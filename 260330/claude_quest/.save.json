@@ -1,0 +1,46 @@
+{
+  "name": "Kenshin",
+  "xp": 1980,
+  "level": 8,
+  "completed_chapters": [
+    "prologue",
+    "chapter1",
+    "chapter2",
+    "chapter3",
+    "chapter4",
+    "chapter5"
+  ],
+  "completed_quizzes": [
+    "q_prologue_1",
+    "q_prologue_2",
+    "q_prologue_3",
+    "q_ch1_1",
+    "q_ch1_2",
+    "q_ch1_3",
+    "q_ch1_4",
+    "q_ch2_1",
+    "q_ch2_2",
+    "q_ch2_3",
+    "q_ch3_1",
+    "q_ch3_2",
+    "q_ch3_3",
+    "q_ch4_1",
+    "q_ch4_2",
+    "q_ch4_3",
+    "q_ch5_3",
+    "q_ch5_4",
+    "q_ch5_1",
+    "q_ch5_2"
+  ],
+  "achievements": [
+    "first_quiz",
+    "perfect_chapter",
+    "streak_5",
+    "all_chapters",
+    "speed_demon"
+  ],
+  "total_correct": 22,
+  "total_questions": 24,
+  "streak": 6,
+  "max_streak": 16
+}

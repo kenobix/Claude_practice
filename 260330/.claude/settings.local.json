@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import rich; print\\(''rich ok''\\)\")",
+      "Bash(python3 -c \"import curses; print\\(''curses ok''\\)\")",
+      "Bash(npm --version)",
+      "Bash(python3:*)",
+      "Bash(chmod +x /home/kenshin/work/260330_claude/start.sh)",
+      "Bash(mkdir -p /home/kenshin/work/claude/260330)",
+      "Bash(mv /home/kenshin/work/260330_claude/.claude /home/kenshin/work/260330_claude/claude_quest /home/kenshin/work/260330_claude/start.sh /home/kenshin/work/claude/260330/)",
+      "Bash(rmdir /home/kenshin/work/260330_claude)"
+    ]
+  }
+}
