@@ -13,7 +13,7 @@
 `claude` フォルダを `claude_practice` にリネーム。
 
 ```bash
-mv /home/kenshin/work/claude /home/kenshin/work/claude_practice
+mv /home/<ユーザー名>/work/claude /home/<ユーザー名>/work/claude_practice
 ```
 
 ---
@@ -29,7 +29,7 @@ mv /home/kenshin/work/claude /home/kenshin/work/claude_practice
 ### 3. ローカルのgit初期化
 
 ```bash
-cd /home/kenshin/work/claude_practice
+cd /home/<ユーザー名>/work/claude_practice
 git init
 git remote add origin https://github.com/<ユーザー名>/<リポジトリ名>.git
 ```
