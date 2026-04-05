@@ -8,6 +8,13 @@
       "when": 1775401715526,
       "tag": "0000_parched_stephen_strange",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1775450000000,
+      "tag": "0001_add_label_to_tasks",
+      "breakpoints": true
     }
   ]
 }

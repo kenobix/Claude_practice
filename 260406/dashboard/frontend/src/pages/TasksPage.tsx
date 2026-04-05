@@ -1,8 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { getTasks, createTask, updateTask } from '../api/tasks'
-import { getProjects } from '../api/projects'
 import TaskCard from '../components/TaskCard'
-import type { Task, Project, Priority } from '../types'
+import type { Task, Priority } from '../types'
 
 const STATUS_OPTIONS = ['', 'todo', 'in_progress', 'done'] as const
 const PRIORITY_OPTIONS = ['', 'high', 'medium', 'low'] as const
@@ -10,22 +9,21 @@ const PRIORITY_OPTIONS = ['', 'high', 'medium', 'low'] as const
 interface NewTaskForm {
   title: string
   description: string
+  label: string
   priority: Priority
-  project_id: string
   due_date: string
 }
 
 const defaultForm: NewTaskForm = {
   title: '',
   description: '',
+  label: '',
   priority: 'medium',
-  project_id: '',
   due_date: '',
 }
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([])
-  const [projects, setProjects] = useState<Project[]>([])
   const [filterStatus, setFilterStatus] = useState('')
   const [filterPriority, setFilterPriority] = useState('')
   const [loading, setLoading] = useState(true)
@@ -36,15 +34,11 @@ export default function TasksPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [t, p] = await Promise.all([
-        getTasks({
-          status: filterStatus || undefined,
-          priority: filterPriority || undefined,
-        }),
-        getProjects(),
-      ])
+      const t = await getTasks({
+        status: filterStatus || undefined,
+        priority: filterPriority || undefined,
+      })
       setTasks(t)
-      setProjects(p)
     } finally {
       setLoading(false)
     }
@@ -53,8 +47,6 @@ export default function TasksPage() {
   useEffect(() => {
     load()
   }, [load])
-
-  const projectMap = Object.fromEntries(projects.map((p) => [p.id, p]))
 
   const handleStatusToggle = async (updated: Task) => {
     try {
@@ -73,8 +65,8 @@ export default function TasksPage() {
       const created = await createTask({
         title: form.title.trim(),
         description: form.description.trim(),
+        label: form.label.trim() || null,
         priority: form.priority,
-        project_id: form.project_id ? Number(form.project_id) : null,
         due_date: form.due_date || null,
         status: 'todo',
       })
@@ -134,7 +126,6 @@ export default function TasksPage() {
             <TaskCard
               key={task.id}
               task={task}
-              project={task.project_id ? projectMap[task.project_id] : null}
               onStatusToggle={handleStatusToggle}
             />
           ))}
@@ -162,7 +153,17 @@ export default function TasksPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Label</label>
+                <input
+                  type="text"
+                  value={form.label}
+                  onChange={(e) => setForm({ ...form, label: e.target.value })}
+                  placeholder="e.g. Work, Personal, Side Project..."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Memo</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -184,27 +185,14 @@ export default function TasksPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
-                  <select
-                    value={form.project_id}
-                    onChange={(e) => setForm({ ...form, project_id: e.target.value })}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                  <input
+                    type="date"
+                    value={form.due_date}
+                    onChange={(e) => setForm({ ...form, due_date: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                  >
-                    <option value="">None</option>
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
+                  />
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                <input
-                  type="date"
-                  value={form.due_date}
-                  onChange={(e) => setForm({ ...form, due_date: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                />
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button

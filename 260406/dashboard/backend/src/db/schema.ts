@@ -13,6 +13,7 @@ export const projects = sqliteTable('projects', {
 export const tasks = sqliteTable('tasks', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   project_id: integer('project_id').references(() => projects.id),
+  label: text('label'),
   title: text('title').notNull(),
   description: text('description'),
   status: text('status', { enum: ['todo', 'in_progress', 'done'] }).notNull().default('todo'),

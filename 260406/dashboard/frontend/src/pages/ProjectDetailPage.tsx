@@ -188,7 +188,6 @@ export default function ProjectDetailPage() {
             <TaskCard
               key={task.id}
               task={task}
-              project={project}
               onStatusToggle={handleStatusToggle}
             />
           ))}

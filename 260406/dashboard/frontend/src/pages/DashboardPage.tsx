@@ -2,23 +2,20 @@ import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { getDashboard } from '../api/dashboard'
 import { stopTimer } from '../api/tasks'
-import { getProjects } from '../api/projects'
 import TimerWidget from '../components/TimerWidget'
 import TaskCard from '../components/TaskCard'
 import { formatHHMM } from '../hooks/useTimer'
-import type { Dashboard, Project } from '../types'
+import type { Dashboard } from '../types'
 
 export default function DashboardPage() {
   const [data, setData] = useState<Dashboard | null>(null)
-  const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
-      const [dash, projs] = await Promise.all([getDashboard(), getProjects()])
+      const dash = await getDashboard()
       setData(dash)
-      setProjects(projs)
       setError(null)
     } catch {
       setError('Failed to load dashboard')
@@ -40,8 +37,6 @@ export default function DashboardPage() {
       alert('Failed to stop timer')
     }
   }
-
-  const projectMap = Object.fromEntries(projects.map((p) => [p.id, p]))
 
   if (loading) return <div className="flex items-center justify-center h-64 text-gray-400">Loading...</div>
   if (error) return <div className="text-red-500 p-4">{error}</div>
@@ -79,44 +74,7 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {data.today_tasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                project={task.project_id ? projectMap[task.project_id] : null}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Recent Notes */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-gray-800">Recent Notes</h2>
-          <Link to="/notes" className="text-sm text-indigo-600 hover:underline">View all</Link>
-        </div>
-        {data.recent_notes.length === 0 ? (
-          <p className="text-sm text-gray-400 bg-white rounded-xl border border-gray-200 p-6 text-center">
-            No notes yet
-          </p>
-        ) : (
-          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100 shadow-sm">
-            {data.recent_notes.map((note) => (
-              <Link
-                key={note.id}
-                to={`/notes/${note.id}`}
-                className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{note.title || 'Untitled'}</p>
-                  <p className="text-xs text-gray-400 truncate mt-0.5">
-                    {note.body.substring(0, 80)}
-                  </p>
-                </div>
-                <span className="text-xs text-gray-400 ml-4 shrink-0">
-                  {new Date(note.updated_at).toLocaleDateString()}
-                </span>
-              </Link>
+              <TaskCard key={task.id} task={task} />
             ))}
           </div>
         )}

@@ -1,9 +1,8 @@
 import { useNavigate } from 'react-router-dom'
-import type { Task, Project } from '../types'
+import type { Task } from '../types'
 
 interface TaskCardProps {
   task: Task
-  project?: Project | null
   onStatusToggle?: (task: Task) => void
 }
 
@@ -25,33 +24,37 @@ const statusLabels: Record<string, string> = {
   done: 'Done',
 }
 
-function nextStatus(current: string): string {
-  if (current === 'todo') return 'in_progress'
-  if (current === 'in_progress') return 'done'
-  return 'todo'
-}
-
-export default function TaskCard({ task, project, onStatusToggle }: TaskCardProps) {
+export default function TaskCard({ task, onStatusToggle }: TaskCardProps) {
   const navigate = useNavigate()
+  const isDone = task.status === 'done'
 
   return (
     <div
-      className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      className={`bg-white rounded-xl border p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
+        isDone ? 'border-green-200 opacity-70' : 'border-gray-200'
+      }`}
       onClick={() => navigate(`/tasks/${task.id}`)}
     >
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-sm font-semibold text-gray-900 flex-1 line-clamp-2">{task.title}</h3>
-        {onStatusToggle && (
+        <h3 className={`text-sm font-semibold flex-1 line-clamp-2 ${isDone ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+          {task.title}
+        </h3>
+        {onStatusToggle && !isDone && (
           <button
-            className="shrink-0 text-xs px-2 py-1 rounded-full border border-gray-300 text-gray-500 hover:bg-gray-100 transition-colors"
+            className="shrink-0 w-7 h-7 rounded-full border-2 border-gray-300 hover:border-green-500 hover:bg-green-50 transition-colors flex items-center justify-center"
             onClick={(e) => {
               e.stopPropagation()
-              onStatusToggle({ ...task, status: nextStatus(task.status) as Task['status'] })
+              onStatusToggle({ ...task, status: 'done' })
             }}
-            title="Toggle status"
+            title="Mark as done"
           >
-            →
+            <span className="text-xs text-gray-400 hover:text-green-600">✓</span>
           </button>
+        )}
+        {isDone && (
+          <span className="shrink-0 w-7 h-7 rounded-full bg-green-100 border-2 border-green-400 flex items-center justify-center">
+            <span className="text-xs text-green-600">✓</span>
+          </span>
         )}
       </div>
 
@@ -62,15 +65,9 @@ export default function TaskCard({ task, project, onStatusToggle }: TaskCardProp
         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusStyles[task.status]}`}>
           {statusLabels[task.status]}
         </span>
-        {project && (
-          <span
-            className="text-xs px-2 py-0.5 rounded-full font-medium"
-            style={{
-              backgroundColor: project.color + '22',
-              color: project.color,
-            }}
-          >
-            {project.name}
+        {task.label && (
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-indigo-50 text-indigo-600 border border-indigo-200">
+            {task.label}
           </span>
         )}
       </div>

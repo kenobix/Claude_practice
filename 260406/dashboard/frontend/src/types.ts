@@ -14,6 +14,7 @@ export interface Task {
   id: number
   title: string
   description: string
+  label: string | null
   status: Status
   priority: Priority
   project_id: number | null

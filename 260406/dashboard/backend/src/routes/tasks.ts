@@ -47,6 +47,7 @@ router.post('/', async (c) => {
     const body = await c.req.json<{
       title: string;
       description?: string;
+      label?: string;
       project_id?: number;
       priority?: 'high' | 'medium' | 'low';
       due_date?: string;
@@ -62,6 +63,7 @@ router.post('/', async (c) => {
       .values({
         title: body.title,
         description: body.description ?? null,
+        label: body.label ?? null,
         project_id: body.project_id ?? null,
         priority: body.priority ?? 'medium',
         due_date: body.due_date ?? null,
@@ -91,6 +93,7 @@ router.put('/:id', async (c) => {
     const body = await c.req.json<{
       title?: string;
       description?: string;
+      label?: string;
       status?: 'todo' | 'in_progress' | 'done';
       priority?: string;
       due_date?: string;
@@ -110,6 +113,7 @@ router.put('/:id', async (c) => {
       .set({
         title: body.title ?? existing.title,
         description: body.description !== undefined ? body.description : existing.description,
+        label: body.label !== undefined ? body.label : existing.label,
         status: newStatus,
         priority: (body.priority as 'high' | 'medium' | 'low') ?? existing.priority,
         due_date: body.due_date !== undefined ? body.due_date : existing.due_date,

@@ -14,8 +14,6 @@ interface NavItem {
 const navItems: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: '🏠' },
   { to: '/tasks', label: 'Tasks', icon: '✓' },
-  { to: '/projects', label: 'Projects', icon: '📁' },
-  { to: '/notes', label: 'Notes', icon: '📝' },
 ]
 
 export default function Layout({ children }: LayoutProps) {
