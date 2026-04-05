@@ -52,7 +52,7 @@
 
 ### 3. WSL環境とDispatchの制約確認
 
-**試したこと**: スマホのDispatchから `~/work/claude_practice/260405/` にファイル作成を指示
+**試したこと①**: スマホのDispatchから `~/work/claude_practice/260405/` にファイル作成を指示
 
 **結果**: 失敗
 
@@ -60,6 +60,18 @@
 - DispatchはWindows上のClaude Desktopが処理を実行する
 - WSLのパス（`~/work/...` = `/home/kenshin/work/...`）はWindows側から直接見えない
 - `\\wsl$\Ubuntu\home\kenshin\work\` 形式のUNCパスも試みたが、CoworkはWSLファイルシステムへのアクセスが非対応
+
+**試したこと②**: スマホのDispatchからWindowsパス（`C:\Users\kensh\work\`）にファイル作成を指示
+
+**結果**: 成功
+
+`C:\Users\kensh\work\test.txt` が作成され、以下の内容が書き込まれた:
+```
+2026-04-05 18:05:50
+Dispatchテスト成功
+```
+
+**結論**: DispatchはWSLパスには非対応だが、**Windowsのファイルシステム（C:ドライブ等）へのファイル操作は正常に動作する**。
 
 ---
 
