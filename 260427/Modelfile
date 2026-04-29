@@ -1,5 +1,5 @@
 FROM qwen2.5:1.5b
 
-PARAMETER num_ctx 32768
+PARAMETER num_ctx 16384
 PARAMETER num_predict 1024
 PARAMETER temperature 0.7

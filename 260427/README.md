@@ -10,7 +10,7 @@ WSL2上にOpenClaw（AIエージェントフレームワーク）とOllama（ロ
 ```
 WSL2 (Ubuntu)
 ├─ Ollama サーバー (systemd service, port 127.0.0.1:11434)
-│   └─ gemma4-agent (qwen2.5:1.5b ベース, num_ctx 32768)
+│   └─ gemma4-agent (qwen2.5:1.5b ベース, num_ctx 16384)
 └─ OpenClaw gateway (systemd user service, port 18789)
     └─ openclaw chat (TUI)
         └─ → http://127.0.0.1:11434
@@ -34,12 +34,13 @@ WSL2 (Ubuntu)
 ```
 FROM qwen2.5:1.5b
 
-PARAMETER num_ctx 32768
+PARAMETER num_ctx 16384
 PARAMETER num_predict 1024
 PARAMETER temperature 0.7
 ```
 
-`num_ctx 32768`はOpenClawのAPIリクエストと一致させる（不一致だとrunnerが2つ起動しOOM）。
+`num_ctx`はopenclaw.jsonの`contextWindow`と一致させる（不一致だとrunnerが2つ起動しOOM）。
+OpenClawの最小値は16000トークンのため、16384が現実的な下限。
 
 ## OpenClaw設定 (`~/.openclaw/openclaw.json`)
 
@@ -66,7 +67,7 @@ PARAMETER temperature 0.7
       "models": [
         {
           "id": "gemma4-agent",
-          "contextWindow": 32768,
+          "contextWindow": 16384,
           "maxTokens": 1024
         }
       ]
@@ -127,13 +128,14 @@ CPU推論の遅さに対応するため300秒に延長。
 - **原因**: gateway側のidle watchdogが2分でタイムアウト → 2回リトライ → abort
 - **解決**: `agents.defaults.llm.idleTimeoutSeconds: 300`に延長
 
-### 問題⑦: streaming watchdog 300秒（一部改善）
+### 問題⑦: streaming watchdog 300秒（大幅改善）
 - **症状**: `streaming watchdog: no stream updates for 300s; resetting status`
 - **原因**: CPU推論でプリフィルが300秒を超える
 - **対策①**: Flash Attention有効化 → CPU推論への効果なし
 - **対策②**: qwen2.5:3b→1.5bに変更 → 短い質問は300s以内に改善
-- **現状**: 短問OK、長文/複雑な質問は300sで応答破棄される場合あり
-- **残課題**: num_ctx削減、GPU推論有効化を検討中
+- **対策③**: num_ctx 32768→16384に削減 → **~20秒に大幅短縮**
+- **注意**: TUIのトークン表示は`X/33k`のままだが実際は16384で推論している（OpenClawがOllamaのモデルメタデータから表示値を取得するため）
+- **現状**: 短問は20s程度、複雑な質問でも大幅改善
 
 ## CPU推論ベンチマーク
 
@@ -144,8 +146,9 @@ CPU推論の遅さに対応するため300秒に延長。
 | gemma4:e4b | openclaw (14kトークン) | 300s超でabort |
 | qwen2.5:3b | curl 短文（システムプロンプトなし） | 数秒 |
 | qwen2.5:3b | openclaw (4.6kトークン) | ~300秒（watchdog後に応答） |
-| qwen2.5:1.5b | openclaw 短問（5.2kトークン） | 300s以内 |
-| qwen2.5:1.5b | openclaw 複雑な質問（5.4kトークン） | ~300s（応答破棄される場合あり） |
+| qwen2.5:1.5b | openclaw 短問（5.2kトークン, num_ctx 32768） | 300s以内 |
+| qwen2.5:1.5b | openclaw 複雑な質問（5.4kトークン, num_ctx 32768） | ~300s（応答破棄される場合あり） |
+| qwen2.5:1.5b | openclaw 短問（~5k トークン, num_ctx 16384） | **~20秒** |
 
 ## Flash Attention設定（適用済み・CPU効果なし）
 
