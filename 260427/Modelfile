@@ -1,5 +1,5 @@
-FROM gemma4:e4b
+FROM qwen2.5:3b
 
-PARAMETER num_ctx 128000
-PARAMETER num_predict 2048
+PARAMETER num_ctx 32768
+PARAMETER num_predict 1024
 PARAMETER temperature 0.7
