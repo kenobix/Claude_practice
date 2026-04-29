@@ -5,12 +5,12 @@
 WSL2上にOpenClaw（AIエージェントフレームワーク）とOllama（ローカルLLMサーバー）を使って、
 ローカルで動作するAIエージェント環境を構築した記録。
 
-## 最終構成（260429確定）
+## 最終構成（260430時点）
 
 ```
 WSL2 (Ubuntu)
 ├─ Ollama サーバー (systemd service, port 127.0.0.1:11434)
-│   └─ gemma4-agent (qwen2.5:3b ベース, num_ctx 32768)
+│   └─ gemma4-agent (qwen2.5:1.5b ベース, num_ctx 32768)
 └─ OpenClaw gateway (systemd user service, port 18789)
     └─ openclaw chat (TUI)
         └─ → http://127.0.0.1:11434
@@ -18,13 +18,21 @@ WSL2 (Ubuntu)
 
 ## 使用モデル
 
-- ベースモデル: `qwen2.5:3b`（軽量・日本語対応）
+- ベースモデル: `qwen2.5:1.5b`（超軽量・日本語対応）
 - カスタムモデル: `gemma4-agent`（Modelfileでパラメータ調整済み）
+
+### モデル変遷
+
+| 日付 | モデル | 理由 |
+|------|--------|------|
+| 260427 | gemma4:e4b | 初期構成 |
+| 260428 | qwen2.5:3b | CPU推論速度改善のため軽量化 |
+| 260430 | qwen2.5:1.5b | さらなる軽量化（3bの約半分） |
 
 ## Modelfile
 
 ```
-FROM qwen2.5:3b
+FROM qwen2.5:1.5b
 
 PARAMETER num_ctx 32768
 PARAMETER num_predict 1024
@@ -119,11 +127,13 @@ CPU推論の遅さに対応するため300秒に延長。
 - **原因**: gateway側のidle watchdogが2分でタイムアウト → 2回リトライ → abort
 - **解決**: `agents.defaults.llm.idleTimeoutSeconds: 300`に延長
 
-### 問題⑦: streaming watchdog 300秒（未解決・許容中）
+### 問題⑦: streaming watchdog 300秒（一部改善）
 - **症状**: `streaming watchdog: no stream updates for 300s; resetting status`
-- **原因**: CPU推論で4.6kトークンのプリフィルが300秒を超える
-- **現状**: watchdog発火後も応答が届く。`run aborted`は発生しない
-- **改善候補**: Flash Attention有効化（後述）
+- **原因**: CPU推論でプリフィルが300秒を超える
+- **対策①**: Flash Attention有効化 → CPU推論への効果なし
+- **対策②**: qwen2.5:3b→1.5bに変更 → 短い質問は300s以内に改善
+- **現状**: 短問OK、長文/複雑な質問は300sで応答破棄される場合あり
+- **残課題**: num_ctx削減、GPU推論有効化を検討中
 
 ## CPU推論ベンチマーク
 
@@ -131,27 +141,22 @@ CPU推論の遅さに対応するため300秒に延長。
 
 | モデル | 条件 | 応答時間 |
 |--------|------|---------|
-| gemma4:e4b | openclaw (14kトークン) | 300s超でタイムアウト（abort） |
+| gemma4:e4b | openclaw (14kトークン) | 300s超でabort |
 | qwen2.5:3b | curl 短文（システムプロンプトなし） | 数秒 |
-| qwen2.5:3b | openclaw (4.6kトークン) | ~300秒（watchdog発火後に応答） |
+| qwen2.5:3b | openclaw (4.6kトークン) | ~300秒（watchdog後に応答） |
+| qwen2.5:1.5b | openclaw 短問（5.2kトークン） | 300s以内 |
+| qwen2.5:1.5b | openclaw 複雑な質問（5.4kトークン） | ~300s（応答破棄される場合あり） |
 
-## Flash Attention有効化（推論高速化・未適用）
+## Flash Attention設定（適用済み・CPU効果なし）
 
-Ollamaの環境変数`OLLAMA_FLASH_ATTENTION=1`でプリフィル高速化が見込める。
+`/etc/systemd/system/ollama.service.d/override.conf`:
 
-WSL2 systemdサービスへの適用方法：
-
-```bash
-# サービスオーバーライドファイルを作成
-sudo systemctl edit ollama
-
-# 以下を入力して保存:
+```ini
 [Service]
 Environment="OLLAMA_FLASH_ATTENTION=1"
-
-# 再起動
-sudo systemctl restart ollama
 ```
+
+Flash AttentionはGPU向けの最適化のため、CPU推論への効果は限定的。
 
 ## WSL2 RAM設定 (`/mnt/c/Users/kensh/.wslconfig`)
 
