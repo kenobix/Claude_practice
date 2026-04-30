@@ -5,12 +5,12 @@
 WSL2上にOpenClaw（AIエージェントフレームワーク）とOllama（ローカルLLMサーバー）を使って、
 ローカルで動作するAIエージェント環境を構築した記録。
 
-## 最終構成（260430時点）
+## 最終構成（260501時点）
 
 ```
 WSL2 (Ubuntu)
 ├─ Ollama サーバー (systemd service, port 127.0.0.1:11434)
-│   └─ gemma4-agent (qwen2.5:3b ベース, num_ctx 16384)
+│   └─ gemma4-agent (qwen2.5:1.5b ベース, num_ctx 16384)
 └─ OpenClaw gateway (systemd user service, port 18789)
     └─ openclaw chat (TUI)
         └─ → http://127.0.0.1:11434
@@ -28,12 +28,13 @@ WSL2 (Ubuntu)
 | 260427 | gemma4:e4b | 128000 | 初期構成 |
 | 260428 | qwen2.5:3b | 32768 | CPU推論速度改善のため軽量化 |
 | 260430 | qwen2.5:1.5b | 32768→16384 | さらなる軽量化 |
-| 260430 | qwen2.5:3b | 16384 | **現在** 速度と精度のバランス最良 |
+| 260430 | qwen2.5:3b | 16384 | 速度と精度のバランスを試験 |
+| 260501 | qwen2.5:1.5b | 16384 | **現在** 3bは冷間始動で必ずabortするため1.5bに戻す |
 
 ## Modelfile
 
 ```
-FROM qwen2.5:3b
+FROM qwen2.5:1.5b
 
 PARAMETER num_ctx 16384
 PARAMETER num_predict 1024
