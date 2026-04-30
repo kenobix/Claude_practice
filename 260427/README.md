@@ -10,7 +10,7 @@ WSL2上にOpenClaw（AIエージェントフレームワーク）とOllama（ロ
 ```
 WSL2 (Ubuntu)
 ├─ Ollama サーバー (systemd service, port 127.0.0.1:11434)
-│   └─ gemma4-agent (qwen2.5:1.5b ベース, num_ctx 16384)
+│   └─ gemma4-agent (qwen2.5:3b ベース, num_ctx 16384)
 └─ OpenClaw gateway (systemd user service, port 18789)
     └─ openclaw chat (TUI)
         └─ → http://127.0.0.1:11434
@@ -23,16 +23,17 @@ WSL2 (Ubuntu)
 
 ### モデル変遷
 
-| 日付 | モデル | 理由 |
-|------|--------|------|
-| 260427 | gemma4:e4b | 初期構成 |
-| 260428 | qwen2.5:3b | CPU推論速度改善のため軽量化 |
-| 260430 | qwen2.5:1.5b | さらなる軽量化（3bの約半分） |
+| 日付 | モデル | num_ctx | 理由 |
+|------|--------|---------|------|
+| 260427 | gemma4:e4b | 128000 | 初期構成 |
+| 260428 | qwen2.5:3b | 32768 | CPU推論速度改善のため軽量化 |
+| 260430 | qwen2.5:1.5b | 32768→16384 | さらなる軽量化 |
+| 260430 | qwen2.5:3b | 16384 | **現在** 速度と精度のバランス最良 |
 
 ## Modelfile
 
 ```
-FROM qwen2.5:1.5b
+FROM qwen2.5:3b
 
 PARAMETER num_ctx 16384
 PARAMETER num_predict 1024
@@ -149,6 +150,7 @@ CPU推論の遅さに対応するため300秒に延長。
 | qwen2.5:1.5b | openclaw 短問（5.2kトークン, num_ctx 32768） | 300s以内 |
 | qwen2.5:1.5b | openclaw 複雑な質問（5.4kトークン, num_ctx 32768） | ~300s（応答破棄される場合あり） |
 | qwen2.5:1.5b | openclaw 短問（~5k トークン, num_ctx 16384） | **~20秒** |
+| qwen2.5:3b | openclaw 短問（~6k トークン, num_ctx 16384） | **~30秒**（コールドスタート時はabort） |
 
 ## Flash Attention設定（適用済み・CPU効果なし）
 
