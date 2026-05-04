@@ -1,0 +1,314 @@
+/* ============================================================
+   KENSHIN DESIGN SYSTEM — Colors & Typography
+   Generated: 2026-05-04
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ============================================================
+   BASE COLOR TOKENS
+   ============================================================ */
+:root {
+  /* Backgrounds */
+  --bg-base:        #0D0D12;   /* Page background */
+  --bg-surface:     #16161F;   /* Cards, panels */
+  --bg-elevated:    #1E1E2A;   /* Hover surfaces, raised panels */
+  --bg-overlay:     #252533;   /* Tooltips, popovers */
+
+  /* Borders */
+  --border-subtle:  #1E1E2A;   /* Hairline dividers */
+  --border-default: #2A2A38;   /* Standard borders */
+  --border-strong:  #3D3D52;   /* Hover borders, emphasis */
+
+  /* Foreground / Text */
+  --fg-primary:     #F0EEF8;   /* Main text */
+  --fg-secondary:   #8B8A9E;   /* Secondary, captions */
+  --fg-tertiary:    #5A5A72;   /* Placeholder, disabled */
+  --fg-inverse:     #0D0D12;   /* Text on light/accent bg */
+
+  /* Accent — Indigo/Violet */
+  --accent:         #6C63FF;   /* Primary accent */
+  --accent-hover:   #7C74FF;   /* Hover state */
+  --accent-muted:   #2D2B5A;   /* Tinted bg for accent elements */
+  --accent-light:   #A78BFA;   /* Violet, gradient partner */
+  --accent-glow:    rgba(108, 99, 255, 0.15); /* Soft glow */
+
+  /* Status */
+  --status-success: #34D399;
+  --status-warning: #FBBF24;
+  --status-error:   #F87171;
+  --status-info:    #60A5FA;
+
+  /* ============================================================
+     SEMANTIC COLOR TOKENS
+     ============================================================ */
+
+  /* Page */
+  --color-page-bg:      var(--bg-base);
+  --color-page-fg:      var(--fg-primary);
+
+  /* Surface / Card */
+  --color-card-bg:      var(--bg-surface);
+  --color-card-border:  var(--border-default);
+  --color-card-hover-border: var(--border-strong);
+
+  /* Text hierarchy */
+  --color-text-primary:   var(--fg-primary);
+  --color-text-secondary: var(--fg-secondary);
+  --color-text-tertiary:  var(--fg-tertiary);
+  --color-text-accent:    var(--accent);
+  --color-text-link:      var(--accent-light);
+
+  /* Interactive */
+  --color-btn-primary-bg:    var(--accent);
+  --color-btn-primary-fg:    #FFFFFF;
+  --color-btn-primary-hover: var(--accent-hover);
+  --color-btn-ghost-fg:      var(--fg-secondary);
+  --color-btn-ghost-hover-fg: var(--fg-primary);
+  --color-btn-ghost-hover-bg: var(--bg-elevated);
+
+  /* Input */
+  --color-input-bg:      var(--bg-surface);
+  --color-input-border:  var(--border-default);
+  --color-input-focus:   var(--accent);
+  --color-input-placeholder: var(--fg-tertiary);
+
+  /* ============================================================
+     TYPOGRAPHY TOKENS
+     ============================================================ */
+
+  /* Font families */
+  --font-display: 'Syne', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  /* Type scale (modular, 1.25 ratio, base 16px) */
+  --text-xs:   0.75rem;    /* 12px */
+  --text-sm:   0.875rem;   /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-md:   1.125rem;   /* 18px */
+  --text-lg:   1.25rem;    /* 20px */
+  --text-xl:   1.5rem;     /* 24px */
+  --text-2xl:  1.875rem;   /* 30px */
+  --text-3xl:  2.25rem;    /* 36px */
+  --text-4xl:  3rem;       /* 48px */
+  --text-5xl:  3.75rem;    /* 60px */
+  --text-6xl:  4.5rem;     /* 72px */
+
+  /* Font weights */
+  --weight-light:    300;
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+  --weight-extrabold:800;
+
+  /* Line heights */
+  --leading-tight:  1.2;
+  --leading-snug:   1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed:1.65;
+  --leading-loose:  1.8;
+
+  /* Letter spacing */
+  --tracking-tight:  -0.03em;
+  --tracking-snug:   -0.01em;
+  --tracking-normal:  0em;
+  --tracking-wide:    0.04em;
+  --tracking-wider:   0.08em;
+  --tracking-widest:  0.12em;
+
+  /* ============================================================
+     SEMANTIC TYPE TOKENS
+     ============================================================ */
+
+  /* Display / Hero headlines */
+  --h1-font:    var(--font-display);
+  --h1-size:    var(--text-5xl);
+  --h1-weight:  var(--weight-bold);
+  --h1-leading: var(--leading-tight);
+  --h1-tracking:var(--tracking-tight);
+
+  /* Section headlines */
+  --h2-font:    var(--font-display);
+  --h2-size:    var(--text-4xl);
+  --h2-weight:  var(--weight-semibold);
+  --h2-leading: var(--leading-tight);
+  --h2-tracking:var(--tracking-snug);
+
+  --h3-font:    var(--font-display);
+  --h3-size:    var(--text-2xl);
+  --h3-weight:  var(--weight-semibold);
+  --h3-leading: var(--leading-snug);
+  --h3-tracking:var(--tracking-snug);
+
+  --h4-font:    var(--font-body);
+  --h4-size:    var(--text-xl);
+  --h4-weight:  var(--weight-semibold);
+  --h4-leading: var(--leading-snug);
+  --h4-tracking:var(--tracking-normal);
+
+  /* Body */
+  --p-font:     var(--font-body);
+  --p-size:     var(--text-base);
+  --p-weight:   var(--weight-regular);
+  --p-leading:  var(--leading-relaxed);
+  --p-tracking: var(--tracking-normal);
+
+  --p-large-size:   var(--text-md);
+  --p-large-leading:var(--leading-relaxed);
+
+  --p-small-size:   var(--text-sm);
+  --p-small-leading:var(--leading-normal);
+
+  /* Labels & UI text */
+  --label-font:     var(--font-body);
+  --label-size:     var(--text-sm);
+  --label-weight:   var(--weight-medium);
+  --label-tracking: var(--tracking-wide);
+
+  /* Overline / eyebrow */
+  --overline-font:    var(--font-body);
+  --overline-size:    var(--text-xs);
+  --overline-weight:  var(--weight-semibold);
+  --overline-tracking:var(--tracking-widest);
+
+  /* Code */
+  --code-font:    var(--font-mono);
+  --code-size:    var(--text-sm);
+  --code-weight:  var(--weight-regular);
+  --code-leading: var(--leading-relaxed);
+
+  /* ============================================================
+     SPACING TOKENS
+     ============================================================ */
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-32:128px;
+
+  /* ============================================================
+     BORDER RADIUS
+     ============================================================ */
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   8px;
+  --radius-xl:  10px;
+  --radius-full: 9999px;
+
+  /* ============================================================
+     SHADOWS & ELEVATION
+     ============================================================ */
+  --shadow-0: none;
+  --shadow-1: 0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
+  --shadow-2: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+  --shadow-3: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+  --shadow-accent: 0 0 24px rgba(108, 99, 255, 0.25);
+
+  /* ============================================================
+     TRANSITIONS
+     ============================================================ */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in:      cubic-bezier(0.4, 0, 1, 1);
+  --ease-out:     cubic-bezier(0, 0, 0.2, 1);
+  --duration-fast:   150ms;
+  --duration-normal: 250ms;
+  --duration-slow:   400ms;
+
+  --transition-default: var(--duration-normal) var(--ease-default);
+
+  /* ============================================================
+     LAYOUT
+     ============================================================ */
+  --max-width:    1200px;
+  --content-width: 720px;
+  --gutter:        24px;
+}
+
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--fg-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+}
+
+/* Semantic type elements */
+h1 {
+  font-family: var(--h1-font);
+  font-size: var(--h1-size);
+  font-weight: var(--h1-weight);
+  line-height: var(--h1-leading);
+  letter-spacing: var(--h1-tracking);
+  color: var(--fg-primary);
+}
+h2 {
+  font-family: var(--h2-font);
+  font-size: var(--h2-size);
+  font-weight: var(--h2-weight);
+  line-height: var(--h2-leading);
+  letter-spacing: var(--h2-tracking);
+  color: var(--fg-primary);
+}
+h3 {
+  font-family: var(--h3-font);
+  font-size: var(--h3-size);
+  font-weight: var(--h3-weight);
+  line-height: var(--h3-leading);
+  letter-spacing: var(--h3-tracking);
+  color: var(--fg-primary);
+}
+h4 {
+  font-family: var(--h4-font);
+  font-size: var(--h4-size);
+  font-weight: var(--h4-weight);
+  line-height: var(--h4-leading);
+  letter-spacing: var(--h4-tracking);
+  color: var(--fg-primary);
+}
+p {
+  font-family: var(--p-font);
+  font-size: var(--p-size);
+  font-weight: var(--p-weight);
+  line-height: var(--p-leading);
+  letter-spacing: var(--p-tracking);
+  color: var(--fg-primary);
+}
+code, pre {
+  font-family: var(--code-font);
+  font-size: var(--code-size);
+  line-height: var(--code-leading);
+}
+a {
+  color: var(--accent-light);
+  text-decoration: none;
+  transition: color var(--transition-default);
+}
+a:hover {
+  color: var(--fg-primary);
+}

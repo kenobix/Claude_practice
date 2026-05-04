@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0D0D12; font-family: 'DM Sans', sans-serif; padding: 20px 24px; }
+  .block { margin-bottom: 14px; }
+  .tag { font-size: 10px; font-weight: 600; color: #5A5A72; letter-spacing: 0.08em; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; margin-bottom: 8px; }
+  pre {
+    background: #16161F;
+    border: 1px solid #2A2A38;
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #F0EEF8;
+    overflow: hidden;
+  }
+  .kw  { color: #A78BFA; }
+  .fn  { color: #6C63FF; }
+  .str { color: #34D399; }
+  .cm  { color: #5A5A72; }
+  .inline-code {
+    display: inline-block;
+    background: #16161F;
+    border: 1px solid #2A2A38;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #A78BFA;
+  }
+</style>
+</head>
+<body>
+  <div class="block">
+    <div class="tag">code block</div>
+    <pre><span class="cm">// Map business requirement to system design</span>
+<span class="kw">function</span> <span class="fn">analyzeRequirement</span>(req: Requirement) {
+  <span class="kw">const</span> stakeholders = req.<span class="fn">getStakeholders</span>();
+  <span class="kw">return</span> <span class="fn">buildSolutionMap</span>(stakeholders, req.scope);
+}</pre>
+  </div>
+  <div class="block">
+    <div class="tag">inline code</div>
+    <p style="font-size:14px; color:#8B8A9E; line-height:1.7;">Use the <span class="inline-code">requirements.md</span> template to structure discovery sessions.</p>
+  </div>
+</body>
+</html>

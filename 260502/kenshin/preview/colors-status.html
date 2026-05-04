@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0D0D12; font-family: 'DM Sans', sans-serif; padding: 20px; }
+  .row { display: flex; gap: 8px; }
+  .swatch { border-radius: 6px; overflow: hidden; border: 1px solid #2A2A38; }
+  .block { height: 44px; }
+  .label { padding: 6px 8px; background: #16161F; }
+  .name { font-size: 10px; font-weight: 600; color: #F0EEF8; }
+  .hex  { font-size: 10px; color: #5A5A72; font-family: monospace; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="swatch">
+      <div class="block" style="background:#34D399; width:80px;"></div>
+      <div class="label"><div class="name">success</div><div class="hex">#34D399</div></div>
+    </div>
+    <div class="swatch">
+      <div class="block" style="background:#FBBF24; width:80px;"></div>
+      <div class="label"><div class="name">warning</div><div class="hex">#FBBF24</div></div>
+    </div>
+    <div class="swatch">
+      <div class="block" style="background:#F87171; width:80px;"></div>
+      <div class="label"><div class="name">error</div><div class="hex">#F87171</div></div>
+    </div>
+    <div class="swatch">
+      <div class="block" style="background:#60A5FA; width:80px;"></div>
+      <div class="label"><div class="name">info</div><div class="hex">#60A5FA</div></div>
+    </div>
+  </div>
+</body>
+</html>

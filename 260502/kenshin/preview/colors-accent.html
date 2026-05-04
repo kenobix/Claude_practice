@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0D0D12; font-family: 'DM Sans', sans-serif; padding: 20px; }
+  .row { display: flex; gap: 10px; }
+  .swatch { flex: 1; border-radius: 8px; overflow: hidden; border: 1px solid #2A2A38; }
+  .block { height: 64px; }
+  .label { padding: 8px 10px; background: #16161F; }
+  .name { font-size: 11px; font-weight: 600; color: #F0EEF8; }
+  .hex  { font-size: 10px; color: #5A5A72; font-family: monospace; margin-top: 2px; }
+  .desc { font-size: 10px; color: #5A5A72; margin-top: 2px; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="swatch">
+      <div class="block" style="background: linear-gradient(135deg, #6C63FF, #A78BFA);"></div>
+      <div class="label">
+        <div class="name">accent gradient</div>
+        <div class="hex">#6C63FF → #A78BFA</div>
+        <div class="desc">CTAs, hero elements</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="block" style="background:#6C63FF;"></div>
+      <div class="label">
+        <div class="name">accent</div>
+        <div class="hex">#6C63FF</div>
+        <div class="desc">Primary interactive</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="block" style="background:#7C74FF;"></div>
+      <div class="label">
+        <div class="name">accent-hover</div>
+        <div class="hex">#7C74FF</div>
+        <div class="desc">Hover state</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="block" style="background:#A78BFA;"></div>
+      <div class="label">
+        <div class="name">accent-light</div>
+        <div class="hex">#A78BFA</div>
+        <div class="desc">Links, soft accent</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="block" style="background:#2D2B5A;"></div>
+      <div class="label">
+        <div class="name">accent-muted</div>
+        <div class="hex">#2D2B5A</div>
+        <div class="desc">Tinted backgrounds</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kenshin — Proposal Deck Template</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="deck-stage.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+
+  .slide {
+    width: 100%; height: 100%;
+    background: #0D0D12;
+    color: #F0EEF8;
+    font-family: 'DM Sans', sans-serif;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 80px 100px;
+  }
+  .slide::before {
+    content: '';
+    position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background-image: radial-gradient(circle, #2A2A38 1.5px, transparent 1.5px);
+    background-size: 40px 40px;
+    opacity: 0.45;
+  }
+  .slide > * { position: relative; z-index: 1; }
+  .slide.surface { background: #16161F; }
+  .slide.surface::before { opacity: 0.25; }
+
+  .logo-badge {
+    position: absolute; top: 40px; left: 80px;
+    display: flex; align-items: center; gap: 10px; z-index: 10;
+  }
+  .logo-badge span {
+    font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700;
+    letter-spacing: -0.02em; color: #F0EEF8;
+  }
+  .slide-num {
+    position: absolute; bottom: 40px; right: 80px;
+    font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #2A2A38; z-index: 10;
+  }
+
+  .overline {
+    font-size: 13px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: #6C63FF;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 24px;
+  }
+  .overline::before { content: ''; width: 24px; height: 1px; background: #6C63FF; display:inline-block; }
+
+  .display {
+    font-family: 'Syne', sans-serif;
+    font-size: 96px; font-weight: 700;
+    line-height: 1.0; letter-spacing: -0.03em; color: #F0EEF8;
+  }
+  .display .grad {
+    background: linear-gradient(135deg, #6C63FF, #A78BFA);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 60px; font-weight: 700;
+    line-height: 1.1; letter-spacing: -0.025em; color: #F0EEF8;
+  }
+  .h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px; font-weight: 600;
+    line-height: 1.2; letter-spacing: -0.01em; color: #F0EEF8;
+  }
+  .body-lg { font-size: 24px; color: #8B8A9E; line-height: 1.6; }
+  .body    { font-size: 20px; color: #8B8A9E; line-height: 1.6; }
+  .caption { font-size: 16px; color: #5A5A72; }
+
+  .card {
+    background: #16161F; border: 1px solid #2A2A38;
+    border-radius: 10px; padding: 32px;
+  }
+  .card.accent-card { border-color: #2D2B5A; box-shadow: 0 0 40px rgba(108,99,255,0.1); }
+
+  .icon-circle {
+    width: 56px; height: 56px; border-radius: 10px;
+    background: #252533; display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+  }
+  .glow-orb {
+    position: absolute; border-radius: 50%; pointer-events: none;
+    filter: blur(100px); z-index: 0;
+  }
+  .quote-mark {
+    font-family: 'Syne', sans-serif; font-size: 160px; font-weight: 800;
+    color: #2D2B5A; line-height: 0.8; margin-bottom: 32px;
+  }
+  .rule { width: 48px; height: 3px; background: #6C63FF; margin-bottom: 24px; }
+  svg-icon { display: inline-flex; }
+</style>
+</head>
+<body>
+<deck-stage>
+
+  <!-- 01 Title -->
+  <section class="slide" data-screen-label="01 Title">
+    <div class="glow-orb" style="width:700px;height:700px;background:rgba(108,99,255,0.08);right:-150px;top:-150px;"></div>
+    <div class="logo-badge">
+      <svg width="22" height="26" viewBox="0 0 28 32" fill="none"><rect x="0" y="0" width="4" height="32" fill="#6C63FF"/><path d="M4 16 L18 0 L24 0 L10 16Z" fill="#6C63FF"/><path d="M4 16 L18 32 L24 32 L10 16Z" fill="#A78BFA"/></svg>
+      <span>kenshin</span>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;z-index:1;">
+      <div class="overline" style="justify-content:center;">Project Proposal</div>
+      <div class="display" style="margin-bottom:32px;"><span class="grad">Digital</span><br>Transformation Strategy</div>
+      <p class="body-lg" style="max-width:700px;">A strategic roadmap for aligning technology investment with business outcomes — prepared for Acme Corporation.</p>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #1E1E2A;padding-top:28px;position:relative;z-index:1;">
+      <span class="caption">Prepared by Kenshin · May 2026</span>
+      <span class="caption">Confidential</span>
+    </div>
+    <div class="slide-num">01</div>
+  </section>
+
+  <!-- 02 Agenda -->
+  <section class="slide surface" data-screen-label="02 Agenda">
+    <div class="logo-badge">
+      <svg width="22" height="26" viewBox="0 0 28 32" fill="none"><rect x="0" y="0" width="4" height="32" fill="#6C63FF"/><path d="M4 16 L18 0 L24 0 L10 16Z" fill="#6C63FF"/><path d="M4 16 L18 32 L24 32 L10 16Z" fill="#A78BFA"/></svg>
+      <span>kenshin</span>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:900px;">
+      <div class="overline">Contents</div>
+      <div class="h2" style="margin-bottom:56px;">Agenda</div>
+      <div style="display:flex;flex-direction:column;gap:0;">
+        <div style="display:flex;align-items:center;gap:32px;padding:24px 0;border-bottom:1px solid #1E1E2A;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#3D3D52;min-width:32px;">01</span>
+          <span style="font-family:'Syne',sans-serif;font-size:26px;font-weight:600;color:#F0EEF8;">Context &amp; problem statement</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:32px;padding:24px 0;border-bottom:1px solid #1E1E2A;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#3D3D52;min-width:32px;">02</span>
+          <span style="font-family:'Syne',sans-serif;font-size:26px;font-weight:600;color:#F0EEF8;">Current state assessment</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:32px;padding:24px 0;border-bottom:1px solid #1E1E2A;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#3D3D52;min-width:32px;">03</span>
+          <span style="font-family:'Syne',sans-serif;font-size:26px;font-weight:600;color:#F0EEF8;">Proposed approach</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:32px;padding:24px 0;border-bottom:1px solid #1E1E2A;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#3D3D52;min-width:32px;">04</span>
+          <span style="font-family:'Syne',sans-serif;font-size:26px;font-weight:600;color:#F0EEF8;">Roadmap &amp; timeline</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:32px;padding:24px 0;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#3D3D52;min-width:32px;">05</span>
+          <span style="font-family:'Syne',sans-serif;font-size:26px;font-weight:600;color:#F0EEF8;">Investment &amp; next steps</span>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">02</div>
+  </section>
+
+  <!-- 03 Problem -->
+  <section class="slide" data-screen-label="03 Problem">
+    <div class="glow-orb" style="width:500px;height:500px;background:rgba(248,113,113,0.04);left:-100px;bottom:-100px;"></div>
+    <div class="logo-badge">
+      <svg width="22" height="26" viewBox="0 0 28 32" fill="none"><rect x="0" y="0" width="4" height="32" fill="#6C63FF"/><path d="M4 16 L18 0 L24 0 L10 16Z" fill="#6C63FF"/><path d="M4 16 L18 32 L24 32 L10 16Z" fill="#A78BFA"/></svg>
+      <span>kenshin</span>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1;">
+      <div class="overline">Context</div>
+      <div class="h2" style="margin-bottom:56px;max-width:900px;">The challenge you're facing</div>
+      <div style="display:grid;grid-template-columns:1.1fr 0.9fr;gap:64px;align-items:start;">
+        <div style="display:flex;flex-direction:column;gap:24px;">
+          <p class="body-lg">Your organisation is growing faster than its systems. Legacy infrastructure creates bottlenecks, and teams have developed workarounds that introduce risk and slow decision-making.</p>
+          <p class="body">The core problem isn't technical — it's structural. Without a clear architecture and governance model, technology investments produce diminishing returns.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="card">
+            <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:600;color:#F0EEF8;margin-bottom:10px;">Fragmented data</div>
+            <div style="font-size:17px;color:#8B8A9E;line-height:1.5;">Multiple siloed systems with no single source of truth</div>
+          </div>
+          <div class="card">
+            <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:600;color:#F0EEF8;margin-bottom:10px;">Manual processes</div>
+            <div style="font-size:17px;color:#8B8A9E;line-height:1.5;">High-value staff spending time on low-value data tasks</div>
+          </div>
+          <div class="card">
+            <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:600;color:#F0EEF8;margin-bottom:10px;">Slow decisions</div>
+            <div style="font-size:17px;color:#8B8A9E;line-height:1.5;">Lack of real-time visibility delays executive decision-making</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">03</div>
+  </section>
+
+  <!-- 04 Approach -->
+  <section class="slide surface" data-screen-label="04 Approach">
+    <div class="logo-badge">
+      <svg width="22" height="26" viewBox="0 0 28 32" fill="none"><rect x="0" y="0" width="4" height="32" fill="#6C63FF"/><path d="M4 16 L18 0 L24 0 L10 16Z" fill="#6C63FF"/><path d="M4 16 L18 32 L24 32 L10 16Z" fill="#A78BFA"/></svg>
+      <span>kenshin</span>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+      <div class="overline">Methodology</div>
+      <div class="h2" style="margin-bottom:56px;">My approach</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px;">
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="icon-circle">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#6C63FF" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#3D3D52;letter-spacing:0.1em;">PHASE 01</div>
+          <div class="h3">Discover</div>
+          <p class="body">Stakeholder interviews, process mapping, and current-state documentation. Define the real problem.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="icon-circle" style="background:#2D2B5A;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#3D3D52;letter-spacing:0.1em;">PHASE 02</div>
+          <div class="h3">Design</div>
+          <p class="body">Architecture, process redesign, and vendor evaluation. A specification engineers can build and executives can approve.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="icon-circle" style="background:#0F2E24;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#3D3D52;letter-spacing:0.1em;">PHASE 03</div>
+          <div class="h3">Deliver</div>
+          <p class="body">Oversee implementation, manage change, and measure outcomes against agreed KPIs.</p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">04</div>
+  </section>
+
+  <!-- 05 Timeline -->
+  <section class="slide" data-screen-label="05 Timeline">
+    <div class="logo-badge">
+      <svg width="22" height="26" viewBox="0 0 28 32" fill="none"><rect x="0" y="0" width="4" height="32" fill="#6C63FF"/><path d="M4 16 L18 0 L24 0 L10 16Z" fill="#6C63FF"/><path d="M4 16 L18 32 L24 32 L10 16Z" fill="#A78BFA"/></svg>
+      <span>kenshin</span>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+      <div class="overline">Roadmap</div>
+      <div class="h2" style="margin-bottom:56px;">Proposed timeline</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:24px;position:relative;">
+        <div style="position:absolute;top:8px;left:5%;right:5%;height:1px;background:linear-gradient(90deg,#6C63FF,#A78BFA,#60A5FA,#34D399);opacity:0.25;"></div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="width:16px;height:16px;border-radius:50%;background:#6C63FF;box-shadow:0 0 16px rgba(108,99,255,0.4);"></div>
+          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:#F0EEF8;">Discovery</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#6C63FF;">Weeks 1–3</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="font-size:17px;color:#8B8A9E;">Stakeholder interviews</div>
+            <div style="font-size:17px;color:#8B8A9E;">Process mapping</div>
+            <div style="font-size:17px;color:#8B8A9E;">Gap analysis</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="width:16px;height:16px;border-radius:50%;background:#A78BFA;box-shadow:0 0 16px rgba(167,139,250,0.4);"></div>
+          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:#F0EEF8;">Design</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#A78BFA;">Weeks 4–7</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="font-size:17px;color:#8B8A9E;">Architecture spec</div>
+            <div style="font-size:17px;color:#8B8A9E;">Vendor shortlist</div>
+            <div style="font-size:17px;color:#8B8A9E;">Approval deck</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="width:16px;height:16px;border-radius:50%;background:#60A5FA;box-shadow:0 0 16px rgba(96,165,250,0.4);"></div>
+          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:#F0EEF8;">Pilot</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#60A5FA;">Weeks 8–14</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="font-size:17px;color:#8B8A9E;">Controlled rollout</div>
+            <div style="font-size:17px;color:#8B8A9E;">Training programme</div>
+            <div style="font-size:17px;color:#8B8A9E;">Feedback loops</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="width:16px;height:16px;border-radius:50%;background:#34D399;box-shadow:0 0 16px rgba(52,211,153,0.4);"></div>
+          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:#F0EEF8;">Scale</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#34D399;">Weeks 15–24</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="font-size:17px;color:#8B8A9E;">Full deployment</div>
+            <div style="font-size:17px;color:#8B8A9E;">KPI measurement</div>
+            <div style="font-size:17px;color:#8B8A9E;">Handover docs</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">05</div>
+  </section>
+
+  <!-- 06 Big Quote -->
+  <section class="slide surface" data-screen-label="06 Quote">
+    <div class="glow-orb" style="width:800px;height:800px;background:rgba(108,99,255,0.05);left:50%;top:50%;transform:translate(-50%,-50%);"></div>
+    <div class="logo-badge">
+      <svg width="22" height="26" viewBox="0 0 28 32" fill="none"><rect x="0" y="0" width="4" height="32" fill="#6C63FF"/><path d="M4 16 L18 0 L24 0 L10 16Z" fill="#6C63FF"/><path d="M4 16 L18 32 L24 32 L10 16Z" fill="#A78BFA"/></svg>
+      <span>kenshin</span>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;z-index:1;">
+      <div class="quote-mark">"</div>
+      <div style="font-family:'Syne',sans-serif;font-size:48px;font-weight:600;line-height:1.2;letter-spacing:-0.025em;color:#F0EEF8;max-width:1100px;margin-bottom:40px;">
+        Let's define the problem before we talk about the solution.
+      </div>
+      <div style="width:48px;height:2px;background:#6C63FF;margin:0 auto 20px;"></div>
+      <div class="caption" style="letter-spacing:0.1em;text-transform:uppercase;">Kenshin · IT Engineer &amp; Business Consultant</div>
+    </div>
+    <div class="slide-num">06</div>
+  </section>
+
+  <!-- 07 Investment -->
+  <section class="slide" data-screen-label="07 Investment">
+    <div class="logo-badge">
+      <svg width="22" height="26" viewBox="0 0 28 32" fill="none"><rect x="0" y="0" width="4" height="32" fill="#6C63FF"/><path d="M4 16 L18 0 L24 0 L10 16Z" fill="#6C63FF"/><path d="M4 16 L18 32 L24 32 L10 16Z" fill="#A78BFA"/></svg>
+      <span>kenshin</span>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+      <div class="overline">Pricing</div>
+      <div class="h2" style="margin-bottom:56px;">Investment</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;">
+        <div class="card">
+          <div style="height:28px;margin-bottom:16px;"></div>
+          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:#F0EEF8;margin-bottom:10px;">Discovery</div>
+          <div style="font-family:'Syne',sans-serif;font-size:40px;font-weight:700;color:#F0EEF8;margin-bottom:20px;letter-spacing:-0.02em;">¥480,000</div>
+          <div style="font-size:17px;color:#8B8A9E;line-height:1.5;">3 weeks · up to 12 stakeholders · full current-state report</div>
+        </div>
+        <div class="card accent-card" style="background:#1A1A2E;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:0.12em;color:#6C63FF;text-transform:uppercase;margin-bottom:16px;">Recommended</div>
+          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:#F0EEF8;margin-bottom:10px;">Strategy</div>
+          <div style="font-family:'Syne',sans-serif;font-size:40px;font-weight:700;color:#A78BFA;margin-bottom:20px;letter-spacing:-0.02em;">¥1,200,000</div>
+          <div style="font-size:17px;color:#8B8A9E;line-height:1.5;">Full engagement: discover + design + delivery oversight · 24 weeks</div>
+        </div>
+        <div class="card">
+          <div style="height:28px;margin-bottom:16px;"></div>
+          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:#F0EEF8;margin-bottom:10px;">Advisory</div>
+          <div style="font-family:'Syne',sans-serif;font-size:40px;font-weight:700;color:#F0EEF8;margin-bottom:20px;letter-spacing:-0.02em;">¥180k<span style="font-size:22px;">/mo</span></div>
+          <div style="font-size:17px;color:#8B8A9E;line-height:1.5;">Ongoing retainer · 2 days/week · flexible scope</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">07</div>
+  </section>
+
+  <!-- 08 CTA -->
+  <section class="slide surface" data-screen-label="08 Next Steps">
+    <div class="glow-orb" style="width:600px;height:600px;background:rgba(108,99,255,0.07);right:-80px;bottom:-80px;"></div>
+    <div class="logo-badge">
+      <svg width="22" height="26" viewBox="0 0 28 32" fill="none"><rect x="0" y="0" width="4" height="32" fill="#6C63FF"/><path d="M4 16 L18 0 L24 0 L10 16Z" fill="#6C63FF"/><path d="M4 16 L18 32 L24 32 L10 16Z" fill="#A78BFA"/></svg>
+      <span>kenshin</span>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;z-index:1;">
+      <div class="overline" style="justify-content:center;">Next steps</div>
+      <div class="h2" style="margin-bottom:24px;">Ready to get started?</div>
+      <p class="body-lg" style="max-width:640px;margin-bottom:64px;">
+        Let's have a 30-minute conversation. No pitch — just a clear look at your situation and whether I can help.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:16px;align-items:center;margin-bottom:64px;">
+        <div style="display:flex;align-items:center;gap:20px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#6C63FF;min-width:28px;">01</span>
+          <span style="font-size:20px;color:#F0EEF8;">Review this proposal with your team</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:20px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#6C63FF;min-width:28px;">02</span>
+          <span style="font-size:20px;color:#F0EEF8;">Schedule a 30-min discovery call</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:20px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#6C63FF;min-width:28px;">03</span>
+          <span style="font-size:20px;color:#F0EEF8;">Agree on scope and start date</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;justify-content:center;">
+        <a href="mailto:hello@kenshin.dev" style="background:#6C63FF;color:#fff;padding:16px 40px;border-radius:8px;font-size:18px;font-weight:600;text-decoration:none;font-family:'DM Sans',sans-serif;">Schedule a call</a>
+        <span style="font-size:18px;color:#8B8A9E;">hello@kenshin.dev</span>
+      </div>
+    </div>
+    <div class="slide-num">08</div>
+  </section>
+
+</deck-stage>
+</body>
+</html>

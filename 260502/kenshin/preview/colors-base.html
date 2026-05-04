@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0D0D12; font-family: 'DM Sans', sans-serif; padding: 20px; }
+  .row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .swatch { flex: 1; border-radius: 6px; overflow: hidden; }
+  .color-block { height: 52px; }
+  .label { padding: 6px 8px; }
+  .name { font-size: 11px; font-weight: 500; color: #F0EEF8; }
+  .hex  { font-size: 10px; color: #5A5A72; font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+  .section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: #5A5A72; text-transform: uppercase; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+  <div class="section-label">Backgrounds</div>
+  <div class="row">
+    <div class="swatch" style="background:#16161F">
+      <div class="color-block" style="background:#0D0D12; border:1px solid #2A2A38;"></div>
+      <div class="label"><div class="name">bg-base</div><div class="hex">#0D0D12</div></div>
+    </div>
+    <div class="swatch" style="background:#16161F">
+      <div class="color-block" style="background:#16161F; border:1px solid #2A2A38;"></div>
+      <div class="label"><div class="name">bg-surface</div><div class="hex">#16161F</div></div>
+    </div>
+    <div class="swatch" style="background:#16161F">
+      <div class="color-block" style="background:#1E1E2A; border:1px solid #2A2A38;"></div>
+      <div class="label"><div class="name">bg-elevated</div><div class="hex">#1E1E2A</div></div>
+    </div>
+    <div class="swatch" style="background:#16161F">
+      <div class="color-block" style="background:#252533; border:1px solid #2A2A38;"></div>
+      <div class="label"><div class="name">bg-overlay</div><div class="hex">#252533</div></div>
+    </div>
+  </div>
+
+  <div class="section-label">Borders</div>
+  <div class="row">
+    <div class="swatch" style="background:#16161F">
+      <div class="color-block" style="background:#1E1E2A;"></div>
+      <div class="label"><div class="name">border-subtle</div><div class="hex">#1E1E2A</div></div>
+    </div>
+    <div class="swatch" style="background:#16161F">
+      <div class="color-block" style="background:#2A2A38;"></div>
+      <div class="label"><div class="name">border-default</div><div class="hex">#2A2A38</div></div>
+    </div>
+    <div class="swatch" style="background:#16161F">
+      <div class="color-block" style="background:#3D3D52;"></div>
+      <div class="label"><div class="name">border-strong</div><div class="hex">#3D3D52</div></div>
+    </div>
+  </div>
+</body>
+</html>

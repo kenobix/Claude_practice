@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kenshin — Consulting One-Pager</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body {
+    background: #0D0D12;
+    color: #F0EEF8;
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 48px 24px;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 900px;
+    background: #16161F;
+    border: 1px solid #2A2A38;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  }
+
+  /* ── Header band ─────────────────────────────── */
+  .page-header {
+    background: #0D0D12;
+    border-bottom: 1px solid #2A2A38;
+    padding: 48px 56px 44px;
+    position: relative;
+    overflow: hidden;
+  }
+  .page-header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle, #2A2A38 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity: 0.4;
+  }
+  .page-header::after {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: rgba(108,99,255,0.07);
+    right: -80px; top: -120px;
+    filter: blur(60px);
+    pointer-events: none;
+  }
+  .header-inner {
+    position: relative; z-index: 1;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 32px; flex-wrap: wrap;
+  }
+  .header-left {}
+  .header-logo {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+  }
+  .header-logo span {
+    font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700;
+    letter-spacing: -0.02em; color: #F0EEF8;
+  }
+  .header-tagline {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #6C63FF; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .header-tagline::before {
+    content: ''; width: 16px; height: 1px; background: #6C63FF; display: inline-block;
+  }
+  .header-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 38px; font-weight: 700;
+    line-height: 1.1; letter-spacing: -0.025em;
+    color: #F0EEF8; max-width: 440px;
+  }
+  .header-title .grad {
+    background: linear-gradient(135deg, #6C63FF, #A78BFA);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header-contact {
+    display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
+    padding-top: 4px;
+  }
+  .contact-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: #8B8A9E;
+  }
+  .contact-item i { width: 14px; height: 14px; color: #5A5A72; }
+
+  /* ── Body ────────────────────────────────────── */
+  .page-body {
+    padding: 48px 56px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 48px;
+  }
+  @media (max-width: 680px) {
+    .page-body { grid-template-columns: 1fr; padding: 32px 24px; }
+    .page-header { padding: 36px 24px; }
+    .header-contact { align-items: flex-start; }
+  }
+
+  /* ── Section heading ─────────────────────────── */
+  .section-title {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: #5A5A72;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after {
+    content: ''; flex: 1; height: 1px; background: #1E1E2A;
+  }
+
+  /* ── Service list ────────────────────────────── */
+  .service-list { display: flex; flex-direction: column; gap: 20px; }
+  .service-item { display: flex; gap: 14px; }
+  .service-icon {
+    width: 32px; height: 32px; border-radius: 6px;
+    background: #252533; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .service-icon i { width: 15px; height: 15px; color: #6C63FF; }
+  .service-name {
+    font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600;
+    color: #F0EEF8; margin-bottom: 4px;
+  }
+  .service-desc { font-size: 13px; color: #8B8A9E; line-height: 1.5; }
+
+  /* ── Process steps ───────────────────────────── */
+  .process-steps { display: flex; flex-direction: column; gap: 0; }
+  .process-step {
+    display: flex; gap: 16px;
+    padding-bottom: 20px; position: relative;
+  }
+  .process-step:last-child { padding-bottom: 0; }
+  .step-num {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: #6C63FF; width: 22px; flex-shrink: 0; padding-top: 2px;
+    font-weight: 600;
+  }
+  .step-line {
+    position: absolute; left: 10px; top: 22px; bottom: 0;
+    width: 1px; background: #1E1E2A;
+  }
+  .step-title { font-size: 14px; font-weight: 600; color: #F0EEF8; margin-bottom: 3px; }
+  .step-desc  { font-size: 13px; color: #8B8A9E; line-height: 1.5; }
+
+  /* ── Stat block ──────────────────────────────── */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .stat-box {
+    background: #1E1E2A; border: 1px solid #2A2A38;
+    border-radius: 6px; padding: 16px;
+  }
+  .stat-num {
+    font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700;
+    color: #F0EEF8; letter-spacing: -0.02em; line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-label { font-size: 12px; color: #5A5A72; }
+
+  /* ── Quote block ─────────────────────────────── */
+  .quote-block {
+    background: #1A1A2E; border: 1px solid #2D2B5A;
+    border-radius: 8px; padding: 20px 22px; margin-top: 16px;
+  }
+  .quote-text {
+    font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600;
+    color: #F0EEF8; line-height: 1.4; margin-bottom: 10px;
+    font-style: italic;
+  }
+  .quote-attr { font-size: 12px; color: #5A5A72; }
+
+  /* ── Tags ────────────────────────────────────── */
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag {
+    font-size: 11px; font-weight: 500;
+    padding: 4px 10px; border-radius: 4px;
+    border: 1px solid #2A2A38; color: #8B8A9E;
+    background: #1E1E2A;
+  }
+
+  /* ── Footer ──────────────────────────────────── */
+  .page-footer {
+    border-top: 1px solid #1E1E2A;
+    padding: 20px 56px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+    background: #0D0D12;
+  }
+  .footer-note { font-size: 11px; color: #3D3D52; }
+  .footer-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #6C63FF; color: #fff;
+    padding: 8px 18px; border-radius: 6px;
+    font-size: 13px; font-weight: 600; text-decoration: none;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 150ms ease;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-inner">
+      <div class="header-left">
+        <div class="header-logo">
+          <svg width="20" height="24" viewBox="0 0 28 32" fill="none">
+            <rect x="0" y="0" width="4" height="32" fill="#6C63FF"/>
+            <path d="M4 16 L18 0 L24 0 L10 16Z" fill="#6C63FF"/>
+            <path d="M4 16 L18 32 L24 32 L10 16Z" fill="#A78BFA"/>
+          </svg>
+          <span>kenshin</span>
+        </div>
+        <div class="header-tagline">IT Engineer &amp; Business Consultant</div>
+        <h1 class="header-title">
+          Technology strategy<br>that <span class="grad">gets built.</span>
+        </h1>
+      </div>
+      <div class="header-contact">
+        <div class="contact-item"><i data-lucide="mail"></i> hello@kenshin.dev</div>
+        <div class="contact-item"><i data-lucide="globe"></i> kenshin.dev</div>
+        <div class="contact-item"><i data-lucide="map-pin"></i> Tokyo / Remote</div>
+        <div class="contact-item"><i data-lucide="calendar"></i> Available from June 2026</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="page-body">
+
+    <!-- Left column -->
+    <div style="display:flex;flex-direction:column;gap:36px;">
+
+      <!-- Services -->
+      <div>
+        <div class="section-title">Services</div>
+        <div class="service-list">
+          <div class="service-item">
+            <div class="service-icon"><i data-lucide="layers"></i></div>
+            <div>
+              <div class="service-name">Requirements &amp; architecture</div>
+              <div class="service-desc">Structured discovery, process mapping, and technical specification. Eliminates ambiguity before build begins.</div>
+            </div>
+          </div>
+          <div class="service-item">
+            <div class="service-icon"><i data-lucide="users"></i></div>
+            <div>
+              <div class="service-name">Organisational change</div>
+              <div class="service-desc">Change programmes for technology transitions — communication, training, and adoption measurement.</div>
+            </div>
+          </div>
+          <div class="service-item">
+            <div class="service-icon"><i data-lucide="bar-chart-2"></i></div>
+            <div>
+              <div class="service-name">IT strategy &amp; roadmaps</div>
+              <div class="service-desc">3-year IT roadmaps aligned to business growth, including build/buy analysis and risk prioritisation.</div>
+            </div>
+          </div>
+          <div class="service-item">
+            <div class="service-icon"><i data-lucide="cpu"></i></div>
+            <div>
+              <div class="service-name">IT due diligence</div>
+              <div class="service-desc">Technical risk assessment for M&amp;A, vendor selection, and platform evaluation.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Expertise tags -->
+      <div>
+        <div class="section-title">Expertise</div>
+        <div class="tag-row">
+          <span class="tag">ERP systems</span>
+          <span class="tag">Agile / scrum</span>
+          <span class="tag">Stakeholder mgmt</span>
+          <span class="tag">SQL &amp; data modelling</span>
+          <span class="tag">System integration</span>
+          <span class="tag">BPMN</span>
+          <span class="tag">Change management</span>
+          <span class="tag">Cloud migration</span>
+          <span class="tag">Business analysis</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right column -->
+    <div style="display:flex;flex-direction:column;gap:28px;">
+
+      <!-- Stats -->
+      <div>
+        <div class="section-title">Track record</div>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-num">12<span style="font-size:16px;color:#5A5A72;">yr</span></div>
+            <div class="stat-label">IT &amp; consulting experience</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num">40<span style="font-size:16px;color:#5A5A72;">+</span></div>
+            <div class="stat-label">Projects delivered</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" style="color:#A78BFA;">3</div>
+            <div class="stat-label">Industries served</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" style="color:#34D399;">94<span style="font-size:16px;">%</span></div>
+            <div class="stat-label">Avg. adoption rate</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- How I work -->
+      <div>
+        <div class="section-title">How I work</div>
+        <div class="process-steps">
+          <div class="process-step">
+            <div class="step-line"></div>
+            <div class="step-num">01</div>
+            <div>
+              <div class="step-title">Discover</div>
+              <div class="step-desc">Stakeholder interviews and current-state mapping to define the real problem.</div>
+            </div>
+          </div>
+          <div class="process-step">
+            <div class="step-line"></div>
+            <div class="step-num">02</div>
+            <div>
+              <div class="step-title">Design</div>
+              <div class="step-desc">Architecture and process redesign with a spec engineers can build from.</div>
+            </div>
+          </div>
+          <div class="process-step">
+            <div class="step-num">03</div>
+            <div>
+              <div class="step-title">Deliver</div>
+              <div class="step-desc">Implementation oversight, change management, and outcome measurement.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quote -->
+      <div class="quote-block">
+        <div class="quote-text">"Let's define the problem before we talk about the solution."</div>
+        <div class="quote-attr">— Core working principle</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="page-footer">
+    <span class="footer-note">Kenshin · IT Engineer &amp; Business Consultant · kenshin.dev · 2026</span>
+    <a href="mailto:hello@kenshin.dev" class="footer-cta">
+      Get in touch
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+  </div>
+
+</div>
+<script>lucide.createIcons();</script>
+</body>
+</html>

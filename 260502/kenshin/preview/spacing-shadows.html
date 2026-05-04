@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0D0D12; font-family: 'DM Sans', sans-serif; padding: 24px; }
+  .row { display: flex; gap: 20px; align-items: flex-end; }
+  .item { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .box { background: #16161F; display: flex; align-items: center; justify-content: center; }
+  .token { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #5A5A72; text-align: center; }
+  .val   { font-size: 10px; color: #3D3D52; text-align: center; margin-top: 2px; }
+  .divider { width: 1px; background: #1E1E2A; align-self: stretch; }
+  .radius-row { display: flex; gap: 16px; align-items: center; margin-top: 16px; }
+  .r-box { width: 48px; height: 32px; background: #2D2B5A; border: 1px solid #6C63FF; display: flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="item">
+      <div class="box" style="width:60px;height:60px;box-shadow:none;border:1px solid #2A2A38;border-radius:8px;"></div>
+      <div class="token">shadow-0</div><div class="val">none</div>
+    </div>
+    <div class="item">
+      <div class="box" style="width:60px;height:60px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.04);"></div>
+      <div class="token">shadow-1</div><div class="val">card</div>
+    </div>
+    <div class="item">
+      <div class="box" style="width:60px;height:60px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.04);"></div>
+      <div class="token">shadow-2</div><div class="val">modal</div>
+    </div>
+    <div class="item">
+      <div class="box" style="width:60px;height:60px;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.06);"></div>
+      <div class="token">shadow-3</div><div class="val">overlay</div>
+    </div>
+    <div class="item">
+      <div class="box" style="width:60px;height:60px;border-radius:8px;box-shadow:0 0 24px rgba(108,99,255,0.25);background:#2D2B5A;border:1px solid #6C63FF;"></div>
+      <div class="token">accent-glow</div><div class="val">cta</div>
+    </div>
+  </div>
+  <div class="radius-row">
+    <div class="r-box" style="border-radius:4px;"><span style="font-size:9px;color:#8B8A9E;font-family:monospace;">4px</span></div>
+    <div class="r-box" style="border-radius:6px;"><span style="font-size:9px;color:#8B8A9E;font-family:monospace;">6px</span></div>
+    <div class="r-box" style="border-radius:8px;"><span style="font-size:9px;color:#8B8A9E;font-family:monospace;">8px</span></div>
+    <div class="r-box" style="border-radius:10px;"><span style="font-size:9px;color:#8B8A9E;font-family:monospace;">10px</span></div>
+    <div class="r-box" style="border-radius:9999px;width:64px;"><span style="font-size:9px;color:#8B8A9E;font-family:monospace;">full</span></div>
+  </div>
+</body>
+</html>

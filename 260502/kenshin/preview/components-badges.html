@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0D0D12; font-family: 'DM Sans', sans-serif; padding: 24px; }
+  .section { margin-bottom: 16px; }
+  .section-label { font-size: 10px; font-weight: 600; color: #5A5A72; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600; padding: 3px 9px;
+    border-radius: 4px; letter-spacing: 0.02em;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .tag {
+    display: inline-flex; align-items: center;
+    font-size: 12px; font-weight: 500; padding: 4px 10px;
+    border-radius: 4px; border: 1px solid;
+  }
+  .pill {
+    display: inline-flex; align-items: center;
+    font-size: 12px; font-weight: 500; padding: 4px 12px;
+    border-radius: 9999px; border: 1px solid;
+  }
+</style>
+</head>
+<body>
+  <div class="section">
+    <div class="section-label">Status badges</div>
+    <div class="row">
+      <span class="badge" style="background:#0F2E24;color:#34D399;"><span class="dot" style="background:#34D399;"></span>Active</span>
+      <span class="badge" style="background:#2D2B5A;color:#A78BFA;"><span class="dot" style="background:#6C63FF;"></span>In progress</span>
+      <span class="badge" style="background:#2A1F0A;color:#FBBF24;"><span class="dot" style="background:#FBBF24;"></span>On hold</span>
+      <span class="badge" style="background:#2A1010;color:#F87171;"><span class="dot" style="background:#F87171;"></span>Blocked</span>
+      <span class="badge" style="background:#16161F;color:#5A5A72;border:1px solid #2A2A38;"><span class="dot" style="background:#5A5A72;"></span>Draft</span>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-label">Tags</div>
+    <div class="row">
+      <span class="tag" style="color:#8B8A9E;border-color:#2A2A38;background:#16161F;">Strategy</span>
+      <span class="tag" style="color:#A78BFA;border-color:#2D2B5A;background:transparent;">IT Consulting</span>
+      <span class="tag" style="color:#34D399;border-color:#0F2E24;background:transparent;">Systems Design</span>
+      <span class="tag" style="color:#60A5FA;border-color:#0F1E3A;background:transparent;">Architecture</span>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-label">Pills</div>
+    <div class="row">
+      <span class="pill" style="color:#F0EEF8;border-color:#3D3D52;background:#1E1E2A;">Requirements</span>
+      <span class="pill" style="color:#6C63FF;border-color:#6C63FF;background:#2D2B5A;">Selected</span>
+      <span class="pill" style="color:#5A5A72;border-color:#1E1E2A;background:transparent;">Inactive</span>
+    </div>
+  </div>
+</body>
+</html>

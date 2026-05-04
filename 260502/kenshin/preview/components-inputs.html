@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0D0D12; font-family: 'DM Sans', sans-serif; padding: 24px; }
+  .stack { display: flex; flex-direction: column; gap: 12px; max-width: 400px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  label { font-size: 13px; font-weight: 500; color: #8B8A9E; }
+  input, textarea, select {
+    background: #16161F;
+    border: 1px solid #2A2A38;
+    border-radius: 6px;
+    padding: 9px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: #F0EEF8;
+    outline: none;
+    transition: border-color 150ms ease;
+    width: 100%;
+  }
+  input::placeholder, textarea::placeholder { color: #5A5A72; }
+  input:focus, textarea:focus, select:focus { border-color: #6C63FF; box-shadow: 0 0 0 3px rgba(108,99,255,0.12); }
+  .input-error { border-color: #F87171 !important; }
+  .error-msg { font-size: 12px; color: #F87171; }
+  .hint { font-size: 11px; color: #5A5A72; }
+</style>
+</head>
+<body>
+  <div class="stack">
+    <div class="field">
+      <label>Company name</label>
+      <input type="text" placeholder="e.g. Acme Corporation">
+    </div>
+    <div class="field">
+      <label>Project scope</label>
+      <textarea rows="2" placeholder="Describe the problem you want to solve…"></textarea>
+    </div>
+    <div class="field">
+      <label>Engagement type</label>
+      <select><option>Strategy & Requirements</option><option>System Architecture</option><option>Change Management</option></select>
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" class="input-error" value="invalid-email">
+      <div class="error-msg">Please enter a valid email address</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  
+  <g>
+    
+    <rect x="0" y="4" width="4" height="40" fill="#6C63FF"></rect>
+    
+    <path d="M4 24 L22 4 L27 4 L9 24Z" fill="#6C63FF"></path>
+    
+    <path d="M4 24 L22 44 L27 44 L9 24Z" fill="#A78BFA"></path>
+  </g>
+  
+  <text x="36" y="32" font-family="Syne, sans-serif" font-size="22" font-weight="700" fill="#F0EEF8" letter-spacing="-0.5">kenshin</text>
+</svg>

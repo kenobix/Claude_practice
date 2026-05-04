@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0D0D12; font-family: 'DM Sans', sans-serif; padding: 24px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 12px; }
+  .card {
+    background: #16161F;
+    border: 1px solid #2A2A38;
+    border-radius: 8px;
+    padding: 18px;
+    width: 200px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
+    transition: border-color 150ms ease, transform 150ms ease;
+    cursor: pointer;
+  }
+  .card:hover { border-color: #3D3D52; transform: translateY(-2px); }
+  .card-icon { width: 32px; height: 32px; border-radius: 6px; background: #2D2B5A; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+  .card-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; color: #F0EEF8; margin-bottom: 6px; }
+  .card-body  { font-size: 13px; color: #8B8A9E; line-height: 1.5; }
+  .card-accent { border-color: #2D2B5A; box-shadow: 0 0 0 1px #2D2B5A, 0 0 24px rgba(108,99,255,0.1); }
+  .icon-placeholder { width: 16px; height: 16px; border-radius: 2px; background: #6C63FF; opacity: 0.8; }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="card">
+      <div class="card-icon"><div class="icon-placeholder"></div></div>
+      <div class="card-title">Requirements</div>
+      <div class="card-body">Structured discovery and gap analysis.</div>
+    </div>
+    <div class="card card-accent">
+      <div class="card-icon" style="background:linear-gradient(135deg,#2D2B5A,#1E1E2A)"><div class="icon-placeholder" style="background:#A78BFA;"></div></div>
+      <div class="card-title" style="color:#A78BFA;">Strategy</div>
+      <div class="card-body">Roadmap alignment and executive clarity.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon"><div class="icon-placeholder" style="background:#34D399;"></div></div>
+      <div class="card-title">Systems</div>
+      <div class="card-body">Architecture design and technical planning.</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0D0D12; font-family: 'DM Sans', sans-serif; padding: 24px; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 9px 18px;
+    transition: all 150ms ease;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .btn-primary { background: #6C63FF; color: #fff; }
+  .btn-primary:hover { background: #7C74FF; }
+  .btn-secondary { background: #1E1E2A; color: #F0EEF8; border: 1px solid #2A2A38; }
+  .btn-secondary:hover { border-color: #3D3D52; background: #252533; }
+  .btn-ghost { background: transparent; color: #8B8A9E; border: 1px solid transparent; }
+  .btn-ghost:hover { color: #F0EEF8; background: #1E1E2A; }
+  .btn-danger { background: transparent; color: #F87171; border: 1px solid #F87171; }
+  .btn-sm { font-size: 12px; padding: 6px 12px; }
+  .btn-lg { font-size: 16px; padding: 12px 24px; }
+  .btn-icon { width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; background: #1E1E2A; color: #8B8A9E; border: 1px solid #2A2A38; }
+  .label-row { display: flex; gap: 10px; align-items: center; margin-top: 12px; }
+  .label { font-size: 10px; color: #5A5A72; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <button class="btn-primary">Primary</button>
+    <button class="btn-secondary">Secondary</button>
+    <button class="btn-ghost">Ghost</button>
+    <button class="btn-danger">Danger</button>
+  </div>
+  <div class="row" style="margin-top:12px;">
+    <button class="btn-primary btn-sm">Small</button>
+    <button class="btn-primary">Default</button>
+    <button class="btn-primary btn-lg">Large</button>
+    <button class="btn-primary" disabled style="opacity:0.35;cursor:not-allowed;">Disabled</button>
+  </div>
+</body>
+</html>

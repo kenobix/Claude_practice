@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0D0D12; font-family: 'DM Sans', sans-serif; padding: 24px; }
+  .section-label { font-size: 10px; font-weight: 600; color: #5A5A72; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 16px; }
+  .icon-item { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 52px; }
+  .icon-wrap { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: #16161F; border: 1px solid #2A2A38; }
+  .icon-name { font-size: 9px; color: #5A5A72; text-align: center; line-height: 1.2; }
+  i[data-lucide] { width: 18px; height: 18px; color: #8B8A9E; stroke-width: 1.5; }
+  .accent i[data-lucide] { color: #6C63FF; }
+</style>
+</head>
+<body>
+  <div class="section-label">Lucide icons — 1.5px stroke · 18px</div>
+  <div class="grid">
+    <div class="icon-item"><div class="icon-wrap accent"><i data-lucide="zap"></i></div><div class="icon-name">zap</div></div>
+    <div class="icon-item"><div class="icon-wrap"><i data-lucide="layers"></i></div><div class="icon-name">layers</div></div>
+    <div class="icon-item"><div class="icon-wrap"><i data-lucide="git-branch"></i></div><div class="icon-name">git-branch</div></div>
+    <div class="icon-item"><div class="icon-wrap"><i data-lucide="bar-chart-2"></i></div><div class="icon-name">bar-chart</div></div>
+    <div class="icon-item"><div class="icon-wrap"><i data-lucide="settings"></i></div><div class="icon-name">settings</div></div>
+    <div class="icon-item"><div class="icon-wrap"><i data-lucide="users"></i></div><div class="icon-name">users</div></div>
+    <div class="icon-item"><div class="icon-wrap"><i data-lucide="file-text"></i></div><div class="icon-name">file-text</div></div>
+    <div class="icon-item"><div class="icon-wrap"><i data-lucide="arrow-right"></i></div><div class="icon-name">arrow-right</div></div>
+    <div class="icon-item"><div class="icon-wrap"><i data-lucide="check"></i></div><div class="icon-name">check</div></div>
+    <div class="icon-item"><div class="icon-wrap"><i data-lucide="external-link"></i></div><div class="icon-name">ext-link</div></div>
+    <div class="icon-item"><div class="icon-wrap"><i data-lucide="mail"></i></div><div class="icon-name">mail</div></div>
+    <div class="icon-item"><div class="icon-wrap"><i data-lucide="calendar"></i></div><div class="icon-name">calendar</div></div>
+    <div class="icon-item"><div class="icon-wrap"><i data-lucide="cpu"></i></div><div class="icon-name">cpu</div></div>
+    <div class="icon-item"><div class="icon-wrap"><i data-lucide="database"></i></div><div class="icon-name">database</div></div>
+    <div class="icon-item"><div class="icon-wrap"><i data-lucide="briefcase"></i></div><div class="icon-name">briefcase</div></div>
+    <div class="icon-item"><div class="icon-wrap"><i data-lucide="map"></i></div><div class="icon-name">map</div></div>
+  </div>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

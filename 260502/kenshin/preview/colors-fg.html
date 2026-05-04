@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0D0D12; font-family: 'DM Sans', sans-serif; padding: 20px; }
+  .stack { display: flex; flex-direction: column; gap: 10px; }
+  .row { display: flex; align-items: center; gap: 16px; }
+  .dot { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; }
+  .meta { display: flex; flex-direction: column; gap: 2px; }
+  .name { font-size: 12px; font-weight: 500; }
+  .hex  { font-size: 10px; color: #5A5A72; font-family: monospace; }
+  .sample-text { font-size: 14px; margin-left: auto; }
+  .divider { height: 1px; background: #1E1E2A; }
+</style>
+</head>
+<body>
+  <div class="stack">
+    <div class="row">
+      <div class="dot" style="background:#F0EEF8;"></div>
+      <div class="meta"><div class="name" style="color:#F0EEF8;">fg-primary</div><div class="hex">#F0EEF8</div></div>
+      <div class="sample-text" style="color:#F0EEF8; font-family:'Syne',sans-serif; font-weight:700;">Main heading text</div>
+    </div>
+    <div class="divider"></div>
+    <div class="row">
+      <div class="dot" style="background:#8B8A9E;"></div>
+      <div class="meta"><div class="name" style="color:#8B8A9E;">fg-secondary</div><div class="hex">#8B8A9E</div></div>
+      <div class="sample-text" style="color:#8B8A9E;">Supporting copy and captions</div>
+    </div>
+    <div class="divider"></div>
+    <div class="row">
+      <div class="dot" style="background:#5A5A72;"></div>
+      <div class="meta"><div class="name" style="color:#5A5A72;">fg-tertiary</div><div class="hex">#5A5A72</div></div>
+      <div class="sample-text" style="color:#5A5A72;">Placeholder · disabled</div>
+    </div>
+    <div class="divider"></div>
+    <div class="row">
+      <div class="dot" style="background:#A78BFA;"></div>
+      <div class="meta"><div class="name" style="color:#A78BFA;">text-link</div><div class="hex">#A78BFA</div></div>
+      <div class="sample-text" style="color:#A78BFA;">Inline link text</div>
+    </div>
+  </div>
+</body>
+</html>
