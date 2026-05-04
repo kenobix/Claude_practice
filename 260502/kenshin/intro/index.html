@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kenshin — Portfolio Introduction</title>
+<link rel="stylesheet" href="colors_and_type.css" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: #0a0a0a; overflow: hidden; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="animations.jsx"></script>
+
+<script type="text/babel">
+// ─── Kenshin Portfolio Introduction ────────────────────────────────────────
+// 16s total
+// Scene 1:  0–3.5s  — Hero: logo + "Bridging technology and strategy."
+// Scene 2:  3.5–7s  — Stats: 12yrs / 40+ projects / 3 industries (count-up)
+// Scene 3:  7–10.5s — Services: 6 service cards grid
+// Scene 4: 10.5–13.5s — Selected work: 3 project cards
+// Scene 5: 13.5–16s — Closing: "Let's define the problem."
+
+const W = 1280;
+const H = 720;
+
+const C = {
+  bg:          '#0D0D12',
+  surface:     '#16161F',
+  elevated:    '#1E1E2A',
+  border:      '#2A2A38',
+  borderHover: '#3D3D52',
+  fgPrimary:   '#F0EEF8',
+  fgSecondary: '#8B8A9E',
+  fgTertiary:  '#5A5A72',
+  accent:      '#6C63FF',
+  accentLight: '#A78BFA',
+  accentMuted: '#2D2B5A',
+  success:     '#34D399',
+  warning:     '#FBBF24',
+};
+
+const SYNE   = "'Syne', sans-serif";
+const DMSANS = "'DM Sans', sans-serif";
+const MONO   = "'JetBrains Mono', monospace";
+
+// ─── Shared Utilities ─────────────────────────────────────────────────────
+
+function easeOut(t, d = 0.5, start = 0, ease = Easing.easeOutCubic) {
+  return ease(clamp((t - start) / d, 0, 1));
+}
+
+function DotGrid({ opacity = 0.12 }) {
+  return (
+    <div style={{
+      position: 'absolute', inset: 0,
+      backgroundImage: 'radial-gradient(circle, #3D3D52 1px, transparent 1px)',
+      backgroundSize: '32px 32px',
+      opacity,
+      pointerEvents: 'none',
+    }} />
+  );
+}
+
+function Background() {
+  return <div style={{ position: 'absolute', inset: 0, background: C.bg }} />;
+}
+
+function KMark({ size = 56 }) {
+  const h = size * (48 / 28);
+  return (
+    <svg viewBox="0 0 28 48" style={{ width: size, height: h, display: 'block', flexShrink: 0 }}>
+      <rect x="0" y="4" width="4" height="40" fill="#6C63FF" />
+      <path d="M4 24 L22 4 L27 4 L9 24Z" fill="#6C63FF" />
+      <path d="M4 24 L22 44 L27 44 L9 24Z" fill="#A78BFA" />
+    </svg>
+  );
+}
+
+// Thin accent overline
+function Overline({ children }) {
+  return (
+    <div style={{
+      fontFamily: DMSANS, fontSize: 12, fontWeight: 500,
+      color: C.accent, letterSpacing: '0.14em',
+      textTransform: 'uppercase', marginBottom: 10,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+// Scene wipe transition
+function SceneTransition({ at }) {
+  const t = useTime();
+  const lt = t - (at - 0.2);
+  if (lt < 0 || lt > 0.7) return null;
+  const op = lt < 0.35
+    ? Easing.easeInCubic(clamp(lt / 0.35, 0, 1))
+    : 1 - Easing.easeOutCubic(clamp((lt - 0.35) / 0.35, 0, 1));
+  return (
+    <div style={{
+      position: 'absolute', inset: 0,
+      background: '#060609',
+      opacity: op * 0.85,
+      pointerEvents: 'none',
+      zIndex: 20,
+    }} />
+  );
+}
+
+// Bottom-right scene ticker
+function SceneTicker() {
+  const t = useTime();
+  const scenes = [
+    { s: 0,    e: 3.5,  l: '01  Hero'     },
+    { s: 3.5,  e: 7,    l: '02  Track record' },
+    { s: 7,    e: 10.5, l: '03  Services'  },
+    { s: 10.5, e: 13.5, l: '04  Work'      },
+    { s: 13.5, e: 16,   l: '05  Contact'   },
+  ];
+  const a = scenes.find(s => t >= s.s && t < s.e);
+  if (!a) return null;
+  return (
+    <div style={{
+      position: 'absolute', bottom: 34, right: 48,
+      fontFamily: MONO, fontSize: 11,
+      color: C.fgTertiary, letterSpacing: '0.08em', opacity: 0.65,
+    }}>
+      {a.l}
+    </div>
+  );
+}
+
+// ─── Scene 1: Hero (0–3.5s) ───────────────────────────────────────────────
+
+function SceneHero() {
+  const t = useTime();
+  if (t >= 3.9) return null;
+
+  const lt = t;
+  const out = t > 3.1 ? Easing.easeInCubic(clamp((t - 3.1) / 0.5, 0, 1)) : 0;
+
+  const kOp    = easeOut(lt, 0.6, 0);
+  const kScale = 0.8 + 0.2 * Easing.easeOutBack(clamp(lt / 0.6, 0, 1));
+  const nameOp = easeOut(lt, 0.55, 0.4);
+  const nameX  = (1 - easeOut(lt, 0.55, 0.4)) * 36;
+  const h1Op   = easeOut(lt, 0.6, 0.85);
+  const h1Y    = (1 - easeOut(lt, 0.6, 0.85)) * 22;
+  const h2Op   = easeOut(lt, 0.55, 1.3);
+  const h2Y    = (1 - easeOut(lt, 0.55, 1.3)) * 16;
+  const lineP  = easeOut(lt, 0.6, 1.7);
+  const subOp  = easeOut(lt, 0.5, 2.1);
+
+  return (
+    <div style={{ position: 'absolute', inset: 0, opacity: 1 - out }}>
+      <DotGrid opacity={0.11} />
+
+      {/* Glow */}
+      <div style={{
+        position: 'absolute', left: '50%', top: '45%',
+        transform: 'translate(-50%, -50%)',
+        width: 480, height: 320,
+        background: `radial-gradient(ellipse, rgba(108,99,255,0.13) 0%, transparent 70%)`,
+        opacity: kOp, pointerEvents: 'none',
+      }} />
+
+      {/* Logo row */}
+      <div style={{
+        position: 'absolute', left: 120, top: 192,
+        display: 'flex', alignItems: 'center', gap: 18,
+      }}>
+        <div style={{ opacity: kOp, transform: `scale(${kScale})`, transformOrigin: 'left center' }}>
+          <KMark size={52} />
+        </div>
+        <div style={{ opacity: nameOp, transform: `translateX(${nameX}px)` }}>
+          <div style={{
+            fontFamily: SYNE, fontSize: 52, fontWeight: 700,
+            color: C.fgPrimary, letterSpacing: '-0.03em', lineHeight: 1,
+          }}>kenshin</div>
+        </div>
+      </div>
+
+      {/* Role label */}
+      <div style={{
+        position: 'absolute', left: 120, top: 285,
+        opacity: h2Op, transform: `translateY(${(1 - easeOut(lt, 0.55, 1.3)) * 10}px)`,
+      }}>
+        <div style={{
+          fontFamily: DMSANS, fontSize: 14, fontWeight: 400,
+          color: C.fgSecondary, letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+        }}>
+          IT Engineer &amp; Business Consultant
+        </div>
+      </div>
+
+      {/* Accent line */}
+      <div style={{
+        position: 'absolute', left: 120, top: 322,
+        width: lineP * 64, height: 1,
+        background: `linear-gradient(90deg, ${C.accent}, ${C.accentLight})`,
+      }} />
+
+      {/* Headline */}
+      <div style={{
+        position: 'absolute', left: 120, top: 348,
+        opacity: h1Op, transform: `translateY(${h1Y}px)`,
+        maxWidth: 720,
+      }}>
+        <div style={{
+          fontFamily: SYNE, fontSize: 58, fontWeight: 700,
+          color: C.fgPrimary, letterSpacing: '-0.03em', lineHeight: 1.08,
+        }}>
+          Bridging<br />technology<br />and strategy.
+        </div>
+      </div>
+
+      {/* Sub copy */}
+      <div style={{
+        position: 'absolute', left: 120, top: 558,
+        opacity: subOp * 0.75, transform: `translateY(${(1 - easeOut(lt, 0.5, 2.1)) * 10}px)`,
+        maxWidth: 580,
+      }}>
+        <div style={{
+          fontFamily: DMSANS, fontSize: 18, fontWeight: 400,
+          color: C.fgSecondary, lineHeight: 1.6,
+        }}>
+          Translating complex business requirements into systems
+          that actually get built.
+        </div>
+      </div>
+
+      {/* Right — subtle url */}
+      <div style={{
+        position: 'absolute', right: 120, bottom: 80,
+        opacity: subOp * 0.4,
+        fontFamily: MONO, fontSize: 13, color: C.fgTertiary, letterSpacing: '0.06em',
+      }}>
+        kenshin.dev
+      </div>
+    </div>
+  );
+}
+
+// ─── Scene 2: Stats (3.5–7s) ──────────────────────────────────────────────
+
+function CountUp({ from, to, suffix = '', t, start, dur = 1.2 }) {
+  const p = Easing.easeOutCubic(clamp((t - start) / dur, 0, 1));
+  const val = Math.round(from + (to - from) * p);
+  return <>{val}{suffix}</>;
+}
+
+function StatBlock({ number, suffix, label, sublabel, t, delay, accentColor }) {
+  const lt = t - delay;
+  const blockP  = Easing.easeOutBack(clamp(lt / 0.55, 0, 1));
+  const blockOp = clamp(lt / 0.35, 0, 1);
+  const labelOp = easeOut(lt, 0.4, 0.3);
+  const lineP   = easeOut(lt, 0.5, 0.2);
+
+  return (
+    <div style={{
+      opacity: blockOp,
+      transform: `translateY(${(1 - blockP) * 32}px)`,
+      display: 'flex', flexDirection: 'column',
+      width: 260,
+    }}>
+      {/* Top accent line */}
+      <div style={{
+        width: lineP * 40, height: 2,
+        background: accentColor || C.accent,
+        borderRadius: 1, marginBottom: 20,
+      }} />
+
+      {/* Number */}
+      <div style={{
+        fontFamily: SYNE, fontSize: 88, fontWeight: 800,
+        color: C.fgPrimary, letterSpacing: '-0.04em', lineHeight: 1,
+      }}>
+        {lt >= 0
+          ? <CountUp from={0} to={number} suffix={suffix} t={lt} start={0.1} dur={1.4} />
+          : '0'}
+      </div>
+
+      {/* Label */}
+      <div style={{
+        opacity: labelOp,
+        marginTop: 14,
+      }}>
+        <div style={{
+          fontFamily: DMSANS, fontSize: 20, fontWeight: 500,
+          color: C.fgPrimary, lineHeight: 1.3, marginBottom: 6,
+        }}>
+          {label}
+        </div>
+        {sublabel && (
+          <div style={{
+            fontFamily: DMSANS, fontSize: 15, fontWeight: 400,
+            color: C.fgSecondary, lineHeight: 1.5,
+          }}>
+            {sublabel}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SceneStats() {
+  const t = useTime();
+  if (t < 3.3 || t >= 7.4) return null;
+
+  const lt = t - 3.5;
+  const out = t > 6.7 ? Easing.easeInCubic(clamp((t - 6.7) / 0.5, 0, 1)) : 0;
+  const headerP = easeOut(lt, 0.5, 0);
+  const taglineP = easeOut(lt, 0.5, 1.9);
+
+  return (
+    <div style={{ position: 'absolute', inset: 0, opacity: 1 - out }}>
+      <DotGrid opacity={0.09} />
+
+      {/* Header */}
+      <div style={{
+        position: 'absolute', left: 120, top: 100,
+        opacity: headerP, transform: `translateY(${(1 - headerP) * 12}px)`,
+      }}>
+        <Overline>Track record</Overline>
+        <div style={{
+          fontFamily: SYNE, fontSize: 38, fontWeight: 700,
+          color: C.fgPrimary, letterSpacing: '-0.02em',
+        }}>
+          A decade of delivery
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div style={{
+        position: 'absolute', left: 120, top: 240,
+        display: 'flex', gap: 64, alignItems: 'flex-start',
+      }}>
+        <StatBlock
+          number={12} suffix="+"
+          label="Years in IT & consulting"
+          sublabel="Across enterprise & SME"
+          t={lt} delay={0.2}
+          accentColor={C.accent}
+        />
+        <StatBlock
+          number={40} suffix="+"
+          label="Projects delivered"
+          sublabel="From discovery to live"
+          t={lt} delay={0.45}
+          accentColor={C.accentLight}
+        />
+        <StatBlock
+          number={3} suffix=""
+          label="Industries served"
+          sublabel="Manufacturing · Logistics · Fintech"
+          t={lt} delay={0.7}
+          accentColor="#34D399"
+        />
+      </div>
+
+      {/* Tagline quote */}
+      <div style={{
+        position: 'absolute', left: 120, right: 120, bottom: 100,
+        opacity: taglineP,
+        transform: `translateY(${(1 - taglineP) * 10}px)`,
+        borderLeft: `2px solid ${C.accent}`,
+        paddingLeft: 24,
+      }}>
+        <div style={{
+          fontFamily: DMSANS, fontSize: 22, fontWeight: 400,
+          color: C.fgSecondary, lineHeight: 1.55, fontStyle: 'italic',
+        }}>
+          "I translate complex business requirements into systems
+          that actually get built — working at the intersection
+          of IT and organisational thinking."
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Scene 3: Services (7–10.5s) ──────────────────────────────────────────
+
+const SERVICES = [
+  { cat: 'Strategy',  title: 'Requirements definition',  desc: 'Structured discovery and gap analysis that aligns stakeholders and eliminates ambiguity.' },
+  { cat: 'Technical', title: 'System architecture',       desc: 'Technical design from data flows to integration patterns, documented for engineers and executives.' },
+  { cat: 'People',    title: 'Organisational change',     desc: 'Guiding teams through technology transitions with communication frameworks.' },
+  { cat: 'Analysis',  title: 'Business analysis',         desc: 'Process mapping, KPI definition, and data-driven recommendations.' },
+  { cat: 'Strategy',  title: 'Roadmap planning',          desc: 'Turning strategy into sequenced, deliverable milestones with clear ownership.' },
+  { cat: 'Technical', title: 'IT due diligence',          desc: 'Technical assessments for M&A and procurement — risk and opportunity in plain language.' },
+];
+
+const CAT_COLORS = {
+  Strategy: C.accent,
+  Technical: C.accentLight,
+  People: '#34D399',
+  Analysis: '#FBBF24',
+};
+
+function ServiceCard({ cat, title, desc, t, delay }) {
+  const lt = t - delay;
+  const p  = Easing.easeOutBack(clamp(lt / 0.5, 0, 1));
+  const op = clamp(lt / 0.3, 0, 1);
+  const col = CAT_COLORS[cat] || C.accent;
+
+  return (
+    <div style={{
+      opacity: op,
+      transform: `translateY(${(1 - p) * 28}px)`,
+      background: C.surface,
+      border: `1px solid ${C.border}`,
+      borderRadius: 8,
+      padding: '18px 20px',
+      display: 'flex', flexDirection: 'column', gap: 8,
+      boxShadow: '0 4px 16px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.03)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ width: 6, height: 6, borderRadius: 1, background: col, flexShrink: 0 }} />
+        <div style={{
+          fontFamily: DMSANS, fontSize: 11, fontWeight: 500,
+          color: col, letterSpacing: '0.1em', textTransform: 'uppercase',
+        }}>{cat}</div>
+      </div>
+      <div style={{
+        fontFamily: SYNE, fontSize: 17, fontWeight: 600,
+        color: C.fgPrimary, letterSpacing: '-0.01em', lineHeight: 1.2,
+      }}>{title}</div>
+      <div style={{
+        fontFamily: DMSANS, fontSize: 13, color: C.fgSecondary, lineHeight: 1.55,
+      }}>{desc}</div>
+    </div>
+  );
+}
+
+function SceneServices() {
+  const t = useTime();
+  if (t < 6.8 || t >= 10.9) return null;
+
+  const lt = t - 7.0;
+  const out = t > 10.2 ? Easing.easeInCubic(clamp((t - 10.2) / 0.5, 0, 1)) : 0;
+  const headerP = easeOut(lt, 0.45, 0);
+
+  return (
+    <div style={{ position: 'absolute', inset: 0, opacity: 1 - out }}>
+      <DotGrid opacity={0.09} />
+
+      {/* Header */}
+      <div style={{
+        position: 'absolute', left: 120, top: 72,
+        opacity: headerP, transform: `translateY(${(1 - headerP) * 12}px)`,
+      }}>
+        <Overline>What I do</Overline>
+        <div style={{
+          fontFamily: SYNE, fontSize: 38, fontWeight: 700,
+          color: C.fgPrimary, letterSpacing: '-0.02em',
+        }}>
+          Full-arc engagement
+        </div>
+      </div>
+
+      {/* 2×3 service grid */}
+      <div style={{
+        position: 'absolute', left: 120, right: 120, top: 192,
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: 16,
+      }}>
+        {SERVICES.map((s, i) => (
+          <ServiceCard key={s.title} {...s} t={lt} delay={0.2 + i * 0.1} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Scene 4: Selected Work (10.5–13.5s) ──────────────────────────────────
+
+const PROJECTS = [
+  {
+    tag: 'Requirements & Architecture',
+    year: '2024', industry: 'Manufacturing',
+    title: 'ERP migration for a mid-size manufacturer',
+    outcomes: ['140 processes documented', 'Vendor selected in 8 weeks', '60% faster evaluation'],
+    color: C.accent,
+  },
+  {
+    tag: 'Organisational Change',
+    year: '2023', industry: 'Logistics',
+    title: 'Digital transformation programme',
+    outcomes: ['Cross-functional change programme', 'Structured comms framework', 'Phased rollout delivered'],
+    color: C.accentLight,
+  },
+  {
+    tag: 'Strategy & Roadmap',
+    year: '2023', industry: 'Fintech',
+    title: 'IT strategy for a scaling fintech',
+    outcomes: ['3-year technology roadmap', 'Clear ownership per milestone', 'Board-ready deliverable'],
+    color: '#34D399',
+  },
+];
+
+function ProjectCard({ tag, year, industry, title, outcomes, color, t, delay }) {
+  const lt = t - delay;
+  const p  = Easing.easeOutCubic(clamp(lt / 0.55, 0, 1));
+  const op = clamp(lt / 0.35, 0, 1);
+  const outcomesOp = easeOut(lt, 0.4, 0.4);
+
+  return (
+    <div style={{
+      opacity: op,
+      transform: `translateY(${(1 - p) * 30}px)`,
+      background: C.surface,
+      border: `1px solid ${C.border}`,
+      borderRadius: 8,
+      overflow: 'hidden',
+      boxShadow: '0 4px 16px rgba(0,0,0,0.45)',
+      display: 'flex', flexDirection: 'column',
+    }}>
+      {/* Top color bar */}
+      <div style={{ height: 3, background: color, flexShrink: 0 }} />
+
+      <div style={{ padding: '20px 24px', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* Meta */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{
+            fontFamily: DMSANS, fontSize: 11, fontWeight: 500,
+            color, letterSpacing: '0.08em', textTransform: 'uppercase',
+          }}>{tag}</div>
+          <div style={{ width: 3, height: 3, borderRadius: '50%', background: C.fgTertiary }} />
+          <div style={{ fontFamily: MONO, fontSize: 11, color: C.fgTertiary }}>{year}</div>
+          <div style={{ width: 3, height: 3, borderRadius: '50%', background: C.fgTertiary }} />
+          <div style={{ fontFamily: DMSANS, fontSize: 11, color: C.fgTertiary }}>{industry}</div>
+        </div>
+
+        {/* Title */}
+        <div style={{
+          fontFamily: SYNE, fontSize: 18, fontWeight: 600,
+          color: C.fgPrimary, letterSpacing: '-0.01em', lineHeight: 1.25,
+        }}>{title}</div>
+
+        {/* Outcomes */}
+        <div style={{ opacity: outcomesOp, marginTop: 6, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {outcomes.map(o => (
+            <div key={o} style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
+              <div style={{ width: 4, height: 4, borderRadius: '50%', background: color, flexShrink: 0, marginTop: 6 }} />
+              <div style={{ fontFamily: DMSANS, fontSize: 13, color: C.fgSecondary, lineHeight: 1.4 }}>{o}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SceneWork() {
+  const t = useTime();
+  if (t < 10.2 || t >= 13.9) return null;
+
+  const lt = t - 10.5;
+  const out = t > 13.2 ? Easing.easeInCubic(clamp((t - 13.2) / 0.5, 0, 1)) : 0;
+  const headerP = easeOut(lt, 0.45, 0);
+
+  return (
+    <div style={{ position: 'absolute', inset: 0, opacity: 1 - out }}>
+      <DotGrid opacity={0.09} />
+
+      {/* Header */}
+      <div style={{
+        position: 'absolute', left: 120, top: 72,
+        opacity: headerP, transform: `translateY(${(1 - headerP) * 12}px)`,
+      }}>
+        <Overline>Selected work</Overline>
+        <div style={{
+          fontFamily: SYNE, fontSize: 38, fontWeight: 700,
+          color: C.fgPrimary, letterSpacing: '-0.02em',
+        }}>
+          Recent projects
+        </div>
+      </div>
+
+      {/* Project cards */}
+      <div style={{
+        position: 'absolute', left: 120, right: 120, top: 200,
+        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: 20,
+      }}>
+        {PROJECTS.map((p, i) => (
+          <ProjectCard key={p.title} {...p} t={lt} delay={0.15 + i * 0.15} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Scene 5: Closing (13.5–16s) ──────────────────────────────────────────
+
+const SKILLS = [
+  'Requirements definition', 'Enterprise architecture',
+  'Stakeholder management', 'Change management',
+  'Business analysis', 'IT strategy',
+  'Agile / scrum', 'SQL & data modelling',
+];
+
+function SceneClosing() {
+  const t = useTime();
+  if (t < 13.3) return null;
+
+  const lt = t - 13.5;
+
+  const kOp     = clamp(lt / 0.5, 0, 1);
+  const kScale  = 0.75 + 0.25 * Easing.easeOutBack(clamp(lt / 0.55, 0, 1));
+  const nameOp  = easeOut(lt, 0.5, 0.3);
+  const lineP   = easeOut(lt, 0.55, 0.6);
+  const taglineOp = easeOut(lt, 0.55, 0.9);
+  const taglineY  = (1 - easeOut(lt, 0.55, 0.9)) * 16;
+  const skillsOp  = easeOut(lt, 0.5, 1.5);
+  const availOp   = easeOut(lt, 0.5, 2.0);
+  const contactOp = easeOut(lt, 0.5, 1.8);
+
+  return (
+    <div style={{ position: 'absolute', inset: 0 }}>
+      {/* Glow */}
+      <div style={{
+        position: 'absolute', left: '50%', top: '48%',
+        transform: 'translate(-50%, -50%)',
+        width: 500, height: 360,
+        background: `radial-gradient(ellipse, rgba(108,99,255,0.12) 0%, transparent 70%)`,
+        opacity: kOp, pointerEvents: 'none',
+      }} />
+      <DotGrid opacity={0.12} />
+
+      {/* Left column: identity + tagline */}
+      <div style={{ position: 'absolute', left: 120, top: 160 }}>
+        {/* Logo */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28,
+          opacity: kOp, transform: `scale(${kScale})`, transformOrigin: 'left center',
+        }}>
+          <KMark size={44} />
+          <div style={{ opacity: nameOp }}>
+            <div style={{
+              fontFamily: SYNE, fontSize: 44, fontWeight: 700,
+              color: C.fgPrimary, letterSpacing: '-0.03em', lineHeight: 1,
+            }}>kenshin</div>
+          </div>
+        </div>
+
+        {/* Role */}
+        <div style={{
+          fontFamily: DMSANS, fontSize: 14, color: C.fgSecondary,
+          letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 18,
+          opacity: nameOp,
+        }}>
+          IT Engineer &amp; Business Consultant
+        </div>
+
+        {/* Accent line */}
+        <div style={{
+          width: lineP * 56, height: 1, marginBottom: 28,
+          background: `linear-gradient(90deg, ${C.accent}, ${C.accentLight})`,
+        }} />
+
+        {/* Tagline */}
+        <div style={{
+          opacity: taglineOp, transform: `translateY(${taglineY}px)`,
+          maxWidth: 480,
+        }}>
+          <div style={{
+            fontFamily: SYNE, fontSize: 34, fontWeight: 700,
+            color: C.fgPrimary, letterSpacing: '-0.02em', lineHeight: 1.2,
+          }}>
+            "Let's define the problem<br />before we talk about<br />the solution."
+          </div>
+        </div>
+
+        {/* Contact */}
+        <div style={{
+          marginTop: 36, opacity: contactOp,
+          display: 'flex', gap: 28, alignItems: 'center',
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <div style={{ fontFamily: MONO, fontSize: 13, color: C.fgTertiary, letterSpacing: '0.04em' }}>
+              hello@kenshin.dev
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: 13, color: C.fgTertiary, letterSpacing: '0.04em' }}>
+              kenshin.dev
+            </div>
+            <div style={{ fontFamily: DMSANS, fontSize: 13, color: C.fgTertiary }}>
+              Tokyo / Remote
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right column: skills + availability */}
+      <div style={{
+        position: 'absolute', right: 120, top: 160,
+        opacity: skillsOp,
+        transform: `translateY(${(1 - skillsOp) * 16}px)`,
+        width: 320,
+      }}>
+        <Overline>Skills &amp; expertise</Overline>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 36 }}>
+          {SKILLS.map((s, i) => (
+            <div key={s} style={{
+              fontFamily: DMSANS, fontSize: 13, fontWeight: 500,
+              color: C.fgSecondary,
+              background: C.elevated,
+              border: `1px solid ${C.border}`,
+              borderRadius: 4, padding: '5px 11px',
+              opacity: easeOut(lt, 0.35, 1.5 + i * 0.06),
+            }}>{s}</div>
+          ))}
+        </div>
+
+        <div style={{ opacity: availOp, transform: `translateY(${(1 - availOp) * 10}px)` }}>
+          <Overline>Currently available for</Overline>
+          {['Project-based consulting', 'Interim IT management', 'Advisory & mentoring'].map(a => (
+            <div key={a} style={{
+              display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10,
+            }}>
+              <div style={{ width: 6, height: 6, borderRadius: 1, background: C.success, flexShrink: 0 }} />
+              <div style={{ fontFamily: DMSANS, fontSize: 15, color: C.fgPrimary }}>{a}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Root ─────────────────────────────────────────────────────────────────
+
+function SceneContent() {
+  const t = useTime();
+  const floor = Math.floor(t);
+  React.useEffect(() => {
+    const el = document.getElementById('scene-root');
+    if (el) el.setAttribute('data-screen-label', `${String(floor).padStart(2, '0')}s`);
+  }, [floor]);
+
+  return (
+    <div id="scene-root" data-screen-label="00s" style={{ position: 'absolute', inset: 0 }}>
+      <Background />
+      <SceneHero />
+      <SceneStats />
+      <SceneServices />
+      <SceneWork />
+      <SceneClosing />
+      <SceneTransition at={3.7} />
+      <SceneTransition at={7.0} />
+      <SceneTransition at={10.5} />
+      <SceneTransition at={13.5} />
+      <SceneTicker />
+    </div>
+  );
+}
+
+function Main() {
+  return (
+    <Stage
+      width={W} height={H}
+      duration={16}
+      background={C.bg}
+      persistKey="kenshin-portfolio-intro"
+      loop={false}
+      autoplay={true}
+    >
+      <SceneContent />
+    </Stage>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Main />);
+</script>
+</body>
+</html>
