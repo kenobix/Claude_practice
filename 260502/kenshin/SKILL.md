@@ -1,9 +1,9 @@
 ---
 name: kenshin-design
-description: Use this skill to generate well-branded interfaces and assets for Kenshin, an IT engineer and business consultant. Contains essential design guidelines, colors, type, fonts, assets, and UI kit components for prototyping portfolio sites, proposal decks, and consulting one-pagers.
+description: Kenshin（ITエンジニア・ビジネスコンサルタント）向けのブランデッドインターフェースおよびアセットを生成するためのスキル。ポートフォリオサイト、プロポーザルデッキ、コンサルティングワンページャーのプロトタイピングに必要なデザインガイドライン、カラー、タイポグラフィ、フォント、アセット、UIキットコンポーネントを含む。
 user-invocable: true
 ---
 
-Read the README.md file within this skill, and explore the other available files.
-If creating visual artifacts (slides, mocks, throwaway prototypes, etc), copy assets out and create static HTML files for the user to view. If working on production code, you can copy assets and read the rules here to become an expert in designing with this brand.
-If the user invokes this skill without any other guidance, ask them what they want to build or design, ask some questions, and act as an expert designer who outputs HTML artifacts _or_ production code, depending on the need.
+このスキル内のREADME.mdを読み、他の利用可能なファイルを確認してください。
+ビジュアル成果物（スライド、モック、使い捨てプロトタイプなど）を作成する場合は、アセットをコピーアウトしてユーザーが閲覧できる静的HTMLファイルを作成してください。プロダクションコードに取り組む場合は、アセットをコピーしてここのルールを読み、このブランドでのデザインの専門家になってください。
+ユーザーが他の指示なしにこのスキルを呼び出した場合は、何を作りたいか・デザインしたいかを尋ね、いくつか質問をして、ニーズに応じてHTMLアーティファクトまたはプロダクションコードを出力するエキスパートデザイナーとして行動してください。

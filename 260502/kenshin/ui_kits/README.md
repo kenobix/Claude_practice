@@ -1,49 +1,49 @@
-# Kenshin Design System — UI Kit README
+# Kenshinデザインシステム — UIキット README
 
-## Portfolio Website (`ui_kits/portfolio/`)
+## ポートフォリオWebサイト（`ui_kits/portfolio/`）
 
-A full-page React portfolio site for Kenshin. Interactive click-through with smooth scroll navigation between sections.
+Kenshin向けのフルページReactポートフォリオサイト。セクション間のスムーススクロールナビゲーションを備えたインタラクティブなクリックスルー。
 
-### Components
-- `Nav.jsx` — Fixed top nav with scroll-aware background, active section highlighting
-- `Hero.jsx` — Full-viewport hero with gradient headline, stats, and CTA row
-- `Services.jsx` — 6-card service grid with hover lift effects
-- `Projects.jsx` — Tabbed case study detail view with outcomes list
-- `About.jsx` — Two-column bio with skills tags and availability card
-- `Contact.jsx` — Contact form with success state
-- `App.jsx` — Root with IntersectionObserver-based active section tracking + footer
+### コンポーネント
+- `Nav.jsx` — スクロール感知背景とアクティブセクションハイライト付き固定トップナビ
+- `Hero.jsx` — グラデーション見出し、統計、CTAロウを備えたフルビューポートヒーロー
+- `Services.jsx` — ホバーリフトエフェクト付き6カードサービスグリッド
+- `Projects.jsx` — 成果リスト付きタブ式ケーススタディ詳細ビュー
+- `About.jsx` — スキルタグと稼働状況カードを備えた2カラム経歴
+- `Contact.jsx` — 送信完了状態付きコンタクトフォーム
+- `App.jsx` — IntersectionObserverベースのアクティブセクション追跡＋フッター
 
-### Design width: 1200px max-width, responsive
-
----
-
-## Proposal Deck (`ui_kits/deck/`)
-
-An 8-slide proposal deck template using `deck-stage.js` (1920×1080, keyboard navigable).
-
-### Slides
-1. Title — hero display with gradient
-2. Agenda — numbered list
-3. Problem statement — two-column with problem cards
-4. Approach — 3-phase Discover/Design/Deliver
-5. Timeline — 4-phase roadmap with color-coded phases
-6. Big quote — full-screen typographic statement
-7. Investment — 3-tier pricing cards
-8. CTA / Next steps — closing with action items
+### デザイン幅：最大1200px、レスポンシブ対応
 
 ---
 
-## Consulting One-Pager (`ui_kits/onepager/`)
+## プロポーザルデッキ（`ui_kits/deck/`）
 
-A single-page A4-style consulting overview document. All contained in `index.html`.
+`deck-stage.js`を使用した8スライドのプロポーザルデッキテンプレート（1920×1080、キーボードナビゲーション対応）。
 
-### Sections
-- Header band — logo, tagline, headline, contact details
-- Services list — 4 services with icons
-- Expertise tags
-- Track record stats (2×2 grid)
-- How I work — 3-step process
-- Core quote block
-- Footer with CTA
+### スライド
+1. タイトル — グラデーション付きヒーローディスプレイ
+2. アジェンダ — 番号付きリスト
+3. 課題提示 — 課題カードを含む2カラム
+4. アプローチ — 3フェーズ：発見・設計・提供
+5. タイムライン — 4フェーズロードマップ（カラーコード付き）
+6. 大型引用 — 全画面タイポグラフィ文
+7. 投資 — 3段階価格カード
+8. CTA／次のステップ — アクションアイテム付きクロージング
 
-### Design width: 900px max-width
+---
+
+## コンサルティングワンページャー（`ui_kits/onepager/`）
+
+A4スタイルのシングルページコンサルティング概要ドキュメント。すべて`index.html`に格納。
+
+### セクション
+- ヘッダーバンド — ロゴ、タグライン、見出し、連絡先詳細
+- サービスリスト — アイコン付き4サービス
+- 専門性タグ
+- 実績統計（2×2グリッド）
+- 私の働き方 — 3ステッププロセス
+- 核心引用ブロック
+- CTA付きフッター
+
+### デザイン幅：最大900px

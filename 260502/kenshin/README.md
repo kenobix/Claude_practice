@@ -1,212 +1,212 @@
-# Kenshin Design System
+# Kenshinデザインシステム
 
-## Overview
+## 概要
 
-**Kenshin** is the personal brand of an IT engineer and business consultant who bridges the gap between technology and organizational strategy. The work spans requirements definition, business process improvement, system architecture, and change management — delivered with engineering rigour and strategic clarity.
+**Kenshin** は、テクノロジーと組織戦略の橋渡しをするITエンジニア・ビジネスコンサルタントのパーソナルブランドです。要件定義、業務プロセス改善、システムアーキテクチャ、チェンジマネジメントを手掛け、エンジニアリングの厳密さと戦略的明快さをもって提供します。
 
-**Brand Positioning:** Technical precision meets strategic thinking. Kenshin operates at the intersection of IT and business — not purely a developer, not purely a consultant, but a systems thinker who can move fluidly between both worlds.
+**ブランドポジショニング：** 技術的精度と戦略的思考の融合。KenshinはITとビジネスの交点に位置し、純粋な開発者でも純粋なコンサルタントでもなく、両方の世界を流動的に行き来できるシステム思考者です。
 
-**Audience:** Mid-to-large enterprise clients, project sponsors, CTOs, and business stakeholders. Decision-makers who appreciate competence and clarity over flash.
-
----
-
-## Sources
-
-This design system was generated from scratch based on the brand brief:
-- No codebase or Figma file provided
-- No existing brand assets provided
-- All visual foundations, tokens, and components are original, designed to match the brand brief
-
-**To improve fidelity:** Attach a codebase, Figma link, or existing brand materials via the Import menu and ask for an update.
+**対象顧客：** 中大規模エンタープライズ、プロジェクトスポンサー、CTO、ビジネスステークホルダー。派手さより実力と明確さを重視する意思決定者。
 
 ---
 
-## CONTENT FUNDAMENTALS
+## ソース
 
-### Voice & Tone
-- **Confident, not arrogant.** Statements are declarative and grounded. Avoid hedging language ("maybe", "sort of", "I think").
-- **Technical yet accessible.** Uses precise terminology without jargon overload. Complex ideas are explained with analogies and structure.
-- **Strategic framing.** Problems are contextualized before solutions are presented. "Why" comes before "how."
-- **Concise.** No padding. No filler sentences. Every word earns its place.
+このデザインシステムはブランドブリーフをもとにゼロから生成されました：
+- コードベースやFigmaファイルの提供なし
+- 既存ブランドアセットの提供なし
+- すべてのビジュアル基盤、トークン、コンポーネントはオリジナルで、ブランドブリーフに沿って設計
 
-### Perspective
-- **First-person singular** ("I" not "we") — this is a personal brand, not an agency.
-- Speaks to the client as **"you"** — direct, engaged, not distant.
-- Occasionally uses **"we"** when describing collaborative work on a project together.
-
-### Casing
-- Headlines: **Sentence case** (not title case). "How I approach requirements" not "How I Approach Requirements."
-- UI labels: **Sentence case** throughout.
-- No all-caps except for acronyms (IT, CTO, KPI, MVP, etc.)
-
-### Emoji
-- **Not used** in professional documents, decks, or the portfolio.
-- May appear sparingly in casual social contexts only.
-
-### Copy Examples
-> "I work at the intersection of technology and business strategy — translating complex requirements into systems that actually get built."
-
-> "The challenge isn't always technical. Often it's organisational. I help teams bridge that gap."
-
-> "Let's define the problem before we talk about the solution."
+**忠実度の向上：** インポートメニューからコードベース、Figmaリンク、既存ブランド素材を添付し、更新を依頼してください。
 
 ---
 
-## VISUAL FOUNDATIONS
+## コンテンツ基本方針
 
-### Color Philosophy
-Dark-anchored palette. Deep backgrounds create focus and professionalism. A single electric accent (indigo/violet) provides direction and hierarchy without distraction. Subtle warm-neutral grays prevent the coldness of pure black/white.
+### ボイス＆トーン
+- **自信はあるが傲慢ではない。** 発言は断定的で根拠がある。「かもしれません」「ちょっと」などの曖昧な表現は使わない。
+- **技術的でありながら分かりやすい。** 専門用語を乱用せず、正確な言葉を使う。複雑なアイデアはアナロジーと構造で説明する。
+- **戦略的な文脈設定。** 解決策の前に問題を文脈化する。「なぜ」を「どのように」の前に置く。
+- **簡潔。** 余分な言葉はない。すべての言葉に意味がある。
 
-See `colors_and_type.css` for all tokens.
+### 視点
+- **一人称単数**（「私」であり「私たち」ではない）— パーソナルブランドであり、エージェンシーではない。
+- クライアントに対して**「あなた」**と語りかける — 直接的で、距離を置かない。
+- プロジェクトでの協働を述べる場合のみ、**「私たち」**を使う。
 
-**Primary palette:**
-- Background: near-black `#0D0D12` with subtle warm undertone
-- Surface: `#16161F` (cards, panels)
-- Border: `#2A2A38` (hairlines, dividers)
-- Foreground primary: `#F0EEF8` (near-white, slightly warm)
-- Foreground secondary: `#8B8A9E` (muted, secondary text)
-- Accent: `#6C63FF` (electric indigo) — used sparingly for CTAs, active states, highlights
-- Accent warm: `#A78BFA` (violet) — gradient partner, hover states
+### 表記
+- 見出し：**センテンスケース**（タイトルケースではない）。
+- UIラベル：全体的に**センテンスケース**。
+- 頭字語（IT、CTO、KPI、MVPなど）を除き、全大文字は使わない。
 
-### Typography
-- **Display/Headlines:** Syne — geometric, modern, slightly unusual. Strong personality without being decorative.
-- **Body/UI:** DM Sans — clean, approachable, excellent at small sizes. Not as overused as Inter.
-- **Code/Technical:** JetBrains Mono — developer credibility, precise.
+### 絵文字
+- プロフェッショナルな文書、デッキ、ポートフォリオでは**使用しない**。
+- カジュアルなSNSでのみ控えめに使用可能。
 
-Type scale is modular (1.25 ratio). Generous line heights for readability.
+### コピー例
+> 「私はテクノロジーとビジネス戦略の交点に位置し、複雑な要件を実際に構築されるシステムに翻訳します。」
 
-### Backgrounds
-- Predominantly **dark solid** (`#0D0D12`, `#16161F`)
-- Subtle **noise texture overlay** at low opacity for depth
-- Occasional **grid dot pattern** as a background motif (engineering precision visual metaphor)
-- **No gradients as backgrounds** — gradients reserved for accent elements and CTAs only
-- Full-bleed section dividers use border lines, not color fills
+> 「課題は必ずしも技術的なものとは限りません。多くの場合、組織的な問題です。私はチームがそのギャップを埋める手助けをします。」
 
-### Spacing & Layout
-- Base unit: **8px**
-- Scale: 4, 8, 12, 16, 24, 32, 48, 64, 96, 128
-- Max content width: **1200px**
-- Grid: 12-column with 24px gutters
-- Section padding: 96px vertical on desktop, 64px on tablet
+> 「解決策を議論する前に、問題を定義しましょう。」
 
-### Animation
-- **Subtle and purposeful.** Not decorative.
-- Fade + slight upward translate on scroll reveal (duration: 400ms, ease: cubic-bezier(0.4, 0, 0.2, 1))
-- Hover states: smooth color/opacity transitions (150ms ease)
-- No bounces, no spring physics, no playful easing
-- Page transitions: simple fade (200ms)
+---
 
-### Hover & Press States
-- Links/buttons: color shift toward accent, 150ms ease
-- Cards: subtle border lightening + very slight lift (translateY: -2px)
-- Press state: slight opacity reduction (0.85) + no lift
+## ビジュアル基盤
 
-### Borders & Radius
-- **Minimal rounding:** `4px` for small elements (chips, tags), `8px` for cards and panels
-- **No large border radii** — avoid pill/rounded aesthetic
-- Hairline borders: 1px `#2A2A38`
-- Focus rings: 2px solid accent with 2px offset
+### カラー哲学
+ダーク基調のパレット。深みのある背景が集中力とプロフェッショナリズムをもたらす。シングルの電気的なアクセント（インディゴ／バイオレット）が、散漫にならずに方向性と階層を提供する。微妙なウォームニュートラルグレーが、純粋な黒白の冷たさを防ぐ。
 
-### Cards
-- Background: `#16161F`
-- Border: 1px `#2A2A38`
-- Border radius: `8px`
-- Shadow: `0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)`
-- Hover: border color lightens to `#3D3D52`, translateY(-2px)
+すべてのトークンは`colors_and_type.css`を参照。
 
-### Shadows & Elevation
-- Level 0: no shadow (flat, inline)
-- Level 1: `0 1px 3px rgba(0,0,0,0.4)` — cards
-- Level 2: `0 4px 16px rgba(0,0,0,0.5)` — modals, dropdowns
-- Level 3: `0 8px 32px rgba(0,0,0,0.6)` — overlays
+**プライマリパレット：**
+- 背景：わずかなウォームアンダートーンを持つ準黒色 `#0D0D12`
+- サーフェス：`#16161F`（カード、パネル）
+- ボーダー：`#2A2A38`（ヘアライン、分割線）
+- フォアグラウンド（プライマリ）：`#F0EEF8`（準白色、わずかにウォーム）
+- フォアグラウンド（セカンダリ）：`#8B8A9E`（ミュート、補足テキスト）
+- アクセント：`#6C63FF`（エレクトリックインディゴ）— CTA、アクティブ状態、ハイライトに控えめに使用
+- アクセントウォーム：`#A78BFA`（バイオレット）— グラデーションパートナー、ホバー状態
 
-### Imagery
-- **Monochromatic or dark-tinted** photography if used
-- Architecture, abstract geometry, circuit/grid motifs align with the brand
-- No stock photo smiling-people imagery
-- Diagrams and charts use the brand palette
+### タイポグラフィ
+- **ディスプレイ／見出し：** Syne — ジオメトリック、モダン、個性的。装飾的にならない強い存在感。
+- **ボディ／UI：** DM Sans — クリーン、親しみやすく、小サイズでも優秀。Interほど使い古されていない。
+- **コード／技術：** JetBrains Mono — 開発者としての信頼性、正確さ。
 
-### Iconography
-See ICONOGRAPHY section below.
+タイプスケールはモジュラー（比率1.25）。読みやすさのために余裕のある行高。
 
-### Corner Radius Summary
-| Element | Radius |
+### 背景
+- 主に**ダークソリッド**（`#0D0D12`、`#16161F`）
+- 奥行きのための低不透明度の**ノイズテクスチャオーバーレイ**
+- 背景モチーフとして時折**グリッドドットパターン**（エンジニアリングの精度を表す視覚的メタファー）
+- **背景としてのグラデーションは使用しない** — グラデーションはアクセント要素とCTAにのみ使用
+- 全幅セクション区切りはボーダーラインを使用し、カラーフィルは使わない
+
+### スペーシング＆レイアウト
+- 基本単位：**8px**
+- スケール：4、8、12、16、24、32、48、64、96、128
+- コンテンツ最大幅：**1200px**
+- グリッド：12カラム、24pxガター
+- セクションパディング：デスクトップ96px上下、タブレット64px
+
+### アニメーション
+- **繊細で目的がある。** 装飾的ではない。
+- スクロールリビール：フェード＋わずかな上方向トランスレート（持続時間400ms、イージング：cubic-bezier(0.4, 0, 0.2, 1)）
+- ホバー状態：スムーズな色／不透明度トランジション（150ms ease）
+- バウンス、スプリング物理、遊び心のあるイージングは使わない
+- ページトランジション：シンプルなフェード（200ms）
+
+### ホバー＆プレス状態
+- リンク／ボタン：アクセントに向かう色変化、150ms ease
+- カード：ボーダーのわずかな明色化＋微小なリフト（translateY: -2px）
+- プレス状態：わずかな不透明度低下（0.85）＋リフトなし
+
+### ボーダー＆半径
+- **最小限の角丸：** 小要素（チップ、タグ）は`4px`、カードやパネルは`8px`
+- **大きな角丸は使わない** — ピル型／丸みの強い外観は避ける
+- ヘアラインボーダー：1px `#2A2A38`
+- フォーカスリング：2pxソリッドアクセント、2pxオフセット
+
+### カード
+- 背景：`#16161F`
+- ボーダー：1px `#2A2A38`
+- 角丸：`8px`
+- シャドウ：`0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)`
+- ホバー：ボーダーカラーを`#3D3D52`に明色化、translateY(-2px)
+
+### シャドウ＆エレベーション
+- レベル0：シャドウなし（フラット、インライン）
+- レベル1：`0 1px 3px rgba(0,0,0,0.4)` — カード
+- レベル2：`0 4px 16px rgba(0,0,0,0.5)` — モーダル、ドロップダウン
+- レベル3：`0 8px 32px rgba(0,0,0,0.6)` — オーバーレイ
+
+### 画像
+- 使用する場合は**モノクロまたはダークティント**の写真
+- 建築、抽象的なジオメトリ、回路／グリッドモチーフがブランドに合う
+- 笑顔のストック写真は使用しない
+- 図表はブランドパレットを使用
+
+### アイコノグラフィ
+以下のアイコノグラフィセクションを参照。
+
+### 角丸まとめ
+| 要素 | 半径 |
 |---|---|
-| Button | 6px |
-| Card | 8px |
-| Input | 6px |
-| Tag/badge | 4px |
-| Avatar | 50% (circle) |
-| Modal | 10px |
+| ボタン | 6px |
+| カード | 8px |
+| インプット | 6px |
+| タグ／バッジ | 4px |
+| アバター | 50%（円形） |
+| モーダル | 10px |
 
 ---
 
-## ICONOGRAPHY
+## アイコノグラフィ
 
-### Approach
-- **Stroke-based icons only** — no filled icons. Consistent 1.5px stroke weight at 20px size.
-- Clean, geometric, minimal — matching the brand's precision aesthetic.
-- **Lucide Icons** (CDN: `https://unpkg.com/lucide@latest`) — used via `<i data-lucide="...">` or React component.
-- No emoji used as icons in any professional context.
-- No icon fonts (e.g. FontAwesome) — SVG-based only for crispness.
+### アプローチ
+- **ストロークアイコンのみ** — フィルドアイコンは使わない。20pxサイズで一貫した1.5pxストローク幅。
+- クリーン、ジオメトリック、ミニマル — ブランドの精度美学に合致。
+- **Lucide Icons**（CDN：`https://unpkg.com/lucide@latest`）— `<i data-lucide="...">` またはReactコンポーネントとして使用。
+- プロフェッショナルな文脈では絵文字をアイコンとして使用しない。
+- アイコンフォント（FontAwesomeなど）は使わない — 鮮明さのためにSVGベースのみ使用。
 
-### Usage
-- Navigation: 20px, stroke `#8B8A9E`, active stroke `#F0EEF8`
-- CTAs and buttons: 16px inline with label
-- Feature blocks: 24px accent-colored
-- Never use icons as decoration without semantic meaning
+### 使用方法
+- ナビゲーション：20px、ストローク`#8B8A9E`、アクティブストローク`#F0EEF8`
+- CTAおよびボタン：ラベルとインラインで16px
+- フィーチャーブロック：アクセントカラーで24px
+- 意味のない装飾としてアイコンを使用しない
 
 ---
 
-## Files & Index
+## ファイル構成
 
-| Path | Description |
+| パス | 説明 |
 |---|---|
-| `README.md` | This file — brand overview and visual foundations |
-| `SKILL.md` | Agent skill definition for Claude Code |
-| `colors_and_type.css` | All CSS custom properties (colors, type, spacing, shadows) |
-| `assets/logo.svg` | Full wordmark — dark background |
-| `assets/logo-light.svg` | Full wordmark — light background |
-| `assets/logo-mark.svg` | K mark only |
-| `preview/` | 15 HTML design system cards (see Design System tab) |
-| `ui_kits/README.md` | UI kit overview |
-| `ui_kits/portfolio/` | Portfolio website UI kit (React, 6 components) |
-| `ui_kits/deck/` | Proposal deck template (8 slides, deck-stage.js) |
-| `ui_kits/onepager/` | Consulting one-pager (single HTML file) |
+| `README.md` | このファイル — ブランド概要とビジュアル基盤 |
+| `SKILL.md` | Claude Code用エージェントスキル定義 |
+| `colors_and_type.css` | すべてのCSSカスタムプロパティ（色、タイポグラフィ、スペーシング、シャドウ） |
+| `assets/logo.svg` | フルワードマーク — ダーク背景用 |
+| `assets/logo-light.svg` | フルワードマーク — ライト背景用 |
+| `assets/logo-mark.svg` | Kマークのみ |
+| `preview/` | 15枚のHTMLデザインシステムカード（デザインシステムタブ参照） |
+| `ui_kits/README.md` | UIキット概要 |
+| `ui_kits/portfolio/` | ポートフォリオWebサイトUIキット（React、6コンポーネント） |
+| `ui_kits/deck/` | プロポーザルデッキテンプレート（8スライド、deck-stage.js） |
+| `ui_kits/onepager/` | コンサルティングワンページャー（単一HTMLファイル） |
 
 ---
 
-## UI Kits
+## UIキット
 
-### Portfolio Website (`ui_kits/portfolio/index.html`)
-Full interactive React portfolio. Sections: hero, services (6 cards), projects (tabbed case studies), about, contact form. Smooth scroll nav with active section tracking.
-**Components:** `Nav.jsx`, `Hero.jsx`, `Services.jsx`, `Projects.jsx`, `About.jsx`, `Contact.jsx`, `App.jsx`
+### ポートフォリオWebサイト（`ui_kits/portfolio/index.html`）
+インタラクティブなReactポートフォリオ。セクション：ヒーロー、サービス（6カード）、プロジェクト（タブ式ケーススタディ）、アバウト、コンタクトフォーム。アクティブセクション追跡付きスムーススクロールナビ。
+**コンポーネント：** `Nav.jsx`、`Hero.jsx`、`Services.jsx`、`Projects.jsx`、`About.jsx`、`Contact.jsx`、`App.jsx`
 
-### Proposal Deck (`ui_kits/deck/index.html`)
-8-slide proposal deck at 1920×1080. Keyboard navigable (← →). Slides: title, agenda, problem, approach, timeline, quote, investment, CTA.
-**Template:** `deck-stage.js` handles scaling, keyboard nav, print-to-PDF.
+### プロポーザルデッキ（`ui_kits/deck/index.html`）
+1920×1080の8スライドプロポーザルデッキ。キーボードナビゲーション対応（← →）。スライド：タイトル、アジェンダ、課題、アプローチ、タイムライン、引用、投資、CTA。
+**テンプレート：** `deck-stage.js`がスケーリング、キーボードナビ、PDF印刷を処理。
 
-### Consulting One-Pager (`ui_kits/onepager/index.html`)
-Single-page document. Sections: header with contact, services list, expertise tags, track record stats, process steps, quote, footer CTA.
+### コンサルティングワンページャー（`ui_kits/onepager/index.html`）
+単一ページドキュメント。セクション：連絡先付きヘッダー、サービスリスト、専門性タグ、実績統計、プロセスステップ、引用、フッターCTA。
 
 ---
 
-## Design System Cards (preview/)
+## デザインシステムカード（preview/）
 
-| Card | Group |
+| カード | グループ |
 |---|---|
-| Background & Border Colors | Colors |
-| Foreground Colors | Colors |
-| Accent Colors | Colors |
-| Status Colors | Colors |
-| Display Type — Syne | Type |
-| Body Type — DM Sans | Type |
-| Mono Type — JetBrains Mono | Type |
-| Spacing Scale | Spacing |
-| Shadows & Radius | Spacing |
-| Buttons | Components |
-| Form Inputs | Components |
-| Cards | Components |
-| Badges & Tags | Components |
-| Logo | Brand |
-| Iconography | Brand |
+| 背景とボーダーカラー | カラー |
+| フォアグラウンドカラー | カラー |
+| アクセントカラー | カラー |
+| ステータスカラー | カラー |
+| ディスプレイタイプ — Syne | タイプ |
+| ボディタイプ — DM Sans | タイプ |
+| モノタイプ — JetBrains Mono | タイプ |
+| スペーシングスケール | スペーシング |
+| シャドウ＆半径 | スペーシング |
+| ボタン | コンポーネント |
+| フォームインプット | コンポーネント |
+| カード | コンポーネント |
+| バッジ＆タグ | コンポーネント |
+| ロゴ | ブランド |
+| アイコノグラフィ | ブランド |
