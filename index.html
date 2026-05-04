@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Claude Practice — kenobix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-base:      #0D0D12;
+    --bg-surface:   #16161F;
+    --bg-elevated:  #1E1E2A;
+    --border:       #2A2A38;
+    --fg-primary:   #F0EEF8;
+    --fg-secondary: #8B8A9E;
+    --fg-tertiary:  #5A5A72;
+    --accent:       #6C63FF;
+    --accent-light: #A78BFA;
+    --success:      #34D399;
+  }
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+  body {
+    background: var(--bg-base);
+    color: var(--fg-primary);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* dot grid */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(circle, #3D3D52 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: 0.10;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 80px 32px 120px;
+  }
+
+  /* header */
+  .site-header { margin-bottom: 64px; }
+  .logo-row {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 20px;
+  }
+  .site-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 600;
+    color: var(--fg-secondary);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .hero-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .hero-heading span {
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    font-size: 17px; color: var(--fg-secondary); line-height: 1.6;
+    max-width: 560px; margin-bottom: 28px;
+  }
+  .accent-line {
+    width: 48px; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    border-radius: 1px;
+  }
+
+  /* pages section */
+  .section-label {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.14em;
+    color: var(--accent); text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .section-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 20px;
+  }
+
+  /* page cards */
+  .pages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+    margin-bottom: 64px;
+  }
+  .page-card {
+    display: block;
+    text-decoration: none;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 22px;
+    transition: border-color 150ms, transform 150ms, box-shadow 150ms;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  .page-card:hover {
+    border-color: #3D3D52;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+  .card-tag {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .card-tag-dot { width: 6px; height: 6px; border-radius: 1px; flex-shrink: 0; }
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px; font-weight: 600;
+    color: var(--fg-primary);
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  .card-desc {
+    font-size: 13px; color: var(--fg-secondary); line-height: 1.55;
+  }
+
+  /* log section */
+  .log-table { width: 100%; border-collapse: collapse; }
+  .log-table th {
+    text-align: left;
+    font-size: 11px; font-weight: 500; letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg-tertiary);
+    padding: 0 12px 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .log-table td {
+    padding: 12px 12px 12px 0;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .log-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--fg-tertiary);
+    white-space: nowrap;
+  }
+  .log-desc { font-size: 14px; color: var(--fg-secondary); line-height: 1.55; }
+  .log-link {
+    color: var(--fg-secondary); text-decoration: none;
+    transition: color 120ms;
+  }
+  .log-link:hover { color: var(--fg-primary); }
+
+  /* footer */
+  .site-footer {
+    margin-top: 80px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .footer-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--fg-tertiary);
+  }
+  .footer-link {
+    font-size: 13px; color: var(--fg-secondary);
+    text-decoration: none; transition: color 120ms;
+  }
+  .footer-link:hover { color: var(--accent-light); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="logo-row">
+      <svg viewBox="0 0 28 48" style="width:24px;height:41px;display:block;flex-shrink:0">
+        <rect x="0" y="4" width="4" height="40" fill="#6C63FF"/>
+        <path d="M4 24 L22 4 L27 4 L9 24Z" fill="#6C63FF"/>
+        <path d="M4 24 L22 44 L27 44 L9 24Z" fill="#A78BFA"/>
+      </svg>
+      <div class="site-title">kenobix / Claude_practice</div>
+    </div>
+    <h1 class="hero-heading">Claude Code<br /><span>学習・実践ログ</span></h1>
+    <p class="hero-sub">Claude Code の機能を日付ごとに実践し、成果物と作業ログを管理するリポジトリ。</p>
+    <div class="accent-line"></div>
+  </header>
+
+  <!-- Live Pages -->
+  <section style="margin-bottom:64px">
+    <div class="section-label">GitHub Pages</div>
+    <h2 class="section-heading">公開ページ</h2>
+    <div class="pages-grid">
+      <a class="page-card" href="260502/kenshin/ui_kits/portfolio/">
+        <div class="card-tag" style="color:#6C63FF">
+          <div class="card-tag-dot" style="background:#6C63FF"></div>Portfolio
+        </div>
+        <div class="card-title">Kenshin Portfolio</div>
+        <div class="card-desc">React製ポートフォリオサイト。ヒーロー・サービス・案件実績・コンタクトを含む全セクション。</div>
+      </a>
+      <a class="page-card" href="260502/kenshin/intro/">
+        <div class="card-tag" style="color:#A78BFA">
+          <div class="card-tag-dot" style="background:#A78BFA"></div>Animation
+        </div>
+        <div class="card-title">Intro Animation</div>
+        <div class="card-desc">16秒のポートフォリオ紹介アニメーション。Claude Design ハンドオフから実装。</div>
+      </a>
+      <a class="page-card" href="260502/kenshin/ui_kits/deck/">
+        <div class="card-tag" style="color:#34D399">
+          <div class="card-tag-dot" style="background:#34D399"></div>Deck
+        </div>
+        <div class="card-title">Proposal Deck</div>
+        <div class="card-desc">1920×1080・8スライドの提案デッキ。キーボードナビゲーション対応。</div>
+      </a>
+      <a class="page-card" href="260502/kenshin/ui_kits/onepager/">
+        <div class="card-tag" style="color:#FBBF24">
+          <div class="card-tag-dot" style="background:#FBBF24"></div>One-pager
+        </div>
+        <div class="card-title">Consulting One-Pager</div>
+        <div class="card-desc">A4スタイルのコンサルティング概要ドキュメント。サービス・実績・連絡先を1ページに集約。</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Work Log -->
+  <section>
+    <div class="section-label">Work log</div>
+    <h2 class="section-heading">作業ログ</h2>
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th style="width:90px">日付</th>
+          <th>内容</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="log-date">260330</td>
+          <td class="log-desc"><a class="log-link" href="https://github.com/kenobix/Claude_practice/tree/main/260330">Pythonでテキストアドベンチャーゲーム（Claude Quest）を作成。Claude Codeによるコード生成の初回実践。</a></td>
+        </tr>
+        <tr>
+          <td class="log-date">260331</td>
+          <td class="log-desc"><a class="log-link" href="https://github.com/kenobix/Claude_practice/tree/main/260331">ローカルリポジトリをGitHubにpushするまでの作業記録。PAT認証・メールプライバシー設定・履歴書き換えのエラー対処を含む。</a></td>
+        </tr>
+        <tr>
+          <td class="log-date">260401</td>
+          <td class="log-desc"><a class="log-link" href="https://github.com/kenobix/Claude_practice/tree/main/260401">Claude.aiのコネクタ機能（Google Drive・Gmail・Calendar・GitHub・Notion・TickTick・Figma）を設定し動作確認。</a></td>
+        </tr>
+        <tr>
+          <td class="log-date">260402</td>
+          <td class="log-desc"><a class="log-link" href="https://github.com/kenobix/Claude_practice/tree/main/260402">RemotionとClaude Codeを使いClaude Code紹介動画（MP4・28秒）を作成。WSL環境でのChrome依存・日本語フォント問題の解決含む。</a></td>
+        </tr>
+        <tr>
+          <td class="log-date">260405</td>
+          <td class="log-desc"><a class="log-link" href="https://github.com/kenobix/Claude_practice/tree/main/260405">スマホからClaude Codeを操作する2つの方法（Remote Control・Dispatch）を調査・設定。</a></td>
+        </tr>
+        <tr>
+          <td class="log-date">260406</td>
+          <td class="log-desc"><a class="log-link" href="https://github.com/kenobix/Claude_practice/tree/main/260406">サブエージェント・エージェントチームを活用して個人開発管理ダッシュボード（React + Hono + SQLite）をフルスタックで構築。</a></td>
+        </tr>
+        <tr>
+          <td class="log-date">260413</td>
+          <td class="log-desc"><a class="log-link" href="https://github.com/kenobix/Claude_practice/tree/main/260413">Anthropic Academyの学習スケジュール再構成。残り課題（agent skills・MCPサーバー自作）を整理。</a></td>
+        </tr>
+        <tr>
+          <td class="log-date">260427</td>
+          <td class="log-desc"><a class="log-link" href="https://github.com/kenobix/Claude_practice/tree/main/260427">WSL2上にOpenClaw（AIエージェントフレームワーク）とOllama（ローカルLLM）を構築。qwen2.5モデルの動作確認・パラメータ調整を記録。</a></td>
+        </tr>
+        <tr>
+          <td class="log-date">260502</td>
+          <td class="log-desc"><a class="log-link" href="https://github.com/kenobix/Claude_practice/tree/main/260502">Claude Designを調査・実践。Kenshinデザインシステム（ポートフォリオ・提案デッキ・ワンページャー・紹介アニメーション）をClaude Designハンドオフから実装。</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-text">kenobix / Claude_practice</div>
+    <a class="footer-link" href="https://github.com/kenobix/Claude_practice">GitHub →</a>
+  </footer>
+
+</div>
+</body>
+</html>
