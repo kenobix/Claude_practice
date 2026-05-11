@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Linux権限 ハッキングラボ | Kenshin Security</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base:        #0D0D12;
+      --bg-surface:     #16161F;
+      --bg-elevated:    #1E1E2A;
+      --bg-overlay:     #252533;
+      --border-subtle:  #1E1E2A;
+      --border-default: #2A2A38;
+      --border-strong:  #3D3D52;
+      --fg-primary:     #F0EEF8;
+      --fg-secondary:   #8B8A9E;
+      --fg-tertiary:    #5A5A72;
+      --accent:         #6C63FF;
+      --accent-hover:   #7C74FF;
+      --accent-muted:   #2D2B5A;
+      --accent-light:   #A78BFA;
+      --accent-glow:    rgba(108,99,255,0.15);
+      --success:        #34D399;
+      --warning:        #FBBF24;
+      --error:          #F87171;
+      --info:           #60A5FA;
+      --font-display:   'Syne', sans-serif;
+      --font-body:      'DM Sans', sans-serif;
+      --font-mono:      'JetBrains Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg-base); color: var(--fg-primary); font-family: var(--font-body); overflow: hidden; }
+
+    /* ── LAYOUT ── */
+    .app { display: grid; grid-template-columns: 250px 1fr; grid-template-rows: 52px 1fr; height: 100vh; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; gap: 14px;
+      padding: 0 20px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-default);
+    }
+    .logo { font-family: var(--font-display); font-size: 14px; font-weight: 800; letter-spacing: 0.1em; color: var(--accent-light); }
+    .sep  { width: 1px; height: 18px; background: var(--border-default); }
+    .topbar-title { font-size: 13px; color: var(--fg-secondary); }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--fg-secondary); }
+    .score-val { color: var(--success); font-weight: 700; }
+    .prog-wrap { width: 100px; height: 3px; background: var(--bg-elevated); border-radius: 9px; overflow: hidden; }
+    .prog-bar  { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-light)); border-radius: 9px; transition: width .4s ease; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: var(--bg-surface); border-right: 1px solid var(--border-default);
+      padding: 16px 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;
+    }
+    .sidebar-label { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-tertiary); padding: 8px 10px 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px; border-radius: 6px; cursor: pointer;
+      font-size: 12px; color: var(--fg-secondary); transition: background .15s;
+    }
+    .nav-item:hover:not(.locked) { background: var(--bg-elevated); color: var(--fg-primary); }
+    .nav-item.active  { background: var(--accent-muted); color: var(--fg-primary); }
+    .nav-item.done    { color: var(--success); }
+    .nav-item.locked  { opacity: .35; cursor: not-allowed; }
+    .nav-num {
+      width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; font-family: var(--font-mono);
+      background: var(--bg-elevated); color: var(--fg-tertiary);
+    }
+    .nav-item.active .nav-num { background: var(--accent); color: #fff; }
+    .nav-item.done   .nav-num { background: rgba(52,211,153,.15); color: var(--success); }
+
+    /* ── MAIN ── */
+    .main { overflow: hidden; display: flex; flex-direction: column; }
+    .screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
+    .screen.active { display: flex; }
+
+    /* ── START ── */
+    .start-screen {
+      align-items: center; justify-content: center; text-align: center; gap: 20px; padding: 40px;
+    }
+    .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+    .hero-title { font-family: var(--font-display); font-size: clamp(1.8rem,3vw,2.6rem); font-weight: 800; line-height: 1.1; letter-spacing: -.02em; }
+    .hero-title span { color: var(--accent-light); }
+    .hero-desc { max-width: 460px; color: var(--fg-secondary); font-size: 14px; line-height: 1.7; }
+    .badge-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+    .badge { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border-default); font-size: 11px; font-family: var(--font-mono); color: var(--fg-secondary); }
+    .badge.hi { border-color: var(--accent-muted); color: var(--accent-light); background: var(--accent-muted); }
+
+    /* ── MISSION ── */
+    .mission-header { padding: 14px 20px 10px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; }
+    .m-meta  { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 3px; }
+    .m-title { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; }
+    .m-desc  { font-size: 12px; color: var(--fg-secondary); margin-top: 3px; line-height: 1.55; }
+
+    .mission-body { display: grid; grid-template-columns: 1fr 320px; flex: 1; overflow: hidden; }
+
+    /* ── TERMINAL ── */
+    .term-col { display: flex; flex-direction: column; padding: 14px; gap: 10px; overflow: hidden; }
+    .terminal {
+      background: #09090E; border: 1px solid var(--border-default); border-radius: 8px;
+      overflow: hidden; flex: 1; display: flex; flex-direction: column;
+    }
+    .term-bar {
+      display: flex; align-items: center; gap: 5px; padding: 7px 12px;
+      background: var(--bg-surface); border-bottom: 1px solid var(--border-default); flex-shrink: 0;
+    }
+    .dot { width: 11px; height: 11px; border-radius: 50%; }
+    .dot-r { background: #FF5F57; } .dot-y { background: #FFBD2E; } .dot-g { background: #28C840; }
+    .term-name { margin-left: 8px; font-family: var(--font-mono); font-size: 11px; color: var(--fg-tertiary); }
+    .term-body {
+      flex: 1; overflow-y: auto; padding: 14px;
+      font-family: var(--font-mono); font-size: 12.5px; line-height: 1.7;
+    }
+    .t-prompt { color: var(--accent-light); }
+    .t-cmd    { color: var(--fg-primary); }
+    .t-out    { color: #7A8A5A; white-space: pre-wrap; }
+    .t-out.hl  { color: var(--warning); }
+    .t-out.dng { color: var(--error); }
+    .t-out.ok  { color: var(--success); }
+    .t-cursor  { display: inline-block; width: 7px; height: 1em; background: var(--accent); vertical-align: text-bottom; animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .cmd-bar {
+      background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: 6px;
+      padding: 10px 14px; display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .cmd-bar code { font-family: var(--font-mono); font-size: 12px; color: var(--accent-light); flex: 1; word-break: break-all; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 7px 16px; border-radius: 6px; border: none;
+      font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-ok { background: rgba(52,211,153,.12); color: var(--success); border: 1px solid rgba(52,211,153,.3); }
+    .btn-ghost { background: transparent; color: var(--fg-secondary); border: 1px solid var(--border-default); }
+    .btn-ghost:hover { background: var(--bg-elevated); color: var(--fg-primary); }
+
+    /* ── RIGHT PANEL ── */
+    .right-col { border-left: 1px solid var(--border-default); overflow-y: auto; display: flex; flex-direction: column; }
+    .explain-pane { padding: 14px; flex: 1; }
+    .pane-hidden { display: none; }
+
+    .pane-title { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-tertiary); margin-bottom: 10px; }
+    .ex-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .ex-table th { text-align: left; padding: 5px 6px; color: var(--fg-tertiary); font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid var(--border-default); }
+    .ex-table td { padding: 7px 6px; border-bottom: 1px solid var(--border-subtle); vertical-align: top; line-height: 1.5; }
+    .ex-table td:first-child { font-family: var(--font-mono); color: var(--accent-light); font-size: 10.5px; white-space: nowrap; padding-right: 8px; }
+    .ex-table td:nth-child(2) { color: var(--fg-secondary); }
+    .ex-table td:nth-child(3) { font-size: 10px; white-space: nowrap; }
+
+    .tip-box {
+      background: var(--accent-muted); border: 1px solid rgba(108,99,255,.3); border-radius: 6px;
+      padding: 9px 11px; font-size: 11px; color: var(--accent-light); margin-top: 10px; line-height: 1.6;
+    }
+    .tip-box strong { color: var(--fg-primary); }
+
+    /* ── QUIZ ── */
+    .quiz-pane { border-top: 1px solid var(--border-default); padding: 14px; flex-shrink: 0; }
+    .quiz-q { font-size: 12px; font-weight: 600; color: var(--fg-primary); margin-bottom: 8px; line-height: 1.5; }
+    .quiz-opts { display: flex; flex-direction: column; gap: 5px; }
+    .quiz-opt {
+      padding: 7px 10px; border: 1px solid var(--border-default); border-radius: 5px;
+      font-size: 11px; cursor: pointer; transition: all .15s; color: var(--fg-secondary);
+      background: transparent; text-align: left; line-height: 1.4;
+    }
+    .quiz-opt:hover:not(:disabled) { border-color: var(--accent); color: var(--fg-primary); background: var(--accent-muted); }
+    .quiz-opt:disabled { cursor: not-allowed; }
+    .quiz-opt.correct { border-color: var(--success); color: var(--success); background: rgba(52,211,153,.07); }
+    .quiz-opt.wrong   { border-color: var(--error);   color: var(--error);   background: rgba(248,113,113,.07); }
+    .quiz-fb { margin-top: 9px; font-size: 11px; line-height: 1.6; color: var(--fg-secondary); display: none; }
+    .quiz-next { margin-top: 10px; display: none; }
+
+    /* ── FINISH ── */
+    .finish-screen { align-items: center; justify-content: center; gap: 18px; text-align: center; padding: 40px; }
+    .ring {
+      width: 96px; height: 96px; border-radius: 50%; border: 3px solid var(--accent);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      box-shadow: 0 0 32px rgba(108,99,255,.3);
+    }
+    .ring-num { font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: var(--accent-light); line-height: 1; }
+    .ring-max { font-size: 11px; color: var(--fg-tertiary); }
+    .finish-title { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; }
+    .finish-desc  { color: var(--fg-secondary); font-size: 14px; max-width: 420px; line-height: 1.7; }
+
+    /* ── UTILS ── */
+    ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+    .fade-in { animation: fadeIn .3s ease forwards; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <span class="logo">KENSHIN</span>
+    <div class="sep"></div>
+    <span class="topbar-title">Linux権限ハッキングラボ — Topic 1</span>
+    <div class="topbar-right">
+      スコア <span class="score-val" id="scoreDisp">0</span>/6
+      <div class="prog-wrap"><div class="prog-bar" id="progBar" style="width:0%"></div></div>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-label">ミッション</div>
+    <div class="nav-item active" id="nav-0" onclick="tryNav(0)"><div class="nav-num">▶</div>イントロ</div>
+    <div class="nav-item locked" id="nav-1" onclick="tryNav(1)"><div class="nav-num">1</div>アイデンティティ確認</div>
+    <div class="nav-item locked" id="nav-2" onclick="tryNav(2)"><div class="nav-num">2</div>Capability調査</div>
+    <div class="nav-item locked" id="nav-3" onclick="tryNav(3)"><div class="nav-num">3</div>SUIDバイナリ探索</div>
+    <div class="nav-item locked" id="nav-4" onclick="tryNav(4)"><div class="nav-num">4</div>sudo権限確認</div>
+    <div class="nav-item locked" id="nav-5" onclick="tryNav(5)"><div class="nav-num">5</div>/proc情報漏洩</div>
+    <div class="nav-item locked" id="nav-6" onclick="tryNav(6)"><div class="nav-num">6</div>namespace調査</div>
+    <div class="nav-item locked" id="nav-7" onclick="tryNav(7)"><div class="nav-num">★</div>結果</div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- START -->
+    <div class="screen start-screen active" id="screen-0">
+      <div class="eyebrow">WSL2 セキュリティラボ — Topic 1</div>
+      <h1 class="hero-title">Linux <span>権限</span>の<br>仕組みを学ぶ</h1>
+      <p class="hero-desc">実際のコマンドを「実行」しながら、<strong>UID/GID・Capability・SUID・sudo・/proc・namespace</strong> の動作原理を体験形式で理解します。各ステップに解説とクイズがあります。</p>
+      <div class="badge-row">
+        <div class="badge hi">6ミッション</div>
+        <div class="badge">クイズ×6</div>
+        <div class="badge">初心者向け解説</div>
+        <div class="badge">CTF / ペネトレ基礎</div>
+      </div>
+      <button class="btn btn-primary" onclick="startGame()">▶ ミッション開始</button>
+    </div>
+
+    <!-- MISSION SCREENS (generated) -->
+    <div id="mscreens"></div>
+
+    <!-- FINISH -->
+    <div class="screen finish-screen" id="screen-7">
+      <div class="ring">
+        <div class="ring-num" id="finalNum">0</div>
+        <div class="ring-max">/ 6</div>
+      </div>
+      <h2 class="finish-title" id="finTitle"></h2>
+      <p class="finish-desc" id="finDesc"></p>
+      <button class="btn btn-primary" onclick="resetGame()">↺ もう一度プレイ</button>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const MISSIONS = [
+  {
+    id: 1, meta: "STEP 1 / 6",
+    title: "アイデンティティを確認する",
+    desc: "自分が誰で、どんな権限グループに属しているかを確認します。これが全ての権限調査の出発点です。",
+    cmd: 'id && grep "^$(whoami):" /etc/passwd',
+    out: [
+      { t: "uid=1000(kenshin) gid=1000(kenshin) groups=1000(kenshin),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),100(users),989(ollama)", c: "hl" },
+      { t: "kenshin:x:1000:1000:,,,:/home/kenshin:/bin/bash", c: "" },
+    ],
+    explain: {
+      title: "📋 出力の読み方",
+      rows: [
+        ["uid=1000(kenshin)", "ユーザーID。1000以上は一般ユーザー。0はrootを意味する。", ""],
+        ["27(sudo)", "sudoグループ。rootコマンドを借りられる資格を持つ。", "⚠ 要注意"],
+        ["4(adm)", "管理グループ。/var/log全体が読める。ログに認証情報が流れることも。", "⚠ 要注意"],
+        ["989(ollama)", "ollamaソケットに接続可能。AIデーモンを操作できる。", ""],
+        [":x:", "/etc/passwdの2フィールド目。xはパスワードが/etc/shadowに移っている証拠。", ""],
+        ["/bin/bash", "ログインシェル。/sbin/nologinなら対話ログイン不可。", ""],
+      ],
+      tip: "<strong>攻撃者視点：</strong> sudoグループ確認は権限昇格の第一歩。sudoersで何が許可されているかが次の焦点になる。",
+    },
+    quiz: {
+      q: "sudoグループ（27）に属しているユーザーが持つ能力は？",
+      opts: ["rootとして全コマンドを実行できる（sudoers設定次第）", "ファイルを見るだけで変更はできない", "ネットワーク管理のみ可能", "グループメンバーを追加できる"],
+      correct: 0,
+      fb: "正解！sudoグループはあくまで sudo コマンドを<em>使う資格</em>があるというだけ。実際に何ができるかは /etc/sudoers の設定次第です。(ALL:ALL) ALL ならroot相当の全権限を持ちます。",
+    },
+  },
+  {
+    id: 2, meta: "STEP 2 / 6",
+    title: "プロセスのCapabilityを確認する",
+    desc: "Linuxのcapabilityは、root権限を細分化した仕組みです。通常ユーザーのプロセスが持つcapabilityを確認します。",
+    cmd: "cat /proc/self/status | grep -i cap",
+    out: [
+      { t: "CapInh: 0000000000000000", c: "" },
+      { t: "CapPrm: 0000000000000000", c: "ok" },
+      { t: "CapEff: 0000000000000000", c: "ok" },
+      { t: "CapBnd: 000001ffffffffff",  c: "hl" },
+      { t: "CapAmb: 0000000000000000", c: "" },
+    ],
+    explain: {
+      title: "📋 Capability の5種類",
+      rows: [
+        ["CapPrm", "Permitted: プロセスが保持できる上限の権限セット", "0=安全"],
+        ["CapEff", "Effective: 現在実際に有効な権限。システムコールはここを参照する。", "0=安全"],
+        ["CapBnd", "Bounding: このプロセスが将来取得できる上限。fff...=ほぼフル。", "⚠ 上限あり"],
+        ["CapInh", "Inheritable: execve後の子プロセスに引き継げる権限", ""],
+        ["CapAmb", "Ambient: setuidでないバイナリにも引き継げる権限（Linux 4.3〜）", ""],
+      ],
+      tip: "<strong>危険なCapabilityの例：</strong> CAP_NET_RAW（rawソケット=スニッフィング）、CAP_SYS_ADMIN（ほぼroot相当）、CAP_SETUID（任意のUIDに変更可能）。DockerでCAP_SYS_ADMINを付与するとコンテナ脱出リスクが高まる。",
+    },
+    quiz: {
+      q: "CapEff: 0000000000000000 が意味することは？",
+      opts: ["現在のプロセスに有効な特権がない（通常ユーザーとして安全）", "メモリが空の状態", "プロセスがすでに終了している", "rootの全権限を持っている"],
+      correct: 0,
+      fb: "正解！CapEffがゼロなら、このプロセスは今この瞬間、特権的なシステムコールを実行できません。CapBndが大きくても、実際に使えるのはCapEffに入っているものだけです。",
+    },
+  },
+  {
+    id: 3, meta: "STEP 3 / 6",
+    title: "SUIDバイナリを探す",
+    desc: "SUIDビットが立ったバイナリは、実行するとファイルオーナー（大抵はroot）の権限で動きます。悪用可能なものがないか調査します。",
+    cmd: "find /usr /bin /sbin -perm -4000 -type f 2>/dev/null",
+    out: [
+      { t: "/usr/bin/passwd",   c: "ok" },
+      { t: "/usr/bin/sudo",     c: "ok" },
+      { t: "/usr/bin/su",       c: "hl" },
+      { t: "/usr/bin/newgrp",   c: "" },
+      { t: "/usr/bin/chfn",     c: "" },
+      { t: "/usr/bin/chsh",     c: "" },
+      { t: "/usr/bin/gpasswd",  c: "" },
+      { t: "/usr/lib/openssh/ssh-keysign", c: "" },
+      { t: "/usr/lib/dbus-1.0/dbus-daemon-launch-helper", c: "" },
+    ],
+    explain: {
+      title: "📋 SUID の仕組み",
+      rows: [
+        ["-rwsr-xr-x", "sの部分がSUID。実行するとオーナー権限でプロセスが動く。", ""],
+        ["/usr/bin/passwd", "正当なSUID。一般ユーザーが自分のパスワードを変更するために必要。", "✓ 正常"],
+        ["/usr/bin/sudo", "正当なSUID。sudoの仕組み上rootとして動く必要がある。", "✓ 正常"],
+        ["GTFOBins対象", "vim, python, find, less, git, awkなどがSUIDなら即座に昇格可能。", "🔴 危険"],
+      ],
+      tip: "<strong>GTFOBins（gtfobins.github.io）：</strong> SUIDバイナリの悪用手順集。例えば find に SUID があれば <code style='font-size:10px'>find . -exec /bin/bash -p \\;</code> でrootシェルが起動する。",
+    },
+    quiz: {
+      q: "SUIDビットが設定されたバイナリを一般ユーザーが実行すると？",
+      opts: ["バイナリのオーナー（多くはroot）の権限で実行される", "常にrootで実行される（オーナー関係なく）", "実行が拒否される", "一般ユーザー権限のままで実行される"],
+      correct: 0,
+      fb: "正解！SUIDはSetUser ID。実行するとプロセスの実効UID（eUID）がバイナリのオーナーに切り替わります。オーナーがrootなら実質root権限でコードが走ります。",
+    },
+  },
+  {
+    id: 4, meta: "STEP 4 / 6",
+    title: "sudo権限を確認する",
+    desc: "sudo -l で、自分がsudoを使って実行できるコマンドを一覧します。設定ミスがあれば権限昇格の足がかりになります。",
+    cmd: "sudo -l",
+    out: [
+      { t: "Matching Defaults entries for kenshin on machine:", c: "" },
+      { t: "    env_reset, mail_badpass,", c: "" },
+      { t: "    secure_path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", c: "" },
+      { t: "", c: "" },
+      { t: "User kenshin may run the following commands on machine:", c: "" },
+      { t: "    (ALL : ALL) ALL", c: "hl" },
+    ],
+    explain: {
+      title: "📋 sudoers の読み方",
+      rows: [
+        ["(ALL : ALL) ALL", "全ホストで、任意のユーザーとして、全コマンドを実行可能。最も強い設定。", "⚠ 要管理"],
+        ["NOPASSWD: /usr/bin/vim", "パスワードなしでvimをroot実行 → :!/bin/bash でroot昇格", "🔴 危険"],
+        ["NOPASSWD: /usr/bin/find", "NOPASSWD+findは即座にGTFOBins昇格が可能", "🔴 危険"],
+        ["! (否定)", "ブラックリスト方式は迂回可能なことが多い。ホワイトリスト推奨。", "⚠ 危険"],
+      ],
+      tip: "<strong>演習（Step 7）：</strong> testuser に NOPASSWD: /usr/bin/vim を与えると、<code style='font-size:10px'>sudo vim -c ':!/bin/bash'</code> でrootシェルが起動する。この演習を自分の環境でぜひ試してみよう。",
+    },
+    quiz: {
+      q: "sudoersに「NOPASSWD: /usr/bin/vim」があった場合の問題点は？",
+      opts: ["vimのシェルコマンド機能(:!/bin/bash)でrootシェルを起動できる", "vimのファイルが破損する", "パスワードが変更される", "ネットワーク接続が切断される"],
+      correct: 0,
+      fb: "正解！多くのテキストエディタはシェルを起動する機能を持ちます。vimなら :!/bin/bash、nanoなら Ctrl+R Ctrl+X などで。GTFOBinsのsudoセクションに詳細な手順があります。",
+    },
+  },
+  {
+    id: 5, meta: "STEP 5 / 6",
+    title: "/procから情報漏洩を体験する",
+    desc: "/procは仮想ファイルシステムで、実行中プロセスの全情報が入っています。環境変数にシークレットが含まれていないか確認します。",
+    cmd: "cat /proc/$$/environ | tr '\\0' '\\n'",
+    out: [
+      { t: "SHELL=/bin/bash", c: "" },
+      { t: "HOME=/home/kenshin", c: "" },
+      { t: "USER=kenshin", c: "" },
+      { t: "LOGNAME=kenshin", c: "" },
+      { t: "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", c: "" },
+      { t: "TERM=xterm-256color", c: "" },
+      { t: "LANG=ja_JP.UTF-8", c: "" },
+      { t: "AWS_SECRET_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE", c: "dng" },
+      { t: "DATABASE_URL=postgres://admin:P@ssw0rd@localhost:5432/prod", c: "dng" },
+    ],
+    explain: {
+      title: "📋 /proc の情報漏洩",
+      rows: [
+        ["/proc/$$/", "$$は現在のシェルのPID。/proc/[PID]/で任意のプロセス情報にアクセスできる。", ""],
+        ["environ", "プロセスの環境変数。\\0区切りのため tr で改行変換して読む。", "🔴 APIキー漏洩"],
+        ["cmdline", "起動時のコマンドライン引数。パスワードが含まれることがある。", "⚠ 要確認"],
+        ["他ユーザーのPID", "ps aux でPIDを取得し sudo cat /proc/[PID]/environ で他ユーザーの環境変数も閲覧可能。", "🔴 権限次第"],
+      ],
+      tip: "<strong>教訓：</strong> APIキーやパスワードを環境変数に置くのは一般的だが、/proc経由で読まれるリスクがある。コンテナではsecrets管理ツール（Vault, AWS SSM等）を使うべき。",
+    },
+    quiz: {
+      q: "環境変数にAPIキーを設定した場合のセキュリティリスクは？",
+      opts: ["/proc/[PID]/environ経由で同一ホストの他プロセスから読まれることがある", "プログラムの実行速度が低下する", "ログインができなくなる", "ファイルが自動削除される"],
+      correct: 0,
+      fb: "正解！特にrootや同一ユーザーのプロセスは /proc 経由で環境変数を読めます。コンテナ内でも同じnetwork namespaceにいれば覗ける場合があります。",
+    },
+  },
+  {
+    id: 6, meta: "STEP 6 / 6",
+    title: "cgroupとnamespaceを確認する",
+    desc: "Dockerなどのコンテナはnamespaceで隔離されています。namespaceのinode番号を比較することでコンテナ脱出の足がかりが見えます。",
+    cmd: "ls -la /proc/$$/ns/",
+    out: [
+      { t: "lrwxrwxrwx 1 kenshin kenshin 0 May 11 cgroup -> 'cgroup:[4026531835]'", c: "" },
+      { t: "lrwxrwxrwx 1 kenshin kenshin 0 May 11 ipc    -> 'ipc:[4026531839]'", c: "" },
+      { t: "lrwxrwxrwx 1 kenshin kenshin 0 May 11 mnt    -> 'mnt:[4026531841]'", c: "" },
+      { t: "lrwxrwxrwx 1 kenshin kenshin 0 May 11 net    -> 'net:[4026531840]'", c: "" },
+      { t: "lrwxrwxrwx 1 kenshin kenshin 0 May 11 pid    -> 'pid:[4026531836]'", c: "" },
+      { t: "lrwxrwxrwx 1 kenshin kenshin 0 May 11 user   -> 'user:[4026531837]'", c: "" },
+      { t: "lrwxrwxrwx 1 kenshin kenshin 0 May 11 uts    -> 'uts:[4026531838]'", c: "" },
+    ],
+    explain: {
+      title: "📋 Linuxのnamespace 7種",
+      rows: [
+        ["mnt", "マウント名前空間。コンテナが独自のファイルシステムビューを持つ。", ""],
+        ["pid", "PID名前空間。コンテナ内でPID 1から始まる独立した番号体系。", ""],
+        ["net", "ネットワーク名前空間。独自のNIC、ルーティングテーブルを持つ。", ""],
+        ["user", "ユーザー名前空間。コンテナ内のrootがホストでは別のUIDにマップされる。", ""],
+        ["inode一致", "コンテナとホストで同じinodeならnamespaceが分離されていない→脱出リスク", "🔴 要確認"],
+      ],
+      tip: "<strong>コンテナ脱出の確認：</strong> コンテナ内で <code style='font-size:10px'>ls -la /proc/1/ns/</code> を実行し、ホストの同コマンド結果と inode番号を比較。同じなら分離されていない。",
+    },
+    quiz: {
+      q: "Dockerコンテナのnamespaceのinodeがホストと同じだった場合、何が懸念される？",
+      opts: ["コンテナが適切に分離されていない可能性があり、コンテナ脱出攻撃の足がかりになる", "コンテナが正常に動作していることの証明になる", "Dockerデーモンが壊れている", "ディスクが満杯になっている"],
+      correct: 0,
+      fb: "正解！namespaceのinode番号が一致するということは、そのリソースがホストと共有されていることを意味します。特権コンテナ（--privileged）ではこれが起きやすく、コンテナ脱出の主要な攻撃経路になります。",
+    },
+  },
+];
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let score = 0;
+let state = {}; // missionId -> 'idle'|'done'
+
+// ── BUILD ─────────────────────────────────────────────────────────────────────
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function buildMissions() {
+  const c = document.getElementById('mscreens');
+  MISSIONS.forEach(m => {
+    const d = document.createElement('div');
+    d.className = 'screen mission-screen';
+    d.id = `screen-${m.id}`;
+    d.innerHTML = `
+      <div class="mission-header">
+        <div class="m-meta">${m.meta}</div>
+        <div class="m-title">${esc(m.title)}</div>
+        <div class="m-desc">${esc(m.desc)}</div>
+      </div>
+      <div class="mission-body">
+        <div class="term-col">
+          <div class="terminal">
+            <div class="term-bar">
+              <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+              <span class="term-name">kenshin@wsl2:~$</span>
+            </div>
+            <div class="term-body" id="tb-${m.id}"><span class="t-cursor"></span></div>
+          </div>
+          <div class="cmd-bar">
+            <code>${esc(m.cmd)}</code>
+            <button class="btn btn-primary" id="runBtn-${m.id}" onclick="runCmd(${m.id})">▶ 実行</button>
+          </div>
+        </div>
+        <div class="right-col">
+          <div class="explain-pane">
+            <div class="pane-hidden" id="ex-${m.id}">
+              <div class="pane-title">${m.explain.title}</div>
+              <table class="ex-table">
+                <thead><tr><th>フィールド</th><th>意味</th><th>リスク</th></tr></thead>
+                <tbody>${m.explain.rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${r[2]}</td></tr>`).join('')}</tbody>
+              </table>
+              <div class="tip-box">💡 ${m.explain.tip}</div>
+            </div>
+          </div>
+          <div class="quiz-pane">
+            <div class="pane-hidden" id="qz-${m.id}">
+              <div class="quiz-q">❓ ${esc(m.quiz.q)}</div>
+              <div class="quiz-opts">
+                ${m.quiz.opts.map((o,i)=>`<button class="quiz-opt" id="qo-${m.id}-${i}" onclick="answer(${m.id},${i})">${'ABCD'[i]}. ${esc(o)}</button>`).join('')}
+              </div>
+              <div class="quiz-fb" id="qfb-${m.id}"></div>
+              <div class="quiz-next" id="qnx-${m.id}">
+                <button class="btn btn-ok" onclick="next(${m.id})">次のミッションへ →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    c.appendChild(d);
+  });
+}
+
+// ── NAV ──────────────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const s = document.getElementById(`screen-${id}`);
+  if (s) s.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const n = document.getElementById(`nav-${id}`);
+  if (n) n.classList.add('active');
+}
+function unlock(id) { const n=document.getElementById(`nav-${id}`); if(n){n.classList.remove('locked');} }
+function markDone(id) {
+  const n=document.getElementById(`nav-${id}`);
+  if(!n) return;
+  n.classList.remove('active'); n.classList.add('done');
+  const num=n.querySelector('.nav-num'); if(num) num.textContent='✓';
+}
+function tryNav(id) {
+  const n=document.getElementById(`nav-${id}`);
+  if(n && n.classList.contains('locked')) return;
+  showScreen(id);
+}
+function updateScore() {
+  document.getElementById('scoreDisp').textContent = score;
+  document.getElementById('progBar').style.width = (score/6*100)+'%';
+}
+
+// ── GAME ─────────────────────────────────────────────────────────────────────
+function startGame() { unlock(1); showScreen(1); }
+
+function resetGame() {
+  score=0; state={};
+  updateScore();
+  for(let i=1;i<=7;i++){
+    const n=document.getElementById(`nav-${i}`);
+    if(n){ n.classList.remove('done','active'); n.classList.add('locked'); const num=n.querySelector('.nav-num'); if(num) num.textContent=i<7?String(i):'★'; }
+  }
+  MISSIONS.forEach(m=>{
+    const tb=document.getElementById(`tb-${m.id}`); if(tb) tb.innerHTML='<span class="t-cursor"></span>';
+    const btn=document.getElementById(`runBtn-${m.id}`); if(btn){btn.disabled=false;btn.textContent='▶ 実行';}
+    const ex=document.getElementById(`ex-${m.id}`); if(ex) ex.classList.add('pane-hidden');
+    const qz=document.getElementById(`qz-${m.id}`); if(qz) qz.classList.add('pane-hidden');
+    m.quiz.opts.forEach((_,i)=>{
+      const o=document.getElementById(`qo-${m.id}-${i}`); if(o){o.className='quiz-opt';o.disabled=false;}
+    });
+    const fb=document.getElementById(`qfb-${m.id}`); if(fb){fb.style.display='none';fb.innerHTML='';}
+    const nx=document.getElementById(`qnx-${m.id}`); if(nx) nx.style.display='none';
+  });
+  showScreen(0);
+}
+
+// ── TERMINAL ─────────────────────────────────────────────────────────────────
+function runCmd(id) {
+  if(state[id]) return;
+  state[id]='running';
+  const m=MISSIONS.find(x=>x.id===id);
+  const btn=document.getElementById(`runBtn-${id}`); btn.disabled=true; btn.textContent='実行中...';
+  const tb=document.getElementById(`tb-${id}`); tb.innerHTML='';
+  typeCmd(tb, m.cmd, ()=>{
+    showLines(tb, m.out, 0, ()=>{
+      setTimeout(()=>{
+        const ex=document.getElementById(`ex-${id}`);
+        if(ex){ ex.classList.remove('pane-hidden'); ex.classList.add('fade-in'); }
+        setTimeout(()=>{
+          const qz=document.getElementById(`qz-${id}`);
+          if(qz){ qz.classList.remove('pane-hidden'); qz.classList.add('fade-in'); }
+          btn.textContent='✓ 実行済み';
+        },400);
+      },300);
+    });
+  });
+}
+
+function typeCmd(tb, cmd, done) {
+  const row=document.createElement('div');
+  row.innerHTML='<span class="t-prompt">kenshin@wsl2:~$ </span><span id="ta"></span><span class="t-cursor"></span>';
+  tb.appendChild(row);
+  const ta=row.querySelector('#ta'); const cur=row.querySelector('.t-cursor');
+  let i=0;
+  (function tick(){
+    if(i<cmd.length){ ta.textContent+=cmd[i++]; setTimeout(tick,25+Math.random()*18); }
+    else { cur.style.display='none'; setTimeout(done,180); }
+  })();
+}
+
+function showLines(tb, lines, i, done) {
+  if(i>=lines.length){
+    const r=document.createElement('div');
+    r.innerHTML='<span class="t-prompt">kenshin@wsl2:~$ </span><span class="t-cursor"></span>';
+    tb.appendChild(r); tb.scrollTop=tb.scrollHeight; done(); return;
+  }
+  const l=lines[i]; const d=document.createElement('div');
+  d.className='t-out'+(l.c?' '+l.c:''); d.textContent=l.t||' ';
+  tb.appendChild(d); tb.scrollTop=tb.scrollHeight;
+  setTimeout(()=>showLines(tb,lines,i+1,done), 55+Math.random()*35);
+}
+
+// ── QUIZ ─────────────────────────────────────────────────────────────────────
+function answer(id, chosen) {
+  if(state[id]==='done') return;
+  const m=MISSIONS.find(x=>x.id===id);
+  m.quiz.opts.forEach((_,i)=>{ const o=document.getElementById(`qo-${id}-${i}`); if(o) o.disabled=true; });
+  const correct=m.quiz.correct;
+  const co=document.getElementById(`qo-${id}-${correct}`); if(co) co.classList.add('correct');
+  if(chosen!==correct){ const wo=document.getElementById(`qo-${id}-${chosen}`); if(wo) wo.classList.add('wrong'); }
+  if(chosen===correct) score++;
+  updateScore();
+  const fb=document.getElementById(`qfb-${id}`);
+  fb.innerHTML = chosen===correct
+    ? `<span style="color:var(--success)">✓ 正解！</span> ${m.quiz.fb}`
+    : `<span style="color:var(--error)">✗ 不正解。</span> 正解は「${esc(m.quiz.opts[correct])}」です。<br>${m.quiz.fb}`;
+  fb.style.display='block';
+  const nx=document.getElementById(`qnx-${id}`); if(nx) nx.style.display='block';
+  state[id]='done'; markDone(id);
+}
+
+function next(id) {
+  const nextId=id+1;
+  if(nextId<=6){ unlock(nextId); showScreen(nextId); }
+  else { showFinish(); }
+}
+
+function showFinish() {
+  unlock(7); showScreen(7); markDone(7);
+  document.getElementById('finalNum').textContent=score;
+  const msgs=[
+    [0,1, "もっと学習を続けましょう！", "セキュリティの概念は最初は難しいものです。各ステップの解説をじっくり読んで、再挑戦してみてください。"],
+    [2,3, "もう少し！",                "基礎は少し掴めています。間違えた問題を振り返って、もう一度プレイしてみましょう。"],
+    [4,5, "よくできました！",           `${score}/6問正解。基礎は理解できています。次はTopic 2のコンテナセキュリティに進みましょう。`],
+    [6,6, "完璧！セキュリティエキスパート 🎯", "全問正解！Linux権限モデルの基礎を完全に理解しました。Step 7（危険なsudoers設定の再現演習）にも挑戦しよう。"],
+  ];
+  const row=msgs.find(([lo,hi])=>score>=lo&&score<=hi)||msgs[0];
+  document.getElementById('finTitle').textContent=row[2];
+  document.getElementById('finDesc').textContent=row[3];
+}
+
+// ── BOOT ─────────────────────────────────────────────────────────────────────
+buildMissions();
+</script>
+</body>
+</html>
