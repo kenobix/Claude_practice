@@ -30,10 +30,10 @@
       --font-mono:      'JetBrains Mono', monospace;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; background: var(--bg-base); color: var(--fg-primary); font-family: var(--font-body); overflow: hidden; }
+    html, body { height: 100%; background: var(--bg-base); color: var(--fg-primary); font-family: var(--font-body); }
 
     /* ── LAYOUT ── */
-    .app { display: grid; grid-template-columns: 240px 1fr; grid-template-rows: 52px 1fr; height: 100vh; }
+    .app { display: grid; grid-template-columns: 240px 1fr; grid-template-rows: 52px 1fr; height: 100vh; overflow: hidden; }
 
     /* ── TOPBAR ── */
     .topbar {
@@ -63,9 +63,9 @@
     .nav-item.active .nav-num { background: var(--accent); color: #fff; }
     .nav-item.done   .nav-num { background: rgba(52,211,153,.15); color: var(--success); }
 
-    /* ── MAIN ── */
-    .main { overflow: hidden; display: flex; flex-direction: column; }
-    .screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
+    /* ── MAIN — scrollable ── */
+    .main { overflow-y: auto; display: flex; flex-direction: column; }
+    .screen { display: none; flex-direction: column; min-height: calc(100vh - 52px); }
     .screen.active { display: flex; }
 
     /* ── START ── */
@@ -85,10 +85,10 @@
     .m-desc  { font-size: 12px; color: var(--fg-secondary); margin-top: 3px; line-height: 1.55; }
 
     /* Left column takes 1fr, right is fixed 300px */
-    .mission-body { display: grid; grid-template-columns: 1fr 300px; flex: 1; min-height: 0; }
+    .mission-body { display: grid; grid-template-columns: 1fr 300px; }
 
     /* ── TERMINAL COLUMN ── */
-    .term-col { display: flex; flex-direction: column; padding: 12px; gap: 8px; overflow-y: auto; min-height: 0; }
+    .term-col { display: flex; flex-direction: column; padding: 12px; gap: 8px; }
 
     .terminal { background: #09090E; border: 1px solid var(--border-default); border-radius: 8px; overflow: hidden; flex: 0 0 auto; min-height: 160px; max-height: 260px; display: flex; flex-direction: column; }
     .term-bar { display: flex; align-items: center; gap: 5px; padding: 7px 12px; background: var(--bg-surface); border-bottom: 1px solid var(--border-default); flex-shrink: 0; }
@@ -144,7 +144,7 @@
     .btn-ghost:hover { background: var(--bg-elevated); color: var(--fg-primary); }
 
     /* ── RIGHT COLUMN ── */
-    .right-col { border-left: 1px solid var(--border-default); display: flex; flex-direction: column; overflow-y: auto; }
+    .right-col { border-left: 1px solid var(--border-default); display: flex; flex-direction: column; }
 
     /* Explanation panel */
     .explain-pane { padding: 12px 14px; border-bottom: 1px solid var(--border-default); }
@@ -159,7 +159,14 @@
     .tip-box { background: var(--accent-muted); border: 1px solid rgba(108,99,255,.3); border-radius: 6px; padding: 8px 10px; font-size: 11px; color: var(--accent-light); margin-top: 8px; line-height: 1.6; }
     .tip-box strong { color: var(--fg-primary); }
 
-    /* Quiz panel — now lives in the left column */
+    /* Command explain table in right col */
+    .cmd-ex-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .cmd-ex-table th { text-align: left; padding: 4px 6px; color: var(--fg-tertiary); font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid var(--border-default); }
+    .cmd-ex-table td { padding: 5px 6px; border-bottom: 1px solid var(--border-subtle); vertical-align: top; line-height: 1.4; }
+    .cmd-ex-table td:first-child { font-family: var(--font-mono); color: var(--warning); font-size: 10px; word-break: break-all; padding-right: 8px; min-width: 70px; }
+    .cmd-ex-table td:nth-child(2) { color: var(--fg-secondary); font-size: 10.5px; }
+
+    /* Quiz panel — lives in the left column */
     .quiz-pane { padding: 10px 0; border-top: 1px solid var(--border-default); flex-shrink: 0; }
     .quiz-pane.pane-hidden { display: none; }
     .quiz-q    { font-size: 12px; font-weight: 600; color: var(--fg-primary); margin-bottom: 8px; line-height: 1.5; }
@@ -191,7 +198,7 @@
     .finish-desc  { color: var(--fg-secondary); font-size: 14px; max-width: 420px; line-height: 1.7; }
 
     /* ── UTILS ── */
-    ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
     @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
     .fade-in { animation: fadeIn .3s ease forwards; }
   </style>
@@ -259,8 +266,6 @@
 
 <script>
 // ── DATA ──────────────────────────────────────────────────────────────────────
-// ※ ユーザー名・パス・特権グループなど個人情報は「you」に統一。
-//   認証情報・APIキーは伏字（████）に置換済み。
 const MISSIONS = [
   {
     id: 1, meta: "STEP 1 / 6",
@@ -268,7 +273,6 @@ const MISSIONS = [
     desc: "自分が誰で、どんな権限グループに属しているかを確認します。これが全ての権限調査の出発点です。",
     cmd: 'id && grep "^$(whoami):" /etc/passwd',
     out: [
-      // ユーザー名・固有グループは伏字
       { t: 'uid=1000(<span class="redacted">&lt;username&gt;</span>) gid=1000(<span class="redacted">&lt;username&gt;</span>) groups=1000(<span class="redacted">&lt;username&gt;</span>),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),100(users)', c: "hl", html: true },
       { t: '<span class="redacted">&lt;username&gt;</span>:x:1000:1000:,,,:/home/<span class="redacted">&lt;username&gt;</span>:/bin/bash', c: "", html: true },
     ],
@@ -283,6 +287,13 @@ const MISSIONS = [
       ],
       tip: "<strong>攻撃者視点：</strong> sudoグループ確認は権限昇格の第一歩。sudoersで何が許可されているかが次の焦点になる。",
     },
+    cmdExplain: [
+      { part: "id", desc: "現在のユーザーのUID・GID・所属グループ一覧を表示する組み込みコマンド" },
+      { part: "&&", desc: "左のコマンドが正常終了（終了コード0）した場合のみ右を実行するシェル演算子" },
+      { part: "grep", desc: "テキストパターンでファイルを検索するコマンド" },
+      { part: '"^$(whoami):"', desc: '検索パターン。^は行頭、$(whoami)は現在のユーザー名に展開、:はフィールド区切り文字' },
+      { part: "/etc/passwd", desc: "ユーザーアカウント情報が記載されたシステムファイル（パスワードは/etc/shadowに格納）" },
+    ],
     quiz: {
       q: "sudoグループ（27）に属しているユーザーが持つ能力は？",
       opts: ["rootとして全コマンドを実行できる（sudoers設定次第）", "ファイルを見るだけで変更はできない", "ネットワーク管理のみ可能", "グループメンバーを追加できる"],
@@ -313,6 +324,12 @@ const MISSIONS = [
       ],
       tip: "<strong>危険なCapabilityの例：</strong> CAP_NET_RAW（rawソケット=スニッフィング）、CAP_SYS_ADMIN（ほぼroot相当）、CAP_SETUID（任意のUIDに変更可能）。DockerでCAP_SYS_ADMINを付与するとコンテナ脱出リスクが高まる。",
     },
+    cmdExplain: [
+      { part: "cat", desc: "ファイルの内容を標準出力に表示するコマンド" },
+      { part: "/proc/self/status", desc: "仮想ファイルシステム。/proc/selfは実行中の自プロセスを指す。statusにはUID・GID・Capability等の詳細情報が含まれる" },
+      { part: "|", desc: "パイプ演算子。左コマンドの標準出力を右コマンドの標準入力に繋げる" },
+      { part: "grep -i cap", desc: "-iは大文字小文字を無視するオプション。\"cap\"を含む行（Capability関連）のみを抽出する" },
+    ],
     quiz: {
       q: "CapEff: 0000000000000000 が意味することは？",
       opts: ["現在のプロセスに有効な特権がない（通常ユーザーとして安全）", "メモリが空の状態", "プロセスがすでに終了している", "rootの全権限を持っている"],
@@ -346,6 +363,12 @@ const MISSIONS = [
       ],
       tip: "<strong>GTFOBins（gtfobins.github.io）：</strong> SUIDバイナリの悪用手順集。例えば find に SUID があれば <code style='font-size:10px'>find . -exec /bin/bash -p \\;</code> でrootシェルが起動する。",
     },
+    cmdExplain: [
+      { part: "find /usr /bin /sbin", desc: "指定した3つのディレクトリ以下を再帰的に検索するコマンド" },
+      { part: "-perm -4000", desc: "パーミッションビットの検索。4000はSUIDビット。先頭の-は「このビットが含まれていれば一致」を意味する" },
+      { part: "-type f", desc: "通常ファイルのみを対象にする（ディレクトリやシンボリックリンクを除外）" },
+      { part: "2>/dev/null", desc: "標準エラー出力（fd 2）を/dev/null（破棄）にリダイレクト。権限がないディレクトリのエラーを非表示にする" },
+    ],
     quiz: {
       q: "SUIDビットが設定されたバイナリを一般ユーザーが実行すると？",
       opts: ["バイナリのオーナー（多くはroot）の権限で実行される", "常にrootで実行される（オーナー関係なく）", "実行が拒否される", "一般ユーザー権限のままで実行される"],
@@ -374,8 +397,12 @@ const MISSIONS = [
         ["NOPASSWD: /usr/bin/find", "NOPASSWD+findは即座にGTFOBins昇格が可能", "🔴 危険"],
         ["! (否定)", "ブラックリスト方式は迂回可能なことが多い。ホワイトリスト推奨。", "⚠ 危険"],
       ],
-      tip: "<strong>演習（Step 7）：</strong> testuser に NOPASSWD: /usr/bin/vim を与えると、<code style='font-size:10px'>sudo vim -c ':!/bin/bash'</code> でrootシェルが起動する。この演習を自分の環境でぜひ試してみよう。",
+      tip: "<strong>演習：</strong> testuser に NOPASSWD: /usr/bin/vim を与えると、<code style='font-size:10px'>sudo vim -c ':!/bin/bash'</code> でrootシェルが起動する。この演習を自分の環境でぜひ試してみよう。",
     },
+    cmdExplain: [
+      { part: "sudo", desc: "Superuser Do。別のユーザー（デフォルトはroot）の権限でコマンドを実行するツール" },
+      { part: "-l", desc: "--listの省略形。/etc/sudoersの設定に基づき、自分が実行可能なsudoコマンドの一覧を表示する（実際にはコマンドを実行しない）" },
+    ],
     quiz: {
       q: "sudoersに「NOPASSWD: /usr/bin/vim」があった場合の問題点は？",
       opts: ["vimのシェルコマンド機能(:!/bin/bash)でrootシェルを起動できる", "vimのファイルが破損する", "パスワードが変更される", "ネットワーク接続が切断される"],
@@ -394,7 +421,6 @@ const MISSIONS = [
       { t: "USER=you",        c: "" },
       { t: "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", c: "" },
       { t: "TERM=xterm-256color", c: "" },
-      // 以下2行：実際の認証情報に見立てたデモ（伏字で表示）
       { t: 'API_KEY=<span class="redacted">&lt;API_KEY&gt;</span>', c: "dng", html: true },
       { t: 'DATABASE_URL=postgres://admin:<span class="redacted">&lt;password&gt;</span>@db.internal:5432/prod', c: "dng", html: true },
     ],
@@ -408,6 +434,12 @@ const MISSIONS = [
       ],
       tip: "<strong>教訓：</strong> APIキーやパスワードを環境変数に置くのは一般的だが、/proc経由で読まれるリスクがある。コンテナではsecrets管理ツール（Vault, AWS SSM等）を使うべき。",
     },
+    cmdExplain: [
+      { part: "cat", desc: "ファイルの内容を標準出力に表示するコマンド" },
+      { part: "/proc/$$/environ", desc: "$$は現在のシェルのPID（プロセスID）に展開される。/proc/[PID]/environには、そのプロセスの環境変数がすべてヌル文字区切りで格納されている" },
+      { part: "|", desc: "パイプ演算子。左の出力を右の入力に渡す" },
+      { part: "tr '\\0' '\\n'", desc: "文字変換コマンド。ヌル文字（\\0）を改行（\\n）に置換する。環境変数はヌル区切りで保存されているため、人間が読める形式に変換するために必要" },
+    ],
     quiz: {
       q: "環境変数にAPIキーを設定した場合のセキュリティリスクは？",
       opts: ["/proc/[PID]/environ経由で同一ホストの他プロセスから読まれることがある", "プログラムの実行速度が低下する", "ログインができなくなる", "ファイルが自動削除される"],
@@ -440,6 +472,12 @@ const MISSIONS = [
       ],
       tip: "<strong>コンテナ脱出の確認：</strong> コンテナ内で <code style='font-size:10px'>ls -la /proc/1/ns/</code> を実行し、ホストと inode番号を比較。同じなら分離されていない。",
     },
+    cmdExplain: [
+      { part: "ls", desc: "ディレクトリの内容を一覧表示するコマンド" },
+      { part: "-l", desc: "ロング形式で表示。権限・オーナー・サイズ・更新日時を含む詳細情報を表示する" },
+      { part: "-a", desc: "隠しファイル（.から始まるファイル）も含めてすべて表示する" },
+      { part: "/proc/$$/ns/", desc: "$$は現在のシェルのPID。ns/ディレクトリには各種namespace（mnt・pid・net・user等）へのシンボリックリンクが入っている。リンク先のinode番号でnamespace共有を識別できる" },
+    ],
     quiz: {
       q: "Dockerコンテナのnamespaceのinodeがホストと同じだった場合、何が懸念される？",
       opts: ["コンテナが適切に分離されていない可能性があり、コンテナ脱出攻撃の足がかりになる", "コンテナが正常に動作していることの証明になる", "Dockerデーモンが壊れている", "ディスクが満杯になっている"],
@@ -451,15 +489,30 @@ const MISSIONS = [
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let score = 0;
-let state = {}; // missionId -> 'running' | 'done'
+let state = {};
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 // ── BUILD MISSION SCREENS ─────────────────────────────────────────────────────
 function buildMissions() {
   const c = document.getElementById('mscreens');
   MISSIONS.forEach(m => {
+    // Shuffle quiz options, track the new correct index
+    const correctOpt = m.quiz.opts[m.quiz.correct];
+    const shuffled = shuffleArray(m.quiz.opts);
+    m.quiz.opts = shuffled;
+    m.quiz.correct = shuffled.indexOf(correctOpt);
+
     const d = document.createElement('div');
     d.className = 'screen mission-screen';
     d.id = `screen-${m.id}`;
@@ -478,9 +531,7 @@ function buildMissions() {
               <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
               <span class="term-name">you@wsl2:~$  —  bash</span>
             </div>
-            <!-- Output history -->
             <div class="term-output" id="to-${m.id}"></div>
-            <!-- Interactive input -->
             <div class="term-input-row">
               <span class="term-prompt-lbl">you@wsl2:~$&nbsp;</span>
               <input
@@ -517,7 +568,7 @@ function buildMissions() {
           </div>
         </div>
 
-        <!-- RIGHT: Explanation only -->
+        <!-- RIGHT: Explanation + Command breakdown -->
         <div class="right-col">
           <div class="explain-pane">
             <div class="pane-hidden" id="ex-${m.id}">
@@ -529,7 +580,14 @@ function buildMissions() {
               <div class="tip-box">💡 ${m.explain.tip}</div>
             </div>
           </div>
-          <div style="display:none" id="qz-dummy-${m.id}">
+          <div class="explain-pane">
+            <div class="pane-hidden" id="cmdex-${m.id}">
+              <div class="pane-title">🔍 コマンドの解説</div>
+              <table class="cmd-ex-table">
+                <thead><tr><th>部分</th><th>意味</th></tr></thead>
+                <tbody>${m.cmdExplain.map(r=>`<tr><td>${esc(r.part)}</td><td>${esc(r.desc)}</td></tr>`).join('')}</tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -546,6 +604,9 @@ function showScreen(id) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const n = document.getElementById(`nav-${id}`);
   if (n) { n.classList.add('active'); }
+  // Scroll main back to top when changing screens
+  const main = document.querySelector('.main');
+  if (main) main.scrollTop = 0;
   // Auto-focus the terminal input when showing a mission screen
   if (id >= 1 && id <= 6) {
     setTimeout(() => {
@@ -602,6 +663,7 @@ function resetGame() {
     const inp  = document.getElementById(`tinput-${m.id}`); if (inp)  { inp.value = ''; inp.disabled = false; }
     const btn  = document.getElementById(`runBtn-${m.id}`); if (btn)  { btn.disabled = false; btn.textContent = '▶ 実行'; }
     const ex   = document.getElementById(`ex-${m.id}`);    if (ex)   ex.classList.add('pane-hidden');
+    const cmdex= document.getElementById(`cmdex-${m.id}`); if (cmdex) cmdex.classList.add('pane-hidden');
     const qz   = document.getElementById(`qz-${m.id}`);    if (qz)   qz.classList.add('pane-hidden');
     const nb   = document.getElementById(`nextbar-${m.id}`); if (nb) nb.style.display = 'none';
     m.quiz.opts.forEach((_, i) => {
@@ -655,7 +717,6 @@ function autoRun(id) {
   const inp = document.getElementById(`tinput-${id}`);
   inp.disabled = true;
   inp.value = m.cmd;
-  // brief pause so user sees the filled command
   setTimeout(() => runWithTyped(id, m.cmd), 200);
 }
 
@@ -669,19 +730,17 @@ function runWithTyped(id, typedCmd) {
 
   const to = document.getElementById(`to-${id}`);
 
-  // Show the typed command line in output
   const cmdLine = document.createElement('div');
   cmdLine.innerHTML = `<span class="t-prompt">you@wsl2:~$&nbsp;</span><span class="t-cmd">${esc(typedCmd)}</span>`;
   to.appendChild(cmdLine);
 
-  // Stream output lines
   showLines(to, m.out, 0, () => {
     btn.textContent = '✓ 実行済み';
-    // Reveal explanation panel
     setTimeout(() => {
       const ex = document.getElementById(`ex-${id}`);
       if (ex) { ex.classList.remove('pane-hidden'); ex.classList.add('fade-in'); }
-      // Reveal quiz panel shortly after
+      const cmdex = document.getElementById(`cmdex-${id}`);
+      if (cmdex) { cmdex.classList.remove('pane-hidden'); cmdex.classList.add('fade-in'); }
       setTimeout(() => {
         const qz = document.getElementById(`qz-${id}`);
         if (qz) { qz.classList.remove('pane-hidden'); qz.classList.add('fade-in'); }
@@ -701,7 +760,7 @@ function showLines(to, lines, i, done) {
   if (l.html) {
     d.innerHTML = l.t;
   } else {
-    d.textContent = l.t || ' ';
+    d.textContent = l.t || ' ';
   }
   to.appendChild(d);
   to.scrollTop = to.scrollHeight;
@@ -713,13 +772,11 @@ function answer(id, chosen) {
   if (state[id] === 'done') return;
   const m = MISSIONS.find(x => x.id === id);
 
-  // Disable all options
   m.quiz.opts.forEach((_, i) => {
     const o = document.getElementById(`qo-${id}-${i}`);
     if (o) o.disabled = true;
   });
 
-  // Mark correct / wrong
   const correct = m.quiz.correct;
   const co = document.getElementById(`qo-${id}-${correct}`);
   if (co) co.classList.add('correct');
@@ -732,19 +789,20 @@ function answer(id, chosen) {
   if (isCorrect) score++;
   updateScore();
 
-  // Show feedback
   const fb = document.getElementById(`qfb-${id}`);
   fb.innerHTML = isCorrect
     ? `<span style="color:var(--success)">✓ 正解！</span> ${m.quiz.fb}`
     : `<span style="color:var(--error)">✗ 不正解。</span> 正解は「${esc(m.quiz.opts[correct])}」です。<br>${m.quiz.fb}`;
   fb.style.display = 'block';
 
-  // Show "Next mission" button in the LEFT column (always visible)
   const nb = document.getElementById(`nextbar-${id}`);
   if (nb) {
     nb.style.display = 'block';
     nb.classList.add('fade-in');
-    nb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Scroll the main area to show the next button
+    setTimeout(() => {
+      nb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
   }
 
   state[id] = 'done';
@@ -769,7 +827,7 @@ function showFinish() {
     [0, 1, "もっと学習を続けましょう！",      "セキュリティの概念は最初は難しいものです。各ステップの解説をじっくり読んで、再挑戦してみてください。"],
     [2, 3, "もう少し！",                      `${score}/6問正解。基礎は少し掴めています。間違えた問題を振り返って、もう一度プレイしてみましょう。`],
     [4, 5, "よくできました！",                `${score}/6問正解。基礎は理解できています。次はTopic 2のコンテナセキュリティに進みましょう。`],
-    [6, 6, "完璧！セキュリティエキスパート 🎯", "全問正解！Linux権限モデルの基礎を完全に理解しました。Step 7（危険なsudoers設定の再現演習）にも挑戦しよう。"],
+    [6, 6, "完璧！セキュリティエキスパート", "全問正解！Linux権限モデルの基礎を完全に理解しました。Step 7（危険なsudoers設定の再現演習）にも挑戦しよう。"],
   ];
   const row = tbl.find(([lo, hi]) => score >= lo && score <= hi) || tbl[0];
   document.getElementById('finTitle').textContent = row[2];
