@@ -12,7 +12,6 @@
       --bg-base:        #0D0D12;
       --bg-surface:     #16161F;
       --bg-elevated:    #1E1E2A;
-      --bg-overlay:     #252533;
       --border-subtle:  #1E1E2A;
       --border-default: #2A2A38;
       --border-strong:  #3D3D52;
@@ -23,11 +22,9 @@
       --accent-hover:   #7C74FF;
       --accent-muted:   #2D2B5A;
       --accent-light:   #A78BFA;
-      --accent-glow:    rgba(108,99,255,0.15);
       --success:        #34D399;
       --warning:        #FBBF24;
       --error:          #F87171;
-      --info:           #60A5FA;
       --font-display:   'Syne', sans-serif;
       --font-body:      'DM Sans', sans-serif;
       --font-mono:      'JetBrains Mono', monospace;
@@ -36,7 +33,7 @@
     html, body { height: 100%; background: var(--bg-base); color: var(--fg-primary); font-family: var(--font-body); overflow: hidden; }
 
     /* ── LAYOUT ── */
-    .app { display: grid; grid-template-columns: 250px 1fr; grid-template-rows: 52px 1fr; height: 100vh; }
+    .app { display: grid; grid-template-columns: 240px 1fr; grid-template-rows: 52px 1fr; height: 100vh; }
 
     /* ── TOPBAR ── */
     .topbar {
@@ -46,8 +43,8 @@
       background: var(--bg-surface);
       border-bottom: 1px solid var(--border-default);
     }
-    .logo { font-family: var(--font-display); font-size: 14px; font-weight: 800; letter-spacing: 0.1em; color: var(--accent-light); }
-    .sep  { width: 1px; height: 18px; background: var(--border-default); }
+    .logo  { font-family: var(--font-display); font-size: 13px; font-weight: 800; letter-spacing: .12em; color: var(--accent-light); }
+    .sep   { width: 1px; height: 18px; background: var(--border-default); }
     .topbar-title { font-size: 13px; color: var(--fg-secondary); }
     .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--fg-secondary); }
     .score-val { color: var(--success); font-weight: 700; }
@@ -55,26 +52,14 @@
     .prog-bar  { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-light)); border-radius: 9px; transition: width .4s ease; }
 
     /* ── SIDEBAR ── */
-    .sidebar {
-      background: var(--bg-surface); border-right: 1px solid var(--border-default);
-      padding: 16px 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;
-    }
+    .sidebar { background: var(--bg-surface); border-right: 1px solid var(--border-default); padding: 14px 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
     .sidebar-label { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-tertiary); padding: 8px 10px 4px; }
-    .nav-item {
-      display: flex; align-items: center; gap: 8px;
-      padding: 7px 10px; border-radius: 6px; cursor: pointer;
-      font-size: 12px; color: var(--fg-secondary); transition: background .15s;
-    }
+    .nav-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--fg-secondary); transition: background .15s; user-select: none; }
     .nav-item:hover:not(.locked) { background: var(--bg-elevated); color: var(--fg-primary); }
     .nav-item.active  { background: var(--accent-muted); color: var(--fg-primary); }
     .nav-item.done    { color: var(--success); }
-    .nav-item.locked  { opacity: .35; cursor: not-allowed; }
-    .nav-num {
-      width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 10px; font-weight: 700; font-family: var(--font-mono);
-      background: var(--bg-elevated); color: var(--fg-tertiary);
-    }
+    .nav-item.locked  { opacity: .32; cursor: not-allowed; }
+    .nav-num { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; font-family: var(--font-mono); background: var(--bg-elevated); color: var(--fg-tertiary); }
     .nav-item.active .nav-num { background: var(--accent); color: #fff; }
     .nav-item.done   .nav-num { background: rgba(52,211,153,.15); color: var(--success); }
 
@@ -84,11 +69,9 @@
     .screen.active { display: flex; }
 
     /* ── START ── */
-    .start-screen {
-      align-items: center; justify-content: center; text-align: center; gap: 20px; padding: 40px;
-    }
+    .start-screen { align-items: center; justify-content: center; text-align: center; gap: 18px; padding: 40px; }
     .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
-    .hero-title { font-family: var(--font-display); font-size: clamp(1.8rem,3vw,2.6rem); font-weight: 800; line-height: 1.1; letter-spacing: -.02em; }
+    .hero-title { font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 800; line-height: 1.1; letter-spacing: -.02em; }
     .hero-title span { color: var(--accent-light); }
     .hero-desc { max-width: 460px; color: var(--fg-secondary); font-size: 14px; line-height: 1.7; }
     .badge-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
@@ -96,30 +79,25 @@
     .badge.hi { border-color: var(--accent-muted); color: var(--accent-light); background: var(--accent-muted); }
 
     /* ── MISSION ── */
-    .mission-header { padding: 14px 20px 10px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; }
-    .m-meta  { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 3px; }
-    .m-title { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; }
+    .mission-header { padding: 12px 20px 10px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; }
+    .m-meta  { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; }
+    .m-title { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; }
     .m-desc  { font-size: 12px; color: var(--fg-secondary); margin-top: 3px; line-height: 1.55; }
 
-    .mission-body { display: grid; grid-template-columns: 1fr 320px; flex: 1; overflow: hidden; }
+    /* Left column takes 1fr, right is fixed 300px */
+    .mission-body { display: grid; grid-template-columns: 1fr 300px; flex: 1; min-height: 0; }
 
-    /* ── TERMINAL ── */
-    .term-col { display: flex; flex-direction: column; padding: 14px; gap: 10px; overflow: hidden; }
-    .terminal {
-      background: #09090E; border: 1px solid var(--border-default); border-radius: 8px;
-      overflow: hidden; flex: 1; display: flex; flex-direction: column;
-    }
-    .term-bar {
-      display: flex; align-items: center; gap: 5px; padding: 7px 12px;
-      background: var(--bg-surface); border-bottom: 1px solid var(--border-default); flex-shrink: 0;
-    }
-    .dot { width: 11px; height: 11px; border-radius: 50%; }
+    /* ── TERMINAL COLUMN ── */
+    .term-col { display: flex; flex-direction: column; padding: 12px; gap: 8px; overflow: hidden; min-height: 0; }
+
+    .terminal { background: #09090E; border: 1px solid var(--border-default); border-radius: 8px; overflow: hidden; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .term-bar { display: flex; align-items: center; gap: 5px; padding: 7px 12px; background: var(--bg-surface); border-bottom: 1px solid var(--border-default); flex-shrink: 0; }
+    .dot   { width: 11px; height: 11px; border-radius: 50%; }
     .dot-r { background: #FF5F57; } .dot-y { background: #FFBD2E; } .dot-g { background: #28C840; }
     .term-name { margin-left: 8px; font-family: var(--font-mono); font-size: 11px; color: var(--fg-tertiary); }
-    .term-body {
-      flex: 1; overflow-y: auto; padding: 14px;
-      font-family: var(--font-mono); font-size: 12.5px; line-height: 1.7;
-    }
+
+    /* Output area — scrollable */
+    .term-output { flex: 1; overflow-y: auto; padding: 12px 14px 6px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.75; }
     .t-prompt { color: var(--accent-light); }
     .t-cmd    { color: var(--fg-primary); }
     .t-out    { color: #7A8A5A; white-space: pre-wrap; }
@@ -129,67 +107,75 @@
     .t-cursor  { display: inline-block; width: 7px; height: 1em; background: var(--accent); vertical-align: text-bottom; animation: blink 1s step-end infinite; }
     @keyframes blink { 50% { opacity: 0; } }
 
-    .cmd-bar {
-      background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: 6px;
-      padding: 10px 14px; display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    /* Input row — always visible at bottom of terminal */
+    .term-input-row {
+      flex-shrink: 0;
+      display: flex; align-items: center;
+      padding: 6px 14px 8px;
+      border-top: 1px solid var(--border-subtle);
+      gap: 0;
     }
-    .cmd-bar code { font-family: var(--font-mono); font-size: 12px; color: var(--accent-light); flex: 1; word-break: break-all; }
+    .term-prompt-lbl { font-family: var(--font-mono); font-size: 12.5px; color: var(--accent-light); white-space: nowrap; }
+    .term-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--fg-primary); font-family: var(--font-mono); font-size: 12.5px;
+      caret-color: var(--accent);
+    }
+    .term-input::placeholder { color: var(--fg-tertiary); font-size: 11px; }
+    .term-input:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* Command hint bar */
+    .cmd-bar { background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: 6px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .cmd-hint { font-size: 10px; color: var(--fg-tertiary); white-space: nowrap; }
+    .cmd-bar code { font-family: var(--font-mono); font-size: 11.5px; color: var(--accent-light); flex: 1; word-break: break-all; }
+
+    /* Next mission bar — hidden until quiz done */
+    .next-bar { display: none; flex-shrink: 0; }
+    .next-bar button { width: 100%; }
 
     /* ── BUTTONS ── */
-    .btn {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 7px 16px; border-radius: 6px; border: none;
-      font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s;
-    }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 7px 16px; border-radius: 6px; border: none; font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; }
     .btn-primary { background: var(--accent); color: #fff; }
     .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
-    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
-    .btn-ok { background: rgba(52,211,153,.12); color: var(--success); border: 1px solid rgba(52,211,153,.3); }
+    .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-ok { background: rgba(52,211,153,.12); color: var(--success); border: 1px solid rgba(52,211,153,.3); font-size: 14px; font-weight: 600; }
+    .btn-ok:hover { background: rgba(52,211,153,.2); }
     .btn-ghost { background: transparent; color: var(--fg-secondary); border: 1px solid var(--border-default); }
     .btn-ghost:hover { background: var(--bg-elevated); color: var(--fg-primary); }
 
-    /* ── RIGHT PANEL ── */
-    .right-col { border-left: 1px solid var(--border-default); overflow-y: auto; display: flex; flex-direction: column; }
-    .explain-pane { padding: 14px; flex: 1; }
-    .pane-hidden { display: none; }
+    /* ── RIGHT COLUMN ── */
+    .right-col { border-left: 1px solid var(--border-default); display: flex; flex-direction: column; overflow-y: auto; }
 
-    .pane-title { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-tertiary); margin-bottom: 10px; }
+    /* Explanation panel */
+    .explain-pane { padding: 12px 14px; border-bottom: 1px solid var(--border-default); }
+    .pane-hidden  { display: none; }
+    .pane-title { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-tertiary); margin-bottom: 8px; }
     .ex-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-    .ex-table th { text-align: left; padding: 5px 6px; color: var(--fg-tertiary); font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid var(--border-default); }
-    .ex-table td { padding: 7px 6px; border-bottom: 1px solid var(--border-subtle); vertical-align: top; line-height: 1.5; }
-    .ex-table td:first-child { font-family: var(--font-mono); color: var(--accent-light); font-size: 10.5px; white-space: nowrap; padding-right: 8px; }
+    .ex-table th { text-align: left; padding: 4px 6px; color: var(--fg-tertiary); font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid var(--border-default); }
+    .ex-table td { padding: 6px 6px; border-bottom: 1px solid var(--border-subtle); vertical-align: top; line-height: 1.45; }
+    .ex-table td:first-child { font-family: var(--font-mono); color: var(--accent-light); font-size: 10px; white-space: nowrap; padding-right: 8px; }
     .ex-table td:nth-child(2) { color: var(--fg-secondary); }
     .ex-table td:nth-child(3) { font-size: 10px; white-space: nowrap; }
-
-    .tip-box {
-      background: var(--accent-muted); border: 1px solid rgba(108,99,255,.3); border-radius: 6px;
-      padding: 9px 11px; font-size: 11px; color: var(--accent-light); margin-top: 10px; line-height: 1.6;
-    }
+    .tip-box { background: var(--accent-muted); border: 1px solid rgba(108,99,255,.3); border-radius: 6px; padding: 8px 10px; font-size: 11px; color: var(--accent-light); margin-top: 8px; line-height: 1.6; }
     .tip-box strong { color: var(--fg-primary); }
 
-    /* ── QUIZ ── */
-    .quiz-pane { border-top: 1px solid var(--border-default); padding: 14px; flex-shrink: 0; }
-    .quiz-q { font-size: 12px; font-weight: 600; color: var(--fg-primary); margin-bottom: 8px; line-height: 1.5; }
+    /* Quiz panel */
+    .quiz-pane { padding: 12px 14px; }
+    .quiz-q    { font-size: 12px; font-weight: 600; color: var(--fg-primary); margin-bottom: 8px; line-height: 1.5; }
     .quiz-opts { display: flex; flex-direction: column; gap: 5px; }
-    .quiz-opt {
-      padding: 7px 10px; border: 1px solid var(--border-default); border-radius: 5px;
-      font-size: 11px; cursor: pointer; transition: all .15s; color: var(--fg-secondary);
-      background: transparent; text-align: left; line-height: 1.4;
-    }
+    .quiz-opt  { padding: 7px 10px; border: 1px solid var(--border-default); border-radius: 5px; font-size: 11px; cursor: pointer; transition: all .15s; color: var(--fg-secondary); background: transparent; text-align: left; line-height: 1.4; }
     .quiz-opt:hover:not(:disabled) { border-color: var(--accent); color: var(--fg-primary); background: var(--accent-muted); }
     .quiz-opt:disabled { cursor: not-allowed; }
     .quiz-opt.correct { border-color: var(--success); color: var(--success); background: rgba(52,211,153,.07); }
     .quiz-opt.wrong   { border-color: var(--error);   color: var(--error);   background: rgba(248,113,113,.07); }
-    .quiz-fb { margin-top: 9px; font-size: 11px; line-height: 1.6; color: var(--fg-secondary); display: none; }
-    .quiz-next { margin-top: 10px; display: none; }
+    .quiz-fb  { margin-top: 8px; font-size: 11px; line-height: 1.6; color: var(--fg-secondary); display: none; }
+
+    /* Redacted text style */
+    .redacted { background: var(--fg-tertiary); color: transparent; border-radius: 2px; user-select: none; letter-spacing: .05em; }
 
     /* ── FINISH ── */
     .finish-screen { align-items: center; justify-content: center; gap: 18px; text-align: center; padding: 40px; }
-    .ring {
-      width: 96px; height: 96px; border-radius: 50%; border: 3px solid var(--accent);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      box-shadow: 0 0 32px rgba(108,99,255,.3);
-    }
+    .ring { width: 96px; height: 96px; border-radius: 50%; border: 3px solid var(--accent); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 0 32px rgba(108,99,255,.3); }
     .ring-num { font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: var(--accent-light); line-height: 1; }
     .ring-max { font-size: 11px; color: var(--fg-tertiary); }
     .finish-title { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; }
@@ -197,7 +183,7 @@
 
     /* ── UTILS ── */
     ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
-    @keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
     .fade-in { animation: fadeIn .3s ease forwards; }
   </style>
 </head>
@@ -216,7 +202,7 @@
   </header>
 
   <!-- SIDEBAR -->
-  <nav class="sidebar" id="sidebar">
+  <nav class="sidebar">
     <div class="sidebar-label">ミッション</div>
     <div class="nav-item active" id="nav-0" onclick="tryNav(0)"><div class="nav-num">▶</div>イントロ</div>
     <div class="nav-item locked" id="nav-1" onclick="tryNav(1)"><div class="nav-num">1</div>アイデンティティ確認</div>
@@ -231,24 +217,24 @@
   <!-- MAIN -->
   <main class="main">
 
-    <!-- START -->
+    <!-- START SCREEN -->
     <div class="screen start-screen active" id="screen-0">
       <div class="eyebrow">WSL2 セキュリティラボ — Topic 1</div>
       <h1 class="hero-title">Linux <span>権限</span>の<br>仕組みを学ぶ</h1>
-      <p class="hero-desc">実際のコマンドを「実行」しながら、<strong>UID/GID・Capability・SUID・sudo・/proc・namespace</strong> の動作原理を体験形式で理解します。各ステップに解説とクイズがあります。</p>
+      <p class="hero-desc">実際のコマンドを入力・実行しながら、<strong>UID/GID・Capability・SUID・sudo・/proc・namespace</strong> の動作原理を体験形式で理解します。各ステップに解説とクイズがあります。</p>
       <div class="badge-row">
         <div class="badge hi">6ミッション</div>
+        <div class="badge">コマンド入力可</div>
         <div class="badge">クイズ×6</div>
-        <div class="badge">初心者向け解説</div>
         <div class="badge">CTF / ペネトレ基礎</div>
       </div>
       <button class="btn btn-primary" onclick="startGame()">▶ ミッション開始</button>
     </div>
 
-    <!-- MISSION SCREENS (generated) -->
+    <!-- MISSION SCREENS (generated by JS) -->
     <div id="mscreens"></div>
 
-    <!-- FINISH -->
+    <!-- FINISH SCREEN -->
     <div class="screen finish-screen" id="screen-7">
       <div class="ring">
         <div class="ring-num" id="finalNum">0</div>
@@ -264,6 +250,8 @@
 
 <script>
 // ── DATA ──────────────────────────────────────────────────────────────────────
+// ※ ユーザー名・パス・特権グループなど個人情報は「you」に統一。
+//   認証情報・APIキーは伏字（████）に置換済み。
 const MISSIONS = [
   {
     id: 1, meta: "STEP 1 / 6",
@@ -271,18 +259,18 @@ const MISSIONS = [
     desc: "自分が誰で、どんな権限グループに属しているかを確認します。これが全ての権限調査の出発点です。",
     cmd: 'id && grep "^$(whoami):" /etc/passwd',
     out: [
-      { t: "uid=1000(kenshin) gid=1000(kenshin) groups=1000(kenshin),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),100(users),989(ollama)", c: "hl" },
-      { t: "kenshin:x:1000:1000:,,,:/home/kenshin:/bin/bash", c: "" },
+      // ユーザー名・固有グループは伏字
+      { t: 'uid=1000(<span class="redacted">████</span>) gid=1000(<span class="redacted">████</span>) groups=1000(<span class="redacted">████</span>),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),100(users)', c: "hl", html: true },
+      { t: '<span class="redacted">████</span>:x:1000:1000:,,,:/home/<span class="redacted">████</span>:/bin/bash', c: "", html: true },
     ],
     explain: {
       title: "📋 出力の読み方",
       rows: [
-        ["uid=1000(kenshin)", "ユーザーID。1000以上は一般ユーザー。0はrootを意味する。", ""],
-        ["27(sudo)", "sudoグループ。rootコマンドを借りられる資格を持つ。", "⚠ 要注意"],
-        ["4(adm)", "管理グループ。/var/log全体が読める。ログに認証情報が流れることも。", "⚠ 要注意"],
-        ["989(ollama)", "ollamaソケットに接続可能。AIデーモンを操作できる。", ""],
-        [":x:", "/etc/passwdの2フィールド目。xはパスワードが/etc/shadowに移っている証拠。", ""],
-        ["/bin/bash", "ログインシェル。/sbin/nologinなら対話ログイン不可。", ""],
+        ["uid=1000(you)", "ユーザーID。1000以上は一般ユーザー。0はrootを意味する。", ""],
+        ["27(sudo)",  "sudoグループ。rootコマンドを借りられる資格を持つ。", "⚠ 要注意"],
+        ["4(adm)",   "管理グループ。/var/log全体が読める。ログに認証情報が流れることも。", "⚠ 要注意"],
+        [":x:",      "/etc/passwdの2フィールド目。xはパスワードが/etc/shadowに移っている証拠。", ""],
+        ["/bin/bash","ログインシェル。/sbin/nologinなら対話ログイン不可。", ""],
       ],
       tip: "<strong>攻撃者視点：</strong> sudoグループ確認は権限昇格の第一歩。sudoersで何が許可されているかが次の焦点になる。",
     },
@@ -290,7 +278,7 @@ const MISSIONS = [
       q: "sudoグループ（27）に属しているユーザーが持つ能力は？",
       opts: ["rootとして全コマンドを実行できる（sudoers設定次第）", "ファイルを見るだけで変更はできない", "ネットワーク管理のみ可能", "グループメンバーを追加できる"],
       correct: 0,
-      fb: "正解！sudoグループはあくまで sudo コマンドを<em>使う資格</em>があるというだけ。実際に何ができるかは /etc/sudoers の設定次第です。(ALL:ALL) ALL ならroot相当の全権限を持ちます。",
+      fb: "正解！sudoグループはあくまで sudo コマンドを<em>使う資格</em>があるというだけ。実際に何ができるかは /etc/sudoers の設定次第。(ALL:ALL) ALL ならroot相当の全権限を持つ。",
     },
   },
   {
@@ -362,11 +350,11 @@ const MISSIONS = [
     desc: "sudo -l で、自分がsudoを使って実行できるコマンドを一覧します。設定ミスがあれば権限昇格の足がかりになります。",
     cmd: "sudo -l",
     out: [
-      { t: "Matching Defaults entries for kenshin on machine:", c: "" },
+      { t: "Matching Defaults entries for you on machine:", c: "" },
       { t: "    env_reset, mail_badpass,", c: "" },
       { t: "    secure_path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", c: "" },
       { t: "", c: "" },
-      { t: "User kenshin may run the following commands on machine:", c: "" },
+      { t: "User you may run the following commands on machine:", c: "" },
       { t: "    (ALL : ALL) ALL", c: "hl" },
     ],
     explain: {
@@ -393,20 +381,19 @@ const MISSIONS = [
     cmd: "cat /proc/$$/environ | tr '\\0' '\\n'",
     out: [
       { t: "SHELL=/bin/bash", c: "" },
-      { t: "HOME=/home/kenshin", c: "" },
-      { t: "USER=kenshin", c: "" },
-      { t: "LOGNAME=kenshin", c: "" },
+      { t: "HOME=/home/you",  c: "" },
+      { t: "USER=you",        c: "" },
       { t: "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", c: "" },
       { t: "TERM=xterm-256color", c: "" },
-      { t: "LANG=ja_JP.UTF-8", c: "" },
-      { t: "AWS_SECRET_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE", c: "dng" },
-      { t: "DATABASE_URL=postgres://admin:P@ssw0rd@localhost:5432/prod", c: "dng" },
+      // 以下2行：実際の認証情報に見立てたデモ（伏字で表示）
+      { t: 'API_KEY=<span class="redacted">████████████████████████████████████</span>', c: "dng", html: true },
+      { t: 'DATABASE_URL=postgres://admin:<span class="redacted">████████████</span>@db.internal:5432/prod', c: "dng", html: true },
     ],
     explain: {
       title: "📋 /proc の情報漏洩",
       rows: [
         ["/proc/$$/", "$$は現在のシェルのPID。/proc/[PID]/で任意のプロセス情報にアクセスできる。", ""],
-        ["environ", "プロセスの環境変数。\\0区切りのため tr で改行変換して読む。", "🔴 APIキー漏洩"],
+        ["environ", "プロセスの環境変数。\\0区切りのため tr で改行変換して読む。", "🔴 シークレット漏洩"],
         ["cmdline", "起動時のコマンドライン引数。パスワードが含まれることがある。", "⚠ 要確認"],
         ["他ユーザーのPID", "ps aux でPIDを取得し sudo cat /proc/[PID]/environ で他ユーザーの環境変数も閲覧可能。", "🔴 権限次第"],
       ],
@@ -425,24 +412,24 @@ const MISSIONS = [
     desc: "Dockerなどのコンテナはnamespaceで隔離されています。namespaceのinode番号を比較することでコンテナ脱出の足がかりが見えます。",
     cmd: "ls -la /proc/$$/ns/",
     out: [
-      { t: "lrwxrwxrwx 1 kenshin kenshin 0 May 11 cgroup -> 'cgroup:[4026531835]'", c: "" },
-      { t: "lrwxrwxrwx 1 kenshin kenshin 0 May 11 ipc    -> 'ipc:[4026531839]'", c: "" },
-      { t: "lrwxrwxrwx 1 kenshin kenshin 0 May 11 mnt    -> 'mnt:[4026531841]'", c: "" },
-      { t: "lrwxrwxrwx 1 kenshin kenshin 0 May 11 net    -> 'net:[4026531840]'", c: "" },
-      { t: "lrwxrwxrwx 1 kenshin kenshin 0 May 11 pid    -> 'pid:[4026531836]'", c: "" },
-      { t: "lrwxrwxrwx 1 kenshin kenshin 0 May 11 user   -> 'user:[4026531837]'", c: "" },
-      { t: "lrwxrwxrwx 1 kenshin kenshin 0 May 11 uts    -> 'uts:[4026531838]'", c: "" },
+      { t: "lrwxrwxrwx 1 you you 0 May 11 cgroup -> 'cgroup:[4026531835]'", c: "" },
+      { t: "lrwxrwxrwx 1 you you 0 May 11 ipc    -> 'ipc:[4026531839]'",    c: "" },
+      { t: "lrwxrwxrwx 1 you you 0 May 11 mnt    -> 'mnt:[4026531841]'",    c: "" },
+      { t: "lrwxrwxrwx 1 you you 0 May 11 net    -> 'net:[4026531840]'",    c: "" },
+      { t: "lrwxrwxrwx 1 you you 0 May 11 pid    -> 'pid:[4026531836]'",    c: "" },
+      { t: "lrwxrwxrwx 1 you you 0 May 11 user   -> 'user:[4026531837]'",   c: "" },
+      { t: "lrwxrwxrwx 1 you you 0 May 11 uts    -> 'uts:[4026531838]'",    c: "" },
     ],
     explain: {
       title: "📋 Linuxのnamespace 7種",
       rows: [
-        ["mnt", "マウント名前空間。コンテナが独自のファイルシステムビューを持つ。", ""],
-        ["pid", "PID名前空間。コンテナ内でPID 1から始まる独立した番号体系。", ""],
-        ["net", "ネットワーク名前空間。独自のNIC、ルーティングテーブルを持つ。", ""],
+        ["mnt",  "マウント名前空間。コンテナが独自のファイルシステムビューを持つ。", ""],
+        ["pid",  "PID名前空間。コンテナ内でPID 1から始まる独立した番号体系。", ""],
+        ["net",  "ネットワーク名前空間。独自のNIC、ルーティングテーブルを持つ。", ""],
         ["user", "ユーザー名前空間。コンテナ内のrootがホストでは別のUIDにマップされる。", ""],
         ["inode一致", "コンテナとホストで同じinodeならnamespaceが分離されていない→脱出リスク", "🔴 要確認"],
       ],
-      tip: "<strong>コンテナ脱出の確認：</strong> コンテナ内で <code style='font-size:10px'>ls -la /proc/1/ns/</code> を実行し、ホストの同コマンド結果と inode番号を比較。同じなら分離されていない。",
+      tip: "<strong>コンテナ脱出の確認：</strong> コンテナ内で <code style='font-size:10px'>ls -la /proc/1/ns/</code> を実行し、ホストと inode番号を比較。同じなら分離されていない。",
     },
     quiz: {
       q: "Dockerコンテナのnamespaceのinodeがホストと同じだった場合、何が懸念される？",
@@ -453,13 +440,14 @@ const MISSIONS = [
   },
 ];
 
-// ── STATE ────────────────────────────────────────────────────────────────────
+// ── STATE ─────────────────────────────────────────────────────────────────────
 let score = 0;
-let state = {}; // missionId -> 'idle'|'done'
+let state = {}; // missionId -> 'running' | 'done'
 
-// ── BUILD ─────────────────────────────────────────────────────────────────────
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+// ── BUILD MISSION SCREENS ─────────────────────────────────────────────────────
 function buildMissions() {
   const c = document.getElementById('mscreens');
   MISSIONS.forEach(m => {
@@ -473,19 +461,45 @@ function buildMissions() {
         <div class="m-desc">${esc(m.desc)}</div>
       </div>
       <div class="mission-body">
+
+        <!-- LEFT: Terminal + controls -->
         <div class="term-col">
           <div class="terminal">
             <div class="term-bar">
               <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
-              <span class="term-name">kenshin@wsl2:~$</span>
+              <span class="term-name">you@wsl2:~$  —  bash</span>
             </div>
-            <div class="term-body" id="tb-${m.id}"><span class="t-cursor"></span></div>
+            <!-- Output history -->
+            <div class="term-output" id="to-${m.id}"></div>
+            <!-- Interactive input -->
+            <div class="term-input-row">
+              <span class="term-prompt-lbl">you@wsl2:~$&nbsp;</span>
+              <input
+                type="text"
+                class="term-input"
+                id="tinput-${m.id}"
+                placeholder="コマンドを入力してEnterを押す..."
+                autocomplete="off"
+                spellcheck="false"
+                onkeydown="handleKey(event,${m.id})"
+              >
+            </div>
           </div>
+
+          <!-- Hint bar -->
           <div class="cmd-bar">
+            <span class="cmd-hint">HINT:</span>
             <code>${esc(m.cmd)}</code>
-            <button class="btn btn-primary" id="runBtn-${m.id}" onclick="runCmd(${m.id})">▶ 実行</button>
+            <button class="btn btn-primary" id="runBtn-${m.id}" onclick="autoRun(${m.id})" title="コマンドを自動入力して実行">▶ 実行</button>
+          </div>
+
+          <!-- Next button — appears after quiz is answered -->
+          <div class="next-bar" id="nextbar-${m.id}">
+            <button class="btn btn-ok" onclick="next(${m.id})">次のミッションへ →</button>
           </div>
         </div>
+
+        <!-- RIGHT: Explanation + Quiz -->
         <div class="right-col">
           <div class="explain-pane">
             <div class="pane-hidden" id="ex-${m.id}">
@@ -504,153 +518,228 @@ function buildMissions() {
                 ${m.quiz.opts.map((o,i)=>`<button class="quiz-opt" id="qo-${m.id}-${i}" onclick="answer(${m.id},${i})">${'ABCD'[i]}. ${esc(o)}</button>`).join('')}
               </div>
               <div class="quiz-fb" id="qfb-${m.id}"></div>
-              <div class="quiz-next" id="qnx-${m.id}">
-                <button class="btn btn-ok" onclick="next(${m.id})">次のミッションへ →</button>
-              </div>
             </div>
           </div>
         </div>
+
       </div>`;
     c.appendChild(d);
   });
 }
 
-// ── NAV ──────────────────────────────────────────────────────────────────────
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const s = document.getElementById(`screen-${id}`);
-  if (s) s.classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if (s) { s.classList.add('active'); }
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const n = document.getElementById(`nav-${id}`);
-  if (n) n.classList.add('active');
+  if (n) { n.classList.add('active'); }
+  // Auto-focus the terminal input when showing a mission screen
+  if (id >= 1 && id <= 6) {
+    setTimeout(() => {
+      const inp = document.getElementById(`tinput-${id}`);
+      if (inp && !inp.disabled) inp.focus();
+    }, 100);
+  }
 }
-function unlock(id) { const n=document.getElementById(`nav-${id}`); if(n){n.classList.remove('locked');} }
+
+function unlock(id) {
+  const n = document.getElementById(`nav-${id}`);
+  if (n) n.classList.remove('locked');
+}
+
 function markDone(id) {
-  const n=document.getElementById(`nav-${id}`);
-  if(!n) return;
+  const n = document.getElementById(`nav-${id}`);
+  if (!n) return;
   n.classList.remove('active'); n.classList.add('done');
-  const num=n.querySelector('.nav-num'); if(num) num.textContent='✓';
+  const num = n.querySelector('.nav-num');
+  if (num) num.textContent = '✓';
 }
+
 function tryNav(id) {
-  const n=document.getElementById(`nav-${id}`);
-  if(n && n.classList.contains('locked')) return;
+  const n = document.getElementById(`nav-${id}`);
+  if (n && n.classList.contains('locked')) return;
   showScreen(id);
 }
+
 function updateScore() {
   document.getElementById('scoreDisp').textContent = score;
-  document.getElementById('progBar').style.width = (score/6*100)+'%';
+  document.getElementById('progBar').style.width = (score / 6 * 100) + '%';
 }
 
-// ── GAME ─────────────────────────────────────────────────────────────────────
-function startGame() { unlock(1); showScreen(1); }
+// ── GAME FLOW ─────────────────────────────────────────────────────────────────
+function startGame() {
+  unlock(1);
+  showScreen(1);
+}
 
 function resetGame() {
-  score=0; state={};
+  score = 0; state = {};
   updateScore();
-  for(let i=1;i<=7;i++){
-    const n=document.getElementById(`nav-${i}`);
-    if(n){ n.classList.remove('done','active'); n.classList.add('locked'); const num=n.querySelector('.nav-num'); if(num) num.textContent=i<7?String(i):'★'; }
+  for (let i = 1; i <= 7; i++) {
+    const n = document.getElementById(`nav-${i}`);
+    if (n) {
+      n.classList.remove('done', 'active');
+      n.classList.add('locked');
+      const num = n.querySelector('.nav-num');
+      if (num) num.textContent = i < 7 ? String(i) : '★';
+    }
   }
-  MISSIONS.forEach(m=>{
-    const tb=document.getElementById(`tb-${m.id}`); if(tb) tb.innerHTML='<span class="t-cursor"></span>';
-    const btn=document.getElementById(`runBtn-${m.id}`); if(btn){btn.disabled=false;btn.textContent='▶ 実行';}
-    const ex=document.getElementById(`ex-${m.id}`); if(ex) ex.classList.add('pane-hidden');
-    const qz=document.getElementById(`qz-${m.id}`); if(qz) qz.classList.add('pane-hidden');
-    m.quiz.opts.forEach((_,i)=>{
-      const o=document.getElementById(`qo-${m.id}-${i}`); if(o){o.className='quiz-opt';o.disabled=false;}
+  MISSIONS.forEach(m => {
+    const to   = document.getElementById(`to-${m.id}`);    if (to)   to.innerHTML = '';
+    const inp  = document.getElementById(`tinput-${m.id}`); if (inp)  { inp.value = ''; inp.disabled = false; }
+    const btn  = document.getElementById(`runBtn-${m.id}`); if (btn)  { btn.disabled = false; btn.textContent = '▶ 実行'; }
+    const ex   = document.getElementById(`ex-${m.id}`);    if (ex)   ex.classList.add('pane-hidden');
+    const qz   = document.getElementById(`qz-${m.id}`);    if (qz)   qz.classList.add('pane-hidden');
+    const nb   = document.getElementById(`nextbar-${m.id}`); if (nb) nb.style.display = 'none';
+    m.quiz.opts.forEach((_, i) => {
+      const o = document.getElementById(`qo-${m.id}-${i}`);
+      if (o) { o.className = 'quiz-opt'; o.disabled = false; }
     });
-    const fb=document.getElementById(`qfb-${m.id}`); if(fb){fb.style.display='none';fb.innerHTML='';}
-    const nx=document.getElementById(`qnx-${m.id}`); if(nx) nx.style.display='none';
+    const fb = document.getElementById(`qfb-${m.id}`); if (fb) { fb.style.display = 'none'; fb.innerHTML = ''; }
   });
   showScreen(0);
 }
 
-// ── TERMINAL ─────────────────────────────────────────────────────────────────
-function runCmd(id) {
-  if(state[id]) return;
-  state[id]='running';
-  const m=MISSIONS.find(x=>x.id===id);
-  const btn=document.getElementById(`runBtn-${id}`); btn.disabled=true; btn.textContent='実行中...';
-  const tb=document.getElementById(`tb-${id}`); tb.innerHTML='';
-  typeCmd(tb, m.cmd, ()=>{
-    showLines(tb, m.out, 0, ()=>{
-      setTimeout(()=>{
-        const ex=document.getElementById(`ex-${id}`);
-        if(ex){ ex.classList.remove('pane-hidden'); ex.classList.add('fade-in'); }
-        setTimeout(()=>{
-          const qz=document.getElementById(`qz-${id}`);
-          if(qz){ qz.classList.remove('pane-hidden'); qz.classList.add('fade-in'); }
-          btn.textContent='✓ 実行済み';
-        },400);
-      },300);
-    });
+// ── TERMINAL INPUT ────────────────────────────────────────────────────────────
+function handleKey(e, id) {
+  if (e.key !== 'Enter') return;
+  const inp = document.getElementById(`tinput-${id}`);
+  const typed = inp.value.trim();
+  if (!typed || state[id]) return;
+  inp.disabled = true;
+  runWithTyped(id, typed);
+}
+
+function autoRun(id) {
+  if (state[id]) return;
+  const m = MISSIONS.find(x => x.id === id);
+  const inp = document.getElementById(`tinput-${id}`);
+  inp.disabled = true;
+  inp.value = m.cmd;
+  // brief pause so user sees the filled command
+  setTimeout(() => runWithTyped(id, m.cmd), 200);
+}
+
+function runWithTyped(id, typedCmd) {
+  if (state[id] === 'running' || state[id] === 'done') return;
+  state[id] = 'running';
+
+  const m   = MISSIONS.find(x => x.id === id);
+  const btn = document.getElementById(`runBtn-${id}`);
+  btn.disabled = true; btn.textContent = '実行中...';
+
+  const to = document.getElementById(`to-${id}`);
+
+  // Show the typed command line in output
+  const cmdLine = document.createElement('div');
+  cmdLine.innerHTML = `<span class="t-prompt">you@wsl2:~$&nbsp;</span><span class="t-cmd">${esc(typedCmd)}</span>`;
+  to.appendChild(cmdLine);
+
+  // Stream output lines
+  showLines(to, m.out, 0, () => {
+    btn.textContent = '✓ 実行済み';
+    // Reveal explanation panel
+    setTimeout(() => {
+      const ex = document.getElementById(`ex-${id}`);
+      if (ex) { ex.classList.remove('pane-hidden'); ex.classList.add('fade-in'); }
+      // Reveal quiz panel shortly after
+      setTimeout(() => {
+        const qz = document.getElementById(`qz-${id}`);
+        if (qz) { qz.classList.remove('pane-hidden'); qz.classList.add('fade-in'); }
+      }, 350);
+    }, 250);
   });
 }
 
-function typeCmd(tb, cmd, done) {
-  const row=document.createElement('div');
-  row.innerHTML='<span class="t-prompt">kenshin@wsl2:~$ </span><span id="ta"></span><span class="t-cursor"></span>';
-  tb.appendChild(row);
-  const ta=row.querySelector('#ta'); const cur=row.querySelector('.t-cursor');
-  let i=0;
-  (function tick(){
-    if(i<cmd.length){ ta.textContent+=cmd[i++]; setTimeout(tick,25+Math.random()*18); }
-    else { cur.style.display='none'; setTimeout(done,180); }
-  })();
-}
-
-function showLines(tb, lines, i, done) {
-  if(i>=lines.length){
-    const r=document.createElement('div');
-    r.innerHTML='<span class="t-prompt">kenshin@wsl2:~$ </span><span class="t-cursor"></span>';
-    tb.appendChild(r); tb.scrollTop=tb.scrollHeight; done(); return;
+function showLines(to, lines, i, done) {
+  if (i >= lines.length) {
+    to.scrollTop = to.scrollHeight;
+    done(); return;
   }
-  const l=lines[i]; const d=document.createElement('div');
-  d.className='t-out'+(l.c?' '+l.c:''); d.textContent=l.t||' ';
-  tb.appendChild(d); tb.scrollTop=tb.scrollHeight;
-  setTimeout(()=>showLines(tb,lines,i+1,done), 55+Math.random()*35);
+  const l = lines[i];
+  const d = document.createElement('div');
+  d.className = 't-out' + (l.c ? ' ' + l.c : '');
+  if (l.html) {
+    d.innerHTML = l.t;
+  } else {
+    d.textContent = l.t || ' ';
+  }
+  to.appendChild(d);
+  to.scrollTop = to.scrollHeight;
+  setTimeout(() => showLines(to, lines, i + 1, done), 55 + Math.random() * 35);
 }
 
-// ── QUIZ ─────────────────────────────────────────────────────────────────────
+// ── QUIZ ──────────────────────────────────────────────────────────────────────
 function answer(id, chosen) {
-  if(state[id]==='done') return;
-  const m=MISSIONS.find(x=>x.id===id);
-  m.quiz.opts.forEach((_,i)=>{ const o=document.getElementById(`qo-${id}-${i}`); if(o) o.disabled=true; });
-  const correct=m.quiz.correct;
-  const co=document.getElementById(`qo-${id}-${correct}`); if(co) co.classList.add('correct');
-  if(chosen!==correct){ const wo=document.getElementById(`qo-${id}-${chosen}`); if(wo) wo.classList.add('wrong'); }
-  if(chosen===correct) score++;
+  if (state[id] === 'done') return;
+  const m = MISSIONS.find(x => x.id === id);
+
+  // Disable all options
+  m.quiz.opts.forEach((_, i) => {
+    const o = document.getElementById(`qo-${id}-${i}`);
+    if (o) o.disabled = true;
+  });
+
+  // Mark correct / wrong
+  const correct = m.quiz.correct;
+  const co = document.getElementById(`qo-${id}-${correct}`);
+  if (co) co.classList.add('correct');
+  if (chosen !== correct) {
+    const wo = document.getElementById(`qo-${id}-${chosen}`);
+    if (wo) wo.classList.add('wrong');
+  }
+
+  const isCorrect = chosen === correct;
+  if (isCorrect) score++;
   updateScore();
-  const fb=document.getElementById(`qfb-${id}`);
-  fb.innerHTML = chosen===correct
+
+  // Show feedback
+  const fb = document.getElementById(`qfb-${id}`);
+  fb.innerHTML = isCorrect
     ? `<span style="color:var(--success)">✓ 正解！</span> ${m.quiz.fb}`
     : `<span style="color:var(--error)">✗ 不正解。</span> 正解は「${esc(m.quiz.opts[correct])}」です。<br>${m.quiz.fb}`;
-  fb.style.display='block';
-  const nx=document.getElementById(`qnx-${id}`); if(nx) nx.style.display='block';
-  state[id]='done'; markDone(id);
+  fb.style.display = 'block';
+
+  // Show "Next mission" button in the LEFT column (always visible)
+  const nb = document.getElementById(`nextbar-${id}`);
+  if (nb) {
+    nb.style.display = 'block';
+    nb.classList.add('fade-in');
+    nb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  state[id] = 'done';
+  markDone(id);
 }
 
 function next(id) {
-  const nextId=id+1;
-  if(nextId<=6){ unlock(nextId); showScreen(nextId); }
-  else { showFinish(); }
+  const nextId = id + 1;
+  if (nextId <= 6) {
+    unlock(nextId);
+    showScreen(nextId);
+  } else {
+    showFinish();
+  }
 }
 
+// ── FINISH ────────────────────────────────────────────────────────────────────
 function showFinish() {
   unlock(7); showScreen(7); markDone(7);
-  document.getElementById('finalNum').textContent=score;
-  const msgs=[
-    [0,1, "もっと学習を続けましょう！", "セキュリティの概念は最初は難しいものです。各ステップの解説をじっくり読んで、再挑戦してみてください。"],
-    [2,3, "もう少し！",                "基礎は少し掴めています。間違えた問題を振り返って、もう一度プレイしてみましょう。"],
-    [4,5, "よくできました！",           `${score}/6問正解。基礎は理解できています。次はTopic 2のコンテナセキュリティに進みましょう。`],
-    [6,6, "完璧！セキュリティエキスパート 🎯", "全問正解！Linux権限モデルの基礎を完全に理解しました。Step 7（危険なsudoers設定の再現演習）にも挑戦しよう。"],
+  document.getElementById('finalNum').textContent = score;
+  const tbl = [
+    [0, 1, "もっと学習を続けましょう！",      "セキュリティの概念は最初は難しいものです。各ステップの解説をじっくり読んで、再挑戦してみてください。"],
+    [2, 3, "もう少し！",                      `${score}/6問正解。基礎は少し掴めています。間違えた問題を振り返って、もう一度プレイしてみましょう。`],
+    [4, 5, "よくできました！",                `${score}/6問正解。基礎は理解できています。次はTopic 2のコンテナセキュリティに進みましょう。`],
+    [6, 6, "完璧！セキュリティエキスパート 🎯", "全問正解！Linux権限モデルの基礎を完全に理解しました。Step 7（危険なsudoers設定の再現演習）にも挑戦しよう。"],
   ];
-  const row=msgs.find(([lo,hi])=>score>=lo&&score<=hi)||msgs[0];
-  document.getElementById('finTitle').textContent=row[2];
-  document.getElementById('finDesc').textContent=row[3];
+  const row = tbl.find(([lo, hi]) => score >= lo && score <= hi) || tbl[0];
+  document.getElementById('finTitle').textContent = row[2];
+  document.getElementById('finDesc').textContent  = row[3];
 }
 
-// ── BOOT ─────────────────────────────────────────────────────────────────────
+// ── BOOT ──────────────────────────────────────────────────────────────────────
 buildMissions();
 </script>
 </body>
