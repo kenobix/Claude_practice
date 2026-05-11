@@ -171,7 +171,15 @@
     .quiz-fb  { margin-top: 8px; font-size: 11px; line-height: 1.6; color: var(--fg-secondary); display: none; }
 
     /* Redacted text style */
-    .redacted { background: var(--fg-tertiary); color: transparent; border-radius: 2px; user-select: none; letter-spacing: .05em; }
+    .redacted {
+      background: rgba(90,90,114,0.25);
+      color: var(--warning);
+      border: 1px solid rgba(251,191,36,0.35);
+      border-radius: 3px;
+      padding: 0 3px;
+      font-style: italic;
+      font-size: 0.92em;
+    }
 
     /* ── FINISH ── */
     .finish-screen { align-items: center; justify-content: center; gap: 18px; text-align: center; padding: 40px; }
@@ -260,8 +268,8 @@ const MISSIONS = [
     cmd: 'id && grep "^$(whoami):" /etc/passwd',
     out: [
       // ユーザー名・固有グループは伏字
-      { t: 'uid=1000(<span class="redacted">████</span>) gid=1000(<span class="redacted">████</span>) groups=1000(<span class="redacted">████</span>),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),100(users)', c: "hl", html: true },
-      { t: '<span class="redacted">████</span>:x:1000:1000:,,,:/home/<span class="redacted">████</span>:/bin/bash', c: "", html: true },
+      { t: 'uid=1000(<span class="redacted">&lt;username&gt;</span>) gid=1000(<span class="redacted">&lt;username&gt;</span>) groups=1000(<span class="redacted">&lt;username&gt;</span>),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),100(users)', c: "hl", html: true },
+      { t: '<span class="redacted">&lt;username&gt;</span>:x:1000:1000:,,,:/home/<span class="redacted">&lt;username&gt;</span>:/bin/bash', c: "", html: true },
     ],
     explain: {
       title: "📋 出力の読み方",
@@ -386,8 +394,8 @@ const MISSIONS = [
       { t: "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", c: "" },
       { t: "TERM=xterm-256color", c: "" },
       // 以下2行：実際の認証情報に見立てたデモ（伏字で表示）
-      { t: 'API_KEY=<span class="redacted">████████████████████████████████████</span>', c: "dng", html: true },
-      { t: 'DATABASE_URL=postgres://admin:<span class="redacted">████████████</span>@db.internal:5432/prod', c: "dng", html: true },
+      { t: 'API_KEY=<span class="redacted">&lt;API_KEY&gt;</span>', c: "dng", html: true },
+      { t: 'DATABASE_URL=postgres://admin:<span class="redacted">&lt;password&gt;</span>@db.internal:5432/prod', c: "dng", html: true },
     ],
     explain: {
       title: "📋 /proc の情報漏洩",
@@ -608,8 +616,34 @@ function handleKey(e, id) {
   const inp = document.getElementById(`tinput-${id}`);
   const typed = inp.value.trim();
   if (!typed || state[id]) return;
+
+  const m = MISSIONS.find(x => x.id === id);
+  const norm = s => s.trim().replace(/\s+/g, ' ');
+  if (norm(typed) !== norm(m.cmd)) {
+    showCmdError(id, typed);
+    return;
+  }
+
   inp.disabled = true;
   runWithTyped(id, typed);
+}
+
+function showCmdError(id, typed) {
+  const to  = document.getElementById(`to-${id}`);
+  const inp = document.getElementById(`tinput-${id}`);
+
+  const cmdLine = document.createElement('div');
+  cmdLine.innerHTML = `<span class="t-prompt">you@wsl2:~$&nbsp;</span><span class="t-cmd">${esc(typed)}</span>`;
+  to.appendChild(cmdLine);
+
+  const errLine = document.createElement('div');
+  errLine.className = 't-out dng';
+  errLine.textContent = 'コマンドが違います — HINTを確認して再入力してください。';
+  to.appendChild(errLine);
+
+  to.scrollTop = to.scrollHeight;
+  inp.value = '';
+  inp.focus();
 }
 
 function autoRun(id) {
@@ -644,10 +678,16 @@ function runWithTyped(id, typedCmd) {
     setTimeout(() => {
       const ex = document.getElementById(`ex-${id}`);
       if (ex) { ex.classList.remove('pane-hidden'); ex.classList.add('fade-in'); }
-      // Reveal quiz panel shortly after
+      // Reveal quiz panel shortly after, then scroll right col to show it
       setTimeout(() => {
         const qz = document.getElementById(`qz-${id}`);
-        if (qz) { qz.classList.remove('pane-hidden'); qz.classList.add('fade-in'); }
+        if (qz) {
+          qz.classList.remove('pane-hidden'); qz.classList.add('fade-in');
+          setTimeout(() => {
+            const rc = qz.closest('.right-col');
+            if (rc) rc.scrollTop = rc.scrollHeight;
+          }, 100);
+        }
       }, 350);
     }, 250);
   });
