@@ -88,9 +88,9 @@
     .mission-body { display: grid; grid-template-columns: 1fr 300px; flex: 1; min-height: 0; }
 
     /* ── TERMINAL COLUMN ── */
-    .term-col { display: flex; flex-direction: column; padding: 12px; gap: 8px; overflow: hidden; min-height: 0; }
+    .term-col { display: flex; flex-direction: column; padding: 12px; gap: 8px; overflow-y: auto; min-height: 0; }
 
-    .terminal { background: #09090E; border: 1px solid var(--border-default); border-radius: 8px; overflow: hidden; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .terminal { background: #09090E; border: 1px solid var(--border-default); border-radius: 8px; overflow: hidden; flex: 0 0 auto; min-height: 160px; max-height: 260px; display: flex; flex-direction: column; }
     .term-bar { display: flex; align-items: center; gap: 5px; padding: 7px 12px; background: var(--bg-surface); border-bottom: 1px solid var(--border-default); flex-shrink: 0; }
     .dot   { width: 11px; height: 11px; border-radius: 50%; }
     .dot-r { background: #FF5F57; } .dot-y { background: #FFBD2E; } .dot-g { background: #28C840; }
@@ -159,8 +159,9 @@
     .tip-box { background: var(--accent-muted); border: 1px solid rgba(108,99,255,.3); border-radius: 6px; padding: 8px 10px; font-size: 11px; color: var(--accent-light); margin-top: 8px; line-height: 1.6; }
     .tip-box strong { color: var(--fg-primary); }
 
-    /* Quiz panel */
-    .quiz-pane { padding: 12px 14px; }
+    /* Quiz panel — now lives in the left column */
+    .quiz-pane { padding: 10px 0; border-top: 1px solid var(--border-default); flex-shrink: 0; }
+    .quiz-pane.pane-hidden { display: none; }
     .quiz-q    { font-size: 12px; font-weight: 600; color: var(--fg-primary); margin-bottom: 8px; line-height: 1.5; }
     .quiz-opts { display: flex; flex-direction: column; gap: 5px; }
     .quiz-opt  { padding: 7px 10px; border: 1px solid var(--border-default); border-radius: 5px; font-size: 11px; cursor: pointer; transition: all .15s; color: var(--fg-secondary); background: transparent; text-align: left; line-height: 1.4; }
@@ -470,7 +471,7 @@ function buildMissions() {
       </div>
       <div class="mission-body">
 
-        <!-- LEFT: Terminal + controls -->
+        <!-- LEFT: Terminal + controls + quiz + next -->
         <div class="term-col">
           <div class="terminal">
             <div class="term-bar">
@@ -501,13 +502,22 @@ function buildMissions() {
             <button class="btn btn-primary" id="runBtn-${m.id}" onclick="autoRun(${m.id})" title="コマンドを自動入力して実行">▶ 実行</button>
           </div>
 
+          <!-- Quiz — appears after command runs -->
+          <div class="quiz-pane pane-hidden" id="qz-${m.id}">
+            <div class="quiz-q">❓ ${esc(m.quiz.q)}</div>
+            <div class="quiz-opts">
+              ${m.quiz.opts.map((o,i)=>`<button class="quiz-opt" id="qo-${m.id}-${i}" onclick="answer(${m.id},${i})">${'ABCD'[i]}. ${esc(o)}</button>`).join('')}
+            </div>
+            <div class="quiz-fb" id="qfb-${m.id}"></div>
+          </div>
+
           <!-- Next button — appears after quiz is answered -->
           <div class="next-bar" id="nextbar-${m.id}">
             <button class="btn btn-ok" onclick="next(${m.id})">次のミッションへ →</button>
           </div>
         </div>
 
-        <!-- RIGHT: Explanation + Quiz -->
+        <!-- RIGHT: Explanation only -->
         <div class="right-col">
           <div class="explain-pane">
             <div class="pane-hidden" id="ex-${m.id}">
@@ -519,14 +529,7 @@ function buildMissions() {
               <div class="tip-box">💡 ${m.explain.tip}</div>
             </div>
           </div>
-          <div class="quiz-pane">
-            <div class="pane-hidden" id="qz-${m.id}">
-              <div class="quiz-q">❓ ${esc(m.quiz.q)}</div>
-              <div class="quiz-opts">
-                ${m.quiz.opts.map((o,i)=>`<button class="quiz-opt" id="qo-${m.id}-${i}" onclick="answer(${m.id},${i})">${'ABCD'[i]}. ${esc(o)}</button>`).join('')}
-              </div>
-              <div class="quiz-fb" id="qfb-${m.id}"></div>
-            </div>
+          <div style="display:none" id="qz-dummy-${m.id}">
           </div>
         </div>
 
@@ -678,16 +681,10 @@ function runWithTyped(id, typedCmd) {
     setTimeout(() => {
       const ex = document.getElementById(`ex-${id}`);
       if (ex) { ex.classList.remove('pane-hidden'); ex.classList.add('fade-in'); }
-      // Reveal quiz panel shortly after, then scroll right col to show it
+      // Reveal quiz panel shortly after
       setTimeout(() => {
         const qz = document.getElementById(`qz-${id}`);
-        if (qz) {
-          qz.classList.remove('pane-hidden'); qz.classList.add('fade-in');
-          setTimeout(() => {
-            const rc = qz.closest('.right-col');
-            if (rc) rc.scrollTop = rc.scrollHeight;
-          }, 100);
-        }
+        if (qz) { qz.classList.remove('pane-hidden'); qz.classList.add('fade-in'); }
       }, 350);
     }, 250);
   });
