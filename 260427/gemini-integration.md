@@ -227,22 +227,67 @@ GEMINI_API_KEY=<your-api-key-here>
 
 ---
 
-## 未解決の問題：TUIとGatewayの接続
+## TUIとGatewayの接続問題
 
 ### 問題
 
 `openclaw chat` はデフォルトで `local embedded` モードで起動する。
-Gatewayに接続するには `--url` と `--token` を明示指定する必要がある:
-
-```bash
-# openclaw.json の gateway.auth.token の値を使用
-openclaw chat --url ws://127.0.0.1:18789 --token <gateway-token>
-```
+GatewayとTUIが同じセッションファイル（`~/.openclaw/agents/main/sessions/<uuid>.jsonl.lock`）を
+同時にロックしようとし、デッドロックが発生することがある。
 
 ### 根本原因
 
 `openclaw.json` の `gateway.remote.url` が未設定の場合、TUIはGatewayに自動接続しない。
-ローカルGatewayへの自動接続設定方法を要調査。
+`openclaw chat` はデフォルトで自分自身の組み込みランタイムを起動するため、
+Gatewayと競合する。
+
+### 対処法（未検証）
+
+同じ問題が再発した場合、TUIをGatewayのクライアントとして明示的に接続する:
+
+**ステップ1: Gatewayのトークンを取得**
+
+`openclaw config get` はリダクトされるため、jsonから直接取得する:
+
+```bash
+jq -r '.gateway.auth.token' ~/.openclaw/openclaw.json
+```
+
+**ステップ2: トークンを指定してTUIを起動**
+
+```bash
+openclaw chat --url ws://127.0.0.1:18789 --token <ステップ1で表示された値>
+```
+
+または1行でまとめて:
+
+```bash
+openclaw chat --url ws://127.0.0.1:18789 --token "$(jq -r '.gateway.auth.token' ~/.openclaw/openclaw.json)"
+```
+
+**確認ポイント:**
+
+TUIが起動したらタイトルバーを確認する:
+- 成功: `local ready | idle | google/gemini-2.5-flash | ...`（`local embedded` 表示がなくなる）
+- 失敗: `local embedded` と表示される → URLまたはトークンが間違っている
+
+ロックエラーが発生しなくなれば接続成功。
+
+---
+
+## ローカルモデルとの性能比較
+
+移行前は `qwen2.5:1.5b`（OpenClaw上のカスタム名: `gemma4-agent`）をCPU推論で使用していた。
+
+| 項目 | qwen2.5:1.5b（ローカル） | Gemini 2.5 Flash（API） |
+|------|--------------------------|-------------------------|
+| 応答速度 | 短問で~20秒、複雑な質問は失敗することがある | ほぼ即時（数秒） |
+| コンテキストウィンドウ | 16,384トークン | 1,000,000トークン |
+| 日本語品質 | 限定的（1.5bモデルの限界） | 自然な日本語で回答可能 |
+| 安定性 | watchdogタイムアウト・OOMリスクあり | APIサーバー側で管理、クライアント負荷なし |
+| コスト | 電力・RAM消費（28GB割当） | 無料枠（RPD 1,000回/日） |
+
+Gemini 2.5 Flash APIへの移行により、応答品質・速度・安定性が大幅に向上した。
 
 ---
 
