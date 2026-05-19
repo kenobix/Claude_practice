@@ -1,8 +1,8 @@
 # TryHackMe: Nmap Live Host Discovery
 
 > **ルーム:** [Nmap Live Host Discovery](https://tryhackme.com/room/nmap01)
-> **学習日:** 2026-05-15〜2026-05-19
-> **進捗:** Task 1〜7 完了 / Task 8〜 は翌日以降
+> **学習日:** 2026-05-15〜2026-05-20
+> **進捗:** Task 1〜9 完了（ルーム完了）
 
 ---
 
@@ -339,9 +339,67 @@ apt install masscan
 
 ---
 
-## 明日の予定
+---
 
-**Task 8: Using Reverse-DNS Lookup** から再開
+## Task 8: Using Reverse-DNS Lookup
+
+### Reverse DNS（逆引きDNS）とは
+
+通常のDNSが「ドメイン名 → IPアドレス」を解決するのに対し、Reverse DNSは**「IPアドレス → ホスト名」**を解決する。
+
+例：`10.200.6.15` → `mail.company.local` や `dc01.domain.com`
+
+### Reverse DNSの用途（ペネトレーションテスト）
+
+- ホスト名からシステムの役割を推測できる（`mail.`→メールサーバー、`dc01.`→ドメインコントローラー等）
+- ネットワーク構造を把握するための偵察情報になる
+- ただしrDNSレコードが設定されていない・不正確なケースもあるため、結果は参考程度に留める
+
+### Nmap のDNS関連オプション
+
+| オプション | 動作 |
+|-----------|------|
+| `-n` | DNS逆引きを**無効化**（スキャン高速化） |
+| `-R` | **オフラインホストも含め**全IPに対して逆引きを強制実行 |
+| `--dns-servers DNS_SERVER` | 使用するDNSサーバーを指定 |
+
+デフォルトでは、Nmapはオンラインのホストのみ逆引きを試みる。
+
+### クイズ
+
+| 質問 | 答え |
+|------|------|
+| サブネット内の全ホストに逆引きDNSを実行するオプションは？ | **`-R`** |
+
+---
+
+## Task 9: Summary（全オプションまとめ）
+
+### スキャン手法一覧
+
+| スキャン種別 | コマンド例 |
+|-------------|-----------|
+| ARP スキャン | `sudo nmap -PR -sn 10.200.6.0/24` |
+| ICMP Echo スキャン | `sudo nmap -PE -sn 10.200.6.0/24` |
+| ICMP Timestamp スキャン | `sudo nmap -PP -sn 10.200.6.0/24` |
+| ICMP Address Mask スキャン | `sudo nmap -PM -sn 10.200.6.0/24` |
+| TCP SYN Ping スキャン | `sudo nmap -PS22,80,443 -sn 10.200.6.0/30` |
+| TCP ACK Ping スキャン | `sudo nmap -PA22,80,443 -sn 10.200.6.0/30` |
+| UDP Ping スキャン | `sudo nmap -PU53,161,162 -sn 10.200.6.0/30` |
+
+### 共通オプション
+
+| オプション | 用途 |
+|-----------|------|
+| `-sn` | ホスト発見のみ（ポートスキャンなし） |
+| `-n` | DNS逆引きを無効化 |
+| `-R` | 全ホストに逆引きDNSを強制実行 |
+
+**`-sn` を付けないと**、生存確認後に自動でポートスキャンに移行するので注意。
+
+### 次のステップ
+
+次のルーム：[Nmap Basic Port Scans](https://tryhackme.com/room/nmap02) — ポートスキャンの基本手法を学ぶ
 
 ---
 
