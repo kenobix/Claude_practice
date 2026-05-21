@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenAI Chat</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e5e5e5;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    header h1 { font-size: 18px; font-weight: 600; color: #111; }
+    header .model-badge {
+      font-size: 12px;
+      background: #f0f0f0;
+      border-radius: 12px;
+      padding: 4px 10px;
+      color: #555;
+    }
+    #settings-btn {
+      background: none;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      color: #555;
+    }
+    #settings-btn:hover { background: #f5f5f5; }
+
+    /* Settings panel */
+    #settings-panel {
+      background: #fff;
+      border-bottom: 1px solid #e5e5e5;
+      padding: 16px;
+      display: none;
+      flex-shrink: 0;
+    }
+    #settings-panel.open { display: block; }
+    .settings-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .settings-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 200px; }
+    .settings-field label { font-size: 12px; color: #666; font-weight: 500; }
+    .settings-field input, .settings-field select {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 14px;
+      outline: none;
+    }
+    .settings-field input:focus, .settings-field select:focus { border-color: #10a37f; }
+    #save-settings {
+      background: #10a37f;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #save-settings:hover { background: #0e9170; }
+    .settings-note {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #888;
+    }
+
+    /* Messages area */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .message {
+      display: flex;
+      gap: 10px;
+      max-width: 800px;
+      width: 100%;
+    }
+    .message.user { align-self: flex-end; flex-direction: row-reverse; }
+    .message.assistant { align-self: flex-start; }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .message.user .avatar { background: #10a37f; color: #fff; }
+    .message.assistant .avatar { background: #e8f5e9; color: #10a37f; }
+
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.6;
+      max-width: calc(100% - 50px);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .message.user .bubble {
+      background: #10a37f;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .message.assistant .bubble {
+      background: #fff;
+      color: #111;
+      border: 1px solid #e5e5e5;
+      border-bottom-left-radius: 4px;
+    }
+    .bubble.error { background: #fff3f3; color: #c0392b; border-color: #f5c6c6; }
+
+    /* Welcome screen */
+    #welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      gap: 12px;
+      color: #888;
+      text-align: center;
+      padding: 32px;
+    }
+    #welcome .icon { font-size: 48px; }
+    #welcome h2 { font-size: 20px; color: #444; }
+    #welcome p { font-size: 14px; line-height: 1.6; }
+
+    /* Typing indicator */
+    .typing .bubble { padding: 14px 18px; }
+    .typing-dots { display: flex; gap: 4px; align-items: center; }
+    .typing-dots span {
+      width: 6px; height: 6px;
+      background: #aaa;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+
+    /* Input area */
+    #input-area {
+      background: #fff;
+      border-top: 1px solid #e5e5e5;
+      padding: 12px 16px;
+      flex-shrink: 0;
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    #user-input {
+      flex: 1;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 14px;
+      resize: none;
+      outline: none;
+      max-height: 160px;
+      min-height: 44px;
+      line-height: 1.5;
+      font-family: inherit;
+    }
+    #user-input:focus { border-color: #10a37f; }
+    #send-btn {
+      background: #10a37f;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      width: 44px;
+      height: 44px;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    #send-btn:hover { background: #0e9170; }
+    #send-btn:disabled { background: #ccc; cursor: not-allowed; }
+    .input-hint {
+      text-align: center;
+      font-size: 11px;
+      color: #bbb;
+      margin-top: 6px;
+    }
+
+    #no-key-warning {
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #795548;
+      margin-bottom: 8px;
+      display: none;
+    }
+    #no-key-warning.show { display: block; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>💬 OpenAI Chat</h1>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span class="model-badge" id="model-label">モデル未設定</span>
+    <button id="settings-btn">⚙ 設定</button>
+  </div>
+</header>
+
+<div id="settings-panel">
+  <div class="settings-row">
+    <div class="settings-field">
+      <label>OpenAI API Key</label>
+      <input type="password" id="api-key-input" placeholder="sk-..." autocomplete="off">
+    </div>
+    <div class="settings-field" style="max-width:220px;">
+      <label>モデル</label>
+      <select id="model-select">
+        <option value="gpt-4.1-mini">gpt-4.1-mini（推奨・低コスト）</option>
+        <option value="gpt-4o-mini">gpt-4o-mini</option>
+        <option value="gpt-4.1">gpt-4.1</option>
+        <option value="gpt-4o">gpt-4o</option>
+      </select>
+    </div>
+    <button id="save-settings">保存</button>
+  </div>
+  <p class="settings-note">
+    APIキーはブラウザのlocalStorageにのみ保存されます。サーバーには送信されません。<br>
+    データ共有枠を利用するには、OpenAI Platformの Settings → Data Controls → Share inputs and outputs をオンにしてください。
+  </p>
+</div>
+
+<div id="messages">
+  <div id="welcome">
+    <div class="icon">🤖</div>
+    <h2>OpenAI Chat</h2>
+    <p>右上の「⚙ 設定」からAPIキーを入力して会話を始めてください。<br>
+    APIキーはあなたのブラウザ内にのみ保存されます。</p>
+  </div>
+</div>
+
+<div id="input-area">
+  <div id="no-key-warning" class="show">
+    APIキーが設定されていません。右上の「⚙ 設定」から入力してください。
+  </div>
+  <div class="input-row">
+    <textarea id="user-input" placeholder="メッセージを入力..." rows="1"></textarea>
+    <button id="send-btn" disabled>➤</button>
+  </div>
+  <p class="input-hint">Shift+Enter で改行 / Enter で送信</p>
+</div>
+
+<script>
+  const STORAGE_KEY = 'openai_chat_settings';
+
+  const settingsBtn = document.getElementById('settings-btn');
+  const settingsPanel = document.getElementById('settings-panel');
+  const apiKeyInput = document.getElementById('api-key-input');
+  const modelSelect = document.getElementById('model-select');
+  const saveSettingsBtn = document.getElementById('save-settings');
+  const messagesEl = document.getElementById('messages');
+  const welcomeEl = document.getElementById('welcome');
+  const userInput = document.getElementById('user-input');
+  const sendBtn = document.getElementById('send-btn');
+  const modelLabel = document.getElementById('model-label');
+  const noKeyWarning = document.getElementById('no-key-warning');
+
+  let apiKey = '';
+  let model = 'gpt-4.1-mini';
+  let history = [];
+  let isLoading = false;
+
+  // Load saved settings
+  function loadSettings() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      if (saved.apiKey) {
+        apiKey = saved.apiKey;
+        apiKeyInput.value = saved.apiKey;
+      }
+      if (saved.model) {
+        model = saved.model;
+        modelSelect.value = saved.model;
+      }
+    } catch {}
+    updateUI();
+  }
+
+  function saveSettings() {
+    apiKey = apiKeyInput.value.trim();
+    model = modelSelect.value;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ apiKey, model }));
+    settingsPanel.classList.remove('open');
+    updateUI();
+  }
+
+  function updateUI() {
+    const hasKey = !!apiKey;
+    sendBtn.disabled = !hasKey || isLoading;
+    noKeyWarning.classList.toggle('show', !hasKey);
+    modelLabel.textContent = hasKey ? model : 'モデル未設定';
+  }
+
+  settingsBtn.addEventListener('click', () => {
+    settingsPanel.classList.toggle('open');
+  });
+
+  saveSettingsBtn.addEventListener('click', saveSettings);
+
+  // Auto-resize textarea
+  userInput.addEventListener('input', () => {
+    userInput.style.height = 'auto';
+    userInput.style.height = Math.min(userInput.scrollHeight, 160) + 'px';
+  });
+
+  // Send on Enter (Shift+Enter = newline)
+  userInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!sendBtn.disabled) sendMessage();
+    }
+  });
+
+  sendBtn.addEventListener('click', sendMessage);
+
+  function addMessage(role, content, isError = false) {
+    if (welcomeEl) welcomeEl.remove();
+
+    const msgEl = document.createElement('div');
+    msgEl.className = `message ${role}`;
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = role === 'user' ? 'あ' : 'AI';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble' + (isError ? ' error' : '');
+    bubble.textContent = content;
+
+    msgEl.appendChild(avatar);
+    msgEl.appendChild(bubble);
+    messagesEl.appendChild(msgEl);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return bubble;
+  }
+
+  function addTypingIndicator() {
+    const msgEl = document.createElement('div');
+    msgEl.className = 'message assistant typing';
+    msgEl.id = 'typing-indicator';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = 'AI';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+
+    msgEl.appendChild(avatar);
+    msgEl.appendChild(bubble);
+    messagesEl.appendChild(msgEl);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function removeTypingIndicator() {
+    document.getElementById('typing-indicator')?.remove();
+  }
+
+  async function sendMessage() {
+    const text = userInput.value.trim();
+    if (!text || isLoading || !apiKey) return;
+
+    userInput.value = '';
+    userInput.style.height = 'auto';
+    isLoading = true;
+    updateUI();
+
+    history.push({ role: 'user', content: text });
+    addMessage('user', text);
+    addTypingIndicator();
+
+    try {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: history,
+          max_tokens: 2048,
+        }),
+      });
+
+      removeTypingIndicator();
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err?.error?.message || `HTTPエラー ${res.status}`;
+        addMessage('assistant', `エラー: ${msg}`, true);
+        history.pop();
+      } else {
+        const data = await res.json();
+        const reply = data.choices?.[0]?.message?.content ?? '(応答なし)';
+        history.push({ role: 'assistant', content: reply });
+        addMessage('assistant', reply);
+      }
+    } catch (e) {
+      removeTypingIndicator();
+      addMessage('assistant', `通信エラー: ${e.message}`, true);
+      history.pop();
+    }
+
+    isLoading = false;
+    updateUI();
+    userInput.focus();
+  }
+
+  loadSettings();
+</script>
+</body>
+</html>
