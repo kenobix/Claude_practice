@@ -1,27 +1,40 @@
-# 260521 — OpenAI API チャットアプリ構築記録
+# 260521 — チャットアプリ構築記録（OpenAI / Gemini）
 
-GitHub Pages上で動作するOpenAI APIを使ったチャットアプリの構築記録。
+GitHub Pages上で動作するチャットアプリの構築記録。OpenAI APIとGemini APIの2種類を実装。
 
 ---
 
 ## 作成したもの
 
-- [index.html](./index.html) — ブラウザのみで動作するチャットUI
+| ファイル | API | 無料枠 | 動作確認 |
+|---------|-----|--------|---------|
+| [index.html](./index.html) | OpenAI | なし（$5必要） | クォータエラーで未動作 |
+| [gemini.html](./gemini.html) | Gemini | あり（クレジット不要） | **動作確認済み** ✓ |
 
-### アプリの特徴
+### 共通の特徴
 
 - APIキーをUI上で入力 → ブラウザの `localStorage` にのみ保存（サーバー送信なし）
-- モデル選択: gpt-4.1-mini / gpt-4o-mini / gpt-4.1 / gpt-4o
 - 会話履歴を保持したマルチターン対話
 - 入力中インジケーター（タイピングアニメーション）
 - エラーメッセージの日本語表示
 - Shift+Enter で改行 / Enter で送信
 
-### GitHub Pages URL
+### OpenAI版（index.html）
 
-```
-https://kenobix.github.io/Claude_practice/260521/
-```
+- モデル選択: gpt-4.1-mini / gpt-4o-mini / gpt-4.1 / gpt-4o
+- GitHub Pages URL: `https://kenobix.github.io/Claude_practice/260521/`
+
+### Gemini版（gemini.html）
+
+- モデル選択: gemini-2.5-flash / gemini-2.5-flash-lite / gemini-2.5-pro
+- GitHub Pages URL: `https://kenobix.github.io/Claude_practice/260521/gemini.html`
+- Gemini APIキーは [Google AI Studio](https://aistudio.google.com/) から無料取得可能
+
+### 動作確認結果（Gemini版）
+
+「こんにちは」→「こんにちは！何かお手伝いできることはありますか？」  
+「あなたの名前を教えてください。」→「私はGoogleによってトレーニングされた、大規模言語モデルです。」  
+マルチターン対話・日本語応答ともに正常動作を確認。
 
 ---
 
@@ -92,15 +105,15 @@ You exceeded your current quota, please check your plan and billing details.
 
 ## 今後の選択肢
 
-### A. OpenAIクレジットを追加して使う（$5〜）
+### OpenAI版を使いたい場合
 
 Settings → Billing → Add credits で最低$5チャージ。
 `gpt-4.1-mini` は低コストで1,000〜数万回の応答が可能。
 
-### B. チャットアプリをGemini API対応に変更する
+### 無料で使い続けたい場合
 
-[260427フォルダ](../260427/)で構築済みのGemini API環境（無料・動作確認済み）を使って、
-同じチャットアプリをGemini対応に改修する。
+Gemini版（gemini.html）を使う。[260427フォルダ](../260427/)で構築済みの
+Gemini API環境と同じAPIキーがそのまま利用できる。
 
 ---
 
