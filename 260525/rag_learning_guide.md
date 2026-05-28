@@ -93,49 +93,62 @@ RAGはこれを解決する。
 - コサイン類似度で「似ている文章」を探す仕組み
 - プロンプトエンジニアリングの基礎
 
+**注意: google-generativeai（旧SDK）は2025年に非推奨となった。`google-genai`（新SDK）を使う。**
+
+```bash
+pip install google-genai numpy
+export GOOGLE_API_KEY="your-api-key"
+```
+
 **手を動かす内容:**
 
+実装済みサンプル: [phase1/rag_phase1.py](./phase1/rag_phase1.py)
+
 ```python
-# Phase1: フレームワークなしの最小RAG
-import google.generativeai as genai
+# Phase1: フレームワークなしの最小RAG（新SDK版）
+from google import genai
+from google.genai import types
 import numpy as np
 
-genai.configure(api_key="your-gemini-api-key")
+client = genai.Client(api_key="your-gemini-api-key")
 
-# テキストをベクトル化
-def embed(text):
-    result = genai.embed_content(
-        model="models/text-embedding-004",
-        content=text,
-        task_type="retrieval_document"
+# テキストをベクトル化（ドキュメント用）
+def embed_docs(texts):
+    result = client.models.embed_content(
+        model="gemini-embedding-001",  # text-embedding-004 は旧SDK用
+        contents=texts,
+        config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT"),
     )
-    return np.array(result["embedding"])
+    return np.array([e.values for e in result.embeddings])
+
+# テキストをベクトル化（クエリ用）
+def embed_query(text):
+    result = client.models.embed_content(
+        model="gemini-embedding-001",
+        contents=text,
+        config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY"),
+    )
+    return np.array(result.embeddings[0].values)
 
 # コサイン類似度
 def cosine_similarity(a, b):
-    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
 
-# 小さなドキュメント群
-docs = [
-    "東京の人口は約1400万人です。",
-    "大阪は西日本最大の都市です。",
-    "富士山の高さは3776メートルです。",
-]
-doc_vectors = [embed(d) for d in docs]
+docs = ["東京の人口は約1400万人です。", "大阪は西日本最大の都市です。", "富士山の高さは3776メートルです。"]
+doc_vecs = embed_docs(docs)
 
-# 質問
 query = "富士山について教えて"
-query_vec = embed(query)
+q_vec = embed_query(query)
 
-# 類似度で検索
-scores = [cosine_similarity(query_vec, dv) for dv in doc_vectors]
+scores = [cosine_similarity(q_vec, dv) for dv in doc_vecs]
 best = docs[np.argmax(scores)]
 print("検索結果:", best)
 
-# LLMに渡す
-model = genai.GenerativeModel("gemini-2.5-flash")
-prompt = f"以下の情報を元に答えてください。\n情報: {best}\n質問: {query}"
-print(model.generate_content(prompt).text)
+response = client.models.generate_content(
+    model="gemini-2.5-flash",
+    contents=f"情報: {best}\n質問: {query}"
+)
+print(response.text)
 ```
 
 **確認ポイント:**
