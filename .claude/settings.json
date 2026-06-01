@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit:*)",
+      "Bash(npm -v)",
+      "Read(//usr/bin/**)",
+      "Read(//usr/local/bin/**)",
+      "Read(//home/kenshin/.nvm/versions/**)",
+      "Read(//opt/homebrew/bin/**)",
+      "Bash(apt list:*)",
+      "Bash(sudo apt-get:*)",
+      "Bash(sudo apt:*)",
+      "Bash(fc-list :lang=ja)"
+    ],
+    "additionalDirectories": [
+      "/home/kenshin/work/claude_practice"
+    ]
+  }
+}
