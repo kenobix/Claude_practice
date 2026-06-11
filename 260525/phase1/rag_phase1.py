@@ -8,7 +8,7 @@ Phase 1: フレームワークなしの最小RAG実装
 
 実行前の準備:
   pip install -r requirements.txt
-  export GOOGLE_API_KEY="your-api-key"   # Google AI Studio で取得
+  export GOOGLE_API_KEY="your-api-key"   # Google AI Studio で取得（GEMINI_API_KEY でも可）
 
 実行:
   python rag_phase1.py
@@ -31,9 +31,9 @@ DOCS_PATH = "./docs/sample.txt"
 
 # ── 初期化 ────────────────────────────────────────────────────────────────────
 
-api_key = os.environ.get("GOOGLE_API_KEY")
+api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
 if not api_key:
-    print("エラー: GOOGLE_API_KEY 環境変数が設定されていません。")
+    print("エラー: GOOGLE_API_KEY（または GEMINI_API_KEY）環境変数が設定されていません。")
     print("  export GOOGLE_API_KEY='your-api-key'")
     sys.exit(1)
 
