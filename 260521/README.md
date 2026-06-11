@@ -122,3 +122,71 @@ Gemini API環境と同じAPIキーがそのまま利用できる。
 - APIキーをコードに直接書かない（GitHubに公開されるため）
 - 本アプリはユーザーがUIでAPIキーを入力する設計（`localStorage` のみ保存）
 - `Share inputs and outputs` をオンにしている場合、会話内容がOpenAIに送信される
+
+---
+
+## Gemini APIで取得できるデータまとめ（`google-genai` 新SDK）
+
+`from google import genai` の `client.models.*` 経由で呼べる主なAPIと、それぞれのレスポンスで取得できる情報のまとめ（[260525/phase1](../260525/phase1/rag_phase1.py)での実装経験をもとに整理）。
+
+### 1. `generate_content`（テキスト生成 / チャット応答）
+
+**リクエスト時に指定できる主なパラメータ（`GenerateContentConfig`）:**
+
+| パラメータ | 内容 |
+|-----------|------|
+| `temperature` | 出力のランダム性（0に近いほど決定的、高いほど多様） |
+| `top_p` / `top_k` | 候補トークンの絞り込み方法 |
+| `max_output_tokens` | 出力トークン数の上限 |
+| `system_instruction` | システムプロンプト（役割・口調などの指示） |
+| `safety_settings` | 有害コンテンツのフィルタ強度 |
+| `response_mime_type` | `application/json`等を指定して構造化出力させる |
+| `tools` | 関数呼び出し（Function Calling）やGoogle検索連携の定義 |
+
+**レスポンスから取得できる主な情報:**
+
+| 項目 | 内容 |
+|------|------|
+| `response.text` | 生成されたテキスト本文（最も基本） |
+| `response.candidates` | 生成候補のリスト（複数候補を要求した場合） |
+| `response.candidates[].finish_reason` | 終了理由（`STOP`, `MAX_TOKENS`, `SAFETY`など） |
+| `response.candidates[].safety_ratings` | カテゴリ別の安全性評価 |
+| `response.usage_metadata.prompt_token_count` | 入力プロンプトのトークン数 |
+| `response.usage_metadata.candidates_token_count` | 出力のトークン数 |
+| `response.usage_metadata.total_token_count` | 合計トークン数（課金・無料枠管理に使う） |
+
+### 2. `embed_content`（テキストのベクトル化）
+
+[260525/phase1/rag_phase1.py](../260525/phase1/rag_phase1.py)で実際に使用。
+
+**リクエスト時に指定できる主なパラメータ（`EmbedContentConfig`）:**
+
+| パラメータ | 内容 |
+|-----------|------|
+| `task_type` | 用途指定。`RETRIEVAL_DOCUMENT`（検索される側）/ `RETRIEVAL_QUERY`（検索する側）/ `SEMANTIC_SIMILARITY` / `CLASSIFICATION` など |
+| `output_dimensionality` | ベクトルの次元数を指定して圧縮可能（デフォルトは`gemini-embedding-001`で3072次元） |
+
+**レスポンスから取得できる主な情報:**
+
+| 項目 | 内容 |
+|------|------|
+| `result.embeddings[].values` | 埋め込みベクトル本体（floatのリスト。例: 3072個） |
+| `result.embeddings[].statistics` | トークン数などの統計情報 |
+
+### 3. `models.list()`（利用可能なモデル一覧）
+
+| 項目 | 内容 |
+|------|------|
+| `model.name` | モデルID（例: `gemini-2.5-flash`, `gemini-embedding-001`） |
+| `model.supported_actions` | そのモデルで使える操作（`generateContent`, `embedContent`など） |
+| `model.input_token_limit` / `output_token_limit` | 入出力の最大トークン数 |
+
+### 4. ストリーミング（`generate_content_stream`）
+
+`response.text`を一括取得する代わりに、生成中のテキストをチャンク単位で逐次受け取れる。チャットUIのタイピング表示などに利用（[gemini.html](./gemini.html)で実装）。
+
+### まとめ
+
+- **「質問への応答（テキスト）」だけでなく**、トークン使用量・安全性評価・終了理由など**メタ情報も同時に取得できる**
+- Embedding APIは「ベクトル」そのものに加えて、ベクトルの次元数を指定で変えられる
+- 用途（検索用 vs 生成用、テキスト用 vs ベクトル用）によって呼ぶAPIエンドポイントとパラメータが異なる点に注意
