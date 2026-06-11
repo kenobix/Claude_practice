@@ -302,6 +302,45 @@ docs/sample.txt（ただのテキストファイル・ローカル）
 
 ---
 
+## 「スコア計算」と「回答生成」、それぞれどこで何のAPIが使われているか
+
+**質問:** 現状のスクリプトでは、スコア（コサイン類似度）はAPIなしで求めて、実際の回答だけAPIを使っているのか？
+
+**回答:** その理解で正しい。`rag_phase1.py`の中でAPIを呼んでいるのは**2箇所だけ**で、スコア計算自体は呼んでいない。
+
+```python
+# ① API呼び出し（Embeddingモデル） ─ ベクトルを取得するため
+doc_vecs  = embed_documents(chunks)   # client.models.embed_content(...)
+query_vec = embed_query(question)     # client.models.embed_content(...)
+
+# ② API不要（ローカル計算） ─ 取得済みのベクトルを使うだけ
+results = retrieve(query_vec, doc_vecs, chunks, top_k=3)
+#   └─ 中身は cosine_similarity() = np.dot() と np.linalg.norm() だけ
+
+# ③ API呼び出し（生成モデル） ─ 検索結果＋質問から回答文を作るため
+answer = generate_answer(question, context_texts)  # client.models.generate_content(...)
+```
+
+つまり「スコアを求める」ためにAPIが必要なのではなく、**スコアの元になる『ベクトル』を作る①の時点でAPIを使っており、スコア自体（②）はそのベクトルを使ったただの数値計算**、という整理になる。
+
+### これは学習用の仕組みか？実際のRAGでも同じか？
+
+**この役割分担（①Embedding API → ②ローカルでベクトル比較 → ③生成API）は、Phase1特有のものではなく、実際のRAGシステムでも基本的に同じ構造。** 違うのは②の部分の「実装方法」だけ。
+
+| | Phase1（今回） | 実際のRAGシステム |
+|---|---|---|
+| ①ベクトル化 | Google API（`embed_content`）を都度呼ぶ | 同様にAPIまたはローカルEmbeddingモデルを使う |
+| ②類似度計算・検索 | `numpy`で全チャンクと総当たりのコサイン類似度を計算（毎回） | **ベクトルDB**（ChromaDB, FAISS, Pineconeなど）に事前保存し、近似最近傍探索（ANN）で高速検索 |
+| ③回答生成 | Google API（`generate_content`）を呼ぶ | 同様にLLM APIまたはローカルLLMを呼ぶ |
+
+つまり実際のシステムとの最大の違いは、**②を「毎回全件総当たりで計算するか」「事前にベクトルDBへ保存しておき高速に検索するか」**という点。Phase1はチャンクが7個しかないので毎回計算しても一瞬だが、ドキュメントが数万件になると総当たりは遅すぎるため、ベクトルDB（Phase2で導入予定）が必要になる。
+
+**まとめ:**
+- 「ベクトル化」と「回答生成」にAPI（≒AIモデル）が必要、という構造は学習用・実用問わず共通
+- 「類似度計算・検索」をどう効率化するか（毎回計算 vs ベクトルDB）が、学習用と実用の主な違い
+
+---
+
 ## Phase 1 用語解説（初学者向け詳細）
 
 「チャンク化」「ベクトル化（Embedding）」「コサイン類似度検索」「スコア」が、それぞれ何をしているのかを実際のデータで追いながら説明する。
