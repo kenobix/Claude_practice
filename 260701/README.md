@@ -102,10 +102,11 @@ export GOOGLE_MAPS_API_KEY="your-maps-api-key"
 | [places_client.py](./places_client.py) | Google Places API（Nearby Search）のラッパー。座標キャッシュ付き |
 | [llm_agent.py](./llm_agent.py) | Gemini APIへの行動決定プロンプト生成・JSON応答パース |
 | [simulate.py](./simulate.py) | シミュレーション本体（ターン制ループ） |
-| [analyze.py](./analyze.py) | ログを集計し、検討率・来店率・購入率と失注理由を表示。A/Bテスト比較にも対応 |
+| [analyze.py](./analyze.py) | ログを集計し、検討率・来店率・購入率と失注理由を表示。グラフ（PNG）も生成。A/Bテスト比較にも対応 |
 | [map_view.html](./map_view.html) | Leaflet + OpenStreetMap（無料・APIキー不要）でシミュレーション結果を地図上に再生表示 |
 | [map_view_google.html](./map_view_google.html) | 実際のGoogle Map（Maps JavaScript API）上に再生表示。専用APIキーが別途必要 |
 | `logs/` | シミュレーション結果のJSONログ出力先 |
+| `charts/` | `analyze.py`が生成するグラフ（PNG）の出力先 |
 
 ---
 
@@ -122,9 +123,11 @@ export GOOGLE_MAPS_API_KEY="..."
 python3 simulate.py
 # → logs/sim_20260701_xxxxxx.json に保存される
 
-# 分析
+# 分析（コンソール出力に加え、charts/funnel.png と charts/interest_over_time.png を生成）
 python3 analyze.py logs/sim_20260701_xxxxxx.json
 ```
+
+**グラフについて**: `analyze.py`は日本語ラベル付きのグラフをmatplotlibで生成する（フォントは`Noto Serif CJK JP`を使用。文字化けする場合は別の日本語フォントをインストールするか`analyze.py`内の`rcParams["font.family"]`を変更する）。グラフ生成が不要な場合は`--no-charts`を付ける。
 
 地図上での再生（OpenStreetMap版、APIキー不要）:
 1. `map_view.html` をブラウザで開く（GitHub Pagesでも静的に動作）

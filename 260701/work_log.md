@@ -215,3 +215,21 @@ Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_fr
 実際のGoogle Map（建物名・施設名表示あり）上で同じログを再生できることを確認。自社店舗ピン（🏪）とペルソナの円マーカーが正しい位置に表示されている。
 
 両方式ともAPIキーの取り扱い（Places API用とMaps JavaScript API用を分離）を含めて正常に動作することが確認できた。
+
+---
+
+## ログのグラフ化機能を追加
+
+「ログから行動を分析してグラフ化できるか」という質問に対し、既存の`logs/sim_xxx.json`に必要なデータ（ペルソナごとの関心度・行動タイプ・検討有無の時系列）が揃っているため可能と回答。matplotlibでの拡張（静的PNG出力、レポート向き）とChart.jsでのインタラクティブ表示（map_view.html拡張）の2案を提示し、データ構造との親和性からmatplotlib案を採用した。
+
+**実装内容（[analyze.py](./analyze.py)を拡張）:**
+
+- `matplotlib`をAggバックエンドで使用（画面表示なし、PNG直接出力。WSL2のヘッドレス環境でも動作）
+- 日本語ラベルの文字化け対策として`Noto Serif CJK JP`フォントを指定（システムに`/usr/share/fonts/opentype/noto/`としてプリインストール済みであることを確認済み）
+- `plot_funnel()`: 検討/来店/購入の人数を棒グラフ化
+- `plot_interest_over_time()`: ペルソナ別の関心度推移を折れ線グラフ化
+- `plot_ab_comparison()`: `--compare`指定時、A/Bの検討率・来店率・購入率を並べた棒グラフ化
+- 出力先は`charts/`（`--charts-dir`で変更可、`--no-charts`でスキップ可）
+- [requirements.txt](./requirements.txt)に`matplotlib`を追加
+
+ユーザーが実際に保存していたログ（`logs/sim_20260630_180426.json`）で動作確認済み。`charts/funnel.png`（検討3/3・来店0/3・購入0/3）と`charts/interest_over_time.png`（ペルソナ別の関心度推移）が正しく日本語表示されることを確認した。
