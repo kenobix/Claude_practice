@@ -116,8 +116,27 @@ Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_fr
 
 ---
 
+## ログの保存場所とシステム構成の質問への回答
+
+ユーザーから「Google Maps APIはどう使われているか」「ペルソナの位置・移動履歴はどこに保存されているか」「システム構成図はあるか」という質問を受け、以下を回答・対応した。
+
+- Google Maps API（Places API）は`places_client.py`経由の周辺施設取得のみに使用。地図の**描画**にはAPIキー不要のLeaflet+OpenStreetMapを使っており、Maps APIとは無関係
+- 位置・移動履歴はDB等ではなく、`simulate.py`実行ごとに`logs/sim_YYYYMMDD_HHMMSS.json`へ全ターン分が保存される方式
+- システム構成図は当初未作成だったため、[README.md](./README.md)に**Mermaidのflowchart**を追加（設定ファイル→シミュレーション本体→外部API→ログ→分析/可視化、の流れを図示）
+
+## 実際のGoogle Map上での再生機能を追加
+
+「ログを実際のGoogle Mapで表示できるか」との質問を受け、新規ファイル[map_view_google.html](./map_view_google.html)を作成した。
+
+- 既存の`map_view.html`（Leaflet+OpenStreetMap、無料・APIキー不要）とは別に、**Google Maps JavaScript API**を使う版を追加
+- Maps JavaScript APIはPlaces APIとは別物のため、Cloud Consoleで個別に有効化が必要。専用のAPIキー（「アプリケーションの制限」をウェブサイト+HTTPリファラー、「APIの制限」をMaps JavaScript APIのみに絞る）を発行する運用を推奨する形でREADMEに手順を追記
+- 実装は`gemini.html`等と同じ「APIキーをUI入力→localStorageに保存」のパターンを踏襲。Google Maps JS APIを動的に`<script>`タグでロードし、`google.maps.Marker`でペルソナの位置をプロットする
+
+---
+
 ## 今後の予定
 
-- ユーザーがAPIキーを取得・設定し、`simulate.py`の動作確認
+- ユーザーがレート制限対策後の`simulate.py`を再実行し、動作確認
+- `map_view_google.html`の動作確認（Maps JavaScript APIキーの発行が必要）
 - 動作確認後、結果を本ログまたは別ログに追記
 - v1の有用性を確認した上で、ペルソナ間相互作用や可視化強化（案2・案3の要素）の追加要否を検討
