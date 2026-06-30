@@ -1,0 +1,35 @@
+[
+  {
+    "id": "p1",
+    "name": "佐藤 美咲",
+    "age": 28,
+    "occupation": "Web系企業の会社員",
+    "personality": "新しいもの好きで、SNS映えする商品に興味がある。コーヒーは1日2杯以上飲む習慣がある。",
+    "budget_jpy": 3000,
+    "needs": "出勤前に手早く美味しいコーヒーを買いたい。最近は健康志向で糖分控えめのものを好む。",
+    "price_sensitivity": "low",
+    "start_location": { "lat": 35.6595, "lng": 139.7005, "place_name": "渋谷駅 ハチ公口" }
+  },
+  {
+    "id": "p2",
+    "name": "田中 健一",
+    "age": 45,
+    "occupation": "中小企業経営者",
+    "personality": "効率重視で無駄な寄り道はしない。価格より時間を優先するが、なじみの店は大事にする。",
+    "budget_jpy": 1500,
+    "needs": "商談の合間に手早くカフェイン補給したい。味より早さを重視する。",
+    "price_sensitivity": "medium",
+    "start_location": { "lat": 35.6586, "lng": 139.7016, "place_name": "渋谷スクランブル交差点付近" }
+  },
+  {
+    "id": "p3",
+    "name": "鈴木 葵",
+    "age": 21,
+    "occupation": "大学生",
+    "personality": "節約志向だが、友人に勧められたものには興味を持つ。SNSでの口コミを重視する。",
+    "budget_jpy": 800,
+    "needs": "できるだけ安く、かつ友人に自慢できるような体験を求めている。",
+    "price_sensitivity": "high",
+    "start_location": { "lat": 35.6612, "lng": 139.7028, "place_name": "渋谷センター街入口" }
+  }
+]

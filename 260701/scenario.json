@@ -1,0 +1,17 @@
+{
+  "area_name": "渋谷駅周辺",
+  "area_center": { "lat": 35.6595, "lng": 139.7005 },
+  "search_radius_m": 600,
+  "our_product": {
+    "store_name": "Kenshin Coffee 渋谷店",
+    "description": "1杯400円のスペシャルティコーヒー。糖分控えめのオーツミルクラテが人気。",
+    "price_jpy": 400,
+    "store_location": { "lat": 35.6603, "lng": 139.7021, "place_name": "Kenshin Coffee 渋谷店" }
+  },
+  "simulation": {
+    "date": "2026-07-01",
+    "start_hour": 8,
+    "end_hour": 21,
+    "turn_minutes": 60
+  }
+}

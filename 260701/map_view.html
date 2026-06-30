@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI箱庭 - シミュレーション再生</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; height: 100dvh; display: flex; flex-direction: column; }
+  header { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 10px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  header h1 { font-size: 16px; }
+  #file-input { font-size: 13px; }
+  #main { flex: 1; display: flex; min-height: 0; }
+  #map { flex: 1; }
+  #side-panel { width: 320px; border-left: 1px solid #e5e5e5; overflow-y: auto; padding: 12px; font-size: 13px; background: #fafafa; }
+  #side-panel h2 { font-size: 14px; margin-bottom: 8px; }
+  .persona-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+  .persona-card .name { font-weight: 600; margin-bottom: 4px; }
+  .persona-card .reason { color: #555; margin-top: 4px; line-height: 1.5; }
+  .persona-card .meta { color: #888; font-size: 11px; margin-top: 4px; }
+  #controls { background: #fff; border-top: 1px solid #e5e5e5; padding: 10px 16px; display: flex; align-items: center; gap: 12px; }
+  #time-slider { flex: 1; }
+  #time-label { font-size: 13px; min-width: 160px; }
+  .leaflet-popup-content { font-size: 13px; }
+  .badge-store { background: #e8f0fe; color: #1a73e8; border-radius: 8px; padding: 1px 6px; font-size: 11px; margin-left: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏘️ AI箱庭 シミュレーション再生</h1>
+  <input type="file" id="file-input" accept="application/json">
+  <span id="status" style="font-size:12px;color:#888;"></span>
+</header>
+
+<div id="main">
+  <div id="map"></div>
+  <div id="side-panel">
+    <h2>このターンの行動・思考ログ</h2>
+    <div id="persona-cards">ログファイルを読み込んでください。</div>
+  </div>
+</div>
+
+<div id="controls">
+  <button id="play-btn" disabled>▶ 再生</button>
+  <input type="range" id="time-slider" min="0" max="0" value="0" disabled>
+  <span id="time-label">-</span>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const fileInput = document.getElementById('file-input');
+  const statusEl = document.getElementById('status');
+  const slider = document.getElementById('time-slider');
+  const timeLabel = document.getElementById('time-label');
+  const playBtn = document.getElementById('play-btn');
+  const cardsEl = document.getElementById('persona-cards');
+
+  const map = L.map('map').setView([35.6595, 139.7005], 16);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19,
+  }).addTo(map);
+
+  const colors = ['#e53935', '#1e88e5', '#43a047', '#fb8c00', '#8e24aa'];
+  let log = null;
+  let markers = {};
+  let storeMarker = null;
+  let playing = false;
+  let playTimer = null;
+
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const text = await file.text();
+    log = JSON.parse(text);
+    statusEl.textContent = `${file.name} を読み込みました（${log.turns.length}ターン）`;
+    initMap();
+  });
+
+  function initMap() {
+    Object.values(markers).forEach(m => map.removeLayer(m));
+    markers = {};
+    if (storeMarker) map.removeLayer(storeMarker);
+
+    const store = log.scenario.our_product.store_location;
+    map.setView([store.lat, store.lng], 16);
+
+    storeMarker = L.marker([store.lat, store.lng], {
+      icon: L.divIcon({ className: '', html: '🏪', iconSize: [24, 24] }),
+    }).addTo(map).bindPopup(`<b>${log.scenario.our_product.store_name}</b><br>自社店舗`);
+
+    log.personas.forEach((p, i) => {
+      const color = colors[i % colors.length];
+      const marker = L.circleMarker([p.start_location.lat, p.start_location.lng], {
+        radius: 9, color, fillColor: color, fillOpacity: 0.8, weight: 2,
+      }).addTo(map);
+      markers[p.id] = marker;
+    });
+
+    slider.max = log.turns.length - 1;
+    slider.value = 0;
+    slider.disabled = false;
+    playBtn.disabled = false;
+    renderTurn(0);
+  }
+
+  function renderTurn(turnIndex) {
+    const turn = log.turns[turnIndex];
+    timeLabel.textContent = turn.time;
+    cardsEl.innerHTML = '';
+
+    turn.decisions.forEach((d) => {
+      const loc = d.location_after;
+      markers[d.persona_id].setLatLng([loc.lat, loc.lng]);
+      markers[d.persona_id].bindPopup(
+        `<b>${d.persona_name}</b><br>${loc.place_name}<br>関心度: ${d.decision.interest_in_our_product}/10`
+      );
+
+      const card = document.createElement('div');
+      card.className = 'persona-card';
+      const storeBadge = d.decision.considered_our_product ? '<span class="badge-store">自社製品を検討</span>' : '';
+      card.innerHTML = `
+        <div class="name">${d.persona_name} ${storeBadge}</div>
+        <div>📍 ${loc.place_name}（${d.decision.action_type}）</div>
+        <div class="reason">💭 ${d.decision.reason}</div>
+        <div class="meta">関心度: ${d.decision.interest_in_our_product}/10</div>
+      `;
+      cardsEl.appendChild(card);
+    });
+  }
+
+  slider.addEventListener('input', () => renderTurn(parseInt(slider.value, 10)));
+
+  playBtn.addEventListener('click', () => {
+    playing = !playing;
+    playBtn.textContent = playing ? '⏸ 停止' : '▶ 再生';
+    if (playing) {
+      playTimer = setInterval(() => {
+        let next = parseInt(slider.value, 10) + 1;
+        if (next > parseInt(slider.max, 10)) next = 0;
+        slider.value = next;
+        renderTurn(next);
+      }, 1200);
+    } else {
+      clearInterval(playTimer);
+    }
+  });
+</script>
+</body>
+</html>
