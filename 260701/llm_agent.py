@@ -68,7 +68,17 @@ class PersonaAgent:
                     config=types.GenerateContentConfig(response_mime_type="application/json"),
                 )
             except errors.ClientError as e:
-                if e.code != 429 or attempt == MAX_RETRIES_ON_RATE_LIMIT:
+                if e.code != 429:
+                    raise
+                if "PerDay" in str(e):
+                    # 1日あたりの無料枠を使い切った場合、待っても解消しないためすぐに諦める
+                    raise RuntimeError(
+                        "Gemini APIの1日あたりの無料枠を使い切りました。\n"
+                        "日付が変わる（米国太平洋時間の0時頃）まで待つか、\n"
+                        "Google AI Studioで課金を有効化してから再実行してください。\n"
+                        f"元のエラー: {e}"
+                    ) from e
+                if attempt == MAX_RETRIES_ON_RATE_LIMIT:
                     raise
                 match = re.search(r"retry in ([\d.]+)s", str(e))
                 wait_sec = float(match.group(1)) + 2 if match else DEFAULT_RETRY_WAIT_SEC

@@ -10,8 +10,8 @@
   },
   "simulation": {
     "date": "2026-07-01",
-    "start_hour": 8,
+    "start_hour": 9,
     "end_hour": 21,
-    "turn_minutes": 60
+    "turn_minutes": 180
   }
 }
