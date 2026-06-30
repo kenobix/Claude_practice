@@ -91,6 +91,27 @@
 | APIキーの制限 | 「APIの制限」で「Places API」のみにチェックを入れ、他のMaps系APIは許可しない設定にできている（漏洩時の被害範囲を限定する正しい設定） |
 | プロジェクト | 「My First Project」が作成され、Google Maps Platformが有効化された状態を確認 |
 
+---
+
+## 初回実行と429エラーの対応
+
+`python3 simulate.py`を初回実行したところ、3ターン分（[08:00]〜[10:00]の一部）は正常に動作したが、その後`429 RESOURCE_EXHAUSTED`エラーで停止した。
+
+```
+google.genai.errors.ClientError: 429 RESOURCE_EXHAUSTED.
+Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests
+```
+
+**原因**: コードのバグではなく、Gemini API無料枠の**レート制限（1分あたりのリクエスト数上限）**に達したため。`simulate.py`がペルソナごとに間隔を空けずに連続でAPIを呼んでいたことが直接の原因。Google AI Studioの「使用状況」画面でも`429 TooManyRequests`エラーが記録されていることを確認した。
+
+**対応（[llm_agent.py](./llm_agent.py)を修正）**:
+
+1. リクエスト間隔の確保: `PersonaAgent`に`_throttle()`を追加し、前回の呼び出しから`MIN_REQUEST_INTERVAL_SEC`(6.5秒)以上空けてから次のリクエストを送るようにした
+2. 429エラー時の自動リトライ: `_call_with_retry()`を追加し、429が発生した場合はエラーメッセージ中の`retry in X秒`を読み取って待機し、最大5回まで自動リトライするようにした
+3. 副次的な修正: ログを見るとロクシタンなど自社店舗以外の場所でも`action_type="purchase"`が出力されていた（`analyze.py`の集計は自社店舗かどうかで正しくフィルタしているため分析結果に影響はないが、紛らわしいため）。プロンプトに「`purchase`は自社店舗を選んだ場合のみ使うこと」という制約を追記した
+
+修正後のコードは構文チェック済み。再実行による動作確認はユーザー側で実施予定。
+
 これでPlaces APIキーの取得は完了。残るは`GOOGLE_API_KEY`（Gemini、既に260521・260525で取得済みのはず）と合わせて環境変数を設定し、`simulate.py`を実際に実行する動作確認のみ。
 
 ---

@@ -9,12 +9,21 @@ Chain of Thought形式のJSONで次の行動を出力させる。
 """
 
 import os
+import re
 import json
 import sys
+import time
 from google import genai
 from google.genai import types
+from google.genai import errors
 
 GENERATION_MODEL = "gemini-2.5-flash"
+
+# 無料枠のレート制限（1分あたりのリクエスト数）に収まるよう、呼び出し間隔を空ける。
+# gemini-2.5-flashの無料枠は10〜20RPM程度（アカウントにより変動）のため、安全側に間隔を取る。
+MIN_REQUEST_INTERVAL_SEC = 6.5
+MAX_RETRIES_ON_RATE_LIMIT = 5
+DEFAULT_RETRY_WAIT_SEC = 20
 
 DECISION_SCHEMA_HINT = """
 以下のJSON形式で**のみ**出力してください（説明文や前後のテキストは一切不要）:
@@ -38,6 +47,33 @@ class PersonaAgent:
             print("  export GOOGLE_API_KEY='your-api-key'")
             sys.exit(1)
         self.client = genai.Client(api_key=api_key)
+        self._last_request_time = 0.0
+
+    def _throttle(self):
+        """前回の呼び出しからMIN_REQUEST_INTERVAL_SEC秒以上空くまで待つ。"""
+        elapsed = time.monotonic() - self._last_request_time
+        wait = MIN_REQUEST_INTERVAL_SEC - elapsed
+        if wait > 0:
+            time.sleep(wait)
+
+    def _call_with_retry(self, prompt: str):
+        """429 (レート制限超過) の場合は自動的に待ってリトライする。"""
+        for attempt in range(MAX_RETRIES_ON_RATE_LIMIT + 1):
+            self._throttle()
+            self._last_request_time = time.monotonic()
+            try:
+                return self.client.models.generate_content(
+                    model=GENERATION_MODEL,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(response_mime_type="application/json"),
+                )
+            except errors.ClientError as e:
+                if e.code != 429 or attempt == MAX_RETRIES_ON_RATE_LIMIT:
+                    raise
+                match = re.search(r"retry in ([\d.]+)s", str(e))
+                wait_sec = float(match.group(1)) + 2 if match else DEFAULT_RETRY_WAIT_SEC
+                print(f"  [レート制限] {wait_sec:.0f}秒待ってリトライします（{attempt + 1}/{MAX_RETRIES_ON_RATE_LIMIT}）...")
+                time.sleep(wait_sec)
 
     def decide(self, persona: dict, current_time: str, current_location: dict,
                candidates: list[dict], our_product: dict) -> dict:
@@ -74,14 +110,11 @@ class PersonaAgent:
 {candidates_text}
 
 候補の中から1つ選び、なぜその選択をしたか（自社製品を検討したか・しなかったか含めて）を考えてください。
+注意: action_type="purchase" は、選んだ場所が自社店舗（候補に「←自社店舗」と付いている場所）の場合にのみ使ってください。それ以外の場所では "move" "stay" "enter_and_browse" のいずれかを使ってください。
 {DECISION_SCHEMA_HINT}
 """
 
-        response = self.client.models.generate_content(
-            model=GENERATION_MODEL,
-            contents=prompt,
-            config=types.GenerateContentConfig(response_mime_type="application/json"),
-        )
+        response = self._call_with_retry(prompt)
 
         try:
             decision = json.loads(response.text)
