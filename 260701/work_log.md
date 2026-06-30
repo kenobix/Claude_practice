@@ -156,3 +156,41 @@ Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_fr
 3. [README.md](./README.md)のコスト目安セクションを実態に合わせて更新。「1日の無料枠の正確な値はGoogle AI Studioの「レート制限」ページで確認できる」「より大規模に動かしたい場合は課金を有効化する」という案内を追記
 
 **教訓**: Gemini APIのエラーメッセージの`retryDelay`（数十秒程度）は、実際の制限が「1日あたり」であっても短い値が返ってくることがあり、これだけでは制限の種類（分単位か日単位か）を判断できない。`quotaId`の文字列（`PerMinute`/`PerDay`等）を確認する必要がある。
+
+---
+
+## 初回完走の確認
+
+ユーザーが無料枠のGemini APIキーをもう1つ発行し、`python3 simulate.py`を再実行した結果、**エラーなく完走**した。
+
+```
+[09:00] 佐藤 美咲: purchase -> Shibuya Excel Hotel Tokyu (自社製品検討=True, 関心度=9)
+[09:00] 田中 健一: purchase -> ロクシタン SHIBUYA TOKYO (自社製品検討=True, 関心度=10)
+[09:00] 鈴木 葵: purchase -> 渋谷センター街入口 (自社製品検討=True, 関心度=9)
+...(中略、5ターン×3ペルソナ=15件すべて正常終了)...
+[21:00] 鈴木 葵: purchase -> 渋谷センター街入口 (自社製品検討=True, 関心度=9)
+
+ログを保存しました: logs/sim_20260630_180426.json
+```
+
+3ペルソナ×5ターン＝15回のGemini API呼び出しが、無料枠（1日20回）の範囲内で完走することを確認した。
+
+**地図再生も両方式で動作確認済み**:
+- `map_view.html`（Leaflet+OpenStreetMap）: `file://`で直接開いて正常に動作。渋谷の実際の道路網上にペルソナのマーカーと自社店舗ピンが表示され、サイドパネルに思考ログが表示された
+- `map_view_google.html`（Google Maps JavaScript API）: GitHub Pages（`https://kenobix.github.io/Claude_practice/260701/map_view_google.html`）にデプロイ後、HTTPリファラー制限をかけたAPIキーで正常に動作。実際のGoogle Map上（渋谷駅周辺の建物・施設名表示あり）でペルソナの移動と思考ログを確認できた
+
+## action_type="purchase"の誤判定を修正（コード側で強制）
+
+ログを見ると、自社店舗以外（ロクシタン、渋谷センター街入口など）でも`action_type="purchase"`と出力される問題が、プロンプトに制約を追記した後も解消していなかった（LLMがプロンプトの指示を完全には守らない）。
+
+[simulate.py](./simulate.py)の`run_simulation()`内で、LLMの出力をそのまま信用せず、**コード側で強制的に補正**するよう修正した。選んだ候補が自社店舗（`is_our_store`）でないにもかかわらず`action_type=="purchase"`だった場合、`"enter_and_browse"`に書き換える。プロンプトでの指示はLLMへのヒントとしては有効だが、データの整合性を保証するには不十分であり、決定的なルールはコード側で担保すべき、という教訓。
+
+なお`analyze.py`の購入判定は元々「`location_after`が自社店舗名と一致し、かつ`action_type=="purchase"`」という条件でフィルタしていたため、この不具合があっても**分析結果（購入率の集計）自体には影響していなかった**。コンソールログの表示が紛らわしかっただけ。
+
+## Google CloudのAPI費用上限について
+
+ユーザーから「APIの請求が無料の範囲でできるように予算を設定したい」との相談があり、以下を回答した。
+
+- GCPの「予算とアラート」は**通知のみ**で、上限に達してもAPIの利用は自動停止されない（誤解しやすいポイント）
+- 確実に無料枠を超えないようにするには、「IAMと管理」→「割り当てとシステムの上限」（Quotas）で、Places APIの1日あたりリクエスト数を無料枠より低い値に手動設定することを推奨（これは実際にAPIを停止させる強制力がある）
+- 予算アラートは早期警告として併用（金額をテストの¥1ではなく、たとえば¥500程度に設定）するのが望ましい

@@ -99,9 +99,16 @@ def run_simulation(personas: list[dict], scenario: dict) -> dict:
             idx = decision["choice_index"]
             if idx == 0:
                 new_location = current_location
+                is_our_store = False
             else:
                 chosen = candidates[idx - 1]
                 new_location = {"lat": chosen["lat"], "lng": chosen["lng"], "place_name": chosen["name"]}
+                is_our_store = chosen.get("is_our_store", False)
+
+            # LLMがプロンプトの指示を守らず、自社店舗以外でも"purchase"と出力することがあるため、
+            # 自社店舗を選んでいない場合はコード側で強制的に補正する
+            if decision.get("action_type") == "purchase" and not is_our_store:
+                decision["action_type"] = "enter_and_browse"
 
             state[persona["id"]] = new_location
 
