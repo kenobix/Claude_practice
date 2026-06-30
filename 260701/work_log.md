@@ -194,3 +194,24 @@ Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_fr
 - GCPの「予算とアラート」は**通知のみ**で、上限に達してもAPIの利用は自動停止されない（誤解しやすいポイント）
 - 確実に無料枠を超えないようにするには、「IAMと管理」→「割り当てとシステムの上限」（Quotas）で、Places APIの1日あたりリクエスト数を無料枠より低い値に手動設定することを推奨（これは実際にAPIを停止させる強制力がある）
 - 予算アラートは早期警告として併用（金額をテストの¥1ではなく、たとえば¥500程度に設定）するのが望ましい
+- ただし無料トライアル中は「割り当て」自体がGoogle側で固定されており、ユーザーが引き下げ/引き上げを行えない（画面上のツールチップで確認）。トライアル中は$300クレジット＋固定の無料上限により誤課金リスクは低いため、「アップグレード」ボタンを誤って押さないことが現状の最大の注意点と回答した
+
+---
+
+## 動作確認のスクリーンショットを記録
+
+ユーザーが実際の動作確認画面を`screenshots/`フォルダに保存し、本ログに掲載した。
+
+**Leaflet + OpenStreetMap版（`map_view.html`）:**
+
+![Leaflet版の地図再生画面](./screenshots/map_view_leaflet_result.png)
+
+渋谷の実際の道路網上に、自社店舗（赤ピン）とペルソナ（青丸）が表示され、右側のサイドパネルに「佐藤 美咲」の思考ログ（自社製品を検討し、Kenshin Coffeeを選んだ理由）が表示されている。
+
+**Google Maps JavaScript API版（`map_view_google.html`、GitHub Pages上で動作）:**
+
+![Google Map版の地図再生画面](./screenshots/map_view_google_result.png)
+
+実際のGoogle Map（建物名・施設名表示あり）上で同じログを再生できることを確認。自社店舗ピン（🏪）とペルソナの円マーカーが正しい位置に表示されている。
+
+両方式ともAPIキーの取り扱い（Places API用とMaps JavaScript API用を分離）を含めて正常に動作することが確認できた。
