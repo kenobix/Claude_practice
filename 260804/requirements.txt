@@ -1,0 +1,9 @@
+numpy
+pandas
+matplotlib
+scikit-learn
+jupyter
+torch
+torchvision
+# torchtext: 2023年に開発終了(deprecated)、torch 2.13とABI非互換のため使用しない
+# word2vec等が必要になった場合はgensimを追加インストールする
