@@ -13,7 +13,7 @@
 3. **各Stageの最後に小さな成果物（ミニプロジェクト）を作る** — 一覧消化ではなく手を動かした実感を残すため
 4. わからないこと・詰まったことがあれば都度聞いてください。ここでは大枠の順序と各Stageの狙いを示す
 
-## WSL環境構築（Stage 0）
+## WSL環境構築（Stage 0）✅完了
 ```bash
 sudo apt update && sudo apt install -y python3-venv python3-pip
 cd /home/kenshin/work/claude_practice/260804
@@ -23,10 +23,12 @@ pip install numpy pandas matplotlib scikit-learn jupyter torch torchvision torch
 ```
 - GPU利用（WSL2 + CUDA）が必要になるのはStage 6以降（CNN画像系）。最初はCPUで十分
 - 各Stageごとに `stageN/` フォルダを作り、コードとミニプロジェクトをそこに置く運用を想定
+- 詳細・詰まった点は [work_log.md](work_log.md#stage-0-wsl環境構築) を参照
+  （`torchtext`はABI非互換のため未使用に決定、word2vec等はStage 7で`gensim`に代替）
 
 ---
 
-## Stage 1: 教師あり学習の基礎（回帰・分類）+ 評価の基本
+## Stage 1: 教師あり学習の基礎（回帰・分類）+ 評価の基本 ✅完了
 **狙い**: 「学習する」とはどういうことかを一番シンプルな形で体感し、以降ずっと使う評価指標を先に押さえる
 
 - 単回帰分析 / 重回帰分析 / 線形回帰
@@ -37,10 +39,12 @@ pip install numpy pandas matplotlib scikit-learn jupyter torch torchvision torch
 
 **実装**: numpyで最小二乗法・勾配降下法による線形回帰をスクラッチ → scikit-learnで重回帰・ロジスティック回帰・評価指標を実践
 **ミニプロジェクト**: 適当な公開データ（例: タイタニック生存予測）でロジスティック回帰＋評価指標一式を出す
+**実施内容**: [work_log.md](work_log.md#stage-1-教師あり学習の基礎回帰分類--評価の基本) 参照。
+タイタニック生存予測をミニプロジェクトとして実施（Accuracy 0.805 / ROC-AUC 0.867）
 
 ---
 
-## Stage 2: 決定木・アンサンブル・SVM
+## Stage 2: 決定木・アンサンブル・SVM ✅完了
 **狙い**: 線形モデルとは異なる決定境界の作り方、複数モデルを組み合わせる発想を学ぶ
 
 - 決定木
@@ -49,6 +53,8 @@ pip install numpy pandas matplotlib scikit-learn jupyter torch torchvision torch
 
 **実装**: scikit-learnで決定木・ランダムフォレスト・SVMを比較、決定境界を可視化
 **ミニプロジェクト**: 同じデータセットで複数モデルの精度・決定境界を比較するノートブック
+**実施内容**: [work_log.md](work_log.md#stage-2-決定木アンサンブルsvm) 参照。
+make_moonsで決定木/RandomForest/SVM(rbf)を比較（SVMがテスト精度0.878で最良）
 
 ---
 
@@ -200,5 +206,5 @@ gensimやPyTorchでword2vecを学習し、単語の類似度を確認
   （[260702](../260702/)と同じ形式）
 
 ## 次のアクション
-Stage 0の環境構築から始めますか？それとも興味のある分野（画像/NLP/生成/強化学習）から
-先に着手したい場合は教えてください。
+Stage 0〜2が完了しました。次はStage 3（教師なし学習）に進みますか？
+それとも興味のある分野（画像/NLP/生成/強化学習）から先に着手したい場合は教えてください。

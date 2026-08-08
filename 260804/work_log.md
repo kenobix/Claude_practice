@@ -113,3 +113,62 @@ source .venv/bin/activate
 - **MNIST（手書き数字）**: 画像データのため欠損値処理やカテゴリ変数エンコーディングの練習にならない。画像系はStage 4以降（NN基礎）で本格的に扱う予定のため、そちらに譲った
 - **California Housing / Diabetes**: いずれも回帰タスクであり、すでに[02_regression_regularization.py](stage1/02_regression_regularization.py)で回帰を扱ったため、分類側の評価指標（混同行列・ROC-AUC）を実践する題材としては別データが必要だった
 - **実務データ（自作の売上・アンケート等）**: 入手性・前処理の複雑さ・個人情報配慮の観点から、教育目的では実績のある公開データセットの方が結果の妥当性を検証しやすく適切と判断
+
+---
+
+## Stage 2: 決定木・アンサンブル・SVM
+
+[stage2/](stage2/) 配下にPythonスクリプトとして実装。追加のインストールは不要だった。
+
+| ファイル | 内容 |
+|---|---|
+| [01_decision_tree.py](stage2/01_decision_tree.py) | load_wine（ワイン品種分類）で決定木。max_depthを変えた過学習の観察、plot_treeによる木構造の可視化、2特徴量での決定境界の可視化 |
+| [02_ensemble_bagging_boosting.py](stage2/02_ensemble_bagging_boosting.py) | 単体決定木 vs Bagging vs RandomForest vs GradientBoostingの精度比較、RandomForestの特徴量重要度 |
+| [03_svm_kernel.py](stage2/03_svm_kernel.py) | make_circles（同心円データ）でSVMのlinear/poly/rbfカーネルを比較し、カーネルトリックの効果を可視化。正則化パラメータCの影響も確認 |
+| [04_model_comparison_project.py](stage2/04_model_comparison_project.py) | **ミニプロジェクト**: make_moonsで決定木・RandomForest・SVM(rbf)の決定境界とテスト精度・交差検証を横並び比較 |
+
+### 図1: decision_tree.png — 決定木の過学習・構造・決定境界（[01_decision_tree.py](stage2/01_decision_tree.py)）
+
+![決定木の過学習の観察・木構造・決定境界](stage2/decision_tree.png)
+
+**何を示す図か**: load_wine（3品種のワインを化学成分13種類から分類する178件のデータ）を使用。左からmax_depth(木の深さの上限)と訓練/テスト精度の関係、max_depth=3の木構造そのもの、flavanoids(フラボノイド量)とcolor_intensity(色の濃さ)の2特徴量だけを使った決定境界。
+
+**読み取れる結果**:
+- 左図: max_depth=1では訓練0.661/テスト0.611と両方低い（未学習＝単純すぎるモデル）。max_depth=3で訓練0.992/テスト0.963まで急上昇し、それ以降(4〜None)は訓練は1.000に達するがテストは0.963で頭打ち。**深さ3を超えて木を複雑にしても、訓練データへの当てはめが良くなるだけでテスト性能は改善しない＝過学習**という典型的な現象が確認できた
+- 中央図: 根ノードがまず`color_intensity <= 3.82`で分岐し、次に`flavanoids`や`alcalinity_of_ash`といった特徴量で細分化されていく様子が視覚的にわかる。各ノードのgini(ジニ不純度、0に近いほどそのノード内が単一クラスに揃っている)が深さとともに0に近づいていく
+- 右図: 2特徴量だけに絞ると全13特徴量を使った場合(0.963)よりテスト精度が下がる(0.870、参考としてmax_depth=3では0.907)。情報量を減らして可視化しやすくしたトレードオフであることを明記した
+
+### 図2: ensemble_comparison.png — アンサンブル手法の精度比較と特徴量重要度（[02_ensemble_bagging_boosting.py](stage2/02_ensemble_bagging_boosting.py)）
+
+![単体決定木とアンサンブル手法の精度比較、RandomForestの特徴量重要度](stage2/ensemble_comparison.png)
+
+**何を示す図か**: 同じload_wineデータで、max_depth=3・n_estimators=50に条件を揃えた「決定木(単体)」「Bagging」「RandomForest」「GradientBoosting」を比較。左がテスト精度と5-fold交差検証平均の棒グラフ、右がRandomForestの特徴量重要度。
+
+**読み取れる結果**:
+- 決定木単体はテスト0.963だが5-fold CV平均は0.871とばらつきが大きい。BaggingとRandomForestはテスト1.000・CV平均0.944/0.972まで改善しており、**複数の木の多数決によって「たまたま良い分割になった」バイアスが均され、汎化性能が安定する**ことが確認できた
+- GradientBoostingはテスト0.944・CV平均0.939とこのデータでは他のアンサンブル手法より低かった。学習率やn_estimatorsのチューニング不足が主因と考えられ、「ブースティングは常に最強」ではなくデータやハイパーパラメータ次第であることも実感できた
+- 特徴量重要度は`flavanoids`(0.193)が最大、次いで`alcohol`(0.163)、`color_intensity`(0.139)と続く。図1の決定木の根ノードで使われた`color_intensity`が単体では最重要ではなく、複数の木の平均で見ると`flavanoids`の寄与が大きいという、単体決定木だけでは見えない情報が得られた
+
+### 図3: svm_kernel_comparison.png — SVMのカーネルトリック比較（[03_svm_kernel.py](stage2/03_svm_kernel.py)）
+
+![SVMのlinear/poly/rbfカーネルによる決定境界の違い](stage2/svm_kernel_comparison.png)
+
+**何を示す図か**: make_circles（内側と外側の同心円状に分布する、直線では絶対に分離できない2クラスデータ）に対して、SVMのカーネルをlinear/poly(3次)/rbfと変えて学習させた決定境界。
+
+**読み取れる結果**:
+- linearカーネルはテスト精度0.533とほぼランダム(コイントス)と同程度。直線1本でしか境界を引けないため、同心円構造には原理的に対応できないことが数値でも図でも明確に示された
+- polyカーネル(3次)は0.644まで改善するが、境界がまだ歪んだ直線的な形にとどまり同心円にはフィットしきれていない
+- rbfカーネルは0.989とほぼ完璧に分離。決定境界が内側の円をきれいに囲む形になっており、**カーネルトリック（データを高次元空間に写像してから直線的に分離することで、元の空間では曲線の境界を実現する）**の効果を視覚的に確認できた
+- 正則化パラメータC（C=0.01/1.0/100.0）を比較すると、Cが大きいほどサポートベクター数が減り（210→54→25）境界がタイトになる。C=1.0が最良(0.989)で、C=100.0はやや過学習気味に精度が落ちた(0.978)
+
+### 図4: model_comparison.png — 決定木・RandomForest・SVMの決定境界比較（ミニプロジェクト、[04_model_comparison_project.py](stage2/04_model_comparison_project.py)）
+
+![make_moonsデータに対する決定木・RandomForest・SVMの決定境界比較](stage2/model_comparison.png)
+
+**何を示す図か**: make_moons（三日月型に絡み合った2クラス、ノイズ0.3であえて重なりを持たせた300件のデータ）に対して、決定木(max_depth=5)・RandomForest(100本)・SVM(rbf, C=1.0)を学習させた決定境界とテスト精度・5-fold CV平均。
+
+**読み取れる結果**:
+- テスト精度は決定木0.856、RandomForest0.856、SVM0.878とSVMがやや優勢。5-fold CV平均でもSVM(0.897)が決定木(0.863)・RandomForest(0.870)を上回った
+- 決定境界の形が手法ごとに明確に異なる: 決定木は軸に平行な直線を組み合わせた「階段状」の境界、RandomForestはその階段が複数の木の平均でやや滑らかになった境界、SVM(rbf)は三日月の曲線に沿うような滑らかな曲線境界になっており、**モデルの構造がどういう形の決定境界を得意とするか**が一目でわかる結果になった
+- CV標準偏差はSVM(0.024)・RandomForest(0.019)が決定木(0.034)より小さく、複数の木を使う/カーネルで滑らかな境界を作る手法の方が分割による精度のブレが小さい傾向も確認できた
+- ノイズ0.3を与えているため、どのモデルも1.0には到達しない。これは「データそのものに重なりがある(理論上の上限精度が1.0未満)」ケースであり、モデルの性能限界ではなくデータ品質による限界であることに注意
