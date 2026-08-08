@@ -316,3 +316,91 @@ source .venv/bin/activate
 - 学習曲線もほぼ完全に重なり、numpyで手書きしたforward/backwardの計算と、PyTorchのautograd(自動微分)が裏側で行っている計算が数学的に同一であることを実証できた
 - 学習時間はPyTorch(0.31秒)がnumpyスクラッチ(0.69秒)の半分以下。同じ計算でもPyTorchは内部で最適化されたテンソル演算を使っているため高速だった
 - コア部分のコード量は、numpyスクラッチがforward/backward/stepの手書きで約15行、PyTorchはbackward()一発で自動微分される分約5行と、フレームワークが担う部分の大きさも実感できた
+
+---
+
+## Stage 5: CNN基礎とアーキテクチャの歴史
+
+[stage5/](stage5/) 配下にPythonスクリプトとして実装。
+
+### データセットをCIFAR-10から自作の合成図形データセットに変更した経緯
+
+当初はroadmap.md記載の通りCIFAR-10を使う予定だったが、`torchvision.datasets.CIFAR10`の
+ダウンロードが90kB/s程度と極端に遅く(170MBで30分以上かかる見込み)、この環境のネットワーク
+帯域では非現実的と判断して中断した。代わりに[synthetic_shapes.py](stage5/synthetic_shapes.py)で
+Pillowを使いその場生成する32x32のRGB合成図形データセット(円/四角/三角/十字の4クラス、
+位置・サイズ・回転角・色・ノイズをランダム化)に切り替えた。なお同じセッション内で後から
+`download.pytorch.org`（事前学習済みモデル配布元）は400KB/s超で接続できており、ホストにより
+帯域が大きく異なることが分かった。
+
+| ファイル | 内容 |
+|---|---|
+| [synthetic_shapes.py](stage5/synthetic_shapes.py) | オフライン生成する合成図形データセット(共通モジュール) |
+| [01_conv_pooling_basics.py](stage5/01_conv_pooling_basics.py) | 畳み込み演算(エッジ検出)・最大値/平均値/グローバルアベレージプーリングをnumpyで実装 |
+| [02_cnn_architectures.py](stage5/02_cnn_architectures.py) | LeNet(浅い2層)・PlainDeepCNN(21層,スキップ結合なし)・ResNetDeep(同21層,スキップ結合あり)を比較し、degradation problemを再現 |
+| [03_mobilenet_dilated_conv.py](stage5/03_mobilenet_dilated_conv.py) | 深度別分離畳み込み(MobileNet)のパラメータ削減率、拡張畳み込み(Dilated Conv)による受容野拡大を可視化 |
+| [04_transfer_learning.py](stage5/04_transfer_learning.py) | ImageNet事前学習済みResNet18で特徴抽出とファインチューニングを比較 |
+| [05_data_augmentation.py](stage5/05_data_augmentation.py) | 定番のデータ拡張(反転・回転・色調変化)とMixupを実装・可視化 |
+| [06_scratch_vs_pretrained_project.py](stage5/06_scratch_vs_pretrained_project.py) | **ミニプロジェクト**: 同じ300枚の訓練データで自作CNN(スクラッチ)と事前学習済みResNet18(ファインチューニング)を比較 |
+
+### 図1: conv_pooling_basics.png — 畳み込みとプーリングの基礎（[01_conv_pooling_basics.py](stage5/01_conv_pooling_basics.py)）
+
+![畳み込み(エッジ検出)と最大値/平均値プーリングの可視化](stage5/conv_pooling_basics.png)
+
+**何を示す図か**: load_digitsの8x8手書き数字1枚に対し、縦/横エッジ検出カーネル(3x3)を畳み込んだ結果と、2x2の最大値/平均値プーリングを適用した結果。
+
+**読み取れる結果**: 畳み込み後は8x8→6x6(パディングなしのため縮小)、プーリング後は8x8→4x4になることを確認。縦エッジ検出カーネルは「左が暗く右が明るい境界」に反応し、数字の輪郭の縦方向のエッジが強調される。GAPは8x8画像全体を1つのスカラー値(4.172)に要約し、GoogLeNet以降で全結合層の代替として使われる理由(パラメータ削減・画像サイズ非依存)を確認した。
+
+### 図2: cnn_architectures_comparison.png — LeNet/PlainDeepCNN/ResNetDeepの比較（[02_cnn_architectures.py](stage5/02_cnn_architectures.py)）
+
+![浅いLeNetと深いPlain CNN、深いResNetの訓練loss・テスト精度の推移](stage5/cnn_architectures_comparison.png)
+
+**何を示す図か**: 合成図形データ(訓練1500枚)で、LeNet(畳み込み2層)・PlainDeepCNN(21層,スキップ結合なし)・ResNetDeep(同じ21層,スキップ結合あり)を15epoch学習させた際の訓練loss・テスト精度の推移。パラメータ数はPlainDeepCNNとResNetDeepで完全に同数(105,940個)に揃えている。
+
+**試行錯誤**: 当初n_blocks=5(11層)・全解像度32x32で3モデル学習を試みたところ、CPU上で計算コストが見積もりを大幅に超え(30分以上経過しても1モデル目すら終わらず)中断。stemにstride=2を入れて特徴マップを16x16に縮小することで計算量を1/4にし、さらに層数を段階的に調整(7層→21層)しながら、CPU上で数分以内に収まる規模を探った。
+
+**読み取れる結果**:
+- 7層の深さでは PlainDeepCNN・ResNetDeepともに難なく学習でき(test_acc 0.95〜1.0)、両者の差はほとんど見られなかった
+- 21層まで深くすると、PlainDeepCNNの最終訓練loss(0.0721)はResNetDeep(0.0250)の約3倍悪く、**同じ深さ・同じパラメータ数でもスキップ結合の有無で最適化のしやすさに明確な差が出る**ことを確認した。これがResNet論文の指摘するdegradation problem(層を深くしただけでは訓練誤差自体が悪化する現象)の再現
+- 浅いLeNet(2層)は表現力不足でtest_acc 0.507止まり(4クラス分類のランダム推測が0.25なので、学習はしているが力不足)。「浅すぎると表現力不足、深すぎるとスキップ結合なしでは最適化が困難」という両端の失敗パターンを1つの実験で確認できた
+
+### 図3: dilated_convolution.png — 拡張畳み込みによる受容野拡大（[03_mobilenet_dilated_conv.py](stage5/03_mobilenet_dilated_conv.py)）
+
+![dilation=1,2,3での3x3カーネルの参照範囲の広がり](stage5/dilated_convolution.png)
+
+**何を示す図か**: 3x3カーネル(重みを持つ点は常に9個)のdilationを1,2,3と変えた時、出力の中心1マスが入力のどの範囲を参照するか(勾配のnon-zero領域)を可視化。
+
+**試行錯誤**: 初回実装では「参照点の数」を指標にしていたため、dilationを変えても常に9個のまま(参照点の数自体は増えない)という誤解を招く結果になっていた。指標を「参照点が占める空間的な範囲(バウンディングボックス)」に修正したところ、dilation=1→2→3で3x3→5x5→7x7と正しく受容野が広がることを確認できた。
+
+**読み取れる結果**: パラメータ数(9個)を一切増やさずに、参照範囲だけを3x3→7x7まで広げられることを実測。あわせて通常の畳み込み(73,856パラメータ)と深度別分離畳み込み(8,960パラメータ、87.9%削減)の比較も実施し、MobileNetの軽量化の仕組みを数値で確認した。
+
+### 図4: transfer_learning_comparison.png — 事前学習済みResNet18の転移学習（[04_transfer_learning.py](stage5/04_transfer_learning.py)）
+
+![特徴抽出とファインチューニングの訓練loss・テスト精度の比較](stage5/transfer_learning_comparison.png)
+
+**何を示す図か**: ImageNet学習済みResNet18に対し、(A)最終層のみ学習する「特徴抽出」と(B)全体を小さい学習率で学習する「ファインチューニング」を、合成図形データ(訓練300枚)で5epoch比較。
+
+**読み取れる結果**: 特徴抽出は最終test_acc 0.775(学習時間141秒)、ファインチューニングは0.990(学習時間302秒)。ファインチューニングの方が2倍以上時間がかかるが、ImageNet(自然画像)と合成図形という題材のギャップが大きいため、バックボーンごと調整できるファインチューニングの方が明確に高精度だった。
+
+### 図5: data_augmentation_examples.png / mixup_example.png / mixup_training_comparison.png — データ拡張とMixup（[05_data_augmentation.py](stage5/05_data_augmentation.py)）
+
+![回転・反転・色調変化などの定番データ拡張の例](stage5/data_augmentation_examples.png)
+![Mixupによる2枚の画像・ラベルの線形混合の例](stage5/mixup_example.png)
+![Mixupの有無による訓練/テスト精度の推移比較](stage5/mixup_training_comparison.png)
+
+**何を示す図か**: 定番のデータ拡張(反転・回転・色調変化・ランダムクロップ)の適用例、Mixup(2枚の画像とラベルを比率lamで線形混合)の中身、そしてMixupの有無による過学習抑制効果の比較。
+
+**試行錯誤**: 当初、GAPを使う小さいCNN(SmallCNN)で比較したところ、300epoch学習してもtrain_accがtest_accを下回る(＝そもそも過学習していない)という状態で、「過学習抑制効果」を検証する前提が崩れていた。GAPは強い正則化効果を持つため、この小容量モデルは300枚の訓練データすら暗記できていなかったのが原因。Flatten+大きめのFC層に変更しモデル容量を上げたところ、通常学習でtrain_acc 1.000・test_acc 0.505という明確な過学習を再現できた。
+
+**読み取れる結果**: 過学習が起きる条件でMixup(alpha=0.2〜1.0で試行)を比較したところ、この小規模な実験ではMixup学習(test_acc 0.475)は通常学習(0.505)を上回らなかった。モデルがMixup後のソフトラベルにも100%フィットできてしまう容量を持っていたため、単純なMixupだけでは過学習を防ぎきれなかったと考えられる。「正則化手法は入れれば必ず効果が出るわけではなく、モデル容量やデータ規模との兼ね合いで効果が変わる」という実務的な注意点を、期待と異なる結果から確認できた。
+
+### 図6: scratch_vs_pretrained.png — ミニプロジェクト: 自作CNN vs 事前学習済みResNet18（[06_scratch_vs_pretrained_project.py](stage5/06_scratch_vs_pretrained_project.py)）
+
+![自作CNNと事前学習済みResNet18の学習曲線比較(同じ訓練データ300枚)](stage5/scratch_vs_pretrained.png)
+
+**何を示す図か**: 04と全く同じ300枚の訓練データ・200枚のテストデータで、自作CNN(ResNetDeep, 7層, スクラッチ学習)と事前学習済みResNet18(ファインチューニング)を比較。
+
+**読み取れる結果**:
+- 自作CNNはtest_acc 0.860(学習時間13.1秒、40epoch)、ResNet18ファインチューニングはtest_acc 0.950(学習時間162.0秒、3epoch)。同じ300枚のデータで**事前学習済みモデルの方が約9ポイント高精度**
+- 学習曲線の形も対照的: 自作CNNは40epochかけてじわじわ上昇しつつ大きく上下動する不安定な曲線、ResNet18は最初のepochから0.78という高いスコアからスタートしすぐに収束する滑らかな曲線。事前学習済みモデルが「ゼロからパターンを見つける」のではなく「既に持っている表現を微調整するだけ」であることが学習曲線の違いに表れている
+- 一方でResNet18はパラメータ数が自作CNN(32,356個)の約345倍(11,178,564個)、学習時間も12倍以上。精度と引き換えに計算コストは大きく増えており、「データが少ない時は転移学習が有利、軽量・高速なモデルが必要な時はスクラッチ設計」というトレードオフを実測で確認した
