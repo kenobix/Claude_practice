@@ -230,3 +230,89 @@ source .venv/bin/activate
 - クラスタごとの内訳を見ると、数字0(99%)・6(98%)・5(88%)のクラスタは非常に純粋だった一方、数字1のクラスタは1が44%しか占めず、他の数字(特に形の近い数字)が混入していた
 - **重要な注意点**: k-meansのクラスタ番号(0〜9)は正解の数字ラベル(0〜9)と対応関係を持たない「たまたま振られた番号」のため、図の色が一致していなくても構造自体は一致し得る。比較は「色の一致」ではなく「塊の形が同じ場所にできているか」で見る必要がある
 - t-SNEの埋め込みでは正解ラベルの塊とk-meansクラスタの塊がほぼ同じ場所にでき、PCAより両者の対応が視覚的にわかりやすかった。k-meansの計算自体は64次元の元データに対して行っており、PCA/t-SNEはあくまで可視化用の後付けの次元削減である点に注意
+
+---
+
+## Stage 4: ニューラルネットワークの基礎（最重要の土台）
+
+[stage4/](stage4/) 配下にPythonスクリプトとして実装。前半(01・02)はnumpyのみのスクラッチ実装、
+後半(04・05)はPyTorchを使用し、フレームワークが何を肩代わりしているかを対比できる構成にした。
+
+| ファイル | 内容 |
+|---|---|
+| [01_activation_functions.py](stage4/01_activation_functions.py) | ReLU/LeakyReLU/シグモイド/tanh/恒等関数/softmaxとその導関数を可視化し、勾配消失問題を数値で確認 |
+| [02_scratch_mlp_backprop.py](stage4/02_scratch_mlp_backprop.py) | numpyのみで2層MLP(64→32→10)のforward/backwardを実装。交差エントロピー+softmaxの勾配導出をコード内に明記し、数値微分による勾配チェックで実装を検証 |
+| [03_optimizers_comparison.py](stage4/03_optimizers_comparison.py) | 楕円形の谷での勾配降下法・最急降下法(線探索)・ニュートン法の軌跡比較、手書き数字MLPでのフルバッチGD/ミニバッチSGD/Adamの収束速度比較 |
+| [04_normalization_regularization.py](stage4/04_normalization_regularization.py) | PyTorchでBatchNorm/LayerNorm/InstanceNorm/GroupNormの違いを数値で確認。あえて過学習しやすい設定でDropout・Early Stoppingの効果を検証 |
+| [05_autoencoder.py](stage4/05_autoencoder.py) | PyTorchでオートエンコーダを実装し、同じ圧縮サイズのPCAと再構成誤差・潜在空間を比較 |
+| [06_pytorch_mlp_project.py](stage4/06_pytorch_mlp_project.py) | **ミニプロジェクト**: 02のnumpyスクラッチMLPとPyTorch MLPを完全に同一の初期値・学習率で学習させ、結果が一致するかを検証 |
+
+### 図1: activation_functions.png — 活性化関数と導関数（[01_activation_functions.py](stage4/01_activation_functions.py)）
+
+![ReLU/LeakyReLU/シグモイド/tanh/恒等関数とその導関数](stage4/activation_functions.png)
+
+**何を示す図か**: 5種類の活性化関数(上段)とその導関数(下段)をx=-5〜5の範囲でプロット。
+
+**読み取れる結果**:
+- シグモイドの勾配は最大でも0.25(x=0の時)で、x=5では0.0066までほぼ0に落ちる。x=5でもReLUの勾配は1のまま保たれる
+- 層を重ねるたびに勾配同士が掛け算される逆伝播の性質上、シグモイド/tanhを多層に重ねると勾配がどんどん小さくなる「勾配消失」が起きやすい。ReLUが現在主流な理由はこの点にある
+- ソフトマックスは他の活性化関数と違い「ベクトル全体を1つの確率分布に変換する」処理で、入力[2.0, 1.0, 0.1]に対し出力[0.659, 0.242, 0.099](合計1.0)という具体例で、要素ごとに独立に計算する他の活性化関数との違いを確認した
+
+### 図2: scratch_mlp_training.png — numpyスクラッチMLPの学習曲線（[02_scratch_mlp_backprop.py](stage4/02_scratch_mlp_backprop.py)）
+
+![numpyスクラッチMLPの訓練/テストloss・精度の推移](stage4/scratch_mlp_training.png)
+
+**何を示す図か**: 手書きで導出したforward/backwardのみで2層MLP(64→32→10)を300エポック学習させた際の、訓練/テストのloss・Accuracyの推移。
+
+**読み取れる結果**:
+- 学習前に数値微分による勾配チェックを実施し、解析的勾配と数値微分の差が最大8.72e-12(実質ゼロ)であることを確認。手書きの逆伝播の実装が数学的に正しいことを検証してから学習に進んだ
+- テスト精度は epoch50 で94.4%、epoch300で96.1%に到達。訓練lossは0.014まで下がり続ける一方でテストlossはepoch150あたりから下げ止まり微増する、典型的な過学習の兆候も観察できた（Stage4後半のDropout/Early Stoppingの伏線）
+- フレームワークを一切使わず、numpyの行列演算だけで実用的な精度の手書き数字分類が学習できることを実証した
+
+### 図3: optimizer_trajectories.png / optimizer_training_comparison.png — 最適化アルゴリズムの比較（[03_optimizers_comparison.py](stage4/03_optimizers_comparison.py)）
+
+![楕円形の谷での勾配降下法・最急降下法・ニュートン法の軌跡](stage4/optimizer_trajectories.png)
+![手書き数字MLPでのフルバッチGD・ミニバッチSGD・Adamの学習曲線](stage4/optimizer_training_comparison.png)
+
+**何を示す図か**: 前半は f(x,y)=x²+10y²（曲率が方向によって10倍異なる細長い谷）での3手法の軌跡。後半は同じMLPをフルバッチGD・ミニバッチSGD・Adamでそれぞれ20エポック学習させた際のテストloss・精度の推移。
+
+**読み取れる結果**:
+- ニュートン法は2階微分(曲率)の情報を使い、この2次関数をちょうど1ステップで厳密に解いた。勾配降下法(固定ステップ)は谷の急な方向(y軸)で大きく振動しながら30ステップかけてゆっくり収束し、最急降下法(毎回最適な歩幅を線探索)でもジグザグは残った（「その場では最適な歩幅」でも「進む方向自体」が谷の形に対して悪いため）
+- ただしニュートン法はヘッセ行列(パラメータ数の2乗のサイズ)の逆行列計算が必要で、パラメータ数が数百万〜数億に達するニューラルネットでは非現実的。これが深層学習で勾配降下法系が主流である理由
+- 実データでの比較では、20エポック時点のテスト精度がフルバッチGD 0.914、ミニバッチSGD 0.969、Adam 0.975。フルバッチGDは1エポックにつき1回しかパラメータを更新しないのに対し、ミニバッチSGD/Adamは1エポック内に複数回更新するため、同じエポック数でも学習の進み方に大きな差が出ることを実測で確認した
+
+### 図4: dropout_early_stopping.png — 正規化・正則化（[04_normalization_regularization.py](stage4/04_normalization_regularization.py)）
+
+![Dropoutの有無による過学習の違いとEarly Stoppingのタイミング](stage4/dropout_early_stopping.png)
+
+**何を示す図か**: BatchNorm/LayerNorm/InstanceNorm/GroupNormを同じ4次元テンソル(N,C,H,W)に適用した数値比較（テキスト出力のみ、図なし）と、訓練データを150件に絞り隠れ層256のあえて過学習しやすいMLPで、Dropoutの有無・Early Stoppingの効果を検証した図。
+
+**読み取れる結果**:
+- 正規化4種の違い: BatchNormは「チャネルごとにバッチ全体(N,H,W)」で正規化しチャネル間のオフセットを解消、LayerNormは「サンプルごとに全チャネル(C,H,W)」で正規化しチャネル間の相対関係を保持、InstanceNormは「サンプル×チャネルごとに(H,W)のみ」、GroupNormはその中間（チャネルをグループ分けして正規化）と、対象とする軸の違いを数値で確認した
+- Dropoutなしのモデルは訓練lossが0近くまで下がり続ける一方、検証lossはepoch7で最小(0.452)になった後は悪化し続け、典型的な過学習曲線を描いた
+- **重要な発見**: 検証lossが最小だったepoch7時点の検証精度(0.895)は、200epoch学習し切った時点の精度(0.907)より低かった。lossは「予測の自信度」まで評価するのに対しaccuracyは「1位予測が当たっているか」しか見ないため、lossに基づくEarly Stoppingが必ずしも精度の最適点と一致しないことを実測で確認できた（想定と異なる結果が出たため、その場で解釈を修正した）
+- Dropout(p=0.5)ありのモデルは最終検証精度0.910とDropoutなし(0.907)よりわずかに高く、検証精度の推移もやや不安定(ノイズが大きい)だった
+
+### 図5: autoencoder_vs_pca.png / autoencoder_latent_space.png — オートエンコーダ（[05_autoencoder.py](stage4/05_autoencoder.py)）
+
+![元画像・PCA復元・オートエンコーダ復元の比較](stage4/autoencoder_vs_pca.png)
+![PCAとオートエンコーダの2次元潜在空間の比較](stage4/autoencoder_latent_space.png)
+
+**何を示す図か**: 8次元に圧縮するオートエンコーダとPCA(8主成分)の復元画像・再構成誤差の比較、および2次元まで圧縮した場合の潜在空間の可視化。
+
+**読み取れる結果**:
+- 初回実装(隠れ層32、300epoch)ではオートエンコーダのMSE(0.036)がPCAのMSE(0.025)を上回ってしまい(＝オートエンコーダの方が悪い)、想定と逆の結果になった。隠れ層サイズとepoch数を調整(隠れ層64、800epoch)したところMSEが0.016まで改善し、PCAを上回る結果を得られた。**ニューラルネットは適切に学習できて初めて理論上の性能を発揮する**という、学習不足のリスクを実地で確認する結果になった
+- 復元画像を見比べると、PCA復元はぼやけて灰色がかっているのに対し、オートエンコーダ復元は元画像に近いコントラストを保っていた
+- 2次元潜在空間はラベルを一切使わない再構成誤差の最小化だけで、数字ごとにある程度まとまった配置を学習できていた。PCAの2次元散布図と比べて劇的に優れているわけではないが、「教師なしで意味のある表現を獲得する」という自己教師あり学習の考え方の入り口を体感できた
+
+### 図6: scratch_vs_pytorch.png — ミニプロジェクト: numpyスクラッチMLP vs PyTorch MLP（[06_pytorch_mlp_project.py](stage4/06_pytorch_mlp_project.py)）
+
+![numpyスクラッチ実装とPyTorch実装の学習曲線比較](stage4/scratch_vs_pytorch.png)
+
+**何を示す図か**: 02のScratchMLPをそのまま再利用し、PyTorchのnn.Linearに全く同じ乱数ストリームから生成した初期値をコピーした上で、同じ学習率(0.5)・同じフルバッチ勾配降下法で300エポック学習させた際の訓練loss曲線。
+
+**読み取れる結果**:
+- 初期実装では重みの初期化方法がnumpy版とPyTorch版で微妙にずれており(別々の乱数生成器を使っていた)、最終テスト精度が0.9611 vs 0.9722と一致しなかった。原因を調べ、ScratchMLPと全く同じ「1つの乱数ストリームをW1→W2の順に連続使用する」初期化に修正したところ、**最終テスト精度が0.9611 vs 0.9611で完全に一致**した
+- 学習曲線もほぼ完全に重なり、numpyで手書きしたforward/backwardの計算と、PyTorchのautograd(自動微分)が裏側で行っている計算が数学的に同一であることを実証できた
+- 学習時間はPyTorch(0.31秒)がnumpyスクラッチ(0.69秒)の半分以下。同じ計算でもPyTorchは内部で最適化されたテンソル演算を使っているため高速だった
+- コア部分のコード量は、numpyスクラッチがforward/backward/stepの手書きで約15行、PyTorchはbackward()一発で自動微分される分約5行と、フレームワークが担う部分の大きさも実感できた
