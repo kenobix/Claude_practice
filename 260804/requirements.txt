@@ -7,3 +7,4 @@ torch
 torchvision
 # torchtext: 2023年に開発終了(deprecated)、torch 2.13とABI非互換のため使用しない
 # word2vec等が必要になった場合はgensimを追加インストールする
+ultralytics  # Stage6: YOLOによる物体検出(opencv-python等を依存として自動インストール)
