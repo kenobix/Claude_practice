@@ -404,3 +404,63 @@ Pillowを使いその場生成する32x32のRGB合成図形データセット(�
 - 自作CNNはtest_acc 0.860(学習時間13.1秒、40epoch)、ResNet18ファインチューニングはtest_acc 0.950(学習時間162.0秒、3epoch)。同じ300枚のデータで**事前学習済みモデルの方が約9ポイント高精度**
 - 学習曲線の形も対照的: 自作CNNは40epochかけてじわじわ上昇しつつ大きく上下動する不安定な曲線、ResNet18は最初のepochから0.78という高いスコアからスタートしすぐに収束する滑らかな曲線。事前学習済みモデルが「ゼロからパターンを見つける」のではなく「既に持っている表現を微調整するだけ」であることが学習曲線の違いに表れている
 - 一方でResNet18はパラメータ数が自作CNN(32,356個)の約345倍(11,178,564個)、学習時間も12倍以上。精度と引き換えに計算コストは大きく増えており、「データが少ない時は転移学習が有利、軽量・高速なモデルが必要な時はスクラッチ設計」というトレードオフを実測で確認した
+
+---
+
+## Stage 6: 物体検出・セグメンテーション
+
+[stage6/](stage6/) 配下にPythonスクリプトとして実装。`pip install ultralytics`でYOLOとopencv-python等の
+依存パッケージを追加インストールした([requirements.txt](requirements.txt)に反映)。
+
+| ファイル | 内容 |
+|---|---|
+| [01_iou_nms.py](stage6/01_iou_nms.py) | IoU(Intersection over Union)とNMS(Non-Max Suppression)をnumpyでスクラッチ実装 |
+| [02_two_stage_vs_one_stage.py](stage6/02_two_stage_vs_one_stage.py) | 事前学習済み(COCO)のFaster R-CNN(2段階)とSSDLite(1段階)で実画像を推論・比較 |
+| [synthetic_detection.py](stage6/synthetic_detection.py) | 物体検出用の合成データセット(128x128, 円/四角/三角/十字+背景, バウンディングボックス付き) |
+| [03_finetune_detection.py](stage6/03_finetune_detection.py) | COCO事前学習済みFaster R-CNNのbox_predictorのみ付け替えて合成データでファインチューニング |
+| [synthetic_segmentation.py](stage6/synthetic_segmentation.py) | セグメンテーション用の合成データセット(64x64, 図形+二値マスク) |
+| [04_maskrcnn_unet_segmentation.py](stage6/04_maskrcnn_unet_segmentation.py) | 事前学習済みMask R-CNNのインスタンスセグメンテーション推論 + 自作U-Netの学習 |
+| [05_yolo_mini_project.py](stage6/05_yolo_mini_project.py) | **ミニプロジェクト**: YOLO11nで手元の画像を物体検出し、Faster R-CNN・SSDと3手法を比較 |
+
+### 使用した実画像について
+
+COCOクラス(人・バス等)での検出デモには合成図形データセットが使えないため、
+ultralytics公式のデモ画像(`https://ultralytics.com/images/bus.jpg`, `zidane.jpg`)を
+[assets/](stage6/assets/)にダウンロードして使用した(ultralyticsの各種チュートリアル・テストで
+標準的に使われる公開デモ画像)。
+
+### 図1: iou_examples.png / nms_example.png — IoUとNMSの基礎（[01_iou_nms.py](stage6/01_iou_nms.py)）
+
+![IoUの4つの例(完全一致から重ならないまで)](stage6/iou_examples.png)
+![NMS適用前後の重複ボックスの絞り込み](stage6/nms_example.png)
+
+**読み取れる結果**: IoUは完全一致で1.000、少しずれた予測で0.471、大きくずれた予測で0.047、無関係な予測で0.000と、重なり具合に応じて連続的に変化することを確認。NMSでは同じ物体に対する5個の重複予測(IoUが高いもの3個+別物体2個)が、スコアの高い順に採用しながら重複を除去する貪欲法によって正しく2個(物体ごとに1個)に絞り込まれた。
+
+### 図2: two_stage_vs_one_stage.png — Faster R-CNN(2段階) vs SSDLite(1段階)（[02_two_stage_vs_one_stage.py](stage6/02_two_stage_vs_one_stage.py)）
+
+![Faster R-CNNとSSDLiteの検出結果比較(bus.jpg, zidane.jpg)](stage6/two_stage_vs_one_stage.png)
+
+**読み取れる結果**: Faster R-CNN(パラメータ4,175万個)はSSDLite(同344万個、約12分の1)より推論時間が大幅に長い(bus.jpgで4.72秒 vs 0.09秒、50倍以上)。検出内容を見ると、Faster R-CNNはネクタイ(tie)のような小さい物体も検出できたのに対し、SSDLiteは見逃しており、「2段階検出器は精度、1段階検出器は速度」という一般的なトレードオフを実データで確認できた。
+
+### 図3: finetune_detection_result.png — 物体検出モデルのファインチューニング（[03_finetune_detection.py](stage6/03_finetune_detection.py)）
+
+![ファインチューニング後のFaster R-CNNによる合成図形の検出結果](stage6/finetune_detection_result.png)
+
+**試行錯誤**: 当初ResNet50バックボーン版のFaster R-CNNでファインチューニングを試みたところ、8枚1epochで84.5秒(推定: 150枚5epochで2時間超)と非現実的だったため、軽量なMobileNetV3バックボーン版(`fasterrcnn_mobilenet_v3_large_320_fpn`)に切り替え、同条件で1.3秒まで短縮した。
+
+**読み取れる結果**: box_predictor(分類・座標回帰の最終層)のみをCOCOの80クラスから合成図形の4クラス+背景に付け替え、150枚・5epochファインチューニングした結果、平均IoUがファインチューニング前の0.000(付け替え直後はランダム初期化のため検出0件)から0.916まで改善し、検出数もテストデータの正解数86個と完全に一致した。バックボーン(特徴抽出部分)がCOCOで学習した「物体の輪郭を捉える」能力は、全く違う合成図形タスクにも転用できることを確認した。
+
+### 図4: maskrcnn_result.png / unet_segmentation_result.png — セグメンテーション（[04_maskrcnn_unet_segmentation.py](stage6/04_maskrcnn_unet_segmentation.py)）
+
+![Mask R-CNNによるインスタンスセグメンテーション(bus.jpg)](stage6/maskrcnn_result.png)
+![自作U-Netによる合成図形のセグメンテーション結果](stage6/unet_segmentation_result.png)
+
+**読み取れる結果**:
+- Mask R-CNNはbus.jpgから人5名・バス1台を検出し、それぞれ個別の画素マスク(インスタンスセグメンテーション)を推論(5.03秒)。重なり合う人物同士も色分けして正しく分離できていた
+- 自作U-Net(エンコーダ2段+ボトルネック+デコーダ2段、スキップ結合あり)を合成図形の2値セグメンテーション(400枚, 15epoch, 学習時間55.1秒)で学習した結果、テストDiceスコア1.000・画素Accuracy1.000を達成。予測マスクと正解マスクを並べても視覚的に完全一致しており、シンプルな図形タスクであればU-Netの基本構造だけで画素単位の分割が正確に学習できることを確認した
+
+### 図5: yolo_comparison.png — ミニプロジェクト: YOLOとFaster R-CNN/SSDの3手法比較（[05_yolo_mini_project.py](stage6/05_yolo_mini_project.py)）
+
+![YOLO11n・Faster R-CNN・SSDLiteの3手法による検出結果比較](stage6/yolo_comparison.png)
+
+**読み取れる結果**: 2枚の画像合計で、YOLO11n(0.249秒, 検出7件)・Faster R-CNN(9.278秒, 検出12件)・SSDLite(0.212秒, 検出6件)という結果になった。YOLOはSSDと同じ1段階系ながら検出件数がSSDよりやや多く、推論速度もSSDと同等かそれ以上に高速だった。一方Faster R-CNNのみが「ネクタイ」のような小物体を検出できており、02で確認した「2段階検出器は精度、1段階検出器は速度」という傾向がYOLOでも同様に見られた。IoU/NMSという共通の土台から、2段階/1段階の設計思想の違い、ファインチューニングによるタスク適応、セグメンテーションへの拡張、最新の1段階検出器(YOLO)まで、物体検出・セグメンテーションの全体像を一通り実装・実測を通じて体験できた。
