@@ -143,7 +143,7 @@ LSTM感情分析ミニプロジェクトではTF-IDF+ロジスティック回帰
 
 ---
 
-## Stage 8: Attention / Transformer時代
+## Stage 8: Attention / Transformer時代 ✅完了
 **狙い**: 現代の生成AIの土台となる仕組みを理解する。ここが後半の本命
 
 - Attention / Self-Attention / Multi-Head Attention
@@ -154,6 +154,11 @@ LSTM感情分析ミニプロジェクトではTF-IDF+ロジスティック回帰
 **実装**: numpyでScaled Dot-Product Attentionをスクラッチ実装し仕組みを理解
 →Hugging Face `transformers`で事前学習済みBERT/GPT系モデルをファインチューニング
 **ミニプロジェクト**: BERTで文章分類のファインチューニング
+**実施内容**: [work_log.md](work_log.md#stage-8-attention--transformer時代) 参照。
+スクラッチAttentionでは学習前は「注意の吸着」しか起きず意味的な構造は学習で初めて獲得されると判明、
+Transformer Encoderは自己注意によりStage7のRNN系が崩壊した系列長でも精度1.0を維持(ただし計算量はO(L²)で増加)、
+事前学習済みBERTでは照応解析に近い挙動を示すheadを層8・head10に実際に発見、
+BERTファインチューニング(Accuracy 0.698)はStage7のLSTM(0.613)を上回ったがTF-IDF(0.823)には届かなかった
 
 ---
 
@@ -225,5 +230,5 @@ LSTM感情分析ミニプロジェクトではTF-IDF+ロジスティック回帰
   （[260702](../260702/)と同じ形式）
 
 ## 次のアクション
-Stage 0〜7が完了しました。次はStage 8（Attention / Transformer時代）に進みますか？
-それとも生成系・強化学習など他分野から先に着手したい場合は教えてください。
+Stage 0〜8が完了しました。次はStage 9（生成モデル）に進みますか？
+それとも強化学習など他分野から先に着手したい場合は教えてください。

@@ -510,3 +510,43 @@ ultralytics公式のデモ画像(`https://ultralytics.com/images/bus.jpg`, `zida
 **実験設計**: movie_reviewsコーパス(訓練1600件・テスト400件、positive/negative各半数)を使い、埋め込み層の初期化方法が異なる3種のLSTM分類器(A: ランダム初期化、B: word2vec初期化+固定、C: word2vec初期化+微調整)と、TF-IDF+ロジスティック回帰のベースラインを比較。
 
 **読み取れる結果**: LSTM3種の精度はA=0.547 < B=0.580 < C=0.613となり、word2vecで得た単語の意味的な近さを埋め込みの初期値に組み込むことが、1600件という限られた訓練データでの学習を安定させる効果が確認できた。一方、TF-IDF+ロジスティック回帰はAccuracy=0.823と、どのLSTMよりも大きく上回った。映画レビューの感情分析は「特定の単語(good/terrible等)の有無」が感情極性と強く相関するタスクであり、系列全体の文脈を捉えるLSTMの強みが活きにくい上、訓練データ規模(1600件)に対してLSTMのパラメータ数が過剰で学習が難しかったと考えられる。ニューラルネットワークが常に古典的手法に勝るわけではなく、データ規模とタスクの性質次第であるという実務上重要な教訓が得られた。
+
+## Stage 8: Attention / Transformer時代
+
+[stage8/](stage8/) 配下にPythonスクリプトとして実装。`pip install transformers`でHugging Face
+transformersを追加インストールした([requirements.txt](requirements.txt)に反映)。
+
+| ファイル | 内容 |
+|---|---|
+| [01_scratch_attention.py](stage8/01_scratch_attention.py) | numpyでScaled Dot-Product Attention/Self-Attention/Multi-Head Attentionをスクラッチ実装 |
+| [02_transformer_encoder.py](stage8/02_transformer_encoder.py) | PyTorchのTransformer Encoderで、Stage7と同じ長期記憶タスクを解き、RNN系と比較 |
+| [03_pretrained_bert_gpt.py](stage8/03_pretrained_bert_gpt.py) | 事前学習済みBERT(穴埋め予測・Attention可視化)とGPT-2(テキスト生成)をHugging Faceで動かす |
+| [04_bert_finetune_project.py](stage8/04_bert_finetune_project.py) | ミニプロジェクト: DistilBERTを映画レビュー感情分析にファインチューニングし、Stage7の各手法と比較 |
+
+### 図1: scratch_attention.png — numpyスクラッチAttention（[01_scratch_attention.py](stage8/01_scratch_attention.py)）
+
+![Self-Attention/Multi-Head Attentionの注意重みヒートマップ(学習前のランダム重み)](stage8/scratch_attention.png)
+
+**読み取れる結果**: スケーリング(√d_k)の効果を数値実験すると、d_kが8→512と大きくなるにつれ、スケーリングなしのsoftmax最大重みが0.667→0.997とほぼone-hotまで尖ってしまう一方、スケーリングありでは0.21前後で安定しており、Transformer論文がスケーリングを導入した理由を数値的に確認できた。Self-Attentionを「同じ意味を持つトークン同士が近いベクトルになる」ような人工データに適用したところ、学習前のランダムな重みの段階では「同じ種類同士が注目し合う」という直感的な構造にはならず、特定の1〜2箇所にほぼ全クエリの注意が集中する「注意の吸着」が起きていた。関連する単語同士が注目し合うという分かりやすいAttentionのパターンは、アーキテクチャから自動的に生まれるのではなく実際のタスクで学習して初めて獲得されるものだという教訓が得られた(03で学習済みBERTの実際の挙動と対比する)。
+
+### 図2: transformer_vs_rnn_family.png — Transformer Encoderと長期記憶タスク（[02_transformer_encoder.py](stage8/02_transformer_encoder.py)）
+
+![Transformer Encoderと、Stage7で測定したRNN/LSTM/GRUの長期記憶タスク精度の比較](stage8/transformer_vs_rnn_family.png)
+
+**読み取れる結果**: Stage7と同じ「最初の信号を無音区間を挟んで最後に当てる」タスクをTransformer Encoderに解かせたところ、系列長10〜200の全てでテスト精度1.000を維持した。Stage7の実測ではvanilla RNN以外(標準初期化LSTM・GRU)は系列長30〜60を境に精度が崩壊していたのに対し、Transformerは自己注意により系列内のどの2点も1ステップで直接つながるため、系列長が伸びても長期記憶の崩壊が起きなかった。ただしSelf-Attentionの計算コストは系列長Lに対しO(L²)で増加するため、系列長が伸びるほど学習時間も顕著に伸びており(系列長10で13.8秒→系列長200で218.9秒)、「長期依存に強いが計算コストは系列長の2乗」というTransformerの特性とトレードオフを実測できた。
+
+### 図3: bert_attention.png — 事前学習済みBERT/GPT-2（[03_pretrained_bert_gpt.py](stage8/03_pretrained_bert_gpt.py)）
+
+![BERT最終層(全head平均)と、照応解析に近い挙動を示す層8・head10のAttention可視化](stage8/bert_attention.png)
+
+**読み取れる結果**: BERTの穴埋め予測(Masked LM)は「The movie was absolutely [MASK].」に対しfantastic/perfect/beautiful/amazing/fabulousと、映画レビューの文脈として自然な形容詞を高精度で予測できた一方、「I love this [MASK], it made me laugh.」ではman/girl/song/guy/womanとなり、期待される"movie"は出てこず、文脈理解には限界があることも分かった。Attentionの可視化では、BERT最終層を全head平均で見ると句読点や[SEP]に注意が集中する「attention sink」という既知の現象が支配的で、「it」が指す「cat」への注目は埋もれてしまっていたが、全12層×12headから探索すると層8・head10で「it→cat」への注意重みが0.835と際立って高く、Clark et al.(2019)が報告する照応解析に近い役割を持つheadの存在を実際に再現できた。GPT-2のテキスト生成では、貪欲法(greedy)が同じ入力から常に同じ安定した(やや単調な)文章を生成するのに対し、温度付きサンプリングは毎回異なる多様な文章を生成することを確認した。
+
+### 図4: bert_finetune_project.png — ミニプロジェクト: BERTファインチューニングによる感情分析（[04_bert_finetune_project.py](stage8/04_bert_finetune_project.py)）
+
+![感情分析タスクの精度比較(Stage7のTF-IDF/LSTM + Stage8のBERT2手法)、および最良モデルの混同行列](stage8/bert_finetune_project.png)
+
+**実験設計**: Stage7のミニプロジェクトと全く同じmovie_reviewsの分割(訓練1600件・テスト400件)で、DistilBERTを (A) 全パラメータをファインチューニング / (B) 分類ヘッドのみ学習(特徴抽出) の2パターンで学習。CPU環境での学習時間を抑えるため、レビュー全文ではなく先頭128トークンに切り詰めて2epoch学習した。
+
+**試行錯誤**: 当初max_length=256・3epochで設計したところ、1バッチ(16件)あたり12秒、1epoch=100バッチで約20分、4パターン(2手法×確認用)で2時間超という非現実的な時間が判明したため、max_length=128・2epochに縮小し、1手法あたり約8〜22分に短縮した。
+
+**読み取れる結果**: 特徴抽出(分類ヘッドのみ学習)はAccuracy=0.608とほぼLSTM(0.613)と同水準にとどまり、学習中のloss推移も0.694→0.685とほとんど下がっていなかった。これは事前学習済みのBERTの表現力そのものは高くても、ランダム初期化の分類ヘッドを学習率2e-5(ファインチューニング向けの小さい値)だけで一から学習させるには不十分だったためと考えられる。一方フルファインチューニング(全パラメータ更新)はAccuracy=0.698まで改善し、loss も0.687→0.568と明確に下がった。Stage7の最良LSTM(0.613)は上回ったが、TF-IDF+ロジスティック回帰(0.823)には及ばなかった——2epoch・128トークンという限られた学習条件下では、事前学習済みTransformerの強みを完全には引き出しきれなかったと考えられ、より長い学習・全文入力・学習率調整でさらに向上する余地があることを示す結果となった。単語埋め込みだけを事前学習したword2vec(Stage7)と、Transformer全体を事前学習したBERT(Stage8)の差が、同じ小規模データでのファインチューニング結果に表れた形である。
