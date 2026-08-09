@@ -670,3 +670,40 @@ RAG部分は[260525/phase1/rag_phase1.py](../260525/phase1/rag_phase1.py)の最�
 ![大きいモデル/小さいモデル×float32/int8の4パターンでのサイズ・速度・精度比較](stage11/quantization_project.png)
 
 **読み取れる結果**: 大きいモデル(float32, 739KB)を基準に、小さい設計(base_ch=8)にする効果が14.4倍、そこにさらに量子化を重ねる効果が2.2倍で、合計31.9倍のサイズ圧縮(739KB→23KB)を達成した。2つの軽量化手法(モデル設計の縮小・量子化)はほぼ独立に効き、掛け算的に効果が積み上がることを確認した。一方で精度は0.975(大きいモデル)→0.692(小さいモデル、量子化後は0.692とほぼ同じ)まで低下しており、軽量化と精度は明確なトレードオフの関係にあることも実測できた。
+
+## Stage 12: 強化学習
+
+[stage12/](stage12/) 配下にPythonスクリプトとして実装。`pip install gymnasium`を追加インストールした。
+
+| ファイル | 内容 |
+|---|---|
+| [01_bandit_exploration.py](stage12/01_bandit_exploration.py) | 多腕バンディット問題でε-greedy/UCB方策と探索・活用のトレードオフを実装 |
+| [02_qlearning_sarsa_frozenlake.py](stage12/02_qlearning_sarsa_frozenlake.py) | Q学習/SARSAをFrozenLakeでスクラッチ実装し、学習曲線と方策を可視化 |
+| [03_dqn_cartpole.py](stage12/03_dqn_cartpole.py) | PyTorchでDQN(Experience Replay + Target Network)を実装しCartPoleで学習 |
+| [04_cartpole_project.py](stage12/04_cartpole_project.py) | ミニプロジェクト: DQN(価値ベース) vs REINFORCE(方策勾配法)でCartPole攻略を比較 |
+
+### 図1: bandit_exploration.png — 多腕バンディット（[01_bandit_exploration.py](stage12/01_bandit_exploration.py)）
+
+![ランダム/ε-greedy/UCB方策の累積報酬率・累積後悔の推移](stage12/bandit_exploration.png)
+
+**読み取れる結果**: 2000ステップ・200試行平均で、UCB(c=1.0)が累積後悔68.7と最小を記録し、ε-greedy(ε=0.1)の85.1、ε-greedy(ε=0.3)の169.0、ランダム方策の519.8を上回った。ランダム方策は後悔が線形に増え続けるのに対し、ε-greedy・UCBは学習が進むにつれて累積後悔の増加が緩やかになる様子が明確に確認でき、教科書的な理論(UCBの対数オーダー後悔)を裏付ける結果となった。
+
+### 図2: qlearning_sarsa_frozenlake.png — Q学習/SARSA（[02_qlearning_sarsa_frozenlake.py](stage12/02_qlearning_sarsa_frozenlake.py)）
+
+![Q学習/SARSAの学習曲線と、学習した状態価値V(s)・方策の可視化](stage12/qlearning_sarsa_frozenlake.png)
+
+**読み取れる結果**: is_slippery=TrueのFrozenLake(4x4)を20000エピソード学習した結果、Q学習・SARSAともに最終成功率0.51〜0.52程度で頭打ちになった(確率的な状態遷移のため成功率1.0には到達しない)。理論的にはQ学習は次状態の最善行動を仮定し、SARSAは実際の探索方策込みで更新するため、穴に近い状況ではSARSAの方が保守的な方策になりやすいとされるが、実際に学習された16マスの方策を比較すると異なる行動を選んでいたのは1マスのみで、この規模のタスクでは両手法の違いが方策に大きく表れるほどではなかった。
+
+### 図3: dqn_cartpole.png — DQN（[03_dqn_cartpole.py](stage12/03_dqn_cartpole.py)）
+
+![Target Networkあり/なしのDQN学習曲線比較](stage12/dqn_cartpole.png)
+
+**試行錯誤**: 当初「Target Networkありが終始安定して優れている」という単純な結論を想定していたが、実際には学習序盤〜中盤でTarget Networkなしの方が高い成績を記録することもあり、スクリプトを複数回実行するとTarget Networkあり・なしのどちらが最終成績で上回るかが入れ替わることが分かった。
+
+**読み取れる結果**: vanilla DQNは400エピソード程度の学習では本質的に高分散な学習曲線(移動平均でも大きく乱高下し、時に一時的な性能崩壊も見せる)をたどりやすいことを実測した。これは実装ミスではなく、深層強化学習でよく知られた性質であり、論文等で複数の乱数シードの平均を報告するのが標準的な作法である理由を体感する結果となった。一方で、Target Networkがない場合の急激な性能低下(catastrophic forgettingに近い現象)は両方の実行で共通して観測され、理論通りの不安定化の兆候として裏付けられた。
+
+### 図4: cartpole_project.png — ミニプロジェクト: DQN vs REINFORCE（[04_cartpole_project.py](stage12/04_cartpole_project.py)）
+
+![DQN(価値ベース法)とREINFORCE(方策勾配法)のCartPole学習曲線比較(解けた基準=直近100エピソード平均475以上)](stage12/cartpole_project.png)
+
+**読み取れる結果**: REINFORCE(方策勾配法)は529エピソードで「解けた」基準(直近100エピソード平均報酬475以上)に到達し最終平均477.2を記録した一方、DQN(価値ベース法)は上限800エピソードまでに基準に届かず、最終平均164.8にとどまった。「DQNの方がサンプル効率が良い」という一般的な期待とは逆の結果になったが、03で確認した通りvanilla DQNの学習は本質的に高分散であり、今回のハイパーパラメータ・乱数シードの組み合わせではREINFORCEの方がたまたま安定して学習が進んだと考えられる。価値ベース法(Q値を経由して間接的に行動を決める)と方策ベース法(行動確率を直接最適化する)という設計思想の違いを、同一タスクでの実装・実行を通じて確認できた。
