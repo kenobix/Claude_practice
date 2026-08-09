@@ -550,3 +550,45 @@ transformersを追加インストールした([requirements.txt](requirements.tx
 **試行錯誤**: 当初max_length=256・3epochで設計したところ、1バッチ(16件)あたり12秒、1epoch=100バッチで約20分、4パターン(2手法×確認用)で2時間超という非現実的な時間が判明したため、max_length=128・2epochに縮小し、1手法あたり約8〜22分に短縮した。
 
 **読み取れる結果**: 特徴抽出(分類ヘッドのみ学習)はAccuracy=0.608とほぼLSTM(0.613)と同水準にとどまり、学習中のloss推移も0.694→0.685とほとんど下がっていなかった。これは事前学習済みのBERTの表現力そのものは高くても、ランダム初期化の分類ヘッドを学習率2e-5(ファインチューニング向けの小さい値)だけで一から学習させるには不十分だったためと考えられる。一方フルファインチューニング(全パラメータ更新)はAccuracy=0.698まで改善し、loss も0.687→0.568と明確に下がった。Stage7の最良LSTM(0.613)は上回ったが、TF-IDF+ロジスティック回帰(0.823)には及ばなかった——2epoch・128トークンという限られた学習条件下では、事前学習済みTransformerの強みを完全には引き出しきれなかったと考えられ、より長い学習・全文入力・学習率調整でさらに向上する余地があることを示す結果となった。単語埋め込みだけを事前学習したword2vec(Stage7)と、Transformer全体を事前学習したBERT(Stage8)の差が、同じ小規模データでのファインチューニング結果に表れた形である。
+
+## Stage 9: 生成モデル
+
+[stage9/](stage9/) 配下にPythonスクリプトとして実装。`pip install diffusers accelerate`で拡散モデル系の
+パッケージも追加インストールしたが、事前学習済みStable Diffusion系パイプラインはダウンロード・CPU推論が
+非現実的に重かったため、後述の通りスクラッチ実装中心の構成に切り替えた。
+
+| ファイル | 内容 |
+|---|---|
+| [01_vae_fashionmnist.py](stage9/01_vae_fashionmnist.py) | PyTorchでVAE(reparameterization trick含む)を実装し、Fashion-MNISTの潜在空間・生成画像を可視化 |
+| [02_dcgan_fashionmnist.py](stage9/02_dcgan_fashionmnist.py) | PyTorchでDCGAN(Generator/Discriminator)を実装し、敵対的学習の過程と生成画像の推移を可視化 |
+| [03_diffusion_scratch.py](stage9/03_diffusion_scratch.py) | DDPM(拡散モデル)の前向き/逆向き過程をスクラッチ実装し、小規模UNetでノイズ予測モデルを学習 |
+| [04_vae_vs_gan_project.py](stage9/04_vae_vs_gan_project.py) | ミニプロジェクト: 自作VAEとGANの生成画像を多様性・識別性の定量指標で比較 |
+
+**試行錯誤**: 当初ロードマップ通り「Diffusion Modelは簡易版をスクラッチしてから事前学習済みモデル(Stable Diffusion系)を試す」構成を予定していたが、`hf-internal-testing/tiny-stable-diffusion-pipe`はCLIPの解像度設定が不整合で生成時にエラーになり、`segmind/tiny-sd`はダウンロードだけで90秒以上かかり(モデルサイズがCPU実行の時間予算に対して大きすぎる)タイムアウトした。CIFAR-10の教訓と同様、事前学習済みStable Diffusion系はこの環境のCPU・回線条件では非現実的と判断し、事前学習済みモデルの利用は見送ってスクラッチ実装(VAE/GAN/Diffusion)に集中する構成に切り替えた。
+
+### 図1: vae_fashionmnist.png — VAE(Variational Autoencoder)（[01_vae_fashionmnist.py](stage9/01_vae_fashionmnist.py)）
+
+![VAEの潜在空間への埋め込み・再構成・格子状/ランダムサンプリングによる生成画像](stage9/vae_fashionmnist.png)
+
+**読み取れる結果**: 可視化のため潜在次元を2に絞ってFashion-MNIST全クラスを学習(15epoch, 学習時間185秒)。テストデータを2次元潜在空間に埋め込むと、ブーツ/サンダル/スニーカーのような履物系クラスが左上に明確なまとまりを作り、ズボン(オレンジ)やバッグ(黄)も比較的まとまった領域を作る一方、Tシャツ/シャツ/コート/プルオーバーのような上半身の衣類同士は領域が重なり合っており、見た目が似ているクラス同士は潜在表現も近くなることを確認できた。潜在空間を格子状に走査すると、ブーツ系の形から別の形へなめらかに変化していく様子が見られ、通常のオートエンコーダにはない「潜在空間のなめらかさ」というVAEの特徴を視覚的に確認できた。再構成画像はぼやけた輪郭になる。
+
+### 図2: dcgan_fashionmnist.png — DCGAN（[02_dcgan_fashionmnist.py](stage9/02_dcgan_fashionmnist.py)）
+
+![DCGANの学習曲線(Generator/Discriminator loss)とepochごとの生成画像の推移](stage9/dcgan_fashionmnist.png)
+
+**読み取れる結果**: Fashion-MNIST全60,000枚を20epoch学習(学習時間3739秒、VAEの約20倍)。学習曲線はVAEのような単調減少ではなく、Generator lossとDiscriminator lossが互いに反応し合いながら1.0〜1.2付近で拮抗する典型的なGANの挙動を示した。epoch1時点ではほぼノイズだった生成画像が、epoch3・6・10と進むにつれてズボン・スニーカー・コートらしいはっきりした輪郭を持つ形へと明確に変化していく様子を確認でき、VAEの再構成画像よりもくっきりした生成結果が得られた。
+
+### 図3: diffusion_forward_process.png / diffusion_scratch.png — スクラッチDDPM（[03_diffusion_scratch.py](stage9/03_diffusion_scratch.py)）
+
+![前向き過程でスニーカー画像に段階的にノイズを加える様子](stage9/diffusion_forward_process.png)
+![学習曲線、逆向き過程(サンプリング)でのノイズ除去の推移、最終生成結果](stage9/diffusion_scratch.png)
+
+**読み取れる結果**: cosine noise scheduleに沿って元画像に200ステップかけてノイズを加える前向き過程を可視化すると、t=0の明瞭なスニーカーがt=199でほぼ完全なノイズになる様子が確認できた。ノイズ予測ネットワーク(2段の小型UNet)をスニーカークラス6000枚・30epochで学習(学習時間470秒)し、逆向き過程でt=199の完全なノイズからt=0まで200ステップかけてサンプリングすると、ノイズの中から明るい塊(スニーカーのおおまかなシルエット)が浮かび上がる過程は確認できたが、最終的な生成画像はVAE・GANほど輪郭がくっきりせず、ぼんやりした明るい塊にとどまった。ノイズ予測のMSE lossも0.09台で下げ止まっており、CPU実行時間を優先してモデル・データ・epoch数を大幅に縮小した結果、収束しきっていないことが分かる——「仕組みは同じでもスケール(モデルサイズ・データ量・学習量)が生成品質を大きく左右する」という、実際のDDPM論文やStable Diffusionとの規模の違いを逆に体感する結果となった。一方で、VAE・GANが1回のネットワーク呼び出しで生成するのに対し、Diffusion Modelは1枚の生成に200回のネットワーク呼び出しを要するという生成の仕組みの違いは明確に確認できた。
+
+### 図4: vae_vs_gan_project.png — ミニプロジェクト: VAE vs GAN比較（[04_vae_vs_gan_project.py](stage9/04_vae_vs_gan_project.py)）
+
+![VAEとGANの生成画像64枚、および多様性(ピクセル分散)・識別性(分類器確信度)の定量比較](stage9/vae_vs_gan_project.png)
+
+**実験設計**: Fashion-MNIST全クラスでVAE(10epoch)・GAN(10epoch)を学習し、生成画像64枚ずつを (1) ピクセル単位の分散(多様性の目安) (2) 別途学習した簡易CNN分類器(テスト精度0.889)の予測確信度の平均(識別性の目安、簡易Inception Score) の2指標で比較。
+
+**読み取れる結果**: 多様性・識別性のどちらもGAN(多様性0.088, 識別性0.726)がVAE(多様性0.045, 識別性0.664)を上回った。これは「VAEの方が潜在空間全体からなめらかにサンプリングできるため多様性で有利」という教科書的な説明とは逆の結果である。生成画像を見比べると、VAEは画素ごとの再構成誤差を平均的に最小化する性質上、輪郭がぼやけて中間的な明るさの画素が多くなり、結果としてピクセル分散自体が小さく計算されやすい一方、GANはくっきりした白黒のコントラストを持つ画像を生成するため画素値が0/1付近に分かれやすく、単純なピクセル分散という指標では「鮮明さ」が「多様性」と混同されて高く出ている可能性がある。今回使った簡易指標が意味的な多様性と画像の鮮明さを完全には切り分けられていないという、評価指標そのものの限界も合わせて確認できた。GANの学習時間(1824秒)はVAE(127秒)の約14倍で、02で確認した学習の重さもあらためて裏付けられた。
