@@ -11,3 +11,5 @@ ultralytics  # Stage6: YOLOによる物体検出(opencv-python等を依存とし
 gensim  # Stage7: word2vec(CBOW/skip-gram)
 nltk  # Stage7: movie_reviewsコーパス(感情分析データ)
 transformers  # Stage8: 事前学習済みBERT/GPT-2(Hugging Face)
+peft  # Stage10: LoRA(パラメータ効率的ファインチューニング)
+google-genai  # Stage10: Gemini API(RAG/CoTプロンプト実験用、要GEMINI_API_KEY)
