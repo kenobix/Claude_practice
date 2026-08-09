@@ -464,3 +464,49 @@ ultralytics公式のデモ画像(`https://ultralytics.com/images/bus.jpg`, `zida
 ![YOLO11n・Faster R-CNN・SSDLiteの3手法による検出結果比較](stage6/yolo_comparison.png)
 
 **読み取れる結果**: 2枚の画像合計で、YOLO11n(0.249秒, 検出7件)・Faster R-CNN(9.278秒, 検出12件)・SSDLite(0.212秒, 検出6件)という結果になった。YOLOはSSDと同じ1段階系ながら検出件数がSSDよりやや多く、推論速度もSSDと同等かそれ以上に高速だった。一方Faster R-CNNのみが「ネクタイ」のような小物体を検出できており、02で確認した「2段階検出器は精度、1段階検出器は速度」という傾向がYOLOでも同様に見られた。IoU/NMSという共通の土台から、2段階/1段階の設計思想の違い、ファインチューニングによるタスク適応、セグメンテーションへの拡張、最新の1段階検出器(YOLO)まで、物体検出・セグメンテーションの全体像を一通り実装・実測を通じて体験できた。
+
+## Stage 7: 系列データ・NLP基礎
+
+[stage7/](stage7/) 配下にPythonスクリプトとして実装。`pip install gensim nltk`でword2vecと
+映画レビューコーパス(movie_reviews)取得用のパッケージを追加インストールした([requirements.txt](requirements.txt)に反映)。
+
+| ファイル | 内容 |
+|---|---|
+| [01_scratch_rnn.py](stage7/01_scratch_rnn.py) | numpyでvanilla RNN(BPTT含む)をスクラッチ実装し、パリティ判定タスクで勾配消失を実測 |
+| [02_rnn_lstm_gru_comparison.py](stage7/02_rnn_lstm_gru_comparison.py) | PyTorchのnn.RNN/nn.LSTM/nn.GRUで長期記憶タスクを比較し、LSTMの忘却ゲート初期化の効果を確認 |
+| [03_word2vec.py](stage7/03_word2vec.py) | gensimでword2vec(CBOW/skip-gram)をmovie_reviewsコーパスで学習し、単語ベクトルの性質を確認 |
+| [04_lstm_sentiment_project.py](stage7/04_lstm_sentiment_project.py) | ミニプロジェクト: LSTMによる映画レビューの感情分析(word2vec初期化 vs ランダム初期化 vs TF-IDFベースライン) |
+
+### 図1: scratch_rnn_parity.png — numpyスクラッチRNNと勾配消失（[01_scratch_rnn.py](stage7/01_scratch_rnn.py)）
+
+![スクラッチRNNのパリティ判定タスクにおける学習曲線・系列長ごとの精度・勾配消失](stage7/scratch_rnn_parity.png)
+
+**課題設計**: 0/1のランダム系列全体を見て、系列中に現れた1の個数が偶数か奇数かを最後の時刻でのみ出力する「パリティ判定」タスク(many-to-one)を使用。系列の最初の入力も結果に等しく影響するため、最後の出力がどれだけ昔の入力の情報を覚えていられるかを測るのに適している。
+
+**試行錯誤**: 当初は各時刻ごとに出力するmany-to-many設計にしていたが、損失が発散したり、勾配ノルムが時刻に対して単調に変化せず「過去に遡るほど勾配が小さくなる」というvanishing gradientの教科書的な説明を素直に確認できなかった。最後の時刻でのみ損失を計算するmany-to-one設計に変更し、学習率0.1・3000イテレーションに調整することで、系列長と精度・勾配ノルムの関係がクリアに測定できるようになった。
+
+**読み取れる結果**: 系列長5では精度1.000まで学習できる一方、系列長8以降はほぼランダム(0.5)から改善しない「崖」のような変化が見られた。系列長60で勾配ノルムを時刻ごとに測定すると、出力に近い時刻ほど勾配が大きく(≈0.05)、出力から59ステップ離れた先頭の時刻ではほぼ0(1e-6オーダー)まで縮んでいる。tanhの微分がBPTTで時刻をさかのぼるたびに繰り返し掛け算されることで勾配が指数的に小さくなる「勾配消失問題」を、手書きのBPTT実装で数値的に確認できた。
+
+### 図2: rnn_lstm_gru_comparison.png — RNN/LSTM/GRUの長期記憶比較（[02_rnn_lstm_gru_comparison.py](stage7/02_rnn_lstm_gru_comparison.py)）
+
+![RNN/LSTM(標準初期化)/LSTM(忘却ゲート初期化)/GRUの系列長ごとの精度比較](stage7/rnn_lstm_gru_comparison.png)
+
+**課題設計**: 系列の最初の1ステップだけ0/1の信号が来て、残りは全て無音(0)が続いた後、最後にその信号を当てるタスク。無音区間は新しい情報がないため、隠れ状態を「そのまま保持し続けられるか」だけを問う、長期依存性の基本的なテストになっている。
+
+**試行錯誤**: 当初01と同じパリティ判定タスクをPyTorchのRNN/LSTM/GRUに解かせようとしたが、Adam+デフォルト初期化ではLSTM・GRUを含めどのセルも系列長30以上でほとんど学習できず、また同一の乱数生成器を使い回していたことで「3種類とも同じ精度で失敗する」という誤解を招く結果になっていた(生成器を使い切って全モデルが同一のテストセットで同一の多数派クラス予測に落ち着いていたため)。パリティ判定はLSTMを含む勾配ベースの学習では既知に難しいタスクであることが分かり、無音区間つきの単純な記憶タスクに変更した。
+
+**読み取れる結果**: vanilla RNNは系列長100まで安定して学習できた一方、標準初期化のLSTMは系列長30以降で崩壊した(精度0.51)。ところがLSTMの忘却ゲートのバイアスを大きく初期化する一工夫(Jozefowicz et al., 2015で知られる手法)を加えるだけで、学習できる系列長が60まで伸びた。GRUは追加の工夫なしで系列長30まで学習できた。「LSTM/GRUはゲート機構により長期依存に強い」という理論的な優位性は、初期値次第で実際に引き出せるかどうかが変わるという、実践上重要な教訓が得られた。
+
+### 図3: word2vec_embeddings.png — gensimによるword2vec(CBOW/skip-gram)（[03_word2vec.py](stage7/03_word2vec.py)）
+
+![CBOW・skip-gramで学習した単語ベクトルをPCAで2次元に投影した散布図](stage7/word2vec_embeddings.png)
+
+**読み取れる結果**: movie_reviewsコーパス(2000レビュー・約133万トークン)でCBOW・skip-gram双方の語彙数14,565のword2vecを学習。actor/actress/directorやhorror/comedy/action/dramaのような「同じ話題」の単語同士は明確にまとまって配置される一方、good⇔badやexcellent⇔terribleのような正反対の意味を持つ形容詞同士も互いに近い位置に来た(`good`のmost_similarに`bad`が上位で出現)。これはword2vecが「同じ意味かどうか」ではなく「同じ文脈に現れるかどうか」を捉える仕組みであるためで、"the movie was ___" のような構文パターンに肯定・否定どちらの単語も出現しやすいことが原因。分散表現が類義語も対義語もまとめて近づけてしまう場合があるという、word2vecの重要な限界を実際に観察できた。
+
+### 図4: lstm_sentiment_project.png — ミニプロジェクト: LSTMによる感情分析（[04_lstm_sentiment_project.py](stage7/04_lstm_sentiment_project.py)）
+
+![LSTM3手法(ランダム初期化/word2vec固定/word2vec微調整)とTF-IDF+ロジスティック回帰の精度比較、および混同行列](stage7/lstm_sentiment_project.png)
+
+**実験設計**: movie_reviewsコーパス(訓練1600件・テスト400件、positive/negative各半数)を使い、埋め込み層の初期化方法が異なる3種のLSTM分類器(A: ランダム初期化、B: word2vec初期化+固定、C: word2vec初期化+微調整)と、TF-IDF+ロジスティック回帰のベースラインを比較。
+
+**読み取れる結果**: LSTM3種の精度はA=0.547 < B=0.580 < C=0.613となり、word2vecで得た単語の意味的な近さを埋め込みの初期値に組み込むことが、1600件という限られた訓練データでの学習を安定させる効果が確認できた。一方、TF-IDF+ロジスティック回帰はAccuracy=0.823と、どのLSTMよりも大きく上回った。映画レビューの感情分析は「特定の単語(good/terrible等)の有無」が感情極性と強く相関するタスクであり、系列全体の文脈を捉えるLSTMの強みが活きにくい上、訓練データ規模(1600件)に対してLSTMのパラメータ数が過剰で学習が難しかったと考えられる。ニューラルネットワークが常に古典的手法に勝るわけではなく、データ規模とタスクの性質次第であるという実務上重要な教訓が得られた。
