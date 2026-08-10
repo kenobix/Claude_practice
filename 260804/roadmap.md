@@ -114,17 +114,19 @@ Inceptionモジュール)・密結合(DenseNet)・チャネル注意(SENet)と�
 
 ---
 
-## Stage 6: 物体検出・セグメンテーション
+## Stage 6: 物体検出・セグメンテーション ✅完了
 **狙い**: 「分類」の次のタスクである「どこに何があるか」を扱う
 
 - YOLO / SSD / Fast R-CNN / Faster R-CNN / Mask R-CNN
+- 姿勢推定（Keypoint R-CNN / OpenPose）
 
 **実装**: ゼロから実装せず、事前学習済みモデル（`torchvision.models.detection`やUltralytics YOLO）を使って推論・簡単なファインチューニングを体験する
 **ミニプロジェクト**: 手元の画像でYOLOを動かして物体検出を試す
 **実施内容**: [work_log.md](work_log.md#stage-6-物体検出セグメンテーション) 参照。
 IoU/NMSの基礎実装、Faster R-CNN(2段階)とSSD/YOLO(1段階)の速度・精度トレードオフを実測
 (推論時間50倍差、小物体検出は2段階が有利)、合成データでの検出ファインチューニング(IoU 0→0.916)、
-Mask R-CNN推論と自作U-Net(Dice 1.000)まで一通り実装
+Mask R-CNN推論と自作U-Net(Dice 1.000)まで一通り実装。事前学習済みKeypoint R-CNNで
+検出・セグメンテーションとは異なる出力形式(17点の関節キーポイント)による姿勢推定を確認
 
 ---
 
