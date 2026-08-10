@@ -32,16 +32,16 @@ source .venv/bin/activate
 
 ## Stage 1: 教師あり学習の基礎（回帰・分類）+ 評価の基本
 
-[stage1/](stage1/) 配下にPythonスクリプトとして実装。追加のインストールは不要だった
+[stage01/](stage01/) 配下にPythonスクリプトとして実装。追加のインストールは不要だった
 （Stage 0で入れたnumpy/pandas/matplotlib/scikit-learnのみで完結）。
 
 | ファイル | 内容 |
 |---|---|
-| [01_scratch_linear_regression.py](stage1/01_scratch_linear_regression.py) | numpyのみで最小二乗法（正規方程式）と勾配降下法による単回帰・重回帰を実装し、両者の解が一致することを確認 |
-| [02_regression_regularization.py](stage1/02_regression_regularization.py) | scikit-learn（load_diabetes）で重回帰、AICの手計算、Ridge(L2)/Lasso(L1)の正則化比較、k分割交差検証、GridSearchCV |
-| [03_logistic_regression_evaluation.py](stage1/03_logistic_regression_evaluation.py) | scikit-learn（load_breast_cancer）でロジスティック回帰、Accuracy/Precision/Recall/F値/混同行列/ROC-AUC、StratifiedKFold、GridSearchCV |
-| [04_titanic_project.py](stage1/04_titanic_project.py) | **ミニプロジェクト**: OpenML経由でタイタニックデータセットを取得し、前処理(Pipeline/ColumnTransformer)＋ロジスティック回帰＋評価指標一式＋交差検証 |
-| [_mpl_ja.py](stage1/_mpl_ja.py) | matplotlibで日本語ラベルが文字化けしないための共通フォント設定（Noto Sans CJK JP） |
+| [01_scratch_linear_regression.py](stage01/01_scratch_linear_regression.py) | numpyのみで最小二乗法（正規方程式）と勾配降下法による単回帰・重回帰を実装し、両者の解が一致することを確認 |
+| [02_regression_regularization.py](stage01/02_regression_regularization.py) | scikit-learn（load_diabetes）で重回帰、AICの手計算、Ridge(L2)/Lasso(L1)の正則化比較、k分割交差検証、GridSearchCV |
+| [03_logistic_regression_evaluation.py](stage01/03_logistic_regression_evaluation.py) | scikit-learn（load_breast_cancer）でロジスティック回帰、Accuracy/Precision/Recall/F値/混同行列/ROC-AUC、StratifiedKFold、GridSearchCV |
+| [04_titanic_project.py](stage01/04_titanic_project.py) | **ミニプロジェクト**: OpenML経由でタイタニックデータセットを取得し、前処理(Pipeline/ColumnTransformer)＋ロジスティック回帰＋評価指標一式＋交差検証 |
+| [_mpl_ja.py](stage01/_mpl_ja.py) | matplotlibで日本語ラベルが文字化けしないための共通フォント設定（Noto Sans CJK JP） |
 
 ### 評価指標・パラメータの用語整理
 
@@ -59,9 +59,9 @@ source .venv/bin/activate
 | alpha（Ridge/Lassoの正則化強度） | 「係数を大きくすることへの罰則」の強さ。0に近いほど通常の重回帰に近づき、大きいほど係数が0に近づく（過学習を抑える一方、大きすぎると未学習になる） |
 | C（ロジスティック回帰の正則化強度） | scikit-learnの`LogisticRegression`ではalphaの逆数的な意味を持つパラメータ。**小さいほど正則化が強く**（係数が縮む）、大きいほど正則化が弱い（訓練データに忠実にフィットしようとする） |
 
-### 図1: regularization_paths.png — Ridge/Lassoの正則化パス（[02_regression_regularization.py](stage1/02_regression_regularization.py)）
+### 図1: regularization_paths.png — Ridge/Lassoの正則化パス（[02_regression_regularization.py](stage01/02_regression_regularization.py)）
 
-![Ridge/Lassoの正則化パス](stage1/regularization_paths.png)
+![Ridge/Lassoの正則化パス](stage01/regularization_paths.png)
 
 **何を示す図か**: `load_diabetes`（糖尿病患者442人の10個の検査値・属性から1年後の病状進行度を予測する回帰データ）を使い、Ridge(L2正則化)とLasso(L1正則化)それぞれについて、正則化強度alphaを0.001〜100まで対数スケールで動かした時、10個の特徴量（age, sex, bmi, bp=血圧, s1〜s6=血液検査値）の回帰係数がどう変化するかをプロットしたもの。横軸alpha、縦軸が各特徴量の係数。
 
@@ -73,9 +73,9 @@ source .venv/bin/activate
 
 **どちらが良いか**: 目的次第。今回のテストデータでは alpha=1 で Lasso の方が R^2=0.4669（Ridgeは0.4541）とやや優勢だった。「使う特徴量を絞りたい／解釈しやすくしたい」ならLasso、「特徴量を全部残しつつ滑らかに抑えたい／相関の強い特徴量が複数ある」ならRidgeが向く。ただしLassoはalphaを上げすぎると急激に性能が落ちる（alpha=100でR^2=-0.012、これは「常に平均値を予測する」より悪い）ため、GridSearchCVのようにalphaを探索する工程が実務上重要になる。
 
-### 図2: logistic_evaluation.png — 乳がん診断データの評価（[03_logistic_regression_evaluation.py](stage1/03_logistic_regression_evaluation.py)）
+### 図2: logistic_evaluation.png — 乳がん診断データの評価（[03_logistic_regression_evaluation.py](stage01/03_logistic_regression_evaluation.py)）
 
-![乳がん診断データの混同行列とROC曲線](stage1/logistic_evaluation.png)
+![乳がん診断データの混同行列とROC曲線](stage01/logistic_evaluation.png)
 
 **何を示す図か**: `load_breast_cancer`（乳がんの腫瘍の細胞核の特徴量30種類から、悪性(malignant)か良性(benign)かを判定する二値分類データ、569件）にロジスティック回帰を適用した結果。左が混同行列、右がROC曲線。
 
@@ -85,9 +85,9 @@ source .venv/bin/activate
 
 医療診断のような場面では「悪性を良性と見逃す」（偽陰性＝Recallの低下）の方が「良性を悪性と誤診する」（偽陽性）よりリスクが大きいため、Recallを重視してしきい値を調整する、といった応用もできる。
 
-### 図3: titanic_evaluation.png — タイタニック生存予測の評価（[04_titanic_project.py](stage1/04_titanic_project.py)）
+### 図3: titanic_evaluation.png — タイタニック生存予測の評価（[04_titanic_project.py](stage01/04_titanic_project.py)）
 
-![タイタニック生存予測の混同行列とROC曲線](stage1/titanic_evaluation.png)
+![タイタニック生存予測の混同行列とROC曲線](stage01/titanic_evaluation.png)
 
 **何を示す図か**: タイタニック号の乗客データから生存/死亡を予測した結果。構成はlogistic_evaluation.pngと同じ（左＝混同行列、右＝ROC曲線）。
 
@@ -111,25 +111,25 @@ source .venv/bin/activate
 **候補から外した他の選択肢**:
 - **Iris（アヤメの品種分類）**: 機械学習チュートリアルの定番すぎる上に3クラス分類のため、今回重視したPrecision/Recall/ROC曲線などの「二値分類の評価指標」の説明には不向き
 - **MNIST（手書き数字）**: 画像データのため欠損値処理やカテゴリ変数エンコーディングの練習にならない。画像系はStage 4以降（NN基礎）で本格的に扱う予定のため、そちらに譲った
-- **California Housing / Diabetes**: いずれも回帰タスクであり、すでに[02_regression_regularization.py](stage1/02_regression_regularization.py)で回帰を扱ったため、分類側の評価指標（混同行列・ROC-AUC）を実践する題材としては別データが必要だった
+- **California Housing / Diabetes**: いずれも回帰タスクであり、すでに[02_regression_regularization.py](stage01/02_regression_regularization.py)で回帰を扱ったため、分類側の評価指標（混同行列・ROC-AUC）を実践する題材としては別データが必要だった
 - **実務データ（自作の売上・アンケート等）**: 入手性・前処理の複雑さ・個人情報配慮の観点から、教育目的では実績のある公開データセットの方が結果の妥当性を検証しやすく適切と判断
 
 ---
 
 ## Stage 2: 決定木・アンサンブル・SVM
 
-[stage2/](stage2/) 配下にPythonスクリプトとして実装。追加のインストールは不要だった。
+[stage02/](stage02/) 配下にPythonスクリプトとして実装。追加のインストールは不要だった。
 
 | ファイル | 内容 |
 |---|---|
-| [01_decision_tree.py](stage2/01_decision_tree.py) | load_wine（ワイン品種分類）で決定木。max_depthを変えた過学習の観察、plot_treeによる木構造の可視化、2特徴量での決定境界の可視化 |
-| [02_ensemble_bagging_boosting.py](stage2/02_ensemble_bagging_boosting.py) | 単体決定木 vs Bagging vs RandomForest vs GradientBoostingの精度比較、RandomForestの特徴量重要度 |
-| [03_svm_kernel.py](stage2/03_svm_kernel.py) | make_circles（同心円データ）でSVMのlinear/poly/rbfカーネルを比較し、カーネルトリックの効果を可視化。正則化パラメータCの影響も確認 |
-| [04_model_comparison_project.py](stage2/04_model_comparison_project.py) | **ミニプロジェクト**: make_moonsで決定木・RandomForest・SVM(rbf)の決定境界とテスト精度・交差検証を横並び比較 |
+| [01_decision_tree.py](stage02/01_decision_tree.py) | load_wine（ワイン品種分類）で決定木。max_depthを変えた過学習の観察、plot_treeによる木構造の可視化、2特徴量での決定境界の可視化 |
+| [02_ensemble_bagging_boosting.py](stage02/02_ensemble_bagging_boosting.py) | 単体決定木 vs Bagging vs RandomForest vs GradientBoostingの精度比較、RandomForestの特徴量重要度 |
+| [03_svm_kernel.py](stage02/03_svm_kernel.py) | make_circles（同心円データ）でSVMのlinear/poly/rbfカーネルを比較し、カーネルトリックの効果を可視化。正則化パラメータCの影響も確認 |
+| [04_model_comparison_project.py](stage02/04_model_comparison_project.py) | **ミニプロジェクト**: make_moonsで決定木・RandomForest・SVM(rbf)の決定境界とテスト精度・交差検証を横並び比較 |
 
-### 図1: decision_tree.png — 決定木の過学習・構造・決定境界（[01_decision_tree.py](stage2/01_decision_tree.py)）
+### 図1: decision_tree.png — 決定木の過学習・構造・決定境界（[01_decision_tree.py](stage02/01_decision_tree.py)）
 
-![決定木の過学習の観察・木構造・決定境界](stage2/decision_tree.png)
+![決定木の過学習の観察・木構造・決定境界](stage02/decision_tree.png)
 
 **何を示す図か**: load_wine（3品種のワインを化学成分13種類から分類する178件のデータ）を使用。左からmax_depth(木の深さの上限)と訓練/テスト精度の関係、max_depth=3の木構造そのもの、flavanoids(フラボノイド量)とcolor_intensity(色の濃さ)の2特徴量だけを使った決定境界。
 
@@ -138,9 +138,9 @@ source .venv/bin/activate
 - 中央図: 根ノードがまず`color_intensity <= 3.82`で分岐し、次に`flavanoids`や`alcalinity_of_ash`といった特徴量で細分化されていく様子が視覚的にわかる。各ノードのgini(ジニ不純度、0に近いほどそのノード内が単一クラスに揃っている)が深さとともに0に近づいていく
 - 右図: 2特徴量だけに絞ると全13特徴量を使った場合(0.963)よりテスト精度が下がる(0.870、参考としてmax_depth=3では0.907)。情報量を減らして可視化しやすくしたトレードオフであることを明記した
 
-### 図2: ensemble_comparison.png — アンサンブル手法の精度比較と特徴量重要度（[02_ensemble_bagging_boosting.py](stage2/02_ensemble_bagging_boosting.py)）
+### 図2: ensemble_comparison.png — アンサンブル手法の精度比較と特徴量重要度（[02_ensemble_bagging_boosting.py](stage02/02_ensemble_bagging_boosting.py)）
 
-![単体決定木とアンサンブル手法の精度比較、RandomForestの特徴量重要度](stage2/ensemble_comparison.png)
+![単体決定木とアンサンブル手法の精度比較、RandomForestの特徴量重要度](stage02/ensemble_comparison.png)
 
 **何を示す図か**: 同じload_wineデータで、max_depth=3・n_estimators=50に条件を揃えた「決定木(単体)」「Bagging」「RandomForest」「GradientBoosting」を比較。左がテスト精度と5-fold交差検証平均の棒グラフ、右がRandomForestの特徴量重要度。
 
@@ -149,9 +149,9 @@ source .venv/bin/activate
 - GradientBoostingはテスト0.944・CV平均0.939とこのデータでは他のアンサンブル手法より低かった。学習率やn_estimatorsのチューニング不足が主因と考えられ、「ブースティングは常に最強」ではなくデータやハイパーパラメータ次第であることも実感できた
 - 特徴量重要度は`flavanoids`(0.193)が最大、次いで`alcohol`(0.163)、`color_intensity`(0.139)と続く。図1の決定木の根ノードで使われた`color_intensity`が単体では最重要ではなく、複数の木の平均で見ると`flavanoids`の寄与が大きいという、単体決定木だけでは見えない情報が得られた
 
-### 図3: svm_kernel_comparison.png — SVMのカーネルトリック比較（[03_svm_kernel.py](stage2/03_svm_kernel.py)）
+### 図3: svm_kernel_comparison.png — SVMのカーネルトリック比較（[03_svm_kernel.py](stage02/03_svm_kernel.py)）
 
-![SVMのlinear/poly/rbfカーネルによる決定境界の違い](stage2/svm_kernel_comparison.png)
+![SVMのlinear/poly/rbfカーネルによる決定境界の違い](stage02/svm_kernel_comparison.png)
 
 **何を示す図か**: make_circles（内側と外側の同心円状に分布する、直線では絶対に分離できない2クラスデータ）に対して、SVMのカーネルをlinear/poly(3次)/rbfと変えて学習させた決定境界。
 
@@ -161,9 +161,9 @@ source .venv/bin/activate
 - rbfカーネルは0.989とほぼ完璧に分離。決定境界が内側の円をきれいに囲む形になっており、**カーネルトリック（データを高次元空間に写像してから直線的に分離することで、元の空間では曲線の境界を実現する）**の効果を視覚的に確認できた
 - 正則化パラメータC（C=0.01/1.0/100.0）を比較すると、Cが大きいほどサポートベクター数が減り（210→54→25）境界がタイトになる。C=1.0が最良(0.989)で、C=100.0はやや過学習気味に精度が落ちた(0.978)
 
-### 図4: model_comparison.png — 決定木・RandomForest・SVMの決定境界比較（ミニプロジェクト、[04_model_comparison_project.py](stage2/04_model_comparison_project.py)）
+### 図4: model_comparison.png — 決定木・RandomForest・SVMの決定境界比較（ミニプロジェクト、[04_model_comparison_project.py](stage02/04_model_comparison_project.py)）
 
-![make_moonsデータに対する決定木・RandomForest・SVMの決定境界比較](stage2/model_comparison.png)
+![make_moonsデータに対する決定木・RandomForest・SVMの決定境界比較](stage02/model_comparison.png)
 
 **何を示す図か**: make_moons（三日月型に絡み合った2クラス、ノイズ0.3であえて重なりを持たせた300件のデータ）に対して、決定木(max_depth=5)・RandomForest(100本)・SVM(rbf, C=1.0)を学習させた決定境界とテスト精度・5-fold CV平均。
 
@@ -177,20 +177,20 @@ source .venv/bin/activate
 
 ## Stage 3: 教師なし学習
 
-[stage3/](stage3/) 配下にPythonスクリプトとして実装。インターネット接続がない環境のため、
+[stage03/](stage03/) 配下にPythonスクリプトとして実装。インターネット接続がない環境のため、
 外部データセットのダウンロードが必要な手法（トピックモデル・協調フィルタリング）は
 自作の小さなコーパス・評価行列で代替した。
 
 | ファイル | 内容 |
 |---|---|
-| [01_kmeans_ward.py](stage3/01_kmeans_ward.py) | load_irisでk-means(エルボー法・シルエットスコアでkを検討)とウォード法(階層的クラスタリング・デンドログラム)、正解ラベルとの一致度(ARI)を比較 |
-| [02_pca_svd_tsne_mds.py](stage3/02_pca_svd_tsne_mds.py) | load_digitsでPCAとSVDの数学的な同一性を検証、PCA/TruncatedSVD/t-SNE/MDSで2次元に埋め込み比較 |
-| [03_topic_model_filtering.py](stage3/03_topic_model_filtering.py) | 自作コーパス(機械学習/スポーツ/日本食の英文12件)でLDAトピックモデル、自作評価行列で協調フィルタリング(ユーザーベース)とコンテンツベースフィルタリングを実装 |
-| [04_mnist_clustering_project.py](stage3/04_mnist_clustering_project.py) | **ミニプロジェクト**: load_digitsをk-means(k=10)でクラスタリングし、PCA/t-SNEの2次元埋め込みに正解ラベルとクラスタ割当を重ねて可視化・比較 |
+| [01_kmeans_ward.py](stage03/01_kmeans_ward.py) | load_irisでk-means(エルボー法・シルエットスコアでkを検討)とウォード法(階層的クラスタリング・デンドログラム)、正解ラベルとの一致度(ARI)を比較 |
+| [02_pca_svd_tsne_mds.py](stage03/02_pca_svd_tsne_mds.py) | load_digitsでPCAとSVDの数学的な同一性を検証、PCA/TruncatedSVD/t-SNE/MDSで2次元に埋め込み比較 |
+| [03_topic_model_filtering.py](stage03/03_topic_model_filtering.py) | 自作コーパス(機械学習/スポーツ/日本食の英文12件)でLDAトピックモデル、自作評価行列で協調フィルタリング(ユーザーベース)とコンテンツベースフィルタリングを実装 |
+| [04_mnist_clustering_project.py](stage03/04_mnist_clustering_project.py) | **ミニプロジェクト**: load_digitsをk-means(k=10)でクラスタリングし、PCA/t-SNEの2次元埋め込みに正解ラベルとクラスタ割当を重ねて可視化・比較 |
 
-### 図1: kmeans_ward.png — k-meansのk決定とウォード法のデンドログラム（[01_kmeans_ward.py](stage3/01_kmeans_ward.py)）
+### 図1: kmeans_ward.png — k-meansのk決定とウォード法のデンドログラム（[01_kmeans_ward.py](stage03/01_kmeans_ward.py)）
 
-![k-meansのエルボー法・ウォード法のデンドログラム・PCA上でのクラスタ可視化](stage3/kmeans_ward.png)
+![k-meansのエルボー法・ウォード法のデンドログラム・PCA上でのクラスタ可視化](stage03/kmeans_ward.png)
 
 **何を示す図か**: load_iris（アヤメ3品種、がく片・花弁の長さ/幅の4特徴量、150件）を使用。左からk-meansのエルボー法（kと inertia の関係）、ウォード法のデンドログラム、k=3のk-meansクラスタをPCAで2次元に投影した散布図。
 
@@ -199,9 +199,9 @@ source .venv/bin/activate
 - 一方、シルエットスコアはk=2で最大(0.582)となりk=3(0.460)より高かった。これは3品種のうちsetosa種は他と明確に分離している一方、versicolor種とvirginica種は特徴量空間でかなり重なっており、「クラスタの分離しやすさ」だけを見る指標では2群構成の方が高く評価されるため。**正解のクラス数と、教師なし指標が示す最適なクラスタ数は必ずしも一致しない**という、教師なし学習特有の注意点が確認できた
 - k=3のk-means(ARI=0.620)とウォード法(ARI=0.615)はほぼ同水準の一致度で、どちらも完全一致ではないが正解の品種にある程度近いクラスタを発見できた
 
-### 図2: dimensionality_reduction.png — PCA/SVD/t-SNE/MDSの次元削減比較（[02_pca_svd_tsne_mds.py](stage3/02_pca_svd_tsne_mds.py)）
+### 図2: dimensionality_reduction.png — PCA/SVD/t-SNE/MDSの次元削減比較（[02_pca_svd_tsne_mds.py](stage03/02_pca_svd_tsne_mds.py)）
 
-![手書き数字データのPCA/TruncatedSVD/t-SNE/MDSによる2次元埋め込み比較](stage3/dimensionality_reduction.png)
+![手書き数字データのPCA/TruncatedSVD/t-SNE/MDSによる2次元埋め込み比較](stage03/dimensionality_reduction.png)
 
 **何を示す図か**: load_digits（8×8=64画素の手書き数字画像、0〜9の10クラス、1797枚）を、PCA・TruncatedSVD・t-SNE・MDSでそれぞれ2次元に埋め込んだ散布図（色=正解の数字ラベル）。
 
@@ -211,7 +211,7 @@ source .venv/bin/activate
 - t-SNEは10個の数字がほぼ明確に分かれた塊になり、視覚的な分離性能が最も高かった。ただし塊同士の距離の大小自体には意味がない（局所的な近さのみを保存する手法のため）
 - MDS（計算コストの都合で300枚に間引き）は、意外にもPCAより分離が弱い結果になった。全サンプル間のペア距離を大域的に保とうとする設計のため、t-SNEのように近傍構造を優先して強調する動きはしないことが要因と考えられる
 
-### 図3・出力: トピックモデル・協調フィルタリング・コンテンツベースフィルタリング（[03_topic_model_filtering.py](stage3/03_topic_model_filtering.py)、図なし・テキスト出力のみ）
+### 図3・出力: トピックモデル・協調フィルタリング・コンテンツベースフィルタリング（[03_topic_model_filtering.py](stage03/03_topic_model_filtering.py)、図なし・テキスト出力のみ）
 
 **トピックモデル(LDA)**: 機械学習/スポーツ/日本食に関する英文12件の自作コーパスに対しLDAで3トピックを抽出。日本食の文書(4件)はトピック0にほぼ綺麗にまとまったが、機械学習とスポーツの文書は2つのトピックに割れて混在した。文書数がわずか12件・各文書が短く共有語彙が少ないため、統計的な手がかりが不足したことが原因と考えられる。**LDAの精度は文書数・語彙の豊富さに大きく依存する**という点を実際に確認できた。
 
@@ -219,9 +219,9 @@ source .venv/bin/activate
 
 **コンテンツベースフィルタリング**: 映画のジャンル特徴量(SF/恋愛/アクションの含有度)を使い、Eveが高評価した2作品からEveの「好みプロファイル」を作成。他ユーザーのデータを一切使わず、プロファイルとのコサイン類似度だけで未評価作品を推薦し、最もジャンルの近い「SF大作B」を正しく推薦できた。
 
-### 図4: mnist_clustering_project.png — 手書き数字のPCA/t-SNE可視化 × k-meansクラスタリング（ミニプロジェクト、[04_mnist_clustering_project.py](stage3/04_mnist_clustering_project.py)）
+### 図4: mnist_clustering_project.png — 手書き数字のPCA/t-SNE可視化 × k-meansクラスタリング（ミニプロジェクト、[04_mnist_clustering_project.py](stage03/04_mnist_clustering_project.py)）
 
-![手書き数字データのPCA/t-SNE可視化にk-meansクラスタと正解ラベルを重ねた比較](stage3/mnist_clustering_project.png)
+![手書き数字データのPCA/t-SNE可視化にk-meansクラスタと正解ラベルを重ねた比較](stage03/mnist_clustering_project.png)
 
 **何を示す図か**: load_digitsをk-means(k=10)でクラスタリングし、PCA・t-SNEそれぞれの2次元埋め込みに「正解ラベル」と「k-meansクラスタ番号」を別々に色分けして表示（2×2の4パネル）。
 
@@ -235,21 +235,21 @@ source .venv/bin/activate
 
 ## Stage 4: ニューラルネットワークの基礎（最重要の土台）
 
-[stage4/](stage4/) 配下にPythonスクリプトとして実装。前半(01・02)はnumpyのみのスクラッチ実装、
+[stage04/](stage04/) 配下にPythonスクリプトとして実装。前半(01・02)はnumpyのみのスクラッチ実装、
 後半(04・05)はPyTorchを使用し、フレームワークが何を肩代わりしているかを対比できる構成にした。
 
 | ファイル | 内容 |
 |---|---|
-| [01_activation_functions.py](stage4/01_activation_functions.py) | ReLU/LeakyReLU/シグモイド/tanh/恒等関数/softmaxとその導関数を可視化し、勾配消失問題を数値で確認 |
-| [02_scratch_mlp_backprop.py](stage4/02_scratch_mlp_backprop.py) | numpyのみで2層MLP(64→32→10)のforward/backwardを実装。交差エントロピー+softmaxの勾配導出をコード内に明記し、数値微分による勾配チェックで実装を検証 |
-| [03_optimizers_comparison.py](stage4/03_optimizers_comparison.py) | 楕円形の谷での勾配降下法・最急降下法(線探索)・ニュートン法の軌跡比較、手書き数字MLPでのフルバッチGD/ミニバッチSGD/Adamの収束速度比較 |
-| [04_normalization_regularization.py](stage4/04_normalization_regularization.py) | PyTorchでBatchNorm/LayerNorm/InstanceNorm/GroupNormの違いを数値で確認。あえて過学習しやすい設定でDropout・Early Stoppingの効果を検証 |
-| [05_autoencoder.py](stage4/05_autoencoder.py) | PyTorchでオートエンコーダを実装し、同じ圧縮サイズのPCAと再構成誤差・潜在空間を比較 |
-| [06_pytorch_mlp_project.py](stage4/06_pytorch_mlp_project.py) | **ミニプロジェクト**: 02のnumpyスクラッチMLPとPyTorch MLPを完全に同一の初期値・学習率で学習させ、結果が一致するかを検証 |
+| [01_activation_functions.py](stage04/01_activation_functions.py) | ReLU/LeakyReLU/シグモイド/tanh/恒等関数/softmaxとその導関数を可視化し、勾配消失問題を数値で確認 |
+| [02_scratch_mlp_backprop.py](stage04/02_scratch_mlp_backprop.py) | numpyのみで2層MLP(64→32→10)のforward/backwardを実装。交差エントロピー+softmaxの勾配導出をコード内に明記し、数値微分による勾配チェックで実装を検証 |
+| [03_optimizers_comparison.py](stage04/03_optimizers_comparison.py) | 楕円形の谷での勾配降下法・最急降下法(線探索)・ニュートン法の軌跡比較、手書き数字MLPでのフルバッチGD/ミニバッチSGD/Adamの収束速度比較 |
+| [04_normalization_regularization.py](stage04/04_normalization_regularization.py) | PyTorchでBatchNorm/LayerNorm/InstanceNorm/GroupNormの違いを数値で確認。あえて過学習しやすい設定でDropout・Early Stoppingの効果を検証 |
+| [05_autoencoder.py](stage04/05_autoencoder.py) | PyTorchでオートエンコーダを実装し、同じ圧縮サイズのPCAと再構成誤差・潜在空間を比較 |
+| [06_pytorch_mlp_project.py](stage04/06_pytorch_mlp_project.py) | **ミニプロジェクト**: 02のnumpyスクラッチMLPとPyTorch MLPを完全に同一の初期値・学習率で学習させ、結果が一致するかを検証 |
 
-### 図1: activation_functions.png — 活性化関数と導関数（[01_activation_functions.py](stage4/01_activation_functions.py)）
+### 図1: activation_functions.png — 活性化関数と導関数（[01_activation_functions.py](stage04/01_activation_functions.py)）
 
-![ReLU/LeakyReLU/シグモイド/tanh/恒等関数とその導関数](stage4/activation_functions.png)
+![ReLU/LeakyReLU/シグモイド/tanh/恒等関数とその導関数](stage04/activation_functions.png)
 
 **何を示す図か**: 5種類の活性化関数(上段)とその導関数(下段)をx=-5〜5の範囲でプロット。
 
@@ -258,9 +258,9 @@ source .venv/bin/activate
 - 層を重ねるたびに勾配同士が掛け算される逆伝播の性質上、シグモイド/tanhを多層に重ねると勾配がどんどん小さくなる「勾配消失」が起きやすい。ReLUが現在主流な理由はこの点にある
 - ソフトマックスは他の活性化関数と違い「ベクトル全体を1つの確率分布に変換する」処理で、入力[2.0, 1.0, 0.1]に対し出力[0.659, 0.242, 0.099](合計1.0)という具体例で、要素ごとに独立に計算する他の活性化関数との違いを確認した
 
-### 図2: scratch_mlp_training.png — numpyスクラッチMLPの学習曲線（[02_scratch_mlp_backprop.py](stage4/02_scratch_mlp_backprop.py)）
+### 図2: scratch_mlp_training.png — numpyスクラッチMLPの学習曲線（[02_scratch_mlp_backprop.py](stage04/02_scratch_mlp_backprop.py)）
 
-![numpyスクラッチMLPの訓練/テストloss・精度の推移](stage4/scratch_mlp_training.png)
+![numpyスクラッチMLPの訓練/テストloss・精度の推移](stage04/scratch_mlp_training.png)
 
 **何を示す図か**: 手書きで導出したforward/backwardのみで2層MLP(64→32→10)を300エポック学習させた際の、訓練/テストのloss・Accuracyの推移。
 
@@ -269,10 +269,10 @@ source .venv/bin/activate
 - テスト精度は epoch50 で94.4%、epoch300で96.1%に到達。訓練lossは0.014まで下がり続ける一方でテストlossはepoch150あたりから下げ止まり微増する、典型的な過学習の兆候も観察できた（Stage4後半のDropout/Early Stoppingの伏線）
 - フレームワークを一切使わず、numpyの行列演算だけで実用的な精度の手書き数字分類が学習できることを実証した
 
-### 図3: optimizer_trajectories.png / optimizer_training_comparison.png — 最適化アルゴリズムの比較（[03_optimizers_comparison.py](stage4/03_optimizers_comparison.py)）
+### 図3: optimizer_trajectories.png / optimizer_training_comparison.png — 最適化アルゴリズムの比較（[03_optimizers_comparison.py](stage04/03_optimizers_comparison.py)）
 
-![楕円形の谷での勾配降下法・最急降下法・ニュートン法の軌跡](stage4/optimizer_trajectories.png)
-![手書き数字MLPでのフルバッチGD・ミニバッチSGD・Adamの学習曲線](stage4/optimizer_training_comparison.png)
+![楕円形の谷での勾配降下法・最急降下法・ニュートン法の軌跡](stage04/optimizer_trajectories.png)
+![手書き数字MLPでのフルバッチGD・ミニバッチSGD・Adamの学習曲線](stage04/optimizer_training_comparison.png)
 
 **何を示す図か**: 前半は f(x,y)=x²+10y²（曲率が方向によって10倍異なる細長い谷）での3手法の軌跡。後半は同じMLPをフルバッチGD・ミニバッチSGD・Adamでそれぞれ20エポック学習させた際のテストloss・精度の推移。
 
@@ -281,9 +281,9 @@ source .venv/bin/activate
 - ただしニュートン法はヘッセ行列(パラメータ数の2乗のサイズ)の逆行列計算が必要で、パラメータ数が数百万〜数億に達するニューラルネットでは非現実的。これが深層学習で勾配降下法系が主流である理由
 - 実データでの比較では、20エポック時点のテスト精度がフルバッチGD 0.914、ミニバッチSGD 0.969、Adam 0.975。フルバッチGDは1エポックにつき1回しかパラメータを更新しないのに対し、ミニバッチSGD/Adamは1エポック内に複数回更新するため、同じエポック数でも学習の進み方に大きな差が出ることを実測で確認した
 
-### 図4: dropout_early_stopping.png — 正規化・正則化（[04_normalization_regularization.py](stage4/04_normalization_regularization.py)）
+### 図4: dropout_early_stopping.png — 正規化・正則化（[04_normalization_regularization.py](stage04/04_normalization_regularization.py)）
 
-![Dropoutの有無による過学習の違いとEarly Stoppingのタイミング](stage4/dropout_early_stopping.png)
+![Dropoutの有無による過学習の違いとEarly Stoppingのタイミング](stage04/dropout_early_stopping.png)
 
 **何を示す図か**: BatchNorm/LayerNorm/InstanceNorm/GroupNormを同じ4次元テンソル(N,C,H,W)に適用した数値比較（テキスト出力のみ、図なし）と、訓練データを150件に絞り隠れ層256のあえて過学習しやすいMLPで、Dropoutの有無・Early Stoppingの効果を検証した図。
 
@@ -293,10 +293,10 @@ source .venv/bin/activate
 - **重要な発見**: 検証lossが最小だったepoch7時点の検証精度(0.895)は、200epoch学習し切った時点の精度(0.907)より低かった。lossは「予測の自信度」まで評価するのに対しaccuracyは「1位予測が当たっているか」しか見ないため、lossに基づくEarly Stoppingが必ずしも精度の最適点と一致しないことを実測で確認できた（想定と異なる結果が出たため、その場で解釈を修正した）
 - Dropout(p=0.5)ありのモデルは最終検証精度0.910とDropoutなし(0.907)よりわずかに高く、検証精度の推移もやや不安定(ノイズが大きい)だった
 
-### 図5: autoencoder_vs_pca.png / autoencoder_latent_space.png — オートエンコーダ（[05_autoencoder.py](stage4/05_autoencoder.py)）
+### 図5: autoencoder_vs_pca.png / autoencoder_latent_space.png — オートエンコーダ（[05_autoencoder.py](stage04/05_autoencoder.py)）
 
-![元画像・PCA復元・オートエンコーダ復元の比較](stage4/autoencoder_vs_pca.png)
-![PCAとオートエンコーダの2次元潜在空間の比較](stage4/autoencoder_latent_space.png)
+![元画像・PCA復元・オートエンコーダ復元の比較](stage04/autoencoder_vs_pca.png)
+![PCAとオートエンコーダの2次元潜在空間の比較](stage04/autoencoder_latent_space.png)
 
 **何を示す図か**: 8次元に圧縮するオートエンコーダとPCA(8主成分)の復元画像・再構成誤差の比較、および2次元まで圧縮した場合の潜在空間の可視化。
 
@@ -305,9 +305,9 @@ source .venv/bin/activate
 - 復元画像を見比べると、PCA復元はぼやけて灰色がかっているのに対し、オートエンコーダ復元は元画像に近いコントラストを保っていた
 - 2次元潜在空間はラベルを一切使わない再構成誤差の最小化だけで、数字ごとにある程度まとまった配置を学習できていた。PCAの2次元散布図と比べて劇的に優れているわけではないが、「教師なしで意味のある表現を獲得する」という自己教師あり学習の考え方の入り口を体感できた
 
-### 図6: scratch_vs_pytorch.png — ミニプロジェクト: numpyスクラッチMLP vs PyTorch MLP（[06_pytorch_mlp_project.py](stage4/06_pytorch_mlp_project.py)）
+### 図6: scratch_vs_pytorch.png — ミニプロジェクト: numpyスクラッチMLP vs PyTorch MLP（[06_pytorch_mlp_project.py](stage04/06_pytorch_mlp_project.py)）
 
-![numpyスクラッチ実装とPyTorch実装の学習曲線比較](stage4/scratch_vs_pytorch.png)
+![numpyスクラッチ実装とPyTorch実装の学習曲線比較](stage04/scratch_vs_pytorch.png)
 
 **何を示す図か**: 02のScratchMLPをそのまま再利用し、PyTorchのnn.Linearに全く同じ乱数ストリームから生成した初期値をコピーした上で、同じ学習率(0.5)・同じフルバッチ勾配降下法で300エポック学習させた際の訓練loss曲線。
 
@@ -321,13 +321,13 @@ source .venv/bin/activate
 
 ## Stage 5: CNN基礎とアーキテクチャの歴史
 
-[stage5/](stage5/) 配下にPythonスクリプトとして実装。
+[stage05/](stage05/) 配下にPythonスクリプトとして実装。
 
 ### データセットをCIFAR-10から自作の合成図形データセットに変更した経緯
 
 当初はroadmap.md記載の通りCIFAR-10を使う予定だったが、`torchvision.datasets.CIFAR10`の
 ダウンロードが90kB/s程度と極端に遅く(170MBで30分以上かかる見込み)、この環境のネットワーク
-帯域では非現実的と判断して中断した。代わりに[synthetic_shapes.py](stage5/synthetic_shapes.py)で
+帯域では非現実的と判断して中断した。代わりに[synthetic_shapes.py](stage05/synthetic_shapes.py)で
 Pillowを使いその場生成する32x32のRGB合成図形データセット(円/四角/三角/十字の4クラス、
 位置・サイズ・回転角・色・ノイズをランダム化)に切り替えた。なお同じセッション内で後から
 `download.pytorch.org`（事前学習済みモデル配布元）は400KB/s超で接続できており、ホストにより
@@ -335,25 +335,25 @@ Pillowを使いその場生成する32x32のRGB合成図形データセット(�
 
 | ファイル | 内容 |
 |---|---|
-| [synthetic_shapes.py](stage5/synthetic_shapes.py) | オフライン生成する合成図形データセット(共通モジュール) |
-| [01_conv_pooling_basics.py](stage5/01_conv_pooling_basics.py) | 畳み込み演算(エッジ検出)・最大値/平均値/グローバルアベレージプーリングをnumpyで実装 |
-| [02_cnn_architectures.py](stage5/02_cnn_architectures.py) | LeNet(浅い2層)・PlainDeepCNN(21層,スキップ結合なし)・ResNetDeep(同21層,スキップ結合あり)を比較し、degradation problemを再現 |
-| [03_mobilenet_dilated_conv.py](stage5/03_mobilenet_dilated_conv.py) | 深度別分離畳み込み(MobileNet)のパラメータ削減率、拡張畳み込み(Dilated Conv)による受容野拡大を可視化 |
-| [04_transfer_learning.py](stage5/04_transfer_learning.py) | ImageNet事前学習済みResNet18で特徴抽出とファインチューニングを比較 |
-| [05_data_augmentation.py](stage5/05_data_augmentation.py) | 定番のデータ拡張(反転・回転・色調変化)とMixupを実装・可視化 |
-| [06_scratch_vs_pretrained_project.py](stage5/06_scratch_vs_pretrained_project.py) | **ミニプロジェクト**: 同じ300枚の訓練データで自作CNN(スクラッチ)と事前学習済みResNet18(ファインチューニング)を比較 |
+| [synthetic_shapes.py](stage05/synthetic_shapes.py) | オフライン生成する合成図形データセット(共通モジュール) |
+| [01_conv_pooling_basics.py](stage05/01_conv_pooling_basics.py) | 畳み込み演算(エッジ検出)・最大値/平均値/グローバルアベレージプーリングをnumpyで実装 |
+| [02_cnn_architectures.py](stage05/02_cnn_architectures.py) | LeNet(浅い2層)・PlainDeepCNN(21層,スキップ結合なし)・ResNetDeep(同21層,スキップ結合あり)を比較し、degradation problemを再現 |
+| [03_mobilenet_dilated_conv.py](stage05/03_mobilenet_dilated_conv.py) | 深度別分離畳み込み(MobileNet)のパラメータ削減率、拡張畳み込み(Dilated Conv)による受容野拡大を可視化 |
+| [04_transfer_learning.py](stage05/04_transfer_learning.py) | ImageNet事前学習済みResNet18で特徴抽出とファインチューニングを比較 |
+| [05_data_augmentation.py](stage05/05_data_augmentation.py) | 定番のデータ拡張(反転・回転・色調変化)とMixupを実装・可視化 |
+| [06_scratch_vs_pretrained_project.py](stage05/06_scratch_vs_pretrained_project.py) | **ミニプロジェクト**: 同じ300枚の訓練データで自作CNN(スクラッチ)と事前学習済みResNet18(ファインチューニング)を比較 |
 
-### 図1: conv_pooling_basics.png — 畳み込みとプーリングの基礎（[01_conv_pooling_basics.py](stage5/01_conv_pooling_basics.py)）
+### 図1: conv_pooling_basics.png — 畳み込みとプーリングの基礎（[01_conv_pooling_basics.py](stage05/01_conv_pooling_basics.py)）
 
-![畳み込み(エッジ検出)と最大値/平均値プーリングの可視化](stage5/conv_pooling_basics.png)
+![畳み込み(エッジ検出)と最大値/平均値プーリングの可視化](stage05/conv_pooling_basics.png)
 
 **何を示す図か**: load_digitsの8x8手書き数字1枚に対し、縦/横エッジ検出カーネル(3x3)を畳み込んだ結果と、2x2の最大値/平均値プーリングを適用した結果。
 
 **読み取れる結果**: 畳み込み後は8x8→6x6(パディングなしのため縮小)、プーリング後は8x8→4x4になることを確認。縦エッジ検出カーネルは「左が暗く右が明るい境界」に反応し、数字の輪郭の縦方向のエッジが強調される。GAPは8x8画像全体を1つのスカラー値(4.172)に要約し、GoogLeNet以降で全結合層の代替として使われる理由(パラメータ削減・画像サイズ非依存)を確認した。
 
-### 図2: cnn_architectures_comparison.png — LeNet/PlainDeepCNN/ResNetDeepの比較（[02_cnn_architectures.py](stage5/02_cnn_architectures.py)）
+### 図2: cnn_architectures_comparison.png — LeNet/PlainDeepCNN/ResNetDeepの比較（[02_cnn_architectures.py](stage05/02_cnn_architectures.py)）
 
-![浅いLeNetと深いPlain CNN、深いResNetの訓練loss・テスト精度の推移](stage5/cnn_architectures_comparison.png)
+![浅いLeNetと深いPlain CNN、深いResNetの訓練loss・テスト精度の推移](stage05/cnn_architectures_comparison.png)
 
 **何を示す図か**: 合成図形データ(訓練1500枚)で、LeNet(畳み込み2層)・PlainDeepCNN(21層,スキップ結合なし)・ResNetDeep(同じ21層,スキップ結合あり)を15epoch学習させた際の訓練loss・テスト精度の推移。パラメータ数はPlainDeepCNNとResNetDeepで完全に同数(105,940個)に揃えている。
 
@@ -364,9 +364,9 @@ Pillowを使いその場生成する32x32のRGB合成図形データセット(�
 - 21層まで深くすると、PlainDeepCNNの最終訓練loss(0.0721)はResNetDeep(0.0250)の約3倍悪く、**同じ深さ・同じパラメータ数でもスキップ結合の有無で最適化のしやすさに明確な差が出る**ことを確認した。これがResNet論文の指摘するdegradation problem(層を深くしただけでは訓練誤差自体が悪化する現象)の再現
 - 浅いLeNet(2層)は表現力不足でtest_acc 0.507止まり(4クラス分類のランダム推測が0.25なので、学習はしているが力不足)。「浅すぎると表現力不足、深すぎるとスキップ結合なしでは最適化が困難」という両端の失敗パターンを1つの実験で確認できた
 
-### 図3: dilated_convolution.png — 拡張畳み込みによる受容野拡大（[03_mobilenet_dilated_conv.py](stage5/03_mobilenet_dilated_conv.py)）
+### 図3: dilated_convolution.png — 拡張畳み込みによる受容野拡大（[03_mobilenet_dilated_conv.py](stage05/03_mobilenet_dilated_conv.py)）
 
-![dilation=1,2,3での3x3カーネルの参照範囲の広がり](stage5/dilated_convolution.png)
+![dilation=1,2,3での3x3カーネルの参照範囲の広がり](stage05/dilated_convolution.png)
 
 **何を示す図か**: 3x3カーネル(重みを持つ点は常に9個)のdilationを1,2,3と変えた時、出力の中心1マスが入力のどの範囲を参照するか(勾配のnon-zero領域)を可視化。
 
@@ -374,19 +374,19 @@ Pillowを使いその場生成する32x32のRGB合成図形データセット(�
 
 **読み取れる結果**: パラメータ数(9個)を一切増やさずに、参照範囲だけを3x3→7x7まで広げられることを実測。あわせて通常の畳み込み(73,856パラメータ)と深度別分離畳み込み(8,960パラメータ、87.9%削減)の比較も実施し、MobileNetの軽量化の仕組みを数値で確認した。
 
-### 図4: transfer_learning_comparison.png — 事前学習済みResNet18の転移学習（[04_transfer_learning.py](stage5/04_transfer_learning.py)）
+### 図4: transfer_learning_comparison.png — 事前学習済みResNet18の転移学習（[04_transfer_learning.py](stage05/04_transfer_learning.py)）
 
-![特徴抽出とファインチューニングの訓練loss・テスト精度の比較](stage5/transfer_learning_comparison.png)
+![特徴抽出とファインチューニングの訓練loss・テスト精度の比較](stage05/transfer_learning_comparison.png)
 
 **何を示す図か**: ImageNet学習済みResNet18に対し、(A)最終層のみ学習する「特徴抽出」と(B)全体を小さい学習率で学習する「ファインチューニング」を、合成図形データ(訓練300枚)で5epoch比較。
 
 **読み取れる結果**: 特徴抽出は最終test_acc 0.775(学習時間141秒)、ファインチューニングは0.990(学習時間302秒)。ファインチューニングの方が2倍以上時間がかかるが、ImageNet(自然画像)と合成図形という題材のギャップが大きいため、バックボーンごと調整できるファインチューニングの方が明確に高精度だった。
 
-### 図5: data_augmentation_examples.png / mixup_example.png / mixup_training_comparison.png — データ拡張とMixup（[05_data_augmentation.py](stage5/05_data_augmentation.py)）
+### 図5: data_augmentation_examples.png / mixup_example.png / mixup_training_comparison.png — データ拡張とMixup（[05_data_augmentation.py](stage05/05_data_augmentation.py)）
 
-![回転・反転・色調変化などの定番データ拡張の例](stage5/data_augmentation_examples.png)
-![Mixupによる2枚の画像・ラベルの線形混合の例](stage5/mixup_example.png)
-![Mixupの有無による訓練/テスト精度の推移比較](stage5/mixup_training_comparison.png)
+![回転・反転・色調変化などの定番データ拡張の例](stage05/data_augmentation_examples.png)
+![Mixupによる2枚の画像・ラベルの線形混合の例](stage05/mixup_example.png)
+![Mixupの有無による訓練/テスト精度の推移比較](stage05/mixup_training_comparison.png)
 
 **何を示す図か**: 定番のデータ拡張(反転・回転・色調変化・ランダムクロップ)の適用例、Mixup(2枚の画像とラベルを比率lamで線形混合)の中身、そしてMixupの有無による過学習抑制効果の比較。
 
@@ -394,9 +394,9 @@ Pillowを使いその場生成する32x32のRGB合成図形データセット(�
 
 **読み取れる結果**: 過学習が起きる条件でMixup(alpha=0.2〜1.0で試行)を比較したところ、この小規模な実験ではMixup学習(test_acc 0.475)は通常学習(0.505)を上回らなかった。モデルがMixup後のソフトラベルにも100%フィットできてしまう容量を持っていたため、単純なMixupだけでは過学習を防ぎきれなかったと考えられる。「正則化手法は入れれば必ず効果が出るわけではなく、モデル容量やデータ規模との兼ね合いで効果が変わる」という実務的な注意点を、期待と異なる結果から確認できた。
 
-### 図6: scratch_vs_pretrained.png — ミニプロジェクト: 自作CNN vs 事前学習済みResNet18（[06_scratch_vs_pretrained_project.py](stage5/06_scratch_vs_pretrained_project.py)）
+### 図6: scratch_vs_pretrained.png — ミニプロジェクト: 自作CNN vs 事前学習済みResNet18（[06_scratch_vs_pretrained_project.py](stage05/06_scratch_vs_pretrained_project.py)）
 
-![自作CNNと事前学習済みResNet18の学習曲線比較(同じ訓練データ300枚)](stage5/scratch_vs_pretrained.png)
+![自作CNNと事前学習済みResNet18の学習曲線比較(同じ訓練データ300枚)](stage05/scratch_vs_pretrained.png)
 
 **何を示す図か**: 04と全く同じ300枚の訓練データ・200枚のテストデータで、自作CNN(ResNetDeep, 7層, スクラッチ学習)と事前学習済みResNet18(ファインチューニング)を比較。
 
@@ -405,9 +405,9 @@ Pillowを使いその場生成する32x32のRGB合成図形データセット(�
 - 学習曲線の形も対照的: 自作CNNは40epochかけてじわじわ上昇しつつ大きく上下動する不安定な曲線、ResNet18は最初のepochから0.78という高いスコアからスタートしすぐに収束する滑らかな曲線。事前学習済みモデルが「ゼロからパターンを見つける」のではなく「既に持っている表現を微調整するだけ」であることが学習曲線の違いに表れている
 - 一方でResNet18はパラメータ数が自作CNN(32,356個)の約345倍(11,178,564個)、学習時間も12倍以上。精度と引き換えに計算コストは大きく増えており、「データが少ない時は転移学習が有利、軽量・高速なモデルが必要な時はスクラッチ設計」というトレードオフを実測で確認した
 
-### 図7: inception_densenet_senet.png — GoogLeNet/DenseNet/SENetの比較（[07_inception_densenet_senet.py](stage5/07_inception_densenet_senet.py)）
+### 図7: inception_densenet_senet.png — GoogLeNet/DenseNet/SENetの比較（[07_inception_densenet_senet.py](stage05/07_inception_densenet_senet.py)）
 
-![ResNetDeepを基準に、Inceptionモジュール・DenseNet(密結合)・SENet(チャネル注意)の訓練loss・テスト精度の推移を比較](stage5/inception_densenet_senet.png)
+![ResNetDeepを基準に、Inceptionモジュール・DenseNet(密結合)・SENet(チャネル注意)の訓練loss・テスト精度の推移を比較](stage05/inception_densenet_senet.png)
 
 **何を示す図か**: 02のResNetDeep(スキップ結合、21層相当)を比較の基準として再利用し、同じ深さ・チャネル数の条件でInceptionモジュール(1x1/3x3/5x5フィルタとプーリングを並列適用し結合)、DenseBlock(それまでの全層の出力をチャネル方向に連結)、SEResNet(ResidualBlockにSqueeze-and-Excitationによるチャネル注意を追加)の3つを比較した。
 
@@ -417,65 +417,65 @@ Pillowを使いその場生成する32x32のRGB合成図形データセット(�
 
 ## Stage 6: 物体検出・セグメンテーション
 
-[stage6/](stage6/) 配下にPythonスクリプトとして実装。`pip install ultralytics`でYOLOとopencv-python等の
+[stage06/](stage06/) 配下にPythonスクリプトとして実装。`pip install ultralytics`でYOLOとopencv-python等の
 依存パッケージを追加インストールした([requirements.txt](requirements.txt)に反映)。
 
 | ファイル | 内容 |
 |---|---|
-| [01_iou_nms.py](stage6/01_iou_nms.py) | IoU(Intersection over Union)とNMS(Non-Max Suppression)をnumpyでスクラッチ実装 |
-| [02_two_stage_vs_one_stage.py](stage6/02_two_stage_vs_one_stage.py) | 事前学習済み(COCO)のFaster R-CNN(2段階)とSSDLite(1段階)で実画像を推論・比較 |
-| [synthetic_detection.py](stage6/synthetic_detection.py) | 物体検出用の合成データセット(128x128, 円/四角/三角/十字+背景, バウンディングボックス付き) |
-| [03_finetune_detection.py](stage6/03_finetune_detection.py) | COCO事前学習済みFaster R-CNNのbox_predictorのみ付け替えて合成データでファインチューニング |
-| [synthetic_segmentation.py](stage6/synthetic_segmentation.py) | セグメンテーション用の合成データセット(64x64, 図形+二値マスク) |
-| [04_maskrcnn_unet_segmentation.py](stage6/04_maskrcnn_unet_segmentation.py) | 事前学習済みMask R-CNNのインスタンスセグメンテーション推論 + 自作U-Netの学習 |
-| [05_yolo_mini_project.py](stage6/05_yolo_mini_project.py) | **ミニプロジェクト**: YOLO11nで手元の画像を物体検出し、Faster R-CNN・SSDと3手法を比較 |
+| [01_iou_nms.py](stage06/01_iou_nms.py) | IoU(Intersection over Union)とNMS(Non-Max Suppression)をnumpyでスクラッチ実装 |
+| [02_two_stage_vs_one_stage.py](stage06/02_two_stage_vs_one_stage.py) | 事前学習済み(COCO)のFaster R-CNN(2段階)とSSDLite(1段階)で実画像を推論・比較 |
+| [synthetic_detection.py](stage06/synthetic_detection.py) | 物体検出用の合成データセット(128x128, 円/四角/三角/十字+背景, バウンディングボックス付き) |
+| [03_finetune_detection.py](stage06/03_finetune_detection.py) | COCO事前学習済みFaster R-CNNのbox_predictorのみ付け替えて合成データでファインチューニング |
+| [synthetic_segmentation.py](stage06/synthetic_segmentation.py) | セグメンテーション用の合成データセット(64x64, 図形+二値マスク) |
+| [04_maskrcnn_unet_segmentation.py](stage06/04_maskrcnn_unet_segmentation.py) | 事前学習済みMask R-CNNのインスタンスセグメンテーション推論 + 自作U-Netの学習 |
+| [05_yolo_mini_project.py](stage06/05_yolo_mini_project.py) | **ミニプロジェクト**: YOLO11nで手元の画像を物体検出し、Faster R-CNN・SSDと3手法を比較 |
 
 ### 使用した実画像について
 
 COCOクラス(人・バス等)での検出デモには合成図形データセットが使えないため、
 ultralytics公式のデモ画像(`https://ultralytics.com/images/bus.jpg`, `zidane.jpg`)を
-[assets/](stage6/assets/)にダウンロードして使用した(ultralyticsの各種チュートリアル・テストで
+[assets/](stage06/assets/)にダウンロードして使用した(ultralyticsの各種チュートリアル・テストで
 標準的に使われる公開デモ画像)。
 
-### 図1: iou_examples.png / nms_example.png — IoUとNMSの基礎（[01_iou_nms.py](stage6/01_iou_nms.py)）
+### 図1: iou_examples.png / nms_example.png — IoUとNMSの基礎（[01_iou_nms.py](stage06/01_iou_nms.py)）
 
-![IoUの4つの例(完全一致から重ならないまで)](stage6/iou_examples.png)
-![NMS適用前後の重複ボックスの絞り込み](stage6/nms_example.png)
+![IoUの4つの例(完全一致から重ならないまで)](stage06/iou_examples.png)
+![NMS適用前後の重複ボックスの絞り込み](stage06/nms_example.png)
 
 **読み取れる結果**: IoUは完全一致で1.000、少しずれた予測で0.471、大きくずれた予測で0.047、無関係な予測で0.000と、重なり具合に応じて連続的に変化することを確認。NMSでは同じ物体に対する5個の重複予測(IoUが高いもの3個+別物体2個)が、スコアの高い順に採用しながら重複を除去する貪欲法によって正しく2個(物体ごとに1個)に絞り込まれた。
 
-### 図2: two_stage_vs_one_stage.png — Faster R-CNN(2段階) vs SSDLite(1段階)（[02_two_stage_vs_one_stage.py](stage6/02_two_stage_vs_one_stage.py)）
+### 図2: two_stage_vs_one_stage.png — Faster R-CNN(2段階) vs SSDLite(1段階)（[02_two_stage_vs_one_stage.py](stage06/02_two_stage_vs_one_stage.py)）
 
-![Faster R-CNNとSSDLiteの検出結果比較(bus.jpg, zidane.jpg)](stage6/two_stage_vs_one_stage.png)
+![Faster R-CNNとSSDLiteの検出結果比較(bus.jpg, zidane.jpg)](stage06/two_stage_vs_one_stage.png)
 
 **読み取れる結果**: Faster R-CNN(パラメータ4,175万個)はSSDLite(同344万個、約12分の1)より推論時間が大幅に長い(bus.jpgで4.72秒 vs 0.09秒、50倍以上)。検出内容を見ると、Faster R-CNNはネクタイ(tie)のような小さい物体も検出できたのに対し、SSDLiteは見逃しており、「2段階検出器は精度、1段階検出器は速度」という一般的なトレードオフを実データで確認できた。
 
-### 図3: finetune_detection_result.png — 物体検出モデルのファインチューニング（[03_finetune_detection.py](stage6/03_finetune_detection.py)）
+### 図3: finetune_detection_result.png — 物体検出モデルのファインチューニング（[03_finetune_detection.py](stage06/03_finetune_detection.py)）
 
-![ファインチューニング後のFaster R-CNNによる合成図形の検出結果](stage6/finetune_detection_result.png)
+![ファインチューニング後のFaster R-CNNによる合成図形の検出結果](stage06/finetune_detection_result.png)
 
 **試行錯誤**: 当初ResNet50バックボーン版のFaster R-CNNでファインチューニングを試みたところ、8枚1epochで84.5秒(推定: 150枚5epochで2時間超)と非現実的だったため、軽量なMobileNetV3バックボーン版(`fasterrcnn_mobilenet_v3_large_320_fpn`)に切り替え、同条件で1.3秒まで短縮した。
 
 **読み取れる結果**: box_predictor(分類・座標回帰の最終層)のみをCOCOの80クラスから合成図形の4クラス+背景に付け替え、150枚・5epochファインチューニングした結果、平均IoUがファインチューニング前の0.000(付け替え直後はランダム初期化のため検出0件)から0.916まで改善し、検出数もテストデータの正解数86個と完全に一致した。バックボーン(特徴抽出部分)がCOCOで学習した「物体の輪郭を捉える」能力は、全く違う合成図形タスクにも転用できることを確認した。
 
-### 図4: maskrcnn_result.png / unet_segmentation_result.png — セグメンテーション（[04_maskrcnn_unet_segmentation.py](stage6/04_maskrcnn_unet_segmentation.py)）
+### 図4: maskrcnn_result.png / unet_segmentation_result.png — セグメンテーション（[04_maskrcnn_unet_segmentation.py](stage06/04_maskrcnn_unet_segmentation.py)）
 
-![Mask R-CNNによるインスタンスセグメンテーション(bus.jpg)](stage6/maskrcnn_result.png)
-![自作U-Netによる合成図形のセグメンテーション結果](stage6/unet_segmentation_result.png)
+![Mask R-CNNによるインスタンスセグメンテーション(bus.jpg)](stage06/maskrcnn_result.png)
+![自作U-Netによる合成図形のセグメンテーション結果](stage06/unet_segmentation_result.png)
 
 **読み取れる結果**:
 - Mask R-CNNはbus.jpgから人5名・バス1台を検出し、それぞれ個別の画素マスク(インスタンスセグメンテーション)を推論(5.03秒)。重なり合う人物同士も色分けして正しく分離できていた
 - 自作U-Net(エンコーダ2段+ボトルネック+デコーダ2段、スキップ結合あり)を合成図形の2値セグメンテーション(400枚, 15epoch, 学習時間55.1秒)で学習した結果、テストDiceスコア1.000・画素Accuracy1.000を達成。予測マスクと正解マスクを並べても視覚的に完全一致しており、シンプルな図形タスクであればU-Netの基本構造だけで画素単位の分割が正確に学習できることを確認した
 
-### 図5: yolo_comparison.png — ミニプロジェクト: YOLOとFaster R-CNN/SSDの3手法比較（[05_yolo_mini_project.py](stage6/05_yolo_mini_project.py)）
+### 図5: yolo_comparison.png — ミニプロジェクト: YOLOとFaster R-CNN/SSDの3手法比較（[05_yolo_mini_project.py](stage06/05_yolo_mini_project.py)）
 
-![YOLO11n・Faster R-CNN・SSDLiteの3手法による検出結果比較](stage6/yolo_comparison.png)
+![YOLO11n・Faster R-CNN・SSDLiteの3手法による検出結果比較](stage06/yolo_comparison.png)
 
 **読み取れる結果**: 2枚の画像合計で、YOLO11n(0.249秒, 検出7件)・Faster R-CNN(9.278秒, 検出12件)・SSDLite(0.212秒, 検出6件)という結果になった。YOLOはSSDと同じ1段階系ながら検出件数がSSDよりやや多く、推論速度もSSDと同等かそれ以上に高速だった。一方Faster R-CNNのみが「ネクタイ」のような小物体を検出できており、02で確認した「2段階検出器は精度、1段階検出器は速度」という傾向がYOLOでも同様に見られた。IoU/NMSという共通の土台から、2段階/1段階の設計思想の違い、ファインチューニングによるタスク適応、セグメンテーションへの拡張、最新の1段階検出器(YOLO)まで、物体検出・セグメンテーションの全体像を一通り実装・実測を通じて体験できた。
 
-### 図6: pose_estimation.png — 姿勢推定（[06_pose_estimation.py](stage6/06_pose_estimation.py)）
+### 図6: pose_estimation.png — 姿勢推定（[06_pose_estimation.py](stage06/06_pose_estimation.py)）
 
-![Keypoint R-CNNによるzidane.jpg(2人)・bus.jpg(4人)の関節キーポイント検出結果](stage6/pose_estimation.png)
+![Keypoint R-CNNによるzidane.jpg(2人)・bus.jpg(4人)の関節キーポイント検出結果](stage06/pose_estimation.png)
 
 **何を示す図か**: 事前学習済みKeypoint R-CNN(COCO, 17キーポイント)による姿勢推定。05までに使ったYOLOデモ画像(zidane.jpg・bus.jpg)をそのまま流用し、検出(矩形+クラス)・セグメンテーション(画素マスク)とは異なる第3の出力形式である「人物ごとの関節座標」を確認した。
 
@@ -483,19 +483,19 @@ ultralytics公式のデモ画像(`https://ultralytics.com/images/bus.jpg`, `zida
 
 ## Stage 7: 系列データ・NLP基礎
 
-[stage7/](stage7/) 配下にPythonスクリプトとして実装。`pip install gensim nltk`でword2vecと
+[stage07/](stage07/) 配下にPythonスクリプトとして実装。`pip install gensim nltk`でword2vecと
 映画レビューコーパス(movie_reviews)取得用のパッケージを追加インストールした([requirements.txt](requirements.txt)に反映)。
 
 | ファイル | 内容 |
 |---|---|
-| [01_scratch_rnn.py](stage7/01_scratch_rnn.py) | numpyでvanilla RNN(BPTT含む)をスクラッチ実装し、パリティ判定タスクで勾配消失を実測 |
-| [02_rnn_lstm_gru_comparison.py](stage7/02_rnn_lstm_gru_comparison.py) | PyTorchのnn.RNN/nn.LSTM/nn.GRUで長期記憶タスクを比較し、LSTMの忘却ゲート初期化の効果を確認 |
-| [03_word2vec.py](stage7/03_word2vec.py) | gensimでword2vec(CBOW/skip-gram)をmovie_reviewsコーパスで学習し、単語ベクトルの性質を確認 |
-| [04_lstm_sentiment_project.py](stage7/04_lstm_sentiment_project.py) | ミニプロジェクト: LSTMによる映画レビューの感情分析(word2vec初期化 vs ランダム初期化 vs TF-IDFベースライン) |
+| [01_scratch_rnn.py](stage07/01_scratch_rnn.py) | numpyでvanilla RNN(BPTT含む)をスクラッチ実装し、パリティ判定タスクで勾配消失を実測 |
+| [02_rnn_lstm_gru_comparison.py](stage07/02_rnn_lstm_gru_comparison.py) | PyTorchのnn.RNN/nn.LSTM/nn.GRUで長期記憶タスクを比較し、LSTMの忘却ゲート初期化の効果を確認 |
+| [03_word2vec.py](stage07/03_word2vec.py) | gensimでword2vec(CBOW/skip-gram)をmovie_reviewsコーパスで学習し、単語ベクトルの性質を確認 |
+| [04_lstm_sentiment_project.py](stage07/04_lstm_sentiment_project.py) | ミニプロジェクト: LSTMによる映画レビューの感情分析(word2vec初期化 vs ランダム初期化 vs TF-IDFベースライン) |
 
-### 図1: scratch_rnn_parity.png — numpyスクラッチRNNと勾配消失（[01_scratch_rnn.py](stage7/01_scratch_rnn.py)）
+### 図1: scratch_rnn_parity.png — numpyスクラッチRNNと勾配消失（[01_scratch_rnn.py](stage07/01_scratch_rnn.py)）
 
-![スクラッチRNNのパリティ判定タスクにおける学習曲線・系列長ごとの精度・勾配消失](stage7/scratch_rnn_parity.png)
+![スクラッチRNNのパリティ判定タスクにおける学習曲線・系列長ごとの精度・勾配消失](stage07/scratch_rnn_parity.png)
 
 **課題設計**: 0/1のランダム系列全体を見て、系列中に現れた1の個数が偶数か奇数かを最後の時刻でのみ出力する「パリティ判定」タスク(many-to-one)を使用。系列の最初の入力も結果に等しく影響するため、最後の出力がどれだけ昔の入力の情報を覚えていられるかを測るのに適している。
 
@@ -503,9 +503,9 @@ ultralytics公式のデモ画像(`https://ultralytics.com/images/bus.jpg`, `zida
 
 **読み取れる結果**: 系列長5では精度1.000まで学習できる一方、系列長8以降はほぼランダム(0.5)から改善しない「崖」のような変化が見られた。系列長60で勾配ノルムを時刻ごとに測定すると、出力に近い時刻ほど勾配が大きく(≈0.05)、出力から59ステップ離れた先頭の時刻ではほぼ0(1e-6オーダー)まで縮んでいる。tanhの微分がBPTTで時刻をさかのぼるたびに繰り返し掛け算されることで勾配が指数的に小さくなる「勾配消失問題」を、手書きのBPTT実装で数値的に確認できた。
 
-### 図2: rnn_lstm_gru_comparison.png — RNN/LSTM/GRUの長期記憶比較（[02_rnn_lstm_gru_comparison.py](stage7/02_rnn_lstm_gru_comparison.py)）
+### 図2: rnn_lstm_gru_comparison.png — RNN/LSTM/GRUの長期記憶比較（[02_rnn_lstm_gru_comparison.py](stage07/02_rnn_lstm_gru_comparison.py)）
 
-![RNN/LSTM(標準初期化)/LSTM(忘却ゲート初期化)/GRUの系列長ごとの精度比較](stage7/rnn_lstm_gru_comparison.png)
+![RNN/LSTM(標準初期化)/LSTM(忘却ゲート初期化)/GRUの系列長ごとの精度比較](stage07/rnn_lstm_gru_comparison.png)
 
 **課題設計**: 系列の最初の1ステップだけ0/1の信号が来て、残りは全て無音(0)が続いた後、最後にその信号を当てるタスク。無音区間は新しい情報がないため、隠れ状態を「そのまま保持し続けられるか」だけを問う、長期依存性の基本的なテストになっている。
 
@@ -513,31 +513,31 @@ ultralytics公式のデモ画像(`https://ultralytics.com/images/bus.jpg`, `zida
 
 **読み取れる結果**: vanilla RNNは系列長100まで安定して学習できた一方、標準初期化のLSTMは系列長30以降で崩壊した(精度0.51)。ところがLSTMの忘却ゲートのバイアスを大きく初期化する一工夫(Jozefowicz et al., 2015で知られる手法)を加えるだけで、学習できる系列長が60まで伸びた。GRUは追加の工夫なしで系列長30まで学習できた。「LSTM/GRUはゲート機構により長期依存に強い」という理論的な優位性は、初期値次第で実際に引き出せるかどうかが変わるという、実践上重要な教訓が得られた。
 
-### 図3: word2vec_embeddings.png — gensimによるword2vec(CBOW/skip-gram)（[03_word2vec.py](stage7/03_word2vec.py)）
+### 図3: word2vec_embeddings.png — gensimによるword2vec(CBOW/skip-gram)（[03_word2vec.py](stage07/03_word2vec.py)）
 
-![CBOW・skip-gramで学習した単語ベクトルをPCAで2次元に投影した散布図](stage7/word2vec_embeddings.png)
+![CBOW・skip-gramで学習した単語ベクトルをPCAで2次元に投影した散布図](stage07/word2vec_embeddings.png)
 
 **読み取れる結果**: movie_reviewsコーパス(2000レビュー・約133万トークン)でCBOW・skip-gram双方の語彙数14,565のword2vecを学習。actor/actress/directorやhorror/comedy/action/dramaのような「同じ話題」の単語同士は明確にまとまって配置される一方、good⇔badやexcellent⇔terribleのような正反対の意味を持つ形容詞同士も互いに近い位置に来た(`good`のmost_similarに`bad`が上位で出現)。これはword2vecが「同じ意味かどうか」ではなく「同じ文脈に現れるかどうか」を捉える仕組みであるためで、"the movie was ___" のような構文パターンに肯定・否定どちらの単語も出現しやすいことが原因。分散表現が類義語も対義語もまとめて近づけてしまう場合があるという、word2vecの重要な限界を実際に観察できた。
 
-### 図4: lstm_sentiment_project.png — ミニプロジェクト: LSTMによる感情分析（[04_lstm_sentiment_project.py](stage7/04_lstm_sentiment_project.py)）
+### 図4: lstm_sentiment_project.png — ミニプロジェクト: LSTMによる感情分析（[04_lstm_sentiment_project.py](stage07/04_lstm_sentiment_project.py)）
 
-![LSTM3手法(ランダム初期化/word2vec固定/word2vec微調整)とTF-IDF+ロジスティック回帰の精度比較、および混同行列](stage7/lstm_sentiment_project.png)
+![LSTM3手法(ランダム初期化/word2vec固定/word2vec微調整)とTF-IDF+ロジスティック回帰の精度比較、および混同行列](stage07/lstm_sentiment_project.png)
 
 **実験設計**: movie_reviewsコーパス(訓練1600件・テスト400件、positive/negative各半数)を使い、埋め込み層の初期化方法が異なる3種のLSTM分類器(A: ランダム初期化、B: word2vec初期化+固定、C: word2vec初期化+微調整)と、TF-IDF+ロジスティック回帰のベースラインを比較。
 
 **読み取れる結果**: LSTM3種の精度はA=0.547 < B=0.580 < C=0.613となり、word2vecで得た単語の意味的な近さを埋め込みの初期値に組み込むことが、1600件という限られた訓練データでの学習を安定させる効果が確認できた。一方、TF-IDF+ロジスティック回帰はAccuracy=0.823と、どのLSTMよりも大きく上回った。映画レビューの感情分析は「特定の単語(good/terrible等)の有無」が感情極性と強く相関するタスクであり、系列全体の文脈を捉えるLSTMの強みが活きにくい上、訓練データ規模(1600件)に対してLSTMのパラメータ数が過剰で学習が難しかったと考えられる。ニューラルネットワークが常に古典的手法に勝るわけではなく、データ規模とタスクの性質次第であるという実務上重要な教訓が得られた。
 
-### 図5: fasttext_oov_comparison.png — fastTextとword2vecの未知語対応（[05_fasttext.py](stage7/05_fasttext.py)）
+### 図5: fasttext_oov_comparison.png — fastTextとword2vecの未知語対応（[05_fasttext.py](stage07/05_fasttext.py)）
 
-![未知語(OOV)5語に対しword2vec/fastTextがベクトル化に成功した数の比較棒グラフ](stage7/fasttext_oov_comparison.png)
+![未知語(OOV)5語に対しword2vec/fastTextがベクトル化に成功した数の比較棒グラフ](stage07/fasttext_oov_comparison.png)
 
 **何を示す図か**: 03と同じmovie_reviewsコーパス・同条件(skip-gram、vector_size=100)でword2vecとfastTextを学習し、学習データに一度も出現しない造語5語(gooood, terriblely, actoring, filmically, wonderfullest)に対するベクトル化の成否を比較。
 
 **読み取れる結果**: word2vecは5語全てでKeyError(ベクトル化不可)となったのに対し、fastTextは5語全てでサブワード(文字n-gram)からベクトルを合成できた。合成されたベクトルの近傍語を見ると、`terriblely`→`terrible(0.91)`、`wonderfullest`→`wonderfully(0.86)`のように、綴りが似た実在語が高い類似度で上位に来ており、サブワード情報が単なる「エラーを起こさない」以上に意味の近さの推定にも実際に役立っていることが確認できた。この性質から、fastTextは活用形や複合語の多い言語でword2vecより有利になるとされる。
 
-### 図6: dependency_parsing.png — 形態素解析(Janome)と係り受け解析(GiNZA)（[06_morphological_dependency_parsing.py](stage7/06_morphological_dependency_parsing.py)）
+### 図6: dependency_parsing.png — 形態素解析(Janome)と係り受け解析(GiNZA)（[06_morphological_dependency_parsing.py](stage07/06_morphological_dependency_parsing.py)）
 
-![「深層学習モデルは大量のデータを使って特徴量を学習する」の係り受け木を弧で可視化した図](stage7/dependency_parsing.png)
+![「深層学習モデルは大量のデータを使って特徴量を学習する」の係り受け木を弧で可視化した図](stage07/dependency_parsing.png)
 
 **試行錯誤**: `spacy.load("ja_ginza")`が`compound_splitter`コンポーネントの設定エラー(`split_mode`がNoneでバリデーション不可)で失敗した。インストールされたginza 5.2.0とspacy 3.8.15の組み合わせの非互換が原因と見られ、`exclude=["compound_splitter"]`を指定することで回避した(複合語分割機能は使わないが、トークン化・係り受け解析自体には影響しない)。また係り受け木の可視化も、当初`ax.annotate`の`connectionstyle="arc3"`で弧を描いたところ、指定した高さとmatplotlibが実際に描画する弧の高さが一致せず、上部が大きく空白になったり長い係り受けの矢印が図の下端で切れたりする問題が発生した。二次ベジエ曲線を`matplotlib.path.Path`で明示的に構築し`FancyArrowPatch`に渡す方式に変更することで、弧の頂点の高さを正確に制御し、ylimと矛盾なく描画できるようにした。
 
@@ -545,37 +545,37 @@ ultralytics公式のデモ画像(`https://ultralytics.com/images/bus.jpg`, `zida
 
 ## Stage 8: Attention / Transformer時代
 
-[stage8/](stage8/) 配下にPythonスクリプトとして実装。`pip install transformers`でHugging Face
+[stage08/](stage08/) 配下にPythonスクリプトとして実装。`pip install transformers`でHugging Face
 transformersを追加インストールした([requirements.txt](requirements.txt)に反映)。
 
 | ファイル | 内容 |
 |---|---|
-| [01_scratch_attention.py](stage8/01_scratch_attention.py) | numpyでScaled Dot-Product Attention/Self-Attention/Multi-Head Attentionをスクラッチ実装 |
-| [02_transformer_encoder.py](stage8/02_transformer_encoder.py) | PyTorchのTransformer Encoderで、Stage7と同じ長期記憶タスクを解き、RNN系と比較 |
-| [03_pretrained_bert_gpt.py](stage8/03_pretrained_bert_gpt.py) | 事前学習済みBERT(穴埋め予測・Attention可視化)とGPT-2(テキスト生成)をHugging Faceで動かす |
-| [04_bert_finetune_project.py](stage8/04_bert_finetune_project.py) | ミニプロジェクト: DistilBERTを映画レビュー感情分析にファインチューニングし、Stage7の各手法と比較 |
+| [01_scratch_attention.py](stage08/01_scratch_attention.py) | numpyでScaled Dot-Product Attention/Self-Attention/Multi-Head Attentionをスクラッチ実装 |
+| [02_transformer_encoder.py](stage08/02_transformer_encoder.py) | PyTorchのTransformer Encoderで、Stage7と同じ長期記憶タスクを解き、RNN系と比較 |
+| [03_pretrained_bert_gpt.py](stage08/03_pretrained_bert_gpt.py) | 事前学習済みBERT(穴埋め予測・Attention可視化)とGPT-2(テキスト生成)をHugging Faceで動かす |
+| [04_bert_finetune_project.py](stage08/04_bert_finetune_project.py) | ミニプロジェクト: DistilBERTを映画レビュー感情分析にファインチューニングし、Stage7の各手法と比較 |
 
-### 図1: scratch_attention.png — numpyスクラッチAttention（[01_scratch_attention.py](stage8/01_scratch_attention.py)）
+### 図1: scratch_attention.png — numpyスクラッチAttention（[01_scratch_attention.py](stage08/01_scratch_attention.py)）
 
-![Self-Attention/Multi-Head Attentionの注意重みヒートマップ(学習前のランダム重み)](stage8/scratch_attention.png)
+![Self-Attention/Multi-Head Attentionの注意重みヒートマップ(学習前のランダム重み)](stage08/scratch_attention.png)
 
 **読み取れる結果**: スケーリング(√d_k)の効果を数値実験すると、d_kが8→512と大きくなるにつれ、スケーリングなしのsoftmax最大重みが0.667→0.997とほぼone-hotまで尖ってしまう一方、スケーリングありでは0.21前後で安定しており、Transformer論文がスケーリングを導入した理由を数値的に確認できた。Self-Attentionを「同じ意味を持つトークン同士が近いベクトルになる」ような人工データに適用したところ、学習前のランダムな重みの段階では「同じ種類同士が注目し合う」という直感的な構造にはならず、特定の1〜2箇所にほぼ全クエリの注意が集中する「注意の吸着」が起きていた。関連する単語同士が注目し合うという分かりやすいAttentionのパターンは、アーキテクチャから自動的に生まれるのではなく実際のタスクで学習して初めて獲得されるものだという教訓が得られた(03で学習済みBERTの実際の挙動と対比する)。
 
-### 図2: transformer_vs_rnn_family.png — Transformer Encoderと長期記憶タスク（[02_transformer_encoder.py](stage8/02_transformer_encoder.py)）
+### 図2: transformer_vs_rnn_family.png — Transformer Encoderと長期記憶タスク（[02_transformer_encoder.py](stage08/02_transformer_encoder.py)）
 
-![Transformer Encoderと、Stage7で測定したRNN/LSTM/GRUの長期記憶タスク精度の比較](stage8/transformer_vs_rnn_family.png)
+![Transformer Encoderと、Stage7で測定したRNN/LSTM/GRUの長期記憶タスク精度の比較](stage08/transformer_vs_rnn_family.png)
 
 **読み取れる結果**: Stage7と同じ「最初の信号を無音区間を挟んで最後に当てる」タスクをTransformer Encoderに解かせたところ、系列長10〜200の全てでテスト精度1.000を維持した。Stage7の実測ではvanilla RNN以外(標準初期化LSTM・GRU)は系列長30〜60を境に精度が崩壊していたのに対し、Transformerは自己注意により系列内のどの2点も1ステップで直接つながるため、系列長が伸びても長期記憶の崩壊が起きなかった。ただしSelf-Attentionの計算コストは系列長Lに対しO(L²)で増加するため、系列長が伸びるほど学習時間も顕著に伸びており(系列長10で13.8秒→系列長200で218.9秒)、「長期依存に強いが計算コストは系列長の2乗」というTransformerの特性とトレードオフを実測できた。
 
-### 図3: bert_attention.png — 事前学習済みBERT/GPT-2（[03_pretrained_bert_gpt.py](stage8/03_pretrained_bert_gpt.py)）
+### 図3: bert_attention.png — 事前学習済みBERT/GPT-2（[03_pretrained_bert_gpt.py](stage08/03_pretrained_bert_gpt.py)）
 
-![BERT最終層(全head平均)と、照応解析に近い挙動を示す層8・head10のAttention可視化](stage8/bert_attention.png)
+![BERT最終層(全head平均)と、照応解析に近い挙動を示す層8・head10のAttention可視化](stage08/bert_attention.png)
 
 **読み取れる結果**: BERTの穴埋め予測(Masked LM)は「The movie was absolutely [MASK].」に対しfantastic/perfect/beautiful/amazing/fabulousと、映画レビューの文脈として自然な形容詞を高精度で予測できた一方、「I love this [MASK], it made me laugh.」ではman/girl/song/guy/womanとなり、期待される"movie"は出てこず、文脈理解には限界があることも分かった。Attentionの可視化では、BERT最終層を全head平均で見ると句読点や[SEP]に注意が集中する「attention sink」という既知の現象が支配的で、「it」が指す「cat」への注目は埋もれてしまっていたが、全12層×12headから探索すると層8・head10で「it→cat」への注意重みが0.835と際立って高く、Clark et al.(2019)が報告する照応解析に近い役割を持つheadの存在を実際に再現できた。GPT-2のテキスト生成では、貪欲法(greedy)が同じ入力から常に同じ安定した(やや単調な)文章を生成するのに対し、温度付きサンプリングは毎回異なる多様な文章を生成することを確認した。
 
-### 図4: bert_finetune_project.png — ミニプロジェクト: BERTファインチューニングによる感情分析（[04_bert_finetune_project.py](stage8/04_bert_finetune_project.py)）
+### 図4: bert_finetune_project.png — ミニプロジェクト: BERTファインチューニングによる感情分析（[04_bert_finetune_project.py](stage08/04_bert_finetune_project.py)）
 
-![感情分析タスクの精度比較(Stage7のTF-IDF/LSTM + Stage8のBERT2手法)、および最良モデルの混同行列](stage8/bert_finetune_project.png)
+![感情分析タスクの精度比較(Stage7のTF-IDF/LSTM + Stage8のBERT2手法)、および最良モデルの混同行列](stage08/bert_finetune_project.png)
 
 **実験設計**: Stage7のミニプロジェクトと全く同じmovie_reviewsの分割(訓練1600件・テスト400件)で、DistilBERTを (A) 全パラメータをファインチューニング / (B) 分類ヘッドのみ学習(特徴抽出) の2パターンで学習。CPU環境での学習時間を抑えるため、レビュー全文ではなく先頭128トークンに切り詰めて2epoch学習した。
 
@@ -585,58 +585,58 @@ transformersを追加インストールした([requirements.txt](requirements.tx
 
 ## Stage 9: 生成モデル
 
-[stage9/](stage9/) 配下にPythonスクリプトとして実装。`pip install diffusers accelerate`で拡散モデル系の
+[stage09/](stage09/) 配下にPythonスクリプトとして実装。`pip install diffusers accelerate`で拡散モデル系の
 パッケージも追加インストールしたが、事前学習済みStable Diffusion系パイプラインはダウンロード・CPU推論が
 非現実的に重かったため、後述の通りスクラッチ実装中心の構成に切り替えた。
 
 | ファイル | 内容 |
 |---|---|
-| [01_vae_fashionmnist.py](stage9/01_vae_fashionmnist.py) | PyTorchでVAE(reparameterization trick含む)を実装し、Fashion-MNISTの潜在空間・生成画像を可視化 |
-| [02_dcgan_fashionmnist.py](stage9/02_dcgan_fashionmnist.py) | PyTorchでDCGAN(Generator/Discriminator)を実装し、敵対的学習の過程と生成画像の推移を可視化 |
-| [03_diffusion_scratch.py](stage9/03_diffusion_scratch.py) | DDPM(拡散モデル)の前向き/逆向き過程をスクラッチ実装し、小規模UNetでノイズ予測モデルを学習 |
-| [04_vae_vs_gan_project.py](stage9/04_vae_vs_gan_project.py) | ミニプロジェクト: 自作VAEとGANの生成画像を多様性・識別性の定量指標で比較 |
+| [01_vae_fashionmnist.py](stage09/01_vae_fashionmnist.py) | PyTorchでVAE(reparameterization trick含む)を実装し、Fashion-MNISTの潜在空間・生成画像を可視化 |
+| [02_dcgan_fashionmnist.py](stage09/02_dcgan_fashionmnist.py) | PyTorchでDCGAN(Generator/Discriminator)を実装し、敵対的学習の過程と生成画像の推移を可視化 |
+| [03_diffusion_scratch.py](stage09/03_diffusion_scratch.py) | DDPM(拡散モデル)の前向き/逆向き過程をスクラッチ実装し、小規模UNetでノイズ予測モデルを学習 |
+| [04_vae_vs_gan_project.py](stage09/04_vae_vs_gan_project.py) | ミニプロジェクト: 自作VAEとGANの生成画像を多様性・識別性の定量指標で比較 |
 
 **試行錯誤**: 当初ロードマップ通り「Diffusion Modelは簡易版をスクラッチしてから事前学習済みモデル(Stable Diffusion系)を試す」構成を予定していたが、`hf-internal-testing/tiny-stable-diffusion-pipe`はCLIPの解像度設定が不整合で生成時にエラーになり、`segmind/tiny-sd`はダウンロードだけで90秒以上かかり(モデルサイズがCPU実行の時間予算に対して大きすぎる)タイムアウトした。CIFAR-10の教訓と同様、事前学習済みStable Diffusion系はこの環境のCPU・回線条件では非現実的と判断し、事前学習済みモデルの利用は見送ってスクラッチ実装(VAE/GAN/Diffusion)に集中する構成に切り替えた。
 
-### 図1: vae_fashionmnist.png — VAE(Variational Autoencoder)（[01_vae_fashionmnist.py](stage9/01_vae_fashionmnist.py)）
+### 図1: vae_fashionmnist.png — VAE(Variational Autoencoder)（[01_vae_fashionmnist.py](stage09/01_vae_fashionmnist.py)）
 
-![VAEの潜在空間への埋め込み・再構成・格子状/ランダムサンプリングによる生成画像](stage9/vae_fashionmnist.png)
+![VAEの潜在空間への埋め込み・再構成・格子状/ランダムサンプリングによる生成画像](stage09/vae_fashionmnist.png)
 
 **読み取れる結果**: 可視化のため潜在次元を2に絞ってFashion-MNIST全クラスを学習(15epoch, 学習時間185秒)。テストデータを2次元潜在空間に埋め込むと、ブーツ/サンダル/スニーカーのような履物系クラスが左上に明確なまとまりを作り、ズボン(オレンジ)やバッグ(黄)も比較的まとまった領域を作る一方、Tシャツ/シャツ/コート/プルオーバーのような上半身の衣類同士は領域が重なり合っており、見た目が似ているクラス同士は潜在表現も近くなることを確認できた。潜在空間を格子状に走査すると、ブーツ系の形から別の形へなめらかに変化していく様子が見られ、通常のオートエンコーダにはない「潜在空間のなめらかさ」というVAEの特徴を視覚的に確認できた。再構成画像はぼやけた輪郭になる。
 
-### 図2: dcgan_fashionmnist.png — DCGAN（[02_dcgan_fashionmnist.py](stage9/02_dcgan_fashionmnist.py)）
+### 図2: dcgan_fashionmnist.png — DCGAN（[02_dcgan_fashionmnist.py](stage09/02_dcgan_fashionmnist.py)）
 
-![DCGANの学習曲線(Generator/Discriminator loss)とepochごとの生成画像の推移](stage9/dcgan_fashionmnist.png)
+![DCGANの学習曲線(Generator/Discriminator loss)とepochごとの生成画像の推移](stage09/dcgan_fashionmnist.png)
 
 **読み取れる結果**: Fashion-MNIST全60,000枚を20epoch学習(学習時間3739秒、VAEの約20倍)。学習曲線はVAEのような単調減少ではなく、Generator lossとDiscriminator lossが互いに反応し合いながら1.0〜1.2付近で拮抗する典型的なGANの挙動を示した。epoch1時点ではほぼノイズだった生成画像が、epoch3・6・10と進むにつれてズボン・スニーカー・コートらしいはっきりした輪郭を持つ形へと明確に変化していく様子を確認でき、VAEの再構成画像よりもくっきりした生成結果が得られた。
 
-### 図3: diffusion_forward_process.png / diffusion_scratch.png — スクラッチDDPM（[03_diffusion_scratch.py](stage9/03_diffusion_scratch.py)）
+### 図3: diffusion_forward_process.png / diffusion_scratch.png — スクラッチDDPM（[03_diffusion_scratch.py](stage09/03_diffusion_scratch.py)）
 
-![前向き過程でスニーカー画像に段階的にノイズを加える様子](stage9/diffusion_forward_process.png)
-![学習曲線、逆向き過程(サンプリング)でのノイズ除去の推移、最終生成結果](stage9/diffusion_scratch.png)
+![前向き過程でスニーカー画像に段階的にノイズを加える様子](stage09/diffusion_forward_process.png)
+![学習曲線、逆向き過程(サンプリング)でのノイズ除去の推移、最終生成結果](stage09/diffusion_scratch.png)
 
 **読み取れる結果**: cosine noise scheduleに沿って元画像に200ステップかけてノイズを加える前向き過程を可視化すると、t=0の明瞭なスニーカーがt=199でほぼ完全なノイズになる様子が確認できた。ノイズ予測ネットワーク(2段の小型UNet)をスニーカークラス6000枚・30epochで学習(学習時間470秒)し、逆向き過程でt=199の完全なノイズからt=0まで200ステップかけてサンプリングすると、ノイズの中から明るい塊(スニーカーのおおまかなシルエット)が浮かび上がる過程は確認できたが、最終的な生成画像はVAE・GANほど輪郭がくっきりせず、ぼんやりした明るい塊にとどまった。ノイズ予測のMSE lossも0.09台で下げ止まっており、CPU実行時間を優先してモデル・データ・epoch数を大幅に縮小した結果、収束しきっていないことが分かる——「仕組みは同じでもスケール(モデルサイズ・データ量・学習量)が生成品質を大きく左右する」という、実際のDDPM論文やStable Diffusionとの規模の違いを逆に体感する結果となった。一方で、VAE・GANが1回のネットワーク呼び出しで生成するのに対し、Diffusion Modelは1枚の生成に200回のネットワーク呼び出しを要するという生成の仕組みの違いは明確に確認できた。
 
-### 図4: vae_vs_gan_project.png — ミニプロジェクト: VAE vs GAN比較（[04_vae_vs_gan_project.py](stage9/04_vae_vs_gan_project.py)）
+### 図4: vae_vs_gan_project.png — ミニプロジェクト: VAE vs GAN比較（[04_vae_vs_gan_project.py](stage09/04_vae_vs_gan_project.py)）
 
-![VAEとGANの生成画像64枚、および多様性(ピクセル分散)・識別性(分類器確信度)の定量比較](stage9/vae_vs_gan_project.png)
+![VAEとGANの生成画像64枚、および多様性(ピクセル分散)・識別性(分類器確信度)の定量比較](stage09/vae_vs_gan_project.png)
 
 **実験設計**: Fashion-MNIST全クラスでVAE(10epoch)・GAN(10epoch)を学習し、生成画像64枚ずつを (1) ピクセル単位の分散(多様性の目安) (2) 別途学習した簡易CNN分類器(テスト精度0.889)の予測確信度の平均(識別性の目安、簡易Inception Score) の2指標で比較。
 
 **読み取れる結果**: 多様性・識別性のどちらもGAN(多様性0.088, 識別性0.726)がVAE(多様性0.045, 識別性0.664)を上回った。これは「VAEの方が潜在空間全体からなめらかにサンプリングできるため多様性で有利」という教科書的な説明とは逆の結果である。生成画像を見比べると、VAEは画素ごとの再構成誤差を平均的に最小化する性質上、輪郭がぼやけて中間的な明るさの画素が多くなり、結果としてピクセル分散自体が小さく計算されやすい一方、GANはくっきりした白黒のコントラストを持つ画像を生成するため画素値が0/1付近に分かれやすく、単純なピクセル分散という指標では「鮮明さ」が「多様性」と混同されて高く出ている可能性がある。今回使った簡易指標が意味的な多様性と画像の鮮明さを完全には切り分けられていないという、評価指標そのものの限界も合わせて確認できた。GANの学習時間(1824秒)はVAE(127秒)の約14倍で、02で確認した学習の重さもあらためて裏付けられた。
 
-### 図5: vqvae_fashionmnist.png — VQ-VAE（[05_vqvae.py](stage9/05_vqvae.py)）
+### 図5: vqvae_fashionmnist.png — VQ-VAE（[05_vqvae.py](stage09/05_vqvae.py)）
 
-![元画像・再構成画像、コードブック使用頻度、1サンプルの7x7潜在マップ](stage9/vqvae_fashionmnist.png)
+![元画像・再構成画像、コードブック使用頻度、1サンプルの7x7潜在マップ](stage09/vqvae_fashionmnist.png)
 
 **何を示す図か**: 01のVAE(連続潜在空間、KLダイバージェンスで正規分布に近づける)と対比するモデルとして、離散コードブック(32個、次元16)を持つVQ-VAEを実装。エンコーダは28x28画像を7x7の特徴マップに変換し、各位置のベクトルをコードブック中で最も近いものに置き換える(straight-through estimatorで逆伝播)。Fashion-MNIST全60,000枚を15epoch学習した(学習時間801秒)。
 
 **読み取れる結果**: テストMSE(画素あたり)=0.00754で、再構成画像は輪郭がやや不鮮明ながら元画像の形状を保っていた。用意した32個のコードブックは全て(32/32)実際に使用され、最も使われたコード(インデックス1、使用率23.1%)は主に背景領域に、それ以外のコードは衣類の形状部分に使われている様子が7x7潜在マップから読み取れた。01のVAEが潜在空間を連続的・なめらかにする(z1,z2を少しずらすと生成画像も少し変化する)のに対し、VQ-VAEは各位置を有限個の離散コードのどれかに強制的に割り当てるため、コード間の「中間」は存在せず、01のような潜在空間の格子状走査による生成はできない。その代わりこの離散コード列を別の系列モデルで学習すれば高品質画像を生成できる、というVQ-GAN・DALL-E等への発展につながる設計思想を実装を通じて確認できた。
 
-### 図6: pix2pix_examples.png / pix2pix_training_curve.png — Pix2Pix（[06_pix2pix.py](stage9/06_pix2pix.py)）
+### 図6: pix2pix_examples.png / pix2pix_training_curve.png — Pix2Pix（[06_pix2pix.py](stage09/06_pix2pix.py)）
 
-![入力エッジ画像・Pix2Pix生成結果・正解画像の比較(8枚)](stage9/pix2pix_examples.png)
-![敵対損失(Generator/Discriminator)とL1再構成誤差の学習曲線](stage9/pix2pix_training_curve.png)
+![入力エッジ画像・Pix2Pix生成結果・正解画像の比較(8枚)](stage09/pix2pix_examples.png)
+![敵対損失(Generator/Discriminator)とL1再構成誤差の学習曲線](stage09/pix2pix_training_curve.png)
 
 **何を示す図か**: 02のDCGAN(ノイズ→画像の無条件生成)と対比するモデルとして、Stage5の合成図形データセットからSobelフィルタでエッジ画像を作り、「エッジ画像→色つき画像」のペア変換を条件付きGAN(Pix2Pix)で学習。U-Net Generator(スキップ結合あり)とPatchGAN Discriminator(画像全体でなくパッチ単位で真偽判定)を1500組・40epoch学習した(学習時間127秒)。
 
@@ -682,7 +682,7 @@ RAG部分は[260525/phase1/rag_phase1.py](../260525/phase1/rag_phase1.py)の最�
 
 ## Stage 11: モデル軽量化
 
-[stage11/](stage11/) 配下にPythonスクリプトとして実装。Stage5の[synthetic_shapes.py](stage5/synthetic_shapes.py)
+[stage11/](stage11/) 配下にPythonスクリプトとして実装。Stage5の[synthetic_shapes.py](stage05/synthetic_shapes.py)
 (合成図形データセット)を再利用した。
 
 | ファイル | 内容 |
