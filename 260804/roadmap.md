@@ -93,11 +93,12 @@ PCAとSVDの数学的な同一性を数値検証、MNISTクラスタリングは
 
 ---
 
-## Stage 5: CNN基礎とアーキテクチャの歴史
+## Stage 5: CNN基礎とアーキテクチャの歴史 ✅完了
 **狙い**: 画像認識の発展史を追いながら、各アーキテクチャが何を解決したかを理解する
 
 - CNN基礎 / 最大値プーリング・平均値プーリング / グローバルアベレージプーリング（GAP）
 - ネオコグニトロン → LeNet → AlexNet → VGGNet → GoogLeNet(Inceptionモジュール) → ResNet(スキップ結合/残差接続)
+- DenseNet(密結合構造) / SENet(Squeeze-and-Excitation, チャネル注意機構)
 - MobileNet(深度別分離畳み込み) / EfficientNet / U-Net
 - 拡張畳み込み（Dilated Convolution）
 - データ拡張（Data Augmentation全般 / Mixup）
@@ -107,7 +108,9 @@ PCAとSVDの数学的な同一性を数値検証、MNISTクラスタリングは
 **実施内容**: [work_log.md](work_log.md#stage-5-cnn基礎とアーキテクチャの歴史) 参照。
 CIFAR-10はダウンロード速度(90kB/s)が非現実的だったため、Pillowで生成する合成図形データセットに変更。
 21層のPlain CNN vs ResNetでdegradation problemを再現し、事前学習済みResNet18のファインチューニングは
-自作CNNを同一データ量で約9ポイント上回った
+自作CNNを同一データ量で約9ポイント上回った。ResNetを基準に、並列フィルタ(GoogLeNet型
+Inceptionモジュール)・密結合(DenseNet)・チャネル注意(SENet)という3つの異なる設計思想を
+同条件(21層相当・15epoch)で比較し、いずれも同程度の分類精度に到達することを確認した
 
 ---
 

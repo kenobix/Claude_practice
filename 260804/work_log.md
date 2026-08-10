@@ -405,6 +405,14 @@ Pillowを使いその場生成する32x32のRGB合成図形データセット(�
 - 学習曲線の形も対照的: 自作CNNは40epochかけてじわじわ上昇しつつ大きく上下動する不安定な曲線、ResNet18は最初のepochから0.78という高いスコアからスタートしすぐに収束する滑らかな曲線。事前学習済みモデルが「ゼロからパターンを見つける」のではなく「既に持っている表現を微調整するだけ」であることが学習曲線の違いに表れている
 - 一方でResNet18はパラメータ数が自作CNN(32,356個)の約345倍(11,178,564個)、学習時間も12倍以上。精度と引き換えに計算コストは大きく増えており、「データが少ない時は転移学習が有利、軽量・高速なモデルが必要な時はスクラッチ設計」というトレードオフを実測で確認した
 
+### 図7: inception_densenet_senet.png — GoogLeNet/DenseNet/SENetの比較（[07_inception_densenet_senet.py](stage5/07_inception_densenet_senet.py)）
+
+![ResNetDeepを基準に、Inceptionモジュール・DenseNet(密結合)・SENet(チャネル注意)の訓練loss・テスト精度の推移を比較](stage5/inception_densenet_senet.png)
+
+**何を示す図か**: 02のResNetDeep(スキップ結合、21層相当)を比較の基準として再利用し、同じ深さ・チャネル数の条件でInceptionモジュール(1x1/3x3/5x5フィルタとプーリングを並列適用し結合)、DenseBlock(それまでの全層の出力をチャネル方向に連結)、SEResNet(ResidualBlockにSqueeze-and-Excitationによるチャネル注意を追加)の3つを比較した。
+
+**読み取れる結果**: 最終test_accはResNetDeep=1.000、InceptionNet=0.957、DenseNet=0.983、SEResNet=1.000。ResNetDeepが既に上限精度に達していたため、SE機構を追加してもSEResNet=1.000と数値上の改善は確認できなかった——合成図形4クラス分類というタスクの難易度に対してResNetの表現力が既に十分だった(天井効果)ためと考えられる。一方、学習曲線の形には明確な違いが見られた。InceptionNetとResNetDeep/SEResNetは4〜6epoch程度で急速に立ち上がるのに対し、DenseNetは10epoch過ぎまでtrain_lossが高止まりし、test_accも8〜11epoch付近まで0.4前後で停滞してから急上昇するという遅い立ち上がりを見せた。パラメータ数はResNetDeep/SEResNetが約10.6万個(SEブロック分だけSEResNetがやや多い)に対し、InceptionNetは19,660個、DenseNetは44,580個と、いずれもResNet型より少ないパラメータ数で同程度の最終精度に到達しており、『層を直列に深く積む』以外の設計でも効率的に学習できることを確認した。
+
 ---
 
 ## Stage 6: 物体検出・セグメンテーション
