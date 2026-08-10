@@ -147,5 +147,82 @@ PoWのクイズを解くために試行錯誤する「使い捨ての数字」�
 沿って正しく作られたチェーン」を正式なものとして全員が採用する、
 という多数決に似たルールで最終的に1本のチェーンに収束する。
 
+## フェーズ2: 既存チェーンへの橋渡し(スマートコントラクト開発)
+[hardhat/](hardhat/) 配下にHardhatプロジェクトとして実装。
+
+| ファイル | 役割 |
+|---|---|
+| [hardhat.config.js](hardhat/hardhat.config.js) | Solidityコンパイラ・ネットワーク設定 |
+| [contracts/PracticeToken.sol](hardhat/contracts/PracticeToken.sol) | OpenZeppelin実装によるERC-20トークン |
+| [contracts/PracticeNFT.sol](hardhat/contracts/PracticeNFT.sol) | OpenZeppelin実装によるERC-721(NFT) |
+| [test/](hardhat/test/) | 各コントラクトのMocha/Chaiテスト(8件) |
+| [scripts/deploy.js](hardhat/scripts/deploy.js) | ローカルネットワークへのデプロイ・動作確認スクリプト |
+
+技術スタック: Solidity 0.8.24、Hardhat 2、ethers.js、OpenZeppelin Contracts
+
+当初 `npm install hardhat` で最新のHardhat 3が入ったが、対話シェル必須の初期化ウィザードと
+ESM前提の新プラグイン体系(viemベース)のため学習用途には不向きと判断し、
+定番構成であるHardhat 2 + ethers.jsに切り替えた。
+
+### 実行方法
+```bash
+cd 260702/hardhat
+npx hardhat compile
+npx hardhat test
+npx hardhat node &          # ローカルテストネットを起動
+npx hardhat run scripts/deploy.js --network localhost
+```
+
+### 実行結果(テスト)
+```
+  PracticeNFT (ERC-721)
+    ✔ mintするとtokenIdが0から連番で発行され、所有者が記録される
+    ✔ owner以外はmintできない
+    ✔ 各tokenIdは固有であり、ERC-20のように数量として混ざらない
+
+  PracticeToken (ERC-20)
+    ✔ デプロイ時にownerへ初期供給量が発行される
+    ✔ 送金するとbalanceが正しく移動する
+    ✔ 残高を超える送金は失敗する(フェーズ1の署名検証失敗に相当する安全装置)
+    ✔ owner以外はmintできない
+    ✔ ownerはmintできる
+
+  8 passing
+```
+
+### 実行結果(ローカルテストネットへのデプロイ)
+```
+PracticeToken (ERC-20) デプロイ先: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+PracticeNFT (ERC-721) デプロイ先: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+ERC-20: 0xf39Fd6...92266 → 0x709979...c79C8 へ100 PRACを送金
+alice残高: 100.0 PRAC
+ERC-721: alice(0x709979...c79C8) へ tokenId=0 をmint
+tokenId=0 の所有者: 0x709979...c79C8
+```
+
+### フェーズ1で学んだ概念との対応関係
+
+| フェーズ1(自作実装) | フェーズ2(Ethereum/Hardhat) |
+|---|---|
+| `Transaction`クラス+ECDSA署名の自前検証 | `msg.sender`が呼び出し時に既に署名検証済みとしてコントラクトへ渡される。署名の生成・検証はネットワーク層(EOAの秘密鍵)が担い、コントラクトは検証済みの送信者を信頼してよい |
+| `pending_transactions`(トランザクションプール) | Hardhat NetworkのmempoolがEIP-1559のガス代に基づき取引を保留・順序付けする(自作実装は単純なリストだったが、実チェーンではガス代の競争が入る) |
+| `Block`のPoWマイニング(nonce総当たり) | Hardhat Networkは即時1取引=1ブロックで確定する開発用ネットワーク。実際のEthereum本番環境はPoWから2022年にPoS(Proof of Stake)へ移行済みで、バリデータの合意で確定する |
+| `Blockchain.is_valid_chain()`によるハッシュチェーン検証 | EVM自体がブロックの整合性を保証するため、アプリケーション層(コントラクト)では意識不要。開発者は代わりに`revert`条件(残高不足・権限不足等)の設計に注力する |
+| 最長チェーン優先ルールによるフォーク解消 | Hardhat Networkは単一ノードのシミュレーションのためフォークは発生しない。本番Ethereumではフォーク選択規則(PoS移行後はLMD-GHOST)が同様の役割を担う |
+| 自前の「残高」概念なし(トランザクション履歴のみ) | ERC-20は`mapping(address => uint256) balances`で残高を直接管理する状態機械として実装されている点が、自作版(取引履歴の再生で残高を都度計算する発想に近い)との設計上の違い |
+| トランザクションはすべて同じ形式(送金のみ) | ERC-721は同じ規格の中でも「各tokenIdが固有の所有者・メタデータを持つ」非代替性を型システムとコントラクトロジックで表現する |
+
+### 結果の考察
+1. OpenZeppelinの`Ownable`により、フェーズ1で自前実装していた「誰が操作を許可されるか」という
+   検証ロジックを1行の`onlyOwner`修飾子に置き換えられた。標準化されたセキュアな実装を
+   再利用できることが、実チェーン開発の大きな利点だと分かった。
+2. ERC-20とERC-721はどちらも「所有権の移転」を扱う点は共通するが、前者は数量(残高)、
+   後者は個別ID(所有者マップ)という全く異なるデータモデルで表現されている。
+   同じ「トークン」という言葉でも設計思想が異なることを実装を通じて確認できた。
+3. `mint`権限を持たないアカウントからの発行がカスタムエラー`OwnableUnauthorizedAccount`で
+   確実に`revert`されることをテストで確認し、フェーズ1の署名検証失敗と同様に
+   「不正な操作は台帳に反映されない」という保証がスマートコントラクトでも
+   型・アクセス制御レベルで作り込まれていることを体感した。
+
 ## 次のステップ
-- フェーズ2: Solidity + Hardhatで既存チェーン(Ethereum系)上のスマートコントラクト開発に着手
+- フェーズ3: Gemini APIを用いたAIオラクル型プロダクト(解析結果のハッシュ化とオンチェーン記録)に着手

@@ -3,3 +3,6 @@ __pycache__/
 .venv/
 *.pt
 **/data/
+node_modules/
+artifacts/
+cache/
