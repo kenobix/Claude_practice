@@ -818,7 +818,7 @@ RAG部分は[260525/phase1/rag_phase1.py](../260525/phase1/rag_phase1.py)の最�
 
 ## Stage 14: 音声処理
 
-[stage14/](stage14/) 配下にPythonスクリプトとして実装。G検定問題集(第7弾)との照合で見つかった、それまでのStage 0〜13では未着手だった「音声」というモダリティを扱う。`scipy`(FFT/波形生成)を追加インストールした。numpy/scipyのみを使い、PCM・FFT・STFT・MFCCまで全てスクラッチ実装している。
+[stage14/](stage14/) 配下にPythonスクリプトとして実装。それまでのStage 0〜13では未着手だった「音声」というモダリティを扱う。`scipy`(FFT/波形生成)を追加インストールした。numpy/scipyのみを使い、PCM・FFT・STFT・MFCCまで全てスクラッチ実装している。
 
 | ファイル | 内容 |
 |---|---|
