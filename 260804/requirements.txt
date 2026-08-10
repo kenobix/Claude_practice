@@ -14,3 +14,6 @@ transformers  # Stage8: 事前学習済みBERT/GPT-2(Hugging Face)
 peft  # Stage10: LoRA(パラメータ効率的ファインチューニング)
 google-genai  # Stage10: Gemini API(RAG/CoTプロンプト実験用、要GEMINI_API_KEY)
 gymnasium  # Stage12: 強化学習環境(FrozenLake/CartPole)
+janome  # Stage7: 形態素解析(純Python、辞書込み)
+ginza  # Stage7: 係り受け解析(SudachiPy+spaCyベースの日本語解析パイプライン)
+ja-ginza  # Stage7: GiNZAの日本語学習済みモデル

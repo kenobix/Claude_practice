@@ -527,6 +527,22 @@ ultralytics公式のデモ画像(`https://ultralytics.com/images/bus.jpg`, `zida
 
 **読み取れる結果**: LSTM3種の精度はA=0.547 < B=0.580 < C=0.613となり、word2vecで得た単語の意味的な近さを埋め込みの初期値に組み込むことが、1600件という限られた訓練データでの学習を安定させる効果が確認できた。一方、TF-IDF+ロジスティック回帰はAccuracy=0.823と、どのLSTMよりも大きく上回った。映画レビューの感情分析は「特定の単語(good/terrible等)の有無」が感情極性と強く相関するタスクであり、系列全体の文脈を捉えるLSTMの強みが活きにくい上、訓練データ規模(1600件)に対してLSTMのパラメータ数が過剰で学習が難しかったと考えられる。ニューラルネットワークが常に古典的手法に勝るわけではなく、データ規模とタスクの性質次第であるという実務上重要な教訓が得られた。
 
+### 図5: fasttext_oov_comparison.png — fastTextとword2vecの未知語対応（[05_fasttext.py](stage7/05_fasttext.py)）
+
+![未知語(OOV)5語に対しword2vec/fastTextがベクトル化に成功した数の比較棒グラフ](stage7/fasttext_oov_comparison.png)
+
+**何を示す図か**: 03と同じmovie_reviewsコーパス・同条件(skip-gram、vector_size=100)でword2vecとfastTextを学習し、学習データに一度も出現しない造語5語(gooood, terriblely, actoring, filmically, wonderfullest)に対するベクトル化の成否を比較。
+
+**読み取れる結果**: word2vecは5語全てでKeyError(ベクトル化不可)となったのに対し、fastTextは5語全てでサブワード(文字n-gram)からベクトルを合成できた。合成されたベクトルの近傍語を見ると、`terriblely`→`terrible(0.91)`、`wonderfullest`→`wonderfully(0.86)`のように、綴りが似た実在語が高い類似度で上位に来ており、サブワード情報が単なる「エラーを起こさない」以上に意味の近さの推定にも実際に役立っていることが確認できた。この性質から、fastTextは活用形や複合語の多い言語でword2vecより有利になるとされる。
+
+### 図6: dependency_parsing.png — 形態素解析(Janome)と係り受け解析(GiNZA)（[06_morphological_dependency_parsing.py](stage7/06_morphological_dependency_parsing.py)）
+
+![「深層学習モデルは大量のデータを使って特徴量を学習する」の係り受け木を弧で可視化した図](stage7/dependency_parsing.png)
+
+**試行錯誤**: `spacy.load("ja_ginza")`が`compound_splitter`コンポーネントの設定エラー(`split_mode`がNoneでバリデーション不可)で失敗した。インストールされたginza 5.2.0とspacy 3.8.15の組み合わせの非互換が原因と見られ、`exclude=["compound_splitter"]`を指定することで回避した(複合語分割機能は使わないが、トークン化・係り受け解析自体には影響しない)。また係り受け木の可視化も、当初`ax.annotate`の`connectionstyle="arc3"`で弧を描いたところ、指定した高さとmatplotlibが実際に描画する弧の高さが一致せず、上部が大きく空白になったり長い係り受けの矢印が図の下端で切れたりする問題が発生した。二次ベジエ曲線を`matplotlib.path.Path`で明示的に構築し`FancyArrowPatch`に渡す方式に変更することで、弧の頂点の高さを正確に制御し、ylimと矛盾なく描画できるようにした。
+
+**読み取れる結果**: Janomeによる形態素解析では、「ここではきものをぬいでください」という有名な曖昧文に対し、今回のIPA辞書は「ここでは/きもの(着物)を/脱いで」という分割を選んだ(「は」を独立した助詞として切り出した)。GiNZAによる係り受け解析では、「データを」→「使っ」(obj)、「深層学習モデルは」→「学習」(nsubj、文全体の主語)のように、離れた位置の単語同士の文法的な結びつきが正しく特定され、木構造として可視化できた。word2vec/fastTextが「意味の近さ」を連続値のベクトルで統計的に捉えるのに対し、形態素解析・係り受け解析は文法規則に基づいて「単語の役割」を離散的な構造として明示的に取り出す、対照的なアプローチであることを実装を通じて確認できた。
+
 ## Stage 8: Attention / Transformer時代
 
 [stage8/](stage8/) 配下にPythonスクリプトとして実装。`pip install transformers`でHugging Face
