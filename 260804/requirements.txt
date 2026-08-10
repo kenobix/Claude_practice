@@ -17,3 +17,4 @@ gymnasium  # Stage12: 強化学習環境(FrozenLake/CartPole)
 janome  # Stage7: 形態素解析(純Python、辞書込み)
 ginza  # Stage7: 係り受け解析(SudachiPy+spaCyベースの日本語解析パイプライン)
 ja-ginza  # Stage7: GiNZAの日本語学習済みモデル
+scipy  # Stage14: FFT/STFT/DCT/波形生成(音声処理の基礎)
