@@ -1,0 +1,12 @@
+{
+  "id": "bookkeeping-2kyu",
+  "name": "簿記2級",
+  "units": [
+    "shiwake-basics.json",
+    "kessan-zaimu-shohyo.json",
+    "tokushu-ronten.json",
+    "genka-kiso.json",
+    "kobetsu-sogo-genka.json",
+    "hyojun-chokusetsu-cvp.json"
+  ]
+}

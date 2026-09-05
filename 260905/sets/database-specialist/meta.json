@@ -1,0 +1,12 @@
+{
+  "id": "database-specialist",
+  "name": "データベーススペシャリスト試験",
+  "units": [
+    "normalization.json",
+    "sql.json",
+    "transaction.json",
+    "index-performance.json",
+    "backup-recovery.json",
+    "distributed-nosql.json"
+  ]
+}
