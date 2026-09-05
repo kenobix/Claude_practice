@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>忘却曲線 - 間隔反復フラッシュカード</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <span class="brand">忘却曲線</span>
+  <nav class="tabs" role="tablist" aria-label="画面切り替え">
+    <button class="tab" data-view="dashboard" role="tab" aria-selected="true">ダッシュボード</button>
+    <button class="tab" data-view="review" role="tab" aria-selected="false">復習</button>
+    <button class="tab" data-view="deck" role="tab" aria-selected="false">カード一覧</button>
+  </nav>
+</header>
+
+<main id="app">
+
+  <!-- ダッシュボード -->
+  <section id="view-dashboard" class="view" data-view="dashboard">
+    <div class="dashboard-hero">
+      <div class="chart-block">
+        <h1 class="chart-title">みんなの記憶は、いま何%残っているか</h1>
+        <p class="chart-caption">薄い線が1枚ごとのカード、太い線が全体の平均。曲線が下がるほど記憶が薄れ、復習すると再び立ち上がる。</p>
+        <div id="curve-chart" class="curve-chart" role="img" aria-label="カードごとの忘却曲線と全体平均"></div>
+        <button id="toggle-table-view" class="link-button" type="button" aria-expanded="false" aria-controls="curve-table-wrap">表で見る</button>
+        <div id="curve-table-wrap" class="curve-table-wrap" hidden>
+          <table id="curve-table" class="curve-table">
+            <thead>
+              <tr><th scope="col">カード</th><th scope="col">最終復習</th><th scope="col">現在の保持率</th><th scope="col">次回復習日</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="due-panel">
+        <p class="due-count"><span id="due-count-number">0</span><span class="due-count-label">枚が復習待ち</span></p>
+        <button id="start-review-btn" class="primary-button" type="button">復習をはじめる</button>
+        <dl class="due-stats">
+          <div><dt>登録カード数</dt><dd id="stat-total">0</dd></div>
+          <div><dt>今日の復習済み</dt><dd id="stat-done-today">0</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- 復習セッション -->
+  <section id="view-review" class="view" data-view="review" hidden>
+    <div id="review-empty" class="empty-state" hidden>
+      <p id="review-empty-text">いま復習が必要なカードはありません。</p>
+      <button id="review-empty-btn" class="link-button" type="button" data-goto="deck">カードを追加する</button>
+    </div>
+    <div id="review-session" class="review-session" hidden>
+      <div class="review-progress">
+        <span id="review-progress-text">1 / 1</span>
+      </div>
+      <div class="flashcard-stage">
+        <button id="flashcard" class="flashcard" type="button" aria-label="クリックで裏面を表示">
+          <span class="flashcard-face flashcard-front"></span>
+          <span class="flashcard-face flashcard-back"></span>
+        </button>
+        <p class="flashcard-hint">カードをクリック、またはEnter/Spaceキーで裏返す</p>
+      </div>
+      <div id="rating-buttons" class="rating-buttons" hidden>
+        <button class="rating-button rating-again" data-rating="again" type="button">もう一度<small>1日後</small></button>
+        <button class="rating-button rating-hard" data-rating="hard" type="button">難しい<small id="preview-hard"></small></button>
+        <button class="rating-button rating-good" data-rating="good" type="button">普通<small id="preview-good"></small></button>
+        <button class="rating-button rating-easy" data-rating="easy" type="button">簡単<small id="preview-easy"></small></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- カード一覧・管理 -->
+  <section id="view-deck" class="view" data-view="deck" hidden>
+    <form id="card-form" class="card-form">
+      <div class="card-form-row">
+        <label for="card-front">表面（問い）</label>
+        <textarea id="card-front" required rows="2"></textarea>
+      </div>
+      <div class="card-form-row">
+        <label for="card-back">裏面（答え）</label>
+        <textarea id="card-back" required rows="2"></textarea>
+      </div>
+      <input type="hidden" id="card-edit-id" value="">
+      <div class="card-form-actions">
+        <button type="submit" class="primary-button" id="card-form-submit">カードを追加</button>
+        <button type="button" class="ghost-button" id="card-form-cancel" hidden>編集をやめる</button>
+      </div>
+    </form>
+
+    <ul id="card-list" class="card-list"></ul>
+    <p id="card-list-empty" class="empty-state" hidden>カードがまだありません。上のフォームから追加してください。</p>
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
