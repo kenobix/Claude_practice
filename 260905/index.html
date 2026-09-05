@@ -4,7 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>忘却曲線 - 間隔反復フラッシュカード</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/review.css">
+<link rel="stylesheet" href="css/deck.css">
 </head>
 <body>
 
@@ -75,6 +79,15 @@
 
   <!-- カード一覧・管理 -->
   <section id="view-deck" class="view" data-view="deck" hidden>
+    <div class="set-import">
+      <div class="set-import-row">
+        <label for="set-select">セットから追加</label>
+        <select id="set-select"></select>
+        <button type="button" id="set-import-btn" class="ghost-button">このセットを追加</button>
+      </div>
+      <p id="set-import-status" class="set-import-status" aria-live="polite"></p>
+    </div>
+
     <form id="card-form" class="card-form">
       <div class="card-form-row">
         <label for="card-front">表面（問い）</label>
@@ -97,6 +110,6 @@
 
 </main>
 
-<script src="app.js"></script>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

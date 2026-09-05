@@ -1,0 +1,92 @@
+/* ==========================================================================
+   ダッシュボード(忘却曲線チャート・復習待ちパネル・表ビュー)
+   ========================================================================== */
+.chart-block {
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  padding: clamp(16px, 3vw, 28px);
+}
+
+.chart-title {
+  font-family: var(--font-serif);
+  font-size: clamp(20px, 2.6vw, 26px);
+  font-weight: 600;
+  margin: 0 0 8px;
+  line-height: 1.35;
+}
+
+.chart-caption {
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin: 0 0 16px;
+  max-width: 58ch;
+}
+
+.curve-chart {
+  width: 100%;
+  overflow: visible;
+  position: relative;
+}
+.curve-chart svg { display: block; width: 100%; height: auto; }
+.curve-chart .chart-axis-label { font: 10px var(--font-sans); }
+.curve-chart .chart-value-label { font: 600 12px var(--font-sans); font-variant-numeric: tabular-nums; }
+
+.chart-tooltip {
+  position: absolute;
+  transform: translate(-50%, -135%);
+  background: var(--ink-strong);
+  color: var(--surface-raised);
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.due-panel {
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.due-count {
+  margin: 0;
+  font-family: var(--font-sans);
+}
+.due-count #due-count-number {
+  font-size: 40px;
+  font-weight: 700;
+  display: block;
+  line-height: 1;
+}
+.due-count-label {
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.due-stats {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--hairline);
+  padding-top: 14px;
+}
+.due-stats > div { display: flex; justify-content: space-between; font-size: 13px; }
+.due-stats dt { color: var(--ink-muted); }
+.due-stats dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+.curve-table-wrap { margin-top: 16px; overflow-x: auto; }
+.curve-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.curve-table th, .curve-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--hairline);
+  font-variant-numeric: tabular-nums;
+}
+.curve-table th { color: var(--ink-muted); font-weight: 600; }

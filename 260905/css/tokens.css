@@ -1,0 +1,104 @@
+/* ==========================================================================
+   トークン — 「紙の上のインク」がテーマ。記憶が強いほどインクが濃く、
+   忘れるほど薄れる。琥珀色(アクセント)は「いま強化された記憶」専用。
+   ========================================================================== */
+:root {
+  color-scheme: light;
+
+  --surface:        #EEF0EA; /* 紙面(クリーム+テラコッタの定番を避け、寒色寄りのセージグレーに) */
+  --surface-raised:  #FAFBF7; /* カード面 */
+  --hairline:        #DBDED4; /* 罫線・グリッド */
+  --baseline:        #B9BDAF; /* 軸線・「今」の縦線 */
+
+  --ink-strong:      #1C2620; /* 本文・強い記憶 */
+  --ink-secondary:   #4C564D; /* 補助テキスト */
+  --ink-muted:       #8B937F; /* 軸ラベル・キャプション */
+  --ink-faded:       #C7CBBC; /* 薄れた記憶(個別カードの忘却曲線) */
+  --ink-faded-mid:   #A8AE9C; /* 「難しい」ボタンなど中間の濃さ */
+
+  --accent:          #C6862B; /* 琥珀 — 強化された記憶、CTA、平均曲線 */
+  --accent-deep:      #8F5E17; /* 文字に使う濃い琥珀(コントラスト確保) */
+  --accent-wash:     rgba(198, 134, 43, 0.14);
+
+  --font-serif: "Iowan Old Style", "Palatino Linotype", "Yu Mincho", "Hiragino Mincho ProN", Georgia, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+
+  --radius-card: 10px;
+  --max-width: 920px;
+}
+
+* , *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+body {
+  background: var(--surface);
+  color: var(--ink-strong);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, textarea, input, select { font-family: inherit; font-size: inherit; color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* `.empty-state`等、classでdisplayを指定している要素はhidden属性が
+   打ち消されるため、明示的に上書きする */
+[hidden] { display: none !important; }
+
+/* ==========================================================================
+   ボタン(全画面共通)
+   ========================================================================== */
+.primary-button {
+  background: var(--accent);
+  color: #241505;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.primary-button:hover { background: var(--accent-deep); color: #fff; }
+.primary-button:disabled { background: var(--ink-faded); color: var(--ink-muted); cursor: not-allowed; }
+
+.ghost-button {
+  background: none;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--ink-secondary);
+  cursor: pointer;
+}
+.ghost-button:hover { border-color: var(--ink-muted); }
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  color: var(--accent-deep);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--ink-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}

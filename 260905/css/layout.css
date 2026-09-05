@@ -1,0 +1,63 @@
+/* ==========================================================================
+   ヘッダー / タブ / 全体レイアウト
+   ========================================================================== */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px clamp(16px, 4vw, 40px);
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface-raised);
+}
+
+.brand {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 4px;
+  margin: 0 8px;
+  font-size: 14px;
+  color: var(--ink-secondary);
+  cursor: pointer;
+}
+
+.tab:hover { color: var(--ink-strong); }
+
+.tab[aria-selected="true"] {
+  color: var(--ink-strong);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+main#app {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: clamp(20px, 4vw, 40px) clamp(16px, 4vw, 40px) 80px;
+}
+
+.view[hidden] { display: none; }
+
+.dashboard-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 28px;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .dashboard-hero { grid-template-columns: 1fr; }
+}
