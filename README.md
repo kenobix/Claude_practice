@@ -27,6 +27,7 @@ Claude Code の学習・実践リポジトリ。日付ごとにディレクト�
 | [260702](260702/) | 生成AI（Gemini API）連携ブロックチェーンの学習ロードマップとフェーズ1実装。Pythonでハッシュ連結・PoWマイニング・ECDSA署名検証・複数ノードの最長チェーン優先ルールをスクラッチ実装し動作確認。 |
 | [260804](260804/) | 機械学習・ディープラーニング学習ロードマップ（約100手法をStage 0〜13に整理）。WSL環境でStage 0(環境構築)〜Stage 2(決定木・アンサンブル・SVM)まで実装・動作確認済み。 |
 | [260805](260805/) | 静的サイトのホスティング方針（GitHub Pages/Netlify/Vercel使い分け）の調査・整理、および外部エージェントランタイム（ponytail/Hermes Agent等）のGitHub API裏取り調査。 |
+| [260905](260905/) | エビングハウスの忘却曲線を使った間隔反復フラッシュカードアプリをGitHub Pages上に構築。UIデザインはGitHub上のAgent Skill `anthropics/skills@frontend-design` を導入して設計。忘却曲線（個別カード+全体平均）を自作SVGで可視化。 |
 
 ---
 
@@ -43,3 +44,4 @@ Claude Code の学習・実践リポジトリ。日付ごとにディレクト�
 | OpenAI チャットアプリ | [260521/](https://kenobix.github.io/Claude_practice/260521/) |
 | Gemini チャットアプリ | [260521/gemini.html](https://kenobix.github.io/Claude_practice/260521/gemini.html) |
 | 生成AIシステムアーキテクト相談室 | [260630/](https://kenobix.github.io/Claude_practice/260630/) |
+| 忘却曲線フラッシュカードアプリ | [260905/](https://kenobix.github.io/Claude_practice/260905/) |
