@@ -145,8 +145,9 @@ function formatShortDate(ms) {
 function formatDate(ms) {
   const diffDays = Math.round((startOfDay(ms) - startOfDay(Date.now())) / DAY_MS);
   const dateStr = formatShortDate(ms);
-  if (diffDays <= 0) return `今日 (${dateStr})`;
+  if (diffDays === 0) return `今日 (${dateStr})`;
   if (diffDays === 1) return `明日 (${dateStr})`;
+  if (diffDays < 0) return `${dateStr}（${Math.abs(diffDays)}日前）`;
   return `${dateStr}（${diffDays}日後）`;
 }
 
@@ -323,9 +324,11 @@ function buildChart(cards, container) {
   });
 
   // 全体平均の忘却曲線(強調・アクセント色) -- このチャートの主役
+  // retentionAtは各カードの復習前(t<=0)なら1を返すため、
+  // 集計対象のカード数を常に一定に保ったまま平均を取れる(母数が変わって
+  // 平均が不連続にジャンプするのを防ぐ)
   const avgPoints = sampleTimes.map((t) => {
-    const values = cards.filter((c) => t >= anchorTime(c)).map((c) => retentionAt(c, t));
-    const avg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 1;
+    const avg = cards.reduce((sum, c) => sum + retentionAt(c, t), 0) / cards.length;
     return { x: xForTime(t), y: yForRetention(avg), t, avg };
   });
 
