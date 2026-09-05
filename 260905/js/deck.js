@@ -27,11 +27,12 @@ export function renderDeck() {
     const r = retentionAt(card, now);
     const setName = setNameFor(card.setId, cardSets);
     const sourceLabel = [setName, card.unit].filter(Boolean).join(" / ") || "自分で追加したカード";
+    const imageBadge = card.image ? `<span class="card-row-image-badge">図あり</span>` : "";
     const li = document.createElement("li");
     li.className = "card-row";
     li.innerHTML = `
       <div class="card-row-text">
-        <div class="card-row-source">${escapeHtml(sourceLabel)}</div>
+        <div class="card-row-source">${escapeHtml(sourceLabel)}${imageBadge}</div>
         <div class="card-row-front" style="color:${inkForRetention(r)}">${escapeHtml(card.front)}</div>
         <div class="card-row-meta">次回復習: ${formatDate(card.dueAt)}（保持率 約${Math.round(r * 100)}%）</div>
       </div>

@@ -34,6 +34,10 @@
   position: relative;
 }
 
+.flashcard.has-image {
+  min-height: 440px;
+}
+
 .flashcard-face {
   position: absolute;
   inset: 0;
@@ -57,6 +61,22 @@
   transform: rotateY(180deg);
   background: var(--accent-wash);
   border-color: var(--accent);
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+}
+
+.flashcard-image {
+  max-width: 100%;
+  max-height: 60%;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid var(--hairline);
+  background: var(--surface-raised);
+}
+
+.flashcard-back-text {
+  white-space: pre-wrap;
 }
 
 .flashcard.is-flipped .flashcard-front { transform: rotateY(180deg); }

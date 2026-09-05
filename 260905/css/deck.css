@@ -71,6 +71,16 @@
   font-size: 11px;
   color: var(--ink-muted);
   margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.card-row-image-badge {
+  border: 1px solid var(--accent);
+  color: var(--accent-deep);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 10px;
 }
 .card-row-front {
   font-family: var(--font-serif);

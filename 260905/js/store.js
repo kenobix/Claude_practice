@@ -20,12 +20,14 @@ function saveState() {
 function makeCard(front, back, {
   createdAt = Date.now(), lastReviewedAt = null, stability = DEFAULT_STABILITY,
   dueAt = null, reviewCount = 0, lapses = 0, setId = null, unit = null,
+  image = null, imageAlt = null,
 } = {}) {
   const anchor = lastReviewedAt ?? createdAt;
   return {
     id: crypto.randomUUID(),
     front, back,
     setId, unit,
+    image, imageAlt,
     createdAt,
     lastReviewedAt,
     stability,
@@ -48,17 +50,17 @@ function buildInitialState(loadedCardSets) {
   ];
   const cards = [];
   loadedCardSets.forEach((set) => {
-    set.cards.forEach(({ front, back, unit }, i) => {
+    set.cards.forEach(({ front, back, unit, image, imageAlt }, i) => {
       const spec = demoSpecs[i];
       if (spec) {
         const lastReviewedAt = now - spec.daysAgo * DAY_MS;
         cards.push(makeCard(front, back, {
-          setId: set.id, unit,
+          setId: set.id, unit, image, imageAlt,
           createdAt: lastReviewedAt, lastReviewedAt,
           stability: spec.stability, reviewCount: 2,
         }));
       } else {
-        cards.push(makeCard(front, back, { setId: set.id, unit, dueAt: now }));
+        cards.push(makeCard(front, back, { setId: set.id, unit, image, imageAlt, dueAt: now }));
       }
     });
   });
@@ -137,9 +139,9 @@ export function importSet(setId) {
   const existingFronts = new Set(state.cards.map((c) => c.front));
   let added = 0;
   let skipped = 0;
-  set.cards.forEach(({ front, back, unit }) => {
+  set.cards.forEach(({ front, back, unit, image, imageAlt }) => {
     if (existingFronts.has(front)) { skipped += 1; return; }
-    state.cards.push(makeCard(front, back, { setId, unit, dueAt: Date.now() }));
+    state.cards.push(makeCard(front, back, { setId, unit, image, imageAlt, dueAt: Date.now() }));
     existingFronts.add(front);
     added += 1;
   });

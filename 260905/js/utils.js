@@ -1,4 +1,4 @@
-import { DAY_MS, COLORS } from "./config.js";
+import { DAY_MS, COLORS, CARD_SETS_BASE_URL } from "./config.js";
 
 export function startOfDay(ms) {
   const d = new Date(ms);
@@ -40,4 +40,11 @@ export function inkForRetention(r) {
   const b = hexToRgb(COLORS.inkFaded);
   const mix = (x, y) => Math.round(y + (x - y) * r);
   return `rgb(${mix(a.r, b.r)}, ${mix(a.g, b.g)}, ${mix(a.b, b.b)})`;
+}
+
+// カードのimageフィールド(ファイル名)から実際のパスを組み立てる。
+// setIdがない(手入力の)カードには画像を付けられない。
+export function imagePathFor(card) {
+  if (!card.image || !card.setId) return null;
+  return `${CARD_SETS_BASE_URL}${card.setId}/images/${card.image}`;
 }

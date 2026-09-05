@@ -1,5 +1,6 @@
 import { getCards, getDueCards, scheduleReview, overwriteCardScheduling } from "./store.js";
 import { previewIntervalDays } from "./srs.js";
+import { imagePathFor } from "./utils.js";
 
 let reviewQueue = [];
 let reviewIndex = 0;
@@ -45,7 +46,21 @@ function renderReviewCurrent() {
   const flashcard = document.getElementById("flashcard");
   flashcard.classList.remove("is-flipped");
   flashcard.querySelector(".flashcard-front").textContent = card.front;
-  flashcard.querySelector(".flashcard-back").textContent = card.back;
+  flashcard.querySelector(".flashcard-back-text").textContent = card.back;
+
+  const imageSrc = imagePathFor(card);
+  const img = flashcard.querySelector(".flashcard-image");
+  flashcard.classList.toggle("has-image", Boolean(imageSrc));
+  if (imageSrc) {
+    img.onerror = () => { img.hidden = true; flashcard.classList.remove("has-image"); };
+    img.alt = card.imageAlt || "";
+    img.src = imageSrc;
+    img.hidden = false;
+  } else {
+    img.hidden = true;
+    img.removeAttribute("src");
+  }
+
   document.getElementById("rating-buttons").hidden = true;
 
   document.getElementById("preview-hard").textContent = `${previewIntervalDays(card, "hard")}日後`;
