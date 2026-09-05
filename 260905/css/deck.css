@@ -67,6 +67,11 @@
 }
 
 .card-row-text { min-width: 0; }
+.card-row-source {
+  font-size: 11px;
+  color: var(--ink-muted);
+  margin-bottom: 2px;
+}
 .card-row-front {
   font-family: var(--font-serif);
   font-size: 15px;

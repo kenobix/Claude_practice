@@ -19,6 +19,21 @@
   letter-spacing: 0.01em;
 }
 
+.dataset-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dataset-switcher label { font-size: 12px; color: var(--ink-muted); }
+.dataset-switcher select {
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: var(--surface-raised);
+  font-size: 13px;
+  max-width: 220px;
+}
+
 .tabs {
   display: flex;
   gap: 4px;
