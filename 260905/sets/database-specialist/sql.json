@@ -1,19 +1,75 @@
 {
   "unit": "SQL",
   "cards": [
-    { "front": "DDL(データ定義言語)に分類されるSQL文は？", "back": "CREATE、ALTER、DROPなど、テーブルやインデックスなどのオブジェクト構造を定義する文。" },
-    { "front": "DML(データ操作言語)に分類されるSQL文は？", "back": "SELECT、INSERT、UPDATE、DELETEなど、データの検索・操作を行う文。" },
-    { "front": "DCL(データ制御言語)に分類されるSQL文は？", "back": "GRANT、REVOKEなど、アクセス権限の付与・取り消しを行う文。" },
-    { "front": "外部キー制約の役割は？", "back": "参照整合性を保証し、親テーブルに存在しない値を子テーブルに登録できないようにすること。" },
-    { "front": "CHECK制約とは？", "back": "列に格納できる値の条件を指定し、条件を満たさない値の登録・更新を禁止する制約。" },
-    { "front": "INNER JOINとLEFT OUTER JOINの違いは？", "back": "INNER JOINは結合条件が一致する行のみ返し、LEFT OUTER JOINは左表の全行を返し右表に一致がなければNULLを補う。" },
-    { "front": "相関副問い合わせ(相関サブクエリ)とは？", "back": "外側の問い合わせの各行の値を参照しながら、行ごとに繰り返し実行される副問い合わせ。" },
-    { "front": "EXISTS述語の特徴は？", "back": "副問い合わせの結果が1件でも存在すれば真となる述語で、副問い合わせの列の値そのものは判定に使わない。" },
-    { "front": "SQLでGROUP BYの集約結果をさらに条件で絞り込む句は？", "back": "HAVING句。" },
-    { "front": "ウィンドウ関数のOVER句の役割は？", "back": "行を集約せずに、PARTITION BYで区切った範囲やORDER BYの順序に基づいて集計・順位付けなどの計算範囲を指定すること。" },
-    { "front": "ROW_NUMBER関数とRANK関数の違いは？", "back": "ROW_NUMBERは同順位でも重複なく連番を振るのに対し、RANKは同順位に同じ順位を与え、次の順位を飛ばす。" },
-    { "front": "UNIONとUNION ALLの違いは？", "back": "UNIONは重複行を除去して結合するが、UNION ALLは重複行を除去せずすべての行をそのまま結合する。" },
-    { "front": "ビュー(VIEW)とは？", "back": "実表を持たず、SELECT文の定義だけを保持し、参照時に問い合わせを実行して仮想的な表として扱えるデータベースオブジェクト。" },
-    { "front": "トリガとは？", "back": "テーブルへのINSERT/UPDATE/DELETEなどのイベントをきっかけに、自動的に実行される処理を定義したデータベースオブジェクト。" }
+    {
+      "front": "DDL(データ定義言語)に分類されるSQL文は？",
+      "back": "CREATE、ALTER、DROPなど、テーブルやインデックスなどのオブジェクト構造を定義する文。",
+      "image": "sql-ddl-dml-dcl.png",
+      "imageAlt": "SQL文をDDL・DML・DCLの3種類に分類し、代表的な文(CREATE/SELECT/GRANTなど)を一覧にした図"
+    },
+    {
+      "front": "DML(データ操作言語)に分類されるSQL文は？",
+      "back": "SELECT、INSERT、UPDATE、DELETEなど、データの検索・操作を行う文。",
+      "image": "sql-ddl-dml-dcl.png",
+      "imageAlt": "SQL文をDDL・DML・DCLの3種類に分類し、代表的な文(CREATE/SELECT/GRANTなど)を一覧にした図"
+    },
+    {
+      "front": "DCL(データ制御言語)に分類されるSQL文は？",
+      "back": "GRANT、REVOKEなど、アクセス権限の付与・取り消しを行う文。",
+      "image": "sql-ddl-dml-dcl.png",
+      "imageAlt": "SQL文をDDL・DML・DCLの3種類に分類し、代表的な文(CREATE/SELECT/GRANTなど)を一覧にした図"
+    },
+    {
+      "front": "外部キー制約の役割は？",
+      "back": "参照整合性を保証し、親テーブルに存在しない値を子テーブルに登録できないようにすること。"
+    },
+    {
+      "front": "CHECK制約とは？",
+      "back": "列に格納できる値の条件を指定し、条件を満たさない値の登録・更新を禁止する制約。"
+    },
+    {
+      "front": "INNER JOINとLEFT OUTER JOINの違いは？",
+      "back": "INNER JOINは結合条件が一致する行のみ返し、LEFT OUTER JOINは左表の全行を返し右表に一致がなければNULLを補う。",
+      "image": "sql-join-union-diagram.png",
+      "imageAlt": "INNER JOINとLEFT OUTER JOINの違いをベン図で、UNIONとUNION ALLの違いを集合の図で示した比較図"
+    },
+    {
+      "front": "相関副問い合わせ(相関サブクエリ)とは？",
+      "back": "外側の問い合わせの各行の値を参照しながら、行ごとに繰り返し実行される副問い合わせ。"
+    },
+    {
+      "front": "EXISTS述語の特徴は？",
+      "back": "副問い合わせの結果が1件でも存在すれば真となる述語で、副問い合わせの列の値そのものは判定に使わない。"
+    },
+    {
+      "front": "SQLでGROUP BYの集約結果をさらに条件で絞り込む句は？",
+      "back": "HAVING句。"
+    },
+    {
+      "front": "ウィンドウ関数のOVER句の役割は？",
+      "back": "行を集約せずに、PARTITION BYで区切った範囲やORDER BYの順序に基づいて集計・順位付けなどの計算範囲を指定すること。",
+      "image": "sql-window-functions.png",
+      "imageAlt": "同じデータに対してROW_NUMBERとRANKを適用した結果を並べて比較したテーブル例の図"
+    },
+    {
+      "front": "ROW_NUMBER関数とRANK関数の違いは？",
+      "back": "ROW_NUMBERは同順位でも重複なく連番を振るのに対し、RANKは同順位に同じ順位を与え、次の順位を飛ばす。",
+      "image": "sql-window-functions.png",
+      "imageAlt": "同じデータに対してROW_NUMBERとRANKを適用した結果を並べて比較したテーブル例の図"
+    },
+    {
+      "front": "UNIONとUNION ALLの違いは？",
+      "back": "UNIONは重複行を除去して結合するが、UNION ALLは重複行を除去せずすべての行をそのまま結合する。",
+      "image": "sql-join-union-diagram.png",
+      "imageAlt": "INNER JOINとLEFT OUTER JOINの違いをベン図で、UNIONとUNION ALLの違いを集合の図で示した比較図"
+    },
+    {
+      "front": "ビュー(VIEW)とは？",
+      "back": "実表を持たず、SELECT文の定義だけを保持し、参照時に問い合わせを実行して仮想的な表として扱えるデータベースオブジェクト。"
+    },
+    {
+      "front": "トリガとは？",
+      "back": "テーブルへのINSERT/UPDATE/DELETEなどのイベントをきっかけに、自動的に実行される処理を定義したデータベースオブジェクト。"
+    }
   ]
 }
