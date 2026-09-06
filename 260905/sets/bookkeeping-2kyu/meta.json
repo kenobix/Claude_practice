@@ -7,6 +7,15 @@
     "tokushu-ronten.json",
     "genka-kiso.json",
     "kobetsu-sogo-genka.json",
-    "hyojun-chokusetsu-cvp.json"
+    "hyojun-chokusetsu-cvp.json",
+    "shohin-shueki-ninshiki.json",
+    "genkin-tegata-yukashoken-zanron.json",
+    "yukei-mukei-shisan-lease.json",
+    "hikiatekin-kabushiki-gappei.json",
+    "gaika-zeikoka-zaimuhyo-zanron.json",
+    "honshiten-renketsu-zanron.json",
+    "zairyo-romu-keihi-zanron.json",
+    "seizo-kansetsuhi-sogo-genka-kessan-zanron.json",
+    "hyojun-chokusetsu-cvp-zanron.json"
   ]
 }

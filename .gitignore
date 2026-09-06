@@ -3,6 +3,7 @@ __pycache__/
 .venv/
 *.pt
 **/data/
+260905/sets/bookkeeping-2kyu/text/
 node_modules/
 artifacts/
 cache/
