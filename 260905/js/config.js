@@ -8,6 +8,10 @@ export const RATING_FACTORS = { again: 0.3, hard: 1.2, good: 2.5, easy: 3.5 };
 export const CARD_SETS_MANIFEST_URL = "sets/manifest.json";
 export const CARD_SETS_BASE_URL = "sets/";
 
+// 復習は一度に全件出さず、この枚数ずつのセットに区切って出題する(0 = 区切らず全件)
+export const REVIEW_BATCH_SIZE_KEY = "forgetting-curve-app:batch-size";
+export const DEFAULT_REVIEW_BATCH_SIZE = 10;
+
 const rootStyles = getComputedStyle(document.documentElement);
 function cssVar(name) { return rootStyles.getPropertyValue(name).trim(); }
 

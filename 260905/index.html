@@ -58,11 +58,27 @@
   <!-- 復習セッション -->
   <section id="view-review" class="view" data-view="review" hidden>
     <div class="review-toolbar">
+      <label class="review-batch-size" for="review-batch-size">1セットの枚数
+        <select id="review-batch-size">
+          <option value="5">5枚</option>
+          <option value="10" selected>10枚</option>
+          <option value="15">15枚</option>
+          <option value="20">20枚</option>
+          <option value="0">すべて</option>
+        </select>
+      </label>
       <button id="review-undo-btn" class="ghost-button" type="button" hidden>直前の評価を取り消す</button>
     </div>
     <div id="review-empty" class="empty-state" hidden>
       <p id="review-empty-text">いま復習が必要なカードはありません。</p>
       <button id="review-empty-btn" class="link-button" type="button" data-goto="deck">カードを追加する</button>
+    </div>
+    <div id="review-batch-done" class="empty-state" hidden>
+      <p id="review-batch-done-text"></p>
+      <div class="review-batch-done-actions">
+        <button id="review-next-batch-btn" class="primary-button" type="button">次のセットに進む</button>
+        <button class="link-button" type="button" data-goto="dashboard">ダッシュボードに戻る</button>
+      </div>
     </div>
     <div id="review-session" class="review-session" hidden>
       <div class="review-progress">

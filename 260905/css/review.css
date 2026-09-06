@@ -4,7 +4,32 @@
 .review-toolbar {
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 12px;
+}
+
+.review-batch-size {
+  font-size: 13px;
+  color: var(--ink-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.review-batch-size select {
+  font: inherit;
+  color: var(--ink-strong);
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.review-batch-done-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .review-progress {

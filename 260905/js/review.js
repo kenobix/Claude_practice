@@ -1,15 +1,33 @@
 import { getCards, getDueCards, scheduleReview, overwriteCardScheduling } from "./store.js";
 import { previewIntervalDays } from "./srs.js";
 import { imagePathFor } from "./utils.js";
+import { REVIEW_BATCH_SIZE_KEY, DEFAULT_REVIEW_BATCH_SIZE } from "./config.js";
 
 let reviewQueue = [];
 let reviewIndex = 0;
 let lastAction = null; // 直前の評価を取り消すためのスナップショット
+let totalDueAtStart = 0; // セット開始時点での復習待ち総数(進捗表示・残り枚数の算出に使う)
 
 const KEY_TO_RATING = { "1": "again", "2": "hard", "3": "good", "4": "easy" };
 
+function loadBatchSize() {
+  const stored = localStorage.getItem(REVIEW_BATCH_SIZE_KEY);
+  if (stored === null) return DEFAULT_REVIEW_BATCH_SIZE;
+  const raw = Number(stored);
+  return Number.isFinite(raw) && raw >= 0 ? raw : DEFAULT_REVIEW_BATCH_SIZE;
+}
+
+function syncBatchSizeSelect() {
+  const select = document.getElementById("review-batch-size");
+  select.value = String(loadBatchSize());
+}
+
 export function startReviewSession() {
-  reviewQueue = getDueCards().map((c) => c.id);
+  syncBatchSizeSelect();
+  const batchSize = loadBatchSize();
+  const dueIds = getDueCards().map((c) => c.id);
+  totalDueAtStart = dueIds.length;
+  reviewQueue = batchSize > 0 ? dueIds.slice(0, batchSize) : dueIds;
   reviewIndex = 0;
   lastAction = null;
   updateUndoButton();
@@ -22,12 +40,24 @@ function updateUndoButton() {
 
 function renderReviewCurrent() {
   const empty = document.getElementById("review-empty");
+  const batchDone = document.getElementById("review-batch-done");
   const session = document.getElementById("review-session");
 
   if (reviewIndex >= reviewQueue.length) {
     session.hidden = true;
-    empty.hidden = false;
     const finishedSession = reviewQueue.length > 0;
+    const remaining = getDueCards().length; // このセット消化後、まだ残っている枚数
+
+    if (finishedSession && remaining > 0) {
+      empty.hidden = true;
+      batchDone.hidden = false;
+      document.getElementById("review-batch-done-text").textContent =
+        `このセットの復習が終わりました。残り${remaining}枚あります。`;
+      return;
+    }
+
+    batchDone.hidden = true;
+    empty.hidden = false;
     document.getElementById("review-empty-text").textContent = finishedSession
       ? "今日の復習はすべて終わりました。おつかれさまでした。"
       : "いま復習が必要なカードはありません。";
@@ -38,10 +68,13 @@ function renderReviewCurrent() {
   }
 
   empty.hidden = true;
+  batchDone.hidden = true;
   session.hidden = false;
 
   const card = getCards().find((c) => c.id === reviewQueue[reviewIndex]);
-  document.getElementById("review-progress-text").textContent = `${reviewIndex + 1} / ${reviewQueue.length}`;
+  const totalLabel = totalDueAtStart > reviewQueue.length ? `(全${totalDueAtStart}枚中)` : "";
+  document.getElementById("review-progress-text").textContent =
+    `${reviewIndex + 1} / ${reviewQueue.length} ${totalLabel}`.trim();
 
   const flashcard = document.getElementById("flashcard");
   flashcard.classList.remove("is-flipped");
@@ -144,6 +177,12 @@ export function initReview() {
   });
 
   document.getElementById("review-undo-btn").addEventListener("click", undoLastRating);
+
+  document.getElementById("review-batch-size").addEventListener("change", (e) => {
+    localStorage.setItem(REVIEW_BATCH_SIZE_KEY, e.target.value);
+  });
+
+  document.getElementById("review-next-batch-btn").addEventListener("click", startReviewSession);
 
   document.addEventListener("keydown", handleKeydown);
 }
