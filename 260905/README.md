@@ -12,7 +12,7 @@
 - ダッシュボードのヒーロー要素として、選択中のカードそれぞれの忘却曲線（薄い線）と全体の平均忘却曲線（太いアクセント線）を1枚のSVGチャートに重ねて表示。「今」を境に、過去の実績と将来の予測がひと続きの曲線として見える
 - 復習のたびに「もう一度 / 難しい / 普通 / 簡単」の4段階で自己評価し、評価に応じて次の復習日を自動計算。復習画面はクリックの他に**キーボード操作**（Space/Enterで裏返す、1〜4キーで評価）にも対応し、直前の評価は「元に戻す」で取り消せる
 - 復習待ちが多くても一度に全部出題せず、**5〜20枚（既定10枚）のセット単位**で区切って復習できる。1セット終えると「次のセットに進む」で続きに進めるか、そこで切り上げてダッシュボードに戻れる。セット枚数は`localStorage`に保存され次回以降も引き継がれる
-- カード裏面には図解画像を添付できる（`image`/`imageAlt`フィールド、複数カードで1枚の図を共有）。同梱2セット・計352枚のうち111枚に、生成AI(Gemini)で作成した図解32枚を割り当て済み（`sets/<id>/images/`。方針は [image-cards-plan.md](image-cards-plan.md)、実際に使った依頼プロンプト全文は [image-generation-prompts-archive.md](image-generation-prompts-archive.md)）。CPA教材から追加した211枚には未着手で、うち14枚分はコピペで使える追加の依頼プロンプトを [image-generation-prompts-additional.md](image-generation-prompts-additional.md) に用意済み
+- カード裏面には図解画像を添付できる（`image`/`imageAlt`フィールド、複数カードで1枚の図を共有）。同梱2セット・計352枚のうち111枚に、生成AI(Gemini)で作成した図解32枚を割り当て済み（`sets/<id>/images/`。方針は [image-cards-plan.md](image-cards-plan.md)、実際に使った依頼プロンプト全文は [image-generation-prompts-archive.md](image-generation-prompts-archive.md)）。CPA教材から追加した211枚には未着手。追加14枚分の依頼プロンプトは [image-generation-prompts-additional.md](image-generation-prompts-additional.md) にあるが、実際にGemini 3.6 Flashで生成した29枚(既存15+追加14)を目視確認したところ20枚に品質問題(他テーマの図・数値の混入、計算矛盾など)が見つかったため、混入防止策を追記した再生成用プロンプトを [image-regeneration-prompts.md](image-regeneration-prompts.md) に用意している
 - すべて `localStorage` に保存。サーバー・APIキーなし
 
 ## ファイル構成

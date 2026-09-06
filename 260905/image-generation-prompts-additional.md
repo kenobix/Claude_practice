@@ -1,5 +1,7 @@
 # 追加の画像生成プロンプト集(簿記2級・未着手分)
 
+> **⚠️ 更新情報**: このプロンプト集を使ってGemini 3.6 Flashで実際に生成したところ、14枚中13枚(`assekiritono-flow.png`以外すべて)で、他テーマの図・数値がそのまま混入する/計算が矛盾するなどの品質問題が確認された。該当13枚については、混入防止・数値検算の指示を追記した修正版プロンプトを [image-regeneration-prompts.md](image-regeneration-prompts.md) に用意しているので、再生成する場合はそちらを使うこと。以下のプロンプト本文は最初の生成時の記録として残す。
+
 既存32枚([image-cards-plan.md](image-cards-plan.md) の管理表、実際の依頼文は [image-generation-prompts-archive.md](image-generation-prompts-archive.md))ではカバーされていない、簿記2級カードセットの構造・比較・階層・フロー系トピック14件について、コピー&ペーストしてそのまま生成AIに渡せるプロンプトをまとめたもの。
 
 - デザイン方針・命名規則・データ構造(`image`/`imageAlt`フィールド)は [image-cards-plan.md](image-cards-plan.md) と共通。生成後はそのまま`sets/bookkeeping-2kyu/images/`に配置し、対応するカードのJSONに`image`/`imageAlt`を追記すれば反映される(コード側の実装は既に対応済みで追加作業不要)。
