@@ -10,7 +10,7 @@
 - 「データベーススペシャリスト試験」「簿記2級」の2セット（各50〜70枚、単元ごとに分類）を最初から同梱。ヘッダーの「学習セット」でダッシュボード・復習・カード一覧のすべてを特定のセット（または自分で追加したカードだけ）に絞り込める
 - ダッシュボードのヒーロー要素として、選択中のカードそれぞれの忘却曲線（薄い線）と全体の平均忘却曲線（太いアクセント線）を1枚のSVGチャートに重ねて表示。「今」を境に、過去の実績と将来の予測がひと続きの曲線として見える
 - 復習のたびに「もう一度 / 難しい / 普通 / 簡単」の4段階で自己評価し、評価に応じて次の復習日を自動計算。復習画面はクリックの他に**キーボード操作**（Space/Enterで裏返す、1〜4キーで評価）にも対応し、直前の評価は「元に戻す」で取り消せる
-- カード裏面には任意で図解画像を添付できる（`image`/`imageAlt`フィールド、複数カードで1枚の図を共有可能）。同梱データには方針とプロンプト例のみ整理済みで、画像本体は未生成（詳細は [image-cards-plan.md](image-cards-plan.md)）
+- カード裏面には図解画像を添付できる（`image`/`imageAlt`フィールド、複数カードで1枚の図を共有）。同梱2セット・計141枚のうち111枚に、生成AI(Gemini)で作成した図解32枚を割り当て済み（`sets/<id>/images/`。方針とプロンプト全文は [image-cards-plan.md](image-cards-plan.md)）
 - すべて `localStorage` に保存。サーバー・APIキーなし
 
 ## ファイル構成
@@ -42,10 +42,12 @@
       normalization.json               … 単元ごとのカード(unit名+cards配列)
       sql.json / transaction.json / index-performance.json /
       backup-recovery.json / distributed-nosql.json
+      images/                                … カード裏面の図解画像(17枚)
     bookkeeping-2kyu/
       meta.json
       shiwake-basics.json / kessan-zaimu-shohyo.json / tokushu-ronten.json /
       genka-kiso.json / kobetsu-sogo-genka.json / hyojun-chokusetsu-cvp.json
+      images/                                … カード裏面の図解画像(15枚)
 ```
 
 `sets/`はリポジトリ全体の`.gitignore`にある`**/data/`パターンを避けるため、あえて`data/sets/`ではなく`sets/`という名前にしている。
@@ -180,3 +182,4 @@ python3 -m http.server 8905
 - ダッシュボードのグラフがカードの状態を反映し、ホバーでクロスヘア＋ツールチップが出ること。「表で見る」から表ビューに切り替えられること
 - ページをリロードしても`localStorage`からカード・復習履歴が復元されること
 - モバイル幅（375px程度）でもレイアウトが崩れないこと
+- 復習セッションでカードを裏返すと、`image`が設定されたカードは図解画像が表示され、`imageAlt`がalt属性に入っていること。画像ファイルが無いカードはエラーにならずテキストのみで表示されること（Playwrightで全32種の画像読み込みを確認済み、`js/utils.js`の`imagePathFor`が組み立てるパスは`sets/<setId>/images/<image>`）
