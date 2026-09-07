@@ -3,9 +3,11 @@
 // AI生成画像(png)を置き換える構造図はここに追加していく。
 import { NS } from "./helpers.js";
 import { bookkeepingBasicsDiagrams } from "./bookkeeping-basics.js";
+import { costAccountingCoreDiagrams } from "./cost-accounting-core.js";
 
 const REGISTRY = {
   ...bookkeepingBasicsDiagrams,
+  ...costAccountingCoreDiagrams,
 };
 
 export const DIAGRAM_KEYS = Object.keys(REGISTRY);

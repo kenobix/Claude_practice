@@ -22,19 +22,19 @@
     {
       "front": "精算表の構成は？",
       "back": "試算表欄・修正記入欄・損益計算書欄・貸借対照表欄からなる、決算手続きを一覧化した表。",
-      "image": "financial-statements-structure.png",
+      "diagram": "financial-statements-structure",
       "imageAlt": "貸借対照表(資産・負債・純資産)と損益計算書(収益・費用)の構造、精算表がその橋渡しをする関係を示した図"
     },
     {
       "front": "貸借対照表(B/S)を構成する3要素は？",
       "back": "資産・負債・純資産。",
-      "image": "financial-statements-structure.png",
+      "diagram": "financial-statements-structure",
       "imageAlt": "貸借対照表(資産・負債・純資産)と損益計算書(収益・費用)の構造、精算表がその橋渡しをする関係を示した図"
     },
     {
       "front": "損益計算書(P/L)を構成する2要素は？",
       "back": "収益と費用。",
-      "image": "financial-statements-structure.png",
+      "diagram": "financial-statements-structure",
       "imageAlt": "貸借対照表(資産・負債・純資産)と損益計算書(収益・費用)の構造、精算表がその橋渡しをする関係を示した図"
     },
     {

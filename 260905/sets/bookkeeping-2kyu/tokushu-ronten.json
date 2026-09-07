@@ -4,13 +4,13 @@
     {
       "front": "手形の裏書譲渡とは？",
       "back": "所持している約束手形を、代金の決済のために第三者へ譲渡すること。",
-      "image": "tegata-flow-diagram.png",
+      "diagram": "tegata-flow-diagram",
       "imageAlt": "約束手形の振り出しから裏書譲渡・割引までの流れと、関係する当事者を示した図"
     },
     {
       "front": "手形の割引とは？",
       "back": "満期日前の手形を金融機関に譲渡して資金化する取引で、満期日までの利息相当分(割引料)が差し引かれた金額を受け取る。",
-      "image": "tegata-flow-diagram.png",
+      "diagram": "tegata-flow-diagram",
       "imageAlt": "約束手形の振り出しから裏書譲渡・割引までの流れと、関係する当事者を示した図"
     },
     {

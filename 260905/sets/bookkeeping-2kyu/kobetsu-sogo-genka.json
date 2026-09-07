@@ -16,7 +16,7 @@
     {
       "front": "総合原価計算で月末仕掛品原価の評価に用いる代表的な方法は？",
       "back": "先入先出法と平均法。",
-      "image": "wip-valuation-spoilage.png",
+      "diagram": "wip-valuation-spoilage",
       "imageAlt": "平均法と先入先出法による月末仕掛品の評価計算の違いと、仕損・減損の位置づけを示した図"
     },
     {
@@ -40,13 +40,13 @@
     {
       "front": "総合原価計算における「仕損」と「減損」の違いは？",
       "back": "仕損は不良品などの形で残るもの、減損は蒸発・粉散などにより原価投入後に形をとどめず消滅してしまうもの。",
-      "image": "wip-valuation-spoilage.png",
+      "diagram": "wip-valuation-spoilage",
       "imageAlt": "平均法と先入先出法による月末仕掛品の評価計算の違いと、仕損・減損の位置づけを示した図"
     },
     {
       "front": "仕損・減損の処理方法である「度外視法」とは？",
       "back": "仕損費・減損費を分離計算せず、完成品や月末仕掛品の原価の中に自動的に含めて処理する方法。",
-      "image": "wip-valuation-spoilage.png",
+      "diagram": "wip-valuation-spoilage",
       "imageAlt": "平均法と先入先出法による月末仕掛品の評価計算の違いと、仕損・減損の位置づけを示した図"
     },
     {
@@ -66,7 +66,7 @@
     {
       "front": "総合原価計算で、加工費について仕掛品の完成度合いを数量に置き換えたものを何という？",
       "back": "完成品換算量。加工進捗度を数量に反映させ、加工費の配分計算に用いる。",
-      "image": "wip-valuation-spoilage.png",
+      "diagram": "wip-valuation-spoilage",
       "imageAlt": "平均法と先入先出法による月末仕掛品の評価計算の違いと、仕損・減損の位置づけを示した図"
     }
   ]

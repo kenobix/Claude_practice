@@ -37,10 +37,10 @@ SVGをコードで直接記述する——に切り替える。数値・ラベ�
 
 1. **Phase 1(基盤、完了)**: スキーマ配線、`helpers.js`、QAハーネス、
    お手本として`bookkeeping-cycle-diagram`を実装・配線・実機確認。
-2. **Phase 2(パイロット、未着手)**: 本番稼働中で実害のある残り6枚
+2. **Phase 2(パイロット、完了)**: 本番稼働中で実害のある残り6枚
    (`double-entry-basics`, `financial-statements-structure`,
    `tegata-flow-diagram`, `wip-valuation-spoilage`, `cost-variance-analysis`,
-   `cvp-breakeven-chart`)をサブエージェント2並列で実装。
+   `cvp-breakeven-chart`)をサブエージェント2並列で実装・目視QA・配線・実機確認済み。
 3. **Phase 3(展開、未着手)**: 未配線13枚を新規配線としてサブエージェント3並列で実装。
 4. **Phase 4(先送り)**: 残り9枚はPNGのまま維持(下表)。
 
@@ -51,12 +51,12 @@ SVGをコードで直接記述する——に切り替える。数値・ラベ�
 | 旧PNG | 新diagramキー | ステータス |
 |---|---|---|
 | `bookkeeping-cycle-diagram.png` | `bookkeeping-cycle-diagram` | ✅ 完了(お手本・配線済み) |
-| `double-entry-basics.png` | `double-entry-basics` | 未着手(Phase 2) |
-| `financial-statements-structure.png` | `financial-statements-structure` | 未着手(Phase 2) |
-| `tegata-flow-diagram.png` | `tegata-flow-diagram` | 未着手(Phase 2) |
-| `wip-valuation-spoilage.png` | `wip-valuation-spoilage` | 未着手(Phase 2) |
-| `cost-variance-analysis.png` | `cost-variance-analysis` | 未着手(Phase 2) |
-| `cvp-breakeven-chart.png` | `cvp-breakeven-chart` | 未着手(Phase 2) |
+| `double-entry-basics.png` | `double-entry-basics` | ✅ 完了(Phase 2) |
+| `financial-statements-structure.png` | `financial-statements-structure` | ✅ 完了(Phase 2) |
+| `tegata-flow-diagram.png` | `tegata-flow-diagram` | ✅ 完了(Phase 2) |
+| `wip-valuation-spoilage.png` | `wip-valuation-spoilage` | ✅ 完了(Phase 2) |
+| `cost-variance-analysis.png` | `cost-variance-analysis` | ✅ 完了(Phase 2) |
+| `cvp-breakeven-chart.png` | `cvp-breakeven-chart` | ✅ 完了(Phase 2) |
 | `bank-reconciliation-diagram.png`(未配線) | `bank-reconciliation-diagram` | 未着手(Phase 3) |
 | `other-securities-valuation.png`(未配線) | `other-securities-valuation` | 未着手(Phase 3) |
 | `depreciation-methods-compare.png`(未配線) | `depreciation-methods-compare` | 未着手(Phase 3) |
@@ -93,3 +93,24 @@ SVGをコードで直接記述する——に切り替える。数値・ラベ�
   ともに仕様通り。さらにPlaywrightで実アプリの復習画面を自動操作し、対象2カード
   (「仕訳帳と総勘定元帳の役割の違いは？」「三伝票制で使われる3種類の伝票は？」)
   を裏返してSVGが正しく表示されること、コンソールエラーがないことを確認済み。
+
+## Phase 2 の実装・QA記録
+
+- サブエージェント2並列で実装: P2-A(`js/diagrams/bookkeeping-basics.js`に3図追加)、
+  P2-B(新規`js/diagrams/cost-accounting-core.js`に3図、うち`cvp-breakeven-chart`は
+  T-account/box型ではなく`chart.js`と同じ生の`createElementNS`による折れ線グラフ)。
+- 目視QAで2件のレイアウト不具合を発見・修正:
+  - `tegata-flow-diagram`: 右下の金額キャプションがSVGのviewBox右端(幅640)を
+    はみ出して末尾の文字が欠けていた → 右側ボックス群の位置を左に寄せ、
+    キャプションのtext-anchorを`end`に変更して解消。
+  - `cvp-breakeven-chart`: X軸タイトル「売上高(円)」と下部の「安全余裕」注記が
+    ほぼ同じy座標に重なって表示されていた → 下部の余白(pad.bottom)を広げ、
+    「目盛り→軸タイトル→安全余裕の矢印→安全余裕の注記」の4段が重ならない
+    y座標になるよう再計算。
+- 修正後、6図すべてを再スクリーンショットして目視確認、さらにPlaywrightで実アプリの
+  復習画面を自動操作(バッチサイズを「すべて」にして復習キューを全走査)し、
+  対象6カードすべてで`has-graphic`クラス・SVG描画・横方向オーバーフローなしを確認、
+  コンソールエラーなし。
+- 該当6枚の旧PNGは`git rm`で削除、カードJSON(`shiwake-basics.json`,
+  `kessan-zaimu-shohyo.json`, `tokushu-ronten.json`, `kobetsu-sogo-genka.json`,
+  `hyojun-chokusetsu-cvp.json`)の`image`フィールドを`diagram`に置換済み。

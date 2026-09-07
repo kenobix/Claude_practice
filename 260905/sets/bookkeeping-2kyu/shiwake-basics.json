@@ -4,7 +4,7 @@
     {
       "front": "複式簿記の基本原則は？",
       "back": "すべての取引を「借方」と「貸方」の両面から記録し、常に貸借の金額を一致させる。",
-      "image": "double-entry-basics.png",
+      "diagram": "double-entry-basics",
       "imageAlt": "T字勘定(借方・貸方)の構造と、複式簿記で貸借が常に一致する仕組みを示した図"
     },
     {
@@ -26,7 +26,7 @@
     {
       "front": "商品売買を「三分法」で記帳する場合に用いる3つの勘定は？",
       "back": "仕入・売上・繰越商品の3勘定。",
-      "image": "double-entry-basics.png",
+      "diagram": "double-entry-basics",
       "imageAlt": "T字勘定(借方・貸方)の構造と、複式簿記で貸借が常に一致する仕組みを示した図"
     },
     {
