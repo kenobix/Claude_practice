@@ -4,10 +4,16 @@
 import { NS } from "./helpers.js";
 import { bookkeepingBasicsDiagrams } from "./bookkeeping-basics.js";
 import { costAccountingCoreDiagrams } from "./cost-accounting-core.js";
+import { assetsValuationDiagrams } from "./assets-valuation.js";
+import { consolidationDiagrams } from "./consolidation.js";
+import { costAccountingMethodsDiagrams } from "./cost-accounting-methods.js";
 
 const REGISTRY = {
   ...bookkeepingBasicsDiagrams,
   ...costAccountingCoreDiagrams,
+  ...assetsValuationDiagrams,
+  ...consolidationDiagrams,
+  ...costAccountingMethodsDiagrams,
 };
 
 export const DIAGRAM_KEYS = Object.keys(REGISTRY);

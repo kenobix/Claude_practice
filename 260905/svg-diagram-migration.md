@@ -41,7 +41,7 @@ SVGをコードで直接記述する——に切り替える。数値・ラベ�
    (`double-entry-basics`, `financial-statements-structure`,
    `tegata-flow-diagram`, `wip-valuation-spoilage`, `cost-variance-analysis`,
    `cvp-breakeven-chart`)をサブエージェント2並列で実装・目視QA・配線・実機確認済み。
-3. **Phase 3(展開、未着手)**: 未配線13枚を新規配線としてサブエージェント3並列で実装。
+3. **Phase 3(展開、完了)**: 未配線13枚を新規配線としてサブエージェント3並列で実装・目視QA・配線・実機確認済み。
 4. **Phase 4(先送り)**: 残り9枚はPNGのまま維持(下表)。
 
 ## 移行状況
@@ -57,19 +57,21 @@ SVGをコードで直接記述する——に切り替える。数値・ラベ�
 | `wip-valuation-spoilage.png` | `wip-valuation-spoilage` | ✅ 完了(Phase 2) |
 | `cost-variance-analysis.png` | `cost-variance-analysis` | ✅ 完了(Phase 2) |
 | `cvp-breakeven-chart.png` | `cvp-breakeven-chart` | ✅ 完了(Phase 2) |
-| `bank-reconciliation-diagram.png`(未配線) | `bank-reconciliation-diagram` | 未着手(Phase 3) |
-| `other-securities-valuation.png`(未配線) | `other-securities-valuation` | 未着手(Phase 3) |
-| `depreciation-methods-compare.png`(未配線) | `depreciation-methods-compare` | 未着手(Phase 3) |
-| `lease-classification-compare.png`(未配線) | `lease-classification-compare` | 未着手(Phase 3) |
-| `merger-goodwill-structure.png`(未配線) | `merger-goodwill-structure` | 未着手(Phase 3) |
-| `capital-consolidation-timetable.png`(未配線) | `capital-consolidation-timetable` | 未着手(Phase 3) |
-| `downstream-upstream-compare.png`(未配線) | `downstream-upstream-compare` | 未着手(Phase 3) |
-| `manufacturing-overhead-variance.png`(未配線) | `manufacturing-overhead-variance` | 未着手(Phase 3) |
-| `absorption-vs-direct-costing.png`(未配線) | `absorption-vs-direct-costing` | 未着手(Phase 3) |
-| `high-low-point-method.png`(未配線) | `high-low-point-method` | 未着手(Phase 3) |
-| `standard-operating-volume-types.png`(未配線) | `standard-operating-volume-types` | 未着手(Phase 3) |
-| `grade-costing-equivalence.png`(未配線) | `grade-costing-equivalence` | 未着手(Phase 3) |
-| `process-costing-carryover.png`(未配線) | `process-costing-carryover` | 未着手(Phase 3) |
+| ~~`bank-reconciliation-diagram.png`~~(旧・未配線) | `bank-reconciliation-diagram` | ✅ 完了(Phase 3、新規配線) |
+| ~~`other-securities-valuation.png`~~(旧・未配線) | `other-securities-valuation` | ✅ 完了(Phase 3、新規配線) |
+| ~~`depreciation-methods-compare.png`~~(旧・未配線) | `depreciation-methods-compare` | ✅ 完了(Phase 3、新規配線) |
+| ~~`lease-classification-compare.png`~~(旧・未配線) | `lease-classification-compare` | ✅ 完了(Phase 3、新規配線) |
+| ~~`merger-goodwill-structure.png`~~(旧・未配線) | `merger-goodwill-structure` | ✅ 完了(Phase 3、新規配線) |
+| ~~`capital-consolidation-timetable.png`~~(旧・未配線) | `capital-consolidation-timetable` | ✅ 完了(Phase 3、新規配線) |
+| ~~`downstream-upstream-compare.png`~~(旧・未配線) | `downstream-upstream-compare` | ✅ 完了(Phase 3、新規配線) |
+| ~~`manufacturing-overhead-variance.png`~~(旧・未配線) | `manufacturing-overhead-variance` | ✅ 完了(Phase 3、新規配線) |
+| ~~`absorption-vs-direct-costing.png`~~(旧・未配線) | `absorption-vs-direct-costing` | ✅ 完了(Phase 3、新規配線) |
+| ~~`high-low-point-method.png`~~(旧・未配線) | `high-low-point-method` | ✅ 完了(Phase 3、新規配線) |
+| ~~`standard-operating-volume-types.png`~~(旧・未配線) | `standard-operating-volume-types` | ✅ 完了(Phase 3、新規配線) |
+| ~~`grade-costing-equivalence.png`~~(旧・未配線) | `grade-costing-equivalence` | ✅ 完了(Phase 3、新規配線) |
+| ~~`process-costing-carryover.png`~~(旧・未配線) | `process-costing-carryover` | ✅ 完了(Phase 3、新規配線) |
+
+**Phase 1〜3で対象20枚すべて完了。** 移行対象の旧PNGはすべて削除済み(本番稼働中だった7枚は`git rm`、未配線だった13枚は未追跡ファイルのため`rm`)。
 
 ### 先送り9枚(PNGのまま維持)
 
@@ -114,3 +116,30 @@ SVGをコードで直接記述する——に切り替える。数値・ラベ�
 - 該当6枚の旧PNGは`git rm`で削除、カードJSON(`shiwake-basics.json`,
   `kessan-zaimu-shohyo.json`, `tokushu-ronten.json`, `kobetsu-sogo-genka.json`,
   `hyojun-chokusetsu-cvp.json`)の`image`フィールドを`diagram`に置換済み。
+
+## Phase 3 の実装・QA記録
+
+- サブエージェント3並列で実装: P3-A(新規`js/diagrams/assets-valuation.js`、4図:
+  銀行勘定調整表・その他有価証券評価・減価償却比較・リース判定比較)、P3-B(新規
+  `js/diagrams/consolidation.js`、3図: 合併のれん構造・資本連結タイムテーブル・
+  ダウン/アップストリーム比較)、P3-C(新規`js/diagrams/cost-accounting-methods.js`、
+  6図: 製造間接費配賦差異・全部/直接原価計算比較・高低点法・基準操業度4種・
+  等級別原価計算・工程別原価計算)。
+- 目視QAで1件のレイアウト不具合を発見・修正:
+  - `manufacturing-overhead-variance`(シュラッター図): 実際操業度が基準操業度に
+    近すぎたため、右端の線ラベル(予定配賦額線・予算許容額線)・基準操業度の目盛り・
+    実際操業度における3点の差異ブラケット注記が右上の狭い領域に密集して文字が
+    重なり判読不能になっていた → ①実際操業度の例示値を基準操業度からより離して
+    横方向のクラスタを解消、②3点が近接するため図中に置けなかった差異の数値注記を
+    プロット内のインライン表示からグラフ下部のキャプション2行にまとめ直して解消。
+- 修正後、13図すべてを再スクリーンショットして目視確認。数値の整合性(表とグラフの
+  数値が一致するか、合計が構成要素の和と一致するかなど)も個別に検算して確認。
+  さらにPlaywrightで実アプリの復習画面を自動操作し、新規配線した13カードすべてで
+  `has-graphic`クラス・SVG描画・横方向オーバーフローなしを確認、コンソールエラーなし。
+- 対応する未配線PNG13枚(未追跡ファイル)は`rm`で削除、カードJSON
+  (`genkin-tegata-yukashoken-zanron.json`, `yukei-mukei-shisan-lease.json`,
+  `kogyo-mikakunin-hyojun-cvp.json`, `hikiatekin-kabushiki-gappei.json`,
+  `honshiten-renketsu-zanron.json`, `seizo-kansetsuhi-sogo-genka-kessan-zanron.json`,
+  `kogyo-mikakunin-genka.json`)の該当カードに`diagram`/`imageAlt`を新規追加。
+- レジストリ整合性: `js/diagrams/index.js`の`DIAGRAM_KEYS`(20件)と、カードJSON全体で
+  実際に使われている`diagram`値(20件)が完全一致することをgrepで確認済み。
