@@ -1,0 +1,12 @@
+{
+  "id": "az-900",
+  "name": "AZ-900: Microsoft Azure Fundamentals",
+  "units": [
+    "cloud-concepts.json",
+    "core-architecture.json",
+    "compute-networking.json",
+    "storage.json",
+    "identity-security.json",
+    "management-governance.json"
+  ]
+}
