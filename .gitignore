@@ -4,6 +4,7 @@ __pycache__/
 *.pt
 **/data/
 260905/sets/bookkeeping-2kyu/text/
+260905/tools/qa-output/
 node_modules/
 artifacts/
 cache/

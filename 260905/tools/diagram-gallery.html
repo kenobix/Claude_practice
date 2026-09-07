@@ -1,0 +1,54 @@
+<!doctype html>
+<!--
+  開発用フィクスチャページ(index.htmlからはリンクしない)。
+  js/diagrams/ 配下のビルダー関数を目視・スクリーンショットで確認するためだけの
+  ものなので、`node tools/screenshot-diagrams.mjs` 以外の場所からは使わない想定。
+
+  使い方: 260905/ で `python3 -m http.server 8905` を起動し、
+  http://localhost:8905/tools/diagram-gallery.html?only=key1,key2 を開く
+  (?onlyを省略すると登録済み全図を並べて表示する)。
+-->
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>diagram gallery</title>
+<link rel="stylesheet" href="../css/tokens.css">
+<style>
+  body { padding: 24px; }
+  section { margin-bottom: 32px; }
+  h2 { font: 600 14px var(--font-sans); color: var(--ink-secondary); }
+  .cell {
+    width: 640px;
+    max-width: 100%;
+    border: 1px solid var(--hairline);
+    background: var(--accent-wash);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .cell svg { display: block; width: 100%; height: auto; }
+  .cell text { font-family: var(--font-sans); }
+</style>
+</head>
+<body>
+<script type="module">
+  import { buildDiagram, DIAGRAM_KEYS } from "../js/diagrams/index.js";
+
+  const params = new URLSearchParams(location.search);
+  const only = params.get("only");
+  const keys = only ? only.split(",").map((s) => s.trim()).filter(Boolean) : DIAGRAM_KEYS;
+
+  keys.forEach((key) => {
+    const section = document.createElement("section");
+    section.id = `diagram-${key}`;
+    const h2 = document.createElement("h2");
+    h2.textContent = key;
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    section.appendChild(h2);
+    section.appendChild(cell);
+    document.body.appendChild(section);
+    buildDiagram(key, cell, key);
+  });
+</script>
+</body>
+</html>

@@ -27,7 +27,7 @@ export function renderDeck() {
     const r = retentionAt(card, now);
     const setName = setNameFor(card.setId, cardSets);
     const sourceLabel = [setName, card.unit].filter(Boolean).join(" / ") || "自分で追加したカード";
-    const imageBadge = card.image ? `<span class="card-row-image-badge">図あり</span>` : "";
+    const imageBadge = (card.image || card.diagram) ? `<span class="card-row-image-badge">図あり</span>` : "";
     const li = document.createElement("li");
     li.className = "card-row";
     li.innerHTML = `

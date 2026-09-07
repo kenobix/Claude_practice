@@ -10,13 +10,13 @@
     {
       "front": "仕訳帳と総勘定元帳の役割の違いは？",
       "back": "仕訳帳は取引を発生順に借方・貸方に分けて記録する帳簿、総勘定元帳は各勘定科目ごとに金額を集計する帳簿。",
-      "image": "bookkeeping-cycle-diagram.png",
+      "diagram": "bookkeeping-cycle-diagram",
       "imageAlt": "取引から伝票・仕訳帳・総勘定元帳へと記録が流れる帳簿組織の全体像と、三伝票制の流れを示した図"
     },
     {
       "front": "三伝票制で使われる3種類の伝票は？",
       "back": "入金伝票・出金伝票・振替伝票。",
-      "image": "bookkeeping-cycle-diagram.png",
+      "diagram": "bookkeeping-cycle-diagram",
       "imageAlt": "取引から伝票・仕訳帳・総勘定元帳へと記録が流れる帳簿組織の全体像と、三伝票制の流れを示した図"
     },
     {

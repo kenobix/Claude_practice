@@ -12,7 +12,7 @@
 - ダッシュボードのヒーロー要素として、選択中のカードそれぞれの忘却曲線（薄い線）と全体の平均忘却曲線（太いアクセント線）を1枚のSVGチャートに重ねて表示。「今」を境に、過去の実績と将来の予測がひと続きの曲線として見える
 - 復習のたびに「もう一度 / 難しい / 普通 / 簡単」の4段階で自己評価し、評価に応じて次の復習日を自動計算。復習画面はクリックの他に**キーボード操作**（Space/Enterで裏返す、1〜4キーで評価）にも対応し、直前の評価は「元に戻す」で取り消せる
 - 復習待ちが多くても一度に全部出題せず、**5〜20枚（既定10枚）のセット単位**で区切って復習できる。1セット終えると「次のセットに進む」で続きに進めるか、そこで切り上げてダッシュボードに戻れる。セット枚数は`localStorage`に保存され次回以降も引き継がれる
-- カード裏面には図解画像を添付できる（`image`/`imageAlt`フィールド、複数カードで1枚の図を共有）。同梱2セット・計352枚のうち111枚に、生成AI(Gemini)で作成した図解32枚を割り当て済み（`sets/<id>/images/`。方針は [image-cards-plan.md](image-cards-plan.md)、実際に使った依頼プロンプト全文は [image-generation-prompts-archive.md](image-generation-prompts-archive.md)）。CPA教材から追加した211枚には未着手。追加14枚分の依頼プロンプトは [image-generation-prompts-additional.md](image-generation-prompts-additional.md) にあるが、実際にGemini 3.6 Flashで生成した29枚(既存15+追加14)を目視確認したところ20枚に品質問題(他テーマの図・数値の混入、計算矛盾など)が見つかったため、混入防止策を追記した再生成用プロンプトを [image-regeneration-prompts.md](image-regeneration-prompts.md) に用意している
+- カード裏面には図解を添付できる（`image`/`imageAlt`フィールド、複数カードで1枚の図を共有）。同梱2セット・計352枚のうち111枚に図解を割り当て済み（方針は [image-cards-plan.md](image-cards-plan.md)）。データベーススペシャリスト17枚は生成AI(Gemini)で作成した画像（`sets/database-specialist/images/`）。簿記2級29枚(既存15+追加14)は当初Geminiで生成したが目視QAで20枚に品質問題(他テーマの図・数値の混入、計算矛盾など)が見つかり、これはテキスト画像生成が精密な技術図を苦手とする構造的な限界だと判断したため、数値・矢印関係が重要な構造図はAI画像生成をやめて`js/diagrams/`配下の自作インラインSVG（`card.diagram`フィールド、`js/chart.js`の忘却曲線グラフと同じ`createElementNS`方式）へ移行中。経緯・進捗は [svg-diagram-migration.md](svg-diagram-migration.md)、過去に使ったAI画像生成プロンプト集は参照用として [archive/](archive/) に保管。CPA教材から追加した211枚の図解は未着手
 - すべて `localStorage` に保存。サーバー・APIキーなし
 
 ## ファイル構成
@@ -37,6 +37,14 @@
     review.js           … 復習セッション画面(キーボード操作・元に戻す含む)
     deck.js               … カード一覧・追加・セット読み込み画面
     main.js              … エントリーポイント(各モジュールの初期化と画面切り替え)
+    diagrams/             … カード裏面の図解を自作SVGで描画するビルダー群(詳細はsvg-diagram-migration.md)
+      helpers.js            共通SVGプリミティブ(箱・矢印・T字勘定・表など)
+      index.js               レジストリ+ディスパッチャ(review.jsが呼ぶ)
+      bookkeeping-basics.js  トピック別ビルダー(今後トピックごとに追加)
+  tools/
+    diagram-gallery.html         … js/diagrams/のビルダーを並べて表示する開発用フィクスチャ
+    screenshot-diagrams.mjs   … 上記をヘッドレスChromiumでPNG化するQAスクリプト
+  archive/                            … 過去に使ったAI画像生成プロンプト集(参照用、詳細はarchive/README.md)
   sets/
     manifest.json                       … 読み込むセット(ディレクトリ)の一覧
     database-specialist/
@@ -187,4 +195,5 @@ python3 -m http.server 8905
 - ページをリロードしても`localStorage`からカード・復習履歴が復元されること
 - モバイル幅（375px程度）でもレイアウトが崩れないこと
 - 復習セッションでカードを裏返すと、`image`が設定されたカードは図解画像が表示され、`imageAlt`がalt属性に入っていること。画像ファイルが無いカードはエラーにならずテキストのみで表示されること（Playwrightで全32種の画像読み込みを確認済み、`js/utils.js`の`imagePathFor`が組み立てるパスは`sets/<setId>/images/<image>`）
+- `diagram`が設定されたカードは`js/diagrams/`の自作SVGが表示され、`<title>`に`imageAlt`が入ること。`tools/screenshot-diagrams.mjs`でのヘッドレスQAに加え、Playwrightで実際に復習画面を裏返してコンソールエラーがないことを確認済み(移行状況は[svg-diagram-migration.md](svg-diagram-migration.md))
 - 復習待ちが「1セットの枚数」より多いとき、指定した枚数（既定10枚）でセッションが区切られ、進捗表示に「(全N枚中)」と出ること。1セット終えると「次のセットに進む」で続きが出題され、残り0枚になると通常の完了表示に切り替わること。「1セットの枚数」を変更すると次回のセッションから反映され、リロード後も設定が保持されること

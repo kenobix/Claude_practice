@@ -1,6 +1,7 @@
 import { getCards, getDueCards, scheduleReview, overwriteCardScheduling } from "./store.js";
 import { previewIntervalDays } from "./srs.js";
 import { imagePathFor } from "./utils.js";
+import { buildDiagram, hasDiagram } from "./diagrams/index.js";
 import { REVIEW_BATCH_SIZE_KEY, DEFAULT_REVIEW_BATCH_SIZE } from "./config.js";
 
 let reviewQueue = [];
@@ -83,15 +84,28 @@ function renderReviewCurrent() {
 
   const imageSrc = imagePathFor(card);
   const img = flashcard.querySelector(".flashcard-image");
-  flashcard.classList.toggle("has-image", Boolean(imageSrc));
-  if (imageSrc) {
-    img.onerror = () => { img.hidden = true; flashcard.classList.remove("has-image"); };
+  const diagramEl = flashcard.querySelector(".flashcard-diagram");
+
+  if (card.diagram && hasDiagram(card.diagram)) {
+    flashcard.classList.add("has-graphic");
+    img.hidden = true;
+    img.removeAttribute("src");
+    diagramEl.hidden = false;
+    buildDiagram(card.diagram, diagramEl, card.imageAlt || "");
+  } else if (imageSrc) {
+    flashcard.classList.add("has-graphic");
+    diagramEl.hidden = true;
+    diagramEl.innerHTML = "";
+    img.onerror = () => { img.hidden = true; flashcard.classList.remove("has-graphic"); };
     img.alt = card.imageAlt || "";
     img.src = imageSrc;
     img.hidden = false;
   } else {
+    flashcard.classList.remove("has-graphic");
     img.hidden = true;
     img.removeAttribute("src");
+    diagramEl.hidden = true;
+    diagramEl.innerHTML = "";
   }
 
   document.getElementById("rating-buttons").hidden = true;

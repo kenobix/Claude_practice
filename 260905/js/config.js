@@ -19,9 +19,12 @@ export const COLORS = {
   hairline: cssVar("--hairline"),
   baseline: cssVar("--baseline"),
   inkFaded: cssVar("--ink-faded"),
+  inkFadedMid: cssVar("--ink-faded-mid"),
   inkMuted: cssVar("--ink-muted"),
+  inkSecondary: cssVar("--ink-secondary"),
   inkStrong: cssVar("--ink-strong"),
   accent: cssVar("--accent"),
+  accentDeep: cssVar("--accent-deep"),
   accentWash: cssVar("--accent-wash"),
   surfaceRaised: cssVar("--surface-raised"),
 };
