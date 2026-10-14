@@ -1,7 +1,7 @@
 # Codex移行・リポジトリ運用計画
 
 - **作成日:** 2026-10-14
-- **文書の用途:** 確定した移行方針と実施手順
+- **文書の用途:** 確定した移行方針・実施手順・実施記録
 - **対象:** `kenobix/Claude_practice` とローカル作業ディレクトリ `/home/kenshin/work/claude_practice`
 
 この文書は、Claude Code中心で運用してきた既存リポジトリを、今後Codexでも継続して使うための実施計画です。リポジトリ名の変更、新規リポジトリへの移動、GitHub PagesのURL変更は今回の計画に含めません。
@@ -206,3 +206,72 @@ GitHubのリポジトリ画面にあるAbout欄の説明も、Claude Codeだけ�
 - [OpenAI Codex Prompting Guide: AGENTS.mdの読み込み](https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide)
 - [Claude Code Docs: CLAUDE.mdとAGENTS.md、`@`インポート](https://code.claude.com/docs/en/memory)
 - [GitHub Docs: リポジトリ名の変更](https://docs.github.com/en/repositories/creating-and-managing-repositories/renaming-a-repository)
+
+## 10. 2026-10-14 実施記録: GitHub認証からPages公開まで
+
+この節は、移行方針をリポジトリへ反映し、GitHub認証・push・GitHub Pagesの公開確認を行った記録です。認証トークン、SSH秘密鍵、デバイス認証コードは記録しません。
+
+### 10.1 SSH認証とリモート設定
+
+WSLからGitHubへ接続できることを、専用のSSH鍵を指定して確認しました。
+
+```bash
+ssh -i ~/.ssh/id_ed25519_github_kenobix -T git@github.com
+```
+
+GitHubから`Hi kenobix! You've successfully authenticated`と返り、SSH認証が成功しました。初回接続時にGitHubのホスト鍵を確認して`known_hosts`へ登録しました。
+
+このリポジトリでは次の設定を行いました。
+
+```bash
+git config core.sshCommand "ssh -i ~/.ssh/id_ed25519_github_kenobix -o IdentitiesOnly=yes"
+git remote set-url origin git@github.com:kenobix/Claude_practice.git
+```
+
+以後の`git push`はこのSSHリモートを使用します。
+
+### 10.2 GitHub CLIの導入と認証
+
+Actionsの状態確認と再実行に使うGitHub CLI（`gh`）が未導入だったため、Ubuntuの標準パッケージではなく、GitHub CLI公式APTリポジトリから導入しました。導入時のバージョンは`2.102.0`です。
+
+```bash
+type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+sudo apt update
+sudo apt install gh -y
+```
+
+WSL内にブラウザーがなく`xdg-open`で認証画面を開けなかったため、`gh auth login --hostname github.com --web`で表示されたURLをWindows側のブラウザーで開き、デバイス認証を完了しました。SSHプロトコルを選び、すでにGitHubへ登録済みの公開鍵は再アップロードせず`Skip`を選択しました。`gh auth status`でアカウント`kenobix`のログインを確認しました。
+
+### 10.3 移行内容の初回pushとActions実行 #161
+
+移行内容をコミット`6383877`（`Codex運用に向けてリポジトリ指示を整備`）として`origin/main`へpushしました。これにより、`AGENTS.md`、`CLAUDE.md`、README、Pagesトップ、ホスティング方針書などを公開しました。
+
+GitHub Actionsの実行[#161](https://github.com/kenobix/Claude_practice/actions/runs/38497553935)では、`build`と`report-build-status`が成功しましたが、`deploy`がGitHub Pagesのデプロイ作成時にHTTP 500で失敗しました。
+
+その後、Actions画面では実行が`Queued`と表示される一方、キャンセル時には「実行中ではない」、`gh run cancel ... --force`では「completed」と異なる状態が返りました。`gh run view`では`queued`、結論なしのまま更新が止まり、失敗ジョブの再実行もGitHub APIから`This workflow is already running`として拒否されました。40分以上状態が変わらなかったため、#161の自然終了を待つのではなく、新しいpushでPagesワークフローを起動することにしました。
+
+### 10.4 新しいPages実行の起動
+
+公開ファイルの内容を変えずにpushイベントを発生させるため、空コミットを作成して`main`へpushしました。未追跡ファイルはステージ・コミットしていません。
+
+```bash
+git commit --allow-empty -m "Retry GitHub Pages deployment"
+git push origin main
+```
+
+空コミットは`24df7f9`、完全なコミットIDは`24df7f9d771fa327790cf17ec8d358047530ec9c`です。GitHub Actions実行[#162](https://github.com/kenobix/Claude_practice/actions/runs/38501551278)が新たに作成され、`build`、`report-build-status`、`deploy`の全ジョブが成功しました。
+
+### 10.5 公開確認と完了状態
+
+公開URL`https://kenobix.github.io/Claude_practice/`を確認し、HTTP 200とページタイトル`AI &amp; Software Practice — kenobix`を確認しました。実行#162によるPages公開は完了しています。
+
+Gitの最終状態では`main`と`origin/main`がコミット`24df7f9`で一致しています。作業開始前からあった次の未追跡項目は変更・コミットしていません。
+
+- `260701/charts/`
+- `260701/logs/`
+- `260905/sets/bookkeeping-2kyu/images/assekiritono-flow.png`
+
+実行#161は最終確認時点でもGitHub上で`queued`の表示が残っていましたが、同一ファイル内容の新しい実行#162が成功し、公開ページも確認できたため、デプロイ完了のために#161を待つ必要はありません。GitHubリポジトリのAbout説明は未設定だったため、追加の説明変更は行っていません。
