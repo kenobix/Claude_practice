@@ -5,7 +5,7 @@ import json
 import urllib.request
 import zipfile
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import pandas as pd
 
@@ -37,7 +37,7 @@ def download_dataset(
     with urllib.request.urlopen(request, timeout=45) as response:
         archive_path.write_bytes(response.read())
     with zipfile.ZipFile(archive_path) as archive:
-        matches = [name for name in archive.namelist() if name.endswith("/hour.csv")]
+        matches = [name for name in archive.namelist() if PurePosixPath(name).name == "hour.csv"]
         if len(matches) != 1:
             raise ValueError(f"Expected one hour.csv in UCI archive, found {matches}")
         csv_path.write_bytes(archive.read(matches[0]))
