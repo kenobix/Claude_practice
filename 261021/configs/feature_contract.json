@@ -1,0 +1,11 @@
+{
+  "version": "bike-demand-features-v1",
+  "as_of_policy": "as_of must equal target_hour and be the start of the target hour",
+  "label_delay_hours": 3,
+  "features": [
+    "hour", "weekday", "month", "day_of_year", "is_weekend",
+    "lag_24", "lag_24_missing", "lag_168", "lag_168_missing"
+  ],
+  "prohibited_source_columns": ["cnt_at_target", "casual", "registered", "actual_future_weather"],
+  "lag_join": "exact dataset timestamp; source available_at must be <= as_of"
+}

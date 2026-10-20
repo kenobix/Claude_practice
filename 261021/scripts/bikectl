@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+cd "$(dirname "$0")/.."
+if [ -f .env ]; then
+  set -a
+  . ./.env
+  set +a
+fi
+if [ -n "${APP_DB_PASSWORD:-}" ]; then
+  export DATABASE_URL="postgresql://bike_app:${APP_DB_PASSWORD}@127.0.0.1:${APP_DB_HOST_PORT:-55432}/bikeops"
+  export MLFLOW_TRACKING_URI="http://127.0.0.1:5000"
+fi
+exec .venv/bin/mlops-bikectl "$@"

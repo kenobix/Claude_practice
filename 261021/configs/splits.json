@@ -1,0 +1,11 @@
+{
+  "timezone": "naive_dataset_time",
+  "label_delay_hours": 3,
+  "train": {"start": "2011-01-01 00:00:00", "end_exclusive": "2012-01-01 00:00:00"},
+  "validation": {"start": "2012-01-01 00:00:00", "end_exclusive": "2012-04-01 00:00:00"},
+  "final_holdout": {"start": "2012-04-01 00:00:00", "end_exclusive": "2012-07-01 00:00:00"},
+  "replay": {"start": "2012-07-01 00:00:00", "end_exclusive": "2013-01-01 00:00:00"},
+  "training_cutoff": "2012-01-01 03:00:00",
+  "random_state": 17,
+  "early_stopping": false
+}

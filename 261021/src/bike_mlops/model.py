@@ -1,0 +1,54 @@
+from __future__ import annotations
+
+import hashlib
+import os
+from pathlib import Path
+
+import numpy as np
+
+from bike_mlops.config import DEFAULT_MLFLOW_URI
+
+
+def directory_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    for file_path in sorted(item for item in path.rglob("*") if item.is_file()):
+        digest.update(file_path.relative_to(path).as_posix().encode("utf-8"))
+        with file_path.open("rb") as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                digest.update(chunk)
+    return digest.hexdigest()
+
+
+def load_registered_model(model_name: str, model_version: str | int, tracking_uri: str | None = None):
+    if int(model_version) <= 0:
+        raise ValueError("A positive, explicit MLflow model version is required")
+    import mlflow
+    import mlflow.sklearn
+    from mlflow.tracking import MlflowClient
+
+    resolved_uri = tracking_uri or os.getenv("MLFLOW_TRACKING_URI", DEFAULT_MLFLOW_URI)
+    mlflow.set_tracking_uri(resolved_uri)
+    uri = f"models:/{model_name}/{int(model_version)}"
+    model = mlflow.sklearn.load_model(uri)
+    local_path = Path(mlflow.artifacts.download_artifacts(artifact_uri=uri))
+    actual_hash = directory_sha256(local_path)
+    registered_version = MlflowClient(tracking_uri=resolved_uri).get_model_version(
+        model_name, str(int(model_version))
+    )
+    expected_hash = registered_version.tags.get("artifact_sha256")
+    if not expected_hash:
+        raise ValueError(f"Registered model version {model_version} has no artifact SHA-256")
+    if actual_hash != expected_hash:
+        raise ValueError(
+            f"Model artifact hash mismatch for version {model_version}: expected {expected_hash}, got {actual_hash}"
+        )
+    quality_gate = registered_version.tags.get("quality_gate", "missing")
+    if quality_gate not in {"passed", "failed"}:
+        raise ValueError(f"Registered model version {model_version} has no recognized quality-gate status")
+    return model, actual_hash, quality_gate
+
+
+def predict_non_negative(model, features) -> float:
+    values = model.predict(features)
+    prediction = float(np.asarray(values).reshape(-1)[0])
+    return max(0.0, prediction)

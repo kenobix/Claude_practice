@@ -1,0 +1,91 @@
+name: bike-mlops
+
+x-app-environment: &app-environment
+  DATABASE_URL: postgresql://bike_app:${APP_DB_PASSWORD:?copy .env.example to .env and set APP_DB_PASSWORD}@postgres:5432/bikeops
+  MLFLOW_TRACKING_URI: http://mlflow:5000
+  MLFLOW_MODEL_NAME: bike-demand
+  FEATURE_CONTRACT_VERSION: bike-demand-features-v1
+
+services:
+  postgres:
+    image: postgres:17.6-bookworm
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?set POSTGRES_ADMIN_PASSWORD in .env}
+      POSTGRES_DB: postgres
+      MLFLOW_DB_PASSWORD: ${MLFLOW_DB_PASSWORD:?set MLFLOW_DB_PASSWORD in .env}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?set APP_DB_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${APP_DB_HOST_PORT:-55432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres-init.sh:/docker-entrypoint-initdb.d/10-create-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mlflow:
+    build: .
+    command:
+      - mlflow
+      - server
+      - --backend-store-uri
+      - postgresql+psycopg://mlflow_app:${MLFLOW_DB_PASSWORD:?set MLFLOW_DB_PASSWORD in .env}@postgres:5432/mlflow
+      - --serve-artifacts
+      - --artifacts-destination
+      - /mlartifacts
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5000"
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - mlflow-artifacts:/mlartifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api-blue:
+    build: .
+    command: ["uvicorn", "bike_mlops.api:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      <<: *app-environment
+      PORT: "8000"
+    env_file: [./data/runtime/blue.env]
+    ports: ["127.0.0.1:8001:8000"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
+
+  api-green:
+    build: .
+    command: ["uvicorn", "bike_mlops.api:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      <<: *app-environment
+      PORT: "8000"
+    env_file: [./data/runtime/green.env]
+    ports: ["127.0.0.1:8002:8000"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    entrypoint: ["/bin/sh", "-ec"]
+    command: ["test -f /runtime/Caddyfile || cp /etc/caddy/default.Caddyfile /runtime/Caddyfile; exec caddy run --config /runtime/Caddyfile --adapter caddyfile"]
+    ports: ["127.0.0.1:8080:8080"]
+    volumes:
+      - ./configs/Caddyfile:/etc/caddy/default.Caddyfile:ro
+      - ./data/runtime:/runtime
+    depends_on: [api-blue, api-green]
+
+volumes:
+  postgres-data:
+  mlflow-artifacts:
