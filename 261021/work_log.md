@@ -127,19 +127,39 @@ venv内で確認した版はMLflow 3.17.1、scikit-learn 1.9.0。MLflowの既定
 
 固定ホールドアウトはこの失敗runで既に評価された。再試行ではデータを見てから評価条件を変えたり、固定期間を再評価したりしない。まずMLflow UIの失敗runから`training-report.json`または`final_holdout_*` metricsを記録し、登録再試行は`--evaluate-final-holdout`なしで行う。
 
-### 対応と次の作業
+### 修正と再学習結果
 
 - `training.py`: skopsの信頼型に上記`TreePredictor`だけを明示する。全型を一括信頼する指定は使わない。
 - `model.py`: 成果物をskopsで読み込む前に、MLflow登録情報のSHA-256と照合する順序に変更する。
 - `README.md`と`docs/runbook.md`: 状態、失敗run、ホールドアウトを再評価しない再試行方法を反映。
 - `compose.yaml`: モデル版envファイルをruntime init前は任意にする修正を記録。
 
-未完了の確認:
+ユーザーが修正後に次を実行し、学習・登録が成功した。
 
-1. MLflow UIの失敗runから固定ホールドアウト指標を記録する。
-2. `.venv`を有効にしたプロジェクトディレクトリで`./scripts/bikectl train`を実行し、モデル登録と`data/reports/training-*.json`生成を確認する。ホールドアウト用オプションは付けない。
-3. レポートの`registration.model_version`と`quality_gate_passed`を確認する。
-4. 品質ゲートがpassedならその登録版を`runtime init`へ渡す。未達なら通常昇格はせず、基盤の動作試験に限ってdiagnosticを使う。
-5. `api-blue`、`api-green`、Caddyを起動して`/ready`と`/version`を確認する。
+```bash
+./scripts/bikectl train
+```
 
-コード変更後のテストスイートと、修正後の実学習・モデルロードはまだ実行していない。
+成功runとレポート:
+
+- Run ID: `0db7aa07461b4b8785145156d8de9a66`。
+- ローカルレポート: `data/reports/training-0db7aa07461b4b8785145156d8de9a66.json`。
+- 実行時刻: `2026-10-21T13:06:54Z`。
+- データSHA-256は前回監査と一致する`e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f`。
+- source commitは`efdabb17fa8c3f99aac217fa0ae8c715f7971f72`、worktreeはclean。
+- split counts: train 8,645、validation 2,176、final holdout 2,182。
+- validation: モデルMAE 55.0728 / RMSE 88.6249、前日・曜日時刻ベースラインMAE 63.9628 / RMSE 107.8187。MAEは8.8900（約13.9%）低く、品質ゲート`quality_gate_passed=true`。
+- `final_holdout`は`null`。初回の失敗runですでに実施したholdout評価を再計算しないため、今回のコマンドに`--evaluate-final-holdout`は付けていない。
+- 登録: `bike-demand` version `1`、URI `models:/bike-demand/1`、artifact SHA-256 `894ebde8080a022f5dc28573babf394c2bfbec1d6e6f4abeadb41d86ea331aab`。
+- 実行ログに`No artifacts found to download .../artifacts/sklearn-model`というINFO行が出たが、CLIは成功終了し、登録版・artifact SHA・ローカルレポートが出力された。これはエラー終了ではない。一方、この表示だけではAPIプロセス内のモデルロードまでは証明しないため、runtime初期化とreadinessで引き続き確認する。
+
+初回のholdout結果は、MLflow run `42abda5f8da94b9b8a3d5f5f46da42ad`の`training-report.json`で確認した。split countsはtrain 8,645、validation 2,176、final holdout 2,182。holdoutのモデルMAEは72.5362、RMSEは111.5060。今回手元で確認できた抜粋にはholdoutベースライン値がないため、holdoutでベースラインを上回ったとは結論しない。これは今回のvalidation指標とは別の期間・別の評価値である。
+
+### 次の作業
+
+1. 品質ゲートpassedの版1を使ってruntime台帳とblue/green設定を初期化する。
+2. ComposeでAPI青緑枠とCaddyを起動し、入口の`/ready`と`/version`を確認する。失敗時はAPIログでskops artifactの取得・ハッシュ検証・デシリアライズ箇所を調べる。
+3. readinessが通った後、観測登録・予測・再送の動作を確認する。
+4. API動作の確認後、MLflowを使った継続候補と第4四半期リプレイへ進む。
+
+修正後の実データ学習とモデル登録はユーザー環境で確認済み。ユニットテスト13件はコード変更前に成功したものの、変更後には再実行していない。APIのモデルロード・readiness・予測リクエストもまだ未確認。
