@@ -86,12 +86,12 @@ docker compose ps
 
 このプロジェクトでは初回学習時に固定ホールドアウトを評価した後、MLflow/skopsの信頼型検査でモデル登録に失敗しました。失敗runは`http://127.0.0.1:5000/#/experiments/1/runs/42abda5f8da94b9b8a3d5f5f46da42ad`です。Artifactsの`training-report.json`からholdoutのモデルMAE 72.5362、RMSE 111.5060を作業記録に転記済みです。修正後の再学習は`--evaluate-final-holdout`なしで成功し、`data/reports/training-0db7aa07461b4b8785145156d8de9a66.json`に記録されました。`bike-demand` version `1`が登録され、validation MAE 55.0728（ベースライン63.9628）、RMSE 88.6249（ベースライン107.8187）、品質ゲートpassedを確認しています。成功レポートの`final_holdout`が`null`なのは、既に測定した固定holdoutを再利用・再評価しないための想定どおりの状態です。作業記録は[work_log.md](../work_log.md)を参照してください。
 
-この時点で再学習は不要です。次はレポートの登録版を使ってruntimeを初期化し、APIがartifactを読み込めることを実機で確認します。
+この時点で再学習は不要です。次はレポートの登録版を使ってruntimeを初期化し、API起動時にartifact取得・ハッシュ照合・モデル読込が通ることを実機で確認します。`runtime init`は登録版と品質ゲートを確認して設定を作る段階で、モデル自体はAPI起動時に読み込まれます。
 
 学習レポートの`registration.model_version`にある登録版番号に置き換えて、青・緑枠と入口を初期化・起動します。初回起動前に、学習登録がMLflow UI/APIから参照可能であることを確かめます。
 
 ```bash
-./scripts/bikectl runtime init --version 1 --approver kenshin --reason 'validation gate and artifact hash verified'
+./scripts/bikectl runtime init --version 1 --approver kenshin --reason 'validation quality gate passed; model version 1 registered'
 docker compose up -d --build api-blue api-green caddy
 curl -fsS http://127.0.0.1:8080/ready
 curl -fsS http://127.0.0.1:8080/version
