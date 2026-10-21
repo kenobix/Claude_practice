@@ -45,6 +45,9 @@ HYPERPARAMETERS = {
     "early_stopping": False,
     "random_state": RANDOM_STATE,
 }
+SKOPS_TRUSTED_TYPES = (
+    "sklearn.ensemble._hist_gradient_boosting.predictor.TreePredictor",
+)
 
 
 def build_estimator() -> Pipeline:
@@ -248,7 +251,12 @@ def _log_and_register(report: dict, estimator: Pipeline, x_example: pd.DataFrame
         mlflow.log_dict(report, "training-report.json")
         mlflow.log_dict(report["model_card"], "model-card.json")
         model_info = mlflow.sklearn.log_model(
-            estimator, name="sklearn-model", input_example=x_example.head(5)
+            estimator,
+            name="sklearn-model",
+            input_example=x_example.head(5),
+            # HistGradientBoostingRegressor contains this sklearn tree type.
+            # Trust only this reviewed type; MLflow records the allowlist for loading.
+            skops_trusted_types=list(SKOPS_TRUSTED_TYPES),
         )
         client = MlflowClient(tracking_uri=tracking_uri)
         from mlflow.exceptions import MlflowException

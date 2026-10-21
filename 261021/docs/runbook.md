@@ -1,5 +1,26 @@
 # 実行・運用手順
 
+## 0. Windows/WSLからプロジェクトを開く
+
+Docker DesktopのWSL Integrationを変更した後や、`wsl.exe --shutdown`を実行した後は、Windows PowerShellからUbuntuを明示して起動します。`wsl.exe -l -v`でUbuntuが`Running`と表示されても、Ubuntuのシェルに入っているとは限りません。Docker DesktopがWSLディストリビューションを自動起動することもあるため、作業用シェルは次のコマンドで開きます。
+
+```powershell
+wsl.exe -l -v
+wsl.exe -d Ubuntu
+```
+
+Ubuntuのシェルに入ったら、PowerShellの現在位置（例: `/mnt/c/WINDOWS/system32`）ではなく、WSL内のプロジェクトディレクトリへ移動します。
+
+```bash
+cd ~/work/claude_practice/261021
+code .
+. .venv/bin/activate
+docker version
+docker compose version
+```
+
+今回の環境では、Ubuntuと`docker-desktop`はいずれもWSL 2で、Docker Desktop 4.96.0 / Engine 29.9.1への接続と`hello-world`コンテナの実行が確認できています。`wsl.exe --shutdown`の後は一覧の状態にかかわらず、`wsl.exe -d Ubuntu`で作業用シェルを開いてから続行してください。WSLを終了する前に、開いている作業を保存します。
+
 ## 1. 環境とデータ
 
 Python 3.12とパッケージインデックスへの接続を用意します。
@@ -17,6 +38,8 @@ python -m unittest discover -s tests -v
 監査JSONを読み、時間欠損があるときはラグ特徴量のmissing値として扱われることを確認します。時刻重複・型・値域違反はロード時に失敗させます。
 
 ## 2. SQLiteで学習・APIを試す
+
+この節はSQLiteで個別に試す場合の任意手順です。ComposeでMLOps基盤を動かす場合はこの節を飛ばして、節3の手順を使います。固定最終ホールドアウト評価は同じ実験で一度だけ実施してください。
 
 ```bash
 mlops-bikectl train --evaluate-final-holdout
@@ -44,22 +67,26 @@ curl -s -X POST http://127.0.0.1:8000/predict \
 
 ## 3. Composeによるローカル運用
 
-Docker EngineとCompose pluginを用意します。`.env.example`を`.env`へコピーし、パスワードを英数字の十分に長いローカル値へ変更します。`.env`はGit対象外です。
+Docker EngineとCompose pluginの接続を確認してから進めます。UCIデータをすでに取得・監査済みなら、再ダウンロードは不要です。`.env.example`を`.env`へコピーし、3つのパスワードを互いに異なる十分に長いローカル値へ変更します。`.env`はGit対象外なので、値をGitやチャットに貼り付けないでください。
 
 ```bash
-cp .env.example .env
+test -f .env || cp .env.example .env
+code .env
+docker compose config -q
 docker compose up -d --build postgres mlflow
+docker compose ps
 ```
 
-ホスト側CLIラッパーは`.env`を読み、運用DBとMLflowへ接続します。
+`data/runtime/blue.env`と`green.env`はモデル版登録後に`runtime init`が生成するため、この時点ではなくて構いません。Compose設定ではこれらの`env_file`を任意にし、PostgreSQLとMLflowだけを先に検証・起動できるようにしています。APIサービスは`runtime init`後に起動してください。`docker compose config -q`が成功したら、ホスト側CLIラッパーは`.env`を読み、運用DBとMLflowへ接続します。データの取得が済んでいない場合だけdownloadを実行し、いずれの場合も監査結果を確認してから初回学習へ進みます。まだ固定最終ホールドアウトを評価していない場合は、次の初回学習で一度だけ評価します。節2ですでに評価した場合は、コマンドから`--evaluate-final-holdout`を外します。
 
 ```bash
-./scripts/bikectl data download
 ./scripts/bikectl data audit
 ./scripts/bikectl train
 ```
 
-学習結果にある登録版を指定し、青・緑枠と入口を初期化・起動します。初回起動前に、学習登録がMLflow UI/APIから参照可能であることを確かめます。
+このプロジェクトでは初回学習時に固定ホールドアウトの評価まで行いましたが、その後のモデル保存が失敗しました。失敗runは`http://127.0.0.1:5000/#/experiments/1/runs/42abda5f8da94b9b8a3d5f5f46da42ad`です。Artifactsの`training-report.json`またはrun metricsから固定ホールドアウト指標を作業記録へ控えてください。修正後の再試行では上記のとおり`--evaluate-final-holdout`を付けません。成功時に生成される`data/reports/training-*.json`でデータハッシュ、分割、検証指標、登録版、品質ゲートを確認します。
+
+学習レポートの`registration.model_version`にある登録版番号に置き換えて、青・緑枠と入口を初期化・起動します。初回起動前に、学習登録がMLflow UI/APIから参照可能であることを確かめます。
 
 ```bash
 ./scripts/bikectl runtime init --version 1 --approver kenshin --reason 'validation gate and artifact hash verified'

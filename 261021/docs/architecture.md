@@ -6,6 +6,8 @@ Python 3.12、SQLite、ローカルMLflow tracking/artifact storeで、データ
 
 動作確認したNumPy・pandas・scikit-learnの版を固定し、Python・Dockerの主要イメージも版付きにしています。FastAPI・MLflow・psycopgは互換範囲で指定し、学習runには実際に解決された全パッケージ版を記録します。
 
+MLflowのscikit-learnモデルはskops形式で保存します。HistGradientBoostingRegressorが使う`sklearn.ensemble._hist_gradient_boosting.predictor.TreePredictor`だけを、エラー内容を確認したうえで明示的な信頼型に加えます。この許可はプロジェクトが生成したローカルモデル用で、外部や未信頼のモデルartifactには使いません。包括的な信頼許可は使いません。配信時はモデル成果物のSHA-256を登録情報と照合してからskopsで読み込みます。
+
 ## Composeプロファイル
 
 `compose.yaml`はローカル専用で、PostgreSQLを2つのDB・2つのログインロールに分けます。

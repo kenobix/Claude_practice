@@ -54,7 +54,11 @@ services:
     environment:
       <<: *app-environment
       PORT: "8000"
-    env_file: [./data/runtime/blue.env]
+    # Created by `runtime init` after a model version has been registered.
+    # Keep infrastructure-only Compose commands usable before model training.
+    env_file:
+      - path: ./data/runtime/blue.env
+        required: false
     ports: ["127.0.0.1:8001:8000"]
     depends_on:
       postgres:
@@ -68,7 +72,9 @@ services:
     environment:
       <<: *app-environment
       PORT: "8000"
-    env_file: [./data/runtime/green.env]
+    env_file:
+      - path: ./data/runtime/green.env
+        required: false
     ports: ["127.0.0.1:8002:8000"]
     depends_on:
       postgres:
