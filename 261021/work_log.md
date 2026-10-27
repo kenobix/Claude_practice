@@ -163,3 +163,42 @@ venv内で確認した版はMLflow 3.17.1、scikit-learn 1.9.0。MLflowの既定
 4. API動作の確認後、MLflowを使った継続候補と第4四半期リプレイへ進む。
 
 修正後の実データ学習とモデル登録はユーザー環境で確認済み。ユニットテスト13件はコード変更前に成功したものの、変更後には再実行していない。APIのモデルロード・readiness・予測リクエストもまだ未確認。
+
+## 2026-10-27: runtime初期化とAPI起動確認
+
+### 成功した操作
+
+ユーザーがモデル版1を指定してruntimeを初期化した。
+
+```bash
+./scripts/bikectl runtime init --version 1 --approver kenshin --reason 'validation quality gate passed; model version 1 registered'
+```
+
+- 初期化成功。deployment ID `7152000b-abd4-415f-81f0-f4cc596f1af7`、active slot `blue`、model version `1`。
+- データセットの観測17,379件をseedし、CSV SHA-256は前回監査と同一の`e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f`。
+- `docker compose up -d --build api-blue api-green caddy`は成功。API青緑枠、Caddy、MLflowがStarted、PostgreSQLはHealthy。
+- `docker compose ps`では全サービスがUp。
+
+### API readiness失敗
+
+```bash
+curl -fsS http://127.0.0.1:8080/ready
+```
+
+応答はHTTP 503。続く`/version`応答は次のとおりで、APIは要求された版番号を持つものの、モデルのロード情報が未設定だった。
+
+```json
+{"application_version":"0.1.0","model_name":"bike-demand","model_version":"1","artifact_sha256":null,"quality_gate_status":null,"feature_contract_version":"bike-demand-features-v1"}
+```
+
+この結果から、コンテナ起動とモデル配信準備完了は別の状態だと確認できた。現時点で原因は確定していない。APIのstartup処理は登録版を取得してSHA-256照合後にskopsモデルをロードするため、artifact取得、hash mismatch、デシリアライズ等の例外詳細が必要。前回trainログの`No artifacts found to download .../artifacts/sklearn-model`は調査上の手がかりだが、今回の失敗原因だとはまだ断定しない。
+
+次にユーザー環境でAPI枠ごとのreadiness本文とログを取得する。runtime initはすでに成功してstateを作成しているため、再実行せず、先に診断する。
+
+```bash
+curl -sS -i http://127.0.0.1:8001/ready
+curl -sS -i http://127.0.0.1:8002/ready
+docker compose logs --tail=120 api-blue api-green
+```
+
+この実行環境からはDocker socketがpermission deniedとなり、添付のコンテナログを直接取得できなかった。上記コマンドの出力が揃った時点で原因と修正箇所を特定する。

@@ -65,7 +65,8 @@ Composeによる運用構成は[実行・運用手順](docs/runbook.md)を参照
 - [x] Compose上のPostgreSQL healthy、MLflow startedを確認（2026-10-21）。
 - [x] 実データで初回学習と固定ホールドアウト評価を実行。初回runはMLflow/skopsの信頼型検査で登録に失敗したが、holdoutのモデルMAE 72.5362、RMSE 111.5060はMLflow artifactに記録された。
 - [x] 信頼型を限定して再学習・登録。2026-10-21のrun `0db7aa07461b4b8785145156d8de9a66`はvalidation MAE 55.0728（ベースライン63.9628）、RMSE 88.6249（ベースライン107.8187）で品質ゲートを通過し、`bike-demand`のモデル版`1`として登録された。再runでは固定holdoutを再評価せず、`final_holdout`は`null`。
-- [ ] 登録版1をruntimeへ読み込み、API・青緑切り替えを確認する。
+- [x] runtime initとCompose起動は成功。2026-10-27に観測17,379件を登録し、API青緑枠・Caddyも起動した。
+- [ ] APIで登録版1をロードできることを確認する。現在`/ready`は503で、`/version`のartifact hashと品質ゲート状態が`null`。詳細なAPI起動エラーを確認中。
 - [ ] MLflowを使った継続候補の登録・比較・第4四半期リプレイ。
 
 未実行の項目は、完了したように表現しません。詳細な実行記録は[work_log.md](work_log.md)を参照してください。次は既存のモデル版1を読み込んでreadinessと配信版を確認します。再学習や固定holdoutの再評価は不要です。

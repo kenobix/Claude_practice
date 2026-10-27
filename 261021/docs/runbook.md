@@ -97,6 +97,16 @@ curl -fsS http://127.0.0.1:8080/ready
 curl -fsS http://127.0.0.1:8080/version
 ```
 
+`/ready`が503の場合、`curl -f`はエラー本文を表示しないため、API枠へ直接アクセスしてモデルロードの詳細を確認します。`/version`にモデル版はあるのにartifact hashや品質ゲート状態が`null`なら、モデルを読み込めていません。runtime initはすでに完了しているため、再実行せず、まず応答本文とAPIログを確認してください。
+
+```bash
+curl -sS -i http://127.0.0.1:8001/ready
+curl -sS -i http://127.0.0.1:8002/ready
+docker compose logs --tail=120 api-blue api-green
+```
+
+この環境では2026-10-27時点で、Compose上の全コンテナ起動後も入口`/ready`が503を返し、`/version`はmodel version `1`、artifact hash `null`、quality gate `null`でした。根本例外はAPIの応答本文または上記ログから特定してから対処します。
+
 検証MAEが固定ベースラインを下回らなかった場合は通常の初期化・昇格を拒否します。基盤の起動・復旧動作を確認する目的に限り、失敗タグが記録された状態で`--diagnostic`を明示できます。
 
 ```bash
