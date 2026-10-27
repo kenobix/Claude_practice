@@ -41,7 +41,7 @@ mlflow ui --backend-store-uri sqlite:///data/mlflow.db --host 127.0.0.1
 継続学習候補は明示した既存モデル版と同じ将来期間で比べます。既定の候補は2012年7月時点までに利用可能なラベルだけで学習し、2012年第3四半期で評価します。登録しても昇格はされません。評価後の第4四半期は別の履歴リプレイに残します。
 
 ```bash
-mlops-bikectl candidate --incumbent-version 1
+mlops-bikectl candidate --incumbent-version 2
 ```
 
 Composeによる運用構成は[実行・運用手順](docs/runbook.md)を参照してください。DBやMLflowを外部へ公開する設定は含めていません。
@@ -69,7 +69,8 @@ Composeによる運用構成は[実行・運用手順](docs/runbook.md)を参照
 - [x] 信頼型を限定して再学習・登録。2026-10-21のrun `0db7aa07461b4b8785145156d8de9a66`はvalidation MAE 55.0728（ベースライン63.9628）、RMSE 88.6249（ベースライン107.8187）で品質ゲートを通過し、`bike-demand`のモデル版`1`として登録された。再runでは固定holdoutを再評価せず、`final_holdout`は`null`。
 - [x] runtime initとCompose起動は成功。2026-10-27に観測17,379件を登録し、API青緑枠・Caddyも起動した。
 - [x] 2026-10-27、MLflow 3でモデル登録元を古いrun artifact URIにしていたため、版1に`MLmodel`ファイルがなくAPIでロードできないことを特定。登録URIのコードを`log_model()`が返すURIへ修正。
-- [ ] 修正版でモデル版2を登録し、版1から版2へ手動切り替え後、API readinessと予測を確認する。
+- [x] 2026-10-27、修正版でrun `f55812c02dac4084a8185856cf7b4793`を実行し、モデル版`2`を登録。validation MAE 55.0728がベースライン63.9628を下回り`quality_gate_passed=true`。固定holdoutは再評価せず`null`。
+- [ ] モデル版2の手動昇格を実行中。完了後、API readiness・配信版・予測を確認する。
 - [ ] MLflowを使った継続候補の登録・比較・第4四半期リプレイ。
 
-未実行の項目は、完了したように表現しません。詳細な実行記録は[work_log.md](work_log.md)を参照してください。次は修正版を取り込んで通常学習を再実行し、新しい登録版を既存runtimeへ昇格してreadinessと予測を確認します。固定holdoutの再評価はしません。
+未実行の項目は、完了したように表現しません。詳細な実行記録は[work_log.md](work_log.md)を参照してください。次はモデル版2の昇格完了とreadiness・予測を確認します。固定holdoutの再評価はしません。

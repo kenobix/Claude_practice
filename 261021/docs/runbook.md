@@ -99,7 +99,9 @@ git pull --ff-only origin main
 ./scripts/bikectl train
 ```
 
-`git status --short`に自分の未保存作業が表示された場合は、先にその変更を保全してからpullします。レポートの`registration.model_version`と`quality_gate_passed`を確認します。現在モデル版1が存在するため、成功すれば通常は版2になります。ゲートがpassedであれば、その番号を指定して昇格します。
+2026-10-27にこの手順を実行し、run `f55812c02dac4084a8185856cf7b4793`からモデル版`2`が登録されました。validation MAEは55.0728、基準MAEは63.9628、`quality_gate_passed`は`true`、`final_holdout`は`null`です。`quality_gate`文字列は合格条件の説明で、合否は`quality_gate_passed`で確認します。
+
+`git status --short`に自分の未保存作業が表示された場合は、先にその変更を保全してからpullします。レポートでは`registration.model_version`と`quality_gate_passed`を確認します。今回の学習ではモデル版2が作られ、ゲートに合格しました。今はこの版の昇格結果を待ち、学習コマンドや昇格コマンドを重ねて実行しないでください。
 
 ```bash
 MODEL_VERSION=2 # 学習レポートのregistration.model_versionに置き換える
@@ -107,6 +109,16 @@ MODEL_VERSION=2 # 学習レポートのregistration.model_versionに置き換え
 curl -sS -i http://127.0.0.1:8080/ready
 curl -sS http://127.0.0.1:8080/version
 ```
+
+昇格コマンドは候補APIをbuild・起動し、readyと固定予測を検査してから入口を切り替えます。内部でDocker Composeの出力を捕まえ、最後にまとめて表示するため、処理中はターミナルが無表示になることがあります。現在の実行ログは昇格コマンドの直後で終わっており、完了したかはまだ分かりません。コマンドが動いている間はCtrl+Cで中断せず、別ターミナルで次を確認します。
+
+```bash
+docker compose ps -a
+docker compose logs --since=5m --tail=100 api-green
+curl -sS -i http://127.0.0.1:8002/ready
+```
+
+今回の旧稼働枠はblueなので、候補はgreen（8002）です。`/ready`の一時的な503は起動中ならあり得ます。昇格コマンドが完了したら、出力と入口の`/ready`・`/version`を確認します。Ctrl+Cで中断すると自動復旧処理が走らない可能性があるため、中断済みの場合は再昇格の前に`./scripts/bikectl deploy recover`を実行し、状態を確認します。
 
 昇格処理はGreen側でモデルを読み込み、readinessと固定予測を確かめてからCaddyの入口を切り替えます。成功後に`/ready`と`/version`を確認します。`final_holdout`は過去の初回評価を再利用するため、再実行レポートでは`null`が正しい状態です。
 
@@ -159,10 +171,10 @@ MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0
 
 ### 時系列を保った再学習候補
 
-初回モデルのモデル版を使って、同一の後続期間で比較します。既定例では初回固定ホールドアウトの後ろにある2012年第3四半期を候補検証に使い、トレーニングカットオフ以降のラベルを学習に入れません。第3四半期の結果を確認後に、第4四半期を独立したAPIリプレイ期間として使います。
+現在の比較対象モデル版2を使って、同一の後続期間で候補を比べます。既定例では初回固定ホールドアウトの後ろにある2012年第3四半期を候補検証に使い、トレーニングカットオフ以降のラベルを学習に入れません。第3四半期の結果を確認後に、第4四半期を独立したAPIリプレイ期間として使います。旧版1は誤ったartifact URIで登録され、読み込みできないため比較・rollbackに使いません。
 
 ```bash
-./scripts/bikectl candidate --incumbent-version 1
+./scripts/bikectl candidate --incumbent-version 2
 ```
 
 出力レポートにincumbent、履歴ベースラインとの同一行MAE/RMSE、候補のカットオフ、検証窓が記録されます。候補品質ゲートはincumbentの品質ゲートが`passed`で、かつ候補MAEがincumbentと履歴ベースラインの双方を厳密に下回る場合だけ通ります。登録後も人が審査するまで稼働版は変わりません。検証窓を変更するときは、期間を見てから都合のよい窓を選ばず、選択理由を作業記録に残します。
@@ -171,7 +183,7 @@ MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0
 
 ```bash
 ./scripts/bikectl candidate \
-  --incumbent-version 1 \
+  --incumbent-version 2 \
   --training-cutoff '2012-07-01 00:00:00' \
   --validation-start '2012-07-01 00:00:00' \
   --validation-end '2012-10-01 00:00:00'
@@ -196,7 +208,7 @@ MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0
 以前に稼働した登録版へ戻す場合も理由を残します。
 
 ```bash
-./scripts/bikectl deploy promote --version 1 --rollback --approver kenshin --reason '新候補に異常を確認したため直前版へ戻す'
+./scripts/bikectl deploy promote --version 2 --rollback --approver kenshin --reason '新候補に異常を確認したため直前の確認済み版へ戻す'
 ```
 
 ## 5. 履歴リプレイと遅延ラベル監視
@@ -212,7 +224,7 @@ MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0
 出力の`replay_id`を指定して監視窓を計算します。
 
 ```bash
-./scripts/bikectl monitor --replay-id DATAHASH-2012070100-2013010100 --model-version 1
+./scripts/bikectl monitor --replay-id DATAHASH-2012070100-2013010100 --model-version 2
 ```
 
 CSVとDBに窓ごとの予測数、到着ラベル数、到着率、MAE/RMSE、固定ビンPSIを保存します。ラベル到着前は誤差を0扱いせず分母から外します。PSIと誤差悪化は別々に読み、通知は調査開始にだけ使います。
