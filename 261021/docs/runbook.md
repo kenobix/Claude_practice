@@ -107,6 +107,20 @@ docker compose logs --tail=120 api-blue api-green
 
 この環境では2026-10-27時点で、Compose上の全コンテナ起動後も入口`/ready`が503を返し、`/version`はmodel version `1`、artifact hash `null`、quality gate `null`でした。根本例外はAPIの応答本文または上記ログから特定してから対処します。
 
+2026-10-27のAPI応答で原因を特定しました。`MLFLOW_TRACKING_URI=http://mlflow:5000`に対してMLflowが`Invalid Host header - possible DNS rebinding attack detected`を返し、`/api/2.0/mlflow/registered-models/get`が403になっていました。Docker内部DNS名`mlflow:5000`がMLflowのHost allowlistに含まれていないためです。`compose.yaml`では、内部名とローカルUI用のホスト名だけを許可しています。DNS rebinding対策を無効化したり、全Hostを許可したりしないでください。
+
+設定を反映するにはCompose設定を検証してからMLflowとAPI枠を再作成します。`runtime init`はすでに完了しているので、再実行しません。
+
+```bash
+docker compose config -q
+docker compose up -d --force-recreate mlflow api-blue api-green caddy
+docker compose ps
+curl -fsS http://127.0.0.1:8080/ready
+curl -fsS http://127.0.0.1:8080/version
+```
+
+readinessが200になるまでAPIの初期化リトライに少し時間がかかる場合があります。成功時は`/ready`の`status`が`ready`、`/version`の`model_version`が`1`、`artifact_sha256`と`quality_gate_status`が非nullで`passed`になっていることを確認します。なお、修正後のモデルartifact取得・hash照合・デシリアライズはまだ未確認です。
+
 検証MAEが固定ベースラインを下回らなかった場合は通常の初期化・昇格を拒否します。基盤の起動・復旧動作を確認する目的に限り、失敗タグが記録された状態で`--diagnostic`を明示できます。
 
 ```bash
@@ -181,7 +195,7 @@ CSVとDBに窓ごとの予測数、到着ラベル数、到着率、MAE/RMSE、�
 
 ## 障害時
 
-- `/ready`失敗: `/version`とAPIログ、MLflow登録版の状態、PostgreSQL状態を確認。候補を入口へ手動で向ける前にreadyを通す。
+- `/ready`失敗: `/version`とAPIログ、MLflow登録版の状態、PostgreSQL状態を確認。`Invalid Host header`の場合はCompose内部のMLflow名を`mlflow --allowed-hosts`へ限定追加し、MLflow/APIを再作成する。候補を入口へ手動で向ける前にreadyを通す。
 - 予測記録失敗: 成功応答は返らない。DB障害を直し、同じリクエストID・入力で再送する。
 - 候補起動・検証失敗: 入口は旧版のまま。候補のエラーを調査してから再試行。
 - 切り替え後に入口版が食い違う: `deploy recover`で照合。未知の版なら手作業で入口と記録を一致させるまで再昇格しない。

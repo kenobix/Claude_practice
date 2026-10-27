@@ -202,3 +202,28 @@ docker compose logs --tail=120 api-blue api-green
 ```
 
 この実行環境からはDocker socketがpermission deniedとなり、添付のコンテナログを直接取得できなかった。上記コマンドの出力が揃った時点で原因と修正箇所を特定する。
+
+### 原因特定と修正
+
+ユーザーからAPI枠ごとのreadiness本文とComposeログが共有され、根本原因が確定した。
+
+```text
+API request to endpoint /api/2.0/mlflow/registered-models/get failed with error code 403
+Invalid Host header - possible DNS rebinding attack detected
+```
+
+ComposeのAPIコンテナは`MLFLOW_TRACKING_URI=http://mlflow:5000`でMLflowへ接続する。MLflowのHost header検査の既定許可リストにはComposeサービス名`mlflow`がなく、APIが送る`Host: mlflow:5000`をDNS rebinding対策が拒否していた。青・緑の両APIで同じ応答を確認した。DB疎通やモデルのシリアライズ形式に到達する前のMLflow API拒否であり、前回trainログにあった`No artifacts found to download`とは別の問題。
+
+`compose.yaml`のMLflow起動引数に`--allowed-hosts mlflow:5000,localhost:5000,127.0.0.1:5000`を加えた。許可範囲を必要なCompose内部名とローカルUIのみに限定し、Host検査全体は無効化しない。
+
+修正後、ユーザー環境で次を実行する。runtime initのdeployment stateは既に作成済みなので再実行しない。
+
+```bash
+docker compose config -q
+docker compose up -d --force-recreate mlflow api-blue api-green caddy
+docker compose ps
+curl -fsS http://127.0.0.1:8080/ready
+curl -fsS http://127.0.0.1:8080/version
+```
+
+Compose再作成後のMLflow接続、artifact hash照合、skops読み込み、API readinessはまだ未確認。結果を見て次の障害有無を判断する。
