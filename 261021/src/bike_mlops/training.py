@@ -258,6 +258,9 @@ def _log_and_register(report: dict, estimator: Pipeline, x_example: pd.DataFrame
             # Trust only this reviewed type; MLflow records the allowlist for loading.
             skops_trusted_types=list(SKOPS_TRUSTED_TYPES),
         )
+        logged_model_uri = model_info.model_uri
+        if not logged_model_uri:
+            raise RuntimeError("MLflow did not return a URI for the logged model")
         client = MlflowClient(tracking_uri=tracking_uri)
         from mlflow.exceptions import MlflowException
 
@@ -281,9 +284,12 @@ def _log_and_register(report: dict, estimator: Pipeline, x_example: pd.DataFrame
             version_tags["incumbent_artifact_sha256"] = comparison["incumbent_artifact_sha256"]
         version = client.create_model_version(
             name=MODEL_NAME,
-            source=f"runs:/{run_id}/sklearn-model",
+            # MLflow 3 stores logged models separately from ordinary run artifacts.
+            # Register the URI returned by log_model instead of assuming a run artifact path.
+            source=logged_model_uri,
             run_id=run_id,
             tags=version_tags,
+            model_id=model_info.model_id,
         )
     for _ in range(60):
         current = client.get_model_version(MODEL_NAME, str(version.version))
@@ -296,6 +302,10 @@ def _log_and_register(report: dict, estimator: Pipeline, x_example: pd.DataFrame
         raise TimeoutError("Timed out waiting for MLflow model registration")
     model_uri = f"models:/{MODEL_NAME}/{version.version}"
     artifact_path = Path(mlflow.artifacts.download_artifacts(artifact_uri=model_uri))
+    if not (artifact_path / "MLmodel").is_file():
+        raise RuntimeError(
+            f"Registered model {model_uri} has no MLmodel file; logged model URI was {logged_model_uri}"
+        )
     artifact_hash = directory_sha256(artifact_path)
     client.set_model_version_tag(MODEL_NAME, str(version.version), "artifact_sha256", artifact_hash)
     registration_manifest = {

@@ -1,5 +1,7 @@
 # アーキテクチャと運用判断
 
+初学者向けの用語は[用語集](glossary.md)を参照してください。
+
 ## 開発プロファイル
 
 Python 3.12、SQLite、ローカルMLflow tracking/artifact storeで、データ監査・学習・特徴量と台帳をCPU上で検証できます。デフォルトのDBと成果物はGit対象外の`data/`以下です。HTTP APIはFastAPI依存を追加した後に`uvicorn`で起動します。
@@ -7,6 +9,8 @@ Python 3.12、SQLite、ローカルMLflow tracking/artifact storeで、データ
 動作確認したNumPy・pandas・scikit-learnの版を固定し、Python・Dockerの主要イメージも版付きにしています。FastAPI・MLflow・psycopgは互換範囲で指定し、学習runには実際に解決された全パッケージ版を記録します。
 
 MLflowのscikit-learnモデルはskops形式で保存します。HistGradientBoostingRegressorが使う`sklearn.ensemble._hist_gradient_boosting.predictor.TreePredictor`だけを、エラー内容を確認したうえで明示的な信頼型に加えます。この許可はプロジェクトが生成したローカルモデル用で、外部や未信頼のモデルartifactには使いません。包括的な信頼許可は使いません。配信時はモデル成果物のSHA-256を登録情報と照合してからskopsで読み込みます。
+
+MLflow 3では学習runの通常artifactとログ済みモデルの保存場所が分かれます。登録時は`log_model()`が返す`model_info.model_uri`を使い、`runs:/<run_id>/<name>`という古い保存場所を仮定しません。[MLflow 3の移行ガイド](https://mlflow.org/docs/latest/ml/mlflow-3)を参照してください。
 
 ## Composeプロファイル
 

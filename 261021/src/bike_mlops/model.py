@@ -30,6 +30,8 @@ def load_registered_model(model_name: str, model_version: str | int, tracking_ur
     mlflow.set_tracking_uri(resolved_uri)
     uri = f"models:/{model_name}/{int(model_version)}"
     local_path = Path(mlflow.artifacts.download_artifacts(artifact_uri=uri))
+    if not (local_path / "MLmodel").is_file():
+        raise ValueError(f"Registered model version {model_version} artifact is missing its MLmodel file")
     actual_hash = directory_sha256(local_path)
     registered_version = MlflowClient(tracking_uri=resolved_uri).get_model_version(
         model_name, str(int(model_version))

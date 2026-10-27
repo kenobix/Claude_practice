@@ -1,5 +1,7 @@
 # 実行・運用手順
 
+初学者向けの用語は[用語集](glossary.md)を参照してください。
+
 ## 0. Windows/WSLからプロジェクトを開く
 
 Docker DesktopのWSL Integrationを変更した後や、`wsl.exe --shutdown`を実行した後は、Windows PowerShellからUbuntuを明示して起動します。`wsl.exe -l -v`でUbuntuが`Running`と表示されても、Ubuntuのシェルに入っているとは限りません。Docker DesktopがWSLディストリビューションを自動起動することもあるため、作業用シェルは次のコマンドで開きます。
@@ -84,14 +86,35 @@ docker compose ps
 ./scripts/bikectl train
 ```
 
-このプロジェクトでは初回学習時に固定ホールドアウトを評価した後、MLflow/skopsの信頼型検査でモデル登録に失敗しました。失敗runは`http://127.0.0.1:5000/#/experiments/1/runs/42abda5f8da94b9b8a3d5f5f46da42ad`です。Artifactsの`training-report.json`からholdoutのモデルMAE 72.5362、RMSE 111.5060を作業記録に転記済みです。修正後の再学習は`--evaluate-final-holdout`なしで成功し、`data/reports/training-0db7aa07461b4b8785145156d8de9a66.json`に記録されました。`bike-demand` version `1`が登録され、validation MAE 55.0728（ベースライン63.9628）、RMSE 88.6249（ベースライン107.8187）、品質ゲートpassedを確認しています。成功レポートの`final_holdout`が`null`なのは、既に測定した固定holdoutを再利用・再評価しないための想定どおりの状態です。作業記録は[work_log.md](../work_log.md)を参照してください。
+初回学習時に固定ホールドアウトを評価したrunは`http://127.0.0.1:5000/#/experiments/1/runs/42abda5f8da94b9b8a3d5f5f46da42ad`です。holdoutのモデルMAE 72.5362、RMSE 111.5060を記録しました。信頼型を限定して再学習したrun `0db7aa07461b4b8785145156d8de9a66`はvalidation MAE 55.0728（ベースライン63.9628）、RMSE 88.6249（ベースライン107.8187）で品質ゲートを通過しました。固定holdoutは再評価していません。
 
-この時点で再学習は不要です。次はレポートの登録版を使ってruntimeを初期化し、API起動時にartifact取得・ハッシュ照合・モデル読込が通ることを実機で確認します。`runtime init`は登録版と品質ゲートを確認して設定を作る段階で、モデル自体はAPI起動時に読み込まれます。
+ただし、最初に登録されたモデル版1はAPIから読み込めませんでした。エラーは`No such artifact: 'MLmodel'`です。原因はMLflow 3でモデルartifactの保存場所が変わったのに、登録処理が`runs:/<run_id>/sklearn-model`という従来のrun artifact URIを登録元に使っていたことです。登録処理を`mlflow.sklearn.log_model()`が返す`model_info.model_uri`を使うよう修正しました。MLflow 3はログ済みモデルを通常のrun artifactと別に保存し、返却されたモデルURIを読み込みに使うよう案内しています。[MLflow 3移行ガイド](https://mlflow.org/docs/latest/ml/mlflow-3)
 
-学習レポートの`registration.model_version`にある登録版番号に置き換えて、青・緑枠と入口を初期化・起動します。初回起動前に、学習登録がMLflow UI/APIから参照可能であることを確かめます。
+修正版を作業環境へ取り込んでから、固定holdoutを再評価せずに通常学習を再実行します。版1は履歴として残し、新しい版を登録した後、既に初期化済みのruntimeから手動昇格します。`runtime init`をやり直してはいけません。別のチェックアウトで作業する場合は、まずローカル変更がないことを確認して更新します。
 
 ```bash
-./scripts/bikectl runtime init --version 1 --approver kenshin --reason 'validation quality gate passed; model version 1 registered'
+git status --short
+git pull --ff-only origin main
+. .venv/bin/activate
+./scripts/bikectl train
+```
+
+`git status --short`に自分の未保存作業が表示された場合は、先にその変更を保全してからpullします。レポートの`registration.model_version`と`quality_gate_passed`を確認します。現在モデル版1が存在するため、成功すれば通常は版2になります。ゲートがpassedであれば、その番号を指定して昇格します。
+
+```bash
+MODEL_VERSION=2 # 学習レポートのregistration.model_versionに置き換える
+./scripts/bikectl deploy promote --version "$MODEL_VERSION" --approver kenshin --reason 'MLflow 3 model URI fixed; validation gate passed'
+curl -sS -i http://127.0.0.1:8080/ready
+curl -sS http://127.0.0.1:8080/version
+```
+
+昇格処理はGreen側でモデルを読み込み、readinessと固定予測を確かめてからCaddyの入口を切り替えます。成功後に`/ready`と`/version`を確認します。`final_holdout`は過去の初回評価を再利用するため、再実行レポートでは`null`が正しい状態です。
+
+今回の環境ではruntimeがモデル版1で既に初期化済みです。以下の初回初期化コマンドは実行しないでください。新しい版の昇格には上記`deploy promote`を使います。初回構築時の参考として手順を残します。
+
+```bash
+MODEL_VERSION=1 # 学習レポートのregistration.model_versionに置き換える
+./scripts/bikectl runtime init --version "$MODEL_VERSION" --approver kenshin --reason 'validation quality gate passed'
 docker compose up -d --build api-blue api-green caddy
 curl -fsS http://127.0.0.1:8080/ready
 curl -fsS http://127.0.0.1:8080/version
@@ -105,9 +128,9 @@ curl -sS -i http://127.0.0.1:8002/ready
 docker compose logs --tail=120 api-blue api-green
 ```
 
-この環境では2026-10-27時点で、Compose上の全コンテナ起動後も入口`/ready`が503を返し、`/version`はmodel version `1`、artifact hash `null`、quality gate `null`でした。根本例外はAPIの応答本文または上記ログから特定してから対処します。
+この環境では2026-10-27時点で、Compose上の全コンテナ起動後も入口`/ready`が503を返し、`/version`はmodel version `1`、artifact hash `null`、quality gate `null`でした。最初の根本例外はAPI応答本文からHost allowlist問題と判明しました。
 
-2026-10-27のAPI応答で原因を特定しました。`MLFLOW_TRACKING_URI=http://mlflow:5000`に対してMLflowが`Invalid Host header - possible DNS rebinding attack detected`を返し、`/api/2.0/mlflow/registered-models/get`が403になっていました。Docker内部DNS名`mlflow:5000`がMLflowのHost allowlistに含まれていないためです。`compose.yaml`では、内部名とローカルUI用のホスト名だけを許可しています。DNS rebinding対策を無効化したり、全Hostを許可したりしないでください。
+2026-10-27に最初に観測した503の原因は、`MLFLOW_TRACKING_URI=http://mlflow:5000`に対してMLflowが`Invalid Host header - possible DNS rebinding attack detected`を返し、`/api/2.0/mlflow/registered-models/get`が403になったことでした。Docker内部DNS名`mlflow:5000`がMLflowのHost allowlistに含まれていなかったためです。`compose.yaml`では、内部名とローカルUI用のホスト名だけを許可しています。DNS rebinding対策を無効化したり、全Hostを許可したりしないでください。
 
 設定を反映するにはCompose設定を検証してからMLflowとAPI枠を再作成します。`runtime init`はすでに完了しているので、再実行しません。
 
@@ -119,12 +142,13 @@ curl -fsS http://127.0.0.1:8080/ready
 curl -fsS http://127.0.0.1:8080/version
 ```
 
-readinessが200になるまでAPIの初期化リトライに少し時間がかかる場合があります。成功時は`/ready`の`status`が`ready`、`/version`の`model_version`が`1`、`artifact_sha256`と`quality_gate_status`が非nullで`passed`になっていることを確認します。なお、修正後のモデルartifact取得・hash照合・デシリアライズはまだ未確認です。
+このHost allowlist修正後も、次のモデル登録元の問題が見つかりました。下記の再学習・昇格が済むまではreadiness 503が続きます。修正版で昇格した後は`/ready`の`status`が`ready`、`/version`の`model_version`が昇格した版、`artifact_sha256`が非null、`quality_gate_status`が`passed`であることを確認します。
 
-検証MAEが固定ベースラインを下回らなかった場合は通常の初期化・昇格を拒否します。基盤の起動・復旧動作を確認する目的に限り、失敗タグが記録された状態で`--diagnostic`を明示できます。
+検証MAEが固定ベースラインを下回らなかった場合は通常の初期化・昇格を拒否します。基盤の起動・復旧動作を確認する目的に限り、失敗タグが記録された状態で`--diagnostic`を明示できます。現在の実行環境ではruntimeが版1で既に初期化されているため、以下の初期化例を再実行しません。
 
 ```bash
-./scripts/bikectl runtime init --version 1 --diagnostic --approver kenshin --reason '品質ゲート未達版を使うローカル配信障害試験'
+MODEL_VERSION=1 # 学習レポートの登録版番号に置き換える
+./scripts/bikectl runtime init --version "$MODEL_VERSION" --diagnostic --approver kenshin --reason '品質ゲート未達版を使うローカル配信障害試験'
 ```
 
 診断配信は低精度の可能性を残し、実用性能を満たしたモデルとして紹介しません。

@@ -1,5 +1,7 @@
 # データ契約とリーク防止
 
+初学者向けの用語は[用語集](glossary.md)を参照してください。
+
 ## 出典と加工
 
 - 原本: [UCI Bike Sharing Dataset](https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset)、`hour.csv`。

@@ -1,5 +1,7 @@
 # 作業記録
 
+用語が分からないときは[初学者向け用語集](docs/glossary.md)を参照してください。
+
 ## 2026-10-21: 実データ取得・Docker/WSL接続・Compose初回学習
 
 ### 目的
@@ -254,3 +256,37 @@ curl -sS -i http://127.0.0.1:8002/ready
 docker compose logs --since=5m --tail=150 mlflow api-blue api-green
 docker inspect bike-mlops-mlflow-1 --format '{{json .Config.Cmd}}'
 ```
+
+## 2026-10-27: `MLmodel`不足の原因と用語集
+
+### API応答とポート競合の切り分け
+
+ユーザーが青・緑APIへ直接問い合わせた。
+
+```bash
+curl -sS -i http://127.0.0.1:8001/ready
+curl -sS -i http://127.0.0.1:8002/ready
+docker compose logs --since=5m --tail=150 mlflow api-blue api-green
+docker inspect bike-mlops-mlflow-1 --format '{{json .Config.Cmd}}'
+```
+
+両方のポートでHTTP 503とUvicornの応答が返り、本文は同じだった。
+
+```text
+Could not load registered model version 1: No such artifact: 'MLmodel'
+```
+
+稼働中MLflowの引数に`--allowed-hosts mlflow:5000,localhost:5000,127.0.0.1:5000`が含まれていた。前回の403 Host拒否は解消し、APIはMLflowへ接続して登録モデルを取得する次の段階へ進んだ。過去の`docker compose ps`では`127.0.0.1:8001->8000`が`api-blue`、`127.0.0.1:8002->8000`が`api-green`に割り当てられていた。HTTP応答とUvicornヘッダーも得られているため、今回の503はポート競合ではなく、APIが起動した上でモデル読み込みに失敗した応答と判断する。
+
+### 原因
+
+学習コードは`mlflow.sklearn.log_model()`でモデルを記録する一方、registry versionのsourceに`runs:/<run_id>/sklearn-model`を組み立てていた。MLflow 3ではlogged modelが通常のrun artifactとは別の場所に保存されるため、この旧URIに読み込みに必要な`MLmodel`がなかった。モデル版1はこの不正なsourceで登録済みであり、コードを直しても登録済み版1のsourceは変わらない。
+
+### 修正した内容
+
+- `training.py`: `log_model()`の戻り値`model_info.model_uri`と`model_info.model_id`をregistry登録に使う。登録後に取得したartifactに`MLmodel`がなければ、URIを含む明確なエラーで停止する。
+- `model.py`: API起動時もダウンロードしたartifact内の`MLmodel`を先に検査し、不足時は明確なエラーにする。
+- `docs/glossary.md`: 5つのMarkdown文書からリンクする用語集を追加し、MLflow、logged model、artifact、skopsの明示的な信頼型、FastAPI/Uvicorn、psycopgなどを説明。
+- READMEとrunbookを更新。次は固定holdoutを再評価せずに修正版で通常学習し、レポートにある新しい登録版（現在の履歴からは通常2）を既存runtimeへ昇格する。`runtime init`は既に実行済みなので繰り返さない。
+
+今回のコード変更後、学習・登録、artifact hash照合、skops読込、readiness、予測はまだ実行確認していない。テストスイートも今回の変更後には実行していない。
