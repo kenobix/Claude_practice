@@ -101,7 +101,7 @@ git pull --ff-only origin main
 
 2026-10-27にこの手順を実行し、run `f55812c02dac4084a8185856cf7b4793`からモデル版`2`が登録されました。validation MAEは55.0728、基準MAEは63.9628、`quality_gate_passed`は`true`、`final_holdout`は`null`です。`quality_gate`文字列は合格条件の説明で、合否は`quality_gate_passed`で確認します。
 
-`git status --short`に自分の未保存作業が表示された場合は、先にその変更を保全してからpullします。レポートでは`registration.model_version`と`quality_gate_passed`を確認します。今回の学習ではモデル版2が作られ、ゲートに合格しました。今はこの版の昇格結果を待ち、学習コマンドや昇格コマンドを重ねて実行しないでください。
+`git status --short`に自分の未保存作業が表示された場合は、先にその変更を保全してからpullします。レポートでは`registration.model_version`と`quality_gate_passed`を確認します。今回の学習ではモデル版2が作られ、ゲートに合格しました。続けて行った昇格も完了し、現在は版2が稼働中です。今回のコマンドをもう一度実行しないでください。
 
 ```bash
 MODEL_VERSION=2 # 学習レポートのregistration.model_versionに置き換える
@@ -110,7 +110,7 @@ curl -sS -i http://127.0.0.1:8080/ready
 curl -sS http://127.0.0.1:8080/version
 ```
 
-昇格コマンドは候補APIをbuild・起動し、readyと固定予測を検査してから入口を切り替えます。内部でDocker Composeの出力を捕まえ、最後にまとめて表示するため、処理中はターミナルが無表示になることがあります。現在の実行ログは昇格コマンドの直後で終わっており、完了したかはまだ分かりません。コマンドが動いている間はCtrl+Cで中断せず、別ターミナルで次を確認します。
+昇格コマンドは候補APIをbuild・起動し、readyと固定予測を検査してから入口を切り替えます。内部でDocker Composeの出力を捕まえ、最後にまとめて表示するため、処理中はターミナルが無表示になることがあります。今回の実行では、完了確認前に別ターミナルから次を確認しました。
 
 ```bash
 docker compose ps -a
@@ -118,11 +118,13 @@ docker compose logs --since=5m --tail=100 api-green
 curl -sS -i http://127.0.0.1:8002/ready
 ```
 
-今回の旧稼働枠はblueなので、候補はgreen（8002）です。`/ready`の一時的な503は起動中ならあり得ます。昇格コマンドが完了したら、出力と入口の`/ready`・`/version`を確認します。Ctrl+Cで中断すると自動復旧処理が走らない可能性があるため、中断済みの場合は再昇格の前に`./scripts/bikectl deploy recover`を実行し、状態を確認します。
+今回の旧稼働枠はblue、候補はgreen（8002）でした。`/ready`の一時的な503は起動中ならあり得ます。Ctrl+Cで中断すると自動復旧処理が走らない可能性があるため、中断済みの場合は再昇格の前に`./scripts/bikectl deploy recover`を実行し、状態を確認します。
+
+2026-10-27にGreen枠の`/ready`とCaddy入口の`/ready`がHTTP 200を返し、両方ともモデル版2を示しました。Caddy入口の`/version`はartifact SHA-256 `42bb5f3c7dc5a28d562d3fe2b01fe2aaf832af34ef5496b05b0fe65e9a79b337`、quality gate `passed`を返しました。`data/runtime/deployment-state.json`はactive slot `green`、active version `2`、mode `approved`、deployment ID `dded8d98-6e6c-4082-9419-df62cc08adb7`でした。モデル版1の初期化をやり直さず、現在版2が稼働中です。
 
 昇格処理はGreen側でモデルを読み込み、readinessと固定予測を確かめてからCaddyの入口を切り替えます。成功後に`/ready`と`/version`を確認します。`final_holdout`は過去の初回評価を再利用するため、再実行レポートでは`null`が正しい状態です。
 
-今回の環境ではruntimeがモデル版1で既に初期化済みです。以下の初回初期化コマンドは実行しないでください。新しい版の昇格には上記`deploy promote`を使います。初回構築時の参考として手順を残します。
+今回のruntimeは当初モデル版1で初期化し、その後版2へ昇格済みです。以下の初回初期化コマンドは実行しないでください。次の新版を昇格するときも`runtime init`ではなく`deploy promote`を使います。初回構築時の参考として手順を残します。
 
 ```bash
 MODEL_VERSION=1 # 学習レポートのregistration.model_versionに置き換える
@@ -156,7 +158,7 @@ curl -fsS http://127.0.0.1:8080/version
 
 このHost allowlist修正後も、次のモデル登録元の問題が見つかりました。下記の再学習・昇格が済むまではreadiness 503が続きます。修正版で昇格した後は`/ready`の`status`が`ready`、`/version`の`model_version`が昇格した版、`artifact_sha256`が非null、`quality_gate_status`が`passed`であることを確認します。
 
-検証MAEが固定ベースラインを下回らなかった場合は通常の初期化・昇格を拒否します。基盤の起動・復旧動作を確認する目的に限り、失敗タグが記録された状態で`--diagnostic`を明示できます。現在の実行環境ではruntimeが版1で既に初期化されているため、以下の初期化例を再実行しません。
+検証MAEが固定ベースラインを下回らなかった場合は通常の初期化・昇格を拒否します。基盤の起動・復旧動作を確認する目的に限り、失敗タグが記録された状態で`--diagnostic`を明示できます。現在の実行環境ではruntimeは版1で初期化後、版2へ昇格済みです。以下の初回初期化例を再実行しません。
 
 ```bash
 MODEL_VERSION=1 # 学習レポートの登録版番号に置き換える
