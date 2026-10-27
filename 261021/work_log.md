@@ -227,3 +227,30 @@ curl -fsS http://127.0.0.1:8080/version
 ```
 
 Compose再作成後のMLflow接続、artifact hash照合、skops読み込み、API readinessはまだ未確認。結果を見て次の障害有無を判断する。
+
+### allowlist反映後もreadiness未達
+
+ユーザーがCompose設定を検証し、MLflowとAPIを強制再作成した。
+
+```bash
+docker compose config -q
+docker compose up -d --force-recreate mlflow api-blue api-green caddy
+docker compose ps
+curl -fsS http://127.0.0.1:8080/ready
+curl -fsS http://127.0.0.1:8080/version
+```
+
+- Compose設定検証は成功。PostgreSQLはHealthy、MLflow・API青緑枠・CaddyはStarted/Up。
+- しかし入口`/ready`は引き続き503。
+- `/version`はmodel version `1`を返すが、`artifact_sha256`と`quality_gate_status`は引き続き`null`。モデルロード完了は確認できていない。
+- 新しい503本文や再起動後のMLflow/APIログはまだ共有されていない。このためHost allowlist変更が実際に反映されたか、または次のartifact取得・hash照合・デシリアライズ段階に別の問題があるかは判別できない。
+- Codexの実行環境からユーザーのDocker socketへ接続するとpermission denied、`127.0.0.1`のAPIポートにも接続できず、ログを直接取得できなかった。
+
+次は再作成後のAPIエラー本文と直近ログ、稼働中MLflowコンテナの引数を確認する。
+
+```bash
+curl -sS -i http://127.0.0.1:8001/ready
+curl -sS -i http://127.0.0.1:8002/ready
+docker compose logs --since=5m --tail=150 mlflow api-blue api-green
+docker inspect bike-mlops-mlflow-1 --format '{{json .Config.Cmd}}'
+```
