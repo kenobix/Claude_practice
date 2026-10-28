@@ -894,3 +894,10 @@ sh -n scripts/bikectl
 3. staging modelのHTTP/offline parityとfailure rejectionをsystem testし、staging API経由で固定operational benchmarkを測れる状態を作る。
 4. final/operational report hash、policy ID/SHA、candidate identityをMLflow version tagsへ付け、全gate passedかつ理由付き手動承認の場合だけ`deployment_permission=eligible`を最後に記録する。
 5. その一式のsystem test後に初めて新しいCapital archiveを取得・manifest検査・protocol freezeし、validation→同一artifactの独立final評価へ進む。
+
+### Commit・push・CI
+
+- コード、テスト、計画書、用語集、作業ログの節目を`35065bd Implement Capital bootstrap gates and runtime benchmark`として`main`へcommitし、`origin/main`へpushした。
+- GitHub Actions contract tests: run `40659664076` success。lock install、`pip check`、68 tests、`compileall`が完了。
+- GitHub Pages build/deploy: run `40659664964` success。buildとdeployの両jobが完了。
+- push後の作業ツリーでは、この作業対象のtracked変更は残っていない。既存の未追跡`260701/charts/`、`260701/logs/`、`260905/sets/bookkeeping-2kyu/images/assekiritono-flow.png`はこの作業に含めず、そのまま保持した。
