@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 
 from bike_mlops.cli import _load_profile_hourly
 from bike_mlops.capital_staging import verify_candidate_for_staging
-from bike_mlops.capital_staging_seed import seed_verified_candidate
+from bike_mlops.capital_staging_seed import seed_verified_candidate, verify_seeded_candidate
 from bike_mlops.candidate_artifacts import sha256_file
 from bike_mlops.config import DATA_PROFILE_ID, DATASET_MANIFEST, DEFAULT_DATASET, TARGET_CONTRACT_ID, MODEL_NAME
 from bike_mlops.db import Database
@@ -23,6 +23,7 @@ def main() -> None:
     parser.add_argument("--selection-report", type=Path, required=True)
     parser.add_argument("--final-report", type=Path, required=True)
     parser.add_argument("--model-version", required=True)
+    parser.add_argument("--verify-only", action="store_true", help="Verify complete existing observations without seeding")
     args = parser.parse_args()
     if DATA_PROFILE_ID != "capital-bikeshare":
         raise SystemExit("Set DATA_PROFILE_ID=capital-bikeshare before seeding staging")
@@ -51,9 +52,11 @@ def main() -> None:
     database_url = f"postgresql://bike_app:{encoded_password}@127.0.0.1:{args.port}/bikeops"
     database = Database(database_url, DATA_PROFILE_ID, TARGET_CONTRACT_ID)
     database.initialize()
-    result = seed_verified_candidate(database, frame, DEFAULT_DATASET, DATASET_MANIFEST, evidence, registered)
+    operation = verify_seeded_candidate if args.verify_only else seed_verified_candidate
+    result = operation(database, frame, DEFAULT_DATASET, DATASET_MANIFEST, evidence, registered)
     print(json.dumps({
         "database": "isolated-capital-staging",
+        "operation": "verify" if args.verify_only else "seed",
         "csv_path": str(DEFAULT_DATASET),
         "manifest_path": str(DATASET_MANIFEST),
         **result,

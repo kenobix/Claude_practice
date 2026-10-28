@@ -1072,3 +1072,22 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s 
 ```
 
 全テストの初回実行はsandbox内で先頭FastAPI testが進まなかったため中断し、制限外で同じテストを再実行したところ成功した。sandbox内Docker socket確認はpermission denied。今回PostgreSQL実機での新seed実行、候補登録からの実stack統合、実データ取得、benchmarkは実施していない。次は使い捨てPostgreSQLで同じ不一致とtransactionを検証し、seed後のDB変更を検出した上で、benchmark全対象が凍結training splitに属しラベルがcutoffまでに到着すること・APIデータ出典が候補と一致することを送信前に検査する。
+
+## 2026-10-28: staging観測の再照合とPostgreSQL実検証
+
+前回のseedに、投入済みDBの全観測を候補のCSV/manifest・MLflowタグと照合する`--verify-only`を追加した。DB検査は同一transactionで実行し、時刻・台数・利用可能時刻・データSHAと件数を比較する。余分な行、変更、欠落を拒否し、観測を挿入・更新しない（schema初期化確認は実行する）。照合後の別プロセスの書き込みは防止できないため、snapshotの有効期間とbenchmarkへの組み込みが残る。上記照合を自動で呼ぶ仕組みや、benchmarkのtraining split/出典照合は未実装であり、実候補の運用gate測定にまだ使えない。
+
+一時Pythonスクリプトから`postgres:17.6-bookworm`を一意の`bike-seed-check-<random>`名で起動し、loopbackのDocker割当port・一時パスワード・独立した一時DBを使用した。合成観測2行について、seed 2行、再seed 0行、verify 2行、1行削除後のverify拒否、再seed 1行を確認した。検査transactionを保持した状態で別connectionからUPDATEすると、`lock_timeout=300ms`で`LockNotAvailable`となり、検査中の書き込みがロックされることを確認した。さらに1行を削除し、残る行のSHAを変更すると、seedとverifyは不一致を拒否し、欠落行は途中挿入されなかった。テストはDBメソッドへの実PostgreSQL接続であり、実MLflow候補からCLI全体を通す試験ではない。
+
+```bash
+.venv/bin/python /tmp/capital_seed_pg_check.py
+# temporary PostgreSQL: seed=2, retry=0, missing rejected, repair=1,
+# concurrent write locked, changed hash rejected without inserting missing row
+# temporary PostgreSQL container removed
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -v
+# 79 tests OK (10.808s)。既存のStarletteDeprecationWarningあり。
+.venv/bin/python -m compileall -q src scripts tests
+# 成功。
+```
+
+一時PostgreSQL containerは各回のfinallyで停止・削除し、同名prefixのcontainerが残っていないことを確認。一時スクリプトも削除した。既存UCIの`/ready`はテスト前後ともversion 3、passed。実データ・実候補・本番評価期間は使用していない。

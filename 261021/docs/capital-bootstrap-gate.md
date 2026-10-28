@@ -117,7 +117,7 @@ curl -fsS http://127.0.0.1:8110/ready
 
 登録先はlocalhostのport 5001にあるCapital用MLflowに限定する。精度gateが不合格、またはreport/artifact identityが一致しない場合は登録しない。staging loaderは配信許可を`blocked`のまま保ち、`runtime init`/`deploy promote`は全gateと明示的な承認を引き続き要求する。診断flagや環境変数でこれらの確認を迂回しない。benchmark reportは`data/reports/capital-bikeshare/`へ新しいファイルとして保存し、既存reportを上書きしない。
 
-seedは候補・最終reportを再検証し、指定したMLflow版のtag、CSVとmanifestのSHA-256を候補に照合する。DBの既存観測は時刻・台数・利用可能時刻・データSHAまで比較し、余分な行や不一致があればseed全体を拒否する。PostgreSQLでは検査と挿入を同じトランザクション内でロックする。ただし、seed完了後の別プロセスによる変更や、benchmark側でのtraining splitとAPIデータ出典の検証は未対応であり、実候補のbenchmarkを実行する前に対応する。
+seedは候補・最終reportを再検証し、指定したMLflow版のtag、CSVとmanifestのSHA-256を候補に照合する。DBの既存観測は時刻・台数・利用可能時刻・データSHAまで比較し、余分な行や不一致があればseed全体を拒否する。PostgreSQLでは検査と挿入を同じトランザクション内でロックする。上記seedコマンドに`--verify-only`を付けると、観測を追加せずに全行が揃っていることも検査する。これは照合した時点のDB状態を示し、確認後の変更を防ぐものではない。benchmark側での再照合、training split、APIデータ出典の検証は未対応であり、実候補のbenchmarkを実行する前に対応する。
 
 計測中にCtrl-Cで止めても、送信済み要求を含むpartial reportを保存し、`completed=false`・運用gate failedとして扱う。完了しなかった計測結果を成功としてMLflowへ記録する経路はない。
 
@@ -128,7 +128,7 @@ seedは候補・最終reportを再検証し、指定したMLflow版のtag、CSV�
 1. **R04/P0: 完了。** Python `tzdata==2026.5`のゾーンファイルを集計・manifest検査・APIで直接読み込み、OSのtimezone検索順に依存しない。manifest schema 3にゾーン名・package版・TZifバイト数・SHA-256を保存する。DST切替テストと新しいmanifestでの実データ再集計・hash検証を行った。詳細は[`data-profiles.md`](data-profiles.md)と`work_log.md`を参照。
 2. **R06/P1:** incumbentなしbootstrap経路とcandidate/final精度gateを合成試験する。実装済み。ここで合格した合成結果を実データの合格根拠に使わない。
 3. **R06/P1・合成統合検証済み:** 使い捨てCompose/MLflow/PostgreSQLと人工model/evidence/観測で、登録、拒否、API/DB、parity、再送を確認しtest resourceを破棄した。実Caddy切替は未試験。
-4. **R06/P1・新データ前:** seed時の候補・CSV/manifest・registry・既存DB行の照合を実装し合成SQLiteで検証した。PostgreSQLでの実検証、seed後の変更検出、benchmark入力を凍結training splitに制限する検査とAPIデータ出典の照合は未完了。
+4. **R06/P1・新データ前:** seed時の候補・CSV/manifest・registry・既存DB行の照合と投入後の完全性検査を実装。合成SQLiteと使い捨てPostgreSQLで検証した。benchmark側でのDB再照合、凍結training splitの検査とAPIデータ出典の照合は未完了。
 5. **R06/P1・新データ前:** operational report hash/statusとcandidate identityをexact versionへ記録する経路を実装・synthetic testする。全gate passedかつ理由付き手動承認がある時だけ`eligible`、failed/missing/mismatchならblockedのままにする。
 6. **R06/P1:** 月境界buffer規則を確定→未取得の原本を取得→新pathのmanifest schema 3監査→非重複を確認→protocol freeze→validationを一度→合格時のみ同じartifactで独立final評価を一度行う。
 7. **R05/R06/P1・実候補後:** 実candidateをblocked登録し、Capital隔離PostgreSQLへseed、staging APIを起動してartifact loading、DB分離、offline/API parity、通常deploy拒否を確認する。50 warmup/1,000 sequential benchmarkを実測し、結果hash/statusをそのversionへ記録する。

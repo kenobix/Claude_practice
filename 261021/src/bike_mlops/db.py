@@ -279,8 +279,8 @@ class Database:
                     raise ValueError(f"Observation source version conflicts for {observed}; use a clean database")
         return inserted
 
-    def seed_staging_observations(self, observations, data_hash: str) -> int:
-        """Atomically accept only exact source rows in an isolated staging database."""
+    @staticmethod
+    def _expected_staging_observations(observations, data_hash: str) -> dict:
         expected = {}
         for row in observations.itertuples(index=False):
             timestamp = canonical_time(row.timestamp)
@@ -289,14 +289,31 @@ class Database:
             expected[timestamp] = (int(row.cnt), canonical_time(row.available_at), data_hash)
         if not expected:
             raise ValueError("Refusing to seed staging from an empty dataset")
+        return expected
+
+    def _check_staging_observations(self, connection, expected: dict, *, require_complete: bool) -> None:
+        if not self.sqlite:
+            self.execute(connection, "LOCK TABLE observations IN SHARE ROW EXCLUSIVE MODE")
+        existing = self.execute(connection, "SELECT timestamp,cnt,available_at,data_hash FROM observations").fetchall()
+        for row in existing:
+            actual = (int(row["cnt"]), row["available_at"], row["data_hash"])
+            if row["timestamp"] not in expected or expected[row["timestamp"]] != actual:
+                raise ValueError(f"Staging observation differs from candidate dataset: {row['timestamp']}")
+        if require_complete and len(existing) != len(expected):
+            raise ValueError("Staging observations are missing rows from the candidate dataset")
+
+    def verify_staging_observations(self, observations, data_hash: str) -> int:
+        """Verify a complete snapshot; callers must account for later DB writes."""
+        expected = self._expected_staging_observations(observations, data_hash)
         with self.transaction(immediate=self.sqlite) as connection:
-            if not self.sqlite:
-                self.execute(connection, "LOCK TABLE observations IN SHARE ROW EXCLUSIVE MODE")
-            existing = self.execute(connection, "SELECT timestamp,cnt,available_at,data_hash FROM observations").fetchall()
-            for row in existing:
-                actual = (int(row["cnt"]), row["available_at"], row["data_hash"])
-                if row["timestamp"] not in expected or expected[row["timestamp"]] != actual:
-                    raise ValueError(f"Staging observation differs from candidate dataset: {row['timestamp']}")
+            self._check_staging_observations(connection, expected, require_complete=True)
+        return len(expected)
+
+    def seed_staging_observations(self, observations, data_hash: str) -> int:
+        """Atomically accept only exact source rows in an isolated staging database."""
+        expected = self._expected_staging_observations(observations, data_hash)
+        with self.transaction(immediate=self.sqlite) as connection:
+            self._check_staging_observations(connection, expected, require_complete=False)
             inserted = 0
             for timestamp, (count, available, source_hash) in expected.items():
                 result = self.execute(

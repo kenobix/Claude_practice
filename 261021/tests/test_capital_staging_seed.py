@@ -13,6 +13,7 @@ from bike_mlops.candidate_artifacts import sha256_file
 from bike_mlops.capital_staging import BOOTSTRAP_QUALITY_GATE_POLICY, BOOTSTRAP_QUALITY_GATE_POLICY_SHA256
 from bike_mlops.config import TARGET_CONTRACT_ID
 from bike_mlops.db import Database
+from bike_mlops.features import available_observation_frame
 
 
 class StagingSeedTests(unittest.TestCase):
@@ -83,6 +84,40 @@ class StagingSeedTests(unittest.TestCase):
                 before = self.rows()
                 with self.assertRaisesRegex(ValueError, "differs from candidate dataset"): self.seed()
                 self.assertEqual(self.rows(), before)
+
+    def test_verify_requires_exact_complete_snapshot_without_writes(self):
+        observations = available_observation_frame(self.frame)
+        with self.assertRaisesRegex(ValueError, "missing rows"):
+            self.db.verify_staging_observations(observations, self.data_hash)
+        self.seed()
+        self.assertEqual(self.db.verify_staging_observations(observations, self.data_hash), 2)
+        expected = {"candidate_id": self.evidence["candidate_id"], "data_sha256": self.data_hash}
+        with patch.object(capital_staging_seed, "_registration_tags", return_value=expected):
+            result = capital_staging_seed.verify_seeded_candidate(
+                self.db, self.frame, self.csv, self.manifest, self.evidence, self.registered)
+            self.assertEqual(result["verified_rows"], 2)
+            self.tags["candidate_id"] = "d" * 64
+            with self.assertRaises(ValueError):
+                capital_staging_seed.verify_seeded_candidate(
+                    self.db, self.frame, self.csv, self.manifest, self.evidence, self.registered)
+            self.tags["candidate_id"] = self.evidence["candidate_id"]
+        for statement in (
+            "DELETE FROM observations WHERE timestamp='2024-01-01 00:00:00'",
+            "UPDATE observations SET cnt=cnt+1 WHERE timestamp='2024-01-01 00:00:00'",
+            "UPDATE observations SET data_hash='wrong' WHERE timestamp='2024-01-01 00:00:00'",
+            "UPDATE observations SET available_at='2024-01-02 00:00:00' WHERE timestamp='2024-01-01 00:00:00'",
+            "INSERT INTO observations VALUES ('2023-01-01 00:00:00',1,'2023-01-01 03:00:00','extra')",
+        ):
+            with self.subTest(statement=statement):
+                with self.db.transaction() as connection:
+                    self.db.execute(connection, statement)
+                before = self.rows()
+                with self.assertRaises(ValueError):
+                    self.db.verify_staging_observations(observations, self.data_hash)
+                self.assertEqual(before, self.rows())
+                with self.db.transaction() as connection:
+                    self.db.execute(connection, "DELETE FROM observations")
+                self.seed()
 
 
 if __name__ == "__main__":
