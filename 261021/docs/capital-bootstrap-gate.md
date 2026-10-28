@@ -60,12 +60,12 @@ validationで選定したartifactはhashを固定し、後続評価で再fitし�
 - 新gate関数は欠落・非有限・負値指標を`not_evaluable`として不合格にする。テストではMAEの同値拒否、RMSE同値許容、RMSE悪化拒否、baseline-onlyの行別証拠照合も確認した。
 - `runtime init`、`deploy promote`、Capital APIのregistered-model loaderは、quality/validation/final-accuracy/operational各status、既知policy ID/SHA、`deployment_permission=eligible`の全てを要求する。欠落/不合格ならdiagnosticやrollback指定でも通さず、UCIの既存gateは変更しない。したがって現時点でCapital版が登録されていても、新gateタグがないモデルは配信できない。
 - 合成dataからimmutable candidate bundleを作り、baseline-only final-evaluation CLI全体を通すintegration testを追加した。registry loaderを失敗するmockにし、非呼び出し、final row artifact、gate/blocked permission report、ledger start/finishを確認する。これは実データ評価ではない。
-- 固定条件を実行する`python scripts/benchmark_capital_runtime.py --model-version <version> --candidate-id <sha256>`を追加した。local endpoint・Capital profile/target/model/version/candidate ID/artifactの事前照合、50回の暖機、逐次1,000要求、接続再利用、timeout 10秒・自動retryなし、各要求のHTTP status/latency/エラーを保存する。MAE/RMSEは計算せず、ベンチマーク単独では配信許可を`blocked`にする。合成候補を載せた使い捨てAPIで1,050要求を実行したが、実候補の運用測定はしていない。
+- 運用測定の内部処理はlocal endpoint・Capital profile/target/model/version/candidate ID/artifactの事前照合、50回の暖機、逐次1,000要求、接続再利用、timeout 10秒・自動retryなし、各要求の記録を実装済み。ただし入力出典とDB固定の統合が未完了のため、CLIによる測定は停止中。内部処理を直接実行して数値条件を満たしても、運用gateは`not_evaluated`とする。過去の合成1,050要求は実候補の運用測定ではない。
 - reportには暖機を含む全1,050要求のrequest ID・対象時刻・status・latency・予測値・data-version hash・エラー、ID集合hash、p95/p50/max、API model/data/artifact identity、ホストOS/CPU/RAM/Python/package版、取得できたCapital stackのcontainer resource limits・image・`docker stats`・Docker engine版、`/ready`のDB疎通結果を保存する。別ホスト負荷は自動計測しないので手動記録が必要。p95はnearest-rank法で算出する。
 - **staging経路の実装状況:** `scripts/register_capital_candidate.py`は一致するimmutable candidate/final reportと固定bootstrap policyを検査してからMLflowに登録する。candidate検証ではvalidation/final gateを指標から再計算し、final row CSVのhash・件数・時刻・ラベル到着時刻・保存済み予測からのMAE/RMSE再計算を確認する。さらに完了した評価台帳の期間・protocol/candidate SHA・report SHAが一致することを要求する。version tagはvalidation/final accuracyを`passed`、operationalを`not_evaluated`、deployment permissionを`blocked`に固定し、selection/final report hashとcandidate IDを保存する。通常runtimeの`load_registered_model`や`deploy promote`は変更していない。登録後に生成する`data/runtime-capital-staging/staging.env`は版・ID・raw/registered artifact hash・report hashだけを保持し、認証情報を含まない。`compose.capital-staging.yaml`のstaging APIは`127.0.0.1:8110`だけに公開し、Caddyから独立させ、prediction用DBも専用volumeへ分ける。MLflowは既存の隔離Capital MLflowを参照する。staging loaderはREADY状態、profile/target、固定policy、report/candidate/artifactのidentity、`deployment_permission=blocked`を確認する。運用benchmarkも候補IDをAPIの`/ready`・`/version`・全prediction responseで照合する。
 - 合成候補と使い捨てComposeのMLflow/PostgreSQL/APIで、登録の再実行、DB分離、HTTP/offline一致、candidate切替後の再送、tag不一致時のready拒否と復帰、通常loader/runtime init/promoteの拒否を確認した。promoteの入口は合成proxyで、実Caddy切替は未試験。全1,050要求の[合成記録](reviews/20261028-synthetic-staging-benchmark.json)と[実行スクリプト記録](reviews/20261028-synthetic-staging-harness.md)を保存し、test環境は破棄した。実候補の登録・計測や実データのvalidation/final評価は未実施で、新評価窓は消費していない。
 - 統合試験で、旧Docker imageがprofile設定を`/usr/local/lib/python3.12/configs/`へ探してAPIの起動に失敗したため、Dockerfileで`PYTHONPATH=/app/src`を指定した。修正前に作成したimageでは修正は反映されないため、次に起動するときは対象imageをbuildし直す。stagingの予測行にはcandidate IDを保存し、候補変更後も同じrequest IDの再送には元のIDを返す。旧予測行の候補IDは`null`として扱う。
-- 実環境試験前に、seedしたCSV/manifest・DBのデータSHAと候補のデータ版を一致させる強制検査、benchmark入力の全時刻が凍結training splitに含まれることの検査が必要。現在のコードはprofileとデータの形式を確認するが、この2条件を強制しない。今回の合成benchmarkは最後の2時刻が学習締切時にラベル未到着であり、training split内の入力条件を満たした証拠には使えない。
+- 現在は候補証拠とCSV/manifestを照合し、training splitの行hash・件数と対象168時刻を検査できる。DB再照合と測定中の固定、API応答の出典照合は未完成。以前の合成benchmarkは最後の2時刻が学習締切時にラベル未到着であり、training split内の入力条件を満たした証拠には使えない。
 
 ## API運用測定の固定条件
 
@@ -79,15 +79,15 @@ validationで選定したartifactはhashを固定し、後続評価で再fitし�
 - HTTP 200以外、接続失敗、timeout、不正JSON、異なるrequest/profile/model/artifact識別、非有限・負の予測をエラーに数える。単にHTTP 2xxであるだけでは成功としない。
 - エラー0件かつp95 250ms以下で合格。CPU/RAM、Docker資源制限、OS/Python/依存とイメージ、model/data hash、DB開始状態、他負荷の有無、p50/p95/max、失敗数を記録する。条件変更時は別benchmarkとして扱う。
 
-実行コードは候補専用Docker Compose staging APIがreadyで、model version・candidate ID・artifact hash・`deployment_permission=blocked`が期待値に一致するときだけ測定を開始する。**実候補に対する測定は、上記のデータ版・training split検査が完成するまで実行しない。** 例の168時間は2026-04-01〜2026-04-08の学習期間内で、validation/後続評価には使わない。staging APIはCaddy経由でなく、prediction用DBもblue/green側と別volumeを使う。
+**現在CLIからの測定は停止中。** 次のコマンドは、候補とデータを照合し、指定した168時間の各行が学習に使われ、各ラベルが学習cutoffまでに到着したことだけを確認する。APIリクエストは送信しない。モデル登録版、DB状態、測定時のデータ出典はこの入力確認だけでは保証しない。例の期間が有効かどうかは選択した候補で検査される。
 
 ```bash
 DATA_PROFILE_ID=capital-bikeshare .venv/bin/python scripts/benchmark_capital_runtime.py \
-  --api-url http://127.0.0.1:8110 \
-  --model-version '<明示したmodel version>' \
   --candidate-id '<candidate reportに記録された64桁ID>' \
+  --selection-report 'data/candidates/<candidate-id>/candidate-report.json' \
+  --final-report 'data/reports/capital-bikeshare/<final-report>.json' \
   --start '2026-04-01 00:00:00' \
-  --end '2026-04-08 00:00:00'
+  --end '2026-04-08 00:00:00' --check-input-only
 ```
 
 測定前にblocked registrationを作成し、生成された`data/runtime-capital-staging/staging.env`を使って、staging DBへのseed、staging API起動の順に行う。seedは検査済みCapital profileのCSV/manifestを使い、専用PostgreSQLのloopback port 55434へ記録する。

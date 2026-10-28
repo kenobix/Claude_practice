@@ -472,6 +472,11 @@ def run_capital_operational_benchmark(
         gate["status"] = "failed"
         gate["checks"]["completed"] = False
         resource_context = {"status": "interrupted", "detail": "Resource capture interrupted"}
+    # Numerical success alone cannot prove the still-missing input/DB provenance checks.
+    gate["measurement_status"] = gate["status"]
+    if gate["status"] == "passed":
+        gate["status"] = "not_evaluated"
+    gate["input_provenance_status"] = "not_evaluated"
     return {
         "schema_version": 1,
         "benchmark_id": benchmark_id,
@@ -509,6 +514,7 @@ def run_capital_operational_benchmark(
         "limitations": [
             "This is a local learning-PC benchmark, not a production SLO.",
             "No accuracy metric is computed from the replay window.",
+            "DB snapshot and API data provenance are not verified; numerical success is not an operational gate pass.",
             "A successful measurement does not independently authorize model deployment.",
         ],
     }

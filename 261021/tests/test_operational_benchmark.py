@@ -104,7 +104,9 @@ class OperationalBenchmarkTests(unittest.TestCase):
                 request_fn=request_fn,
                 resource_fn=lambda: {"host": {"logical_cpu_count": 4}},
             )
-        self.assertEqual(result["operational_gate"]["status"], "passed")
+        self.assertEqual(result["operational_gate"]["status"], "not_evaluated")
+        self.assertEqual(result["operational_gate"]["measurement_status"], "passed")
+        self.assertEqual(result["operational_gate"]["input_provenance_status"], "not_evaluated")
         self.assertEqual(result["operational_gate"]["observed"]["measured_requests"], 1000)
         self.assertEqual(result["operational_gate"]["observed"]["retry_count"], 0)
         self.assertEqual(result["deployment_permission"]["status"], "blocked")

@@ -1091,3 +1091,23 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s 
 ```
 
 一時PostgreSQL containerは各回のfinallyで停止・削除し、同名prefixのcontainerが残っていないことを確認。一時スクリプトも削除した。既存UCIの`/ready`はテスト前後ともversion 3、passed。実データ・実候補・本番評価期間は使用していない。
+
+## 2026-10-28: benchmarkの学習期間入力確認と誤合格防止
+
+前回の合成benchmarkは学習締切時にラベル未到着の2時間を含んでいた。そこで`capital_benchmark_inputs.py`に、既存の候補・最終report検証、候補ID、設定CSV/manifestのhash、固定protocol、学習行の件数と`training_row_keys_sha256`を再確認し、指定168時間の全時刻が実際の学習行に含まれることを検査する処理を追加した。学習行の選択はtrainerと同じ `timestamp < validation_start` かつ `timestamp + label_delay <= training_cutoff`。ラベルがcutoffちょうどに到着する行は許可し、cutoff後、欠けた時刻、異なる行や件数、delayの不一致は拒否する。元データの読込前後にもCSV/manifest hashを確認する。
+
+`scripts/benchmark_capital_runtime.py`は候補reportとfinal reportを必須とし、現段階では`--check-input-only`による入力検査だけを提供する。DB snapshot・測定中の変更防止・API出典の結び付けが未完了のため、オプションなしのCLI測定はエラーで停止し、HTTP予測を送らない。内部の測定関数を直接呼んだ場合も、数値条件がpassedなら`measurement_status=passed`を記録しつつ、`operational_gate.status=not_evaluated`とする。検査用CLIはMLflow登録版・DB・API出典を確認せず、候補採用や実測合格の証拠ではない。
+
+```bash
+.venv/bin/python -m unittest discover -s tests -p 'test_capital_benchmark_inputs.py' -v
+# 初回: 5 tests中4 failures/1 error。pandasのdatetime64[us]を誤って拒否した。
+# 型判定をnaive datetime64全般に修正後: 5 tests OK。
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -v
+# 86 tests OK (17.965s)。最終版では入力確認・CLI拒否・候補/CSV不一致も含む7 tests。
+# その後のCLI引数整理とprotocol再読込時のhash照合の追加後に入力確認の7 testsを再実行しOK (2.945s)。
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+# 成功。
+```
+
+実候補の測定・新規データ取得・実評価は行っていない。次はbenchmark実行前に同じ候補とregistry/DBを照合し、測定中に観測表の変更を防ぎ、APIが使用したlag観測の出典を候補データから再計算して各応答と照合する。失敗やロック消失は運用gateに合格させない。CLI全体を合成MLflow/PostgreSQL/APIで検証してから実測を再有効化する。
