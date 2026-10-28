@@ -1376,3 +1376,49 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s 
 # data/reports/20261029-monitor-persistence/postgres-integration.log
 # SHA-256: 04dc3b290942c1e199f430b351171900bb6723b7c77609fa28df1e6610002a30
 ```
+
+## 2026-10-29: 隔離system test用の基盤
+
+`scripts/capital_system_harness.py`を追加した。現行Dockerfile・必要source/configだけを一時directoryにコピーして前後のSHAを確認し、ユーザーdata・`.env`・`.git`・`.venv`はコピーしない。試験用Compose project/認証値/labelは毎回ランダムとする。Dockerは明示の`--run-infrastructure`時だけ使用し、ローカルUnix socketと固定port 5001/8110/55433/55434の空きを検査する。片付け前にproject・label・serviceを照合し、所有が不明なものは削除しない。これはDB/MLflow基盤の準備であり、合成候補・API・予測の全体試験は未完成。
+
+実DockerでCompose `config -q`は成功。DB・MLflowだけの隔離起動はimage build段階で約3分進捗を確認できず、当該projectのCompose upプロセスだけを識別して中止した。原因は不明で、`Docker operation compose failed (exit 130)`は中止の結果。親shellの終了コードは記録を取り損ねたため不明。対象projectのcontainer/network/volume/imageと一時workspaceは残っていない。試験後、段階と経過秒を定期表示し、異常時は原因の判明可否を示すよう改修した。最終コードの実Docker再試行はしていない。
+
+```bash
+.venv/bin/python scripts/capital_system_harness.py
+# workspace_prepared、docker_started=false、prediction_requests=0。最終版の非Docker確認。
+# 過去の実行: --run-infrastructure で起動を試み、中止・cleanupを確認。
+# data/reports/20261029-system-harness/infrastructure.log
+# SHA-256: eac616866973021555926e8977f0ed18219aeeb9a94c04d5d3e9c63e9ea2723c
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_capital_system_harness.py' -v
+# 最終版 12 tests OK (0.320s)。
+# data/reports/20261029-system-harness/unit-tests-final-v2.log
+# SHA-256: da702c6a445dbde16b03c5bb1285fe3094f47cbd20662913eb9807bf9227b44a
+```
+
+## 2026-10-29: 運用測定reportの読み取り点検
+
+`scripts/inspect_capital_operational_reports.py --candidate-id <候補ID>`と照合部品を追加した。すでに存在する候補・台帳ロックを取得できる場合に限り、台帳とplanのSHA、attempt ID、reportの配置・SHA・内容を照合する。紐付いたreport、孤立report、欠損・破損、中断、候補に帰属できないファイルを区別し、実行中やロック不在なら点検を拒否する。report・台帳を修復・削除せず、孤立reportを自動採用しない。合成テストでは読取り前後のreport・台帳の不変性、ロック競合、シンボリックリンクや不一致の拒否を確認した。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_capital_operational_recovery.py' -v
+# 最終版 11 tests OK。実候補のreportは操作していない。
+# data/reports/20261029-operational-recovery/recovery-tests-identity.log
+# SHA-256: 043a09e5c79922fef531539cc3b46ae40b8a7d66e7e11512232c971b0fd410e5
+```
+
+点検は状態を分類するだけで、timeout後に遅れてcommitされたDB監査の回収、部分証拠の復元、採用判断は未実装。強制終了ではメモリ上の証拠が失われうる。永続journalは測定時間に影響しうるため、測定policyを先に固定したうえで方式を検証する。
+
+### 今回の全変更を含む最終検証
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 180 .venv/bin/python -m unittest discover -s tests -v
+# 175 tests OK (21.899s)。隔離harness・monitor履歴・測定report点検を含む。
+# data/reports/20261029-continuation/unit-tests-final.log
+# SHA-256: 4ff1b9775ee761b38bfa11d29b9df24dc745815981d7bdd1aa9f6b0de577dbca
+.venv/bin/python -m compileall -q src scripts tests
+.venv/bin/python scripts/inspect_capital_operational_reports.py --help
+git diff --check
+# 成功。既存UCI入口は読み取り確認でversion 3・ready 200。
+```
+
+CIでは監視期間・PSIのcommit `63656ca`と内部runnerのcommit `a0e6041`の各workflow成功を確認した。後続commitには処理中またはキャンセルされたworkflowがあり、その時点で全成功とは扱わない。合成試験と実PostgreSQL試験だけでは、実Capital候補の精度やAPI運用目標の達成を意味しない。

@@ -110,7 +110,9 @@ DATA_PROFILE_ID=capital-bikeshare MLFLOW_TRACKING_URI=http://127.0.0.1:5001 \
 
 測定内部処理は、試行IDとartifact SHAを指定し、各要求前のロック確認・台帳への要求開始記録、応答の出典確認と監査照合を行う接続部を受け取れる。接続部を使う場合は、要求や出典確認の失敗時に後続要求を止め、送信前の失敗を送信済みとして数えない。planの再照合、台帳・DBロック、測定、監査、reportをつなぐ内部runnerを追加し、合成通信・mock DBで正常と失敗を検証した。台帳の`completed`は測定処理が完了した状態で、運用gateは別途`not_evaluated`、配信は`blocked`のまま。実stackでの通し検証と資源・証拠の独立検証は未完了で、現在の測定CLIは停止中。
 
-試行開始後、台帳と同じplan・候補・学習window・CSV/manifest・登録version・登録artifactを再照合し、確認済みデータをメモリへ読み込む。登録先はplanに固定されたCapital MLflowで、取得前後の登録情報と、読込み前後のCSV・manifestも検査する。DBロック解放や台帳保存が失敗した際、台帳に採用されないreportファイルが残りうるため、reportファイルの存在だけで完了と判断しない。孤立reportの検出・整理は未完成。
+試行開始後、台帳と同じplan・候補・学習window・CSV/manifest・登録version・登録artifactを再照合し、確認済みデータをメモリへ読み込む。登録先はplanに固定されたCapital MLflowで、取得前後の登録情報と、読込み前後のCSV・manifestも検査する。DBロック解放や台帳保存が失敗した際、台帳に採用されないreportファイルが残りうるため、reportファイルの存在だけで完了と判断しない。`.venv/bin/python scripts/inspect_capital_operational_reports.py --candidate-id <候補ID>` は既存のロックを取得したうえで、台帳とplan/reportのSHA・IDを読み取り照合し、紐付いたreport、孤立ファイル、不足・破損、中断を列挙する。実行中やロックが存在しない場合は点検を拒否し、reportの採用や修復は行わない。部分証拠の回復と原因の確定は別途必要。
+
+隔離system test用の基盤は `.venv/bin/python scripts/capital_system_harness.py` で、Dockerを起動せず一時workspace作成と削除を確認できる。`--run-infrastructure`を付けた場合のみ、専用Compose projectでDBとMLflowの起動を試み、終了時に所有labelを確認して片付ける。port 5001・8110・55433・55434が使用中なら既存のサービスを止めずに失敗する。この基盤はまだ候補やAPIを作らず、通し試験の完成を示さない。実行にはDocker imageのbuildと依存取得が必要になる場合がある。
 
 測定前にblocked registrationを作成し、生成された`data/runtime-capital-staging/staging.env`を使って、staging DBへのseed、staging API起動の順に行う。seedは検査済みCapital profileのCSV/manifestを使い、専用PostgreSQLのloopback port 55434へ記録する。
 
