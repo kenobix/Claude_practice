@@ -57,6 +57,14 @@ def _staging_url(url: str) -> str:
     return url.rstrip("/")
 
 
+def local_registry_url(url: str) -> str:
+    parsed = urlsplit(url)
+    if (parsed.scheme != "http" or parsed.hostname not in {"localhost", "127.0.0.1"} or parsed.port != 5001
+            or parsed.username or parsed.password or parsed.path not in {"", "/"} or parsed.query or parsed.fragment):
+        raise ValueError("Operational plan requires local Capital MLflow on port 5001")
+    return url.rstrip("/")
+
+
 def validate_plan_registration(evidence: dict, registered) -> str:
     """Reject a foreign or ineligible registration before downloading its artifact."""
     if registered.status != "READY" or registered.name != "bike-demand-capital":
@@ -69,7 +77,7 @@ def validate_plan_registration(evidence: dict, registered) -> str:
 
 
 def build_operational_plan(*, evidence: dict, window: dict, registered, artifact_dir: Path,
-                           api_url: str, resource_context: dict) -> dict:
+                           api_url: str, registry_uri: str, resource_context: dict) -> dict:
     """Validate supplied evidence and freeze conditions; this function sends no predictions."""
     artifact_sha = validate_plan_registration(evidence, registered)
     version = str(registered.version)
@@ -117,7 +125,7 @@ def build_operational_plan(*, evidence: dict, window: dict, registered, artifact
     if not isinstance(resource_context, dict):
         raise ValueError("Operational plan requires an object describing the resource context")
     plan = {
-        "schema_version": 1,
+        "schema_version": 2,
         "kind": "capital-operational-plan",
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "identity": {**expected, "model_name": registered.name, "model_version": version,
@@ -127,6 +135,7 @@ def build_operational_plan(*, evidence: dict, window: dict, registered, artifact
                      "feature_contract_version": selection["feature_contract_version"]},
         "input_window": dict(window),
         "api_url": _staging_url(api_url),
+        "registry_uri": local_registry_url(registry_uri),
         "policy": dict(PLAN_POLICY),
         "resource_context_before_requests": resource_context,
         "other_host_load": "not fully measured; assess separately before deciding operational eligibility",
@@ -139,7 +148,7 @@ def build_operational_plan(*, evidence: dict, window: dict, registered, artifact
 def validate_operational_plan(plan: object) -> dict:
     """Validate integrity and fixed policy; actual candidate/DB must be rechecked before use."""
     if (not isinstance(plan, dict) or type(plan.get("schema_version")) is not int
-            or plan.get("schema_version") != 1 or plan.get("kind") != "capital-operational-plan"):
+            or plan.get("schema_version") != 2 or plan.get("kind") != "capital-operational-plan"):
         raise ValueError("Unsupported operational plan")
     if plan.get("plan_sha256") != _digest(plan):
         raise ValueError("Operational plan SHA-256 mismatch")
@@ -148,6 +157,7 @@ def validate_operational_plan(plan: object) -> dict:
             or plan.get("deployment_permission") != "blocked"):
         raise ValueError("Operational plan policy or deployment permission differs from the fixed conditions")
     _staging_url(plan.get("api_url", ""))
+    local_registry_url(plan.get("registry_uri", ""))
     identity = plan.get("identity")
     if not isinstance(identity, dict):
         raise ValueError("Operational plan candidate identity is missing")
@@ -190,13 +200,15 @@ def validate_operational_plan(plan: object) -> dict:
     return plan
 
 
-def verify_operational_plan_binding(plan: dict, *, evidence: dict, window: dict, registered, artifact_dir: Path) -> None:
+def verify_operational_plan_binding(plan: dict, *, evidence: dict, window: dict, registered, artifact_dir: Path,
+                                    registry_uri: str) -> None:
     """Recheck a frozen plan against current verified evidence and the exact registry artifact."""
     validate_operational_plan(plan)
     fresh = build_operational_plan(evidence=evidence, window=window, registered=registered,
                                    artifact_dir=artifact_dir, api_url=plan["api_url"],
+                                   registry_uri=registry_uri,
                                    resource_context=plan["resource_context_before_requests"])
-    for key in ("identity", "input_window", "api_url", "policy"):
+    for key in ("identity", "input_window", "api_url", "registry_uri", "policy"):
         if plan.get(key) != fresh.get(key):
             raise ValueError(f"Frozen operational plan {key} differs from current candidate evidence")
 

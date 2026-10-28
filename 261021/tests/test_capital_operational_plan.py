@@ -57,6 +57,7 @@ class OperationalPlanTests(unittest.TestCase):
         with patch.object(capital_staging, "TARGET_CONTRACT_ID", "capital-trip-starts-hourly-v1"):
             return plans.build_operational_plan(evidence=self.evidence, window=self.window,
                 registered=self.registered, artifact_dir=self.artifact, api_url="http://127.0.0.1:8110",
+                registry_uri="http://127.0.0.1:5001",
                 resource_context={"host": {"logical_cpu_count": 4}, "host_load_average": [0.1, 0.2, 0.3]})
 
     def test_plan_is_bound_to_candidate_and_written_once(self):
@@ -124,6 +125,11 @@ class OperationalPlanTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "policy"):
             plans.validate_operational_plan(changed)
         changed = copy.deepcopy(plan)
+        changed["schema_version"] = 1
+        changed["plan_sha256"] = plans._digest(changed)
+        with self.assertRaisesRegex(ValueError, "Unsupported operational plan"):
+            plans.validate_operational_plan(changed)
+        changed = copy.deepcopy(plan)
         changed["policy"]["concurrency"] = True
         changed["plan_sha256"] = plans._digest(changed)
         with self.assertRaisesRegex(ValueError, "policy"):
@@ -142,17 +148,24 @@ class OperationalPlanTests(unittest.TestCase):
         plan = self.build()
         with patch.object(capital_staging, "TARGET_CONTRACT_ID", "capital-trip-starts-hourly-v1"):
             plans.verify_operational_plan_binding(plan, evidence=self.evidence, window=self.window,
-                                                  registered=self.registered, artifact_dir=self.artifact)
+                                                  registered=self.registered, artifact_dir=self.artifact,
+                                                  registry_uri="http://127.0.0.1:5001")
             altered = copy.deepcopy(plan)
             altered["identity"]["model_version"] = "8"
             altered["plan_sha256"] = plans._digest(altered)
             with self.assertRaisesRegex(ValueError, "identity differs"):
                 plans.verify_operational_plan_binding(altered, evidence=self.evidence, window=self.window,
-                                                      registered=self.registered, artifact_dir=self.artifact)
+                                                      registered=self.registered, artifact_dir=self.artifact,
+                                                      registry_uri="http://127.0.0.1:5001")
+            with self.assertRaisesRegex(ValueError, "registry_uri differs"):
+                plans.verify_operational_plan_binding(plan, evidence=self.evidence, window=self.window,
+                                                      registered=self.registered, artifact_dir=self.artifact,
+                                                      registry_uri="http://localhost:5001")
             self.registered.tags["deployment_permission"] = "eligible"
             with self.assertRaisesRegex(ValueError, "deployment_permission"):
                 plans.verify_operational_plan_binding(plan, evidence=self.evidence, window=self.window,
-                                                      registered=self.registered, artifact_dir=self.artifact)
+                                                      registered=self.registered, artifact_dir=self.artifact,
+                                                      registry_uri="http://127.0.0.1:5001")
 
     def test_cli_writes_plan_without_sending_prediction_requests(self):
         script = Path(__file__).resolve().parents[1] / "scripts/prepare_capital_operational_plan.py"
@@ -221,14 +234,17 @@ class OperationalPlanTests(unittest.TestCase):
                 with patch.object(capital_staging, "TARGET_CONTRACT_ID", "capital-trip-starts-hourly-v1"):
                     plan = plans.build_operational_plan(evidence=self.evidence, window=self.window,
                         registered=registered, artifact_dir=artifact_dir, api_url="http://127.0.0.1:8110",
+                        registry_uri="http://127.0.0.1:5001",
                         resource_context={"host": {"kind": "synthetic"}})
                     plans.verify_operational_plan_binding(plan, evidence=self.evidence, window=self.window,
-                                                          registered=registered, artifact_dir=artifact_dir)
+                                                          registered=registered, artifact_dir=artifact_dir,
+                                                          registry_uri="http://127.0.0.1:5001")
                     client.set_model_version_tag("bike-demand-capital", created.version, "candidate_id", "0" * 64)
                     changed = client.get_model_version("bike-demand-capital", created.version)
                     with self.assertRaisesRegex(ValueError, "candidate_id"):
                         plans.verify_operational_plan_binding(plan, evidence=self.evidence, window=self.window,
-                                                              registered=changed, artifact_dir=artifact_dir)
+                                                              registered=changed, artifact_dir=artifact_dir,
+                                                              registry_uri="http://127.0.0.1:5001")
         finally:
             mlflow.set_tracking_uri(old_uri)
             registry_utils._registry_uri = old_registry_uri

@@ -1218,3 +1218,24 @@ git diff --check
 ```
 
 手動probeの最終版と生ログはGit対象外の`data/reports/20261028-operational-plan/`に保存。再現用の実MLflow registry testは`tests/test_capital_operational_plan.py`にも追加した。計画書11.5とgate文書を進捗に合わせて更新。実candidate/final reportやCapital MLflow HTTP serverを使ったplan作成、DBロック中の1,050件、MLflow tag更新、実評価・実配信は未実施。次はattempt台帳と既存guardを測定の実行順へ結び付け、ロック喪失・部分失敗・監査不一致を非合格として記録し、隔離した実stackで通す。
+
+### planにregistry接続先を追加
+
+plan作成commit `34b7547`後に、candidate/version/artifactのほか、参照したCapital registry URIもplanへ固定する変更を加えた。必須項目の追加に合わせschema versionを2に上げ、旧schema 1は拒否する。再照合では指定されたregistry URIとplanの値の一致を要求する。`http://localhost:5001`と`http://127.0.0.1:5001`は同一視せず、最初に記録した表記を使う。plan作成は従来どおり予測を送らず、実測・承認の証拠は作らない。
+
+先行commit `34b7547`のcontract CI `40702606419`とPages workflow `40702605286`はいずれもsuccess。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_capital_operational_plan.py' -v
+# registry URI変更の拒否を含む8 tests、OK (5.874s)。
+# data/reports/20261028-operational-plan/plan-tests-registry-uri.log
+# SHA-256: daae7132ec1584d35f7eaf5e7f66bcadf8e41bb2b31a4554ebf7675222e42670
+# schema 2への変更と旧schema拒否を追加した後、別名で再実行: 8 tests OK (5.888s)。
+# data/reports/20261028-operational-plan/plan-tests-schema2.log
+# SHA-256: e2fd9fd5df6c076eca542c5b41b27e69d5635c3488bc718be84471e9aa99fa7a
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+# 成功。
+```
+
+ログの取扱いで誤りがあった。再試験時に、直前の節が記録する`plan-tests.log`を同じpathへ上書きしたため、旧SHA `2c3dda...`の生ログは残っていない。旧テストの結果と記録したSHAは当時の履歴として維持し、上記新ログのSHAと区別する。以後の再実行は別名で保存する。全suite 98 testsはcommit `34b7547`前の実行であり、この追加変更後は関連8 testsを再実行した。実候補・実測は引き続き未実施。

@@ -5,10 +5,11 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from urllib.parse import urlsplit
 
 from bike_mlops.capital_benchmark_inputs import check_candidate_training_window
-from bike_mlops.capital_operational_plan import build_operational_plan, save_operational_plan, validate_plan_registration
+from bike_mlops.capital_operational_plan import (
+    build_operational_plan, local_registry_url, save_operational_plan, validate_plan_registration,
+)
 from bike_mlops.capital_staging import verify_candidate_for_staging
 from bike_mlops.config import DATA_PROFILE_ID, MODEL_NAME
 from bike_mlops.operational_benchmark import _machine_and_container_resources
@@ -30,11 +31,7 @@ def main() -> None:
     version = args.model_version
     if not version.isdecimal() or int(version) <= 0:
         raise ValueError("A positive explicit model version is required")
-    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "")
-    uri = urlsplit(tracking_uri)
-    if (uri.scheme != "http" or uri.hostname not in {"localhost", "127.0.0.1"} or uri.port != 5001
-            or uri.username or uri.password or uri.path not in {"", "/"} or uri.query or uri.fragment):
-        raise ValueError("MLFLOW_TRACKING_URI must point to local Capital MLflow at port 5001")
+    tracking_uri = local_registry_url(os.getenv("MLFLOW_TRACKING_URI", ""))
 
     window = check_candidate_training_window(
         args.selection_report, args.final_report, args.candidate_id, start=args.start, end=args.end,
@@ -63,7 +60,8 @@ def main() -> None:
         except (OSError, AttributeError):
             resources["host_load_average"] = None
         plan = build_operational_plan(evidence=evidence, window=window, registered=registered,
-                                      artifact_dir=artifact_dir, api_url=args.api_url, resource_context=resources)
+                                      artifact_dir=artifact_dir, api_url=args.api_url,
+                                      registry_uri=tracking_uri, resource_context=resources)
         output = save_operational_plan(plan, args.output)
     print(json.dumps({"plan_path": str(output), "plan_sha256": plan["plan_sha256"],
                       "candidate_id": plan["identity"]["candidate_id"], "model_version": version,
