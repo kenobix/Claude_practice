@@ -36,6 +36,7 @@ from bike_mlops.candidate_artifacts import persist_candidate_bundle, source_tree
 from bike_mlops.evaluation_protocol import begin_evaluation, finish_evaluation, read_protocol
 from bike_mlops.features import FEATURE_COLUMNS, feature_frame_for_dataset
 from bike_mlops.model import directory_sha256, load_registered_model
+from bike_mlops.timezones import timezone_data_identity
 
 SPLITS = {
     "train_end": pd.Timestamp("2012-01-01 00:00:00"),
@@ -171,11 +172,13 @@ def _versions() -> dict:
             if line.startswith("FROM "):
                 configured_container_image = line.split(maxsplit=1)[1]
                 break
+    timezone_name = DATA_PROFILE["target"].get("timezone_name")
     return {
         "python": sys.version,
         "platform": platform.platform(),
         "container_image_configured": configured_container_image,
         "training_execution": "host Python; container image is recorded for the API/MLflow services",
+        "timezone_database": timezone_data_identity(timezone_name) if timezone_name else None,
         "direct_dependencies": {name: packages.get(name) for name in names},
         "all_installed_packages": dict(sorted(packages.items(), key=lambda pair: pair[0].lower())),
     }
@@ -534,14 +537,20 @@ def _train_candidate_impl(
         raise ValueError("A verified source manifest is required for frozen candidate evaluation")
     if source_manifest.get("source") == "Capital Bikeshare monthly trip history":
         source_manifest, strict_frame = validate_capital_manifest(source_manifest, data_path)
+        if source_manifest.get("manifest_schema_version") != 3:
+            raise ValueError(
+                "Frozen candidate evaluation requires Capital manifest schema 3 with a locked timezone database identity"
+            )
         if not frame["timestamp"].equals(strict_frame["timestamp"]) or not frame["cnt"].equals(strict_frame["cnt"]):
             raise ValueError("Candidate CSV differs from the validated Capital Bikeshare manifest")
     else:
-        raise ValueError("Frozen candidate protocols currently support only strict Capital Bikeshare manifest schema v2")
+        raise ValueError("Frozen candidate protocols currently support only strict Capital Bikeshare manifest schema v3")
     if protocol["dataset"]["data_sha256"] != data_hash:
         raise ValueError("Evaluation protocol data SHA-256 does not match the candidate CSV")
     if protocol["dataset"]["source_manifest_sha256"] != sha256_file(manifest_path):
         raise ValueError("Evaluation protocol source-manifest SHA-256 does not match the selected manifest")
+    if protocol["dataset"].get("timezone_database") != source_manifest.get("timezone_database"):
+        raise ValueError("Evaluation protocol timezone database identity differs from the source manifest")
     if protocol["dataset"]["target_contract"] != source_manifest.get("processing", {}).get("contract_version"):
         raise ValueError("Evaluation protocol target contract differs from the source manifest")
     if protocol["features"]["contract_version"] != FEATURE_CONTRACT_VERSION or protocol["features"]["columns"] != list(FEATURE_COLUMNS):

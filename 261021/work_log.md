@@ -697,3 +697,45 @@ UCI Bike SharingとCapital Bikeshareの件数は意味が異なるため、UCI�
 ユーザーから判断を委任されたため、3点をCodexが決定した。validation/後続精度gateはMAEの厳密改善とRMSE非悪化、運用は暖機50件後の逐次1,000件でエラー0・p95 250ms以下、weekday/weekend・通勤時間帯は件数/MAE/差を記録する診断値とする。全要求は新規ID・再試行0とし、保存済み応答の計測を避ける。追加の確認待ちは解消した。
 
 `docs/capital-bootstrap-gate.md`を決定済み基準へ更新し、runbook・data profile文書の未承認表記を修正、計画書R06を仕様決定と未実装/未実測へ分割した。計画書11.4へ実行順序を追記した。今回完了したのは差分レビューと基準/残作業の更新で、新規fit・評価・登録・昇格・負荷試験は行っていない。変更は文書のみのため、ローカルでのテストsuite再実行は省略し、文書リンク・日時算術・diffを確認する。push後は自動CIの結果を確認する。
+
+## 2026-10-28: R04 timezone供給元固定・実環境再現確認
+
+### 実装
+
+- `src/bike_mlops/timezones.py`を追加し、OSの`zoneinfo.TZPATH`に依存せず、lock済みのPython `tzdata` packageからTZif bytesを読み込んで`ZoneInfo.from_file`でtimezoneを作るようにした。zone path traversalを拒否し、timezone file identityをSHA-256付きで返す。
+- `pyproject.toml`と既存`requirements.lock`の版を`tzdata==2026.5`に一致させた。Capitalの月次集計・manifest validator・API壁時計検証が同じloaderを使う。学習reportとAPI `/ready`・`/version`、manifest schema 3にprovider/package版/zone名/byte数/hashを記録する。schema 2は既存audit/seed用として読めるが、新protocol/candidate作成ではschema 3を必須にした。
+- 回帰試験を追加し、春の欠落時刻、秋の重複時刻、package file hash、traversal拒否、schema 2からの新protocol拒否を確認する。
+- Docker buildで`COPY configs/data-profiles`が失敗した。原因は`.dockerignore`の`configs`全体除外で、Dockerfileとの設定不整合だった。`configs/*`を除外しつつ`configs/data-profiles/`だけ再包含するよう修正した。
+
+### 検証
+
+```bash
+./.venv/bin/python -m unittest tests.test_timezones tests.test_capital_pipeline tests.test_evaluation_protocol -v
+./.venv/bin/python -m unittest discover -s tests -v
+./.venv/bin/python -m compileall -q src tests scripts
+./.venv/bin/python -m pip check
+```
+
+- 対象3 moduleの17テスト成功。全suiteは48テスト成功（最終実行2.996秒）。隔離sandbox内の実行はFastAPI先頭テストで停止したため中断し、許可付きの通常実行で同じコマンドを完走した。終了コード0。Starlette/httpx利用の非推奨warningは出るが失敗ではない。
+- compileall成功、`pip check`は`No broken requirements found`。`git diff --check`も成功。
+- Docker Desktop 4.97.0 / Engine 29.9.2へ許可付き接続。修正前の`docker build --tag bike-demand-r04-tz-check:local .`は上記`.dockerignore`理由で失敗。修正後はbuild成功し、image内でpackage版`2026.5`、America/New_York TZif 1,744 bytes、SHA-256 `d7f2206b3a45989fc9ad63d558922532fa7352280d5f87176bf1db79cb1d1fa9`を確認した。コンテナの春DST gridは`00, 01, 03, 04`でhostの結果と一致。検証専用image tagは確認後に削除した。WSL hostのOS timezone database表示は`2026c`。これはpackage版と別記録で、同一版とは推定しない。
+
+### 実データ再集計と独立検査
+
+既存の集計結果や評価データを上書きしないよう、新しい出力pathを使った。候補学習・評価・MLflow登録・API/Compose再起動は行っていない。
+
+```bash
+./.venv/bin/python scripts/prepare_capitalbikeshare.py \
+  --archive-start 202301 --archive-end 202605 \
+  --data-start '2023-01-01 00:00:00' \
+  --data-end-exclusive '2026-05-01 00:00:00' \
+  --output-csv data/derived/capitalbikeshare-r04-tzdata2026-5/hourly.csv \
+  --output-manifest data/derived/capitalbikeshare-r04-tzdata2026-5/manifest.json
+```
+
+- 全41 ZIP、source rows 19,440,291、重複205、一意ride ID 19,440,086。内訳は期間外592,491、DST除外1,568、CSV出力18,846,027 trip startsで収支一致。CSVは29,177時間。期間内の空き7時間は春の欠落4時間・秋の曖昧3時間と一致し、timestamp duplicate 0。
+- 新CSV SHA-256は`cc4b39c67db286d30300cc6fb10a0f37e942eb337a7bd964795bbdd891762a96`。旧schema 2 CSVと同じhash。新manifestはschema 3 / `capital-hourly-aggregation-v3`で、timezone identityを含む。
+- 生成後に`validate_capital_manifest`でschema 3を再読込し、41原本すべてのbyte数/SHA、timestamp coverage/grid、行収支、CSV SHAを検査した。新旧manifest間で41件すべてのarchive SHAが一致し、CSV SHAも一致。再集計の再現証拠であり、原本・期間が同じなので未使用の新評価データではない。
+- 検査後の出力先: `data/derived/capitalbikeshare-r04-tzdata2026-5/`（local generated data、Git対象外）。
+
+計画書R04を完了とし、`capital-bootstrap-gate.md`、`data-profiles.md`、`runbook.md`もschema 3/未使用データの条件へ更新した。次の優先作業はR06のincumbentなしbootstrap protocol/candidate/final-evaluation実装。その後に初めて未使用2026年データを取得・監査する。新規検証後のGitHub CIと変更pushはまだ行っていない。

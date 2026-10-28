@@ -207,17 +207,17 @@ MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0
 
 2026-10-28時点で手元にあるCapital Bikeshareの2025年上期validationと2025-07〜2026-04の後続期間は、いずれも既評価として再利用禁止です。UCI登録版3は別targetのモデルなので、Capital候補のincumbentとして使いません。まだ`bike-demand-capital`配下の同target incumbentも承認済みmonitor参照期間もありません。このため、現在は新protocolの作成・候補選定・最終評価を実行しないでください。まず別target用の初回modelと合否規則をR06に従って確立します。
 
-初回Capital modelの基準は、ユーザーからの判断委任により[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)へ決定事項として記録しました。MAEの厳密改善とRMSE非悪化、エラー0件/p95 250ms以下のローカル運用目標、segmentは記録のみを採用します。追加の確認待ちはありませんが、bootstrapコード適用・未使用データ検証・protocol freezeは未完了です。2026年6〜9月公式archiveは前回URLの存在を確認しただけで、内容をまだ取得・閲覧していません。新しい実験前にR04のtimezone供給元固定とR06の実装・protocolを整えます。
+初回Capital modelの基準は、ユーザーからの判断委任により[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)へ決定事項として記録しました。MAEの厳密改善とRMSE非悪化、エラー0件/p95 250ms以下のローカル運用目標、segmentは記録のみを採用します。追加の確認待ちはありませんが、bootstrapコード適用・未使用データ検証・protocol freezeは未完了です。2026年6〜9月公式archiveは前回URLの存在を確認しただけで、内容をまだ取得・閲覧していません。R04のtimezone供給元固定は完了しています。次はR06 bootstrap経路と、評価未使用の新期間をmanifest schema 3で検証します。
 
 初回modelが用意され、未使用のvalidation・後続期間を確保した後の手順は次のとおりです。出典の公開が遅れている場合は、新期間が入手できるまで待ちます。
 
 取込先は新しいパスを指定します。既存CSV/manifestの上書きは拒否されます。`--archive-start`/`--archive-end`は取得したZIPの全月を連続して指定し、data期間の境界月も含めます。出力CSV・manifestは一組で保存され、manifestのSHA-256が一致してから利用できます。
 
 ```bash
-CSV='data/derived/capitalbikeshare-next/hourly.csv'
-MANIFEST='data/derived/capitalbikeshare-next/manifest.json'
+CSV='data/derived/replace-with-new-unique-period/hourly.csv'
+MANIFEST='data/derived/replace-with-new-unique-period/manifest.json'
 
-# YYYYMMとtimestampを、実際に取得した新しい連続月・未使用期間に置き換える。
+# 出力path、YYYYMM、timestampは、実際に取得した新しい連続月・未使用期間に置き換える。
 python scripts/prepare_capitalbikeshare.py \
   --archive-start YYYYMM \
   --archive-end YYYYMM \

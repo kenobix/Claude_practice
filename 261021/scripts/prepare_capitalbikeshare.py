@@ -22,6 +22,7 @@ import pandas as pd
 
 from bike_mlops.data import audit_hourly, load_hourly
 from bike_mlops.profiles import load_data_profile
+from bike_mlops.timezones import load_pinned_timezone, timezone_data_identity
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RAW_DIR = PROJECT_ROOT / "data/raw/capitalbikeshare/monthly"
@@ -32,6 +33,8 @@ SOURCE_PAGE = "https://capitalbikeshare.com/system-data"
 LICENSE_PAGE = "https://capitalbikeshare.com/data-license-agreement"
 CAPITAL_PROFILE = load_data_profile("capital-bikeshare")
 LOCAL_TIMEZONE = CAPITAL_PROFILE["target"]["timezone_name"]
+LOCAL_TIMEZONE_INFO = load_pinned_timezone(LOCAL_TIMEZONE)
+TIMEZONE_DATABASE_IDENTITY = timezone_data_identity(LOCAL_TIMEZONE)
 DATA_START = pd.Timestamp("2023-01-01 00:00:00")
 DATA_END_EXCLUSIVE = pd.Timestamp("2026-05-01 00:00:00")
 
@@ -97,7 +100,7 @@ def _valid_local_hours(
         end=end_exclusive,
         freq="h",
         inclusive="left",
-        tz=LOCAL_TIMEZONE,
+        tz=LOCAL_TIMEZONE_INFO,
     )
     local_wall_hours = aware_hours.tz_localize(None)
     repeated = local_wall_hours.duplicated(keep=False)
@@ -374,6 +377,7 @@ def _aggregate_archives_locked(
         audit["data_profile_id"] = CAPITAL_PROFILE["profile_id"]
         audit["target_contract_id"] = CAPITAL_PROFILE["target_contract_id"]
         audit["timezone_interpretation"] = CAPITAL_PROFILE["target"]["time_zone_interpretation"]
+        audit["timezone_database"] = TIMEZONE_DATABASE_IDENTITY
         delay = CAPITAL_PROFILE["label_availability"]["delay_hours"]
         delay_status = CAPITAL_PROFILE["label_availability"]["status"]
         audit["label_available_at_rule"] = f"timestamp + {delay} hours ({delay_status})"
@@ -381,14 +385,15 @@ def _aggregate_archives_locked(
             raise AssertionError("Derived timestamps must be unique")
 
         report = {
-            "manifest_schema_version": 2,
+            "manifest_schema_version": 3,
+            "timezone_database": TIMEZONE_DATABASE_IDENTITY,
             "source": "Capital Bikeshare monthly trip history",
             "source_page": SOURCE_PAGE,
             "license_page": LICENSE_PAGE,
             "license_summary": "Use is governed by the Capital Bikeshare Data License Agreement; do not publish the source as a standalone dataset.",
             "processing": {
                 "contract_version": CAPITAL_PROFILE["target_contract_id"],
-                "processing_version": "capital-hourly-aggregation-v2",
+                "processing_version": "capital-hourly-aggregation-v3",
                 "input_field": "started_at",
                 "target": "trip starts counted by local wall-clock hour",
                 "source_time_strings_have_timezone_offset": False,

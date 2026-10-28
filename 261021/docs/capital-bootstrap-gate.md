@@ -68,9 +68,9 @@ validationで選定したartifactはhashを固定し、後続評価で再fitし�
 
 ## 残る作業と実行順序
 
-1. **R04/P0:** timezoneの実際の供給元・版を固定/記録し、集計とAPIのDST解釈を揃える。`tzdata`のinstallだけでOSから独立するわけではない。
+1. **R04/P0: 完了。** Python `tzdata==2026.5`のゾーンファイルを集計・manifest検査・APIで直接読み込み、OSのtimezone検索順に依存しない。manifest schema 3にゾーン名・package版・TZifバイト数・SHA-256を保存する。DST切替テストと新しいmanifestでの実データ再集計・hash検証を行った。詳細は[`data-profiles.md`](data-profiles.md)と`work_log.md`を参照。
 2. **R06/P1:** incumbentなしbootstrap経路をprotocol/candidate/final-evaluationへ実装する。新精度gate、policy識別子、hash、未設定・不合格時の拒否を回帰試験する。
-3. **R06/P1:** 原本範囲・buffer規則を確定し、未取得archiveを取得、新pathへmanifest v2を生成する。時刻・件数・出典と評価台帳の非重複を確認し、実験protocolを凍結する。
+3. **R06/P1:** 原本範囲・buffer規則を確定し、未取得archiveを取得、新pathへmanifest schema 3を生成する。時刻・件数・出典と評価台帳の非重複を確認し、実験protocolを凍結する。schema 2の過去データは監査・seed用に読めるが、新protocolには使わない。
 4. **R06/P1:** validationを一度実行しartifact/行別証拠を固定する。合格時だけ同一artifactで一度限りの後続評価へ進む。
 5. **R05/R06/P1:** 独立PostgreSQL/MLflow、model loading、offline/API parityを確認する。固定条件の運用benchmarkと配信許可の判定を実装・実施する。
 6. **R07〜R10:** 監視参照とPSI、障害・復旧、配信台帳と進行表示、採否記録・デモを計画書に従って完了する。

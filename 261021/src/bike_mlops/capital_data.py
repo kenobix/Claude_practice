@@ -8,9 +8,14 @@ from pathlib import Path
 import pandas as pd
 
 from bike_mlops.data import load_hourly, sha256_file
+from bike_mlops.profiles import load_data_profile
+from bike_mlops.timezones import load_pinned_timezone, timezone_data_identity
 
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
-MANIFEST_SCHEMA_VERSION = 2
+MANIFEST_SCHEMA_VERSION = 3
+LEGACY_MANIFEST_SCHEMA_VERSION = 2
+CAPITAL_PROFILE = load_data_profile("capital-bikeshare")
+CAPITAL_TIMEZONE = CAPITAL_PROFILE["target"]["timezone_name"]
 DEFAULT_RAW_ARCHIVE_DIR = Path(__file__).resolve().parents[2] / "data/raw/capitalbikeshare/monthly"
 
 
@@ -57,10 +62,11 @@ def validate_capital_manifest(
     """
     if not isinstance(manifest, dict):
         raise ValueError("Capital Bikeshare source manifest must be a JSON object")
-    if manifest.get("manifest_schema_version") != MANIFEST_SCHEMA_VERSION:
+    schema_version = manifest.get("manifest_schema_version")
+    if schema_version not in {LEGACY_MANIFEST_SCHEMA_VERSION, MANIFEST_SCHEMA_VERSION}:
         raise ValueError(
             "Capital Bikeshare source manifest schema is unsupported; regenerate into new output paths "
-            f"(expected schema {MANIFEST_SCHEMA_VERSION})"
+            f"(supported schemas {LEGACY_MANIFEST_SCHEMA_VERSION} and {MANIFEST_SCHEMA_VERSION})"
         )
     required_strings = ("source", "source_page", "license_page", "license_summary")
     for key in required_strings:
@@ -71,8 +77,16 @@ def validate_capital_manifest(
         raise ValueError("Capital Bikeshare source manifest field 'processing' must be an object")
     if processing.get("contract_version") != "capital-trip-starts-hourly-v1":
         raise ValueError("Capital Bikeshare target contract is missing or unsupported")
-    if processing.get("processing_version") != "capital-hourly-aggregation-v2":
+    expected_processing_version = (
+        "capital-hourly-aggregation-v3"
+        if schema_version == MANIFEST_SCHEMA_VERSION
+        else "capital-hourly-aggregation-v2"
+    )
+    if processing.get("processing_version") != expected_processing_version:
         raise ValueError("Capital Bikeshare processing version is missing or unsupported")
+    if schema_version == MANIFEST_SCHEMA_VERSION:
+        if manifest.get("timezone_database") != timezone_data_identity(CAPITAL_TIMEZONE):
+            raise ValueError("Capital Bikeshare manifest timezone database identity does not match the locked provider")
     if processing.get("input_field") != "started_at" or processing.get("source_time_strings_have_timezone_offset") is not False:
         raise ValueError("Capital Bikeshare timestamp input contract is missing or unsupported")
     window = manifest.get("data_window")
@@ -203,7 +217,7 @@ def validate_capital_manifest(
     if frame["timestamp"].min() < start or frame["timestamp"].max() >= end:
         raise ValueError("Capital Bikeshare derived timestamps fall outside the declared data window")
     expected_local = pd.date_range(
-        start=start, end=end, freq="h", inclusive="left", tz="America/New_York"
+        start=start, end=end, freq="h", inclusive="left", tz=load_pinned_timezone(CAPITAL_TIMEZONE)
     ).tz_localize(None)
     expected_local = expected_local[~expected_local.duplicated(keep=False)]
     if not frame["timestamp"].reset_index(drop=True).equals(pd.Series(expected_local, name="timestamp")):

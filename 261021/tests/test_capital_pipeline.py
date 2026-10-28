@@ -64,9 +64,17 @@ class CapitalAggregationContractTests(unittest.TestCase):
         self.assertEqual(report["audit"]["data_profile_id"], "capital-bikeshare")
         self.assertEqual(report["audit"]["target_contract_id"], "capital-trip-starts-hourly-v1")
         self.assertIn("monthly publication latency is not measured", report["audit"]["label_available_at_rule"])
+        self.assertEqual(report["timezone_database"]["provider"], "python-tzdata-package")
+        self.assertEqual(report["timezone_database"]["package_version"], "2026.5")
+        self.assertEqual(report["manifest_schema_version"], 3)
         manifest, frame = validate_capital_manifest(json.loads(manifest_path.read_text()), csv_path, self.raw)
         self.assertEqual(manifest["data_sha256"], report["derived_csv_sha256"])
         self.assertEqual(int(frame["cnt"].sum()), 2)
+
+        wrong_timezone_manifest = json.loads(manifest_path.read_text())
+        wrong_timezone_manifest["timezone_database"]["zone_file_sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "timezone database identity"):
+            validate_capital_manifest(wrong_timezone_manifest, csv_path, self.raw)
 
     def test_archive_months_must_be_contiguous_and_cover_requested_range(self):
         with self.assertRaisesRegex(ValueError, "sorted and contiguous"):

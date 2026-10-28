@@ -85,6 +85,30 @@ class EvaluationProtocolTests(unittest.TestCase):
         with self.assertRaisesRegex(FileExistsError, "Refusing to overwrite"):
             save_protocol(protocol, path)
 
+    def test_new_protocol_rejects_legacy_timezone_unpinned_manifest(self):
+        manifest = json.loads(self.manifest.read_text(encoding="utf-8"))
+        manifest["manifest_schema_version"] = 2
+        manifest["processing"]["processing_version"] = "capital-hourly-aggregation-v2"
+        manifest.pop("timezone_database")
+        legacy_manifest = self.root / "legacy-manifest.json"
+        legacy_manifest.write_text(json.dumps(manifest), encoding="utf-8")
+
+        with self.assertRaisesRegex(ValueError, "require manifest schema 3"):
+            build_capital_protocol(
+                self.csv,
+                legacy_manifest,
+                training_cutoff="2024-01-02 00:00:00",
+                validation_start="2024-01-02 00:00:00",
+                validation_end="2024-01-03 00:00:00",
+                evaluation_start="2024-01-03 02:00:00",
+                evaluation_end="2024-01-04 00:00:00",
+                incumbent_version="3",
+                incumbent_artifact_sha256="a" * 64,
+                incumbent_quality_gate="passed",
+                candidate_recipe={"model_family": "synthetic", "hyperparameters": {"seed": 17}},
+                raw_dir=self.raw,
+            )
+
     def test_protocol_rejects_overlapping_declared_windows_even_when_rows_are_missing(self):
         protocol = self.build_protocol()
         protocol["validation"]["end_exclusive"] = "2024-01-04 00:00:00"

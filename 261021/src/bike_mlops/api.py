@@ -6,7 +6,6 @@ import os
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
-from zoneinfo import ZoneInfo
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Request, status
@@ -25,6 +24,7 @@ from bike_mlops.config import (
 from bike_mlops.db import Database, RequestConflict, canonical_time, stable_hash
 from bike_mlops.features import FEATURE_COLUMNS, build_feature_row
 from bike_mlops.model import load_registered_model, predict_non_negative
+from bike_mlops.timezones import load_pinned_timezone, timezone_data_identity
 
 
 class PredictionRequest(BaseModel):
@@ -66,7 +66,7 @@ def _validate_wall_clock_timestamp(value: datetime) -> None:
     zone_name = DATA_PROFILE["target"].get("timezone_name")
     if not zone_name:
         return
-    zone = ZoneInfo(zone_name)
+    zone = load_pinned_timezone(zone_name)
     candidates = [value.replace(tzinfo=zone, fold=fold) for fold in (0, 1)]
     round_trips = [item.astimezone(timezone.utc).astimezone(zone).replace(tzinfo=None) for item in candidates]
     valid = [round_trip == value for round_trip in round_trips]
@@ -150,6 +150,11 @@ def ready(request: Request):
         "model_name": MODEL_NAME,
         "model_version": request.app.state.model_version,
         "quality_gate_status": request.app.state.model_quality_gate,
+        "timezone_database": (
+            timezone_data_identity(DATA_PROFILE["target"]["timezone_name"])
+            if DATA_PROFILE["target"].get("timezone_name")
+            else None
+        ),
     }
 
 
@@ -165,6 +170,11 @@ def version(request: Request):
         "artifact_sha256": getattr(request.app.state, "artifact_hash", None),
         "quality_gate_status": getattr(request.app.state, "model_quality_gate", None),
         "feature_contract_version": FEATURE_CONTRACT_VERSION,
+        "timezone_database": (
+            timezone_data_identity(DATA_PROFILE["target"]["timezone_name"])
+            if DATA_PROFILE["target"].get("timezone_name")
+            else None
+        ),
     }
 
 

@@ -269,16 +269,17 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 - [x] hostとコンテナは同じrequirements.lockを使い、Python 3.12.11とDocker base tagを設定。候補reportには実際のhost Python/依存版を記録する。lockは現venvの99 packageと一致。
 - [x] candidate bundleにsource snapshotを保存する。
 - [x] 同じ合成開発データで2回学習し、予測完全一致を試験。final期間は使っていない。
-- [ ] timezone供給元と版を集計・API・host/container間で固定し、reportへ記録する。`tzdata` installだけでは`zoneinfo`のOS優先検索を無効にできないことを今回確認した。必要なprovider設定とDSTの一致を試験し、新しい候補実験前に解消する。
-- 検証済みの範囲: 44テスト、compileall、pip check、CI上のclean lock installが成功。CI `40638852598`とUbuntu 24.04 runner/Node 24対応actionへ更新後の`40639053590`に加え、R05変更後のCI `40642840800`、前回最終コミットのCI `40645058486`もsuccess。Starlette/httpx非推奨警告は既知制限としてwork_logへ記録した。timezone供給元の固定・証跡は未完了なのでR04全体は完了扱いにしない。
+- [x] timezone供給元と版を固定した。依存定義とlockは`tzdata==2026.5`。集計・manifest検査・APIはOSの`zoneinfo` search pathを使わず、Python package内の対象zone TZif bytesから`ZoneInfo.from_file`を作る。manifest schema 3、training report、API `/ready`・`/version`にprovider/package版/zone名/bytes/hashを記録。春の欠落時刻・秋の重複時刻のテスト、schema 2から新protocolを作れない回帰テストを追加。旧manifest schema 2は監査・seedの後方互換用で、新protocol/candidateでは拒否する。
+- 完了確認: 全41 ZIPを既存出力を上書きせず新pathへ再集計し、schema 3 manifestのTZif identity、全archive hash・行収支、CSV hashを検証した。新CSVとschema 2 CSVのhash一致は時刻処理のbyte同一性を示すが、同期間・同原本なので新しい評価データとは扱わない。既存のsystem DB確認（`2026c`）とPython package identityを別々に記録し、同一版だとは推定しない。
+- 検証済みの範囲: 以前の44テスト、compileall、pip check、CI上のclean lock installに加え、今回のtimezone変更後は48テスト、compileall、pip check、Docker image build、host/container間のpackage版・TZif SHA・春DST grid一致、全41 ZIPのschema 3再集計・独立manifest検証が成功した。Starlette/httpx非推奨warningはwork_logへ記録した。今回の変更をpushした後、同じlockを使うCI結果を確認して記録する。
 
 #### R05 新しいtarget定義の移行プロファイル
 
 - [x] UCI `cnt`とCapital Bikeshare `started_at`件数の違い、除外乗車、集計母集団、America/New_York壁時計という解釈、DST除外、月次公開と仮想+3時間遅延の違いを[`docs/data-profiles.md`](../261021/docs/data-profiles.md)に固定する。
 - [x] target契約・データプロファイルIDを候補report/model card、MLflow run/model tags、DB metadata/prediction/deployment rows、API要求・応答、runtime state/probeへ結び付けた。DBはprofileに固定し、既存の行を含むUCI DBのCapital再利用を拒否する。別project/volume/host portの`compose.capital.yaml`を追加し、API/modelロード/seed/CLIでは別profileとtargetの混在を拒否する。
-- [x] 配信CLIのseedはprofile設定のCSVを使い、Capitalでは厳格なmanifest v2・target契約を確認する。2012年以前固定のprobeをデータ範囲に対応させた。UCIの既存client/idempotency hash/legacy modelは後方互換を保つ。
+- [x] 配信CLIのseedはprofile設定のCSVを使い、Capitalでは厳格なmanifest schema 2・target契約を確認する。R04では過去seed/auditとの互換を維持しつつ、新しい評価ではtimezone identity付きschema 3だけを受け入れる。2012年以前固定のprobeをデータ範囲に対応させた。UCIの既存client/idempotency hash/legacy modelは後方互換を保つ。
 - [x] 現行特徴量が時刻から既知の暦と利用可能時刻を過ぎた同profileのラグだけであること、および休日・天候の追加時点条件をデータprofile docsに明記した。未確認の将来情報は追加していない。
-- [x] 全41原本ZIPから新規pathに厳格manifest v2を作成し、各ZIP hash、集計収支、profile/target、CSV hashを再検査した。既存CSVとbyte hashが一致し、Capital用SQLiteへ29,177時間をseedした。
+- [x] 全41原本ZIPから新規pathに厳格manifest schema 2を作成し、各ZIP hash、集計収支、profile/target、CSV hashを再検査した。既存CSVとbyte hashが一致し、Capital用SQLiteへ29,177時間をseedした。別のschema 3出力もR04で作ったが、同じ期間・原本の再検査なので未使用評価データではない。
 - [ ] Capital監視はUCIの2011参照を流用しない。Capitalに凍結済み同profile training-reference model/window/PSI binがない間はCLIが監視を停止する。初回Capital modelと参照期間をR06/R07で確立後、同profile referenceで監視を実装・試験する。
 - 完了条件は未達。厳格manifest v2、監査、profile別SQLite seed、Compose静的設定検査、合成API/DB/profile試験は成功した。一方、独立PostgreSQL/MLflow/Composeの実起動、同target modelとmonitor reference、registered model loading、offline/API parity、end-to-end deploymentの証拠はまだない。UCI稼働版へは変更を加えていない。
 
@@ -290,7 +291,7 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 - [ ] 初回bootstrap用のprotocol/candidate/final-evaluation経路を実装する。incumbentなしでは同target historical baselineだけを比較し、UCI modelや仮modelを流用しない。新gate・policy識別子/SHA・行集合と件数・未設定/非有限指標/不合格拒否を回帰試験する。現在のCLIは新基準未対応。
 - [ ] report/model card/MLflow tagsとdeploy側で、validation選択gate・後続精度gate・運用gate・配信許可を区別し、条件不足や不合格を昇格前に拒否する。手動承認で不合格を上書きできる経路を作らない。
 - [ ] 原本範囲と月境界buffer規則を先に確定し、未使用2026年6〜9月のデータを取得・監査する。前回は10月archiveが404だったため、10月bufferを必要とする契約なら公開を待つ。結果を見て評価期間を短縮しない。
-- [ ] 新pathのmanifest v2、日時grid/DST/欠測理由・出典、分割件数、特徴量版、固定recipe、比較対象、gateとpolicy hashを実験protocolへ保存し、消費台帳の重複を検査する。候補fit前にvalidation開始を記録する。
+- [ ] 新pathのmanifest schema 3、日時grid/DST/欠測理由・出典、分割件数、特徴量版、固定recipe、比較対象、gateとpolicy hashを実験protocolへ保存し、消費台帳の重複を検査する。候補fit前にvalidation開始を記録する。
 - [ ] bootstrap validationを一度実行してtarget-specific model card・artifact・行別予測・判断記録を固定する。合格時だけ同一artifactで後続評価を一度実行し、再fitしない。使用済みwindowを最終評価や調整後候補へ再利用しない。
 - [ ] 固定条件のAPI測定を実装・実行する。学習期間内の固定168時間入力を使い、精度採点はしない。HTTP 200・schema/識別/有限非負予測を確認し、失敗要求を除外せず、再送cacheの計測を避ける。hardware条件を保存し、予測精度とは別に運用gateを算出する。
 - 完了条件: 同じreportとprotocolから採用/見送りが一意に説明でき、条件不足・悪い候補は昇格を拒否する。最終採用は理由付きの手動承認を記録する。今回完了したのは基準の判断・文書化で、コード適用・protocol freeze・実験は未完了。追加のユーザー確認待ちはない。
@@ -331,9 +332,9 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 
 | 順番 | 対象 | 次に実施する作業・完了の証拠 |
 |---|---|---|
-| 1 | R04/P0 | timezone供給元/版を固定・記録し、集計とAPIのDST一致を検証する。新しい実験前の前提条件。 |
+| 1 | R04/P0 | 完了。Python `tzdata==2026.5`を集計・manifest検査・APIで明示的に使い、schema 3/report/APIのidentity記録、DST・後方互換境界テスト、全41 ZIPの再集計とhash確認を行った。旧期間の再集計物は新規評価には使わない。 |
 | 2 | R06/P1 | incumbentなしのprotocol/candidate/final経路、新MAE/RMSE gate、policy hashと拒否条件を実装し、合成データで回帰試験する。 |
-| 3 | R06/P1 | 月境界bufferを含む原本範囲を決定→取得/manifest v2監査→未使用split/件数/recipe/gateをprotocolへ凍結する。training cutoffは2026-06-01 00:00、未到着の直前2時間を除外。 |
+| 3 | R06/P1 | 月境界bufferを含む原本範囲を決定→取得/manifest schema 3監査→未使用split/件数/recipe/gateをprotocolへ凍結する。training cutoffは2026-06-01 00:00、未到着の直前2時間を除外。 |
 | 4 | R06/P1 | validationを一度実施→artifact/evidence固定→合格時だけ同一artifactで後続評価を一度実施する。 |
 | 5 | R05/R06/P1 | Capital隔離PostgreSQL/MLflowとmodel loading、offline/API parityを実証し、固定benchmarkを実装・測定して運用gateを判定する。 |
 | 6 | R07/P1 | 同profile training reference/PSI bins、monitor期間継承、定数分布/件数不足/ラベル待ち/欠測増加の状態を実装・試験する。 |

@@ -6,7 +6,9 @@ __pycache__
 data
 tests
 docs
-configs
+configs/*
+!configs/data-profiles/
+!configs/data-profiles/**
 scripts
 *.sqlite
 *.db

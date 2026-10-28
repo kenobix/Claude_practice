@@ -60,6 +60,11 @@ def build_capital_protocol(
     """Build a pre-candidate split protocol from the validated dataset pair."""
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     manifest, frame = validate_capital_manifest(manifest, csv_path, raw_dir)
+    if manifest.get("manifest_schema_version") != 3 or "timezone_database" not in manifest:
+        raise ValueError(
+            "New Capital evaluation protocols require manifest schema 3 with a locked timezone database identity; "
+            "reaggregate into new output paths"
+        )
     data_sha = sha256_file(csv_path)
     manifest_sha = sha256_file(manifest_path)
     cutoff = _naive_hour(training_cutoff, "training_cutoff")
@@ -116,6 +121,7 @@ def build_capital_protocol(
             "data_sha256": data_sha,
             "source_manifest_sha256": manifest_sha,
             "data_window": manifest["data_window"],
+            "timezone_database": manifest["timezone_database"],
         },
         "features": {
             "contract_version": FEATURE_CONTRACT_VERSION,
