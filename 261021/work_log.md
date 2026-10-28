@@ -1239,3 +1239,28 @@ git diff --check
 ```
 
 ログの取扱いで誤りがあった。再試験時に、直前の節が記録する`plan-tests.log`を同じpathへ上書きしたため、旧SHA `2c3dda...`の生ログは残っていない。旧テストの結果と記録したSHAは当時の履歴として維持し、上記新ログのSHAと区別する。以後の再実行は別名で保存する。全suite 98 testsはcommit `34b7547`前の実行であり、この追加変更後は関連8 testsを再実行した。実候補・実測は引き続き未実施。
+
+## 2026-10-29: 運用測定の試行台帳
+
+計画11.5の最優先項目の一部として、`capital_operational_ledger.py`と確認用`scripts/operational_attempt_ledger.py`を追加した。候補ごとのロックを取得し、予測要求より前にplanの内容SHA・ファイルSHA、候補・登録版・registry URI、試行IDを台帳へ保存する部品である。要求開始直前の記録、重複実行の拒否、中断と証拠不足の記録、担当者・理由・次のplanを固定する再試行確認を用意した。完了reportは試行・plan・モデル識別とファイルSHAを検査し、contextの正常終了後にだけ台帳を確定する。台帳は一時ファイル、fsync、置換で書き、ロックは同一ローカルファイルシステムで同じlock先を使う協調プロセス間のもの。台帳自体の直接改変を防ぐ仕組みではない。
+
+実装中に、完了操作の直後、context終了前に例外やプロセス停止が起きた場合でも先に完了記録が残る問題に気づいた。完了の書き込みを正常終了まで延期し、書き込み時にreportとplanを再検査するよう修正した。また中断記録の書き込み自体が失敗しても、元の例外を保持し追加情報を付ける。OSによる強制終了はstartedが残り、次の実行前に確認が必要。要求後のpartial reportがない中断は証拠不足として記録する。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 120 .venv/bin/python -m unittest discover -s tests -v
+# 110 tests OK (18.634s)。最終の例外保持の補強より前の全体試験。
+# data/reports/20261029-operational-ledger/unit-tests.log
+# SHA-256: 88b598a140b09bd72320d0398bf75d5bf2fe9c766a904c58b470d106fbe280c9
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_capital_operational_ledger.py' -v
+# 最終変更後 11 tests OK (2.873s)。強制終了、同時ロック、再試行plan変更、
+# 終了直前例外・report改変・中断記録失敗を合成データで検証。
+# data/reports/20261029-operational-ledger/ledger-tests-final.log
+# SHA-256: 597b2bf583d291ea763f0368e9c47ef7c292b4c5b4006c108438241477e0f4ee
+.venv/bin/python -m compileall -q src scripts tests
+.venv/bin/python scripts/operational_attempt_ledger.py list
+# 成功。実台帳は未作成で空のrecordsを表示。実候補への試行やレビューは行っていない。
+git diff --check
+# 成功。既存のStarlette/httpxおよびMLflow/SQLAlchemy非推奨警告あり。
+```
+
+台帳はreportの識別・形を確認する部品であり、測定内容や精度・運用gateの独立した再検証ではない。plan、台帳、PostgreSQL guard、HTTP要求・監査・partial reportをbenchmark本体に統合する作業と、最新Dockerfileの隔離system testは残っている。測定CLIは停止したままで、実候補の登録・1,050要求・運用合格・配信承認は行っていない。次はこれらを固定した実行順でつなぎ、異常時を非合格にする。

@@ -104,7 +104,11 @@ DATA_PROFILE_ID=capital-bikeshare MLFLOW_TRACKING_URI=http://127.0.0.1:5001 \
   --output 'data/evaluations/capital-bikeshare/operational-plans/<plan-name>.json'
 ```
 
-計画ファイルの上書きは拒否し、内容のSHAを保持する。自己ハッシュは偶発的な変更の検出用であり、本人が内容とハッシュを両方書き換えた場合の真正性は証明しない。実測時にplanを候補・registry・DBと再照合し、最初の要求前に別の台帳へplan SHAとattemptを固定する経路、失敗時の再試行規則、出典/監査照合との統合は未実装。resourceの取得不能や他の負荷の未測定も合格証拠にしない。計画作成だけで運用gateは合格にならず、現在の測定CLIは停止中。
+計画ファイルの上書きは拒否し、内容のSHAを保持する。自己ハッシュは偶発的な変更の検出用であり、本人が内容とハッシュを両方書き換えた場合の真正性は証明しない。別途、最初の要求前にplanの内容とファイルのSHAを試行台帳に記録し、候補ごとの同時実行を防ぐ部品を追加した。途中終了や失敗後の再試行には、担当者・理由と次に使用するplanのSHAを記録する。記録済みのplanと異なるファイルによる再試行は拒否する。要求開始後に証拠を残せず中断した場合は証拠不足を記録する。`completed`は測定処理の正常終了時に初めて確定し、台帳内の状態だけでは運用gateや配信の合格証拠にならない。
+
+台帳の内容は `.venv/bin/python scripts/operational_attempt_ledger.py list` で確認できる。失敗・中断した試行の原因と部分report・監査記録を調査してから、再試行を認める場合に限り、`review-retry --candidate-id <候補ID> --operator <担当者> --reason <理由> --next-plan <planのパス>` を同じスクリプトに渡す。この操作は候補の配信承認ではない。ロックは同じファイルシステムとロック先を使う協調プロセス間に限られ、台帳を直接変更できる人による改変を防ぐものではない。
+
+台帳部品とplan/guardをbenchmark本体へつなぐ作業、DB・出典・監査との全体照合は未完了。resourceの取得不能や他の負荷の未測定も合格証拠にしない。計画作成だけで運用gateは合格にならず、現在の測定CLIは停止中。
 
 測定前にblocked registrationを作成し、生成された`data/runtime-capital-staging/staging.env`を使って、staging DBへのseed、staging API起動の順に行う。seedは検査済みCapital profileのCSV/manifestを使い、専用PostgreSQLのloopback port 55434へ記録する。
 
