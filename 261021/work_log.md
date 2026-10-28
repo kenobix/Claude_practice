@@ -1264,3 +1264,30 @@ git diff --check
 ```
 
 台帳はreportの識別・形を確認する部品であり、測定内容や精度・運用gateの独立した再検証ではない。plan、台帳、PostgreSQL guard、HTTP要求・監査・partial reportをbenchmark本体に統合する作業と、最新Dockerfileの隔離system testは残っている。測定CLIは停止したままで、実候補の登録・1,050要求・運用合格・配信承認は行っていない。次はこれらを固定した実行順でつなぎ、異常時を非合格にする。
+
+## 2026-10-29: 測定処理と台帳・出典確認の接続部
+
+固定benchmark内部に、試行ID・期待するartifact SHA・要求の前後を検査する接続部を渡せるようにした。試行IDはcanonical UUID、artifactは小文字SHA-256を要求し、APIの版・artifactが異なれば予測要求の前に拒否する。接続部を使う場合、要求直前の検査、通信、HTTP/応答検証、応答の出典確認のいずれかが失敗した時点で後続要求を停止する。送信前の検査失敗は送信済み要求として記録しない。timeoutなど送信後の失敗は試行された要求として記録し、未完了・非合格とする。既存の接続部なしの動作は維持した。
+
+`capital_benchmark_observer.py`は各要求の前後にsnapshot lockを確認し、最初の要求前に台帳へ開始を記録する。応答のdata-versionを候補由来のsourceと照合し、照合済みrequest/responseのコピーを保存する。完全な1,050件のときだけ既存の監査batch照合に渡す。これは測定処理の部品を接続する段階であり、候補・plan・登録先の再照合から、DB lock・台帳・報告確定までを結ぶ実行経路は未実装。監査関数の呼び出しはmock試験で、実PostgreSQLを通じた1,050件の全体試験ではない。測定CLIは入力確認専用のままで、実候補の運用合格や配信承認は行っていない。
+
+最初の全体テストでは新規observerのテスト用`Mock`が`assert_held`をunittest独自のassert名と誤認し、4 errorsと1 failureが出た。mockに`unsafe=True`を指定して修正し、失敗ログを上書きせず再実行した。さらにtimeout時の停止をテストに追加した。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 120 .venv/bin/python -m unittest discover -s tests -v
+# 初回 116 tests、1 failure / 4 errors。テスト用Mockの設定不備。
+# data/reports/20261029-benchmark-hooks/unit-tests.log
+# SHA-256: 69e4a5ef4be00c0db69d0a2d767162fd8e8ba6d5fa50d7d2af4e1c98dee0d737
+# 修正後 116 tests OK (18.766s)。後続のtimeoutテスト追加前。
+# data/reports/20261029-benchmark-hooks/unit-tests-fixed.log
+# SHA-256: ad901f6b9b037932dc085df268799f88bc33dd85cc4def62df22f2fa05d0a145
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_operational_benchmark.py' -v
+# timeoutテスト追加後 10 tests OK (0.071s)。
+# data/reports/20261029-benchmark-hooks/benchmark-tests-final.log
+# SHA-256: f8013c508d4f39d1a89cf997cf2c82f04b8414d4b6bdd9e4cf58d2c3f5cba4e9
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+# 成功。既存の非推奨警告あり。
+```
+
+次はplan/registry/candidateを再照合し、試行台帳とPostgreSQL guardのcontextを正しい順序で保持して測定・監査・部分reportを確定する実行経路を実装する。その後、隔離した最新Dockerfile・MLflow・PostgreSQL・APIで異常系を含むsystem testを行い、CLI復帰の条件を確認する。

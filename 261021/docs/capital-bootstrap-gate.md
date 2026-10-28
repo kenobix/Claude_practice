@@ -108,7 +108,7 @@ DATA_PROFILE_ID=capital-bikeshare MLFLOW_TRACKING_URI=http://127.0.0.1:5001 \
 
 台帳の内容は `.venv/bin/python scripts/operational_attempt_ledger.py list` で確認できる。失敗・中断した試行の原因と部分report・監査記録を調査してから、再試行を認める場合に限り、`review-retry --candidate-id <候補ID> --operator <担当者> --reason <理由> --next-plan <planのパス>` を同じスクリプトに渡す。この操作は候補の配信承認ではない。ロックは同じファイルシステムとロック先を使う協調プロセス間に限られ、台帳を直接変更できる人による改変を防ぐものではない。
 
-台帳部品とplan/guardをbenchmark本体へつなぐ作業、DB・出典・監査との全体照合は未完了。resourceの取得不能や他の負荷の未測定も合格証拠にしない。計画作成だけで運用gateは合格にならず、現在の測定CLIは停止中。
+測定内部処理は、試行IDとartifact SHAを指定し、各要求前のロック確認・台帳への要求開始記録、応答の出典確認と監査照合を行う接続部を受け取れる。接続部を使う場合は、要求や出典確認の失敗時に後続要求を止め、送信前の失敗を送信済みとして数えない。ただしplanの再照合から台帳・DBロック・測定・監査・report確定までを組み立てる実行経路は未完成で、この接続部だけではgateは合格にならない。resourceの取得不能や他の負荷の未測定も合格証拠にしない。現在の測定CLIは停止中。
 
 測定前にblocked registrationを作成し、生成された`data/runtime-capital-staging/staging.env`を使って、staging DBへのseed、staging API起動の順に行う。seedは検査済みCapital profileのCSV/manifestを使い、専用PostgreSQLのloopback port 55434へ記録する。
 

@@ -290,6 +290,9 @@ def run_capital_operational_benchmark(
     resource_fn: Callable = _machine_and_container_resources,
     warmup_count: int = WARMUP_REQUESTS,
     measured_count: int = MEASURED_REQUESTS,
+    attempt_id: str | None = None,
+    expected_artifact_sha256: str | None = None,
+    request_observer=None,
 ) -> dict:
     if DATA_PROFILE_ID != "capital-bikeshare":
         raise ValueError("Run the operational benchmark with DATA_PROFILE_ID=capital-bikeshare")
@@ -306,6 +309,16 @@ def run_capital_operational_benchmark(
     _validate_timezone_grid(start_time)
     if warmup_count <= 0 or measured_count <= 0:
         raise ValueError("Warmup and measured request counts must be positive")
+    if attempt_id is not None:
+        try:
+            if str(uuid.UUID(attempt_id)) != attempt_id:
+                raise ValueError
+        except (ValueError, TypeError, AttributeError) as error:
+            raise ValueError("Attempt ID must be a canonical UUID") from error
+    if expected_artifact_sha256 is not None and not re.fullmatch(r"[0-9a-f]{64}", expected_artifact_sha256):
+        raise ValueError("Expected artifact SHA-256 must be lowercase hexadecimal")
+    if request_observer is not None and (attempt_id is None or expected_artifact_sha256 is None):
+        raise ValueError("An observer requires the pinned attempt ID and artifact SHA-256")
 
     request_client = _PersistentJsonClient() if request_fn is None else None
     if request_fn is None:
@@ -327,6 +340,7 @@ def run_capital_operational_benchmark(
             or version.get("quality_gate_status") != "passed"
             or not isinstance(version.get("artifact_sha256"), str)
             or len(version["artifact_sha256"]) != 64
+            or (expected_artifact_sha256 is not None and version.get("artifact_sha256") != expected_artifact_sha256)
         ):
             raise RuntimeError("Active API identity/readiness does not match the requested Capital model")
         if (
@@ -343,7 +357,7 @@ def run_capital_operational_benchmark(
             request_client.close()
         raise
 
-    benchmark_id = str(uuid.uuid4())
+    benchmark_id = attempt_id or str(uuid.uuid4())
     request_ids: list[str] = []
     errors: list[dict] = []
     latencies_ms: list[float] = []
@@ -351,6 +365,7 @@ def run_capital_operational_benchmark(
     error_counts = {"warmup": 0, "measured": 0}
     total = warmup_count + measured_count
     interrupted = False
+    execution_error = None
     pending = None
 
     def record_measurement(
@@ -396,6 +411,13 @@ def run_capital_operational_benchmark(
                 "data_profile_id": DATA_PROFILE_ID,
                 "target_contract_id": TARGET_CONTRACT_ID,
             }
+            if request_observer is not None:
+                try:
+                    request_observer.before_request(payload)
+                except Exception as exception:
+                    execution_error = f"before_request: {type(exception).__name__}"
+                    interrupted = True
+                    break
             began = time.perf_counter()
             pending = (phase, phase_index, request_id, target_text, began)
             status_code = None
@@ -413,6 +435,8 @@ def run_capital_operational_benchmark(
                     artifact_sha256=version["artifact_sha256"],
                     candidate_id=candidate_id,
                 )
+                if error is None and request_observer is not None:
+                    request_observer.after_response(payload, response)
             except KeyboardInterrupt:
                 latency_ms = (time.perf_counter() - began) * 1000.0
                 error = "KeyboardInterrupt: request interrupted; benchmark is incomplete"
@@ -424,6 +448,8 @@ def run_capital_operational_benchmark(
                 phase, phase_index, request_id, target_text, status_code, latency_ms, response, error
             )
             pending = None
+            if error and request_observer is not None:
+                interrupted = True
             if interrupted:
                 break
     except KeyboardInterrupt:
@@ -504,6 +530,7 @@ def run_capital_operational_benchmark(
             "target_sequence": "cycle through the fixed 168 hourly timestamps",
         },
         "completed": not interrupted,
+        "execution_error": execution_error,
         "operational_gate": gate,
         "measurements": measurements,
         "deployment_permission": {

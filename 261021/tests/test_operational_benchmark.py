@@ -3,11 +3,12 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pandas as pd
 
 from bike_mlops import operational_benchmark as benchmark
+from bike_mlops.capital_benchmark_observer import CapitalBenchmarkObserver
 
 
 class OperationalBenchmarkTests(unittest.TestCase):
@@ -50,6 +51,14 @@ class OperationalBenchmarkTests(unittest.TestCase):
         artifact_hash = "a" * 64
         candidate_id = "c" * 64
         calls: list[tuple[str, dict | None]] = []
+        events = []
+
+        class Observer:
+            def before_request(self, payload):
+                events.append(("before", payload["request_id"]))
+
+            def after_response(self, payload, response):
+                events.append(("after", response["request_id"]))
 
         def request_fn(url, payload=None, timeout=10):
             calls.append((url, payload))
@@ -103,6 +112,9 @@ class OperationalBenchmarkTests(unittest.TestCase):
                 end="2026-04-08 00:00:00",
                 request_fn=request_fn,
                 resource_fn=lambda: {"host": {"logical_cpu_count": 4}},
+                attempt_id="3ae0909d-7ae1-4a09-a756-96a7ed582edf",
+                expected_artifact_sha256=artifact_hash,
+                request_observer=Observer(),
             )
         self.assertEqual(result["operational_gate"]["status"], "not_evaluated")
         self.assertEqual(result["operational_gate"]["measurement_status"], "passed")
@@ -113,11 +125,98 @@ class OperationalBenchmarkTests(unittest.TestCase):
         self.assertEqual(result["model_identity"]["candidate_id"], candidate_id)
         prediction_calls = [(url, payload) for url, payload in calls if payload is not None]
         self.assertEqual(len(prediction_calls), 1050)
+        self.assertEqual(len(events), 2100)
+        self.assertEqual(events[0], ("before", prediction_calls[0][1]["request_id"]))
+        self.assertEqual(events[1], ("after", prediction_calls[0][1]["request_id"]))
+        self.assertTrue(all(payload["request_id"].startswith("capital-op:3ae0909d-7ae1-4a09-a756-96a7ed582edf:") for _, payload in prediction_calls))
         self.assertEqual(len({payload["request_id"] for _, payload in prediction_calls}), 1050)
         self.assertEqual(prediction_calls[50][1]["target_hour"], prediction_calls[218][1]["target_hour"])
         self.assertEqual(len(result["measurements"]), 1050)
         self.assertTrue(all(sample["latency_ms"] is not None for sample in result["measurements"]))
         self.assertEqual(result["resource_context"]["host"]["logical_cpu_count"], 4)
+
+    def test_observer_stops_requests_when_guard_or_provenance_fails(self):
+        profile = {"model_name": "bike-demand-capital", "feature_contract_version": "bike-demand-features-v1",
+                   "target": {"timezone_name": "America/New_York"}}
+        candidate_id, artifact = "c" * 64, "a" * 64
+        identity = {"data_profile_id": "capital-bikeshare", "target_contract_id": "capital-trip-starts-hourly-v1",
+                    "model_name": profile["model_name"], "model_version": "7", "candidate_id": candidate_id,
+                    "deployment_permission": "blocked"}
+        calls = []
+
+        def request_fn(url, payload=None):
+            if url.endswith("/ready"):
+                return 200, {**identity, "status": "ready"}
+            if url.endswith("/version"):
+                return 200, {**identity, "artifact_sha256": artifact, "quality_gate_status": "passed",
+                             "feature_contract_version": profile["feature_contract_version"]}
+            calls.append(payload)
+            return 200, {**identity, "request_id": payload["request_id"], "target_hour": payload["target_hour"],
+                         "prediction": 12.5, "artifact_sha256": artifact, "data_version_sha256": "f" * 64,
+                         "feature_contract_version": profile["feature_contract_version"]}
+
+        class Observer:
+            def __init__(self, fail_stage):
+                self.fail_stage = fail_stage
+                self.before_count = 0
+
+            def before_request(self, payload):
+                self.before_count += 1
+                if self.fail_stage == "before" and self.before_count == 2:
+                    raise RuntimeError("snapshot lost")
+
+            def after_response(self, payload, response):
+                if self.fail_stage == "after":
+                    raise ValueError("wrong provenance")
+
+        with (patch.object(benchmark, "DATA_PROFILE_ID", "capital-bikeshare"),
+              patch.object(benchmark, "TARGET_CONTRACT_ID", "capital-trip-starts-hourly-v1"),
+              patch.object(benchmark, "DATA_PROFILE", profile)):
+            args = dict(api_url="http://127.0.0.1:8110", model_version="7", candidate_id=candidate_id,
+                        start="2026-04-01 00:00:00", end="2026-04-08 00:00:00", request_fn=request_fn,
+                        resource_fn=lambda: {}, attempt_id="3ae0909d-7ae1-4a09-a756-96a7ed582edf",
+                        expected_artifact_sha256=artifact)
+            before_report = benchmark.run_capital_operational_benchmark(**args, request_observer=Observer("before"))
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(len(before_report["measurements"]), 1)
+            self.assertEqual(before_report["execution_error"], "before_request: RuntimeError")
+            self.assertFalse(before_report["completed"])
+            calls.clear()
+            after_report = benchmark.run_capital_operational_benchmark(**args, request_observer=Observer("after"))
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(len(after_report["measurements"]), 1)
+            self.assertFalse(after_report["completed"])
+            self.assertEqual(after_report["operational_gate"]["status"], "failed")
+            calls.clear()
+            args["expected_artifact_sha256"] = "b" * 64
+            with self.assertRaisesRegex(RuntimeError, "identity/readiness"):
+                benchmark.run_capital_operational_benchmark(**args, request_observer=Observer("before"))
+            self.assertEqual(calls, [])
+            args["expected_artifact_sha256"] = artifact
+            attempt = Mock(request_prefix="capital-op:3ae0909d-7ae1-4a09-a756-96a7ed582edf:")
+            snapshot, sources = Mock(unsafe=True), Mock()
+            sources.validate_response.side_effect = [None, ValueError("incorrect provenance")]
+            observer = CapitalBenchmarkObserver(attempt, snapshot, sources, pinned_identity={})
+            result = benchmark.run_capital_operational_benchmark(**args, request_observer=observer)
+            self.assertEqual(len(calls), 2)
+            self.assertEqual(len(observer.exchanges), 1)
+            self.assertFalse(result["completed"])
+            self.assertEqual(result["operational_gate"]["status"], "failed")
+            attempt.mark_requests_started.assert_called_once_with()
+            calls.clear()
+
+            def timeout_request(url, payload=None):
+                if payload is not None:
+                    calls.append(payload)
+                    raise TimeoutError("simulated timeout")
+                return request_fn(url)
+
+            args["request_fn"] = timeout_request
+            result = benchmark.run_capital_operational_benchmark(**args, request_observer=Observer("none"))
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(len(result["measurements"]), 1)
+            self.assertFalse(result["completed"])
+            self.assertEqual(result["operational_gate"]["status"], "failed")
 
     def test_preflight_rejects_a_different_model_before_sending_predictions(self):
         profile = {
