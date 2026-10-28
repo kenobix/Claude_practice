@@ -987,3 +987,12 @@ docker compose -f compose.yaml -f compose.capital.yaml -f compose.capital-stagin
 3. isolated staging PostgreSQLへのseedとCompose API起動、DB分離・prediction記録・artifact load・HTTP/offline parity・通常deploy拒否をsystem testする。
 4. stagingで50 warmup/1,000 sequential benchmarkを実測し、report hash/statusを該当MLflow versionへ追記する処理を実装・検証する。
 5. validation/final/operational全gateと理由付き承認がある場合のみ`eligible`を最後に設定する経路を検証する。これが完了するまで新しいデータを取得せず、UCI版は変更しない。
+
+### push後の環境・CI確認
+
+- commit `d263f8e Add isolated Capital candidate staging lane`を`origin/main`へpushした。
+- GitHub Actions contract tests run `40663177779` success。lock install、`pip check`、75 tests、`compileall`がsuccess。
+- GitHub Pages build/deploy run `40663177219` success。
+- Docker接続をsandbox内で最初に確認した際は`/var/run/docker.sock` permission deniedだった。承認付きread-only確認ではDocker client/serverとも`29.9.2`と応答した。Capital 3-file Composeの`ps -a`は空で、現在このprojectのserviceは起動していない。Composeの起動・停止やvolume操作はしていない。
+- data inventoryではCapital derived CSV/manifestとraw monthly archiveが存在し、raw archiveは2026-05まで見つかった。一方、canonical `data/candidates/<candidate-id>/candidate-report.json`および`data/reports/capital-bikeshare/`内のfinal reportは見つからなかった。従って実MLflow登録・staging seed/API/benchmarkにはまだ進めない。既存の2025・UCI評価reportを新しい候補や未使用評価期間の代用にはしない。
+- `git status`で残るのは他の日付ディレクトリの既存untracked chart/log/imageのみ。今回のcommitに含めず、変更・削除していない。
