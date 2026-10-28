@@ -112,7 +112,7 @@ async def lifespan(app: FastAPI):
     app.state.model_version = version
     app.state.artifact_hash = artifact_hash
     app.state.model_quality_gate = quality_gate
-    app.state.candidate_id = os.getenv("CAPITAL_STAGING_CANDIDATE_ID")
+    app.state.candidate_id = None
     app.state.model_error = model_error
     app.state.started_at = datetime.now(timezone.utc).isoformat()
     yield
@@ -244,9 +244,7 @@ def predict(payload: PredictionRequest, request: Request):
         if saved:
             if saved["input_hash"] != request_hash:
                 raise HTTPException(status_code=409, detail="request_id was already used with different input")
-            response = _prediction_response(saved)
-            response["candidate_id"] = getattr(request.app.state, "candidate_id", None)
-            return response
+            return _prediction_response(saved)
         if request.app.state.model is None:
             raise HTTPException(status_code=503, detail=request.app.state.model_error)
         observations = request.app.state.database.observations_as_of(payload.target_hour, payload.as_of)
@@ -275,6 +273,7 @@ def predict(payload: PredictionRequest, request: Request):
             "predicted": prediction,
             "model_name": MODEL_NAME,
             "model_version": request.app.state.model_version,
+            "candidate_id": getattr(request.app.state, "candidate_id", None),
             "model_quality_gate": request.app.state.model_quality_gate,
             "artifact_sha256": request.app.state.artifact_hash,
             "data_version_sha256": data_version_hash,
@@ -292,9 +291,7 @@ def predict(payload: PredictionRequest, request: Request):
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         saved = request.app.state.database.save_prediction(record)
-        response = _prediction_response(saved)
-        response["candidate_id"] = getattr(request.app.state, "candidate_id", None)
-        return response
+        return _prediction_response(saved)
     except HTTPException:
         raise
     except RequestConflict as error:
@@ -307,6 +304,7 @@ def predict(payload: PredictionRequest, request: Request):
 
 
 def _prediction_response(record: dict) -> dict:
+    candidate_id = record.get("candidate_id")
     return {
         "request_id": record["request_id"],
         "data_profile_id": record["data_profile_id"],
@@ -315,6 +313,8 @@ def _prediction_response(record: dict) -> dict:
         "prediction": float(record["predicted"]),
         "model_name": record["model_name"],
         "model_version": str(record["model_version"]),
+        "candidate_id": candidate_id,
+        "deployment_permission": "blocked" if candidate_id is not None else None,
         "model_quality_gate": record["model_quality_gate"],
         "artifact_sha256": record["artifact_sha256"],
         "data_version_sha256": record["data_version_sha256"],

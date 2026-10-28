@@ -159,6 +159,7 @@ def _prediction_is_valid(
         "model_name": model_name,
         "model_version": model_version,
         "candidate_id": candidate_id,
+        "deployment_permission": "blocked",
         "artifact_sha256": artifact_sha256,
         "feature_contract_version": DATA_PROFILE["feature_contract_version"],
     }

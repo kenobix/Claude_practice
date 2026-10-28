@@ -25,6 +25,7 @@ SCHEMA = (
         predicted REAL NOT NULL CHECK (predicted >= 0),
         model_name TEXT NOT NULL,
         model_version TEXT NOT NULL,
+        candidate_id TEXT,
         model_quality_gate TEXT NOT NULL,
         artifact_sha256 TEXT NOT NULL,
         data_version_sha256 TEXT NOT NULL,
@@ -168,6 +169,7 @@ class Database:
             additions = (
                 ("data_profile_id", "TEXT NOT NULL DEFAULT 'uci-bike-sharing'"),
                 ("target_contract_id", "TEXT NOT NULL DEFAULT 'uci-bike-sharing-cnt-dataset-local-hour'"),
+                ("candidate_id", "TEXT"),
             )
             for name, declaration in additions:
                 if name not in columns:
@@ -183,6 +185,7 @@ class Database:
                 "ALTER TABLE predictions ADD COLUMN IF NOT EXISTS target_contract_id TEXT NOT NULL "
                 "DEFAULT 'uci-bike-sharing-cnt-dataset-local-hour'",
             )
+            self.execute(connection, "ALTER TABLE predictions ADD COLUMN IF NOT EXISTS candidate_id TEXT")
 
     def _ensure_deployment_profile_columns(self, connection) -> None:
         if self.sqlite:
@@ -328,13 +331,13 @@ class Database:
             self.execute(
                 connection,
                 "INSERT INTO predictions(request_id,input_hash,target_hour,as_of,predicted,model_name,"
-                "model_version,model_quality_gate,artifact_sha256,data_version_sha256,data_profile_id,target_contract_id,"
+                "model_version,candidate_id,model_quality_gate,artifact_sha256,data_version_sha256,data_profile_id,target_contract_id,"
                 "feature_contract_version,features_json,created_at) "
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(request_id) DO NOTHING",
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(request_id) DO NOTHING",
                 (
                     record["request_id"], record["input_hash"], record["target_hour"],
                     record["as_of"], record["predicted"], record["model_name"],
-                    str(record["model_version"]), record["model_quality_gate"], record["artifact_sha256"], record["data_version_sha256"],
+                    str(record["model_version"]), record.get("candidate_id"), record["model_quality_gate"], record["artifact_sha256"], record["data_version_sha256"],
                     record.get("data_profile_id", self.data_profile_id),
                     record.get("target_contract_id", self.target_contract_id),
                     record["feature_contract_version"], record["features_json"],

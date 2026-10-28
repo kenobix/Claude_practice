@@ -424,22 +424,28 @@ class CapitalStagingTests(unittest.TestCase):
                 with TestClient(staging_api.app) as client:
                     version = client.get("/version").json()
                     ready = client.get("/ready").json()
-                    prediction = client.post(
-                        "/predict",
-                        json={
-                            "request_id": "staging-candidate-test-001",
-                            "target_hour": "2026-04-01T10:00:00",
-                            "as_of": "2026-04-01T10:00:00",
-                            "feature_contract_version": "bike-demand-features-v1",
-                            "data_profile_id": "capital-bikeshare",
-                            "target_contract_id": "capital-trip-starts-hourly-v1",
-                        },
-                    ).json()
+                    payload = {
+                        "request_id": "staging-candidate-test-001",
+                        "target_hour": "2026-04-01T10:00:00",
+                        "as_of": "2026-04-01T10:00:00",
+                        "feature_contract_version": "bike-demand-features-v1",
+                        "data_profile_id": "capital-bikeshare",
+                        "target_contract_id": "capital-trip-starts-hourly-v1",
+                    }
+                    prediction = client.post("/predict", json=payload).json()
+                    # A retry must retain the identity stored with the original prediction,
+                    # even after the service has loaded a different candidate.
+                    client.app.state.candidate_id = "d" * 64
+                    client.app.state.model_version = "10"
+                    client.app.state.artifact_hash = "b" * 64
+                    retry = client.post("/predict", json=payload).json()
         self.assertEqual(version["candidate_id"], candidate_id)
         self.assertEqual(version["deployment_permission"], "blocked")
         self.assertEqual(ready["candidate_id"], candidate_id)
         self.assertEqual(ready["deployment_permission"], "blocked")
         self.assertEqual(prediction["candidate_id"], candidate_id)
+        self.assertEqual(prediction["deployment_permission"], "blocked")
+        self.assertEqual(retry, prediction)
 
 
 if __name__ == "__main__":

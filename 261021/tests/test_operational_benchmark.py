@@ -84,6 +84,7 @@ class OperationalBenchmarkTests(unittest.TestCase):
                 "model_name": profile["model_name"],
                 "model_version": "7",
                 "candidate_id": candidate_id,
+                "deployment_permission": "blocked",
                 "artifact_sha256": artifact_hash,
                 "data_version_sha256": "f" * 64,
                 "feature_contract_version": profile["feature_contract_version"],
@@ -207,6 +208,7 @@ class OperationalBenchmarkTests(unittest.TestCase):
                 "model_name": profile["model_name"],
                 "model_version": "7",
                 "candidate_id": candidate_id,
+                "deployment_permission": "blocked",
                 "artifact_sha256": "a" * 64,
                 "data_version_sha256": "f" * 64,
                 "feature_contract_version": profile["feature_contract_version"],
@@ -262,6 +264,7 @@ class OperationalBenchmarkTests(unittest.TestCase):
             "model_name": "bike-demand-capital",
             "model_version": "7",
             "candidate_id": "c" * 64,
+            "deployment_permission": "blocked",
             "artifact_sha256": "a" * 64,
             "data_version_sha256": "f" * 64,
             "feature_contract_version": "bike-demand-features-v1",
@@ -290,6 +293,16 @@ class OperationalBenchmarkTests(unittest.TestCase):
                 model_version="7",
                 artifact_sha256="a" * 64,
                 candidate_id="0" * 64,
+            ))
+            self.assertIn("deployment_permission", benchmark._prediction_is_valid(
+                200,
+                dict(response, deployment_permission="eligible"),
+                request_id=response["request_id"],
+                target_hour=response["target_hour"],
+                model_name="bike-demand-capital",
+                model_version="7",
+                artifact_sha256="a" * 64,
+                candidate_id="c" * 64,
             ))
             self.assertIn("data-version SHA", benchmark._prediction_is_valid(
                 200,

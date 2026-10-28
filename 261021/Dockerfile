@@ -11,5 +11,8 @@ COPY configs/data-profiles ./configs/data-profiles
 RUN python -m pip install --no-cache-dir -r requirements.lock \
     && python -m pip install --no-cache-dir --no-deps --no-build-isolation .
 
+# The application resolves profile files relative to its source-tree root /app.
+ENV PYTHONPATH=/app/src
+
 EXPOSE 8000 5000
 CMD ["uvicorn", "bike_mlops.api:app", "--host", "0.0.0.0", "--port", "8000"]

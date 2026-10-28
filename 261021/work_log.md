@@ -998,3 +998,53 @@ docker compose -f compose.yaml -f compose.capital.yaml -f compose.capital-stagin
 - Docker接続をsandbox内で最初に確認した際は`/var/run/docker.sock` permission deniedだった。承認付きread-only確認ではDocker client/serverとも`29.9.2`と応答した。Capital 3-file Composeの`ps -a`は空で、現在このprojectのserviceは起動していない。Composeの起動・停止やvolume操作はしていない。
 - data inventoryではCapital derived CSV/manifestとraw monthly archiveが存在し、raw archiveは2026-05まで見つかった。一方、canonical `data/candidates/<candidate-id>/candidate-report.json`および`data/reports/capital-bikeshare/`内のfinal reportは見つからなかった。従って実MLflow登録・staging seed/API/benchmarkにはまだ進めない。既存の2025・UCI評価reportを新しい候補や未使用評価期間の代用にはしない。
 - `git status`で残るのは他の日付ディレクトリの既存untracked chart/log/imageのみ。今回のcommitに含めず、変更・削除していない。
+
+## 2026-10-28: 合成candidateのCompose統合検証と修正
+
+### 範囲と準備
+
+`f365dfa`の`261021`を`git archive`で`/tmp/bike-mlops-it-4UTZQoxs/261021`へコピーし、後述の修正sourceをそのコピーへ反映した。元のUCI projectとは別名の`bikemlopsit4utzqoxs`、テスト専用の仮パスワード、port 5001/55433/55434/8110、独立した3 volumeを使用。開始前に同名project/volumeが存在せず、使用portが空いていることを確認した。
+
+人工データは2024年1月の21,612 ride recordsを生成して744時間へ集約した。人工データでのみprotocolを凍結し、validationと独立finalを各1回実行した。合成validationはcandidate MAE 0.143229/RMSE 0.214217、baseline MAE 7.142857/RMSE 13.363062。合成finalはcandidate MAE 0.140567/RMSE 0.210506、baseline MAE 6.818182/RMSE 13.055824で、双方の精度gateがpassedだった。これらは実データの精度を表さない。
+
+初めに既存の`bike-mlops-mlflow:latest`を一時containerで調べたところ、固定依存の`tzdata`がなく、現在のlockを満たしていなかった。代用せず、テスト用MLflow imageを現在のDockerfileと`requirements.lock`からbuildした。API imageはその固定依存imageを基に、今回の修正sourceを再installするテスト用overrideでbuildした。
+
+### 発見した問題と修正
+
+1. 最初のstaging APIは起動直後に再起動を繰り返した。ログは`Unknown data profile 'capital-bikeshare'`と`/usr/local/lib/python3.12/configs/data-profiles`の`FileNotFoundError`を示した。通常installされたpackageの位置を基準に設定を探していたため、Dockerfileへ`PYTHONPATH=/app/src`を追加した。修正Dockerfileの実buildでは`PROJECT_ROOT=/app`となり、UCI/Capital両profileの読込を確認した。APIの実動作は、同じ固定依存と修正source/環境設定を含むテスト用override imageで確認した。
+2. 予測の再送時に現在のAPI状態からcandidate IDを付けていたため、候補切替後は保存済みの旧予測へ新候補IDを付ける可能性があった。`predictions.candidate_id`をnullable列として保存し、再送では保存されたIDを返すようにした。既存DBは起動時に列を追加し、過去行のIDは不明として`null`にする。staging予測応答は`deployment_permission=blocked`も返し、benchmarkが全応答で確認する。通常APIはstaging候補IDを環境から取得しない。
+
+### 結果
+
+- 合成candidateを一時MLflowへblocked登録。source修正後に作り直した候補は一時version `2`、candidate ID `4ac50f5613e507c71244992bd4271d19b5a8ad458bd4759dbf77fc92ac8f6274`。同じ候補の再登録は同じ版/hashを返し、同IDを持つversionは1件だった。これは使い捨てregistry内の番号で、UCI版番号とは関係しない。
+- 合成CSV/manifestをstaging PostgreSQLへseedし、744観測を保存。別のCapital側PostgreSQLの`bikeops`には予測表がなく、予測記録が混在しないことを確認した。
+- staging `/ready`と`/predict`は200。同じrequest ID・入力の再送は同一応答、入力変更は409。オフライン予測 `40.052485924333126`、API応答 `40.052486`、絶対差 `0.00000007566687543203443`で許容範囲内。該当予測はstaging DBに1行だけあり、candidate ID・version・artifact SHAも一致した。
+- 一時registryのcandidate ID tagを変更してAPIを再起動すると、約45秒のload retry後`/ready`が503となり、原因にcandidate ID不一致を示した。tagを戻して再起動後は200へ復帰。別途、登録artifact SHA不一致は実MLflowからのロード時に拒否した。
+- 通常loaderと`runtime init --diagnostic`はblocked候補を拒否した。`deploy promote`の本体も、合成proxyを使い実registryを参照した上で拒否し、状態ファイルは変化しなかった。実Caddy切替・復旧操作はこの試験に含まない。
+- 一時APIを合成version 2から1へ切り替えた後、version 2で保存した同一requestの再送はversion 2と元のcandidate IDを返し、新規requestはversion 1のcandidate IDを返した。その後version 2へ戻し、ready 200を確認した。
+- 合成候補で暖機50件と逐次1,000件を送信。エラー0、p95 `106.464485 ms`、最大 `254.821038 ms`、監査DBの対応行1,050件、配信許可`blocked`。p95基準は満たしたが、他のhost負荷を測定しておらず、実候補の運用gateの合格証拠ではない。[全要求の合成レポート](docs/reviews/20261028-synthetic-staging-benchmark.json)のSHA-256は`cc68b465ae2dc1b819148f367361d1c92677731d6a883964a9383bf9b503c8f5`。[実行スクリプトの記録](docs/reviews/20261028-synthetic-staging-harness.md)には今回の一時パス・候補IDが含まれ、そのまま再実行するためのものではない。
+
+### 残った入力条件の問題
+
+benchmarkの合成入力は`2024-01-08 00:00`以上`2024-01-15 00:00`未満だった。最後の2対象時刻`2024-01-14 22:00`と`23:00`は+3時間のラベル到着がtraining cutoffの`2024-01-15 00:00`を超えるため、実際のfit行には含まれない。保存済み1,050行を別途読み直し、IDの一意性・HTTP 200・エラー0・p95再計算と、この2時刻を確認した。今回の測定はHTTP・監査・計測処理の統合確認であり、固定した「学習行のみ」の入力条件を満たした証拠にはしない。
+
+また現在のseed scriptはprofileのCSV/manifestを検査するが、そのデータSHAが登録candidateと一致することを強制しない。benchmarkも168時間・時刻妥当性を確認する一方、凍結training splitやラベル到着時刻との照合を強制しない。実データの取得・実candidate benchmark前に、candidate/report/DBのデータ版照合と、全対象時刻のtraining split/ラベル到着/欠損検査を追加する。計画書R06とgate文書へ追記した。
+
+### コマンドと検証・後片付け
+
+```bash
+# 以下のcompose操作はすべて一時コピー内で、-pには今回専用のproject名を指定。
+docker compose -p bikemlopsit4utzqoxs -f compose.yaml -f compose.capital.yaml -f compose.capital-staging.yaml up -d --build mlflow postgres-staging
+# 合成candidate登録を2回、synthetic CSV/manifestのseed、API image build/start後に
+# 上記の登録・HTTP・DB・拒否・候補切替・benchmarkスクリプトを実行。
+docker compose -p bikemlopsit4utzqoxs -f compose.yaml -f compose.capital.yaml -f compose.capital-staging.yaml -f /tmp/bike-mlops-it-4UTZQoxs/compose-test-override.yaml down --volumes --remove-orphans
+# このprojectの4 container、3 volume、networkと、今回作成した3つのimage tagを削除。
+
+MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m unittest discover -s tests -v
+# 75 tests, OK (6.128s)。その後に追加した旧DB行のNULL確認はstorage 7 testsで再検証しOK。
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+# 成功。
+```
+
+一時project名のcontainer・volume・imageが残っていないことと、一時ディレクトリ削除を確認した。既存UCI入口`http://127.0.0.1:8080/ready`は片付け前後ともversion 3・passedを返した。新しい実データは取得せず、実評価期間も消費していない。

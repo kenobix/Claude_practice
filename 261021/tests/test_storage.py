@@ -110,14 +110,25 @@ class StorageTests(unittest.TestCase):
             connection.execute(
                 "INSERT INTO observations VALUES ('2012-01-01 00:00:00',1,'2012-01-01 03:00:00','old-hash')"
             )
+            connection.execute(
+                "INSERT INTO predictions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                ("legacy-request", "input-hash", "2012-01-01 01:00:00", "2012-01-01 01:00:00",
+                 1.0, "bike-demand", "1", "passed", "model-hash", "data-hash",
+                 "bike-demand-features-v1", "{}", "2012-01-01T01:00:00+00:00"),
+            )
         Database(f"sqlite:///{path}").initialize()
         with sqlite3.connect(path) as connection:
             columns = {row[1] for row in connection.execute("PRAGMA table_info(predictions)")}
             profile = connection.execute(
                 "SELECT data_profile_id,target_contract_id FROM data_profile_metadata WHERE singleton=1"
             ).fetchone()
+            candidate = connection.execute(
+                "SELECT candidate_id FROM predictions WHERE request_id='legacy-request'"
+            ).fetchone()
         self.assertIn("data_profile_id", columns)
         self.assertIn("target_contract_id", columns)
+        self.assertIn("candidate_id", columns)
+        self.assertEqual(candidate, (None,))
         self.assertEqual(profile, ("uci-bike-sharing", "uci-bike-sharing-cnt-dataset-local-hour"))
 
     def test_deployment_audit_row_is_bound_to_data_profile(self):

@@ -182,7 +182,7 @@ MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0
 
 ### 時系列を保った再学習候補
 
-新データ候補の登録・昇格前に[差分監査](reviews/20261028-review.md)と[計画書R01〜R09](../../261014/plan_mlops.md#11-2026-10-28差分監査後の実行計画)を確認します。過去のCapital最終評価は再学習していましたが、P0修正後の最終評価scriptは保存済み候補artifactを照合・loadします。現行の候補経路には同target incumbentが必要で、Capital初回bootstrapの基準適用は未実装です。下記の過去コマンドは履歴として扱います。
+新データ候補の登録・昇格前に[差分監査](reviews/20261028-review.md)と[計画書R01〜R09](../../261014/plan_mlops.md#11-2026-10-28差分監査後の実行計画)を確認します。過去のCapital最終評価は再学習していましたが、現在の最終評価scriptは保存済み候補artifactを照合・loadします。Capital初回bootstrapは同target incumbentを指定せず、固定した履歴baselineとのMAE/RMSE比較を使います。下記のUCIコマンドは実行当時の履歴として扱います。
 
 2026-10-28に版2をincumbentとして候補版3を比較し、Q3ゲート合格後に昇格しました。現行版は3です。旧版1は誤ったartifact URIで登録され、読み込みできないため比較・rollbackに使いません。Q3・Q4は評価済みで、同じ期間を次候補の選択に使ってはいけません。次の候補には新しいデータと事前に決めた後続期間を用意します。
 
@@ -191,7 +191,7 @@ MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0
 ./scripts/bikectl candidate --incumbent-version 2
 ```
 
-出力レポートにincumbent、履歴ベースラインとの同一行MAE/RMSE、候補のカットオフ、検証窓が記録されます。候補品質ゲートはincumbentの品質ゲートが`passed`で、かつ候補MAEがincumbentと履歴ベースラインの双方を厳密に下回る場合だけ通ります。登録後も人が審査するまで稼働版は変わりません。検証窓を変更するときは、期間を見てから都合のよい窓を選ばず、選択理由を作業記録に残します。
+当時の出力レポートにはincumbent、履歴ベースラインとの同一行MAE/RMSE、候補のカットオフ、検証窓が記録されています。当時の候補品質ゲートはincumbentが`passed`で、候補MAEがincumbentと履歴ベースラインの双方を厳密に下回る条件でした。現在のCapital初回候補には、下記のbootstrap手順と別の基準を使います。
 
 任意の評価窓は、候補の学習カットオフ以降に置きます。2026-10-28の実行条件は以下です。同じQ3窓を後続候補の選択に再利用しません。
 
@@ -205,11 +205,11 @@ MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0
 
 ### 凍結protocolに基づく新規候補
 
-2026-10-28時点で手元にあるCapital Bikeshareの2025年上期validationと2025-07〜2026-04の後続期間は、いずれも既評価として再利用禁止です。UCI登録版3は別targetのモデルなので、Capital候補のincumbentとして使いません。まだ`bike-demand-capital`配下の同target incumbentも承認済みmonitor参照期間もありません。このため、現在は新protocolの作成・候補選定・最終評価を実行しないでください。まず別target用の初回modelと合否規則をR06に従って確立します。
+2026-10-28時点で手元にあるCapital Bikeshareの2025年上期validationと2025-07〜2026-04の後続期間は、いずれも既評価として再利用禁止です。UCI登録版3は別targetのモデルなので、Capital候補のincumbentとして使いません。まだ`bike-demand-capital`配下の承認済み同target incumbentもmonitor参照期間もありません。初回候補には未使用の期間と、事前に固定したbaseline-only protocolを使います。
 
-初回Capital modelの基準は、ユーザーからの判断委任により[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)へ決定事項として記録しました。MAEの厳密改善とRMSE非悪化、エラー0件/p95 250ms以下のローカル運用目標、segmentは記録のみを採用します。追加の確認待ちはありませんが、bootstrapコード適用・未使用データ検証・protocol freezeは未完了です。2026年6〜9月公式archiveは前回URLの存在を確認しただけで、内容をまだ取得・閲覧していません。R04のtimezone供給元固定は完了しています。次はR06 bootstrap経路と、評価未使用の新期間をmanifest schema 3で検証します。
+初回Capital modelの基準は、ユーザーからの判断委任により[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)へ記録しました。MAEの厳密改善とRMSE非悪化、エラー0件/p95 250ms以下のローカル運用目標、segmentは記録のみを採用します。bootstrapコードと合成データでの検証は実施済みですが、未使用の実データ取得・protocol freeze・実候補評価は未完了です。実験前の残作業は計画書の順序を確認してください。
 
-初回modelが用意され、未使用のvalidation・後続期間を確保した後の手順は次のとおりです。出典の公開が遅れている場合は、新期間が入手できるまで待ちます。
+未使用のvalidation・後続期間を確保し、計画書の実験前作業が終わった後の初回bootstrap手順は次のとおりです。出典の公開が遅れている場合は、新期間が入手できるまで待ちます。
 
 取込先は新しいパスを指定します。既存CSV/manifestの上書きは拒否されます。`--archive-start`/`--archive-end`は取得したZIPの全月を連続して指定し、data期間の境界月も含めます。出力CSV・manifestは一組で保存され、manifestのSHA-256が一致してから利用できます。
 
@@ -227,12 +227,11 @@ python scripts/prepare_capitalbikeshare.py \
   --output-manifest "$MANIFEST"
 ```
 
-次に、既存の品質合格incumbentをMLflowからhash確認し、validation・判断時刻・最終評価期間・分割件数・candidate recipeを含むprotocolを凍結します。最終評価開始は、validation期間の最後のラベルが到着する時刻以降でなければなりません。プロトコル保存時に既存台帳とlegacy期間を照合し、重複窓を拒否します。
+次に、incumbentを指定せず、validation・判断時刻・最終評価期間・分割件数・candidate recipeを含むbootstrap protocolを凍結します。最終評価開始は、validation期間の最後のラベルが到着する時刻以降でなければなりません。プロトコル保存時に既存台帳とlegacy期間を照合し、重複窓を拒否します。
 
 ```bash
 export DATA_PROFILE_ID=capital-bikeshare
 export MLFLOW_TRACKING_URI=http://127.0.0.1:5001
-CAPITAL_INCUMBENT_VERSION='<bike-demand-capitalの承認済み版>'
 mkdir -p configs/evaluation-protocols
 python scripts/create_capital_evaluation_protocol.py \
   --csv "$CSV" \
@@ -242,7 +241,6 @@ python scripts/create_capital_evaluation_protocol.py \
   --validation-end 'YYYY-MM-DD HH:00:00' \
   --evaluation-start 'YYYY-MM-DD HH:00:00' \
   --evaluation-end 'YYYY-MM-DD HH:00:00' \
-  --incumbent-version "$CAPITAL_INCUMBENT_VERSION" \
   --output configs/evaluation-protocols/capital-next-v1.json
 ```
 
@@ -253,7 +251,6 @@ mlops-bikectl candidate \
   --csv "$CSV" \
   --source-manifest "$MANIFEST" \
   --evaluation-protocol configs/evaluation-protocols/capital-next-v1.json \
-  --incumbent-version "$CAPITAL_INCUMBENT_VERSION" \
   --no-register
 
 python scripts/evaluation_ledger.py list
@@ -265,13 +262,13 @@ python scripts/evaluation_ledger.py list
 python scripts/evaluate_capitalbikeshare_holdout.py \
   --csv "$CSV" \
   --source-manifest "$MANIFEST" \
-  --selection-report data/candidates/<candidate_id>/candidate-report.json \
+  --selection-report 'data/candidates/<candidate_id>/candidate-report.json' \
   --output data/reports/capital-bikeshare/capital-next-final-evaluation.json
 ```
 
 同じtarget contractの評価期間は、別データhashや出力名でも重複・部分重複が拒否されます。失敗・中断も自動で未使用に戻りません。まず`python scripts/evaluation_ledger.py list`と成果物を調べ、正当な再試行と判断した場合だけ、記録されたkeyに人の理由を付けて`reopen --key ... --operator ... --reason ...`を実行します。startedのままの場合は実行中プロセスがないことを確認してから判断します。
 
-Capital Bikeshareのtrip startsとUCIのrentalsは同じtarget定義ではありません。ここでのcandidate比較・後続採点は移行調査であり、それだけでUCI配信の昇格承認に使いません。初回modelと後続評価が揃うまでは、隔離stackの`/ready`は稼働可能判定に使わず、候補を登録・昇格しません。
+Capital Bikeshareのtrip startsとUCIのrentalsは同じtarget定義ではありません。ここでのcandidate比較・後続採点は移行調査であり、それだけでUCI配信の昇格承認には使えません。初回candidateがvalidationとfinalの精度条件に合格した後、専用stagingへ`blocked`状態で登録できます。運用条件と手動承認が未完了の間は通常配信へ昇格できません。
 
 Capital用Composeのファイル結合を確かめるだけなら、サービスを起動せず次を実行できます。Compose project名、port、volume、envがUCI側から分かれている設定です。
 
@@ -279,7 +276,7 @@ Capital用Composeのファイル結合を確かめるだけなら、サービス
 docker compose -f compose.yaml -f compose.capital.yaml config -q
 ```
 
-validation/final gateを通過した未承認candidateの登録と運用測定は、通常のblue/greenやCaddyへ接続せず、専用DB付きstaging APIで行います。candidate/final reportの照合、blocked登録、起動、candidate IDを固定したbenchmarkの手順と残る検証項目は[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)を参照してください。Composeのstaging設定だけを確認するときは次を実行できます。これはサービスを起動しません。
+validation/final gateを通過した未承認candidateの登録と運用測定は、通常のblue/greenやCaddyへ接続せず、専用DB付きstaging APIで行います。candidate/final reportの照合、blocked登録、起動、candidate IDを固定したbenchmarkの手順と残る検証項目は[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)を参照してください。staging seedはprofileの`default_csv`と`default_manifest`を読みます。実候補のデータ版との一致を強制する仕組みは未完成なので、実candidateで測定する前に計画書の残作業を完了してください。Composeのstaging設定だけを確認するときは次を実行できます。これはサービスを起動しません。
 
 ```bash
 docker compose -f compose.yaml -f compose.capital.yaml -f compose.capital-staging.yaml config -q
