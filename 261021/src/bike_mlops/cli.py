@@ -98,6 +98,7 @@ def command_candidate(args) -> None:
         validation_start=args.validation_start,
         validation_end=args.validation_end,
         training_cutoff=args.training_cutoff,
+        source_manifest_path=args.source_manifest,
         register=not args.no_register,
     )
     run_id = report.get("registration", {}).get("run_id", "unregistered")
@@ -692,6 +693,11 @@ def build_parser() -> argparse.ArgumentParser:
     candidate.add_argument("--training-cutoff", default="2012-07-01 00:00:00")
     candidate.add_argument("--validation-start", default="2012-07-01 00:00:00")
     candidate.add_argument("--validation-end", default="2012-10-01 00:00:00")
+    candidate.add_argument(
+        "--source-manifest",
+        type=Path,
+        help="Manifest that identifies the selected CSV by SHA-256",
+    )
     candidate.add_argument("--output", type=Path)
     candidate.add_argument("--no-register", action="store_true")
     candidate.set_defaults(func=command_candidate)

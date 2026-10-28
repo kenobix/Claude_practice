@@ -1,0 +1,121 @@
+{
+  "created_at_utc": "2026-10-28T02:29:55+00:00",
+  "investigation_type": "post-hoc diagnosis only; no model training, tuning, or promotion",
+  "data_sha256": "e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f",
+  "models": {
+    "incumbent_version": "2",
+    "candidate_version": "3",
+    "candidate_artifact_sha256": "79f06eb9d5a6efc378f20ba37fe98a8367762c1cb6c699200152a121a2af4a43",
+    "same_estimator_hyperparameters": true,
+    "incumbent_training_rows": 8645,
+    "candidate_training_rows": 13001,
+    "candidate_training_rows_increase_percent": 50.393291,
+    "candidate_training_cutoff": "2012-07-01 00:00:00"
+  },
+  "candidate_quality_gate": {
+    "passed": true,
+    "rule": "candidate validation MAE must be strictly lower than both the explicitly selected passed incumbent and the historical baseline on identical timestamps",
+    "validation_window": {
+      "start_inclusive": "2012-07-01 00:00:00",
+      "end_exclusive": "2012-10-01 00:00:00",
+      "row_count": 2208
+    },
+    "candidate_mae": 62.41599141189019,
+    "incumbent_v2_mae": 84.16778769421023,
+    "historical_baseline_mae": 83.69202898550725
+  },
+  "q4_full_window": {
+    "start_inclusive": "2012-10-01 00:00:00",
+    "end_exclusive": "2013-01-01 00:00:00",
+    "rows_per_model": 2168,
+    "v2": {
+      "mae": 70.50089095668359,
+      "rmse": 113.27010335184048,
+      "mean_actual": 219.19649446494466,
+      "mean_prediction": 178.85636469709868,
+      "mean_prediction_minus_actual": -40.340129767845944
+    },
+    "v3": {
+      "mae": 59.40269794432242,
+      "rmse": 91.94132089624146,
+      "mean_actual": 219.19649446494466,
+      "mean_prediction": 195.414799522744,
+      "mean_prediction_minus_actual": -23.781694942200648
+    },
+    "monthly_mae": {
+      "2012-10": {"rows": 708, "v2": 98.575, "v3": 77.258},
+      "2012-11": {"rows": 718, "v2": 64.414, "v3": 57.615},
+      "2012-12": {"rows": 742, "v2": 49.604, "v3": 44.095}
+    },
+    "interpretation": "v3 reduced underprediction and MAE in each Q4 month. More training rows and later training data are plausible contributors; this two-model comparison does not establish causality."
+  },
+  "latest_7_day_window": {
+    "start_exclusive": "2012-12-24 23:00:00",
+    "end_inclusive": "2012-12-31 23:00:00",
+    "predictions_per_model": 167,
+    "scored_labels_per_model": 164,
+    "unscored_due_to_label_delay": 3,
+    "v2": {
+      "mae": 37.27775155353658,
+      "rmse": 58.158205647623625,
+      "mean_actual": 75.17682926829268,
+      "mean_prediction": 90.56196875865854,
+      "prediction_bias": 15.385139490365853
+    },
+    "v3": {
+      "mae": 44.176335568292686,
+      "rmse": 74.2858248735777,
+      "mean_actual": 75.17682926829268,
+      "mean_prediction": 99.63163956951219,
+      "prediction_bias": 24.454810301219513
+    },
+    "v3_mae_increase_vs_v2_percent": 18.501,
+    "v3_rmse_increase_vs_v2_percent": 27.732,
+    "highest_daily_added_absolute_error": {
+      "2012-12-25": 320.33548,
+      "2012-12-26": 461.51930,
+      "2012-12-29": 175.41579
+    },
+    "those_three_days_share_of_net_added_absolute_error_percent": 84.613,
+    "holiday_and_weather_context": {
+      "holiday_rows": 23,
+      "holiday_date": "2012-12-25",
+      "weather_situation_3_rows": 23,
+      "weather_situation_3_mae_v2": 77.315,
+      "weather_situation_3_mae_v3": 98.041,
+      "2012-12-26_weather_situation_3_rows": 16
+    },
+    "model_feature_columns_do_not_include": ["holiday", "weathersit", "workingday"],
+    "interpretation": "The week contains a sharp low-demand holiday/weather episode. v3 predicted about 9 more bikes per hour on average than v2 and overpredicted more. The omitted holiday/weather fields are plausible explanations, not a causal proof."
+  },
+  "psi_investigation": {
+    "reported_reference": "all feature rows in the 2011 training period",
+    "configured_investigation_threshold": 0.2,
+    "latest_window_psi": {
+      "lag_24": 2.095416249145052,
+      "lag_168": 0.0767513930813474,
+      "hour": 0.00022650419740037457
+    },
+    "lag_24_distribution": {
+      "reference_rows": 8645,
+      "reference_nonmissing": 8523,
+      "reference_mean": 145.1484,
+      "reference_median": 111.0,
+      "current_rows": 167,
+      "current_nonmissing": 165,
+      "current_mean": 64.9515,
+      "current_median": 40.0,
+      "current_missing_rate": 0.011976
+    },
+    "diagnostic_alternate_comparisons": {
+      "full_december_2012_vs_full_2011_reference_lag_24_psi": 0.0634786,
+      "same_late_december_calendar_window_2012_vs_2011_lag_24_psi": 0.1982504
+    },
+    "interpretation": "The alert is largely consistent with a late-December seasonal/holiday shift against a full-year reference. It remains a real short-window input-distribution change; the alternate comparisons are diagnostic only and do not replace the recorded monitor result. PSI is identical for model versions because their input rows are identical."
+  },
+  "limitations": [
+    "Historical UCI replay only; it does not demonstrate current demand accuracy or business impact.",
+    "The Q3 validation and Q4 replay have already been observed and must not be reused for candidate selection.",
+    "Weather/holiday explanation is a post-hoc correlation. No feature ablation or new model was run."
+  ]
+}

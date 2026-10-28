@@ -454,6 +454,7 @@ def train_candidate(
     validation_start: str | pd.Timestamp = "2012-07-01 00:00:00",
     validation_end: str | pd.Timestamp = "2012-10-01 00:00:00",
     training_cutoff: str | pd.Timestamp = "2012-07-01 00:00:00",
+    source_manifest_path: Path | None = None,
     register: bool = True,
 ) -> dict:
     """Train a point-in-time candidate and compare it on a later time window.
@@ -480,13 +481,28 @@ def train_candidate(
     frame = load_hourly(data_path)
     data_hash = sha256_file(data_path)
     source_manifest = None
-    if DATASET_MANIFEST.exists():
+    manifest_path = source_manifest_path or DATASET_MANIFEST
+    if source_manifest_path is not None and not manifest_path.is_file():
+        raise FileNotFoundError(f"Source manifest does not exist: {manifest_path}")
+    if manifest_path.exists():
         try:
-            candidate_manifest = json.loads(DATASET_MANIFEST.read_text(encoding="utf-8"))
-            if candidate_manifest.get("data_sha256") == data_hash:
-                source_manifest = candidate_manifest
-        except (OSError, json.JSONDecodeError):
-            source_manifest = None
+            candidate_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as error:
+            if source_manifest_path is not None:
+                raise ValueError(f"Could not read source manifest {manifest_path}: {error}") from error
+            candidate_manifest = None
+        manifest_data_hash = (
+            candidate_manifest.get("data_sha256", candidate_manifest.get("derived_csv_sha256"))
+            if candidate_manifest
+            else None
+        )
+        if manifest_data_hash == data_hash:
+            source_manifest = candidate_manifest
+        elif source_manifest_path is not None:
+            raise ValueError(
+                "The supplied source manifest does not identify the selected CSV "
+                f"(manifest hash={manifest_data_hash!r}, CSV hash={data_hash})"
+            )
     features = feature_frame_for_dataset(frame)
     train_mask = (frame["timestamp"] < start) & (
         frame["timestamp"] + pd.Timedelta(hours=3) <= cutoff
@@ -523,6 +539,28 @@ def train_candidate(
         and candidate_metrics["mae"] < incumbent_metrics["mae"]
         and candidate_metrics["mae"] < baseline_metrics["mae"]
     )
+    source_name = (
+        source_manifest.get("source") if source_manifest else "caller-supplied UCI-schema hourly CSV"
+    )
+    source_url = (
+        (source_manifest.get("url") or source_manifest.get("source_page"))
+        if source_manifest
+        else None
+    )
+    source_license = (
+        (
+            source_manifest.get("license")
+            or source_manifest.get("license_page")
+            or source_manifest.get("license_summary")
+        )
+        if source_manifest
+        else "not verified from a matching source manifest"
+    )
+    try:
+        manifest_path_report = str(manifest_path.relative_to(PROJECT_ROOT))
+    except ValueError:
+        manifest_path_report = str(manifest_path)
+    manifest_hash = sha256_file(manifest_path) if source_manifest else None
     report = {
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "candidate_mode": "rolling_time_series",
@@ -559,13 +597,20 @@ def train_candidate(
         "final_holdout": None,
         "operational_scope": "retrospective rolling-window candidate comparison; no live demand claim",
         "data_source": {
-            "dataset": "UCI Bike Sharing Dataset (ID 275)" if source_manifest else "caller-supplied UCI-schema hourly CSV",
-            "url": DATASET_URL if source_manifest else None,
+            "dataset": source_name,
+            "url": source_url,
             "csv_sha256": data_hash,
             "archive_sha256": source_manifest.get("archive_sha256") if source_manifest else None,
             "citation": source_manifest.get("citation") if source_manifest else None,
-            "license": source_manifest.get("license") if source_manifest else "not verified from a matching source manifest",
+            "license": source_license,
             "source_manifest_verified_for_csv": source_manifest is not None,
+            "source_manifest_path": manifest_path_report if source_manifest else None,
+            "source_manifest_sha256": manifest_hash,
+            "processing": source_manifest.get("processing") if source_manifest else None,
+            "data_window": source_manifest.get("data_window") if source_manifest else None,
+            "source_archive_count": source_manifest.get("archive_count") if source_manifest else None,
+            "source_rows_read": source_manifest.get("source_rows_read") if source_manifest else None,
+            "duplicate_rows_skipped": source_manifest.get("duplicate_rows_skipped") if source_manifest else None,
         },
         "model_card": {
             "name": MODEL_NAME,
@@ -578,9 +623,13 @@ def train_candidate(
             "incumbent_artifact_sha256": incumbent_artifact_sha256,
             "features": list(FEATURE_COLUMNS),
             "data_source": {
+                "dataset": source_name,
+                "url": source_url,
                 "csv_sha256": data_hash,
                 "citation": source_manifest.get("citation") if source_manifest else None,
-                "license": source_manifest.get("license") if source_manifest else "unverified",
+                "license": source_license,
+                "source_manifest_path": manifest_path_report if source_manifest else None,
+                "source_manifest_sha256": manifest_hash,
             },
             "label_availability_assumption": "target timestamp + 3 hours; experimental, not measured from the source feed",
             "quality_gate": "candidate MAE must strictly beat the passed incumbent and historical baseline",

@@ -169,6 +169,13 @@ MODEL_VERSION=1 # 学習レポートの登録版番号に置き換える
 
 MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0.1:8080`です。PostgreSQLは`127.0.0.1:55432`です。必要なとき以外はポートを公開しないでください。
 
+### 実行結果を見る場所
+
+- MLflow UI (`http://127.0.0.1:5000`)ではexperiment `bike-demand-operations`のrun、学習指標、品質ゲート、`training-report.json`などのrun artifactを確認します。候補版3はrun ID `a0c6d543bb464f5aac88dd87a9712339`です。
+- Q4リプレイ・監視・比較結果はMLflowへ自動登録されません。`data/reports/`のJSON/CSVをVS Codeで開きます。現在の比較とPSI調査は[`monitor-investigation-and-next-data.md`](monitor-investigation-and-next-data.md)に一覧があります。
+- `http://127.0.0.1:8080/ready`と`/version`は稼働版の状態をJSONで返すAPIです。予測APIのローカル画面や結果ダッシュボードではありません。
+- ターミナルの出力は実行コマンドのその場の結果です。後から見る結果は`data/reports/`かMLflow run artifactを参照します。
+
 ## 4. 候補の昇格・差し戻し
 
 ### 時系列を保った再学習候補
@@ -243,6 +250,8 @@ CSVとDBに窓ごとの予測数、到着ラベル数、到着率、MAE/RMSE、�
 - Q4全期間をラベル到着後に集計: 版2 MAE/RMSE `70.501 / 113.270`、版3 `59.403 / 91.941`。版3は版2に比べMAE約15.7%、RMSE約18.8%改善。p50 API遅延は版2/3で`71.3 / 71.7 ms`、p95は`104.6 / 111.9 ms`。
 - 最新7日窓では版2 MAE/RMSE `37.278 / 58.158`、版3 `44.176 / 74.286`で版3の誤差が大きかった。両方の窓は`within_review_threshold`。一方、両版とも`lag_24` PSI `2.095`で分布変化の調査対象。分布変化は精度悪化と同じ指標ではないため、Q4全期間の改善と最新週の差を分けて記録する。
 - Q4の全期間結果は見た後の再学習・候補選択に使わない。次候補の検証には新しいデータと独立した期間が必要。
+
+PSIの参照期間、直近7日間の誤差を日付・休日・天候で調べた結果、品質ゲート、Capital Bikeshare新データ候補のvalidationと一度限りのout-of-time評価は[`監視調査と次の評価データ`](monitor-investigation-and-next-data.md)を参照してください。追加レポートは`data/reports/candidate-capitalbikeshare-2025h1-v3.json`と`data/reports/capitalbikeshare-2025h2-202604-final-evaluation.json`です。これらはMLflowへ登録されていません。版3は現行稼働中であり、新候補へ切り替えません。
 
 候補イメージの再ビルドは約5分かかりました。Buildxログでは、Dockerfileの`pip install .`が依存関係を新規取得・インストールしており、昇格コマンドが無表示でもビルドは進行中でした。ビルド中に非稼働のBlue枠が旧版1で503を返しましたが、CaddyはGreen版2を維持し、昇格後にBlue版3へ切り替わりました。
 

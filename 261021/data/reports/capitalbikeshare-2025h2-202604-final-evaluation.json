@@ -1,0 +1,195 @@
+{
+  "evaluation_kind": "reserved_out_of_time_final_evaluation",
+  "created_at_utc": "2026-10-28T02:35:31.215006+00:00",
+  "candidate_selection_report": "data/reports/candidate-capitalbikeshare-2025h1-v3.json",
+  "candidate_selection_quality_gate_passed": true,
+  "candidate_model_version": null,
+  "candidate_fit": {
+    "same_training_cutoff_as_selected_report": "2025-01-01 00:00:00",
+    "latest_label_available_at": "2025-01-01 00:00:00",
+    "train_rows": 17538,
+    "hyperparameters": {
+      "learning_rate": 0.08,
+      "max_iter": 160,
+      "max_leaf_nodes": 31,
+      "l2_regularization": 1.0,
+      "early_stopping": false,
+      "random_state": 17
+    },
+    "feature_columns": [
+      "hour",
+      "weekday",
+      "month",
+      "day_of_year",
+      "is_weekend",
+      "lag_24",
+      "lag_24_missing",
+      "lag_168",
+      "lag_168_missing"
+    ]
+  },
+  "incumbent": {
+    "model_version": "3",
+    "artifact_sha256": "79f06eb9d5a6efc378f20ba37fe98a8367762c1cb6c699200152a121a2af4a43",
+    "quality_gate": "passed"
+  },
+  "data_source": {
+    "dataset": "Capital Bikeshare monthly trip history",
+    "source_page": "https://capitalbikeshare.com/system-data",
+    "license_page": "https://capitalbikeshare.com/data-license-agreement",
+    "csv_path": "data/derived/capitalbikeshare-hourly-2023-202604.csv",
+    "csv_sha256": "cc4b39c67db286d30300cc6fb10a0f37e942eb337a7bd964795bbdd891762a96",
+    "source_manifest_path": "data/derived/capitalbikeshare-hourly-2023-202604-manifest.json",
+    "source_manifest_sha256": "b4fc2e187b87127a4d845680f9edb19826976cf067c64e0470fd0df388752852",
+    "target_definition_matches_incumbent_training_data": false
+  },
+  "evaluation_window": {
+    "start_inclusive": "2025-07-01 00:00:00",
+    "end_exclusive": "2026-05-01 00:00:00",
+    "rows_scored": 7294,
+    "used_for_candidate_selection": false,
+    "used_for_hyperparameter_tuning": false,
+    "source_data_quality_audit_had_seen_aggregate_statistics": true
+  },
+  "candidate": {
+    "model": {
+      "mae": 126.94098831272721,
+      "rmse": 211.5777291752239
+    },
+    "model_by_segment": {
+      "weekday": {
+        "n": 5232,
+        "mae": 123.21728973602302
+      },
+      "weekend": {
+        "n": 2062,
+        "mae": 136.38928654420945
+      },
+      "commute_morning_7_10": {
+        "n": 912,
+        "mae": 152.52182094849087
+      },
+      "commute_evening_16_19": {
+        "n": 912,
+        "mae": 261.1615149011786
+      }
+    }
+  },
+  "incumbent_metrics_on_same_timestamps": {
+    "model": {
+      "mae": 326.38729473340214,
+      "rmse": 518.6600456035599
+    },
+    "model_by_segment": {
+      "weekday": {
+        "n": 5232,
+        "mae": 317.4408876932424
+      },
+      "weekend": {
+        "n": 2062,
+        "mae": 349.0873925191034
+      },
+      "commute_morning_7_10": {
+        "n": 912,
+        "mae": 366.0945626589695
+      },
+      "commute_evening_16_19": {
+        "n": 912,
+        "mae": 890.1861042990893
+      }
+    }
+  },
+  "historical_baseline": {
+    "model": {
+      "mae": 181.18492955723556,
+      "rmse": 296.1797347875806
+    },
+    "model_by_segment": {
+      "weekday": {
+        "n": 5232,
+        "mae": 164.72665829328673
+      },
+      "weekend": {
+        "n": 2062,
+        "mae": 222.9451988360815
+      },
+      "commute_morning_7_10": {
+        "n": 912,
+        "mae": 246.46820175438597
+      },
+      "commute_evening_16_19": {
+        "n": 912,
+        "mae": 327.77741228070175
+      }
+    }
+  },
+  "monthly_mae": {
+    "2025-07": {
+      "rows": 744,
+      "candidate": 139.26094142128727,
+      "incumbent": 487.38570151576005,
+      "baseline": 206.59005376344086
+    },
+    "2025-08": {
+      "rows": 744,
+      "candidate": 79.02425095183536,
+      "incumbent": 416.09404799783186,
+      "baseline": 164.63440860215053
+    },
+    "2025-09": {
+      "rows": 720,
+      "candidate": 137.7032027457272,
+      "incumbent": 453.014606841876,
+      "baseline": 244.35972222222222
+    },
+    "2025-10": {
+      "rows": 744,
+      "candidate": 104.91433161165321,
+      "incumbent": 425.85362171062275,
+      "baseline": 179.8709677419355
+    },
+    "2025-11": {
+      "rows": 719,
+      "candidate": 111.42985755412832,
+      "incumbent": 280.064548679128,
+      "baseline": 176.65196370620572
+    },
+    "2025-12": {
+      "rows": 744,
+      "candidate": 89.39950636405385,
+      "incumbent": 145.8780891118036,
+      "baseline": 122.06048387096774
+    },
+    "2026-01": {
+      "rows": 744,
+      "candidate": 154.71211737165925,
+      "incumbent": 165.48388610144468,
+      "baseline": 120.5241935483871
+    },
+    "2026-02": {
+      "rows": 672,
+      "candidate": 100.58476687012364,
+      "incumbent": 150.1966284467196,
+      "baseline": 133.47470238095238
+    },
+    "2026-03": {
+      "rows": 743,
+      "candidate": 186.45742945128077,
+      "incumbent": 321.7802816025472,
+      "baseline": 225.9691982311094
+    },
+    "2026-04": {
+      "rows": 720,
+      "candidate": 164.49009426614168,
+      "incumbent": 406.16635980920967,
+      "baseline": 236.8375
+    }
+  },
+  "interpretation": "This one-time out-of-time score reports the frozen candidate beside the incumbent and baseline. It is not a new candidate-selection or hyperparameter-tuning window.",
+  "limitations": [
+    "Capital Bikeshare trip-start counts do not have exactly the same target definition as the UCI incumbent data.",
+    "The three-hour label-availability delay is an experiment assumption, not a measured source-feed guarantee.",
+    "The source data was inspected for aggregate data-quality statistics, so this is not an unseen blind holdout.",
+    "Metrics do not establish live demand accuracy or business impact."
+  ]
+}

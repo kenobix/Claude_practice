@@ -1,0 +1,305 @@
+{
+  "created_at_utc": "2026-10-28T02:33:50.831522+00:00",
+  "candidate_mode": "rolling_time_series",
+  "data_sha256": "cc4b39c67db286d30300cc6fb10a0f37e942eb337a7bd964795bbdd891762a96",
+  "source_revision": {
+    "git_commit": "485286c20c830d70d98eacd63f9dbeb0ffda2538",
+    "worktree_dirty": true,
+    "worktree_status_entries": [
+      " M 261021/README.md",
+      " M 261021/docs/glossary.md",
+      " M 261021/docs/runbook.md",
+      " M 261021/src/bike_mlops/cli.py",
+      " M 261021/src/bike_mlops/training.py",
+      " M 261021/work_log.md",
+      "?? 261021/docs/monitor-investigation-and-next-data.md",
+      "?? 261021/scripts/prepare_capitalbikeshare.py"
+    ],
+    "source_tree_sha256": "67b28e6542cf31df68914226a9f9dddeb4dd0f0668cf26a04c16923aacacab9e",
+    "source_file_count": 33
+  },
+  "environment": {
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "direct_dependencies": {
+      "bike-demand-mlops": "0.1.0",
+      "numpy": "2.5.1",
+      "pandas": "3.0.5",
+      "scikit-learn": "1.9.0",
+      "mlflow": "3.17.1",
+      "psycopg": "3.3.6",
+      "fastapi": "0.156.3",
+      "uvicorn": "0.54.0"
+    },
+    "all_installed_packages": {
+      "aiohappyeyeballs": "2.7.1",
+      "aiohttp": "3.14.5",
+      "aiosignal": "1.4.0",
+      "alembic": "1.20.0",
+      "annotated-doc": "0.0.5",
+      "annotated-types": "0.8.0",
+      "anyio": "4.15.1",
+      "attrs": "26.1.0",
+      "bike-demand-mlops": "0.1.0",
+      "blinker": "1.9.0",
+      "cachetools": "7.2.4",
+      "certifi": "2026.10.19",
+      "cffi": "2.1.1",
+      "charset-normalizer": "3.5.2",
+      "click": "8.5.0",
+      "cloudpickle": "3.1.2",
+      "contourpy": "1.4.0",
+      "cryptography": "50.0.2",
+      "cycler": "0.12.1",
+      "databricks-sdk": "0.154.0",
+      "docker": "7.2.0",
+      "fastapi": "0.156.3",
+      "Flask": "3.1.3",
+      "flask-cors": "6.0.5",
+      "fonttools": "4.67.0",
+      "frozenlist": "1.8.0",
+      "gitdb": "4.0.12",
+      "GitPython": "3.2.1",
+      "google-auth": "2.62.0",
+      "graphene": "3.4.3",
+      "graphql-core": "3.2.13",
+      "graphql-relay": "3.2.0",
+      "gunicorn": "26.2.0",
+      "h11": "0.16.0",
+      "httpcore": "1.0.9",
+      "httptools": "0.9.0",
+      "httpx": "0.28.1",
+      "huey": "3.4.0",
+      "idna": "3.20",
+      "importlib_metadata": "9.0.1",
+      "iniconfig": "2.3.1",
+      "itsdangerous": "2.2.0",
+      "Jinja2": "3.1.6",
+      "joblib": "1.6.0",
+      "kiwisolver": "1.5.1",
+      "Mako": "1.4.3",
+      "MarkupSafe": "3.0.4",
+      "matplotlib": "3.11.2",
+      "mlflow": "3.17.1",
+      "mlflow-skinny": "3.17.1",
+      "mlflow-tracing": "3.17.1",
+      "multidict": "7.1.0",
+      "narwhals": "2.27.1",
+      "numpy": "2.5.1",
+      "opentelemetry-api": "1.45.1",
+      "opentelemetry-proto": "1.45.1",
+      "opentelemetry-sdk": "1.45.1",
+      "opentelemetry-semantic-conventions": "0.66b1",
+      "packaging": "26.3",
+      "pandas": "3.0.5",
+      "pillow": "13.0.0",
+      "pip": "26.2.2",
+      "pluggy": "1.7.0",
+      "prettytable": "3.18.0",
+      "propcache": "0.5.4",
+      "protobuf": "7.36.2",
+      "psycopg": "3.3.6",
+      "psycopg-binary": "3.3.6",
+      "pyarrow": "25.0.1",
+      "pyasn1": "0.6.4",
+      "pyasn1_modules": "0.4.2",
+      "pycparser": "3.11",
+      "pydantic": "2.14.1",
+      "pydantic_core": "2.50.1",
+      "Pygments": "2.21.0",
+      "pyparsing": "3.3.3",
+      "pytest": "8.4.2",
+      "python-dateutil": "2.9.0.post0",
+      "python-dotenv": "1.2.4",
+      "PyYAML": "6.0.3",
+      "requests": "2.34.2",
+      "scikit-learn": "1.9.0",
+      "scipy": "1.18.1",
+      "six": "1.17.0",
+      "skops": "0.16.0",
+      "smmap": "5.0.3",
+      "SQLAlchemy": "2.1.5",
+      "sqlparse": "0.6.0",
+      "starlette": "1.9.0",
+      "threadpoolctl": "3.7.0",
+      "typing-inspection": "0.4.4",
+      "typing_extensions": "4.16.0",
+      "urllib3": "2.8.0",
+      "uvicorn": "0.54.0",
+      "uvloop": "0.23.0",
+      "watchfiles": "1.3.0",
+      "wcwidth": "0.9.3",
+      "websockets": "17.3",
+      "Werkzeug": "3.1.9",
+      "yarl": "1.25.1",
+      "zipp": "4.1.1"
+    }
+  },
+  "feature_contract_version": "bike-demand-features-v1",
+  "feature_columns": [
+    "hour",
+    "weekday",
+    "month",
+    "day_of_year",
+    "is_weekend",
+    "lag_24",
+    "lag_24_missing",
+    "lag_168",
+    "lag_168_missing"
+  ],
+  "hyperparameters": {
+    "learning_rate": 0.08,
+    "max_iter": 160,
+    "max_leaf_nodes": 31,
+    "l2_regularization": 1.0,
+    "early_stopping": false,
+    "random_state": 17
+  },
+  "training_cutoff": "2025-01-01 00:00:00",
+  "training_latest_label_available_at": "2025-01-01 00:00:00",
+  "split_counts": {
+    "train": 17538,
+    "validation": 4343
+  },
+  "validation_window": {
+    "start": "2025-01-01 00:00:00",
+    "end_exclusive": "2025-07-01 00:00:00"
+  },
+  "validation": {
+    "model": {
+      "mae": 168.2657567877067,
+      "rmse": 265.93396593335353
+    },
+    "baseline": {
+      "mae": 208.06122167033982,
+      "rmse": 329.87756006499444
+    },
+    "model_by_segment": {
+      "weekday": {
+        "n": 3096,
+        "mae": 165.387754514245
+      },
+      "weekend": {
+        "n": 1247,
+        "mae": 175.41114174250825
+      },
+      "commute_morning_7_10": {
+        "n": 543,
+        "mae": 183.85158562151017
+      },
+      "commute_evening_16_19": {
+        "n": 543,
+        "mae": 340.2399792830026
+      }
+    },
+    "baseline_by_segment": {
+      "weekday": {
+        "n": 3096,
+        "mae": 195.18633259505356
+      },
+      "weekend": {
+        "n": 1247,
+        "mae": 240.02646351242984
+      },
+      "commute_morning_7_10": {
+        "n": 543,
+        "mae": 286.0460405156538
+      },
+      "commute_evening_16_19": {
+        "n": 543,
+        "mae": 367.6611418047882
+      }
+    }
+  },
+  "comparison": {
+    "incumbent_model_version": "3",
+    "incumbent_artifact_sha256": "79f06eb9d5a6efc378f20ba37fe98a8367762c1cb6c699200152a121a2af4a43",
+    "incumbent_quality_gate": "passed",
+    "incumbent": {
+      "mae": 389.76164282743446,
+      "rmse": 608.3198079588819
+    },
+    "candidate_mae_improvement_vs_incumbent": 221.49588603972776,
+    "candidate_mae_improvement_vs_baseline": 39.79546488263313,
+    "same_validation_timestamps": true
+  },
+  "quality_gate_passed": true,
+  "quality_gate": "candidate validation MAE must strictly beat both the explicitly selected, passed incumbent and the historical baseline on identical timestamps",
+  "final_holdout": null,
+  "operational_scope": "retrospective rolling-window candidate comparison; no live demand claim",
+  "data_source": {
+    "dataset": "Capital Bikeshare monthly trip history",
+    "url": "https://capitalbikeshare.com/system-data",
+    "csv_sha256": "cc4b39c67db286d30300cc6fb10a0f37e942eb337a7bd964795bbdd891762a96",
+    "archive_sha256": null,
+    "citation": null,
+    "license": "https://capitalbikeshare.com/data-license-agreement",
+    "source_manifest_verified_for_csv": true,
+    "source_manifest_path": "data/derived/capitalbikeshare-hourly-2023-202604-manifest.json",
+    "source_manifest_sha256": "b4fc2e187b87127a4d845680f9edb19826976cf067c64e0470fd0df388752852",
+    "processing": {
+      "input_field": "started_at",
+      "target": "trip starts counted by local wall-clock hour",
+      "source_time_strings_have_timezone_offset": false,
+      "timezone_interpretation": "America/New_York wall time inferred from the Capital Bikeshare service area; source strings themselves have no offset.",
+      "ambiguous_fall_back_hours": "Excluded in full because the source cannot distinguish the two repeated local 01:00 hours.",
+      "spring_forward_hours": "Remain absent because those local hours do not exist.",
+      "empty_valid_hours": "Filled with zero after all monthly source archives in the declared range were acquired.",
+      "duplicate_ride_ids": "Deduplicated across all monthly archives after canonicalizing started_at to the local hour; conflicting hour buckets for one ID are rejected.",
+      "retained_fields": [
+        "dteday",
+        "hr",
+        "cnt"
+      ],
+      "raw_trip_identifiers_retained_in_derived_csv": false
+    },
+    "data_window": {
+      "start_inclusive": "2023-01-01 00:00:00",
+      "end_exclusive": "2026-05-01 00:00:00"
+    },
+    "source_archive_count": 41,
+    "source_rows_read": 19440291,
+    "duplicate_rows_skipped": 205
+  },
+  "model_card": {
+    "name": "bike-demand",
+    "model_family": "scikit-learn HistGradientBoostingRegressor in a Pipeline",
+    "prediction_target": "hourly aggregate bike rentals (cnt) for the hour starting at target_hour",
+    "intended_use": "education and controlled historical MLOps replay only",
+    "candidate_training_cutoff": "2025-01-01 00:00:00",
+    "validation_window": {
+      "start": "2025-01-01 00:00:00",
+      "end_exclusive": "2025-07-01 00:00:00"
+    },
+    "incumbent_model_version": "3",
+    "incumbent_artifact_sha256": "79f06eb9d5a6efc378f20ba37fe98a8367762c1cb6c699200152a121a2af4a43",
+    "features": [
+      "hour",
+      "weekday",
+      "month",
+      "day_of_year",
+      "is_weekend",
+      "lag_24",
+      "lag_24_missing",
+      "lag_168",
+      "lag_168_missing"
+    ],
+    "data_source": {
+      "dataset": "Capital Bikeshare monthly trip history",
+      "url": "https://capitalbikeshare.com/system-data",
+      "csv_sha256": "cc4b39c67db286d30300cc6fb10a0f37e942eb337a7bd964795bbdd891762a96",
+      "citation": null,
+      "license": "https://capitalbikeshare.com/data-license-agreement",
+      "source_manifest_path": "data/derived/capitalbikeshare-hourly-2023-202604-manifest.json",
+      "source_manifest_sha256": "b4fc2e187b87127a4d845680f9edb19826976cf067c64e0470fd0df388752852"
+    },
+    "label_availability_assumption": "target timestamp + 3 hours; experimental, not measured from the source feed",
+    "quality_gate": "candidate MAE must strictly beat the passed incumbent and historical baseline",
+    "promotion": "manual approval only; candidate registration does not imply deployment",
+    "limitations": [
+      "validation metrics are retrospective and depend on the selected historical window",
+      "the final replay window must remain independent of candidate selection",
+      "results do not establish current demand accuracy or business impact"
+    ]
+  }
+}

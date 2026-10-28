@@ -76,5 +76,9 @@ Composeによる運用構成は[実行・運用手順](docs/runbook.md)を参照
 - [x] 候補版3を版2と2012年第3四半期で比較。候補MAE 62.416、版2 MAE 84.168、ベースラインMAE 83.692でゲート通過。
 - [x] 版2・版3を同一の第4四半期2,168時間でAPIリプレイ。HTTPエラーは両版0件。全期間MAE/RMSEは版2が70.501/113.270、版3が59.403/91.941。比較レポートは[`data/reports/q4-comparison-e03de4ee4ef4-2012100100-2013010100.json`](data/reports/q4-comparison-e03de4ee4ef4-2012100100-2013010100.json)。
 - [x] 版3を2026-10-28にBlue枠へ昇格。deployment ID `8a6a63f0-875a-4c5b-8c85-bc0fe1538d1e`、Caddy入口の`/ready`は200、model version `3`、quality gate `passed`。
+- [x] PSIと直近週の誤差差を保存済み予測で調査。詳細と結果の確認場所は[`monitor-investigation-and-next-data.md`](docs/monitor-investigation-and-next-data.md)。
+- [x] Capital Bikeshare公式月次データ2023-01〜2026-05を取得し、2023-01〜2026-04の時間別データをローカル生成。候補validationと最終評価の期間を固定。元データと派生CSVはライセンスと`.gitignore`に従いGit対象外。
+- [x] 版3を基準に新データ候補を2025年上期validationで比較。候補MAE/RMSE `168.266 / 265.934`、版3 `389.762 / 608.320`、履歴baseline `208.061 / 329.878`で品質ゲート通過。MLflow登録・昇格は未実施。
+- [x] 候補を固定後、2025年7月〜2026年4月の7,294時間を一度だけout-of-time評価。候補MAE/RMSE `126.941 / 211.578`、版3 `326.387 / 518.660`、履歴baseline `181.185 / 296.180`。ローカルJSONレポートを保存し、候補登録・API切替は未実施。
 
-詳細な実行記録は[work_log.md](work_log.md)を参照してください。直近1週間は`lag_24`のPSIが2.095で分布変化の調査対象になりました。一方、同窓のMAEは版2より版3が高く、Q4全期間の結果とは異なります。Q4を使った追加調整は行わず、次の候補評価は新しい独立データを用意してから行います。固定holdoutの再評価はしません。
+詳細な実行記録は[work_log.md](work_log.md)を参照してください。今回のvalidationとout-of-time評価期間はこの候補に使い終えています。今後の候補選択には新しい期間または別の外部データが必要です。データ品質監査で全期間集計を閲覧済みのため、未閲覧のblind holdoutではありません。2012年Q3/Q4は再利用していません。現在の稼働版は3です。

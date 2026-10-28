@@ -435,3 +435,114 @@ Q4を同じAPI・データ・日時窓で版2と版3へ送り、どちらも2,16
 - 昇格後のCaddy `/ready`はHTTP 200、version3、quality gate `passed`。`/version` artifact SHA-256 `79f06eb9d5a6efc378f20ba37fe98a8367762c1cb6c699200152a121a2af4a43`。`data/runtime/Caddyfile`は`api-blue:8000`、runtime stateはactive blue/version3。
 
 現時点の稼働版は版3。Q3/Q4はこのデータの最後の時系列窓として消費済みであり、次候補には新しいデータと独立検証期間を用意する。
+
+## 2026-10-28: PSI・直近週誤差の原因調査、新データ準備
+
+### 調査方法
+
+モデル版2・3の学習や変更はせず、PostgreSQLに保存済みのQ4予測を読み取り、UCI `hour.csv`と`target_hour`で結合した。監視実装`score_monitor_windows()`は、2011年全体の学習時特徴量分布を参照し、lag値・hourのPSIとラベル到着後のMAE/RMSEを別々に計算している。対象レポートは`data/reports/model-drift-investigation-2012100100-2013010100.json`。
+
+### PSI警告の切り分け
+
+- 監視窓`2012-12-24 23:00`より後〜`2012-12-31 23:00`まで167予測の`lag_24` PSIは`2.0954`。参照は2011年の8,645行（非欠損8,523）で、平均145.15・中央値111。窓は167行（非欠損165）で、平均64.95・中央値40、欠損率1.20%。設定上の調査基準`0.2`を大きく超える。
+- hour PSIは`0.000227`、lag_168 PSIは`0.07675`。警告のほぼ全てがlag_24の分布変化から来ており、両モデル版で同じ値になるのは同じ特徴量行を比べるため。
+- 同じPSI関数で2012年12月全体と2011年全体を比べるとlag_24は`0.0635`。2011・2012の12月24〜31日を比べる診断値は`0.1983`。年全体を参照にした値には、年末・祝日週の季節差が強く含まれる。診断比較は正式な監視結果を差し替えない。
+- `lag_24`の差は実データにある短期入力変化で、単なるモデル固有の警告ではない。季節調整した参照期間を追加すれば監視の解釈は改善するが、現在のしきい値や計算方式は今回変更していない。
+
+### 直近7日間の誤差差
+
+| 指標 | 版2 | 版3 |
+|---|---:|---:|
+| 予測数 / 採点数 | 167 / 164 | 167 / 164 |
+| MAE | 37.278 | 44.176 |
+| RMSE | 58.158 | 74.286 |
+| 平均実測 | 75.177 | 75.177 |
+| 平均予測 | 90.562 | 99.632 |
+| 平均bias（予測−実測） | +15.385 | +24.455 |
+
+最後の3時間は`timestamp+3 hours`のラベル利用可能時刻が監視時計を越すので採点対象外。版3のMAEは版2より18.5%高く、RMSEは27.7%高い。版3はQ4全期間で版2より低誤差だが、直近窓では平均予測を版2より約9.07台/時高く出し、過大予測が増えた。
+
+日別では、版3の版2に対する絶対誤差増分の84.6%が12月25日、26日、29日に集中した。12月25日の23採点行はすべてholiday。12月26日の24行中16行は`weathersit=3`。現行特徴量は`hour, weekday, month, day_of_year, is_weekend, lag_24, lag_168`と欠測flagで、holiday・weather・workingdayを含まない。低需要の祝日・荒天が今回の誤差差に関係する有力な説明だが、事後相関であり因果を証明してはいない。
+
+### 版3がQ4全期間で改善した理由
+
+版2・3は同じ特徴量とHistGradientBoostingRegressorのハイパーパラメータを使う。版2の学習行数8,645に対し版3は13,001（50.4%増）で、学習 cutoffが2012-01-01から2012-07-01へ進んだ。全Q4では版2の平均予測178.86が実測平均219.20を40.34台/時下回り、版3は平均195.41で下回り幅を23.78へ縮めた。MAEは10月`98.575→77.258`、11月`64.414→57.615`、12月`49.604→44.095`と各月で下がった。追加されたより新しいデータが季節・水準を補った可能性が高いが、学習データ量だけを変えるablationはしていないので因果と断定しない。
+
+### 品質ゲートの確認
+
+- 通常`train`のゲート: validation MAEが前日同時刻（欠ける場合は曜日・時刻別平均、その次は全体平均）の履歴baseline MAEを厳密に下回ること。
+- rolling `candidate`のゲート: incumbent自体が`passed`であり、候補MAEが同じvalidation timestamp上でincumbentと履歴baselineの両方を厳密に下回ること。等しい場合は不合格。RMSEや固定holdoutに絶対値の合格線はなく、固定holdoutはこの候補ゲートに使わない。
+- v3はQ3でMAE`62.416`、版2`84.168`、baseline`83.692`、評価行2,208。版2はpassedで、候補は両方より小さいため合格。昇格にはさらに人の理由付き承認とready/probe確認が必要。
+
+### 同一システムの新しいデータを準備
+
+UCIデータの出典ページで2011–2012年の対象がCapital Bikeshareと確認できた。Capital Bikeshare公式サイトは月次トリップ履歴を公開し、2026年5月ファイルまで存在した。現行データ説明では保守・検査、倉庫テスト駅、60秒未満のトリップを除くと明記される。これは同じシステムだが旧`cnt`と完全同一定義ではないため、次回はターゲット定義変更を伴う移行評価とする。Data License Agreementに従い、元データを単独再配布せず、Gitにも追加しない。
+
+2023-01〜2026-05の公式ZIP 41件を`data/raw/capitalbikeshare/monthly/`へ取得。元ファイルの`started_at`を調べ、秒以下の精度がアーカイブ間で変わること、月次ZIPが隣月に始まったトリップを含むことを発見した。2024年5/6月で141 ride_id、2026年4/5月で64 ride_idが重複。各重複は同一の時間bucketに入り、秒以下の精度だけが異なるため、時単位に正規化して重複除去する処理へ修正した。異なる時間bucketの重複IDはエラーで止める。
+
+時刻文字列にはoffsetが無い。America/New_Yorkのローカル壁時計として扱い、UTC変換をしない。秋に2回出る01時は元ファイルで区別できないため、該当するwall-hour全体を予測対象から除外。春の存在しない02時も作成しない。最終CSVは`dteday,hr,cnt`だけで乗車ID・駅・位置情報を保持しない。
+
+```bash
+python scripts/prepare_capitalbikeshare.py
+```
+
+- 取得41 ZIP、読込19,440,291行、重複ID205件を除外。2023-01-01〜2026-04-30の派生CSV29,177行、重複timestamp 0、SHA-256 `cc4b39c67db286d30300cc6fb10a0f37e942eb337a7bd964795bbdd891762a96`。
+- 時刻除外7件: 2023/24/25年の秋の重複01時3件、2023/24/25/26年の春に存在しない02時4件。監査の欠け7件はこのDST方針と一致。
+- ローカルmanifest `data/derived/capitalbikeshare-hourly-2023-202604-manifest.json`は月別アーカイブSHA、件数、前処理、split行数を記録する。CSV・元ZIP・manifestは`.gitignore`の`**/data/`によりGit対象外。
+- 事前に固定した時間分割: 学習 cutoff `2025-01-01 00:00`（利用可能な学習行17,538）、候補validation `[2025-01-01, 2025-07-01)`（4,343行）、out-of-time最終評価 `[2025-07-01, 2026-05-01)`（7,294行）。cutoff時にまだラベルを使えない2024-12-31 22/23時の2行は学習から除外。
+- 最終期間はモデル誤差を採点しておらず、候補選択にも利用していない。ただし全期間CSVのデータ品質監査を行い、min/max/meanなどの集計は見ているため「未閲覧のblind holdout」ではない。次候補の選定をせず、out-of-time最終評価として保護する。
+
+データ変換scriptは1か月分、月境界重複のある2024年5–6月、および全期間で実行・監査。`py_compile`は成功。テストスイートは今回実行していない。新候補の学習、MLflow登録、runtime配信、最終期間のモデル誤差採点は未実行。現在稼働中のAPI版3に変更はない。
+
+確認先・実験条件・次候補コマンドは[`docs/monitor-investigation-and-next-data.md`](docs/monitor-investigation-and-next-data.md)、集約レポートは`data/reports/model-drift-investigation-2012100100-2013010100.json`。
+
+## 2026-10-28: Capital Bikeshare候補と独立期間の評価
+
+### 出典manifestを候補レポートへ結びつける
+
+新しいCapital Bikeshare CSVは既定のUCI manifestと別ファイルのため、そのまま候補CLIを動かすと出典が「未確認」と記録されることが分かった。`candidate --source-manifest`を追加し、明示されたmanifestが選択CSVのSHA-256と一致しない場合はエラーにするよう変更。学習レポートには出典名・URL・ライセンス・manifest SHA・変換要約を記録する。`py_compile`とCLI helpで構文・引数を確認した。テストスイートは実行していない。
+
+### 2025年上期validationで候補を一度選ぶ
+
+Dockerソケットは通常の隔離コマンドから`permission denied`になったが、許可付きの読み取り確認でCompose全サービス稼働、PostgreSQL healthy、MLflow稼働を確認した。登録済み版3をMLflowから読み込み、候補はMLflowへ登録しない`--no-register`で一度だけ比較した。
+
+```bash
+MLFLOW_TRACKING_URI=http://127.0.0.1:5000 ./.venv/bin/mlops-bikectl candidate \
+  --csv data/derived/capitalbikeshare-hourly-2023-202604.csv \
+  --source-manifest data/derived/capitalbikeshare-hourly-2023-202604-manifest.json \
+  --incumbent-version 3 \
+  --training-cutoff '2025-01-01 00:00:00' \
+  --validation-start '2025-01-01 00:00:00' \
+  --validation-end '2025-07-01 00:00:00' \
+  --output data/reports/candidate-capitalbikeshare-2025h1-v3.json \
+  --no-register
+```
+
+- 同じUCI-schema特徴量・モデル種・ハイパーパラメータ。学習17,538行、validation4,343行。カットオフ時点までの最新学習ラベル利用可能時刻は`2025-01-01 00:00:00`。
+- candidate MAE/RMSE `168.266 / 265.934`、版3 `389.762 / 608.320`、履歴baseline `208.061 / 329.878`。validationの全同一timestamp上で候補MAEが両比較対象を厳密に下回ったため、既定のrolling candidate品質ゲートは`passed`。
+- コマンド出力が端末に表示され、完全なJSONは`data/reports/candidate-capitalbikeshare-2025h1-v3.json`へ保存された。`--no-register`のためMLflow UIに新run/versionはなく、版4も作られていない。
+
+### validation確定後に最終out-of-time期間を一度だけ採点
+
+validationで固定した候補を同じtraining cutoff・学習行・特徴量・hyperparameterで再構成し、2025-07-01〜2026-04-30の7,294時間を一度だけ評価するスクリプトを追加した。スクリプトは選定reportとCSVのhash、incumbent artifact SHA、quality tag、特徴量、hyperparameter、学習行数を照合する。既定出力レポートが存在する場合は二度目の採点を拒否する。候補は登録せず、昇格もしない。
+
+```bash
+MLFLOW_TRACKING_URI=http://127.0.0.1:5000 ./.venv/bin/python scripts/evaluate_capitalbikeshare_holdout.py
+```
+
+最初に`./scripts/evaluate_capitalbikeshare_holdout.py --help`を直接起動しようとして、scriptに実行permissionがないため`Permission denied`になった。プロジェクトで案内する通り`python scripts/evaluate_capitalbikeshare_holdout.py`へ変えて正常実行した。結果は`data/reports/capitalbikeshare-2025h2-202604-final-evaluation.json`。
+
+| 指標 | 固定候補 | 版3 | 履歴baseline |
+|---|---:|---:|---:|
+| MAE | 126.941 | 326.387 | 181.185 |
+| RMSE | 211.578 | 518.660 | 296.180 |
+
+全体では候補のMAEは版3比61.1%、baseline比29.9%小さく、RMSEは版3比59.2%、baseline比28.6%小さい。月別では2026-01の候補MAE154.712がbaseline120.524を上回るなど、一部期間でbaselineに劣る。全期間を平均した改善だけで十分とは判断せず、必要なら季節・休日・荒天や通勤夕方帯の誤差を追加分析する。最終期間には独立の固定合否基準を設けていないので、「最終holdout quality gate合格」とは表記しない。
+
+今回の比較はCapital Bikeshareの新ターゲット定義への移行評価で、UCI版3の学習ターゲットと完全一致しない。最終期間の誤差自体は候補選択・パラメータ調整に使っていないが、データ監査で全期間の集計統計は見ているため、完全に未閲覧のblind holdoutではない。3時間ラベル遅延は引き続き実測保証ではなく実験仮定。
+
+### 稼働確認と運用状態
+
+候補評価後もComposeは稼働し、Caddy入口`/ready`はHTTP 200・版3・quality gate passed、`/version`のartifact SHAは`79f06eb9d5a6efc378f20ba37fe98a8367762c1cb6c699200152a121a2af4a43`。モデル版3を維持し、新候補をMLflow登録・API昇格していない。報告書は端末出力とローカル`data/reports/`で確認する。MLflow UIは既存の登録runを見る画面、localhost:8080の`/ready`・`/version`は稼働状態を返すだけで、評価ダッシュボードではない。
+
+このvalidationと最終out-of-time期間は今回の候補に使用済み。次の別候補を比較・調整する場合は、新しい独立データ期間を事前確保する。
