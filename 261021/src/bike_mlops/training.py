@@ -18,6 +18,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.pipeline import Pipeline
 
 from bike_mlops.config import (
+    DATA_PROFILE,
+    DATA_PROFILE_ID,
     DATASET_MANIFEST,
     DATASET_URL,
     DEFAULT_DATASET,
@@ -25,6 +27,8 @@ from bike_mlops.config import (
     FEATURE_CONTRACT_VERSION,
     MODEL_NAME,
     PROJECT_ROOT,
+    TARGET_CONTRACT_ID,
+    LABEL_DELAY_HOURS,
 )
 from bike_mlops.data import load_hourly, sha256_file
 from bike_mlops.capital_data import validate_capital_manifest
@@ -191,6 +195,8 @@ def _log_and_register(report: dict, estimator: Pipeline, x_example: pd.DataFrame
         run_id = run.info.run_id
         mlflow.log_params(HYPERPARAMETERS)
         run_params = {
+            "data_profile_id": DATA_PROFILE_ID,
+            "target_contract_id": TARGET_CONTRACT_ID,
             "feature_contract_version": FEATURE_CONTRACT_VERSION,
             "data_sha256": report["data_sha256"],
         }
@@ -234,6 +240,8 @@ def _log_and_register(report: dict, estimator: Pipeline, x_example: pd.DataFrame
             metric_values["validation_incumbent_mae"] = comparison["incumbent"]["mae"]
         mlflow.log_metrics(metric_values)
         run_tags = {
+            "data_profile_id": DATA_PROFILE_ID,
+            "target_contract_id": TARGET_CONTRACT_ID,
             "quality_gate": "passed" if report["quality_gate_passed"] else "failed",
             "data_sha256": report["data_sha256"],
             "git_revision": report["source_revision"]["git_commit"] or "unknown",
@@ -268,6 +276,8 @@ def _log_and_register(report: dict, estimator: Pipeline, x_example: pd.DataFrame
                 raise
             client.create_registered_model(MODEL_NAME)
         version_tags = {
+            "data_profile_id": DATA_PROFILE_ID,
+            "target_contract_id": TARGET_CONTRACT_ID,
             "quality_gate": "passed" if report["quality_gate_passed"] else "failed",
             "data_sha256": report["data_sha256"],
             "validation_mae": str(report["validation"]["model"]["mae"]),
@@ -309,6 +319,8 @@ def _log_and_register(report: dict, estimator: Pipeline, x_example: pd.DataFrame
         "run_id": run_id,
         "model_name": MODEL_NAME,
         "model_version": str(version.version),
+        "data_profile_id": DATA_PROFILE_ID,
+        "target_contract_id": TARGET_CONTRACT_ID,
         "model_uri": model_uri,
         "artifact_sha256": artifact_hash,
         "quality_gate_passed": report["quality_gate_passed"],
@@ -328,6 +340,11 @@ def train(
     register: bool = True,
     evaluate_final_holdout: bool = False,
 ) -> dict:
+    if DATA_PROFILE_ID != "uci-bike-sharing":
+        raise ValueError(
+            "The fixed initial train command is only defined for the UCI profile; "
+            "use a frozen candidate protocol for migration profiles"
+        )
     frame = load_hourly(data_path)
     data_hash = sha256_file(data_path)
     source_manifest = None
@@ -355,7 +372,7 @@ def train(
     holdout_frame = frame.loc[holdout_mask].reset_index(drop=True)
     holdout_features = features.loc[holdout_mask, FEATURE_COLUMNS].reset_index(drop=True)
 
-    max_train_label_available = train_frame["timestamp"].max() + pd.Timedelta(hours=3)
+    max_train_label_available = train_frame["timestamp"].max() + pd.Timedelta(hours=LABEL_DELAY_HOURS)
     if max_train_label_available > SPLITS["training_cutoff"]:
         raise ValueError("Training includes a label unavailable at the configured training cutoff")
 
@@ -374,6 +391,8 @@ def train(
         "source_revision": _source_revision(),
         "environment": _versions(),
         "feature_contract_version": FEATURE_CONTRACT_VERSION,
+        "data_profile_id": DATA_PROFILE_ID,
+        "target_contract_id": TARGET_CONTRACT_ID,
         "feature_columns": list(FEATURE_COLUMNS),
         "hyperparameters": HYPERPARAMETERS,
         "split_counts": {
@@ -404,6 +423,9 @@ def train(
         },
         "model_card": {
             "name": MODEL_NAME,
+            "data_profile_id": DATA_PROFILE_ID,
+            "target_contract_id": TARGET_CONTRACT_ID,
+            "target_contract": DATA_PROFILE["target"],
             "model_family": "scikit-learn HistGradientBoostingRegressor in a Pipeline",
             "prediction_target": "hourly aggregate bike rentals (cnt) for the hour starting at target_hour",
             "intended_use": "education and controlled historical MLOps replay only",
@@ -419,7 +441,7 @@ def train(
                 "citation": source_manifest.get("citation") if source_manifest else None,
             },
             "features": list(FEATURE_COLUMNS),
-            "label_availability_assumption": "target timestamp + 3 hours; experimental, not measured from the source feed",
+            "label_availability_assumption": DATA_PROFILE["label_availability"],
             "quality_gate": "validation MAE must strictly beat the previous-day/weekday-hour baseline",
             "promotion": "manual approval only; diagnostic mode is clearly labeled when the gate fails",
             "limitations": [
@@ -464,6 +486,8 @@ def _train_candidate_impl(
     """
     if protocol is None or evaluation_protocol_path is None:
         raise ValueError("Internal candidate training requires a validated frozen evaluation protocol")
+    if DATA_PROFILE_ID != "capital-bikeshare":
+        raise ValueError("Capital candidate evaluation requires DATA_PROFILE_ID=capital-bikeshare")
     if register:
         raise ValueError("Candidate evaluation must remain unregistered until deployment gates are implemented")
     start = pd.Timestamp(validation_start if validation_start is not None else protocol["validation"]["start_inclusive"])
@@ -537,8 +561,12 @@ def _train_candidate_impl(
     ):
         raise ValueError("Candidate cutoffs/windows differ from the frozen evaluation protocol")
     features = feature_frame_for_dataset(frame)
+    if protocol["dataset"]["target_contract"] != TARGET_CONTRACT_ID:
+        raise ValueError("Evaluation protocol target contract differs from the active data profile")
+    if protocol["dataset"]["data_profile_id"] != DATA_PROFILE_ID:
+        raise ValueError("Evaluation protocol data profile differs from the active data profile")
     train_mask = (frame["timestamp"] < start) & (
-        frame["timestamp"] + pd.Timedelta(hours=3) <= cutoff
+        frame["timestamp"] + pd.Timedelta(hours=LABEL_DELAY_HOURS) <= cutoff
     )
     validation_mask = (frame["timestamp"] >= start) & (frame["timestamp"] < end)
     if not train_mask.any():
@@ -554,7 +582,7 @@ def _train_candidate_impl(
     train_features = features.loc[train_mask, FEATURE_COLUMNS].reset_index(drop=True)
     validation_frame = frame.loc[validation_mask].reset_index(drop=True)
     validation_features = features.loc[validation_mask, FEATURE_COLUMNS].reset_index(drop=True)
-    latest_label_available = train_frame["timestamp"].max() + pd.Timedelta(hours=3)
+    latest_label_available = train_frame["timestamp"].max() + pd.Timedelta(hours=LABEL_DELAY_HOURS)
     if latest_label_available > cutoff:
         raise AssertionError("Candidate training mask included a label unavailable at training cutoff")
 
@@ -618,6 +646,8 @@ def _train_candidate_impl(
         "source_revision": _source_revision(),
         "environment": _versions(),
         "feature_contract_version": FEATURE_CONTRACT_VERSION,
+        "data_profile_id": DATA_PROFILE_ID,
+        "target_contract_id": TARGET_CONTRACT_ID,
         "feature_columns": list(FEATURE_COLUMNS),
         "hyperparameters": HYPERPARAMETERS,
         "training_cutoff": cutoff.isoformat(sep=" "),
@@ -668,6 +698,9 @@ def _train_candidate_impl(
         },
         "model_card": {
             "name": MODEL_NAME,
+            "data_profile_id": DATA_PROFILE_ID,
+            "target_contract_id": TARGET_CONTRACT_ID,
+            "target_contract": DATA_PROFILE["target"],
             "model_family": "scikit-learn HistGradientBoostingRegressor in a Pipeline",
             "prediction_target": source_manifest["processing"]["target"],
             "intended_use": "education and controlled historical MLOps replay only",
@@ -685,7 +718,7 @@ def _train_candidate_impl(
                 "source_manifest_path": manifest_path_report if source_manifest else None,
                 "source_manifest_sha256": manifest_hash,
             },
-            "label_availability_assumption": "target timestamp + 3 hours; experimental, not measured from the source feed",
+            "label_availability_assumption": DATA_PROFILE["label_availability"],
             "quality_gate": "candidate MAE must strictly beat the passed incumbent and historical baseline",
             "promotion": "manual approval only; candidate registration does not imply deployment",
             "limitations": [
@@ -698,7 +731,7 @@ def _train_candidate_impl(
     validation_evidence = pd.DataFrame(
         {
             "timestamp": validation_frame["timestamp"].map(lambda stamp: stamp.isoformat(sep=" ")),
-            "label_available_at": (validation_frame["timestamp"] + pd.Timedelta(hours=3)).map(
+            "label_available_at": (validation_frame["timestamp"] + pd.Timedelta(hours=LABEL_DELAY_HOURS)).map(
                 lambda stamp: stamp.isoformat(sep=" ")
             ),
             "actual": validation_frame["cnt"].astype(int),

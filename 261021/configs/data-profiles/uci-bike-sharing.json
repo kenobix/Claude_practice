@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "profile_id": "uci-bike-sharing",
+  "status": "current",
+  "target_contract_id": "uci-bike-sharing-cnt-dataset-local-hour",
+  "source": {
+    "name": "UCI Bike Sharing Dataset",
+    "dataset_url": "https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "citation": "Fanaee-T, H. (2013). Bike Sharing [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5W894."
+  },
+  "target": {
+    "column": "cnt",
+    "meaning": "casual and registered rentals summed for the hour beginning at timestamp",
+    "unit": "rentals per hour",
+    "timezone_name": null,
+    "time_zone_interpretation": "dataset-local naive timestamps; no UTC conversion is asserted"
+  },
+  "label_availability": {
+    "delay_hours": 3,
+    "rule": "timestamp + 3 hours",
+    "status": "simulation assumption; source feed latency is not measured"
+  },
+  "feature_contract_version": "bike-demand-features-v1",
+  "monitor_reference": {
+    "start_inclusive": "2011-01-01 00:00:00",
+    "end_exclusive": "2012-01-01 00:00:00",
+    "source": "frozen initial training period"
+  },
+  "runtime_ports": {"postgres": 55432, "mlflow": 5000, "api_blue": 8001, "api_green": 8002, "proxy": 8080},
+  "model_name": "bike-demand",
+  "default_csv": "data/raw/hour.csv",
+  "default_manifest": "data/raw/source-manifest.json"
+}

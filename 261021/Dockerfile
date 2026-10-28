@@ -7,6 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 COPY pyproject.toml README.md requirements.lock ./
 COPY src ./src
+COPY configs/data-profiles ./configs/data-profiles
 RUN python -m pip install --no-cache-dir -r requirements.lock \
     && python -m pip install --no-cache-dir --no-deps --no-build-isolation .
 

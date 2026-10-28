@@ -10,6 +10,13 @@ from bike_mlops.monitoring import population_stability_index, score_monitor_wind
 
 
 class DataAndMonitoringTests(unittest.TestCase):
+    def test_loader_reports_profile_neutral_required_columns(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "hour.csv"
+            path.write_text("timestamp,cnt\n2012-01-01 00:00:00,1\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Missing required hourly data columns"):
+                load_hourly(path)
+
     def test_loader_rejects_duplicate_timestamp(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "hour.csv"

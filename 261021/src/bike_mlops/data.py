@@ -9,7 +9,16 @@ from pathlib import Path, PurePosixPath
 
 import pandas as pd
 
-from bike_mlops.config import DATASET_ARCHIVE, DATASET_MANIFEST, DATASET_URL, DEFAULT_DATASET, LABEL_DELAY_HOURS
+from bike_mlops.config import (
+    DATA_PROFILE,
+    DATA_PROFILE_ID,
+    DATASET_ARCHIVE,
+    DATASET_MANIFEST,
+    DATASET_URL,
+    DEFAULT_DATASET,
+    LABEL_DELAY_HOURS,
+    TARGET_CONTRACT_ID,
+)
 
 REQUIRED_COLUMNS = {"dteday", "hr", "cnt"}
 
@@ -27,6 +36,8 @@ def download_dataset(
     csv_path: Path = DEFAULT_DATASET,
     manifest_path: Path = DATASET_MANIFEST,
 ) -> dict:
+    if DATA_PROFILE_ID != "uci-bike-sharing":
+        raise ValueError("The built-in ZIP downloader is only valid for the uci-bike-sharing profile")
     archive_path.parent.mkdir(parents=True, exist_ok=True)
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
@@ -61,7 +72,7 @@ def load_hourly(path: Path = DEFAULT_DATASET) -> pd.DataFrame:
     frame = pd.read_csv(path)
     missing_columns = sorted(REQUIRED_COLUMNS.difference(frame.columns))
     if missing_columns:
-        raise ValueError(f"Missing required UCI columns: {missing_columns}")
+        raise ValueError(f"Missing required hourly data columns: {missing_columns}")
     date = pd.to_datetime(frame["dteday"], errors="raise")
     hour = pd.to_numeric(frame["hr"], errors="raise")
     if not hour.between(0, 23).all() or not (hour % 1 == 0).all():
@@ -92,6 +103,8 @@ def audit_hourly(frame: pd.DataFrame, data_hash: str | None = None) -> dict:
     start, end = timestamps.iloc[0], timestamps.iloc[-1]
     expected_hours = int((end - start) / timedelta(hours=1)) + 1
     return {
+        "data_profile_id": DATA_PROFILE_ID,
+        "target_contract_id": TARGET_CONTRACT_ID,
         "rows": int(len(frame)),
         "start": start.isoformat(sep=" "),
         "end": end.isoformat(sep=" "),
@@ -103,6 +116,10 @@ def audit_hourly(frame: pd.DataFrame, data_hash: str | None = None) -> dict:
         "target_mean": float(frame["cnt"].mean()),
         "gap_intervals": {str(key): int(value) for key, value in gap_counts.items()},
         "data_sha256": data_hash,
-        "timezone_interpretation": "naive dataset-local timestamp; source evidence does not define conversion",
-        "label_available_at_rule": f"timestamp + {LABEL_DELAY_HOURS} hours (experiment assumption)",
+        "timezone_interpretation": frame.attrs.get(
+            "timezone_interpretation", DATA_PROFILE["target"]["time_zone_interpretation"]
+        ),
+        "label_available_at_rule": (
+            f"timestamp + {LABEL_DELAY_HOURS} hours ({DATA_PROFILE['label_availability']['status']})"
+        ),
     }

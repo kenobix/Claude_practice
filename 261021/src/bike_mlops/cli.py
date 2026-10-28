@@ -17,6 +17,8 @@ import numpy as np
 import pandas as pd
 
 from bike_mlops.config import (
+    DATA_PROFILE,
+    DATA_PROFILE_ID,
     DATASET_MANIFEST,
     DATASET_ARCHIVE,
     DEFAULT_DATASET,
@@ -27,6 +29,7 @@ from bike_mlops.config import (
     PROJECT_ROOT,
     REPORT_DIR,
     RUNTIME_DIR,
+    TARGET_CONTRACT_ID,
 )
 from bike_mlops.data import audit_hourly, download_dataset, load_hourly, sha256_file
 from bike_mlops.db import Database, canonical_time, stable_hash
@@ -48,8 +51,25 @@ def _database() -> Database:
     return database
 
 
+def _load_profile_hourly(data_path: Path) -> pd.DataFrame:
+    if DATA_PROFILE_ID != "capital-bikeshare":
+        return load_hourly(data_path)
+    if data_path.resolve() != DEFAULT_DATASET.resolve():
+        raise ValueError("Capital data operations must use the active profile's configured CSV path")
+    try:
+        manifest = json.loads(DATASET_MANIFEST.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError(f"Could not read the active Capital source manifest: {error}") from error
+    from bike_mlops.capital_data import validate_capital_manifest
+
+    manifest, frame = validate_capital_manifest(manifest, data_path)
+    if manifest["processing"]["contract_version"] != TARGET_CONTRACT_ID:
+        raise ValueError("Capital source manifest target contract differs from the active profile")
+    return frame
+
+
 def _seed_observations(database: Database, data_path: Path) -> tuple[int, str, pd.DataFrame]:
-    frame = load_hourly(data_path)
+    frame = _load_profile_hourly(data_path)
     data_hash = sha256_file(data_path)
     observations = available_observation_frame(frame)
     added = database.add_observations(observations, data_hash)
@@ -57,11 +77,16 @@ def _seed_observations(database: Database, data_path: Path) -> tuple[int, str, p
 
 
 def command_data_download(args) -> None:
+    if DATA_PROFILE_ID != "uci-bike-sharing":
+        raise ValueError(
+            "The built-in downloader is only for UCI. Capital data must first be prepared from monthly archives "
+            "with scripts/prepare_capitalbikeshare.py and a matching manifest."
+        )
     _print(download_dataset(args.archive, args.csv, args.manifest))
 
 
 def command_data_audit(args) -> None:
-    frame = load_hourly(args.csv)
+    frame = _load_profile_hourly(args.csv)
     audit = audit_hourly(frame, sha256_file(args.csv))
     report_path = args.output or REPORT_DIR / "data-audit.json"
     report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -130,6 +155,7 @@ def command_runtime_init(args) -> None:
         raise ValueError("Initial runtime model did not pass the validation quality gate")
     if not registered_version.tags.get("artifact_sha256"):
         raise ValueError("Initial runtime model has no artifact SHA-256")
+    _assert_registered_model_profile(registered_version)
     (RUNTIME_DIR / "blue.env").write_text(f"MODEL_VERSION={version}\n", encoding="utf-8")
     (RUNTIME_DIR / "green.env").write_text(f"MODEL_VERSION={version}\n", encoding="utf-8")
     caddyfile = RUNTIME_DIR / "Caddyfile"
@@ -141,6 +167,8 @@ def command_runtime_init(args) -> None:
     state = {
         "active_slot": "blue",
         "active_version": version,
+        "data_profile_id": DATA_PROFILE_ID,
+        "target_contract_id": TARGET_CONTRACT_ID,
         "deployment_mode": "approved" if quality_gate == "passed" else "diagnostic",
         "previous_versions": [],
         "last_deployment_id": deployment_id,
@@ -154,10 +182,12 @@ def command_runtime_init(args) -> None:
         with database.transaction(immediate=database.sqlite) as connection:
             database.execute(
                 connection,
-                "INSERT INTO deployments(deployment_id,status,phase,from_slot,to_slot,from_version,to_version,"
-                "approver,reason,error,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO deployments(deployment_id,status,phase,data_profile_id,target_contract_id,"
+                "from_slot,to_slot,from_version,to_version,approver,reason,error,created_at,updated_at) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
-                    deployment_id, "completed", "bootstrap" if quality_gate == "passed" else "bootstrap_diagnostic", None, "blue", None, version,
+                    deployment_id, "completed", "bootstrap" if quality_gate == "passed" else "bootstrap_diagnostic",
+                    DATA_PROFILE_ID, TARGET_CONTRACT_ID, None, "blue", None, version,
                     args.approver, args.reason, None, now, now,
                 ),
             )
@@ -206,6 +236,8 @@ def command_replay(args) -> None:
         raise RuntimeError(
             f"API serves model version {serving.get('model_version')}; requested version is {version}"
         )
+    if not _version_matches_active_profile(serving):
+        raise RuntimeError("API data profile/target contract differs from the selected replay data")
     selected = frame.loc[(frame["timestamp"] >= start) & (frame["timestamp"] < end)]
     if args.limit:
         selected = selected.head(args.limit)
@@ -221,6 +253,8 @@ def command_replay(args) -> None:
             "target_hour": timestamp.isoformat(),
             "as_of": timestamp.isoformat(),
             "feature_contract_version": FEATURE_CONTRACT_VERSION,
+            "data_profile_id": DATA_PROFILE_ID,
+            "target_contract_id": TARGET_CONTRACT_ID,
         }
         request_started = time.perf_counter()
         try:
@@ -236,6 +270,8 @@ def command_replay(args) -> None:
             print(f"replay requests: {sent}/{len(selected)}", file=sys.stderr)
     summary = {
         "replay_id": replay_id,
+        "data_profile_id": DATA_PROFILE_ID,
+        "target_contract_id": TARGET_CONTRACT_ID,
         "model_version": version,
         "data_sha256": data_hash,
         "start": start,
@@ -300,8 +336,20 @@ def command_monitor(args) -> None:
                 f"Persisted feature source hash does not match the selected CSV for {prediction.target_hour}"
             )
     observations = available_observation_frame(frame)
-    train_mask = frame["timestamp"] < pd.Timestamp("2012-01-01")
-    reference = feature_frame_for_dataset(frame).loc[train_mask].reset_index(drop=True)
+    reference_config = DATA_PROFILE.get("monitor_reference")
+    if not isinstance(reference_config, dict):
+        raise ValueError(
+            f"Data profile {DATA_PROFILE_ID!r} has no frozen monitoring reference; "
+            "monitoring must wait until the candidate training reference is approved and recorded"
+        )
+    reference_start = pd.Timestamp(reference_config["start_inclusive"])
+    reference_end = pd.Timestamp(reference_config["end_exclusive"])
+    if reference_start.tzinfo is not None or reference_end.tzinfo is not None or reference_start >= reference_end:
+        raise ValueError("The profile monitoring reference has invalid local-time boundaries")
+    reference_mask = (frame["timestamp"] >= reference_start) & (frame["timestamp"] < reference_end)
+    if not reference_mask.any():
+        raise ValueError("Selected CSV does not contain the profile's frozen monitoring reference period")
+    reference = feature_frame_for_dataset(frame).loc[reference_mask].reset_index(drop=True)
     client = _model_registry_client()
     registered_version = client.get_model_version(MODEL_NAME, int(version))
     candidate_validation_mae = registered_version.tags.get("validation_mae")
@@ -350,7 +398,12 @@ def command_monitor(args) -> None:
         "data_sha256": data_hash,
         "prediction_rows": int(len(predictions)),
         "window_count": int(len(windows)),
-        "reference": "2011 training-period feature distribution",
+        "data_profile_id": DATA_PROFILE_ID,
+        "target_contract_id": TARGET_CONTRACT_ID,
+        "reference": {
+            **reference_config,
+            "data_sha256": data_hash,
+        },
         "performance_reference_mae": validation_mae,
         "thresholds": {
             "minimum_label_count": args.minimum_labels,
@@ -390,6 +443,22 @@ def _model_registry_client():
     return MlflowClient(tracking_uri=mlflow.get_tracking_uri())
 
 
+def _assert_registered_model_profile(model_version) -> None:
+    registered_profile = model_version.tags.get("data_profile_id")
+    registered_target = model_version.tags.get("target_contract_id")
+    if DATA_PROFILE_ID != "uci-bike-sharing" and (
+        registered_profile != DATA_PROFILE_ID or registered_target != TARGET_CONTRACT_ID
+    ):
+        raise ValueError(
+            f"Model version profile/target contract does not match active runtime "
+            f"{DATA_PROFILE_ID}/{TARGET_CONTRACT_ID}"
+        )
+    if registered_profile and registered_profile != DATA_PROFILE_ID:
+        raise ValueError("Model version belongs to a different data profile")
+    if registered_target and registered_target != TARGET_CONTRACT_ID:
+        raise ValueError("Model version belongs to a different target contract")
+
+
 def _deployment_row(
     database, deployment_id: str, phase: str, status_value: str = "in_progress",
     error=None, probe: dict | None = None,
@@ -409,9 +478,33 @@ def _deployment_row(
 
 
 def _compose(*args, check=True):
+    command = ["docker", "compose"]
+    if DATA_PROFILE_ID == "capital-bikeshare":
+        command.extend(
+            ["-p", "bike-mlops-capital", "-f", "compose.yaml", "-f", "compose.capital.yaml"]
+        )
+    command.extend(args)
     return subprocess.run(
-        ["docker", "compose", *args], cwd=PROJECT_ROOT, check=check, text=True,
+        command, cwd=PROJECT_ROOT, check=check, text=True,
         stdout=subprocess.PIPE if check else None, stderr=subprocess.STDOUT if check else None,
+    )
+
+
+def _proxy_url() -> str:
+    return f"http://127.0.0.1:{DATA_PROFILE['runtime_ports']['proxy']}"
+
+
+def _version_matches_active_profile(version_payload: dict) -> bool:
+    # Legacy UCI images predate profile fields; UCI remains the default profile.
+    if (
+        DATA_PROFILE_ID == "uci-bike-sharing"
+        and version_payload.get("data_profile_id") is None
+        and version_payload.get("target_contract_id") is None
+    ):
+        return True
+    return (
+        version_payload.get("data_profile_id") == DATA_PROFILE_ID
+        and version_payload.get("target_contract_id") == TARGET_CONTRACT_ID
     )
 
 
@@ -429,6 +522,8 @@ def _wait_ready(url: str, version: str, quality_gate: str, timeout_seconds: int 
         try:
             ready = _url_json(f"{url}/ready", timeout=3)
             actual = _url_json(f"{url}/version", timeout=3)
+            if not _version_matches_active_profile(actual):
+                raise RuntimeError("Candidate API data profile/target contract does not match this deployment")
             if str(actual.get("model_version")) != version:
                 raise RuntimeError(f"Expected model version {version}, got {actual.get('model_version')}")
             if actual.get("quality_gate_status") != quality_gate:
@@ -446,11 +541,10 @@ def _deployment_probe(url: str, version: str, deployment_id: str, frame: pd.Data
     from bike_mlops.model import load_registered_model, predict_non_negative
 
     feature_frame = feature_frame_for_dataset(frame)
-    training_mask = frame["timestamp"] < pd.Timestamp("2012-01-01")
     complete_lags = (feature_frame["lag_24_missing"] == 0) & (feature_frame["lag_168_missing"] == 0)
-    eligible = frame.index[training_mask & complete_lags]
+    eligible = frame.index[complete_lags]
     if len(eligible) == 0:
-        raise ValueError("No fixed historical probe row with both exact lag features is available")
+        raise ValueError("No profile-specific probe row with both exact lag features is available")
     index = int(eligible[0])
     target = pd.Timestamp(frame.loc[index, "timestamp"])
     feature_values = feature_frame.loc[index, list(FEATURE_COLUMNS)].to_dict()
@@ -463,6 +557,8 @@ def _deployment_probe(url: str, version: str, deployment_id: str, frame: pd.Data
         "target_hour": target.isoformat(),
         "as_of": target.isoformat(),
         "feature_contract_version": FEATURE_CONTRACT_VERSION,
+        "data_profile_id": DATA_PROFILE_ID,
+        "target_contract_id": TARGET_CONTRACT_ID,
     }
     actual = _url_json(f"{url}/predict", payload, timeout=10)
     if str(actual.get("model_version")) != version:
@@ -477,6 +573,8 @@ def _deployment_probe(url: str, version: str, deployment_id: str, frame: pd.Data
             f"Offline/API parity check failed: expected {expected}, API returned {actual_prediction}"
         )
     return {
+        "data_profile_id": DATA_PROFILE_ID,
+        "target_contract_id": TARGET_CONTRACT_ID,
         "target_hour": target.isoformat(),
         "offline_prediction": expected,
         "api_prediction": actual_prediction,
@@ -501,11 +599,13 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
         old_slot = state["active_slot"]
         old_version = str(state["active_version"])
         old_state_contents = state_path.read_text(encoding="utf-8")
-        live_before = _url_json("http://127.0.0.1:8080/version", timeout=5)
+        live_before = _url_json(f"{_proxy_url()}/version", timeout=5)
         if str(live_before.get("model_version")) != old_version:
             raise RuntimeError(
                 f"Runtime state says {old_version} but the proxy serves {live_before.get('model_version')}; run deploy recover"
             )
+        if not _version_matches_active_profile(live_before):
+            raise RuntimeError("Live proxy serves a different data profile/target contract")
         if not approver.strip() or not reason.strip():
             raise ValueError("Promotion requires a named approver and a non-empty reason")
         if version == old_version:
@@ -514,6 +614,7 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
             raise ValueError("Rollback target has no recorded history as a previously active model")
         client = _model_registry_client()
         model_version = client.get_model_version(MODEL_NAME, int(version))
+        _assert_registered_model_profile(model_version)
         if model_version.status != "READY":
             raise ValueError(f"Model version {version} is not READY in MLflow")
         if not model_version.tags.get("artifact_sha256"):
@@ -526,22 +627,27 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
             diagnostic = True
         new_slot = "green" if old_slot == "blue" else "blue"
         service = f"api-{new_slot}"
-        host_port = 8002 if new_slot == "green" else 8001
+        port_key = "api_green" if new_slot == "green" else "api_blue"
+        host_port = DATA_PROFILE["runtime_ports"][port_key]
         old_caddyfile = f":8080 {{\n  reverse_proxy api-{old_slot}:8000\n}}\n"
         new_caddyfile = f":8080 {{\n  reverse_proxy api-{new_slot}:8000\n}}\n"
         deployment_id = str(uuid.uuid4())
         database = _database()
         if not DEFAULT_DATASET.exists():
-            raise FileNotFoundError("Download and audit the UCI hour.csv before model promotion")
+            raise FileNotFoundError(
+                f"Prepare and audit the active profile CSV before model promotion: {DEFAULT_DATASET}"
+            )
         _, replay_data_hash, replay_frame = _seed_observations(database, DEFAULT_DATASET)
         now = datetime.now().astimezone().isoformat()
         with database.transaction(immediate=database.sqlite) as connection:
             database.execute(
                 connection,
-                "INSERT INTO deployments(deployment_id,status,phase,from_slot,to_slot,from_version,to_version,"
-                "approver,reason,error,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO deployments(deployment_id,status,phase,data_profile_id,target_contract_id,"
+                "from_slot,to_slot,from_version,to_version,approver,reason,error,created_at,updated_at) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
-                    deployment_id, "in_progress", "prepared", old_slot, new_slot, old_version,
+                    deployment_id, "in_progress", "prepared", DATA_PROFILE_ID, TARGET_CONTRACT_ID,
+                    old_slot, new_slot, old_version,
                     version, approver, reason, None, now, now,
                 ),
             )
@@ -555,9 +661,11 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
             _compose("exec", "-T", "caddy", "caddy", "validate", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
             _compose("exec", "-T", "caddy", "caddy", "reload", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
             _deployment_row(database, deployment_id, "proxy_switched")
-            active = _url_json("http://127.0.0.1:8080/version", timeout=5)
+            active = _url_json(f"{_proxy_url()}/version", timeout=5)
             if str(active.get("model_version")) != version:
                 raise RuntimeError(f"Proxy verification returned model version {active.get('model_version')}")
+            if not _version_matches_active_profile(active):
+                raise RuntimeError("Proxy switched to a different data profile/target contract")
             state["active_slot"] = new_slot
             state["active_version"] = version
             state["deployment_mode"] = "approved" if quality_gate == "passed" else "diagnostic"
@@ -600,6 +708,11 @@ def command_deploy_promote(args) -> None:
 def command_deploy_recover(args) -> None:
     state_path = RUNTIME_DIR / "deployment-state.json"
     state = _read_json(state_path)
+    if DATA_PROFILE_ID != "uci-bike-sharing" and (
+        state.get("data_profile_id") != DATA_PROFILE_ID
+        or state.get("target_contract_id") != TARGET_CONTRACT_ID
+    ):
+        raise RuntimeError("Runtime state belongs to a different data profile/target contract")
     database = _database()
     with database.session() as connection:
         rows = database.execute(
@@ -610,7 +723,9 @@ def command_deploy_recover(args) -> None:
         _print({"status": "no_incomplete_deployments", "active_version": state["active_version"]})
         return
     row = dict(rows[0])
-    actual = _url_json("http://127.0.0.1:8080/version", timeout=5)
+    actual = _url_json(f"{_proxy_url()}/version", timeout=5)
+    if not _version_matches_active_profile(actual):
+        raise RuntimeError("Proxy serves a different data profile/target contract; recovery stopped")
     actual_version = str(actual.get("model_version"))
     if actual_version == str(row["to_version"]):
         _write_atomic(
@@ -619,7 +734,7 @@ def command_deploy_recover(args) -> None:
         )
         _compose("exec", "-T", "caddy", "caddy", "validate", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
         _compose("exec", "-T", "caddy", "caddy", "reload", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
-        actual = _url_json("http://127.0.0.1:8080/version", timeout=5)
+        actual = _url_json(f"{_proxy_url()}/version", timeout=5)
         if str(actual.get("model_version")) != str(row["to_version"]):
             raise RuntimeError("Proxy version changed during recovery; stopped without finalizing")
         state["active_slot"] = row["to_slot"]
@@ -638,7 +753,7 @@ def command_deploy_recover(args) -> None:
         )
         _compose("exec", "-T", "caddy", "caddy", "validate", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
         _compose("exec", "-T", "caddy", "caddy", "reload", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
-        actual = _url_json("http://127.0.0.1:8080/version", timeout=5)
+        actual = _url_json(f"{_proxy_url()}/version", timeout=5)
         if str(actual.get("model_version")) != str(row["from_version"]):
             raise RuntimeError("Old version could not be re-established at the proxy")
         _deployment_row(
@@ -739,7 +854,7 @@ def build_parser() -> argparse.ArgumentParser:
     replay.add_argument("--model-version", required=True)
     replay.add_argument("--start", default="2012-07-01 00:00:00")
     replay.add_argument("--end", default="2013-01-01 00:00:00")
-    replay.add_argument("--api-url", default="http://127.0.0.1:8080")
+    replay.add_argument("--api-url", default=_proxy_url())
     replay.add_argument("--timeout", type=float, default=10)
     replay.add_argument("--limit", type=int, default=0)
     replay.add_argument("--progress-every", type=int, default=250)

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "profile_id": "capital-bikeshare",
+  "status": "migration-only",
+  "target_contract_id": "capital-trip-starts-hourly-v1",
+  "source": {
+    "name": "Capital Bikeshare monthly trip history",
+    "dataset_url": "https://capitalbikeshare.com/system-data",
+    "license": "Capital Bikeshare Data License Agreement",
+    "license_url": "https://capitalbikeshare.com/data-license-agreement",
+    "citation": "Capital Bikeshare System Data; monthly trip-history archives."
+  },
+  "target": {
+    "column": "cnt",
+    "meaning": "unique trip starts counted in the local wall-clock hour",
+    "unit": "trip starts per local hour",
+    "timezone_name": "America/New_York",
+    "time_zone_interpretation": "naive America/New_York local wall time inferred from service area; no UTC conversion",
+    "spring_forward": "nonexistent local hours are absent",
+    "fall_back": "both ambiguous repeated local hours are excluded because source timestamps have no offset"
+  },
+  "label_availability": {
+    "delay_hours": 3,
+    "rule": "timestamp + 3 hours",
+    "status": "simulation assumption; monthly publication latency is not measured"
+  },
+  "feature_contract_version": "bike-demand-features-v1",
+  "monitor_reference": null,
+  "runtime_ports": {"postgres": 55433, "mlflow": 5001, "api_blue": 8101, "api_green": 8102, "proxy": 8180},
+  "model_name": "bike-demand-capital",
+  "default_csv": "data/derived/capitalbikeshare-next/hourly.csv",
+  "default_manifest": "data/derived/capitalbikeshare-next/manifest.json",
+  "serving_status": "No candidate model is approved for deployment. This profile is isolated migration engineering only."
+}

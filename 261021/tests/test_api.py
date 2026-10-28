@@ -79,6 +79,77 @@ class PredictionApiTests(unittest.TestCase):
         response = self.client.post("/predict", json=payload)
         self.assertEqual(response.status_code, 503)
 
+    def test_api_publishes_profile_and_rejects_a_foreign_profile(self):
+        version = self.client.get("/version").json()
+        self.assertEqual(version["data_profile_id"], "uci-bike-sharing")
+        self.assertEqual(
+            version["target_contract_id"], "uci-bike-sharing-cnt-dataset-local-hour"
+        )
+        response = self.client.post(
+            "/predict",
+            json={
+                "request_id": "foreign-profile-001",
+                "target_hour": "2012-07-01T10:00:00",
+                "as_of": "2012-07-01T10:00:00",
+                "feature_contract_version": "bike-demand-features-v1",
+                "data_profile_id": "capital-bikeshare",
+                "target_contract_id": "capital-trip-starts-hourly-v1",
+            },
+        )
+        self.assertEqual(response.status_code, 409)
+
+    def test_old_uci_idempotency_hash_remains_valid_after_profile_migration(self):
+        from bike_mlops.db import stable_hash
+
+        payload = {
+            "request_id": "legacy-request-001",
+            "target_hour": "2012-07-01T10:00:00",
+            "as_of": "2012-07-01T10:00:00",
+            "feature_contract_version": "bike-demand-features-v1",
+        }
+        old_hash = stable_hash(
+            {
+                "target_hour": "2012-07-01 10:00:00",
+                "as_of": "2012-07-01 10:00:00",
+                "feature_contract_version": "bike-demand-features-v1",
+            }
+        )
+        self.client.app.state.database.save_prediction(
+            {
+                "request_id": payload["request_id"],
+                "input_hash": old_hash,
+                "target_hour": "2012-07-01 10:00:00",
+                "as_of": "2012-07-01 10:00:00",
+                "predicted": 88.0,
+                "model_name": "bike-demand",
+                "model_version": "6",
+                "model_quality_gate": "passed",
+                "artifact_sha256": "old-artifact-sha",
+                "data_version_sha256": "old-data-sha",
+                "feature_contract_version": "bike-demand-features-v1",
+                "features_json": "{}",
+                "created_at": "2012-07-01T10:00:00+00:00",
+            }
+        )
+        response = self.client.post("/predict", json=payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["prediction"], 88.0)
+        self.assertEqual(response.json()["data_profile_id"], "uci-bike-sharing")
+
+    def test_capital_profile_rejects_nonexistent_and_ambiguous_wall_hours(self):
+        from datetime import datetime
+
+        from fastapi import HTTPException
+
+        with patch.object(self.api, "DATA_PROFILE", {"target": {"timezone_name": "America/New_York"}}):
+            with self.assertRaises(HTTPException) as spring:
+                self.api._validate_wall_clock_timestamp(datetime(2024, 3, 10, 2))
+            with self.assertRaises(HTTPException) as autumn:
+                self.api._validate_wall_clock_timestamp(datetime(2024, 11, 3, 1))
+            self.api._validate_wall_clock_timestamp(datetime(2024, 3, 10, 3))
+        self.assertEqual(spring.exception.status_code, 422)
+        self.assertEqual(autumn.exception.status_code, 422)
+
 
 if __name__ == "__main__":
     unittest.main()

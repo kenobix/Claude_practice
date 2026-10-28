@@ -6,6 +6,7 @@ import os
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Request, status
@@ -13,10 +14,13 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from bike_mlops import __version__
 from bike_mlops.config import (
+    DATA_PROFILE,
+    DATA_PROFILE_ID,
     DEFAULT_DATABASE_URL,
     FEATURE_CONTRACT_VERSION,
     LABEL_DELAY_HOURS,
     MODEL_NAME,
+    TARGET_CONTRACT_ID,
 )
 from bike_mlops.db import Database, RequestConflict, canonical_time, stable_hash
 from bike_mlops.features import FEATURE_COLUMNS, build_feature_row
@@ -30,6 +34,8 @@ class PredictionRequest(BaseModel):
     target_hour: datetime
     as_of: datetime
     feature_contract_version: str = Field(min_length=1, max_length=64)
+    data_profile_id: str | None = Field(default=None, min_length=1, max_length=64)
+    target_contract_id: str | None = Field(default=None, min_length=1, max_length=96)
 
 
 class ObservationRequest(BaseModel):
@@ -38,6 +44,42 @@ class ObservationRequest(BaseModel):
     timestamp: datetime
     cnt: int = Field(ge=0)
     available_at: datetime
+    data_profile_id: str | None = Field(default=None, min_length=1, max_length=64)
+    target_contract_id: str | None = Field(default=None, min_length=1, max_length=96)
+
+
+def _validate_request_profile(data_profile_id: str | None, target_contract_id: str | None) -> None:
+    # Keep old UCI clients working while requiring explicit identity for migration profiles.
+    if data_profile_id is None and target_contract_id is None and DATA_PROFILE_ID == "uci-bike-sharing":
+        return
+    if data_profile_id != DATA_PROFILE_ID or target_contract_id != TARGET_CONTRACT_ID:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Request data profile/target contract does not match this API: "
+                f"{DATA_PROFILE_ID}/{TARGET_CONTRACT_ID}"
+            ),
+        )
+
+
+def _validate_wall_clock_timestamp(value: datetime) -> None:
+    zone_name = DATA_PROFILE["target"].get("timezone_name")
+    if not zone_name:
+        return
+    zone = ZoneInfo(zone_name)
+    candidates = [value.replace(tzinfo=zone, fold=fold) for fold in (0, 1)]
+    round_trips = [item.astimezone(timezone.utc).astimezone(zone).replace(tzinfo=None) for item in candidates]
+    valid = [round_trip == value for round_trip in round_trips]
+    if not any(valid):
+        raise HTTPException(
+            status_code=422,
+            detail=f"Timestamp is a nonexistent {zone_name} wall-clock hour during spring DST transition",
+        )
+    if all(valid) and candidates[0].utcoffset() != candidates[1].utcoffset():
+        raise HTTPException(
+            status_code=422,
+            detail=f"Timestamp is an ambiguous repeated {zone_name} wall-clock hour during fall DST transition",
+        )
 
 
 def _runtime_model() -> tuple[object | None, str | None, str | None, str | None, str | None]:
@@ -60,7 +102,9 @@ def _runtime_model() -> tuple[object | None, str | None, str | None, str | None,
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    database = Database(os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL))
+    database = Database(
+        os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL), DATA_PROFILE_ID, TARGET_CONTRACT_ID
+    )
     database.initialize()
     model, version, artifact_hash, quality_gate, model_error = _runtime_model()
     app.state.database = database
@@ -101,6 +145,8 @@ def ready(request: Request):
         raise HTTPException(status_code=503, detail=f"Database is unavailable: {error}") from error
     return {
         "status": "ready",
+        "data_profile_id": DATA_PROFILE_ID,
+        "target_contract_id": TARGET_CONTRACT_ID,
         "model_name": MODEL_NAME,
         "model_version": request.app.state.model_version,
         "quality_gate_status": request.app.state.model_quality_gate,
@@ -111,6 +157,9 @@ def ready(request: Request):
 def version(request: Request):
     return {
         "application_version": __version__,
+        "data_profile_id": DATA_PROFILE_ID,
+        "data_profile_status": DATA_PROFILE["status"],
+        "target_contract_id": TARGET_CONTRACT_ID,
         "model_name": MODEL_NAME,
         "model_version": getattr(request.app.state, "model_version", None),
         "artifact_sha256": getattr(request.app.state, "artifact_hash", None),
@@ -121,6 +170,8 @@ def version(request: Request):
 
 @app.post("/observations", status_code=status.HTTP_202_ACCEPTED)
 def ingest_observation(payload: ObservationRequest, request: Request):
+    _validate_request_profile(payload.data_profile_id, payload.target_contract_id)
+    _validate_wall_clock_timestamp(payload.timestamp)
     if payload.timestamp.tzinfo is not None or payload.available_at.tzinfo is not None:
         raise HTTPException(status_code=422, detail="Timestamps must be naive dataset-local time")
     if payload.timestamp.minute or payload.timestamp.second or payload.timestamp.microsecond:
@@ -140,11 +191,19 @@ def ingest_observation(payload: ObservationRequest, request: Request):
         )
     except ValueError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
-    return {"status": "accepted", "timestamp": canonical_time(payload.timestamp), "available_at": canonical_time(payload.available_at)}
+    return {
+        "status": "accepted",
+        "data_profile_id": DATA_PROFILE_ID,
+        "target_contract_id": TARGET_CONTRACT_ID,
+        "timestamp": canonical_time(payload.timestamp),
+        "available_at": canonical_time(payload.available_at),
+    }
 
 
 @app.post("/predict")
 def predict(payload: PredictionRequest, request: Request):
+    _validate_request_profile(payload.data_profile_id, payload.target_contract_id)
+    _validate_wall_clock_timestamp(payload.target_hour)
     if payload.target_hour.tzinfo is not None or payload.as_of.tzinfo is not None:
         raise HTTPException(status_code=422, detail="Timestamps must be naive dataset-local time")
     if payload.feature_contract_version != FEATURE_CONTRACT_VERSION:
@@ -154,13 +213,16 @@ def predict(payload: PredictionRequest, request: Request):
         )
     try:
         target, as_of = canonical_time(payload.target_hour), canonical_time(payload.as_of)
-        request_hash = stable_hash(
-            {
-                "target_hour": target,
-                "as_of": as_of,
-                "feature_contract_version": payload.feature_contract_version,
-            }
-        )
+        canonical_request = {
+            "target_hour": target,
+            "as_of": as_of,
+            "feature_contract_version": payload.feature_contract_version,
+        }
+        if DATA_PROFILE_ID != "uci-bike-sharing":
+            canonical_request.update(
+                {"data_profile_id": DATA_PROFILE_ID, "target_contract_id": TARGET_CONTRACT_ID}
+            )
+        request_hash = stable_hash(canonical_request)
         saved = request.app.state.database.saved_prediction(payload.request_id)
         if saved:
             if saved["input_hash"] != request_hash:
@@ -197,6 +259,8 @@ def predict(payload: PredictionRequest, request: Request):
             "model_quality_gate": request.app.state.model_quality_gate,
             "artifact_sha256": request.app.state.artifact_hash,
             "data_version_sha256": data_version_hash,
+            "data_profile_id": DATA_PROFILE_ID,
+            "target_contract_id": TARGET_CONTRACT_ID,
             "feature_contract_version": FEATURE_CONTRACT_VERSION,
             "features_json": json.dumps(
                 {
@@ -224,6 +288,8 @@ def predict(payload: PredictionRequest, request: Request):
 def _prediction_response(record: dict) -> dict:
     return {
         "request_id": record["request_id"],
+        "data_profile_id": record["data_profile_id"],
+        "target_contract_id": record["target_contract_id"],
         "target_hour": record["target_hour"],
         "prediction": float(record["predicted"]),
         "model_name": record["model_name"],

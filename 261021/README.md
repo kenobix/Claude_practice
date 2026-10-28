@@ -1,10 +1,10 @@
 # 需要予測モデルを継続運用するMLOps基盤
 
-`261014/plan_mlops.md`に沿って、UCI Bike Sharingの時間別貸出台数を使うMLOps学習プロジェクトです。単にモデルを学習するだけでなく、特徴量の時点制約、モデル登録、版固定の予測API、手動承認・差し戻し、遅延ラベルを使う監視までを一続きにします。
+`261014/plan_mlops.md`に沿った、UCI Bike Sharingを現行データとするMLOps学習プロジェクトです。Capital Bikeshareは別targetとして扱う移行専用profileを追加中です。単にモデルを学習するだけでなく、特徴量の時点制約、モデル登録、版固定の予測API、手動承認・差し戻し、遅延ラベルを使う監視までを一続きにします。
 
 これは公開過去データを使った運用再現実験です。現在の需要を予測するサービスでも、実店舗の売上や配置を改善した実証でもありません。性能結果は実行後に記録し、未実行の結果は記載しません。
 
-専門用語は[初学者向け用語集](docs/glossary.md)を参照してください。
+専門用語は[初学者向け用語集](docs/glossary.md)、出典・targetの切替と隔離方法は[データプロファイル](docs/data-profiles.md)を参照してください。
 
 2026-10-28の[差分監査](docs/reviews/20261028-review.md)で、UCIの保存済み予測・誤差・PSIと現在の配信状態の整合を確認しました。新データ候補は最終評価時に再学習しており、選定時と同一artifactという証拠が不足しています。評価の再実行防止、新データAPI/監視、復旧実験も残るため、全計画完了や新候補の昇格可能状態とは扱いません。残作業は[計画書R01〜R10](../261014/plan_mlops.md#11-2026-10-28差分監査後の実行計画)にまとめています。
 
@@ -12,6 +12,7 @@
 
 - `src/bike_mlops/`: データ契約、時刻付き特徴量、学習、API、DB、監視、運用CLI。
 - `configs/`: 時系列分割と特徴量契約。
+- `configs/data-profiles/`と`compose.capital.yaml`: UCIとCapital Bikeshareのデータ/targetを別DB・別Compose projectへ分離する設定。Capital用modelとmonitor参照が未準備のため、移行実験専用です。
 - `tests/`: 時刻リーク、欠損時間、入力重複、ストレージの回帰試験。
 - `docs/`: データ・アーキテクチャ・運用判断。
 - `compose.yaml`: MLflow、PostgreSQL、FastAPIの青緑2枠、Caddyを使うローカル運用構成。
@@ -59,6 +60,7 @@ Composeによる運用構成は[実行・運用手順](docs/runbook.md)を参照
 - `casual`、`registered`、予測対象時間の`cnt`、実測天気は特徴量にしません。
 - モデル版は整数の登録版で固定し、`champion`等の別名だけで配信版を決めません。
 - 自動昇格はしません。データ・モデル・配信条件を満たした後、人が理由を残して切り替えます。
+- `uci-bike-sharing`と`capital-bikeshare`の観測値やmodelを同じDB・モデル名・target契約として混ぜません。CapitalとUCIの指標も同じtargetの精度比較として扱いません。
 
 ## 進捗
 

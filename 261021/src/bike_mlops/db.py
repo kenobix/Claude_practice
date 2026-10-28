@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterator
 
-from bike_mlops.config import DEFAULT_DATABASE_URL
+from bike_mlops.config import DATA_PROFILE_ID, DEFAULT_DATABASE_URL, TARGET_CONTRACT_ID
 
 SCHEMA = (
     """CREATE TABLE IF NOT EXISTS observations (
@@ -28,6 +28,8 @@ SCHEMA = (
         model_quality_gate TEXT NOT NULL,
         artifact_sha256 TEXT NOT NULL,
         data_version_sha256 TEXT NOT NULL,
+        data_profile_id TEXT NOT NULL DEFAULT 'uci-bike-sharing',
+        target_contract_id TEXT NOT NULL DEFAULT 'uci-bike-sharing-cnt-dataset-local-hour',
         feature_contract_version TEXT NOT NULL,
         features_json TEXT NOT NULL,
         created_at TEXT NOT NULL
@@ -36,6 +38,8 @@ SCHEMA = (
         deployment_id TEXT PRIMARY KEY,
         status TEXT NOT NULL,
         phase TEXT NOT NULL,
+        data_profile_id TEXT NOT NULL,
+        target_contract_id TEXT NOT NULL,
         from_slot TEXT,
         to_slot TEXT NOT NULL,
         from_version TEXT,
@@ -60,6 +64,11 @@ SCHEMA = (
         missing_json TEXT NOT NULL,
         created_at TEXT NOT NULL
     )""",
+    """CREATE TABLE IF NOT EXISTS data_profile_metadata (
+        singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
+        data_profile_id TEXT NOT NULL,
+        target_contract_id TEXT NOT NULL
+    )""",
 )
 
 
@@ -76,8 +85,15 @@ def stable_hash(value: Any) -> str:
 
 
 class Database:
-    def __init__(self, url: str = DEFAULT_DATABASE_URL):
+    def __init__(
+        self,
+        url: str = DEFAULT_DATABASE_URL,
+        data_profile_id: str = DATA_PROFILE_ID,
+        target_contract_id: str = TARGET_CONTRACT_ID,
+    ):
         self.url = url
+        self.data_profile_id = data_profile_id
+        self.target_contract_id = target_contract_id
         self.sqlite = url.startswith("sqlite:")
         if not self.sqlite and not url.startswith(("postgresql://", "postgres://")):
             raise ValueError("DATABASE_URL must use sqlite:/// or postgresql://")
@@ -113,6 +129,84 @@ class Database:
                 self.execute(connection, "SELECT pg_advisory_xact_lock(726314092)")
             for statement in SCHEMA:
                 self.execute(connection, statement)
+            self._ensure_prediction_profile_columns(connection)
+            self._ensure_deployment_profile_columns(connection)
+            metadata = self.execute(
+                connection,
+                "SELECT data_profile_id,target_contract_id FROM data_profile_metadata WHERE singleton=1",
+            ).fetchone()
+            if metadata is None:
+                populated = any(
+                    int(self.execute(connection, f"SELECT COUNT(*) AS n FROM {table}").fetchone()["n"])
+                    for table in ("observations", "predictions", "deployments", "monitor_windows")
+                )
+                if populated and self.data_profile_id != "uci-bike-sharing":
+                    raise ValueError(
+                        "Refusing to assign a non-UCI profile to an unmarked database containing legacy rows; "
+                        "use a new isolated database"
+                    )
+                self.execute(
+                    connection,
+                    "INSERT INTO data_profile_metadata(singleton,data_profile_id,target_contract_id) VALUES (1,?,?)",
+                    (self.data_profile_id, self.target_contract_id),
+                )
+            elif (
+                metadata["data_profile_id"] != self.data_profile_id
+                or metadata["target_contract_id"] != self.target_contract_id
+            ):
+                raise ValueError(
+                    "Database profile mismatch: database is bound to "
+                    f"{metadata['data_profile_id']}/{metadata['target_contract_id']}, but this process uses "
+                    f"{self.data_profile_id}/{self.target_contract_id}; use a separate database"
+                )
+
+    def _ensure_prediction_profile_columns(self, connection) -> None:
+        if self.sqlite:
+            columns = {
+                row["name"] for row in self.execute(connection, "PRAGMA table_info(predictions)").fetchall()
+            }
+            additions = (
+                ("data_profile_id", "TEXT NOT NULL DEFAULT 'uci-bike-sharing'"),
+                ("target_contract_id", "TEXT NOT NULL DEFAULT 'uci-bike-sharing-cnt-dataset-local-hour'"),
+            )
+            for name, declaration in additions:
+                if name not in columns:
+                    self.execute(connection, f"ALTER TABLE predictions ADD COLUMN {name} {declaration}")
+        else:
+            self.execute(
+                connection,
+                "ALTER TABLE predictions ADD COLUMN IF NOT EXISTS data_profile_id TEXT NOT NULL "
+                "DEFAULT 'uci-bike-sharing'",
+            )
+            self.execute(
+                connection,
+                "ALTER TABLE predictions ADD COLUMN IF NOT EXISTS target_contract_id TEXT NOT NULL "
+                "DEFAULT 'uci-bike-sharing-cnt-dataset-local-hour'",
+            )
+
+    def _ensure_deployment_profile_columns(self, connection) -> None:
+        if self.sqlite:
+            columns = {
+                row["name"] for row in self.execute(connection, "PRAGMA table_info(deployments)").fetchall()
+            }
+            additions = (
+                ("data_profile_id", "TEXT NOT NULL DEFAULT 'uci-bike-sharing'"),
+                ("target_contract_id", "TEXT NOT NULL DEFAULT 'uci-bike-sharing-cnt-dataset-local-hour'"),
+            )
+            for name, declaration in additions:
+                if name not in columns:
+                    self.execute(connection, f"ALTER TABLE deployments ADD COLUMN {name} {declaration}")
+        else:
+            self.execute(
+                connection,
+                "ALTER TABLE deployments ADD COLUMN IF NOT EXISTS data_profile_id TEXT NOT NULL "
+                "DEFAULT 'uci-bike-sharing'",
+            )
+            self.execute(
+                connection,
+                "ALTER TABLE deployments ADD COLUMN IF NOT EXISTS target_contract_id TEXT NOT NULL "
+                "DEFAULT 'uci-bike-sharing-cnt-dataset-local-hour'",
+            )
 
     @contextmanager
     def session(self) -> Iterator[Any]:
@@ -226,16 +320,23 @@ class Database:
         return [dict(row) for row in rows]
 
     def save_prediction(self, record: dict[str, Any]) -> dict:
+        if record.get("data_profile_id", self.data_profile_id) != self.data_profile_id:
+            raise ValueError("Prediction data profile differs from the database profile")
+        if record.get("target_contract_id", self.target_contract_id) != self.target_contract_id:
+            raise ValueError("Prediction target contract differs from the database target contract")
         with self.transaction(immediate=self.sqlite) as connection:
             self.execute(
                 connection,
                 "INSERT INTO predictions(request_id,input_hash,target_hour,as_of,predicted,model_name,"
-                "model_version,model_quality_gate,artifact_sha256,data_version_sha256,feature_contract_version,features_json,created_at) "
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(request_id) DO NOTHING",
+                "model_version,model_quality_gate,artifact_sha256,data_version_sha256,data_profile_id,target_contract_id,"
+                "feature_contract_version,features_json,created_at) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(request_id) DO NOTHING",
                 (
                     record["request_id"], record["input_hash"], record["target_hour"],
                     record["as_of"], record["predicted"], record["model_name"],
                     str(record["model_version"]), record["model_quality_gate"], record["artifact_sha256"], record["data_version_sha256"],
+                    record.get("data_profile_id", self.data_profile_id),
+                    record.get("target_contract_id", self.target_contract_id),
                     record["feature_contract_version"], record["features_json"],
                     record["created_at"],
                 ),

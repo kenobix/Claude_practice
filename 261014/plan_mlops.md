@@ -273,14 +273,16 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 
 #### R05 新しいtarget定義の移行プロファイル
 
-- [ ] UCI `cnt`とCapital Bikeshare `started_at`件数の違い、除外乗車、集計母集団、America/New_York壁時計という解釈、DST除外、月次公開と仮想+3時間遅延の違いをデータカードに固定する。
-- [ ] target契約・データプロファイルをモデルカード、DB、API特徴量、配信記録へ結び付ける。既存DBはtimestampが一意なので、移行実験には別DB/Compose projectを使い、出典・版の混在を拒否する。
-- [ ] 配信CLIのUCI seed・2012年以前probeをプロファイル化し、候補に対応する観測を使う。監視も同じprofileから参照分布を読む。
-- [ ] 特徴量の休日情報を将来追加する場合は事前に分かる暦だけを使う。天候を追加する場合は利用可能時点を持つ予報等に限定し、対象時刻の後から分かった実測天気を入力にしない。
-- 完了条件: 独立したComposeで新データの観測hash・ラグ・offline/API予測・model/target契約が一致。異なる出典は拒否され、現行UCIのDB/配信入口へ混入しない。
+- [x] UCI `cnt`とCapital Bikeshare `started_at`件数の違い、除外乗車、集計母集団、America/New_York壁時計という解釈、DST除外、月次公開と仮想+3時間遅延の違いを[`docs/data-profiles.md`](../261021/docs/data-profiles.md)に固定する。
+- [x] target契約・データプロファイルIDを候補report/model card、MLflow run/model tags、DB metadata/prediction/deployment rows、API要求・応答、runtime state/probeへ結び付けた。DBはprofileに固定し、既存の行を含むUCI DBのCapital再利用を拒否する。別project/volume/host portの`compose.capital.yaml`を追加し、API/modelロード/seed/CLIでは別profileとtargetの混在を拒否する。
+- [x] 配信CLIのseedはprofile設定のCSVを使い、Capitalでは厳格なmanifest v2・target契約を確認する。2012年以前固定のprobeをデータ範囲に対応させた。UCIの既存client/idempotency hash/legacy modelは後方互換を保つ。
+- [x] 現行特徴量が時刻から既知の暦と利用可能時刻を過ぎた同profileのラグだけであること、および休日・天候の追加時点条件をデータprofile docsに明記した。未確認の将来情報は追加していない。
+- [ ] Capital監視はUCIの2011参照を流用しない。Capitalに凍結済み同profile training-reference model/window/PSI binがない間はCLIが監視を停止する。初回Capital modelと参照期間をR06/R07で確立後、同profile referenceで監視を実装・試験する。
+- 完了条件は未達。`docker compose -f compose.yaml -f compose.capital.yaml config -q`と合成API/DB/profile試験は成功したが、Capital用の新しい厳格manifest v2、同target model/参照期間が未作成であるため、独立stackの実起動、観測hash/seed、registered model loading、offline/API parity、end-to-end deploymentの証拠がまだない。UCI稼働版へは変更を加えていない。
 
 #### R06 比較gateと昇格条件の完成
 
+- [ ] 新targetの初回modelには同target incumbentが存在しない。UCI版3をincumbentとして流用せず、初回bootstrapをhistorical baselineと事前固定validationでどう評価するか決め、target-specific model card・artifact・判断記録を作る。bootstrap validationは選定に使用済みとして台帳登録し、同じwindowを最終評価へ再使用しない。
 - [ ] 現在の`passed`がvalidation MAE比較の結果であることをタグ/文書で明確化し、artifact整合性・入力契約・運用試験を含む配信許可と分ける。
 - [ ] 全体MAE、RMSEの役割、主要時間帯、欠測率、必要件数、API latency/エラー率の許容条件と根拠を評価前にprotocolへ固定する。既に見た最終結果へ閾値を後付けしない。
 - [ ] APIの同時数・件数・暖機・hardware条件を固定した測定を、予測精度と別に実施する。学習データ量/季節差を理由に改善の因果を断定しない。

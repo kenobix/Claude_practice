@@ -633,3 +633,25 @@ rollback、中断復旧、破損artifact拒否、PostgreSQL並行要求、障害
 - candidate IDがモデルartifact/validation evidence/source snapshot/品質gate/指標を含むようにし、snapshot内ファイルを再hashしてsource-tree hashと比較する。最終評価時はbundle ID、各SHA、row-level validation、候補/incumbent/baseline予測とvalidation指標を照合し、品質gateを再計算する。
 - 修正後の確認: compileall成功、32テスト成功（2.462秒）、`pip check`成功。Starlette/httpx deprecation warningは引き続き表示される。
 - commit `2820ca4` push後のCI `40638852598` はlock install、`pip check`、32テスト、src/tests/scripts compileを全て通過した。runnerからUbuntu 26移行予定とNode 20 actionのwarningが出たため、Ubuntu 24.04 runnerを固定しNode 24対応版のactionsへ更新した。根拠は[checkout v7.0.1](https://github.com/actions/checkout/blob/v7.0.1/action.yml)、[setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0)。追補commit `870de9d` のCI `40639053590`もsuccess（lock install、pip check、全32テスト、src/tests/scripts compile）。
+
+## 2026-10-28: P1移行プロファイルR05
+
+UCI Bike SharingとCapital Bikeshareの件数は意味が異なるため、UCIの稼働DB/model/portと分離するprofile境界を実装した。Capitalは`migration-only`のまま。モデルの学習・登録・昇格や、UCI版3をCapitalの基準として使う比較は行っていない。
+
+### 実装
+
+- `configs/data-profiles/`にUCI/Capitalのtarget、timezone、ラベル利用仮定、入力パス、model名、監視参照、host portを定義した。設定loaderでID、schema、パス、contract、label delay、portを検査する。
+- `DATA_PROFILE_ID`からCSV/manifest、SQLite/MLflowの初期パス、report/runtimeパス、model名とhost portを選択する。MLflow tagsとmodel loaderでprofile/targetの異なる登録modelを拒否する。
+- DBをprofile/targetのmetadataに固定し、Capital用の新DB/Compose projectと別volume/portを用意した。古いUCIの行があるDBへCapital metadataを割り当てる操作は拒否する。予測・deploymentにもprofile/targetを保存する。
+- API応答・新しい予測/観測要求・replay・deploy probeにprofile/targetを含める。UCIの従来要求とidempotency hashは互換維持。Capital APIはprofile/targetの不一致とDSTの存在しない/曖昧な壁時計時刻を拒否する。
+- Seed/audit/model probeを選択profileに対応させ、Capitalはmanifest schema v2と全原本archive hashを検査する。Capitalには凍結monitor referenceがないため、UCI 2011の参照分布を流用せずmonitorを停止する。
+- 追加レビューで`./scripts/bikectl`が`.env`から秘密値を読み込んでから接続先をUCI portへ強制していた問題を修正した。明示的なprofile/DB/MLflow URLを保持し、`.env`のDBパスワードでホスト接続を作る場合はCapitalを55433/5001、UCIを設定済みport/5000へ振り分ける。
+- `tzdata==2026.5`をlockへ追加し、このWSL venvにもインストールした。Python `zoneinfo`がOSのzoneinfoに依存しないようにするため。profile loaderの不正label設定検査とwrapperのprofile path選択を加えた。
+
+### 検証と未完了
+
+- `.venv/bin/python -m unittest discover -s tests -v`: 44件成功。最初の隔離実行はFastAPI TestClientの最初のテストで停止したため、その実行を終了。通常WSL実行では3.101秒で完了。Starletteの`httpx`非推奨警告は表示された。
+- `.venv/bin/python -m compileall -q src tests scripts`、`docker compose -f compose.yaml -f compose.capital.yaml config -q`、`git diff --check`、`sh -n scripts/bikectl`、`pip check`: 成功。隔離Composeは静的設定検査のみで、CapitalのDockerサービスは起動していない。
+- `DATA_PROFILE_ID=capital-bikeshare ./scripts/bikectl data audit`の限定確認では、UCIではなく新profileの`data/derived/capitalbikeshare-next/manifest.json`を探し、現時点で未作成のため予想どおり停止した。これは接続確認やデータ監査の成功を意味しない。
+- 既存41 ZIPを新規pathへmanifest v2で再集計中。既存CSV/manifest、使用済み評価窓、UCI稼働stackは変更していない。処理完了後に全archive hashとCSV/manifestの再読込を検査する。
+- Capitalに同targetのmodel/監視参照がなく、新v2 CSV作成後もseed hash、MLflow model loading、offline/API parity、隔離Composeのend-to-end配信証拠はない。R05は完了扱いにしない。PSI監視参照はR06/R07のbootstrap/監視基準決定後に確立する。

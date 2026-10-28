@@ -18,6 +18,7 @@ from bike_mlops.capital_data import DEFAULT_RAW_ARCHIVE_DIR
 from bike_mlops.config import FEATURE_CONTRACT_VERSION, PROJECT_ROOT
 from bike_mlops.data import sha256_file
 from bike_mlops.features import FEATURE_COLUMNS
+from bike_mlops.profiles import load_data_profile
 
 PROTOCOL_SCHEMA_VERSION = 1
 LEDGER_SCHEMA_VERSION = 1
@@ -84,7 +85,8 @@ def build_capital_protocol(
         raise ValueError("The incumbent must be an explicitly selected passed model version")
 
     timestamps = frame["timestamp"]
-    delay = 3
+    data_profile = load_data_profile("capital-bikeshare")
+    delay = data_profile["label_availability"]["delay_hours"]
     training_mask = (timestamps < val_start) & (timestamps + pd.Timedelta(hours=delay) <= cutoff)
     validation_mask = (timestamps >= val_start) & (timestamps < val_end)
     evaluation_mask = (timestamps >= eval_start) & (timestamps < eval_end)
@@ -108,6 +110,7 @@ def build_capital_protocol(
         "protocol_name": "capital-bikeshare-rolling-candidate-v1",
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "dataset": {
+            "data_profile_id": data_profile["profile_id"],
             "profile": manifest["processing"]["contract_version"],
             "target_contract": manifest["processing"]["contract_version"],
             "data_sha256": data_sha,
@@ -119,7 +122,10 @@ def build_capital_protocol(
             "columns": list(FEATURE_COLUMNS),
         },
         "candidate_recipe": candidate_recipe,
-        "label_availability": {"delay_hours": delay, "rule": "target timestamp + 3 hours (experiment assumption)"},
+        "label_availability": {
+            "delay_hours": delay,
+            "rule": f"target timestamp + {delay} hours (experiment assumption)",
+        },
         "training": {
             "cutoff": cutoff.isoformat(sep=" "),
             "latest_included_label_available_at": latest_training_label.isoformat(sep=" "),
@@ -177,6 +183,12 @@ def validate_protocol(protocol: object) -> dict:
     required = ("dataset", "features", "candidate_recipe", "training", "validation", "evaluation", "incumbent", "selection_decision_time")
     if any(key not in protocol for key in required):
         raise ValueError("Evaluation protocol is missing required fields")
+    if (
+        not isinstance(protocol["dataset"], dict)
+        or protocol["dataset"].get("data_profile_id") != "capital-bikeshare"
+        or protocol["dataset"].get("target_contract") != "capital-trip-starts-hourly-v1"
+    ):
+        raise ValueError("Evaluation protocol data profile/target contract is unsupported")
     decision = _naive_hour(protocol["selection_decision_time"], "selection_decision_time")
     eval_start = _naive_hour(protocol["evaluation"]["start_inclusive"], "evaluation.start_inclusive")
     eval_end = _naive_hour(protocol["evaluation"]["end_exclusive"], "evaluation.end_exclusive")

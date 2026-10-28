@@ -18,7 +18,13 @@ from bike_mlops.candidate_artifacts import (
     source_snapshot_inventory,
 )
 from bike_mlops.capital_data import validate_capital_manifest
-from bike_mlops.config import MODEL_NAME, PROJECT_ROOT
+from bike_mlops.config import (
+    DATA_PROFILE_ID,
+    LABEL_DELAY_HOURS,
+    MODEL_NAME,
+    PROJECT_ROOT,
+    TARGET_CONTRACT_ID,
+)
 from bike_mlops.data import sha256_file
 from bike_mlops.evaluation_protocol import (
     begin_evaluation,
@@ -178,6 +184,9 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
+    if DATA_PROFILE_ID != "capital-bikeshare":
+        raise SystemExit("Set DATA_PROFILE_ID=capital-bikeshare before final evaluation")
+
     if args.output.exists():
         raise FileExistsError(f"Refusing to overwrite final-evaluation evidence: {args.output}")
     try:
@@ -236,8 +245,18 @@ def main() -> None:
     ):
         raise ValueError("Candidate source snapshot differs from its recorded source-tree identity")
     protocol = read_protocol(protocol_path)
+    if (
+        protocol["dataset"]["data_profile_id"] != DATA_PROFILE_ID
+        or protocol["dataset"]["target_contract"] != TARGET_CONTRACT_ID
+    ):
+        raise ValueError("Final-evaluation protocol profile/target differs from the active data profile")
     if protocol["protocol_sha256"] != selection.get("evaluation_protocol_sha256"):
         raise ValueError("Selected candidate and evaluation protocol hashes differ")
+    if (
+        selection.get("data_profile_id") != DATA_PROFILE_ID
+        or selection.get("target_contract_id") != TARGET_CONTRACT_ID
+    ):
+        raise ValueError("Selected candidate profile/target differs from the active profile")
     if selection.get("training_cutoff") != protocol["training"]["cutoff"]:
         raise ValueError("Selected candidate training cutoff differs from the frozen protocol")
     if selection.get("validation_window") != {
@@ -323,7 +342,7 @@ def main() -> None:
 
         predictions = pd.DataFrame({
             "timestamp": evaluation_frame["timestamp"].map(lambda stamp: stamp.isoformat(sep=" ")),
-            "label_available_at": (evaluation_frame["timestamp"] + pd.Timedelta(hours=3)).map(
+            "label_available_at": (evaluation_frame["timestamp"] + pd.Timedelta(hours=LABEL_DELAY_HOURS)).map(
                 lambda stamp: stamp.isoformat(sep=" ")
             ),
             "actual": evaluation_frame["cnt"].astype(int),
@@ -349,6 +368,8 @@ def main() -> None:
 
         summary = {
             "evaluation_kind": "frozen_candidate_reserved_out_of_time_evaluation",
+            "data_profile_id": DATA_PROFILE_ID,
+            "target_contract_id": TARGET_CONTRACT_ID,
             "candidate_id": selection.get("candidate_id"),
             "candidate_artifact_sha256": candidate_sha,
             "evaluation_protocol_sha256": protocol["protocol_sha256"],

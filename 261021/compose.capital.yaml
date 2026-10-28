@@ -1,0 +1,39 @@
+# Isolated Capital Bikeshare migration stack.
+# Start with: docker compose -f compose.yaml -f compose.capital.yaml up -d
+name: bike-mlops-capital
+
+services:
+  postgres:
+    ports: !override
+      - "127.0.0.1:55433:5432"
+
+  mlflow:
+    ports: !override
+      - "127.0.0.1:5001:5000"
+
+  api-blue:
+    environment:
+      DATA_PROFILE_ID: capital-bikeshare
+      MLFLOW_MODEL_NAME: bike-demand-capital
+    env_file: !override
+      - path: ./data/runtime-capital-bikeshare/blue.env
+        required: false
+    ports: !override
+      - "127.0.0.1:8101:8000"
+
+  api-green:
+    environment:
+      DATA_PROFILE_ID: capital-bikeshare
+      MLFLOW_MODEL_NAME: bike-demand-capital
+    env_file: !override
+      - path: ./data/runtime-capital-bikeshare/green.env
+        required: false
+    ports: !override
+      - "127.0.0.1:8102:8000"
+
+  caddy:
+    ports: !override
+      - "127.0.0.1:8180:8080"
+    volumes: !override
+      - ./configs/Caddyfile:/etc/caddy/default.Caddyfile:ro
+      - ./data/runtime-capital-bikeshare:/runtime

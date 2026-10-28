@@ -2,7 +2,7 @@
 
 初学者向けの用語は[用語集](glossary.md)を参照してください。
 
-この契約は現在配信中のUCIモデル用です。Capital Bikeshareの月次trip-start集計は[移行実験の記録](monitor-investigation-and-next-data.md)を参照してください。新target契約・データprofile・独立した作業DB・監視参照・配信probeは未整備で、[差分監査のF03](reviews/20261028-review.md)と計画書R05に残しています。
+この契約は現在配信中のUCIモデル用です。UCIとCapital Bikeshareのtargetの違い、隔離Compose、未完了条件は[データプロファイルとtarget分離](data-profiles.md)を参照してください。Capitalはmigration-onlyであり、別target用の承認済みmodelと監視参照期間は未準備です。
 
 ## 出典と加工
 
@@ -28,13 +28,17 @@
   "request_id": "a-unique-operation-id",
   "target_hour": "2012-07-01T10:00:00",
   "as_of": "2012-07-01T10:00:00",
-  "feature_contract_version": "bike-demand-features-v1"
+  "feature_contract_version": "bike-demand-features-v1",
+  "data_profile_id": "uci-bike-sharing",
+  "target_contract_id": "uci-bike-sharing-cnt-dataset-local-hour"
 }
 ```
 
+UCIではprofile/targetの指定は古いclientとの互換性のため省略できます。新しいclientでは明示を推奨します。Capital APIでは両方が必須で、稼働中APIと一致しない要求を拒否します。
+
 入力に天気、`cnt`、`casual`、`registered`を含めません。対象時刻から暦特徴を計算し、24時間前・168時間前の観測を**時刻キーの完全一致**で参照します。行番号の`shift(24)`は欠けた時間を飛び越えるため使いません。値がない、または利用可能時刻に達していない場合は`NaN`とmissingフラグを作ります。HistGradientBoostingRegressorはこの欠損値を扱い、学習時・配信時とも同じ関数で特徴量を作ります。
 
-応答と予測台帳には、リクエストID、対象時間、予測、モデル名・整数版、モデル成果物SHA-256、入力に使った観測のSHA-256、特徴量契約版、特徴量値を記録します。学習runにはデータSHA-256、コードrevision、ハイパーパラメーター、環境版、指標、モデル成果物を記録します。
+応答と予測台帳には、リクエストID、data profile、target contract、対象時間、予測、モデル名・整数版、モデル成果物SHA-256、入力に使った観測のSHA-256、特徴量契約版、特徴量値を記録します。学習runとmodel cardにもdata profile/target contract、データSHA-256、コードrevision、ハイパーパラメーター、環境版、指標、モデル成果物を記録します。DBは初期化時にprofile/targetへ固定し、UCI DBをCapitalとして再利用する要求を拒否します。
 
 ## 時系列分割
 

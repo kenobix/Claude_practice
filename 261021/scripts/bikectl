@@ -1,13 +1,43 @@
 #!/bin/sh
 set -eu
 cd "$(dirname "$0")/.."
+requested_profile=${DATA_PROFILE_ID:-}
+requested_database_url=${DATABASE_URL:-}
+requested_mlflow_uri=${MLFLOW_TRACKING_URI:-}
 if [ -f .env ]; then
   set -a
   . ./.env
   set +a
 fi
+if [ -n "$requested_profile" ]; then
+  export DATA_PROFILE_ID="$requested_profile"
+fi
+if [ -n "$requested_database_url" ]; then
+  export DATABASE_URL="$requested_database_url"
+fi
+if [ -n "$requested_mlflow_uri" ]; then
+  export MLFLOW_TRACKING_URI="$requested_mlflow_uri"
+fi
 if [ -n "${APP_DB_PASSWORD:-}" ]; then
-  export DATABASE_URL="postgresql://bike_app:${APP_DB_PASSWORD}@127.0.0.1:${APP_DB_HOST_PORT:-55432}/bikeops"
-  export MLFLOW_TRACKING_URI="http://127.0.0.1:5000"
+  case "${DATA_PROFILE_ID:-uci-bike-sharing}" in
+    uci-bike-sharing)
+      database_port=${APP_DB_HOST_PORT:-55432}
+      mlflow_port=5000
+      ;;
+    capital-bikeshare)
+      database_port=55433
+      mlflow_port=5001
+      ;;
+    *)
+      printf 'scripts/bikectl has no local service mapping for data profile %s\n' "${DATA_PROFILE_ID}" >&2
+      exit 2
+      ;;
+  esac
+  if [ -z "${DATABASE_URL:-}" ]; then
+    export DATABASE_URL="postgresql://bike_app:${APP_DB_PASSWORD}@127.0.0.1:${database_port}/bikeops"
+  fi
+  if [ -z "${MLFLOW_TRACKING_URI:-}" ]; then
+    export MLFLOW_TRACKING_URI="http://127.0.0.1:${mlflow_port}"
+  fi
 fi
 exec .venv/bin/mlops-bikectl "$@"

@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+import sqlite3
 
 import pandas as pd
 
@@ -65,6 +66,87 @@ class StorageTests(unittest.TestCase):
             self.database.add_observation(
                 "2012-06-30 10:00:00", 121, "2012-06-30 13:00:00", "dataset-sha"
             )
+
+    def test_database_is_bound_to_its_data_profile(self):
+        with self.assertRaisesRegex(ValueError, "Database profile mismatch"):
+            Database(
+                self.database.url,
+                data_profile_id="capital-bikeshare",
+                target_contract_id="capital-trip-starts-hourly-v1",
+            ).initialize()
+
+    def test_legacy_populated_database_cannot_be_claimed_by_capital_profile(self):
+        path = Path(self.tempdir.name) / "legacy.sqlite"
+        with sqlite3.connect(path) as connection:
+            connection.execute(
+                "CREATE TABLE observations (timestamp TEXT PRIMARY KEY, cnt INTEGER NOT NULL, "
+                "available_at TEXT NOT NULL, data_hash TEXT NOT NULL)"
+            )
+            connection.execute(
+                "INSERT INTO observations VALUES ('2012-01-01 00:00:00',1,'2012-01-01 03:00:00','old-hash')"
+            )
+        capital = Database(
+            f"sqlite:///{path}",
+            data_profile_id="capital-bikeshare",
+            target_contract_id="capital-trip-starts-hourly-v1",
+        )
+        with self.assertRaisesRegex(ValueError, "Refusing to assign a non-UCI profile"):
+            capital.initialize()
+
+    def test_legacy_prediction_table_is_migrated_and_bound_as_uci(self):
+        path = Path(self.tempdir.name) / "legacy-uci.sqlite"
+        with sqlite3.connect(path) as connection:
+            connection.execute(
+                "CREATE TABLE observations (timestamp TEXT PRIMARY KEY, cnt INTEGER NOT NULL, "
+                "available_at TEXT NOT NULL, data_hash TEXT NOT NULL)"
+            )
+            connection.execute(
+                "CREATE TABLE predictions (request_id TEXT PRIMARY KEY,input_hash TEXT NOT NULL,"
+                "target_hour TEXT NOT NULL,as_of TEXT NOT NULL,predicted REAL NOT NULL,model_name TEXT NOT NULL,"
+                "model_version TEXT NOT NULL,model_quality_gate TEXT NOT NULL,artifact_sha256 TEXT NOT NULL,"
+                "data_version_sha256 TEXT NOT NULL,feature_contract_version TEXT NOT NULL,"
+                "features_json TEXT NOT NULL,created_at TEXT NOT NULL)"
+            )
+            connection.execute(
+                "INSERT INTO observations VALUES ('2012-01-01 00:00:00',1,'2012-01-01 03:00:00','old-hash')"
+            )
+        Database(f"sqlite:///{path}").initialize()
+        with sqlite3.connect(path) as connection:
+            columns = {row[1] for row in connection.execute("PRAGMA table_info(predictions)")}
+            profile = connection.execute(
+                "SELECT data_profile_id,target_contract_id FROM data_profile_metadata WHERE singleton=1"
+            ).fetchone()
+        self.assertIn("data_profile_id", columns)
+        self.assertIn("target_contract_id", columns)
+        self.assertEqual(profile, ("uci-bike-sharing", "uci-bike-sharing-cnt-dataset-local-hour"))
+
+    def test_deployment_audit_row_is_bound_to_data_profile(self):
+        capital = Database(
+            f"sqlite:///{Path(self.tempdir.name) / 'capital.sqlite'}",
+            data_profile_id="capital-bikeshare",
+            target_contract_id="capital-trip-starts-hourly-v1",
+        )
+        capital.initialize()
+        with capital.transaction(immediate=True) as connection:
+            capital.execute(
+                connection,
+                "INSERT INTO deployments(deployment_id,status,phase,data_profile_id,target_contract_id,"
+                "to_slot,to_version,approver,reason,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                (
+                    "deployment-capital-1", "completed", "bootstrap", "capital-bikeshare",
+                    "capital-trip-starts-hourly-v1", "blue", "1", "reviewer",
+                    "test fixture", "2026-10-28T00:00:00+00:00", "2026-10-28T00:00:00+00:00",
+                ),
+            )
+            row = capital.execute(
+                connection,
+                "SELECT data_profile_id,target_contract_id FROM deployments WHERE deployment_id=?",
+                ("deployment-capital-1",),
+            ).fetchone()
+        self.assertEqual(
+            (row["data_profile_id"], row["target_contract_id"]),
+            ("capital-bikeshare", "capital-trip-starts-hourly-v1"),
+        )
 
 
 if __name__ == "__main__":

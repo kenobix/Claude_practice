@@ -6,13 +6,15 @@ import argparse
 import json
 from pathlib import Path
 
-from bike_mlops.config import MODEL_NAME
+from bike_mlops.config import DATA_PROFILE_ID, MODEL_NAME, TARGET_CONTRACT_ID
 from bike_mlops.evaluation_protocol import build_capital_protocol, save_protocol
 from bike_mlops.model import load_registered_model
 from bike_mlops.training import HYPERPARAMETERS
 
 
 def main() -> None:
+    if DATA_PROFILE_ID != "capital-bikeshare":
+        raise SystemExit("Set DATA_PROFILE_ID=capital-bikeshare before freezing a Capital protocol")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--csv", type=Path, required=True)
     parser.add_argument("--source-manifest", type=Path, required=True)
@@ -42,6 +44,8 @@ def main() -> None:
             "hyperparameters": HYPERPARAMETERS,
         },
     )
+    if protocol["dataset"]["target_contract"] != TARGET_CONTRACT_ID:
+        raise ValueError("Generated protocol target contract differs from the active data profile")
     save_protocol(protocol, args.output)
     print(json.dumps({
         "protocol_path": str(args.output),

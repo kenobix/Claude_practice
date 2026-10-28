@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-from bike_mlops.config import DEFAULT_MLFLOW_URI
+from bike_mlops.config import DATA_PROFILE_ID, DEFAULT_MLFLOW_URI, TARGET_CONTRACT_ID
 
 
 def directory_sha256(path: Path) -> str:
@@ -36,6 +36,25 @@ def load_registered_model(model_name: str, model_version: str | int, tracking_ur
     registered_version = MlflowClient(tracking_uri=resolved_uri).get_model_version(
         model_name, str(int(model_version))
     )
+    registered_profile = registered_version.tags.get("data_profile_id")
+    registered_target = registered_version.tags.get("target_contract_id")
+    if DATA_PROFILE_ID != "uci-bike-sharing" and (
+        registered_profile != DATA_PROFILE_ID or registered_target != TARGET_CONTRACT_ID
+    ):
+        raise ValueError(
+            f"Registered model version {model_version} profile/target contract does not match "
+            f"{DATA_PROFILE_ID}/{TARGET_CONTRACT_ID}"
+        )
+    if registered_profile and registered_profile != DATA_PROFILE_ID:
+        raise ValueError(
+            f"Registered model version {model_version} belongs to data profile {registered_profile!r}, "
+            f"not {DATA_PROFILE_ID!r}"
+        )
+    if registered_target and registered_target != TARGET_CONTRACT_ID:
+        raise ValueError(
+            f"Registered model version {model_version} uses target contract {registered_target!r}, "
+            f"not {TARGET_CONTRACT_ID!r}"
+        )
     expected_hash = registered_version.tags.get("artifact_sha256")
     if not expected_hash:
         raise ValueError(f"Registered model version {model_version} has no artifact SHA-256")
