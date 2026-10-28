@@ -241,7 +241,7 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 - [x] 読込行数 = ID重複 + 一意行数、一意行数 = 対象範囲外 + DST除外 + 出力件数合計、という収支を同じ集計単位で記録する。
 - [x] manifestのJSON object、必須項目、hash形式、処理版、時刻・target契約、archive実体のbyte数とSHAを検査する。型違反は入力エラーとして拒否する。
 - [x] CSV・manifestを一時出力しmanifestをcommit markerとして保存する。lockを使い既存証拠の上書きを拒否し、stale lockとlive lockを区別する。
-- 完了条件: 合成ZIP fixtureの空archive、欠落月、重複ID、矛盾ID、小数秒、月境界、DST、出力保全を試験。既存41 ZIPを新しい出力先へ全件再集約し、厳格manifest v2の検証・監査・profile別seedまで完了した。旧derived CSVと新CSVのSHA-256は一致し、旧成果物は上書きしていない。全44テスト、CIでのlock install、`pip check`、compileallが成功。
+- 完了条件: 合成ZIP fixtureの空archive、欠落月、重複ID、矛盾ID、小数秒、月境界、DST、出力保全を試験。既存41 ZIPを新しい出力先へ全件再集約し、厳格manifest v2の検証・監査・profile別seedまで完了した。旧derived CSVと新CSVのSHA-256は一致し、旧成果物は上書きしていない。全44テスト、CI `40644880384`のlock install、`pip check`、compileallが成功。
 
 #### R02 評価protocolと期間の消費台帳
 

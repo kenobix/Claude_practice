@@ -679,5 +679,6 @@ UCI Bike SharingとCapital Bikeshareの件数は意味が異なるため、UCI�
 ### 検証
 
 - 変更後の全44テストが成功。`compileall -q src tests scripts`、`pip check`、`sh -n scripts/bikectl`、`docker compose -f compose.yaml -f compose.capital.yaml config -q`、`git diff --check`も成功。
+- commit `05b6c95` push後のGitHub Actions run `40644880384`がsuccess。lock install、`pip check`、44テスト、compileallが完了した。
 - `tzdata==2026.5`を依存lockとこのWSL venvに追加し、zoneinfoがシステム設定に依存しないことを確認した。
 - R05の隔離Compose実起動、PostgreSQL接続、Capital model loading、offline/API parity、deployは未実施。R05は部分完了のまま。
