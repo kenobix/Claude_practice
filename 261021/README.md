@@ -71,7 +71,7 @@ Composeによる運用構成は[実行・運用手順](docs/runbook.md)を参照
 - [x] 2026-10-27、MLflow 3でモデル登録元を古いrun artifact URIにしていたため、版1に`MLmodel`ファイルがなくAPIでロードできないことを特定。登録URIのコードを`log_model()`が返すURIへ修正。
 - [x] 2026-10-27、修正版でrun `f55812c02dac4084a8185856cf7b4793`を実行し、モデル版`2`を登録。validation MAE 55.0728がベースライン63.9628を下回り`quality_gate_passed=true`。固定holdoutは再評価せず`null`。
 - [x] モデル版2をGreen枠へ手動昇格。2026-10-27にdeployment ID `dded8d98-6e6c-4082-9419-df62cc08adb7`で完了。Green枠とCaddy入口の`/ready`が200、`/version`は版2・artifact SHA-256 `42bb5f3c7dc5a28d562d3fe2b01fe2aaf832af34ef5496b05b0fe65e9a79b337`・品質ゲート`passed`。
-- [ ] APIの通常予測保存・同一request ID再送動作を確認する。
+- [x] APIの通常予測保存・同一request ID再送動作を確認。2026-10-28に予測がHTTP 200、同一入力・同一request IDの再送も同じ応答でHTTP 200、入力を変えた再送はHTTP 409。
 - [ ] MLflowを使った継続候補の登録・比較・第4四半期リプレイ。
 
-未実行の項目は、完了したように表現しません。詳細な実行記録は[work_log.md](work_log.md)を参照してください。次は予測保存と再送の動作を確認します。固定holdoutの再評価はしません。
+未実行の項目は、完了したように表現しません。詳細な実行記録は[work_log.md](work_log.md)を参照してください。次は継続候補の比較と第4四半期リプレイです。固定holdoutの再評価はしません。
