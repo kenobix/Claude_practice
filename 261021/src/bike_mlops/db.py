@@ -279,6 +279,35 @@ class Database:
                     raise ValueError(f"Observation source version conflicts for {observed}; use a clean database")
         return inserted
 
+    def seed_staging_observations(self, observations, data_hash: str) -> int:
+        """Atomically accept only exact source rows in an isolated staging database."""
+        expected = {}
+        for row in observations.itertuples(index=False):
+            timestamp = canonical_time(row.timestamp)
+            if timestamp in expected:
+                raise ValueError(f"Duplicate staging source timestamp: {timestamp}")
+            expected[timestamp] = (int(row.cnt), canonical_time(row.available_at), data_hash)
+        if not expected:
+            raise ValueError("Refusing to seed staging from an empty dataset")
+        with self.transaction(immediate=self.sqlite) as connection:
+            if not self.sqlite:
+                self.execute(connection, "LOCK TABLE observations IN SHARE ROW EXCLUSIVE MODE")
+            existing = self.execute(connection, "SELECT timestamp,cnt,available_at,data_hash FROM observations").fetchall()
+            for row in existing:
+                actual = (int(row["cnt"]), row["available_at"], row["data_hash"])
+                if row["timestamp"] not in expected or expected[row["timestamp"]] != actual:
+                    raise ValueError(f"Staging observation differs from candidate dataset: {row['timestamp']}")
+            inserted = 0
+            for timestamp, (count, available, source_hash) in expected.items():
+                result = self.execute(
+                    connection,
+                    "INSERT INTO observations(timestamp,cnt,available_at,data_hash) VALUES (?,?,?,?) "
+                    "ON CONFLICT(timestamp) DO NOTHING",
+                    (timestamp, count, available, source_hash),
+                )
+                inserted += max(result.rowcount, 0)
+        return inserted
+
     def observations_as_of(self, target_hour: datetime | str, as_of: datetime | str):
         import pandas as pd
 

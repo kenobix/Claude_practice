@@ -1054,3 +1054,21 @@ git diff --check
 - 上記の修正・検証記録をcommit `a07c581`として`origin/main`へpushした。
 - GitHub Actionsのcontract checks（run `40667516861`）とPages build/deploy（run `40667516327`）はいずれもsuccess。
 - 他の日付ディレクトリの既存untrackedファイル4件は今回の変更に含めていない。
+
+## 2026-10-28: Capital staging seedのデータ版照合
+
+前回の合成統合検証で、異なるデータ版にしか含まれない既存観測をseedが見逃す問題が見つかった。`scripts/seed_capital_staging.py`にcandidate report、final report、登録済みmodel versionの明示指定を追加。既存の候補・final証拠検証を再実行し、localhost:5001のCapital MLflowのREADY版・固定gate/tag・candidate/report/data identityを照合する。CSVとmanifestのSHAをcandidateと比較し、厳格manifest検証も行う。
+
+DBの新しいstaging専用seedは、既存行を時刻・台数・available_at・data_hashまで候補データと比較する。異なる版、変更行、余分な時刻、空または重複する入力は拒否し、成功時のみ不足行を挿入する。検査と挿入は同じtransactionに置き、PostgreSQLではobservationsをロックする。seed後に別プロセスがDBを変更した場合の検出はまだなく、benchmark実行前の再照合が必要。証拠ファイル・DB・候補データを不変と見なせる権限分離までは実装していない。
+
+```bash
+.venv/bin/python -m unittest discover -s tests -p 'test_capital_staging_seed.py' -v
+# 3 tests OK: 合成SQLiteで初回/再実行、registry・CSV・manifest不一致、
+# 余分な行・値違い・版違い時に既存DBが変化しないことを確認。
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -v
+# 78 tests OK (12.136s)。FastAPI testclientのStarletteDeprecationWarningは既存。
+.venv/bin/python -m compileall -q src scripts tests
+# 成功。
+```
+
+全テストの初回実行はsandbox内で先頭FastAPI testが進まなかったため中断し、制限外で同じテストを再実行したところ成功した。sandbox内Docker socket確認はpermission denied。今回PostgreSQL実機での新seed実行、候補登録からの実stack統合、実データ取得、benchmarkは実施していない。次は使い捨てPostgreSQLで同じ不一致とtransactionを検証し、seed後のDB変更を検出した上で、benchmark全対象が凍結training splitに属しラベルがcutoffまでに到着すること・APIデータ出典が候補と一致することを送信前に検査する。
