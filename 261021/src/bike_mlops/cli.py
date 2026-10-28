@@ -36,6 +36,7 @@ from bike_mlops.db import Database, canonical_time, stable_hash
 from bike_mlops.deployment_gates import require_deployment_eligible
 from bike_mlops.features import FEATURE_COLUMNS, available_observation_frame, feature_frame_for_dataset
 from bike_mlops.monitoring import score_monitor_windows
+from bike_mlops.monitoring_window import resolve_monitor_window
 
 
 def _print(value) -> None:
@@ -300,13 +301,18 @@ def command_replay(args) -> None:
 
 
 def command_monitor(args) -> None:
-    database = _database()
     frame = load_hourly(args.csv)
     data_hash = sha256_file(args.csv)
     version = str(args.model_version)
+    start, end, window_source = resolve_monitor_window(
+        replay_id=args.replay_id, model_version=version, data_sha256=data_hash,
+        profile_id=DATA_PROFILE_ID, target_contract_id=TARGET_CONTRACT_ID,
+        report_dir=REPORT_DIR, start=args.start, end=args.end,
+    )
+    database = _database()
     request_prefix = f"replay:{args.replay_id}:v{version}:"
     predictions = pd.DataFrame(
-        database.list_predictions(args.start, args.end, version, request_prefix)
+        database.list_predictions(start.isoformat(sep=" "), end.isoformat(sep=" "), version, request_prefix)
     )
     if predictions.empty:
         raise ValueError("No persisted predictions matched this replay ID, version, and time window")
@@ -360,8 +366,8 @@ def command_monitor(args) -> None:
         predictions,
         observations,
         reference,
-        pd.Timestamp(args.start),
-        pd.Timestamp(args.end),
+        start,
+        end,
         window_hours=args.window_hours,
         minimum_labels=args.minimum_labels,
         validation_mae=validation_mae,
@@ -402,6 +408,8 @@ def command_monitor(args) -> None:
         "window_count": int(len(windows)),
         "data_profile_id": DATA_PROFILE_ID,
         "target_contract_id": TARGET_CONTRACT_ID,
+        "monitor_period": {"start_inclusive": start.isoformat(sep=" "),
+                           "end_exclusive": end.isoformat(sep=" "), **window_source},
         "reference": {
             **reference_config,
             "data_sha256": data_hash,
@@ -867,8 +875,8 @@ def build_parser() -> argparse.ArgumentParser:
     monitor.add_argument("--csv", type=Path, default=DEFAULT_DATASET)
     monitor.add_argument("--replay-id", required=True)
     monitor.add_argument("--model-version", required=True)
-    monitor.add_argument("--start", default="2012-07-01 00:00:00")
-    monitor.add_argument("--end", default="2013-01-01 00:00:00")
+    monitor.add_argument("--start", help="Start (inclusive); requires --end. Omit both to use the replay report")
+    monitor.add_argument("--end", help="End (exclusive); requires --start. Omit both to use the replay report")
     monitor.add_argument("--window-hours", type=int, default=168)
     monitor.add_argument("--minimum-labels", type=int, default=24)
     monitor.add_argument("--output", type=Path)

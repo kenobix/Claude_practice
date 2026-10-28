@@ -1313,3 +1313,25 @@ git diff --check
 ```
 
 残る最優先作業は、台帳context内でこの事前確認を呼び、DBロック・API測定・監査照合・partial report/台帳確定を順序どおりに実行する処理と、正常・異常時の実stack試験である。計画とgate文書を更新した。運用測定CLIは引き続き入力確認専用、実候補の1,050要求・合格・配信承認は未実施。
+
+## 2026-10-29: replay期間の継承と新しいPSI参照方式
+
+R07の監視期間を修正した。`monitor`でstart/endを両方省略するとreplay reportの期間を読み、ID・モデル版・CSV hash・profile/targetを検査する。期間を指定するときは両端を必須とし、reportが存在する場合はその範囲外を拒否する。reportがない場合は明示期間を要求する。古いUCI reportはprofileとtargetが記録されていないため、既知のUCIデータSHAとactive profile/targetが一致する場合に限り推定し、その推定をmonitor summaryに記録する。実在する版2・版3のQ4 reportを読み取り、どちらも`2012-10-01`から`2013-01-01`と識別した。古い出力やDB窓を再計算・削除していない。reportの期間は要求範囲であり、`--limit`やエラー時の全時間処理を保証しない。既存のmonitor出力・DB窓は同じIDの再実行で更新されうるため、履歴保護は引き続き未完了であり、既存結果を保護する場合は再実行しない。
+
+別途`monitoring_psi_v2.py`に、参照が定数のとき値が小・等・大の3区分を使うversion付きPSIを追加した。固定bin・件数・自己SHAと欠測、無限大、件数不足の状態を保持する。定数との比較はfloatの完全一致で、許容幅は未設定。最初の合成検査で、件数に平滑化を加えると同じ分布でも標本数が違う場合にわずかなPSIが出ると分かり、割合に平滑化を適用するよう修正した。新方式は既存monitorと未接続で、自己SHAは真正性やcandidateデータとの結び付きの証明ではない。既存UCIの過去値は書き換えていない。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_monitoring_window.py' -v
+# 6 tests OK (0.066s)。実際のcommand_monitorへの合成入力も含む。
+# data/reports/20261029-continuation/monitor-window-tests-final.log
+# SHA-256: c09dc748fe2a5cee13e5346e1db56eb6b091e925448ed99cc2892973df4a1854
+# 数値日時を拒否する入力検査追加後も6 tests OK (0.050s)。
+# data/reports/20261029-continuation/monitor-window-tests-validated.log
+# SHA-256: 588393ff0f7fa8d00e39c4ffd2da26c26169e665248c7e0c7d46480646661cee
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_monitoring_psi_v2.py' -v
+# 6 tests OK (0.015s)。
+# data/reports/20261029-continuation/psi-v2-tests.log
+# SHA-256: 74661e7b72599142716d46710c54826e17a1f7dbe6fcc973d2e36c356b6f6c51
+```
+
+Capital候補に紐づく参照の作成、v2のmonitor接続、既存監視履歴の上書き防止、ラベル待ちやmissing増加の区別は残っている。計画書とrunbookに進捗と制約を反映した。
