@@ -110,6 +110,8 @@ DATA_PROFILE_ID=capital-bikeshare MLFLOW_TRACKING_URI=http://127.0.0.1:5001 \
 
 測定内部処理は、試行IDとartifact SHAを指定し、各要求前のロック確認・台帳への要求開始記録、応答の出典確認と監査照合を行う接続部を受け取れる。接続部を使う場合は、要求や出典確認の失敗時に後続要求を止め、送信前の失敗を送信済みとして数えない。ただしplanの再照合から台帳・DBロック・測定・監査・report確定までを組み立てる実行経路は未完成で、この接続部だけではgateは合格にならない。resourceの取得不能や他の負荷の未測定も合格証拠にしない。現在の測定CLIは停止中。
 
+試行開始後、台帳と同じplan・候補・学習window・CSV/manifest・登録version・登録artifactを再照合し、確認済みデータをメモリへ読み込む事前確認部品を追加した。登録先はplanに固定されたCapital MLflowで、取得前後の登録情報と、読込み前後のCSV・manifestも検査する。予測要求は送らない。事前確認後のデータ使用時には別途staging DBの観測ロックと一致確認が必要であり、これらを含む通しの測定は未完成。
+
 測定前にblocked registrationを作成し、生成された`data/runtime-capital-staging/staging.env`を使って、staging DBへのseed、staging API起動の順に行う。seedは検査済みCapital profileのCSV/manifestを使い、専用PostgreSQLのloopback port 55434へ記録する。
 
 ```bash

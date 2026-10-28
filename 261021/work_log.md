@@ -1291,3 +1291,25 @@ git diff --check
 ```
 
 次はplan/registry/candidateを再照合し、試行台帳とPostgreSQL guardのcontextを正しい順序で保持して測定・監査・部分reportを確定する実行経路を実装する。その後、隔離した最新Dockerfile・MLflow・PostgreSQL・APIで異常系を含むsystem testを行い、CLI復帰の条件を確認する。
+
+## 2026-10-29: 試行開始後の候補・データ・登録モデル再照合
+
+`capital_measurement_preflight.py`を追加した。候補単位の試行台帳context内で、台帳に記録されたcandidate ID・plan内容SHA・ファイルSHAを照合する。候補/final report、固定protocol、学習window、CSVとmanifestのSHAを検証し、CSVを読み込む前後と最後にSHAを確認する。planに記録されたCapital MLflow URIをtrackingとregistryに明示し、対象版のtagを確認してからartifactを一時領域へ取得する。取得したartifactと、取得前後の登録版を固定plan・候補証拠と照合する。最後に候補報告とplanをもう一度照合して、後続のDB観測固定に使うframeを返す。完了・配信の許可を出す処理ではなく、予測要求や本番登録の変更は行わない。
+
+試行中の一時台帳と合成候補、mockしたMLflow client/downloadを使い、plan・CSVの変更、読込み中のCSV変更、取得中の登録tag変更、候補report変更、取得artifactの改変が失敗することを検査した。実MLflow HTTP、実候補、DB固定から測定までの一連の処理はこの試験に含まない。既存の隔離SQLite MLflowによる登録・artifact取得試験は全suiteに含まれるが、今回の事前確認部品をHTTP registryと結んだ試験ではない。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_capital_measurement_preflight.py' -v
+# 先行版 5 tests OK (1.721s)。後に候補report/artifact改変の2 testsを追加。
+# data/reports/20261029-measurement-preflight/preflight-tests.log
+# SHA-256: a014bb490150464a567f1d4cc9eaa15ef0a46fb1462d59bd58164d7c74c36494
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 120 .venv/bin/python -m unittest discover -s tests -v
+# 最終版 123 tests OK (19.330s)。追加した事前確認7 testsを含む。
+# data/reports/20261029-measurement-preflight/unit-tests.log
+# SHA-256: be30d2775f58761968410a37683393e00ba1fa0a6925ddb14bba250c36c62d33
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+# 成功。既存のStarlette/httpx、MLflow/SQLAlchemy非推奨警告あり。
+```
+
+残る最優先作業は、台帳context内でこの事前確認を呼び、DBロック・API測定・監査照合・partial report/台帳確定を順序どおりに実行する処理と、正常・異常時の実stack試験である。計画とgate文書を更新した。運用測定CLIは引き続き入力確認専用、実候補の1,050要求・合格・配信承認は未実施。
