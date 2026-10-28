@@ -19,7 +19,9 @@
 - 時刻: `America/New_York`のローカル壁時計として解釈する。元の時刻文字列にoffsetがないため、UTC時刻は復元できない。
 - 春の存在しない時間は作らない。秋に2回現れる曖昧な時間は、元データから区別できないため時間全体を集計から除外する。APIもその壁時計時刻を受け付けない。
 - monthly archiveの公開タイミングと、実験上の`timestamp + 3時間`は別の概念。3時間は実測された公開SLAではない。
-- Capital用の新しいCSV・manifestができるまでは、既存の旧manifest v1をseed/監視/新protocolに利用しない。default pathは`data/derived/capitalbikeshare-next/`で、R01の厳格なmanifest v2を要求する。ここへ旧原本からv2を再生成しても、データ期間は新しくならない。既評価期間と重なるvalidation/最終評価には使えず、評価台帳の再利用拒否も維持する。
+- 新しいCSV・manifest v2は`data/derived/capitalbikeshare-next/`に作成済み。元の41 ZIPを厳格検査して再集計したがCSV SHA-256は旧CSVと同じで、データ期間も2023-01〜2026-04のまま。これはmanifest/集計契約の再検証であり、新しい評価データではない。再利用済みmanifest v1は新protocolに使わない。
+- Capital用SQLiteへ29,177時間をseedし、profile/target metadataと単一のdata hashを確認した。これはDB分離・hash保存の証拠で、隔離PostgreSQL/MLflow/Composeの起動やmodel loadingの証拠ではない。
+- 未使用の次候補として公式2026年6〜9月archiveのURLへのHTTP HEADが200だったことを確認したが、ZIP内容はまだ取得していない。2026年10月archiveは確認時点で404。取得後は別pathに保存し、R06でvalidationと後続期間を凍結するまで候補学習・評価に使わない。
 - このプロファイルにはまだ凍結済みの監視参照期間も承認済みmodelもない。APIを本番利用可能と表示したり、旧UCIモデル版3をCapital incumbentとして比較したりしない。
 
 ## APIの要求識別
@@ -56,7 +58,7 @@ MLFLOW_TRACKING_URI=http://127.0.0.1:5001 \
 
 `./scripts/bikectl`を使う場合も、先頭に`DATA_PROFILE_ID=capital-bikeshare`を付けるとCapital用のPostgreSQL `55433`とMLflow `5001`を選びます。UCI profileでは従来どおり`.env`の`APP_DB_HOST_PORT`（既定`55432`）とMLflow `5000`です。コマンド行で明示した`DATABASE_URL`と`MLFLOW_TRACKING_URI`は`.env`より優先されます。
 
-現在は厳格なv2 manifestとprofile参照期間、同じtargetで学習した承認済みmodelが未準備のため、これだけでサービスはreadyになりません。候補作成と評価は[R01〜R05の計画](../../261014/plan_mlops.md)の残項目を満たしてから行います。実環境を起動する場合もUCIと同時に受け付けず、先にCompose設定の適用・別port・profile表示を確認します。
+厳格なmanifest v2とprofile別seedは検証済みですが、同targetのmodel・承認済みmonitor参照、隔離PostgreSQL/MLflowの実起動は未完了です。このためAPIはまだreadyになりません。次のbootstrap評価案と未使用期間の提案は[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)を参照してください。候補作成・評価は[R06のgateとprotocol](../../261014/plan_mlops.md#r06-比較gateと昇格条件の完成)を凍結するまで行いません。実環境を起動する場合もUCIと同時に受け付けず、先にCompose設定の適用・別port・profile表示を確認します。
 
 ## 特徴量の情報時点
 

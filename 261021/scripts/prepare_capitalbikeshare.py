@@ -21,6 +21,7 @@ from tempfile import TemporaryDirectory
 import pandas as pd
 
 from bike_mlops.data import audit_hourly, load_hourly
+from bike_mlops.profiles import load_data_profile
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RAW_DIR = PROJECT_ROOT / "data/raw/capitalbikeshare/monthly"
@@ -29,7 +30,8 @@ OUTPUT_MANIFEST = PROJECT_ROOT / "data/derived/capitalbikeshare-hourly-2023-2026
 SOURCE_ROOT = "https://s3.amazonaws.com/capitalbikeshare-data"
 SOURCE_PAGE = "https://capitalbikeshare.com/system-data"
 LICENSE_PAGE = "https://capitalbikeshare.com/data-license-agreement"
-LOCAL_TIMEZONE = "America/New_York"
+CAPITAL_PROFILE = load_data_profile("capital-bikeshare")
+LOCAL_TIMEZONE = CAPITAL_PROFILE["target"]["timezone_name"]
 DATA_START = pd.Timestamp("2023-01-01 00:00:00")
 DATA_END_EXCLUSIVE = pd.Timestamp("2026-05-01 00:00:00")
 
@@ -369,9 +371,12 @@ def _aggregate_archives_locked(
         loaded = load_hourly(staged_csv)
         data_hash = sha256_file(staged_csv)
         audit = audit_hourly(loaded, data_hash)
-        audit["timezone_interpretation"] = (
-            "naive America/New_York local wall time inferred from the service area; no UTC conversion applied"
-        )
+        audit["data_profile_id"] = CAPITAL_PROFILE["profile_id"]
+        audit["target_contract_id"] = CAPITAL_PROFILE["target_contract_id"]
+        audit["timezone_interpretation"] = CAPITAL_PROFILE["target"]["time_zone_interpretation"]
+        delay = CAPITAL_PROFILE["label_availability"]["delay_hours"]
+        delay_status = CAPITAL_PROFILE["label_availability"]["status"]
+        audit["label_available_at_rule"] = f"timestamp + {delay} hours ({delay_status})"
         if loaded["timestamp"].duplicated().any():
             raise AssertionError("Derived timestamps must be unique")
 
@@ -382,7 +387,7 @@ def _aggregate_archives_locked(
             "license_page": LICENSE_PAGE,
             "license_summary": "Use is governed by the Capital Bikeshare Data License Agreement; do not publish the source as a standalone dataset.",
             "processing": {
-                "contract_version": "capital-trip-starts-hourly-v1",
+                "contract_version": CAPITAL_PROFILE["target_contract_id"],
                 "processing_version": "capital-hourly-aggregation-v2",
                 "input_field": "started_at",
                 "target": "trip starts counted by local wall-clock hour",

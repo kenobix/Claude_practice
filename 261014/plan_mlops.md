@@ -241,7 +241,7 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 - [x] 読込行数 = ID重複 + 一意行数、一意行数 = 対象範囲外 + DST除外 + 出力件数合計、という収支を同じ集計単位で記録する。
 - [x] manifestのJSON object、必須項目、hash形式、処理版、時刻・target契約、archive実体のbyte数とSHAを検査する。型違反は入力エラーとして拒否する。
 - [x] CSV・manifestを一時出力しmanifestをcommit markerとして保存する。lockを使い既存証拠の上書きを拒否し、stale lockとlive lockを区別する。
-- 完了条件: 合成ZIP fixtureの空archive、欠落月、重複ID、矛盾ID、小数秒、月境界、DST、出力保全を試験し、32件の全テスト成功。全41 ZIPを新コードで再集約する追加確認は途中停止し、新v2 CSV/manifestはまだ作成していない。以前の原本とCSVは読取専用で維持した。
+- 完了条件: 合成ZIP fixtureの空archive、欠落月、重複ID、矛盾ID、小数秒、月境界、DST、出力保全を試験。既存41 ZIPを新しい出力先へ全件再集約し、厳格manifest v2の検証・監査・profile別seedまで完了した。旧derived CSVと新CSVのSHA-256は一致し、旧成果物は上書きしていない。全44テスト、CIでのlock install、`pip check`、compileallが成功。
 
 #### R02 評価protocolと期間の消費台帳
 
@@ -277,8 +277,9 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 - [x] target契約・データプロファイルIDを候補report/model card、MLflow run/model tags、DB metadata/prediction/deployment rows、API要求・応答、runtime state/probeへ結び付けた。DBはprofileに固定し、既存の行を含むUCI DBのCapital再利用を拒否する。別project/volume/host portの`compose.capital.yaml`を追加し、API/modelロード/seed/CLIでは別profileとtargetの混在を拒否する。
 - [x] 配信CLIのseedはprofile設定のCSVを使い、Capitalでは厳格なmanifest v2・target契約を確認する。2012年以前固定のprobeをデータ範囲に対応させた。UCIの既存client/idempotency hash/legacy modelは後方互換を保つ。
 - [x] 現行特徴量が時刻から既知の暦と利用可能時刻を過ぎた同profileのラグだけであること、および休日・天候の追加時点条件をデータprofile docsに明記した。未確認の将来情報は追加していない。
+- [x] 全41原本ZIPから新規pathに厳格manifest v2を作成し、各ZIP hash、集計収支、profile/target、CSV hashを再検査した。既存CSVとbyte hashが一致し、Capital用SQLiteへ29,177時間をseedした。
 - [ ] Capital監視はUCIの2011参照を流用しない。Capitalに凍結済み同profile training-reference model/window/PSI binがない間はCLIが監視を停止する。初回Capital modelと参照期間をR06/R07で確立後、同profile referenceで監視を実装・試験する。
-- 完了条件は未達。`docker compose -f compose.yaml -f compose.capital.yaml config -q`と合成API/DB/profile試験は成功したが、Capital用の新しい厳格manifest v2、同target model/参照期間が未作成であるため、独立stackの実起動、観測hash/seed、registered model loading、offline/API parity、end-to-end deploymentの証拠がまだない。UCI稼働版へは変更を加えていない。
+- 完了条件は未達。厳格manifest v2、監査、profile別SQLite seed、Compose静的設定検査、合成API/DB/profile試験は成功した。一方、独立PostgreSQL/MLflow/Composeの実起動、同target modelとmonitor reference、registered model loading、offline/API parity、end-to-end deploymentの証拠はまだない。UCI稼働版へは変更を加えていない。
 
 #### R06 比較gateと昇格条件の完成
 
@@ -287,7 +288,8 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 - [ ] 全体MAE、RMSEの役割、主要時間帯、欠測率、必要件数、API latency/エラー率の許容条件と根拠を評価前にprotocolへ固定する。既に見た最終結果へ閾値を後付けしない。
 - [ ] APIの同時数・件数・暖機・hardware条件を固定した測定を、予測精度と別に実施する。学習データ量/季節差を理由に改善の因果を断定しない。
 - [ ] 未使用の後続データ期間を確保してから、新しい候補を固定・評価する。必要なデータが未公開なら未達のまま待ち、使用済み期間を新しい独立評価と呼ばない。
-- 完了条件: 同じreportとprotocolから採用/見送りが一意に説明でき、条件不足・悪い候補は昇格を拒否する。最終採用は理由付きの手動承認を記録する。
+- [ ] 初回bootstrap用のprotocol/candidate/final-evaluation経路を実装する。incumbentなしでは同target historical baselineだけを比較対象にし、UCI modelや未登録の仮モデルをincumbent扱いしない。
+- 完了条件: 同じreportとprotocolから採用/見送りが一意に説明でき、条件不足・悪い候補は昇格を拒否する。最終採用は理由付きの手動承認を記録する。初回bootstrap基準の提案と未使用評価候補期間は[`capital-bootstrap-gate.md`](../261021/docs/capital-bootstrap-gate.md)を参照。数値gateはユーザー合意・protocol freeze前には適用しない。
 
 #### R07 監視の参照・期間・退化ケース
 

@@ -656,3 +656,28 @@ UCI Bike SharingとCapital Bikeshareの件数は意味が異なるため、UCI�
 - `DATA_PROFILE_ID=capital-bikeshare ./scripts/bikectl data audit`の限定確認では、UCIではなく新profileの`data/derived/capitalbikeshare-next/manifest.json`を探し、現時点で未作成のため予想どおり停止した。これは接続確認やデータ監査の成功を意味しない。
 - 既存41 ZIPを新規pathへmanifest v2で再集計中。既存CSV/manifest、使用済み評価窓、UCI稼働stackは変更していない。処理完了後に全archive hashとCSV/manifestの再読込を検査する。
 - Capitalに同targetのmodel/監視参照がなく、新v2 CSV作成後もseed hash、MLflow model loading、offline/API parity、隔離Composeのend-to-end配信証拠はない。R05は完了扱いにしない。PSI監視参照はR06/R07のbootstrap/監視基準決定後に確立する。
+
+## 2026-10-28: R01/R05再集計とR06 bootstrap案
+
+### R01/R05の未記録だった実行結果
+
+以前のR05記録では全41 ZIPの再集計を「処理中」としていたため、その後の実績を追記する。出力は旧成果物と別の`data/derived/capitalbikeshare-next/`を使い、原本ZIP・旧CSV・旧manifestは変更していない。
+
+- 41 ZIPを読み込み、raw行数19,440,291、一意ride ID 19,440,086、同一IDの重複205行を検出した。期間外592,491件、DST曖昧時刻で除外1,568件、出力trip starts 18,846,027件で収支が一致した。
+- 2023-01-01〜2026-05-01の時間データ29,177行を作成。時間枠の欠落7件は春の存在しないローカル時刻4枠と、秋のoffset不明な曖昧時刻3枠に対応する。出力CSV SHA-256 `cc4b39c67db286d30300cc6fb10a0f37e942eb337a7bd964795bbdd891762a96`は旧CSVと一致した。したがって集計のbyte再現を確認したが、新しい評価期間は増えていない。
+- 最初に作成したmanifestの`audit`が既定UCI profile/targetを記録している問題を発見した。集計CSV/hash自体は一致していたが、manifestをそのまま有効証拠として使わなかった。原因は集計時の監査情報が実行環境の既定profileを参照していたこと。生成scriptをCapital profile設定からtimezone/target/profile/label ruleを明示するよう直し、テストも追加したうえで、新規manifestのaudit sectionだけを原本から再計算して修正した。
+- 修正後の`DATA_PROFILE_ID=capital-bikeshare ... data audit`は成功。`data/reports/capital-bikeshare/data-audit-v2.json`でprofile `capital-bikeshare`、target `capital-trip-starts-hourly-v1`、29,177行、CSV hashを確認した。3時間のlabel delayは実測値ではなくsimulation assumptionと記録される。
+- 独立SQLite `data/bikeops-capital-bikeshare.db`へ29,177行をseedした。読み取り照会で観測行数29,177、distinct data hash 1、metadata profile/targetが一致した。これはSQLite分離の確認であり、隔離PostgreSQL/MLflowやDockerサービス起動の確認ではない。
+- 既存UCI stackと評価台帳は変更せず、新候補学習、MLflow登録、最終評価、API昇格もしていない。
+
+### 未使用期間とR06の次段階
+
+- Capital Bikeshare公式の[system data page](https://capitalbikeshare.com/system-data)から、2026年6〜9月archiveのURLへHEAD requestを行いHTTP 200を確認した。2026年10月archiveは確認時点で404。内容はダウンロードも閲覧もしていないため、使用済み評価期間には数えていない。
+- `docs/capital-bootstrap-gate.md`へ、未使用の2026年6〜7月validation、8月1日03時〜10月1日の後続評価、historical baseline比較、validation gateと運用許可の分離を提案として記録した。`p95 <= 250 ms`等の数値は未承認・未凍結で、実験には適用していない。
+- 初回モデルは同target incumbentがないため、既存の候補CLI/protocol経路では実行できないことを確認した。次の実装対象は、合意済みgateを用いたincumbentなしbootstrap protocol/candidate/final-evaluation経路とそのテスト。データを取得して期間を消費する前にこの経路を整備する。
+
+### 検証
+
+- 変更後の全44テストが成功。`compileall -q src tests scripts`、`pip check`、`sh -n scripts/bikectl`、`docker compose -f compose.yaml -f compose.capital.yaml config -q`、`git diff --check`も成功。
+- `tzdata==2026.5`を依存lockとこのWSL venvに追加し、zoneinfoがシステム設定に依存しないことを確認した。
+- R05の隔離Compose実起動、PostgreSQL接続、Capital model loading、offline/API parity、deployは未実施。R05は部分完了のまま。

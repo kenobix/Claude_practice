@@ -207,6 +207,8 @@ MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0
 
 2026-10-28時点で手元にあるCapital Bikeshareの2025年上期validationと2025-07〜2026-04の後続期間は、いずれも既評価として再利用禁止です。UCI登録版3は別targetのモデルなので、Capital候補のincumbentとして使いません。まだ`bike-demand-capital`配下の同target incumbentも承認済みmonitor参照期間もありません。このため、現在は新protocolの作成・候補選定・最終評価を実行しないでください。まず別target用の初回modelと合否規則をR06に従って確立します。
 
+初回Capital modelのvalidation/後続期間と比較gateの提案は[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)にあります。これは未承認の案です。2026年6〜9月公式archiveはURLの存在確認のみで、内容をまだ取得・閲覧していません。gateとsplitを合意・凍結するまで、ダウンロード後の集計データを候補学習や評価に使わないでください。
+
 初回modelが用意され、未使用のvalidation・後続期間を確保した後の手順は次のとおりです。出典の公開が遅れている場合は、新期間が入手できるまで待ちます。
 
 取込先は新しいパスを指定します。既存CSV/manifestの上書きは拒否されます。`--archive-start`/`--archive-end`は取得したZIPの全月を連続して指定し、data期間の境界月も含めます。出力CSV・manifestは一組で保存され、manifestのSHA-256が一致してから利用できます。
