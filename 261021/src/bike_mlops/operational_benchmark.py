@@ -8,6 +8,7 @@ import importlib.metadata
 import math
 import os
 import platform
+import re
 import subprocess
 import sys
 import time
@@ -144,6 +145,7 @@ def _prediction_is_valid(
     model_name: str,
     model_version: str,
     artifact_sha256: str,
+    candidate_id: str,
 ) -> str | None:
     if status_code != 200:
         return f"unexpected HTTP status {status_code}"
@@ -156,6 +158,7 @@ def _prediction_is_valid(
         "target_contract_id": TARGET_CONTRACT_ID,
         "model_name": model_name,
         "model_version": model_version,
+        "candidate_id": candidate_id,
         "artifact_sha256": artifact_sha256,
         "feature_contract_version": DATA_PROFILE["feature_contract_version"],
     }
@@ -220,10 +223,11 @@ def _machine_and_container_resources() -> dict:
         "docker", "compose", "--project-name", "bike-mlops-capital",
         "-f", str(PROJECT_ROOT / "compose.yaml"),
         "-f", str(PROJECT_ROOT / "compose.capital.yaml"),
+        "-f", str(PROJECT_ROOT / "compose.capital-staging.yaml"),
     ]
     try:
         listed = subprocess.run(
-            compose + ["ps", "--status", "running", "-q", "postgres", "mlflow", "api-blue", "api-green", "caddy"],
+            compose + ["ps", "--status", "running", "-q", "postgres", "mlflow", "api-blue", "api-green", "caddy", "postgres-staging", "api-staging"],
             check=True, capture_output=True, text=True, timeout=15,
         )
         container_ids = [line.strip() for line in listed.stdout.splitlines() if line.strip()]
@@ -278,6 +282,7 @@ def run_capital_operational_benchmark(
     *,
     api_url: str,
     model_version: str,
+    candidate_id: str,
     start: str,
     end: str,
     request_fn: Callable | None = None,
@@ -287,6 +292,8 @@ def run_capital_operational_benchmark(
 ) -> dict:
     if DATA_PROFILE_ID != "capital-bikeshare":
         raise ValueError("Run the operational benchmark with DATA_PROFILE_ID=capital-bikeshare")
+    if not re.fullmatch(r"[0-9a-f]{64}", candidate_id):
+        raise ValueError("Benchmark requires the exact lowercase SHA-256 candidate ID")
     base_url = validate_local_api_url(api_url)
     start_time, end_time = pd.Timestamp(start), pd.Timestamp(end)
     if start_time.tzinfo or end_time.tzinfo or start_time >= end_time:
@@ -314,6 +321,8 @@ def run_capital_operational_benchmark(
             or version.get("target_contract_id") != TARGET_CONTRACT_ID
             or version.get("model_name") != DATA_PROFILE["model_name"]
             or str(version.get("model_version")) != str(model_version)
+            or version.get("candidate_id") != candidate_id
+            or version.get("deployment_permission") != "blocked"
             or version.get("quality_gate_status") != "passed"
             or not isinstance(version.get("artifact_sha256"), str)
             or len(version["artifact_sha256"]) != 64
@@ -324,6 +333,8 @@ def run_capital_operational_benchmark(
             or ready.get("target_contract_id") != TARGET_CONTRACT_ID
             or ready.get("model_name") != version["model_name"]
             or str(ready.get("model_version")) != str(model_version)
+            or ready.get("candidate_id") != candidate_id
+            or ready.get("deployment_permission") != "blocked"
         ):
             raise RuntimeError("Capital API /ready identity differs from /version")
     except Exception:
@@ -399,6 +410,7 @@ def run_capital_operational_benchmark(
                     model_name=DATA_PROFILE["model_name"],
                     model_version=str(model_version),
                     artifact_sha256=version["artifact_sha256"],
+                    candidate_id=candidate_id,
                 )
             except KeyboardInterrupt:
                 latency_ms = (time.perf_counter() - began) * 1000.0
@@ -474,6 +486,7 @@ def run_capital_operational_benchmark(
         "model_identity": {
             "model_name": version["model_name"],
             "model_version": str(version["model_version"]),
+            "candidate_id": version["candidate_id"],
             "artifact_sha256": version["artifact_sha256"],
             "feature_contract_version": version["feature_contract_version"],
         },

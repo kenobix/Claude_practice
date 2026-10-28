@@ -11,8 +11,9 @@ from bike_mlops.operational_benchmark import run_capital_operational_benchmark, 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the fixed local Capital API operational benchmark")
-    parser.add_argument("--api-url", default="http://127.0.0.1:8180")
+    parser.add_argument("--api-url", default="http://127.0.0.1:8110")
     parser.add_argument("--model-version", required=True)
+    parser.add_argument("--candidate-id", required=True)
     parser.add_argument("--start", default="2026-04-01 00:00:00")
     parser.add_argument("--end", default="2026-04-08 00:00:00")
     parser.add_argument(
@@ -30,6 +31,7 @@ def main() -> None:
     report = run_capital_operational_benchmark(
         api_url=args.api_url,
         model_version=args.model_version,
+        candidate_id=args.candidate_id,
         start=args.start,
         end=args.end,
     )

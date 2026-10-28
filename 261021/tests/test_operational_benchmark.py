@@ -48,6 +48,7 @@ class OperationalBenchmarkTests(unittest.TestCase):
             "target": {"timezone_name": "America/New_York"},
         }
         artifact_hash = "a" * 64
+        candidate_id = "c" * 64
         calls: list[tuple[str, dict | None]] = []
 
         def request_fn(url, payload=None, timeout=10):
@@ -59,6 +60,8 @@ class OperationalBenchmarkTests(unittest.TestCase):
                     "target_contract_id": "capital-trip-starts-hourly-v1",
                     "model_name": profile["model_name"],
                     "model_version": "7",
+                    "candidate_id": candidate_id,
+                    "deployment_permission": "blocked",
                 }
             if url.endswith("/version"):
                 return 200, {
@@ -66,6 +69,8 @@ class OperationalBenchmarkTests(unittest.TestCase):
                     "target_contract_id": "capital-trip-starts-hourly-v1",
                     "model_name": profile["model_name"],
                     "model_version": "7",
+                    "candidate_id": candidate_id,
+                    "deployment_permission": "blocked",
                     "artifact_sha256": artifact_hash,
                     "quality_gate_status": "passed",
                     "feature_contract_version": profile["feature_contract_version"],
@@ -78,6 +83,7 @@ class OperationalBenchmarkTests(unittest.TestCase):
                 "target_contract_id": "capital-trip-starts-hourly-v1",
                 "model_name": profile["model_name"],
                 "model_version": "7",
+                "candidate_id": candidate_id,
                 "artifact_sha256": artifact_hash,
                 "data_version_sha256": "f" * 64,
                 "feature_contract_version": profile["feature_contract_version"],
@@ -89,8 +95,9 @@ class OperationalBenchmarkTests(unittest.TestCase):
             patch.object(benchmark, "DATA_PROFILE", profile),
         ):
             result = benchmark.run_capital_operational_benchmark(
-                api_url="http://127.0.0.1:8180",
+                api_url="http://127.0.0.1:8110",
                 model_version="7",
+                candidate_id=candidate_id,
                 start="2026-04-01 00:00:00",
                 end="2026-04-08 00:00:00",
                 request_fn=request_fn,
@@ -100,6 +107,7 @@ class OperationalBenchmarkTests(unittest.TestCase):
         self.assertEqual(result["operational_gate"]["observed"]["measured_requests"], 1000)
         self.assertEqual(result["operational_gate"]["observed"]["retry_count"], 0)
         self.assertEqual(result["deployment_permission"]["status"], "blocked")
+        self.assertEqual(result["model_identity"]["candidate_id"], candidate_id)
         prediction_calls = [(url, payload) for url, payload in calls if payload is not None]
         self.assertEqual(len(prediction_calls), 1050)
         self.assertEqual(len({payload["request_id"] for _, payload in prediction_calls}), 1050)
@@ -114,6 +122,7 @@ class OperationalBenchmarkTests(unittest.TestCase):
             "feature_contract_version": "bike-demand-features-v1",
             "target": {"timezone_name": "America/New_York"},
         }
+        candidate_id = "c" * 64
         calls = []
 
         def request_fn(url, payload=None, timeout=10):
@@ -125,12 +134,15 @@ class OperationalBenchmarkTests(unittest.TestCase):
                     "target_contract_id": "capital-trip-starts-hourly-v1",
                     "model_name": profile["model_name"],
                     "model_version": "7",
+                    "candidate_id": candidate_id,
+                    "deployment_permission": "blocked",
                 }
             return 200, {
                 "data_profile_id": "capital-bikeshare",
                 "target_contract_id": "capital-trip-starts-hourly-v1",
                 "model_name": profile["model_name"],
                 "model_version": "8",
+                "candidate_id": candidate_id,
                 "artifact_sha256": "a" * 64,
                 "quality_gate_status": "passed",
             }
@@ -142,8 +154,9 @@ class OperationalBenchmarkTests(unittest.TestCase):
         ):
             with self.assertRaisesRegex(RuntimeError, "identity/readiness"):
                 benchmark.run_capital_operational_benchmark(
-                    api_url="http://127.0.0.1:8180",
+                    api_url="http://127.0.0.1:8110",
                     model_version="7",
+                    candidate_id=candidate_id,
                     start="2026-04-01 00:00:00",
                     end="2026-04-08 00:00:00",
                     request_fn=request_fn,
@@ -158,6 +171,7 @@ class OperationalBenchmarkTests(unittest.TestCase):
             "feature_contract_version": "bike-demand-features-v1",
             "target": {"timezone_name": "America/New_York"},
         }
+        candidate_id = "c" * 64
 
         def request_fn(url, payload=None, timeout=10):
             if url.endswith("/ready"):
@@ -167,6 +181,8 @@ class OperationalBenchmarkTests(unittest.TestCase):
                     "target_contract_id": "capital-trip-starts-hourly-v1",
                     "model_name": profile["model_name"],
                     "model_version": "7",
+                    "candidate_id": candidate_id,
+                    "deployment_permission": "blocked",
                 }
             if url.endswith("/version"):
                 return 200, {
@@ -174,8 +190,10 @@ class OperationalBenchmarkTests(unittest.TestCase):
                     "target_contract_id": "capital-trip-starts-hourly-v1",
                     "model_name": profile["model_name"],
                     "model_version": "7",
+                    "candidate_id": candidate_id,
                     "artifact_sha256": "a" * 64,
                     "quality_gate_status": "passed",
+                    "deployment_permission": "blocked",
                     "feature_contract_version": profile["feature_contract_version"],
                 }
             if ":measured:" in payload["request_id"]:
@@ -188,6 +206,7 @@ class OperationalBenchmarkTests(unittest.TestCase):
                 "target_contract_id": "capital-trip-starts-hourly-v1",
                 "model_name": profile["model_name"],
                 "model_version": "7",
+                "candidate_id": candidate_id,
                 "artifact_sha256": "a" * 64,
                 "data_version_sha256": "f" * 64,
                 "feature_contract_version": profile["feature_contract_version"],
@@ -199,8 +218,9 @@ class OperationalBenchmarkTests(unittest.TestCase):
             patch.object(benchmark, "DATA_PROFILE", profile),
         ):
             report = benchmark.run_capital_operational_benchmark(
-                api_url="http://127.0.0.1:8180",
+                api_url="http://127.0.0.1:8110",
                 model_version="7",
+                candidate_id=candidate_id,
                 start="2026-04-01 00:00:00",
                 end="2026-04-08 00:00:00",
                 request_fn=request_fn,
@@ -216,8 +236,9 @@ class OperationalBenchmarkTests(unittest.TestCase):
         with patch.object(benchmark, "DATA_PROFILE_ID", "capital-bikeshare"):
             with self.assertRaisesRegex(ValueError, "exactly 168 hours"):
                 benchmark.run_capital_operational_benchmark(
-                    api_url="http://127.0.0.1:8180",
+                    api_url="http://127.0.0.1:8110",
                     model_version="7",
+                    candidate_id="c" * 64,
                     start="2026-04-01 00:00:00",
                     end="2026-04-07 23:00:00",
                 )
@@ -240,6 +261,7 @@ class OperationalBenchmarkTests(unittest.TestCase):
             "target_contract_id": "capital-trip-starts-hourly-v1",
             "model_name": "bike-demand-capital",
             "model_version": "7",
+            "candidate_id": "c" * 64,
             "artifact_sha256": "a" * 64,
             "data_version_sha256": "f" * 64,
             "feature_contract_version": "bike-demand-features-v1",
@@ -257,6 +279,17 @@ class OperationalBenchmarkTests(unittest.TestCase):
                 model_name="bike-demand-capital",
                 model_version="7",
                 artifact_sha256="a" * 64,
+                candidate_id="c" * 64,
+            ))
+            self.assertIn("candidate_id", benchmark._prediction_is_valid(
+                200,
+                response,
+                request_id=response["request_id"],
+                target_hour=response["target_hour"],
+                model_name="bike-demand-capital",
+                model_version="7",
+                artifact_sha256="a" * 64,
+                candidate_id="0" * 64,
             ))
             self.assertIn("data-version SHA", benchmark._prediction_is_valid(
                 200,
@@ -266,6 +299,7 @@ class OperationalBenchmarkTests(unittest.TestCase):
                 model_name="bike-demand-capital",
                 model_version="7",
                 artifact_sha256="a" * 64,
+                candidate_id="c" * 64,
             ))
             self.assertIn("finite and non-negative", benchmark._prediction_is_valid(
                 200,
@@ -275,6 +309,7 @@ class OperationalBenchmarkTests(unittest.TestCase):
                 model_name="bike-demand-capital",
                 model_version="7",
                 artifact_sha256="a" * 64,
+                candidate_id="c" * 64,
             ))
 
     def test_report_writer_refuses_overwrite_and_outside_paths(self):

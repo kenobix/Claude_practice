@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 
 import pandas as pd
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import APIRouter, FastAPI, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 
 from bike_mlops import __version__
@@ -112,10 +112,13 @@ async def lifespan(app: FastAPI):
     app.state.model_version = version
     app.state.artifact_hash = artifact_hash
     app.state.model_quality_gate = quality_gate
+    app.state.candidate_id = os.getenv("CAPITAL_STAGING_CANDIDATE_ID")
     app.state.model_error = model_error
     app.state.started_at = datetime.now(timezone.utc).isoformat()
     yield
 
+
+api_router = APIRouter()
 
 app = FastAPI(
     title="Bike Demand Prediction API",
@@ -127,12 +130,12 @@ app = FastAPI(
 )
 
 
-@app.get("/health")
+@api_router.get("/health")
 def health():
     return {"status": "alive"}
 
 
-@app.get("/ready")
+@api_router.get("/ready")
 def ready(request: Request):
     if not hasattr(request.app.state, "database"):
         raise HTTPException(status_code=503, detail="Application has not completed startup")
@@ -149,6 +152,8 @@ def ready(request: Request):
         "target_contract_id": TARGET_CONTRACT_ID,
         "model_name": MODEL_NAME,
         "model_version": request.app.state.model_version,
+        "candidate_id": getattr(request.app.state, "candidate_id", None),
+        "deployment_permission": "blocked" if getattr(request.app.state, "candidate_id", None) else None,
         "quality_gate_status": request.app.state.model_quality_gate,
         "timezone_database": (
             timezone_data_identity(DATA_PROFILE["target"]["timezone_name"])
@@ -158,7 +163,7 @@ def ready(request: Request):
     }
 
 
-@app.get("/version")
+@api_router.get("/version")
 def version(request: Request):
     return {
         "application_version": __version__,
@@ -167,6 +172,8 @@ def version(request: Request):
         "target_contract_id": TARGET_CONTRACT_ID,
         "model_name": MODEL_NAME,
         "model_version": getattr(request.app.state, "model_version", None),
+        "candidate_id": getattr(request.app.state, "candidate_id", None),
+        "deployment_permission": "blocked" if getattr(request.app.state, "candidate_id", None) else None,
         "artifact_sha256": getattr(request.app.state, "artifact_hash", None),
         "quality_gate_status": getattr(request.app.state, "model_quality_gate", None),
         "feature_contract_version": FEATURE_CONTRACT_VERSION,
@@ -178,7 +185,7 @@ def version(request: Request):
     }
 
 
-@app.post("/observations", status_code=status.HTTP_202_ACCEPTED)
+@api_router.post("/observations", status_code=status.HTTP_202_ACCEPTED)
 def ingest_observation(payload: ObservationRequest, request: Request):
     _validate_request_profile(payload.data_profile_id, payload.target_contract_id)
     _validate_wall_clock_timestamp(payload.timestamp)
@@ -210,7 +217,7 @@ def ingest_observation(payload: ObservationRequest, request: Request):
     }
 
 
-@app.post("/predict")
+@api_router.post("/predict")
 def predict(payload: PredictionRequest, request: Request):
     _validate_request_profile(payload.data_profile_id, payload.target_contract_id)
     _validate_wall_clock_timestamp(payload.target_hour)
@@ -237,7 +244,9 @@ def predict(payload: PredictionRequest, request: Request):
         if saved:
             if saved["input_hash"] != request_hash:
                 raise HTTPException(status_code=409, detail="request_id was already used with different input")
-            return _prediction_response(saved)
+            response = _prediction_response(saved)
+            response["candidate_id"] = getattr(request.app.state, "candidate_id", None)
+            return response
         if request.app.state.model is None:
             raise HTTPException(status_code=503, detail=request.app.state.model_error)
         observations = request.app.state.database.observations_as_of(payload.target_hour, payload.as_of)
@@ -283,7 +292,9 @@ def predict(payload: PredictionRequest, request: Request):
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         saved = request.app.state.database.save_prediction(record)
-        return _prediction_response(saved)
+        response = _prediction_response(saved)
+        response["candidate_id"] = getattr(request.app.state, "candidate_id", None)
+        return response
     except HTTPException:
         raise
     except RequestConflict as error:
@@ -309,3 +320,6 @@ def _prediction_response(record: dict) -> dict:
         "data_version_sha256": record["data_version_sha256"],
         "feature_contract_version": record["feature_contract_version"],
     }
+
+
+app.include_router(api_router)

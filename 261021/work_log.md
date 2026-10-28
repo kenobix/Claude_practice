@@ -901,3 +901,89 @@ sh -n scripts/bikectl
 - GitHub Actions contract tests: run `40659664076` success。lock install、`pip check`、68 tests、`compileall`が完了。
 - GitHub Pages build/deploy: run `40659664964` success。buildとdeployの両jobが完了。
 - push後の作業ツリーでは、この作業対象のtracked変更は残っていない。既存の未追跡`260701/charts/`、`260701/logs/`、`260905/sets/bookkeeping-2kyu/images/assekiritono-flow.png`はこの作業に含めず、そのまま保持した。
+
+## 2026-10-28: R06 blocked registrationとcandidate staging経路
+
+### 実装
+
+前回作業の優先順に従い、通常runtimeのdeployment gateを変更せずに、validation/final精度gateを通過したCapital候補の運用測定を可能にする経路を作った。データ・評価期間の新規取得や消費はしていない。
+
+- `src/bike_mlops/capital_staging.py`と`scripts/register_capital_candidate.py`を追加。登録前にcanonical candidate bundle位置、candidate ID、model/protocol/validation evidence/source snapshotのSHA、source snapshot内のソースtree hash、bootstrap protocolのschema/policyを検査する。candidate validationとfinal accuracy gateを保存値だけで信じず、MAE/RMSE値から再計算してreport内の全gate証拠と一致することを要求する。final reportは同じcandidate/model/protocol/data/manifest/validation windowを指し、評価期間・件数が凍結protocolと一致し、再fitなし・deployment blocked・operational未評価であることを要求する。
+- 登録先を`http://localhost:5001`または`127.0.0.1:5001`のCapital MLflowに制限した。MLflow version tagsにprofile/target、validation/final=passed、operational=not_evaluated、deployment_permission=blocked、candidate/raw artifact/report/protocol hashとpolicy identityを記録する。登録model artifactを再取得して`MLmodel`とdirectory SHAを確認する。候補IDの重複登録は拒否し、同一IDの再実行は証拠tag/artifactが一致する場合だけ再利用する。
+- version・candidate ID・candidate model SHA・selection/final report SHA・protocol SHA・registered artifact SHAを含む`data/runtime-capital-staging/staging.env`を作成する。ファイルは異なるidentityで上書きせず、プロジェクト外へ解決するsymlink pathも拒否する。認証情報はこのファイルへ書かない。
+- `src/bike_mlops/staging_api.py`を追加し、既存API routeを専用ASGI appから再利用する。staging loaderはprofile/target、固定policy、registry READY、blocked状態、すべてのpinned candidate/report/artifact identityを検査し、登録artifact hashが一致した後でだけ読み込む。通常API loader、runtime init、deploy promoteは変更していない。APIのready/version/predict応答にstaging candidate IDとblocked permissionを載せる。
+- `compose.capital-staging.yaml`を追加。Caddyへ接続しない候補専用APIをloopback `127.0.0.1:8110`で公開し、予測監査DBは`capital-staging-postgres-data` volumeでblue/green側と分離する。DB seed用にloopback `127.0.0.1:55434`を公開する。隔離Capital MLflow serviceは共有する。
+- `scripts/seed_capital_staging.py`を追加。現在のCapital profile既定CSV/manifestを既存validatorで確認してstaging PostgreSQLへseedする。パスワードは環境変数から受け取り、URLへpercent-encodeして使用し、出力・ファイルには保存しない。DBをseedしてからstaging APIを起動する手順を`docs/capital-bootstrap-gate.md`と`docs/runbook.md`へ記載した。
+- 固定benchmarkに必須の64桁candidate ID引数を追加。`/ready`・`/version`・全prediction応答でcandidate/version/artifact identityと`deployment_permission=blocked`を照合し、レポートのmodel identityにもcandidate IDを残す。default URLをCaddy proxyからstaging API `127.0.0.1:8110`へ変更し、Docker資源取得対象にもstaging DB/APIを含めた。
+- `../261014/plan_mlops.md`とgate文書に、今回の実装範囲と、まだ実行していないMLflow/Compose integration、実measurement、tag更新、実データ作業を区別して追記した。
+
+### デバッグ・検証
+
+- 初期synthetic bundle testで、fixture作成directoryをその子directoryへrenameして`OSError: Invalid argument`になった。実装ではなくfixture構造の誤りだったため、temporary bundleをsiblingに置いてからcanonical candidate directoryへrenameする形に直した。
+- 次のstaging fixtureでは、selection reportの`validation_gate_status`・固定policy・validation metricと、final reportのselection path/source/window/MAE/RMSEが不足してfalse rejectした。production条件は緩めず、実レポート形状に合わせてfixtureを補った。さらに実装でselection/finalそれぞれのMAE/RMSE gateを再計算することで、ステータス文字列だけを変更した偽の合格reportを登録できないようにした。
+- operational benchmark fixtureは新しいpreflight条件`deployment_permission=blocked`とcandidate IDを返さず、正当に拒否された。正常・中断・候補不一致fixtureへ値を追加し、既存API契約の条件は変更しなかった。
+- 制限付きshellからFastAPI TestClientを含むテストを実行したところsocket初期化の段階で停止したため中断した。ローカルsocketを使うテストとして承認付き通常実行へ切替え、API testを含むfull suiteを完走した。
+- 読み合わせ中にbenchmarkのerror countが二重加算されていると一度誤認したが、該当コードを再確認するとincrementは1回だった。これは出力の読み違いで、実装変更はしていない。
+
+```bash
+.venv/bin/python -m unittest discover -s tests -v
+# 71 tests, OK (9.293s)。FastAPI TestClientを含む。Starlette/httpx DeprecationWarningあり。
+
+docker compose -f compose.yaml -f compose.capital.yaml -f compose.capital-staging.yaml config -q
+# 成功。3ファイル結合の静的Compose検査のみ。serviceは起動していない。
+
+.venv/bin/python -m compileall -q src scripts tests
+.venv/bin/python -m pip check
+sh -n scripts/bikectl
+git diff --check
+# 成功。pip checkはNo broken requirements found。pip cache directory書込不可warningのみ。
+
+.venv/bin/python scripts/register_capital_candidate.py --help
+DATA_PROFILE_ID=capital-bikeshare .venv/bin/python scripts/seed_capital_staging.py --help
+.venv/bin/python scripts/benchmark_capital_runtime.py --help
+# 成功。CLI option確認。seed helpのみでDB接続はしていない。
+```
+
+現在ある実candidate/final reportと稼働するCapital MLflow/Composeを使った登録・load・DB seed・API system testはしていない。staging API起動や実予測benchmarkも未実施。これは実装と合成/静的検証の節目であり、stagingが稼働した証拠や精度/運用gateの合格を示すものではない。UCI stack/modelは操作していない。未使用評価期間も消費していない。
+
+### 残作業の優先順
+
+1. 実candidate/final reportが作成された後に限り、隔離Capital MLflowでblocked registrationのidempotency・hash・tagsを確認する。
+2. staging ComposeのDBだけを起動し、seed scriptでCapital CSV/manifestの検証・投入件数を照合。その後APIを起動し、staging DBの`/ready`・予測監査保存、candidate ID・version・hash応答を確認する。
+3. stagingの実candidate APIでoffline/API prediction parity、登録identity不一致・欠落・破損時のready拒否、通常`runtime init`/`deploy promote`がblocked versionを拒否するsystem testを行う。
+4. warming 50/serial 1,000 fixed benchmarkをstagingで実測し、operational report hash/statusを正確なMLflow versionへ追記する経路を実装・試験する。全gate後の理由付き手動approvalとeligible tag最終設定も別途検証する。
+5. その後でのみ、計画書に沿って未使用archive範囲を確認し、protocolを凍結してvalidation/final評価へ進む。
+
+### 最終レビューで追加した証拠整合性検査
+
+差分レビューで、blocked registrationがfinal reportの集計指標からgateを再計算していたものの、その指標の元になったfinal row CSVと消費台帳との照合が不足していると分かった。登録前に以下を拒否するよう強化した。
+
+- frozen protocolがcandidate reportと同じデータSHA・source manifest SHAを指すこと。
+- final reportがproject内canonical report directoryにあるrow-level prediction CSVを指し、CSV SHA、protocol固定件数・期間、時間順/一意な時間別timestamp、ラベル到着遅延を満たすこと。
+- 保存済みactual/candidate/baseline予測行からMAE/RMSEを再計算し、final reportの集計値と許容誤差内で一致すること。モデルを再評価・再fitせず、最終期間を再利用しない。
+- 評価台帳に同じwindow/data/targetのcompleted recordがあり、attemptのprotocol SHA・candidate artifact SHA・detailのreport SHAが一致すること。
+- staging model loaderがMLflow READY statusと必要tagに加え、artifact directoryをhash検査してからだけloadすること。
+
+テストfixtureの初回実行では、MLflow loader fixtureの`target_contract_id`がCapitalではなくdefault UCI値になってregistry tag検証で拒否された。Capital targetを明示するfixtureに直し、production gateは緩めなかった。最初の限定sandbox full-suite実行はFastAPI TestClientのsocket利用で停止したため中断し、承認付き通常WSL実行で完走した。Starlette/httpx DeprecationWarningは残るが、テスト失敗ではない。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m unittest discover -s tests -v
+# 75 tests, OK (10.116s)。FastAPI TestClient、staging loader artifact pinning、row/report/ledger整合性を含む。
+
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+sh -n scripts/bikectl
+docker compose -f compose.yaml -f compose.capital.yaml -f compose.capital-staging.yaml config -q
+.venv/bin/python -m pip check
+# すべて成功。pip checkはNo broken requirements found。pip cache書込不可warningのみ。
+```
+
+この追加検査も合成evidenceである。実candidate/final reportは存在せず、MLflow registration、PostgreSQL seed、staging Compose/API起動、実API/offline parity、1,050件benchmarkは実施していない。データ取得・評価期間の消費・通常UCI稼働環境への変更もない。
+
+### 更新後の最優先残作業
+
+1. 未使用Capitalデータ範囲とbufferを確定し、protocol凍結→一度のvalidation→同一artifactで一度の独立final評価を行う。
+2. 実report/ledgerが揃った後でblocked MLflow登録を行い、登録のidempotency/hash/tagを実serverで照合する。
+3. isolated staging PostgreSQLへのseedとCompose API起動、DB分離・prediction記録・artifact load・HTTP/offline parity・通常deploy拒否をsystem testする。
+4. stagingで50 warmup/1,000 sequential benchmarkを実測し、report hash/statusを該当MLflow versionへ追記する処理を実装・検証する。
+5. validation/final/operational全gateと理由付き承認がある場合のみ`eligible`を最後に設定する経路を検証する。これが完了するまで新しいデータを取得せず、UCI版は変更しない。

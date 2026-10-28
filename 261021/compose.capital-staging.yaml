@@ -1,0 +1,48 @@
+# Candidate-only service. It has its own prediction database and is not behind Caddy.
+# Start only after register-capital-candidate has created data/runtime-capital-staging/staging.env.
+name: bike-mlops-capital
+
+services:
+  postgres-staging:
+    image: postgres:17.6-bookworm
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?set POSTGRES_ADMIN_PASSWORD in .env}
+      POSTGRES_DB: postgres
+      MLFLOW_DB_PASSWORD: ${MLFLOW_DB_PASSWORD:?set MLFLOW_DB_PASSWORD in .env}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?set APP_DB_PASSWORD in .env}
+    volumes:
+      - capital-staging-postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres-init.sh:/docker-entrypoint-initdb.d/10-create-databases.sh:ro
+    ports:
+      - "127.0.0.1:55434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api-staging:
+    build: .
+    command: ["uvicorn", "bike_mlops.staging_api:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      DATABASE_URL: postgresql://bike_app:${APP_DB_PASSWORD:?set APP_DB_PASSWORD in .env}@postgres-staging:5432/bikeops
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_MODEL_NAME: bike-demand-capital
+      FEATURE_CONTRACT_VERSION: bike-demand-features-v1
+      DATA_PROFILE_ID: capital-bikeshare
+      PORT: "8000"
+    env_file:
+      - path: ./data/runtime-capital-staging/staging.env
+        required: false
+    ports:
+      - "127.0.0.1:8110:8000"
+    depends_on:
+      postgres-staging:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  capital-staging-postgres-data:

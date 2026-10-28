@@ -279,6 +279,12 @@ Capital用Composeのファイル結合を確かめるだけなら、サービス
 docker compose -f compose.yaml -f compose.capital.yaml config -q
 ```
 
+validation/final gateを通過した未承認candidateの登録と運用測定は、通常のblue/greenやCaddyへ接続せず、専用DB付きstaging APIで行います。candidate/final reportの照合、blocked登録、起動、candidate IDを固定したbenchmarkの手順と残る検証項目は[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)を参照してください。Composeのstaging設定だけを確認するときは次を実行できます。これはサービスを起動しません。
+
+```bash
+docker compose -f compose.yaml -f compose.capital.yaml -f compose.capital-staging.yaml config -q
+```
+
 ### 手動の昇格
 
 新しい学習版を作り、validationゲート結果をMLflowで確認したあと、承認理由を付けて昇格します。
