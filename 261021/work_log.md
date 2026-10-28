@@ -632,3 +632,4 @@ rollback、中断復旧、破損artifact拒否、PostgreSQL並行要求、障害
 - protocolの宣言期間同士の重複を、観測行の有無に関係なく拒否する。CSVとmanifestへ同じパスを指定する入力も先に拒否する。
 - candidate IDがモデルartifact/validation evidence/source snapshot/品質gate/指標を含むようにし、snapshot内ファイルを再hashしてsource-tree hashと比較する。最終評価時はbundle ID、各SHA、row-level validation、候補/incumbent/baseline予測とvalidation指標を照合し、品質gateを再計算する。
 - 修正後の確認: compileall成功、32テスト成功（2.462秒）、`pip check`成功。Starlette/httpx deprecation warningは引き続き表示される。
+- commit `2820ca4` push後のCI `40638852598` はlock install、`pip check`、32テスト、src/tests/scripts compileを全て通過した。runnerからUbuntu 26移行予定とNode 20 actionのwarningが出たため、現行runner imageを固定しactionをNode 24対応の版へ更新した。根拠は[checkout v7.0.1](https://github.com/actions/checkout/blob/v7.0.1/action.yml)、[setup-python v7.1.0](https://github.com/actions/setup-python/releases/tag/v7.1.0)。この追補のCI結果を確認後にR04を完了扱いにする。

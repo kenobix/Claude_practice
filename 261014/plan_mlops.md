@@ -269,7 +269,7 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 - [x] hostとコンテナは同じrequirements.lockを使い、Python 3.12.11とDocker base tagを設定。候補reportには実際のhost Python/依存版を記録する。lockは現venvの99 packageと一致。
 - [x] candidate bundleにsource snapshotを保存する。
 - [x] 同じ合成開発データで2回学習し、予測完全一致を試験。final期間は使っていない。
-- 完了条件: 32テスト、compileall、pip check成功。GitHub Actionsとclean checkoutからのlock再インストールはpush後確認が必要。Starlette/httpx非推奨警告は既知制限としてwork_logへ記録した。
+- 完了条件: 32テスト、compileall、pip check、clean checkoutでのlock installが成功。commit `2820ca4` のGitHub Actionsもsuccess。実行時に見つかったUbuntu runner移行/Node 20 action警告を解消するaction更新を追補中で、そのCI成功を確認してR04を閉じる。Starlette/httpx非推奨警告は既知制限としてwork_logへ記録した。
 
 #### R05 新しいtarget定義の移行プロファイル
 
