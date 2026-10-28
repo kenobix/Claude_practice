@@ -1048,3 +1048,9 @@ git diff --check
 ```
 
 一時project名のcontainer・volume・imageが残っていないことと、一時ディレクトリ削除を確認した。既存UCI入口`http://127.0.0.1:8080/ready`は片付け前後ともversion 3・passedを返した。新しい実データは取得せず、実評価期間も消費していない。
+
+### コミットとCI
+
+- 上記の修正・検証記録をcommit `a07c581`として`origin/main`へpushした。
+- GitHub Actionsのcontract checks（run `40667516861`）とPages build/deploy（run `40667516327`）はいずれもsuccess。
+- 他の日付ディレクトリの既存untrackedファイル4件は今回の変更に含めていない。
