@@ -24,7 +24,8 @@ from bike_mlops.candidate_artifacts import (
 from bike_mlops.training import build_estimator
 from bike_mlops.features import FEATURE_COLUMNS
 from bike_mlops.features import feature_frame_for_dataset
-from bike_mlops.training import HistoricalBaseline, regression_metrics, segment_mae
+from bike_mlops.quality_gates import baseline_accuracy_gate
+from bike_mlops.training import HistoricalBaseline, regression_metrics, segment_comparison, segment_mae
 from scripts.evaluate_capitalbikeshare_holdout import _verify_validation_evidence
 
 
@@ -163,6 +164,11 @@ class CandidateArtifactTests(unittest.TestCase):
         }
         incumbent_metrics = regression_metrics(validation["cnt"], incumbent_predictions)
         protocol = {
+            "incumbent": {
+                "model_version": "1",
+                "artifact_sha256": "a" * 64,
+                "quality_gate": "passed",
+            },
             "training": {"cutoff": cutoff.isoformat(sep=" "), "rows": int(train_mask.sum())},
             "validation": {
                 "start_inclusive": validation_start.isoformat(sep=" "),
@@ -190,6 +196,87 @@ class CandidateArtifactTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "quality gate"):
             _verify_validation_evidence(
                 dict(selection, quality_gate_passed=False), path, frame, protocol, candidate, incumbent
+            )
+
+    def test_bootstrap_validation_evidence_uses_only_historical_baseline_gate(self):
+        timestamps = pd.date_range("2024-01-01", periods=24 * 10, freq="h")
+        frame = pd.DataFrame({"timestamp": timestamps, "cnt": np.arange(len(timestamps), dtype=int)})
+        validation_start = pd.Timestamp("2024-01-07 00:00:00")
+        validation_end = pd.Timestamp("2024-01-08 00:00:00")
+        cutoff = pd.Timestamp("2024-01-07 03:00:00")
+        train_mask = (frame["timestamp"] < validation_start) & (
+            frame["timestamp"] + pd.Timedelta(hours=3) <= cutoff
+        )
+        validation_mask = (frame["timestamp"] >= validation_start) & (frame["timestamp"] < validation_end)
+        validation = frame.loc[validation_mask].reset_index(drop=True)
+        features = feature_frame_for_dataset(frame)
+
+        class FixedPredictions:
+            def predict(self, rows):
+                if len(rows) != len(validation):
+                    raise AssertionError("unexpected prediction row count")
+                return validation["cnt"].to_numpy(dtype=float)
+
+        candidate = FixedPredictions()
+        candidate_predictions = candidate.predict(features.loc[validation_mask, FEATURE_COLUMNS])
+        baseline_model = HistoricalBaseline().fit(frame.loc[train_mask].reset_index(drop=True), frame)
+        baseline_predictions = baseline_model.predict(validation["timestamp"])
+        path = self.root / "bootstrap-validation-predictions.csv"
+        evidence = pd.DataFrame({
+            "timestamp": validation["timestamp"].map(lambda stamp: stamp.isoformat(sep=" ")),
+            "label_available_at": (validation["timestamp"] + pd.Timedelta(hours=3)).map(
+                lambda stamp: stamp.isoformat(sep=" ")
+            ),
+            "actual": validation["cnt"].astype(int),
+            "candidate_prediction": candidate_predictions,
+            "baseline_prediction": baseline_predictions,
+        })
+        evidence.to_csv(path, index=False, float_format="%.17g")
+        candidate_metrics = regression_metrics(validation["cnt"], candidate_predictions)
+        baseline_metrics = regression_metrics(validation["cnt"], baseline_predictions)
+        gate = baseline_accuracy_gate(candidate_metrics, baseline_metrics, period="validation_selection")
+        validation_report = {
+            "model": candidate_metrics,
+            "baseline": baseline_metrics,
+            "model_by_segment": segment_mae(validation, candidate_predictions),
+            "baseline_by_segment": segment_mae(validation, baseline_predictions),
+            "segment_comparison": segment_comparison(validation, candidate_predictions, baseline_predictions),
+        }
+        selection = {
+            "validation_predictions": {
+                "path": "validation-predictions.csv",
+                "sha256": sha256_file(path),
+                "rows": len(evidence),
+            },
+            "training_row_keys_sha256": _test_row_hash(frame.loc[train_mask].reset_index(drop=True)),
+            "validation_row_keys_sha256": _test_row_hash(validation),
+            "validation": validation_report,
+            "comparison": {
+                "reference": "historical_baseline_only",
+                "incumbent_model_version": None,
+                "incumbent_artifact_sha256": None,
+                "incumbent_quality_gate": None,
+                "incumbent": None,
+                "validation_gate": gate,
+            },
+            "quality_gate_policy_id": gate["policy_id"],
+            "quality_gate_policy_sha256": gate["policy_sha256"],
+            "quality_gate_passed": gate["passed"],
+        }
+        protocol = {
+            "incumbent": None,
+            "training": {"cutoff": cutoff.isoformat(sep=" "), "rows": int(train_mask.sum())},
+            "validation": {
+                "start_inclusive": validation_start.isoformat(sep=" "),
+                "end_exclusive": validation_end.isoformat(sep=" "),
+                "rows": len(validation),
+            },
+            "label_availability": {"delay_hours": 3},
+        }
+        _verify_validation_evidence(selection, path, frame, protocol, candidate, incumbent=None)
+        with self.assertRaisesRegex(ValueError, "quality gate"):
+            _verify_validation_evidence(
+                dict(selection, quality_gate_passed=False), path, frame, protocol, candidate, incumbent=None
             )
 
 

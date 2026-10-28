@@ -33,7 +33,8 @@ from bike_mlops.evaluation_protocol import (
 )
 from bike_mlops.features import FEATURE_COLUMNS, feature_frame_for_dataset
 from bike_mlops.model import load_registered_model
-from bike_mlops.training import HistoricalBaseline, regression_metrics, segment_mae
+from bike_mlops.quality_gates import baseline_accuracy_gate
+from bike_mlops.training import HistoricalBaseline, regression_metrics, segment_comparison, segment_mae
 
 
 def _project_relative(path: Path) -> str:
@@ -85,6 +86,18 @@ def _assert_segments_equal(actual: dict, expected: dict, label: str) -> None:
             raise ValueError(f"Stored candidate {label} segment {segment} does not match row-level evidence")
 
 
+def _assert_segment_comparison_equal(actual: dict, expected: dict) -> None:
+    if actual.keys() != expected.keys():
+        raise ValueError("Stored segment comparisons do not match row-level evidence")
+    for segment, values in expected.items():
+        stored = actual[segment]
+        if stored.get("n") != values["n"]:
+            raise ValueError(f"Stored segment comparison row count differs for {segment}")
+        for metric in ("candidate_mae", "baseline_mae", "delta_mae_candidate_minus_baseline"):
+            if not np.isclose(float(stored.get(metric)), float(values[metric]), rtol=1e-10, atol=1e-10):
+                raise ValueError(f"Stored segment comparison {metric} differs for {segment}")
+
+
 def _verify_validation_evidence(
     selection: dict,
     predictions_path: Path,
@@ -93,16 +106,16 @@ def _verify_validation_evidence(
     candidate,
     incumbent,
 ) -> None:
+    bootstrap_protocol = protocol.get("incumbent") is None
     info = selection["validation_predictions"]
     if info.get("path") != "validation-predictions.csv":
         raise ValueError("Candidate validation-prediction path is not the canonical bundle file")
     if sha256_file(predictions_path) != info.get("sha256"):
         raise ValueError("Candidate validation-predictions SHA-256 mismatch")
     predictions = pd.read_csv(predictions_path)
-    required = {
-        "timestamp", "label_available_at", "actual", "candidate_prediction",
-        "incumbent_prediction", "baseline_prediction",
-    }
+    required = {"timestamp", "label_available_at", "actual", "candidate_prediction", "baseline_prediction"}
+    if not bootstrap_protocol:
+        required.add("incumbent_prediction")
     if (
         set(predictions.columns) != required
         or len(predictions) != protocol["validation"]["rows"]
@@ -129,7 +142,14 @@ def _verify_validation_evidence(
     feature_frame = feature_frame_for_dataset(frame)
     validation_features = feature_frame.loc[validation_mask, FEATURE_COLUMNS].reset_index(drop=True)
     candidate_prediction = np.maximum(candidate.predict(validation_features), 0.0)
-    incumbent_prediction = np.maximum(incumbent.predict(validation_features), 0.0)
+    if bootstrap_protocol:
+        if incumbent is not None:
+            raise ValueError("Baseline-only protocol must not load or compare an incumbent model")
+        incumbent_prediction = None
+    else:
+        if incumbent is None:
+            raise ValueError("Legacy incumbent-comparison protocol is missing its incumbent model")
+        incumbent_prediction = np.maximum(incumbent.predict(validation_features), 0.0)
     training = frame.loc[train_mask].reset_index(drop=True)
     baseline = HistoricalBaseline().fit(training, frame)
     baseline_prediction = baseline.predict(validation["timestamp"])
@@ -141,33 +161,59 @@ def _verify_validation_evidence(
         raise ValueError("Candidate validation label-availability timestamps are incorrect")
     if predictions["actual"].astype(int).tolist() != validation["cnt"].astype(int).tolist():
         raise ValueError("Candidate validation actual values do not match the frozen data")
-    for column, expected in (
+    expected_predictions = [
         ("candidate_prediction", candidate_prediction),
-        ("incumbent_prediction", incumbent_prediction),
         ("baseline_prediction", baseline_prediction),
-    ):
+    ]
+    if incumbent_prediction is not None:
+        expected_predictions.append(("incumbent_prediction", incumbent_prediction))
+    for column, expected in expected_predictions:
         if not np.allclose(predictions[column].to_numpy(dtype=float), expected, rtol=0, atol=1e-9):
             raise ValueError(f"Candidate validation {column} does not match the saved model and data")
 
     validation_report = selection["validation"]
     candidate_metrics = regression_metrics(validation["cnt"], candidate_prediction)
-    incumbent_metrics = regression_metrics(validation["cnt"], incumbent_prediction)
     baseline_metrics = regression_metrics(validation["cnt"], baseline_prediction)
     _assert_metrics_equal(validation_report["model"], candidate_metrics, "candidate")
     _assert_metrics_equal(validation_report["baseline"], baseline_metrics, "baseline")
-    _assert_metrics_equal(selection["comparison"]["incumbent"], incumbent_metrics, "incumbent")
+    if incumbent_prediction is not None:
+        incumbent_metrics = regression_metrics(validation["cnt"], incumbent_prediction)
+        _assert_metrics_equal(selection["comparison"]["incumbent"], incumbent_metrics, "incumbent")
     _assert_segments_equal(
         validation_report["model_by_segment"], segment_mae(validation, candidate_prediction), "candidate"
     )
     _assert_segments_equal(
         validation_report["baseline_by_segment"], segment_mae(validation, baseline_prediction), "baseline"
     )
-    expected_gate = (
-        selection["comparison"]["incumbent_quality_gate"] == "passed"
-        and candidate_metrics["mae"] < incumbent_metrics["mae"]
-        and candidate_metrics["mae"] < baseline_metrics["mae"]
-    )
-    if bool(selection["quality_gate_passed"]) != expected_gate or not expected_gate:
+    if bootstrap_protocol or "segment_comparison" in validation_report:
+        _assert_segment_comparison_equal(
+            validation_report.get("segment_comparison", {}),
+            segment_comparison(validation, candidate_prediction, baseline_prediction),
+        )
+    if bootstrap_protocol:
+        expected_gate = baseline_accuracy_gate(
+            candidate_metrics, baseline_metrics, period="validation_selection"
+        )
+        comparison = selection.get("comparison", {})
+        if (
+            comparison.get("reference") != "historical_baseline_only"
+            or comparison.get("incumbent_model_version") is not None
+            or comparison.get("incumbent_artifact_sha256") is not None
+            or comparison.get("incumbent_quality_gate") is not None
+            or comparison.get("incumbent") is not None
+            or comparison.get("validation_gate") != expected_gate
+            or selection.get("quality_gate_policy_id") != expected_gate["policy_id"]
+            or selection.get("quality_gate_policy_sha256") != expected_gate["policy_sha256"]
+        ):
+            raise ValueError("Candidate bootstrap validation gate/policy differs from row-level evidence")
+        passed = expected_gate["passed"]
+    else:
+        passed = (
+            selection["comparison"]["incumbent_quality_gate"] == "passed"
+            and candidate_metrics["mae"] < incumbent_metrics["mae"]
+            and candidate_metrics["mae"] < baseline_metrics["mae"]
+        )
+    if selection.get("quality_gate_passed") is not passed or not passed:
         raise ValueError("Candidate validation quality gate does not pass when recomputed from row-level evidence")
 
 
@@ -265,7 +311,22 @@ def main() -> None:
     }:
         raise ValueError("Selected candidate validation window differs from the frozen protocol")
     comparison = selection.get("comparison", {})
-    if (
+    bootstrap_protocol = protocol.get("incumbent") is None
+    if bootstrap_protocol:
+        gate_policy = protocol["selection_gate"]
+        if (
+            comparison.get("reference") != "historical_baseline_only"
+            or comparison.get("incumbent_model_version") is not None
+            or comparison.get("incumbent_artifact_sha256") is not None
+            or comparison.get("incumbent_quality_gate") is not None
+            or comparison.get("incumbent") is not None
+            or selection.get("quality_gate_policy_id") != gate_policy["policy_id"]
+            or selection.get("quality_gate_policy_sha256") != gate_policy["policy_sha256"]
+        ):
+            raise ValueError("Selected candidate bootstrap comparison differs from the frozen policy")
+        if not selection.get("quality_gate_passed"):
+            raise ValueError("Candidate did not pass validation selection; final evaluation is not permitted")
+    elif (
         str(comparison.get("incumbent_model_version")) != str(protocol["incumbent"]["model_version"])
         or comparison.get("incumbent_artifact_sha256") != protocol["incumbent"]["artifact_sha256"]
         or comparison.get("incumbent_quality_gate") != protocol["incumbent"]["quality_gate"]
@@ -296,9 +357,20 @@ def main() -> None:
     if selection.get("training_row_keys_sha256") is None or selection.get("validation_row_keys_sha256") is None:
         raise ValueError("Selected candidate report is missing row-level split lineage")
 
-    incumbent_version = str(args.incumbent_version or protocol["incumbent"]["model_version"])
-    if incumbent_version != str(protocol["incumbent"]["model_version"]):
-        raise ValueError("Requested incumbent version differs from the frozen protocol")
+    if bootstrap_protocol:
+        if args.incumbent_version:
+            raise ValueError("A baseline-only bootstrap evaluation must not specify an incumbent version")
+        incumbent_version = None
+        incumbent = None
+        incumbent_sha = None
+        incumbent_gate = None
+    else:
+        incumbent_version = str(args.incumbent_version or protocol["incumbent"]["model_version"])
+        if incumbent_version != str(protocol["incumbent"]["model_version"]):
+            raise ValueError("Requested incumbent version differs from the frozen protocol")
+        incumbent, incumbent_sha, incumbent_gate = load_registered_model(MODEL_NAME, incumbent_version)
+        if incumbent_sha != protocol["incumbent"]["artifact_sha256"] or incumbent_gate != "passed":
+            raise ValueError("Loaded incumbent artifact/gate differs from the frozen protocol")
     evaluation_start = pd.Timestamp(protocol["evaluation"]["start_inclusive"])
     evaluation_end = pd.Timestamp(protocol["evaluation"]["end_exclusive"])
     if args.evaluation_start and pd.Timestamp(args.evaluation_start) != evaluation_start:
@@ -307,10 +379,6 @@ def main() -> None:
         raise ValueError("Requested evaluation end differs from the frozen protocol")
     if protocol["evaluation"]["rows"] <= 0:
         raise ValueError("Frozen protocol contains no reserved evaluation rows")
-
-    incumbent, incumbent_sha, incumbent_gate = load_registered_model(MODEL_NAME, incumbent_version)
-    if incumbent_sha != protocol["incumbent"]["artifact_sha256"] or incumbent_gate != "passed":
-        raise ValueError("Loaded incumbent artifact/gate differs from the frozen protocol")
 
     candidate_sha = artifact_info["sha256"]
     candidate, loaded_sha = load_candidate_model(artifact_path, candidate_sha)
@@ -328,7 +396,9 @@ def main() -> None:
 
         # The selected artifact is loaded as-is. This script never calls fit().
         candidate_prediction = np.maximum(candidate.predict(evaluation_features), 0.0)
-        incumbent_prediction = np.maximum(incumbent.predict(evaluation_features), 0.0)
+        incumbent_prediction = (
+            np.maximum(incumbent.predict(evaluation_features), 0.0) if incumbent is not None else None
+        )
         train_cutoff = pd.Timestamp(protocol["training"]["cutoff"])
         training_start = pd.Timestamp(protocol["validation"]["start_inclusive"])
         training_mask = (frame["timestamp"] < training_start) & (
@@ -340,16 +410,18 @@ def main() -> None:
         baseline = HistoricalBaseline().fit(training_frame, frame)
         baseline_prediction = baseline.predict(evaluation_frame["timestamp"])
 
-        predictions = pd.DataFrame({
+        prediction_columns = {
             "timestamp": evaluation_frame["timestamp"].map(lambda stamp: stamp.isoformat(sep=" ")),
             "label_available_at": (evaluation_frame["timestamp"] + pd.Timedelta(hours=LABEL_DELAY_HOURS)).map(
                 lambda stamp: stamp.isoformat(sep=" ")
             ),
             "actual": evaluation_frame["cnt"].astype(int),
             "candidate_prediction": candidate_prediction,
-            "incumbent_prediction": incumbent_prediction,
             "baseline_prediction": baseline_prediction,
-        })
+        }
+        if incumbent_prediction is not None:
+            prediction_columns["incumbent_prediction"] = incumbent_prediction
+        predictions = pd.DataFrame(prediction_columns)
         predictions_path = args.output.with_suffix(".predictions.csv")
         if predictions_path.exists():
             raise FileExistsError(f"Refusing to overwrite row-level evidence: {predictions_path}")
@@ -366,6 +438,21 @@ def main() -> None:
         finally:
             temporary_predictions.unlink(missing_ok=True)
 
+        candidate_metrics = regression_metrics(evaluation_frame["cnt"], candidate_prediction)
+        baseline_metrics = regression_metrics(evaluation_frame["cnt"], baseline_prediction)
+        final_accuracy_gate = (
+            baseline_accuracy_gate(candidate_metrics, baseline_metrics, period="final_evaluation")
+            if bootstrap_protocol
+            else None
+        )
+        deployment_blockers = []
+        if final_accuracy_gate is None:
+            deployment_blockers.append("final accuracy gate has not been computed under the bootstrap policy")
+        elif not final_accuracy_gate["passed"]:
+            deployment_blockers.append("final accuracy gate failed or could not be evaluated")
+        deployment_blockers.extend(
+            ["operational gate has not been measured", "manual approval has not been recorded"]
+        )
         summary = {
             "evaluation_kind": "frozen_candidate_reserved_out_of_time_evaluation",
             "data_profile_id": DATA_PROFILE_ID,
@@ -390,19 +477,35 @@ def main() -> None:
                 "row_level_predictions_sha256": sha256_file(predictions_path),
             },
             "candidate": {
-                "model": regression_metrics(evaluation_frame["cnt"], candidate_prediction),
+                "model": candidate_metrics,
                 "model_by_segment": segment_mae(evaluation_frame, candidate_prediction),
             },
-            "incumbent": {
-                "model_version": incumbent_version,
-                "artifact_sha256": incumbent_sha,
-                "quality_gate": incumbent_gate,
-                "model_metrics": regression_metrics(evaluation_frame["cnt"], incumbent_prediction),
-                "model_by_segment": segment_mae(evaluation_frame, incumbent_prediction),
-            },
+            "incumbent": (
+                {
+                    "model_version": incumbent_version,
+                    "artifact_sha256": incumbent_sha,
+                    "quality_gate": incumbent_gate,
+                    "model_metrics": regression_metrics(evaluation_frame["cnt"], incumbent_prediction),
+                    "model_by_segment": segment_mae(evaluation_frame, incumbent_prediction),
+                }
+                if incumbent_prediction is not None
+                else None
+            ),
             "historical_baseline": {
-                "model": regression_metrics(evaluation_frame["cnt"], baseline_prediction),
+                "model": baseline_metrics,
                 "model_by_segment": segment_mae(evaluation_frame, baseline_prediction),
+            },
+            "segment_comparison": segment_comparison(
+                evaluation_frame, candidate_prediction, baseline_prediction
+            ),
+            "validation_gate_status": selection.get("validation_gate_status"),
+            "quality_gate_policy_id": final_accuracy_gate["policy_id"] if final_accuracy_gate else None,
+            "quality_gate_policy_sha256": final_accuracy_gate["policy_sha256"] if final_accuracy_gate else None,
+            "final_accuracy_gate": final_accuracy_gate,
+            "operational_gate_status": "not_evaluated",
+            "deployment_permission": {
+                "status": "blocked",
+                "reasons": deployment_blockers,
             },
             "limitations": protocol["limitations"],
         }

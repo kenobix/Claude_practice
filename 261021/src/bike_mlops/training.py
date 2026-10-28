@@ -36,6 +36,7 @@ from bike_mlops.candidate_artifacts import persist_candidate_bundle, source_tree
 from bike_mlops.evaluation_protocol import begin_evaluation, finish_evaluation, read_protocol
 from bike_mlops.features import FEATURE_COLUMNS, feature_frame_for_dataset
 from bike_mlops.model import directory_sha256, load_registered_model
+from bike_mlops.quality_gates import baseline_accuracy_gate
 from bike_mlops.timezones import timezone_data_identity
 
 SPLITS = {
@@ -126,6 +127,25 @@ def segment_mae(frame: pd.DataFrame, predicted: np.ndarray) -> dict[str, dict[st
                 "n": int(mask.sum()),
                 "mae": float(mean_absolute_error(frame.loc[mask, "cnt"], predicted[mask.to_numpy()])),
             }
+    return result
+
+
+def segment_comparison(frame: pd.DataFrame, candidate: np.ndarray, baseline: np.ndarray) -> dict:
+    candidate_segments = segment_mae(frame, candidate)
+    baseline_segments = segment_mae(frame, baseline)
+    if candidate_segments.keys() != baseline_segments.keys():
+        raise ValueError("Candidate and baseline segment sets differ")
+    result = {}
+    for name, candidate_values in candidate_segments.items():
+        baseline_values = baseline_segments[name]
+        if candidate_values["n"] != baseline_values["n"]:
+            raise ValueError(f"Candidate and baseline segment row counts differ for {name}")
+        result[name] = {
+            "n": candidate_values["n"],
+            "candidate_mae": candidate_values["mae"],
+            "baseline_mae": baseline_values["mae"],
+            "delta_mae_candidate_minus_baseline": candidate_values["mae"] - baseline_values["mae"],
+        }
     return result
 
 
@@ -505,8 +525,16 @@ def _train_candidate_impl(
         raise ValueError("validation_start must be earlier than validation_end")
     if cutoff > start:
         raise ValueError("training_cutoff must be no later than validation_start to prevent leakage")
-    if int(incumbent_version) <= 0:
-        raise ValueError("A positive, explicit incumbent model version is required")
+    incumbent_spec = protocol.get("incumbent")
+    bootstrap_protocol = incumbent_spec is None
+    if bootstrap_protocol:
+        if protocol.get("schema_version") != 2 or incumbent_version is not None:
+            raise ValueError("Baseline-only training requires a schema 2 protocol and no incumbent version")
+    else:
+        if incumbent_version is None or int(incumbent_version) <= 0:
+            raise ValueError("A positive, explicit incumbent model version is required")
+        if str(incumbent_spec["model_version"]) != str(incumbent_version):
+            raise ValueError("Candidate incumbent version differs from the frozen evaluation protocol")
 
     frame = load_hourly(data_path)
     data_hash = sha256_file(data_path)
@@ -561,8 +589,6 @@ def _train_candidate_impl(
         or protocol["candidate_recipe"].get("hyperparameters") != HYPERPARAMETERS
     ):
         raise ValueError("Candidate model family/hyperparameters differ from the frozen evaluation protocol")
-    if str(protocol["incumbent"]["model_version"]) != str(incumbent_version):
-        raise ValueError("Candidate incumbent version differs from the frozen evaluation protocol")
     if (
         cutoff != pd.Timestamp(protocol["training"]["cutoff"])
         or start != pd.Timestamp(protocol["validation"]["start_inclusive"])
@@ -601,23 +627,41 @@ def _train_candidate_impl(
     baseline = HistoricalBaseline().fit(train_frame, frame)
     baseline_predictions = baseline.predict(validation_frame["timestamp"])
 
-    incumbent, incumbent_artifact_sha256, incumbent_quality_gate = load_registered_model(
-        MODEL_NAME, incumbent_version
-    )
-    if (
-        incumbent_artifact_sha256 != protocol["incumbent"]["artifact_sha256"]
-        or incumbent_quality_gate != protocol["incumbent"]["quality_gate"]
-    ):
-        raise ValueError("Loaded incumbent differs from the frozen evaluation protocol")
-    incumbent_predictions = np.maximum(incumbent.predict(validation_features), 0.0)
     candidate_metrics = regression_metrics(validation_frame["cnt"], candidate_predictions)
-    incumbent_metrics = regression_metrics(validation_frame["cnt"], incumbent_predictions)
     baseline_metrics = regression_metrics(validation_frame["cnt"], baseline_predictions)
-    gate_passed = (
-        incumbent_quality_gate == "passed"
-        and candidate_metrics["mae"] < incumbent_metrics["mae"]
-        and candidate_metrics["mae"] < baseline_metrics["mae"]
-    )
+    incumbent_predictions = None
+    incumbent_metrics = None
+    incumbent_artifact_sha256 = None
+    incumbent_quality_gate = None
+    if bootstrap_protocol:
+        if protocol["selection_gate"].get("policy_id") != "capital-bootstrap-baseline-mae-rmse-v1":
+            raise ValueError("Bootstrap protocol does not carry the supported quality-gate policy")
+        validation_gate = baseline_accuracy_gate(
+            candidate_metrics, baseline_metrics, period="validation_selection"
+        )
+        gate_passed = validation_gate["passed"]
+        quality_gate_text = "candidate validation MAE must strictly beat historical baseline MAE and candidate RMSE must not exceed historical baseline RMSE"
+    else:
+        incumbent, incumbent_artifact_sha256, incumbent_quality_gate = load_registered_model(
+            MODEL_NAME, incumbent_version
+        )
+        if (
+            incumbent_artifact_sha256 != incumbent_spec["artifact_sha256"]
+            or incumbent_quality_gate != incumbent_spec["quality_gate"]
+        ):
+            raise ValueError("Loaded incumbent differs from the frozen evaluation protocol")
+        incumbent_predictions = np.maximum(incumbent.predict(validation_features), 0.0)
+        incumbent_metrics = regression_metrics(validation_frame["cnt"], incumbent_predictions)
+        gate_passed = (
+            incumbent_quality_gate == "passed"
+            and candidate_metrics["mae"] < incumbent_metrics["mae"]
+            and candidate_metrics["mae"] < baseline_metrics["mae"]
+        )
+        validation_gate = None
+        quality_gate_text = (
+            "candidate validation MAE must strictly beat both the explicitly selected, passed incumbent "
+            "and the historical baseline on identical timestamps"
+        )
     source_name = (
         source_manifest.get("source") if source_manifest else "caller-supplied UCI-schema hourly CSV"
     )
@@ -672,21 +716,31 @@ def _train_candidate_impl(
             "baseline": baseline_metrics,
             "model_by_segment": segment_mae(validation_frame, candidate_predictions),
             "baseline_by_segment": segment_mae(validation_frame, baseline_predictions),
+            "segment_comparison": segment_comparison(
+                validation_frame, candidate_predictions, baseline_predictions
+            ),
         },
         "comparison": {
-            "incumbent_model_version": str(incumbent_version),
+            "reference": "historical_baseline_only" if bootstrap_protocol else "incumbent_and_historical_baseline",
+            "incumbent_model_version": str(incumbent_version) if incumbent_version is not None else None,
             "incumbent_artifact_sha256": incumbent_artifact_sha256,
             "incumbent_quality_gate": incumbent_quality_gate,
             "incumbent": incumbent_metrics,
-            "candidate_mae_improvement_vs_incumbent": incumbent_metrics["mae"] - candidate_metrics["mae"],
+            "candidate_mae_improvement_vs_incumbent": (
+                incumbent_metrics["mae"] - candidate_metrics["mae"] if incumbent_metrics is not None else None
+            ),
             "candidate_mae_improvement_vs_baseline": baseline_metrics["mae"] - candidate_metrics["mae"],
             "same_validation_timestamps": True,
+            "validation_gate": validation_gate,
         },
         "quality_gate_passed": bool(gate_passed),
-        "quality_gate": (
-            "candidate validation MAE must strictly beat both the explicitly selected, passed incumbent "
-            "and the historical baseline on identical timestamps"
-        ),
+        "quality_gate": quality_gate_text,
+        "quality_gate_policy_id": validation_gate["policy_id"] if validation_gate else None,
+        "quality_gate_policy_sha256": validation_gate["policy_sha256"] if validation_gate else None,
+        "validation_gate_status": validation_gate["status"] if validation_gate else ("passed" if gate_passed else "failed"),
+        "final_accuracy_gate_status": "not_evaluated",
+        "operational_gate_status": "not_evaluated",
+        "deployment_permission": {"status": "blocked", "reason": "final accuracy, operational, and manual approval gates remain outstanding"},
         "final_holdout": None,
         "operational_scope": "retrospective rolling-window candidate comparison; no live demand claim",
         "data_source": {
@@ -715,7 +769,7 @@ def _train_candidate_impl(
             "intended_use": "education and controlled historical MLOps replay only",
             "candidate_training_cutoff": cutoff.isoformat(sep=" "),
             "validation_window": {"start": start.isoformat(sep=" "), "end_exclusive": end.isoformat(sep=" ")},
-            "incumbent_model_version": str(incumbent_version),
+            "incumbent_model_version": str(incumbent_version) if incumbent_version is not None else None,
             "incumbent_artifact_sha256": incumbent_artifact_sha256,
             "features": list(FEATURE_COLUMNS),
             "data_source": {
@@ -728,7 +782,12 @@ def _train_candidate_impl(
                 "source_manifest_sha256": manifest_hash,
             },
             "label_availability_assumption": DATA_PROFILE["label_availability"],
-            "quality_gate": "candidate MAE must strictly beat the passed incumbent and historical baseline",
+            "quality_gate": quality_gate_text,
+            "quality_gate_policy_id": validation_gate["policy_id"] if validation_gate else None,
+            "quality_gate_policy_sha256": validation_gate["policy_sha256"] if validation_gate else None,
+            "final_accuracy_gate_status": "not_evaluated",
+            "operational_gate_status": "not_evaluated",
+            "deployment_permission": "blocked until final accuracy, operational, and manual approval gates pass",
             "promotion": "manual approval only; candidate registration does not imply deployment",
             "limitations": [
                 "validation metrics are retrospective and depend on the selected historical window",
@@ -737,18 +796,18 @@ def _train_candidate_impl(
             ],
         },
     }
-    validation_evidence = pd.DataFrame(
-        {
-            "timestamp": validation_frame["timestamp"].map(lambda stamp: stamp.isoformat(sep=" ")),
-            "label_available_at": (validation_frame["timestamp"] + pd.Timedelta(hours=LABEL_DELAY_HOURS)).map(
-                lambda stamp: stamp.isoformat(sep=" ")
-            ),
-            "actual": validation_frame["cnt"].astype(int),
-            "candidate_prediction": candidate_predictions,
-            "incumbent_prediction": incumbent_predictions,
-            "baseline_prediction": baseline_predictions,
-        }
-    )
+    validation_evidence_columns = {
+        "timestamp": validation_frame["timestamp"].map(lambda stamp: stamp.isoformat(sep=" ")),
+        "label_available_at": (validation_frame["timestamp"] + pd.Timedelta(hours=LABEL_DELAY_HOURS)).map(
+            lambda stamp: stamp.isoformat(sep=" ")
+        ),
+        "actual": validation_frame["cnt"].astype(int),
+        "candidate_prediction": candidate_predictions,
+        "baseline_prediction": baseline_predictions,
+    }
+    if incumbent_predictions is not None:
+        validation_evidence_columns["incumbent_prediction"] = incumbent_predictions
+    validation_evidence = pd.DataFrame(validation_evidence_columns)
     report["candidate_artifacts"] = persist_candidate_bundle(
         estimator,
         report,
@@ -773,12 +832,9 @@ def train_candidate(
     if register:
         raise ValueError("Candidate evaluation must remain unregistered until deployment gates are implemented")
     protocol = read_protocol(evaluation_protocol_path)
-    if protocol.get("incumbent") is None:
-        raise ValueError(
-            "This baseline-only bootstrap protocol is frozen, but candidate training has not yet been updated "
-            "to apply its MAE/RMSE policy; no evaluation window was consumed"
-        )
-    if incumbent_version is None:
+    if protocol.get("incumbent") is None and incumbent_version is not None:
+        raise ValueError("Baseline-only bootstrap protocol must not be paired with an incumbent version")
+    if protocol.get("incumbent") is not None and incumbent_version is None:
         raise ValueError("An incumbent model version is required for a legacy incumbent-comparison protocol")
     attempt_id = begin_evaluation(protocol, "validation_selection", candidate_artifact_sha256=None)
     try:

@@ -33,6 +33,7 @@ from bike_mlops.config import (
 )
 from bike_mlops.data import audit_hourly, download_dataset, load_hourly, sha256_file
 from bike_mlops.db import Database, canonical_time, stable_hash
+from bike_mlops.deployment_gates import require_deployment_eligible
 from bike_mlops.features import FEATURE_COLUMNS, available_observation_frame, feature_frame_for_dataset
 from bike_mlops.monitoring import score_monitor_windows
 
@@ -151,11 +152,12 @@ def command_runtime_init(args) -> None:
     if registered_version.status != "READY":
         raise ValueError(f"Model version {version} is not READY in MLflow")
     quality_gate = registered_version.tags.get("quality_gate")
+    _assert_registered_model_profile(registered_version)
+    require_deployment_eligible(DATA_PROFILE_ID, registered_version.tags)
     if quality_gate != "passed" and not args.diagnostic:
         raise ValueError("Initial runtime model did not pass the validation quality gate")
     if not registered_version.tags.get("artifact_sha256"):
         raise ValueError("Initial runtime model has no artifact SHA-256")
-    _assert_registered_model_profile(registered_version)
     (RUNTIME_DIR / "blue.env").write_text(f"MODEL_VERSION={version}\n", encoding="utf-8")
     (RUNTIME_DIR / "green.env").write_text(f"MODEL_VERSION={version}\n", encoding="utf-8")
     caddyfile = RUNTIME_DIR / "Caddyfile"
@@ -619,6 +621,7 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
             raise ValueError(f"Model version {version} is not READY in MLflow")
         if not model_version.tags.get("artifact_sha256"):
             raise ValueError(f"Model version {version} has no artifact SHA-256")
+        require_deployment_eligible(DATA_PROFILE_ID, model_version.tags)
         quality_gate = model_version.tags.get("quality_gate")
         if quality_gate != "passed" and not (rollback or diagnostic):
             raise ValueError("Model version did not pass the validation quality gate; use --diagnostic only for a controlled local test")
@@ -805,7 +808,7 @@ def build_parser() -> argparse.ArgumentParser:
     training.set_defaults(func=command_train)
 
     candidate = subparsers.add_parser(
-        "candidate", help="Fit a point-in-time rolling candidate and compare it with an incumbent"
+        "candidate", help="Fit a point-in-time candidate against its frozen incumbent or baseline-only protocol"
     )
     candidate.add_argument("--csv", type=Path, required=True)
     candidate.add_argument("--incumbent-version")

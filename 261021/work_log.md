@@ -795,3 +795,102 @@ sh -n scripts/bikectl
 現行のcandidate trainerとfinal-evaluation scriptはincumbent予測列・incumbent metricsを直接参照する。schema 2はprotocol/ledgerでのみ有効になった段階で、candidate fit自体は実行不可である。次はcandidate reportと行別validation evidenceをcandidate/baselineの共通timestamp・actual・行集合hashで照合し、MAE厳密改善かつRMSE非悪化のgateを有限値・同一件数の検査込みで再計算する。segmentsは件数/MAE/deltaのみ、gateには使わない。その後、選択artifactのhashを固定してfinal scriptもbaseline-onlyに変更し、final gateを独立に再計算する。両経路のテスト、CIが通るまで2026年未使用データを取得・評価しない。
 
 この節目はプロトコル基盤のみの部分完了である。bootstrap protocolを使ったcandidate runnerが「未対応・窓を未消費」と報告し、ledger開始関数を呼ばないことは回帰テスト済み。R06項目と11.4の順序をこの状況へ更新した。
+
+## 2026-10-28: R06 baseline-only candidate/final scoring
+
+### 実装
+
+前節で固定したprotocol schema 2を候補学習と最終評価へ接続した。未使用2026年データは取得せず、合成データだけを使った。
+
+- `src/bike_mlops/quality_gates.py`を追加。candidate/baselineのMAE・RMSEが不足、非数値、非有限、負値なら`not_evaluable`/不合格。判定はMAE厳密改善、RMSE非悪化で、条件ごとの比較値・operator・reason・policy ID/SHAを返す。
+- Capital baseline-only candidateはschema 2かつincumbent引数なしを要求し、MLflow Registryを呼ばず学習する。validation reportにcandidate/baseline指標、各segmentの母数/誤差/差、validation gate、policy ID/SHA、final/operational gate未実施、deployment blockedを記録する。validation row CSVはincumbent列なしで保存する。
+- 最終評価はbootstrap時にincumbent loadを行わない。candidate artifact hashを確認し、選定時と同じvalidation予測をモデルから再生成、actual・timestamp・label availability・row-key hash・baseline予測と照合してから評価台帳を開始する。candidateは再fitしない。独立final窓でcandidate/baselineのMAE/RMSE gateとsegment差を計算し、運用測定・人手承認がない限り配信許可をblockedとする。
+- legacy schema 1 incumbent経路と過去候補reportの後方互換を維持した。古いreportにsegment comparison列がない場合はlegacyでは受け入れ、bootstrap reportでは必須にする。
+- synthetic training/evidenceテスト、gateの非有限値/MAE同値/RMSE悪化テストを追加。`mlops-bikectl candidate --help`の説明もincumbentまたはbaseline-only protocolとした。
+
+### デバッグ記録と検証
+
+合成candidate fitの最初の試験では、archiveに2件しかなく学習特徴がほぼ定数になり、HistGradientBoostingRegressorが`window shape cannot be larger than input array shape`で失敗した。原因は小さすぎるテストfixtureで、実装側の期間を調整しなかった。31日分の時刻・台数変化を含む合成archiveへfixtureを広げ、fitが通るようにした。集計元には2,234 ride recordsがあり、実データではない。
+
+candidate trainer fixtureの初回検証では、`validate_capital_manifest`の既定raw pathが一時fixtureのraw dirを指さずarchive byte count mismatchになった。テスト内だけでvalidatorに一時raw pathを渡し、production codeのarchive検査はそのまま維持した。既存validation-evidenceテストはprotocolにincumbentがなかったためbootstrapと誤認したので、legacy fixtureにincumbent情報を追加した。さらにlegacy candidate reportにはsegment comparisonが存在しないため、schema 1では当該フィールドをoptional、schema 2では必須と分けた。
+
+```bash
+.venv/bin/python -m unittest discover -s tests -p 'test_evaluation_protocol.py' -v
+# 10 tests, OK。baseline-only protocol、台帳、registryを呼ばない合成fitを確認。
+
+.venv/bin/python -m unittest discover -s tests -p 'test_candidate_artifacts.py' -v
+# 7 tests, OK。legacyとbaseline-only row evidenceを確認。
+
+.venv/bin/python -m unittest discover -s tests -p 'test_quality_gates.py' -v
+# 3 tests, OK。
+
+.venv/bin/python -m unittest discover -s tests -v
+# 56 tests, OK (9.958s)。Starlette/httpx利用のDeprecationWarningあり。
+
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+docker compose -f compose.yaml -f compose.capital.yaml config -q
+sh -n scripts/bikectl
+.venv/bin/python -m pip check
+# すべて成功。pip checkはNo broken requirements found。pip cache書込不可warningのみ。
+
+.venv/bin/mlops-bikectl candidate --help
+# 成功。--incumbent-versionはoptionalであることを確認。
+```
+
+FastAPI TestClientを含むfull suiteはsandboxでは最初のtestで停止する既知挙動があったため、中断後、通常WSL process環境で再実行し全56件を完了した。前のprotocol commit `513436b`のCI `40656621848`とPages build/deploy `40656621926`もsuccessである。
+
+### 未実施と次の作業
+
+この実装検証ではprotocolを実データへfreezeしていない。未使用archiveの取得、candidate validation、final evaluation、MLflow登録、Capital Compose/API起動、operational benchmark、MLflow tagsとdeploy側のgate連携、final script全体を実bundleで通すintegration testは未実施。56 testが通ったことはモデル精度やAPI稼働の証拠ではない。次に実bundleを使ったfinal CLI integration testでcandidate identity/hash・policy・validation gateの不合格拒否・final gate report/台帳を確認し、R06 gateと配信拒否の全コードが揃うまで新評価データを取得しない。
+
+計画書と[`docs/capital-bootstrap-gate.md`](docs/capital-bootstrap-gate.md)を更新し、R06を部分完了のまま残した。運用・人手承認gate未実施時のdeployment permissionはblockedであり、未実測の精度・運用結果は記録していない。
+
+## 2026-10-28: R06 final-evaluation integration・deployment gate・運用benchmark
+
+前項の「final script全体を実bundleで通すintegration testは未実施」は、その記録を書いた時点の状態だった。この後、合成fixtureを使うend-to-end final CLI試験を追加した。以下が本節時点の更新結果。
+
+### 実装
+
+- `quality_gates.py`でCapital bootstrapのvalidation/final精度gateを実装した。MAEはbaselineを厳密に下回る必要があり、RMSEはbaseline以下を許す。欠落・非有限・負値は`not_evaluable`として不合格にする。
+- bootstrap candidate trainingとfinal evaluationをMLflow incumbentなしで動かす経路を実装した。合成candidate bundleからcandidate fit、行別validation evidence照合、artifact SHA確認、同一candidateを再fitせず最終評価、final row report/ledgerまでのCLI integration testを追加した。実データは使っていない。
+- `deployment_gates.py`にCapital fail-closed checkを追加し、runtime init/promote/API model loaderは4 gate status、固定policy ID/SHA、`deployment_permission=eligible`を要求する。診断指定・rollback指定もCapitalの未達gateを通過しない。UCI policyは変更しない。
+- `operational_benchmark.py`と`benchmark_capital_runtime.py`を追加した。localhostのみに接続し、Capital APIのprofile/model/version/artifact identityを事前確認する。固定168時間入力を循環使用して暖機50件+逐次1,000件を送り、自動retryなし・timeout 10秒で全requestのID/時刻/HTTP status/latency/予測値/data-version hash/エラーを保存する。HTTP schema・有限非負予測を検証し、p95 nearest-rank法、p50/max、host OS/CPU/RAM/Python/package版、取得可能なCapital stack container resource/image/`docker stats`/engine、API readiness時のDB疎通を記録する。benchmark単体のdeployment permissionは常にblocked。
+- 計測入力のAmerica/New_York wall hour gridで存在しない時刻・二重時刻がある場合は送信前に停止する。reportは`data/reports/capital-bikeshare/`内の新規JSONだけに書き、既存ファイルの上書きやlocalhost以外への送信を拒否する。
+- 途中でCtrl-Cされた場合も実行済みのrequestを部分reportへ残し、`completed=false`かつgate failedにする。APIへ送信中の要求はinterrupt errorとして記録し、retryしない。
+- 計画書とgate文書で、通常Capital runtimeがeligible modelだけを読める一方、未承認candidateの運用測定には隔離staging APIが必要という循環を明記した。gateを弱めず、blocked candidate登録・staging API・MLflow report/tag書込みを次の先行タスクに置く。
+
+### デバッグと検証
+
+ベンチマークの初回fixture試験でテスト用Capital profileに`target.timezone_name`がなくtimezone grid検査で`KeyError: 'target'`になったため、fixtureを実profileのAmerica/New_York設定に合わせた。nearest-rank p95の期待値も修正した。1000件中1件だけ高遅延でもp95には現れないため、境界を検証するよう高遅延を51件にし、p95=251msとして不合格を確認した。中断時partial reportの追加試験ではversion fixtureの`feature_contract_version`が不足して`KeyError`になったのでfixtureを補った。いずれもテストデータの欠落/誤期待で、production codeをテストに合わせて弱めずfixtureを修正した。
+
+```bash
+.venv/bin/python -m unittest discover -s tests -p 'test_operational_benchmark.py' -v
+# 9 tests, OK。固定要求数、identity pinning、no retry、p95、local URL、168h/DST grid、data hash、interrupt partial report、report write guardを確認。
+
+.venv/bin/python -m unittest discover -s tests -v
+# 68 tests, OK (8.927s)。FastAPI TestClientの実行制約を避ける通常WSL processで完了。
+# Starlette/httpxのDeprecationWarningは表示されたが、失敗ではない。
+
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+docker compose -f compose.yaml -f compose.capital.yaml config -q
+sh -n scripts/bikectl
+.venv/bin/python -m pip check
+# すべて成功。pip checkはNo broken requirements found。
+
+.venv/bin/python scripts/benchmark_capital_runtime.py --help
+# 成功。固定測定スクリプトの引数を確認。
+```
+
+通常sandbox内の全suiteはFastAPI TestClientの最初のcaseで停止したため中断し、通常WSL process権限で再実行して68 testsを完了した。pip cacheは`/home/kenshin/.cache/pip`に書込不可という警告を出したが、依存検査結果は正常。Compose確認は静的`config -q`のみ。
+
+実MLflow登録/tag更新、Capital Composeサービス起動、API benchmark実測、未使用データ取得・protocol freeze・実データvalidation/final評価は未実施。今回のテスト件数や合成HTTPのpassは、運用gateまたは精度gateの実測合格を示さない。ここでは新しい評価窓を消費していない。
+
+### 次の優先作業
+
+1. candidate artifact/reportとfinal reportが一致するblocked MLflow registrationを作る。
+2. 通常のruntime/promoteから隔離したstaging API/Compose projectを作り、blocked candidateだけを正確なcandidate ID/artifact SHAで起動できるようにする。通常API loaderのgateを迂回する環境変数やdiagnostic経路は使わない。
+3. staging modelのHTTP/offline parityとfailure rejectionをsystem testし、staging API経由で固定operational benchmarkを測れる状態を作る。
+4. final/operational report hash、policy ID/SHA、candidate identityをMLflow version tagsへ付け、全gate passedかつ理由付き手動承認の場合だけ`deployment_permission=eligible`を最後に記録する。
+5. その一式のsystem test後に初めて新しいCapital archiveを取得・manifest検査・protocol freezeし、validation→同一artifactの独立final評価へ進む。

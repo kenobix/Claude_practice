@@ -288,13 +288,13 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 - [x] 2026-10-28にユーザーから判断を委任され、初回Capitalの基準を決定した。validationと一度限りの後続評価の両方で同target baselineに対し`candidate MAE < baseline MAE`かつ`candidate RMSE <= baseline RMSE`。weekday/weekend・通勤時間帯は件数/MAE/差を記録する診断値とする。個別の自動gateは置かない。根拠・境界条件は[`capital-bootstrap-gate.md`](../261021/docs/capital-bootstrap-gate.md)に固定した。
 - [x] 運用目標の仕様を決定した。暖機50要求後、同時数1・新規request IDで1,000要求、再試行0、timeout10秒、エラー0件、p95 250ms以下。hardware/資源条件と全計測値を保存する。これは学習用PC上の目標であり、業務SLOではない。
 - [x] 現在のUCI `passed`は従来のvalidation MAE比較、新Capitalの精度gateは上記MAE/RMSE条件を指すと文書化した。配信許可には別途artifact/入力/運用/復旧の証拠と理由付き手動承認を要求する。旧結果・タグへ新基準を遡及適用しない。
-- [ ] 初回bootstrap用のprotocol/candidate/final-evaluation経路を実装する。incumbentなしでは同target historical baselineだけを比較し、UCI modelや仮modelを流用しない。新gate・policy識別子/SHA・行集合と件数・未設定/非有限指標/不合格拒否を回帰試験する。**進捗:** protocol schema 2でincumbentをnullにし、MAE/RMSE policy本体・ID・SHAを固定する経路、CLIの省略可能なincumbent、incumbent nullを記録する消費台帳を合成試験した。candidate trainingはschema 2を検出し窓消費前に停止する。candidate/final gate適用とreport整合性は未実装なので、この項目は未完了。実データ取得・評価期間消費なし。
-- [ ] report/model card/MLflow tagsとdeploy側で、validation選択gate・後続精度gate・運用gate・配信許可を区別し、条件不足や不合格を昇格前に拒否する。手動承認で不合格を上書きできる経路を作らない。
+- [x] 初回bootstrap用のprotocol/candidate/final-evaluation経路を合成fixtureで実装・試験した。incumbentなしで同target historical baselineだけを比較し、UCI/仮modelを流用しない。schema 2、policy本体/ID/SHA、nullable ledger、candidate fit、row evidence再計算、artifact hash確認、final CLI全体、final MAE/RMSE gateを確認。registry model loaderはmockで非呼び出しを検証。実データは未取得・未採点。
+- [ ] report/model card/MLflow tagsとdeploy側で、validation選択gate・後続精度gate・運用gate・配信許可を区別し、条件不足や不合格を昇格前に拒否する。手動承認で不合格を上書きできる経路を作らない。**進捗:** candidate report/model card/final reportは状態を分離。runtime init/promote/Capital API loaderは4 gate status、policy ID/SHA、eligible permissionを要求し、不足時は診断/rollbackでも拒否する。固定条件のoperational benchmarkも実装し、実行ごとのstatus/latency/errorを記録する。ただしgate未完了候補を測る通常runtimeから隔離したstaging API、blocked candidate登録、MLflowへの全gate/evidence tag記録は未実装。
 - [ ] 原本範囲と月境界buffer規則を先に確定し、未使用2026年6〜9月のデータを取得・監査する。前回は10月archiveが404だったため、10月bufferを必要とする契約なら公開を待つ。結果を見て評価期間を短縮しない。
 - [ ] 新pathのmanifest schema 3、日時grid/DST/欠測理由・出典、分割件数、特徴量版、固定recipe、比較対象、gateとpolicy hashを実験protocolへ保存し、消費台帳の重複を検査する。候補fit前にvalidation開始を記録する。
 - [ ] bootstrap validationを一度実行してtarget-specific model card・artifact・行別予測・判断記録を固定する。合格時だけ同一artifactで後続評価を一度実行し、再fitしない。使用済みwindowを最終評価や調整後候補へ再利用しない。
-- [ ] 固定条件のAPI測定を実装・実行する。学習期間内の固定168時間入力を使い、精度採点はしない。HTTP 200・schema/識別/有限非負予測を確認し、失敗要求を除外せず、再送cacheの計測を避ける。hardware条件を保存し、予測精度とは別に運用gateを算出する。
-- 完了条件: 同じreportとprotocolから採用/見送りが一意に説明でき、条件不足・悪い候補は昇格を拒否する。最終採用は理由付きの手動承認を記録する。今回完了したのは基準の判断・文書化で、コード適用・protocol freeze・実験は未完了。追加のユーザー確認待ちはない。
+- [ ] 固定条件のAPI測定コードを実装した。`scripts/benchmark_capital_runtime.py`は学習期間内の168時間を繰り返し、50暖機+1,000逐次要求、HTTP 200・schema/識別/有限非負予測、再試行0、timeout10秒、nearest-rank p95を確認し全リクエストを記録する。合成HTTP試験は成功。**実際の計測は未実施**で、通常runtimeはeligible candidateしかロードしないため、隔離staging経路とcandidate登録を先に作る。精度採点は行わず、hardware/container資源条件を保存する。
+- 完了条件: 同じreportとprotocolから採用/見送りが一意に説明でき、条件不足・悪い候補は昇格を拒否する。最終採用は理由付きの手動承認を記録する。現時点でbaseline-only精度gateと固定条件benchmark、fail-closed deployment checkを合成テストした。実benchmarkを行う隔離staging経路とMLflow registration/tag書込み、実データprotocol freeze/精度評価・手動承認は未完了。新評価データを取得する前にstagingとtag/system testsを完了する。追加のユーザー判断待ちはない。
 
 #### R07 監視の参照・期間・退化ケース
 
@@ -333,10 +333,11 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 | 順番 | 対象 | 次に実施する作業・完了の証拠 |
 |---|---|---|
 | 1 | R04/P0 | 完了。Python `tzdata==2026.5`を集計・manifest検査・APIで明示的に使い、schema 3/report/APIのidentity記録、DST・後方互換境界テスト、全41 ZIPの再集計とhash確認を行った。旧期間の再集計物は新規評価には使わない。 |
-| 2 | R06/P1 | **進行中:** schema 2 baseline-only protocol/policy hash/nullable ledgerを合成データで実装・試験済み。次にcandidate reportとvalidation evidenceをbaselineだけで再計算するMAE/RMSE gateへ接続し、未設定/非有限/不一致/不合格ならartifact選定を拒否する。その後、同じ検査を独立final-evaluationへ接続する。候補/最終CLIがschema 2に対応するまでは新protocolを実行しない。 |
-| 3 | R06/P1 | 月境界bufferを含む原本範囲を決定→取得/manifest schema 3監査→未使用split/件数/recipe/gateをprotocolへ凍結する。training cutoffは2026-06-01 00:00、未到着の直前2時間を除外。 |
-| 4 | R06/P1 | validationを一度実施→artifact/evidence固定→合格時だけ同一artifactで後続評価を一度実施する。 |
-| 5 | R05/R06/P1 | Capital隔離PostgreSQL/MLflowとmodel loading、offline/API parityを実証し、固定benchmarkを実装・測定して運用gateを判定する。 |
-| 6 | R07/P1 | 同profile training reference/PSI bins、monitor期間継承、定数分布/件数不足/ラベル待ち/欠測増加の状態を実装・試験する。 |
-| 7 | R08/R09/P1 | 隔離環境で並行要求、拒否/障害注入、rollback/recover、backup/restoreを検証し、配信可否・承認metadata・進行表示を整合させる。 |
-| 8 | R10/P2 | 採否と未達理由、再現手順、5分デモと成果の証拠をまとめる。 |
+| 2 | R06/P1 | **部分完了:** baseline-only protocol/candidate/final scoring、MAE/RMSE gate、fixed operational benchmarkを合成データ/HTTP fixtureで試験した。実benchmarkは未実施。次に通常runtime/promoteから独立したCapital staging APIとblocked candidate登録経路を実装・Compose system testする。これらが終わるまでは新しい評価データを取得しない。 |
+| 3 | R06/P1 | candidate ID/artifact SHAへbenchmarkを結び付ける。実測後、validation/final/operational report hash・policy ID/SHAと理由付き手動承認をMLflow version tagsへ書く。`eligible`は全gateがpassedの場合のみ最後に設定し、failed/欠損の上書きを拒否する。 |
+| 4 | R06/P1 | 月境界bufferを含む原本範囲を決定→取得/manifest schema 3監査→未使用split/件数/recipe/gateをprotocolへ凍結する。training cutoffは2026-06-01 00:00、未到着の直前2時間を除外。 |
+| 5 | R06/P1 | validationを一度実施→artifact/evidence固定→合格時だけ同一artifactで後続評価を一度実施する。 |
+| 6 | R05/R06/P1 | Capital隔離PostgreSQL/MLflowとmodel loading、offline/API parity、promotion rejection/acceptanceをsystem testする。candidate/DBが揃った後に固定benchmarkを隔離staging APIで実測する。 |
+| 7 | R07/P1 | 同profile training reference/PSI bins、monitor期間継承、定数分布/件数不足/ラベル待ち/欠測増加の状態を実装・試験する。 |
+| 8 | R08/R09/P1 | 隔離環境で並行要求、拒否/障害注入、rollback/recover、backup/restoreを検証し、配信可否・承認metadata・進行表示を整合させる。 |
+| 9 | R10/P2 | 採否と未達理由、再現手順、5分デモと成果の証拠をまとめる。 |

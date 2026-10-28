@@ -2,7 +2,7 @@
 
 更新日: 2026-10-28
 
-ユーザーから3点の判断を委任されたため、Codexが以下を採用した。仕様上の確認待ちは解消したが、実行コードへの適用とデータhash・件数を含む評価protocolの凍結は未完了。現在のCLIがこの基準を実装済みという意味ではない。判断前の結果をこの基準で合格扱いに変更しない。
+ユーザーから3点の判断を委任されたため、以下を採用した。仕様上の確認待ちは解消したが、実データのprotocol凍結・評価・運用測定は未完了。実装済みの範囲は「実装状況」で区別し、判断前の結果をこの基準で合格扱いに変更しない。
 
 | 判断対象 | 採用する基準 | 理由 |
 |---|---|---|
@@ -55,9 +55,14 @@ validationで選定したartifactはhashを固定し、後続評価で再fitし�
 ## 実装状況（2026-10-28）
 
 - `create_capital_evaluation_protocol.py`は`--incumbent-version`を省略すると、incumbentを持たないprotocol schema 2を生成する。そこには上記gate policy本体、policy ID、policy SHA-256を固定する。versionを指定した既存経路はschema 1として後方互換で残している。
-- 評価消費台帳はincumbentがないvalidation試行を`incumbent_artifact_sha256: null`で記録できる。protocolと台帳の動作は合成データで試験した。
-- **候補学習と最終評価はschema 2に未対応。** 現時点でこのprotocolを使って候補学習・評価を実行しないこと。候補CLIは対応前のprotocolを検出すると、validation窓を消費する前に停止する。最終評価はcandidate側のrow-level evidence照合、baselineとのMAE/RMSE gate再計算、最終評価結果の記録をincumbentなしに対応させる必要がある。
-- 実データの取得、protocolの凍結、validation/最終評価はこの実装確認では行っていない。新しい評価窓を消費した証拠でも、モデル精度の証拠でもない。
+- 評価消費台帳はincumbentがないvalidation試行を`incumbent_artifact_sha256: null`で記録できる。baseline-only candidate trainerはMLflow Registryを参照せずfitし、validationの行別candidate/baseline予測・件数・row-key hash・policy ID/SHAを保存する。
+- final-evaluation scriptは登録incumbentをロードせず、同じ選定artifactをhash検査して使う。validation証拠を行単位で再計算・照合した後に限りfinal窓を台帳へ開始記録し、final MAE/RMSE gateを別に算出する。最終報告にはsegment別件数/誤差差、validation/final/operationalの状態と、運用測定・人の承認がない間の`deployment_permission=blocked`を含める。
+- 新gate関数は欠落・非有限・負値指標を`not_evaluable`として不合格にする。テストではMAEの同値拒否、RMSE同値許容、RMSE悪化拒否、baseline-onlyの行別証拠照合も確認した。
+- `runtime init`、`deploy promote`、Capital APIのregistered-model loaderは、quality/validation/final-accuracy/operational各status、既知policy ID/SHA、`deployment_permission=eligible`の全てを要求する。欠落/不合格ならdiagnosticやrollback指定でも通さず、UCIの既存gateは変更しない。したがって現時点でCapital版が登録されていても、新gateタグがないモデルは配信できない。
+- 合成dataからimmutable candidate bundleを作り、baseline-only final-evaluation CLI全体を通すintegration testを追加した。registry loaderを失敗するmockにし、非呼び出し、final row artifact、gate/blocked permission report、ledger start/finishを確認する。これは実データ評価ではない。
+- 固定条件を実行する`python scripts/benchmark_capital_runtime.py --model-version <version>`を追加した。local endpoint・Capital profile/target/model/version/artifactの事前照合、50回の暖機、逐次1,000要求、接続再利用、timeout 10秒・自動retryなし、各要求のHTTP status/latency/エラーを保存する。MAE/RMSEは計算せず、ベンチマーク単独では配信許可を`blocked`にする。合成HTTP応答による試験だけで、稼働APIの実測はしていない。
+- reportには暖機を含む全1,050要求のrequest ID・対象時刻・status・latency・予測値・data-version hash・エラー、ID集合hash、p95/p50/max、API model/data/artifact identity、ホストOS/CPU/RAM/Python/package版、取得できたCapital stackのcontainer resource limits・image・`docker stats`・Docker engine版、`/ready`のDB疎通結果を保存する。別ホスト負荷は自動計測しないので手動記録が必要。p95はnearest-rank法で算出する。
+- **未確認範囲と実行順:** MLflowへのcandidate登録/tag書込み経路、配信前candidateを稼働APIへ隔離して計測するstaging経路、deployment拒否/許可をCompose/MLflow環境で通すsystem testが未実装。通常のCapital API loaderは現時点で`deployment_permission=eligible`を要求するため、gate未完了candidateの実運用benchmarkへ進むには、通常runtime/promoteから隔離されたstaging経路を先に作る必要がある。この循環を解かずにgate要件を弱めてはならない。実データ取得・protocol凍結・validation/final評価はまだ行っておらず、新評価窓も消費していない。
 
 ## API運用測定の固定条件
 
@@ -67,19 +72,35 @@ validationで選定したartifactはhashを固定し、後続評価で再fitし�
 - 暖機で失敗した場合は準備失敗として記録し、その実行を合格扱いしない。
 - 暖機を含む全要求に新規のrequest IDを付ける。同じIDの再送で保存済み結果を返す処理を計測対象にしない。benchmark IDで監査行を識別し、件数と保存先をreportへ残す。
 - 入力は学習期間内の固定168時間の列を順番に繰り返す。対象週・順序・body生成規則を実行前に保存し、validation/後続期間は使わない。正解との精度計算はこのbenchmarkでは行わない。
-- latencyは送信直前から応答body受信完了までの単調時計による経過時間。1,000件すべての計測値を保存し、p95は線形補間の95 percentileで計算する。失敗した要求を除外・成功要求で置換しない。途中中断はincompleteで不合格。
+- latencyは送信直前から応答body受信完了までの単調時計による経過時間。1,000件すべての計測値を保存し、p95はnearest-rank法（順位`ceil(0.95*N)`）で計算する。失敗した要求を除外・成功要求で置換しない。途中中断はincompleteで不合格。
 - HTTP 200以外、接続失敗、timeout、不正JSON、異なるrequest/profile/model/artifact識別、非有限・負の予測をエラーに数える。単にHTTP 2xxであるだけでは成功としない。
 - エラー0件かつp95 250ms以下で合格。CPU/RAM、Docker資源制限、OS/Python/依存とイメージ、model/data hash、DB開始状態、他負荷の有無、p50/p95/max、失敗数を記録する。条件変更時は別benchmarkとして扱う。
+
+実行コードはDocker ComposeのCapital API枠がreadyで、model versionとartifact hashが期待値に一致するときだけ測定を開始する。例の168時間は2026-04-01〜2026-04-08の学習期間内で、validation/後続評価には使わない。
+
+```bash
+DATA_PROFILE_ID=capital-bikeshare .venv/bin/python scripts/benchmark_capital_runtime.py \
+  --api-url http://127.0.0.1:8180 \
+  --model-version '<明示したmodel version>' \
+  --start '2026-04-01 00:00:00' \
+  --end '2026-04-08 00:00:00'
+```
+
+**このコマンドは、通常のCapital deployment gateを通過したモデルにしか現在は使えない。** 未承認candidateでの運用gateは測定できず、隔離staging serviceとcandidate registration/report taggingが次の実装課題である。既存ゲートを迂回する環境変数やdiagnostic指定で代用しない。reportの出力先は新規の`data/reports/capital-bikeshare/operational-benchmark-*.json`で、既存ファイルを上書きしない。
+
+計測中にCtrl-Cで止めても、送信済み要求を含むpartial reportを保存し、`completed=false`・運用gate failedとして扱う。完了しなかった計測結果を成功としてMLflowへ記録する経路はない。
 
 この結果は当該PC・逐次要求の運用目標への適合を示す。同時負荷への耐性や本番SLOの達成を示すものではない。
 
 ## 残る作業と実行順序
 
 1. **R04/P0: 完了。** Python `tzdata==2026.5`のゾーンファイルを集計・manifest検査・APIで直接読み込み、OSのtimezone検索順に依存しない。manifest schema 3にゾーン名・package版・TZifバイト数・SHA-256を保存する。DST切替テストと新しいmanifestでの実データ再集計・hash検証を行った。詳細は[`data-profiles.md`](data-profiles.md)と`work_log.md`を参照。
-2. **R06/P1:** incumbentなしbootstrap経路をprotocol/candidate/final-evaluationへ実装する。新精度gate、policy識別子、hash、未設定・不合格時の拒否を回帰試験する。
-3. **R06/P1:** 原本範囲・buffer規則を確定し、未取得archiveを取得、新pathへmanifest schema 3を生成する。時刻・件数・出典と評価台帳の非重複を確認し、実験protocolを凍結する。schema 2の過去データは監査・seed用に読めるが、新protocolには使わない。
-4. **R06/P1:** validationを一度実行しartifact/行別証拠を固定する。合格時だけ同一artifactで一度限りの後続評価へ進む。
-5. **R05/R06/P1:** 独立PostgreSQL/MLflow、model loading、offline/API parityを確認する。固定条件の運用benchmarkと配信許可の判定を実装・実施する。
-6. **R07〜R10:** 監視参照とPSI、障害・復旧、配信台帳と進行表示、採否記録・デモを計画書に従って完了する。
+2. **R06/P1:** incumbentなしbootstrap経路とcandidate/final精度gateを合成試験する。実装済み。ここで合格した合成結果を実データの合格根拠に使わない。
+3. **R06/P1:** MLflowへcandidateを「配信不可」の状態で登録する方法と、通常runtime/promoteから分離したCapital staging APIを実装・system testする。staging APIはimmutable candidate ID/artifact hashに固定し、配信許可tagを設定せずに運用benchmarkだけを実行可能にする。
+4. **R06/P1:** benchmarkがそのcandidate ID/artifact hashと、固定した50/1,000要求・timeout・p95規則を結び付けることを確認し、DB/MLflowを含む隔離Compose試験を行う。benchmark結果は運用gateだけを確定し、精度/承認gateを変更しない。
+5. **R06/P1:** gate結果・policy ID/SHA・validation/final/operational report hashをMLflow model tagsへ記録する経路を追加する。不足・不合格を拒否し、配信許可は理由付き手動承認がある場合だけ`eligible`にする。
+6. **R06/P1:** 月境界buffer規則を確定→未使用archive取得→新pathのmanifest schema 3監査→非重複を確認→protocol freeze→validation一度→合格時のみ同じartifactで後続評価を一度行う。
+7. **R05/R06/P1:** 登録artifact loading、offline/API parity、deployment拒否/許可を隔離PostgreSQL/MLflow/Composeで確認する。モデル・データ準備後に限り、staging candidateで運用benchmarkを実測する。
+8. **R07〜R10:** 監視参照とPSI、障害・復旧、配信台帳と進行表示、採否記録・デモを計画書に従って完了する。
 
 追加のユーザー確認を開始条件にはしない。精度gate・運用gateの実装/証拠、artifact整合性、入力契約、復旧試験、理由付き手動承認が揃うまでは、Capital profileはmigration-onlyを維持する。
