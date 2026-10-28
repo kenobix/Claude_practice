@@ -52,6 +52,13 @@ weekday/weekend、朝7〜9時、夕方16〜18時は各区間の件数・候補MA
 
 validationで選定したartifactはhashを固定し、後続評価で再fitしない。後続評価で不合格なら登録・昇格せず、調整後の候補には別の未使用期間を用意する。現在のUCI `quality_gate=passed`は従来のvalidation MAE条件を指す。新Capital基準はpolicy識別子とともに記録し、過去タグの意味を変更しない。
 
+## 実装状況（2026-10-28）
+
+- `create_capital_evaluation_protocol.py`は`--incumbent-version`を省略すると、incumbentを持たないprotocol schema 2を生成する。そこには上記gate policy本体、policy ID、policy SHA-256を固定する。versionを指定した既存経路はschema 1として後方互換で残している。
+- 評価消費台帳はincumbentがないvalidation試行を`incumbent_artifact_sha256: null`で記録できる。protocolと台帳の動作は合成データで試験した。
+- **候補学習と最終評価はschema 2に未対応。** 現時点でこのprotocolを使って候補学習・評価を実行しないこと。候補CLIは対応前のprotocolを検出すると、validation窓を消費する前に停止する。最終評価はcandidate側のrow-level evidence照合、baselineとのMAE/RMSE gate再計算、最終評価結果の記録をincumbentなしに対応させる必要がある。
+- 実データの取得、protocolの凍結、validation/最終評価はこの実装確認では行っていない。新しい評価窓を消費した証拠でも、モデル精度の証拠でもない。
+
 ## API運用測定の固定条件
 
 精度gateとは別の運用gateを作る。対象はCapital隔離stackのproxy入口`http://127.0.0.1:8180/predict`。モデル・DBが準備済みで、readyとprofile/model/artifact識別が確認できてから測定する。

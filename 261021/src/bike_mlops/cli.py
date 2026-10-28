@@ -808,7 +808,7 @@ def build_parser() -> argparse.ArgumentParser:
         "candidate", help="Fit a point-in-time rolling candidate and compare it with an incumbent"
     )
     candidate.add_argument("--csv", type=Path, required=True)
-    candidate.add_argument("--incumbent-version", required=True)
+    candidate.add_argument("--incumbent-version")
     candidate.add_argument("--training-cutoff")
     candidate.add_argument("--validation-start")
     candidate.add_argument("--validation-end")

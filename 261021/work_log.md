@@ -739,3 +739,59 @@ UCI Bike SharingとCapital Bikeshareの件数は意味が異なるため、UCI�
 - 検査後の出力先: `data/derived/capitalbikeshare-r04-tzdata2026-5/`（local generated data、Git対象外）。
 
 計画書R04を完了とし、`capital-bootstrap-gate.md`、`data-profiles.md`、`runbook.md`もschema 3/未使用データの条件へ更新した。commit `13ea918`を`origin/main`へpushした。契約テストCI `40655472121`はlock install、`pip check`、48テスト、compileallをすべて通過してsuccess。GitHub Pages build/deploy `40655471660`もsuccess。次の優先作業はR06のincumbentなしbootstrap protocol/candidate/final-evaluation実装。その後に初めて未使用2026年データを取得・監査する。
+
+## 2026-10-28: R06 incumbentなしprotocolの基礎
+
+### 目的と差分
+
+直前の残作業順に従い、未使用期間を取得・採点する前に、既存Capital評価経路が同target incumbentを必須にしている点を解消する最初のコード節目を進めた。作業開始時の追跡差分はなく、今回の対象ファイルに既存の別作業は混在していなかった。
+
+- `src/bike_mlops/evaluation_protocol.py`: schema 2の`capital-bikeshare-bootstrap-v1`を追加。incumbentを`null`にし、合意済みのvalidation/final MAE・RMSE条件、segment診断専用、運用gate分離を含むpolicy本体をprotocolへ保存する。policy IDは`capital-bootstrap-baseline-mae-rmse-v1`、canonical JSON SHA-256も保存・検査する。schema 1の既存incumbent protocol読込は維持。
+- `scripts/create_capital_evaluation_protocol.py`: `--incumbent-version`を省略可能にした。省略時にはMLflow model registryを参照せずbootstrap protocolを生成し、指定時には既存schema 1経路を使う。
+- evaluation ledger: incumbent不在のvalidation attemptを`incumbent_artifact_sha256: null`として記録可能にした。
+- `src/bike_mlops/training.py`: candidate runnerがincumbentなしprotocolを検出したら、評価ledgerへ開始記録する前に理由付きで停止する。candidate/final scoringはまだschema 2 policy未対応で、窓を誤って消費しないための一時的な保護である。
+- `tests/test_evaluation_protocol.py`: policy hashと条件の固定、policy改変拒否、incumbent tupleの一部欠落拒否、台帳のnull記録を合成データで確認。
+- `docs/capital-bootstrap-gate.md`と`261014/plan_mlops.md`: 実装済み範囲と、まだcandidate/final CLIを使えないことを明記。
+
+### 実行したコマンドと結果
+
+最初にglobal `python`で試したが、このPATHにはコマンドがなく終了コード127だった。プロジェクトvenvの実行ファイルを使うことで解消した。
+
+```bash
+python -m unittest discover -s tests -p 'test_evaluation_protocol.py' -v
+# /bin/bash: python: command not found (exit 127)
+
+.venv/bin/python -m unittest discover -s tests -p 'test_evaluation_protocol.py' -v
+# candidate-runner guard追加前の中間実行: 9 tests, OK
+
+.venv/bin/python -m unittest discover -s tests -v
+# 最終実行: 52 tests, OK (3.163s)。Starlette/httpx利用の非推奨warningあり。
+
+.venv/bin/python -m compileall -q src scripts tests
+# 成功、構文エラーなし
+
+git diff --check
+# 成功、whitespace errorなし
+
+DATA_PROFILE_ID=capital-bikeshare .venv/bin/python scripts/create_capital_evaluation_protocol.py --help
+# 成功。--incumbent-versionがoptionalと表示された。
+
+docker compose -f compose.yaml -f compose.capital.yaml config -q
+# 成功、静的Compose設定にエラーなし。
+
+sh -n scripts/bikectl
+# 成功。
+
+.venv/bin/python -m pip check
+# No broken requirements found。pip cacheが書込不可という警告は出たが依存整合性確認は成功。
+```
+
+初回にはglobal `python`がなく失敗し、venvへ切替えた。全確認をまとめて実行する際、誤ってworking directoryを`.venv/bin`に指定したため相対pathを解決できず、作業ディレクトリをproject rootへ戻して再実行した。sandbox test runはFastAPIの最初のTestClientテスト開始後に停止したためCtrl-Cで中断し、通常WSL実行へ昇格して全suiteを完了した。candidate CLIでも`--incumbent-version`を省略できるようにし、未対応bootstrap protocolはregistry版を仮指定せず明示エラーにできる。
+
+評価データのダウンロード、protocolの実データ凍結、候補fit、validation/final評価、MLflow登録、Compose起動・再起動、API呼出しは行っていない。したがって新窓の消費も精度・稼働結果もない。
+
+### 未完了と次の節目
+
+現行のcandidate trainerとfinal-evaluation scriptはincumbent予測列・incumbent metricsを直接参照する。schema 2はprotocol/ledgerでのみ有効になった段階で、candidate fit自体は実行不可である。次はcandidate reportと行別validation evidenceをcandidate/baselineの共通timestamp・actual・行集合hashで照合し、MAE厳密改善かつRMSE非悪化のgateを有限値・同一件数の検査込みで再計算する。segmentsは件数/MAE/deltaのみ、gateには使わない。その後、選択artifactのhashを固定してfinal scriptもbaseline-onlyに変更し、final gateを独立に再計算する。両経路のテスト、CIが通るまで2026年未使用データを取得・評価しない。
+
+この節目はプロトコル基盤のみの部分完了である。bootstrap protocolを使ったcandidate runnerが「未対応・窓を未消費」と報告し、ledger開始関数を呼ばないことは回帰テスト済み。R06項目と11.4の順序をこの状況へ更新した。

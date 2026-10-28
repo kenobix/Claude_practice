@@ -23,11 +23,18 @@ def main() -> None:
     parser.add_argument("--validation-end", required=True)
     parser.add_argument("--evaluation-start", required=True)
     parser.add_argument("--evaluation-end", required=True)
-    parser.add_argument("--incumbent-version", required=True)
+    parser.add_argument(
+        "--incumbent-version",
+        help="Existing passed model version; omit to create the first baseline-only bootstrap protocol",
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
-    _, incumbent_hash, incumbent_gate = load_registered_model(MODEL_NAME, args.incumbent_version)
+    if args.incumbent_version:
+        _, incumbent_hash, incumbent_gate = load_registered_model(MODEL_NAME, args.incumbent_version)
+    else:
+        incumbent_hash = None
+        incumbent_gate = None
     protocol = build_capital_protocol(
         args.csv,
         args.source_manifest,

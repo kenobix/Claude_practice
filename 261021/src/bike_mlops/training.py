@@ -760,7 +760,7 @@ def _train_candidate_impl(
 
 def train_candidate(
     data_path: Path = DEFAULT_DATASET,
-    incumbent_version: str | int = 1,
+    incumbent_version: str | int | None = None,
     validation_start: str | pd.Timestamp | None = None,
     validation_end: str | pd.Timestamp | None = None,
     training_cutoff: str | pd.Timestamp | None = None,
@@ -773,6 +773,13 @@ def train_candidate(
     if register:
         raise ValueError("Candidate evaluation must remain unregistered until deployment gates are implemented")
     protocol = read_protocol(evaluation_protocol_path)
+    if protocol.get("incumbent") is None:
+        raise ValueError(
+            "This baseline-only bootstrap protocol is frozen, but candidate training has not yet been updated "
+            "to apply its MAE/RMSE policy; no evaluation window was consumed"
+        )
+    if incumbent_version is None:
+        raise ValueError("An incumbent model version is required for a legacy incumbent-comparison protocol")
     attempt_id = begin_evaluation(protocol, "validation_selection", candidate_artifact_sha256=None)
     try:
         report = _train_candidate_impl(

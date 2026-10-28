@@ -288,7 +288,7 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 - [x] 2026-10-28にユーザーから判断を委任され、初回Capitalの基準を決定した。validationと一度限りの後続評価の両方で同target baselineに対し`candidate MAE < baseline MAE`かつ`candidate RMSE <= baseline RMSE`。weekday/weekend・通勤時間帯は件数/MAE/差を記録する診断値とする。個別の自動gateは置かない。根拠・境界条件は[`capital-bootstrap-gate.md`](../261021/docs/capital-bootstrap-gate.md)に固定した。
 - [x] 運用目標の仕様を決定した。暖機50要求後、同時数1・新規request IDで1,000要求、再試行0、timeout10秒、エラー0件、p95 250ms以下。hardware/資源条件と全計測値を保存する。これは学習用PC上の目標であり、業務SLOではない。
 - [x] 現在のUCI `passed`は従来のvalidation MAE比較、新Capitalの精度gateは上記MAE/RMSE条件を指すと文書化した。配信許可には別途artifact/入力/運用/復旧の証拠と理由付き手動承認を要求する。旧結果・タグへ新基準を遡及適用しない。
-- [ ] 初回bootstrap用のprotocol/candidate/final-evaluation経路を実装する。incumbentなしでは同target historical baselineだけを比較し、UCI modelや仮modelを流用しない。新gate・policy識別子/SHA・行集合と件数・未設定/非有限指標/不合格拒否を回帰試験する。現在のCLIは新基準未対応。
+- [ ] 初回bootstrap用のprotocol/candidate/final-evaluation経路を実装する。incumbentなしでは同target historical baselineだけを比較し、UCI modelや仮modelを流用しない。新gate・policy識別子/SHA・行集合と件数・未設定/非有限指標/不合格拒否を回帰試験する。**進捗:** protocol schema 2でincumbentをnullにし、MAE/RMSE policy本体・ID・SHAを固定する経路、CLIの省略可能なincumbent、incumbent nullを記録する消費台帳を合成試験した。candidate trainingはschema 2を検出し窓消費前に停止する。candidate/final gate適用とreport整合性は未実装なので、この項目は未完了。実データ取得・評価期間消費なし。
 - [ ] report/model card/MLflow tagsとdeploy側で、validation選択gate・後続精度gate・運用gate・配信許可を区別し、条件不足や不合格を昇格前に拒否する。手動承認で不合格を上書きできる経路を作らない。
 - [ ] 原本範囲と月境界buffer規則を先に確定し、未使用2026年6〜9月のデータを取得・監査する。前回は10月archiveが404だったため、10月bufferを必要とする契約なら公開を待つ。結果を見て評価期間を短縮しない。
 - [ ] 新pathのmanifest schema 3、日時grid/DST/欠測理由・出典、分割件数、特徴量版、固定recipe、比較対象、gateとpolicy hashを実験protocolへ保存し、消費台帳の重複を検査する。候補fit前にvalidation開始を記録する。
@@ -333,7 +333,7 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 | 順番 | 対象 | 次に実施する作業・完了の証拠 |
 |---|---|---|
 | 1 | R04/P0 | 完了。Python `tzdata==2026.5`を集計・manifest検査・APIで明示的に使い、schema 3/report/APIのidentity記録、DST・後方互換境界テスト、全41 ZIPの再集計とhash確認を行った。旧期間の再集計物は新規評価には使わない。 |
-| 2 | R06/P1 | incumbentなしのprotocol/candidate/final経路、新MAE/RMSE gate、policy hashと拒否条件を実装し、合成データで回帰試験する。 |
+| 2 | R06/P1 | **進行中:** schema 2 baseline-only protocol/policy hash/nullable ledgerを合成データで実装・試験済み。次にcandidate reportとvalidation evidenceをbaselineだけで再計算するMAE/RMSE gateへ接続し、未設定/非有限/不一致/不合格ならartifact選定を拒否する。その後、同じ検査を独立final-evaluationへ接続する。候補/最終CLIがschema 2に対応するまでは新protocolを実行しない。 |
 | 3 | R06/P1 | 月境界bufferを含む原本範囲を決定→取得/manifest schema 3監査→未使用split/件数/recipe/gateをprotocolへ凍結する。training cutoffは2026-06-01 00:00、未到着の直前2時間を除外。 |
 | 4 | R06/P1 | validationを一度実施→artifact/evidence固定→合格時だけ同一artifactで後続評価を一度実施する。 |
 | 5 | R05/R06/P1 | Capital隔離PostgreSQL/MLflowとmodel loading、offline/API parityを実証し、固定benchmarkを実装・測定して運用gateを判定する。 |

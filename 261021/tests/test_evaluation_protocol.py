@@ -6,10 +6,13 @@ import threading
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from unittest.mock import patch
 
 import pandas as pd
 
 from bike_mlops.evaluation_protocol import (
+    BOOTSTRAP_QUALITY_GATE_POLICY,
+    BOOTSTRAP_QUALITY_GATE_POLICY_SHA256,
     begin_evaluation,
     build_capital_protocol,
     finish_evaluation,
@@ -20,6 +23,7 @@ from bike_mlops.evaluation_protocol import (
     validate_protocol,
 )
 from scripts.prepare_capitalbikeshare import aggregate_archives
+from bike_mlops.training import train_candidate
 
 
 class EvaluationProtocolTests(unittest.TestCase):
@@ -72,6 +76,22 @@ class EvaluationProtocolTests(unittest.TestCase):
             raw_dir=self.raw,
         )
 
+    def build_bootstrap_protocol(self):
+        return build_capital_protocol(
+            self.csv,
+            self.manifest,
+            training_cutoff="2024-01-02 00:00:00",
+            validation_start="2024-01-02 00:00:00",
+            validation_end="2024-01-03 00:00:00",
+            evaluation_start="2024-01-03 02:00:00",
+            evaluation_end="2024-01-04 00:00:00",
+            incumbent_version=None,
+            incumbent_artifact_sha256=None,
+            incumbent_quality_gate=None,
+            candidate_recipe={"model_family": "synthetic", "hyperparameters": {"seed": 17}},
+            raw_dir=self.raw,
+        )
+
     def test_protocol_fixes_row_counts_and_waits_for_validation_labels(self):
         with self.assertRaisesRegex(ValueError, "precedes the time"):
             self.build_protocol("2024-01-03 00:00:00")
@@ -84,6 +104,43 @@ class EvaluationProtocolTests(unittest.TestCase):
         save_protocol(protocol, path)
         with self.assertRaisesRegex(FileExistsError, "Refusing to overwrite"):
             save_protocol(protocol, path)
+
+    def test_bootstrap_protocol_freezes_baseline_only_mae_rmse_policy(self):
+        protocol = self.build_bootstrap_protocol()
+        self.assertEqual(protocol["schema_version"], 2)
+        self.assertIsNone(protocol["incumbent"])
+        self.assertEqual(protocol["selection_gate"]["policy"], BOOTSTRAP_QUALITY_GATE_POLICY)
+        self.assertEqual(protocol["selection_gate"]["policy_sha256"], BOOTSTRAP_QUALITY_GATE_POLICY_SHA256)
+        self.assertEqual(
+            protocol["selection_gate"]["policy_id"], "capital-bootstrap-baseline-mae-rmse-v1"
+        )
+        self.assertEqual(protocol["selection_gate"]["final_evaluation_used_for_selection"], False)
+        self.assertEqual(validate_protocol(protocol), protocol)
+
+        tampered = dict(protocol)
+        tampered["selection_gate"] = dict(protocol["selection_gate"])
+        tampered["selection_gate"]["policy"] = dict(BOOTSTRAP_QUALITY_GATE_POLICY)
+        tampered["selection_gate"]["policy"]["segments"] = "gate"
+        tampered["protocol_sha256"] = protocol_sha256(tampered)
+        with self.assertRaisesRegex(ValueError, "policy is missing, unsupported, or modified"):
+            validate_protocol(tampered)
+
+    def test_bootstrap_protocol_requires_all_incumbent_fields_or_none(self):
+        with self.assertRaisesRegex(ValueError, "complete version/hash/passed-gate tuple"):
+            build_capital_protocol(
+                self.csv,
+                self.manifest,
+                training_cutoff="2024-01-02 00:00:00",
+                validation_start="2024-01-02 00:00:00",
+                validation_end="2024-01-03 00:00:00",
+                evaluation_start="2024-01-03 02:00:00",
+                evaluation_end="2024-01-04 00:00:00",
+                incumbent_version=None,
+                incumbent_artifact_sha256="a" * 64,
+                incumbent_quality_gate=None,
+                candidate_recipe={"model_family": "synthetic", "hyperparameters": {"seed": 17}},
+                raw_dir=self.raw,
+            )
 
     def test_new_protocol_rejects_legacy_timezone_unpinned_manifest(self):
         manifest = json.loads(self.manifest.read_text(encoding="utf-8"))
@@ -143,6 +200,23 @@ class EvaluationProtocolTests(unittest.TestCase):
         self.assertEqual(len(record["attempts"]), 2)
         self.assertEqual(record["attempts"][0]["status"], "failed")
         self.assertEqual(record["attempts"][1]["status"], "completed")
+
+    def test_bootstrap_ledger_records_absent_incumbent_as_null(self):
+        protocol = self.build_bootstrap_protocol()
+        attempt = begin_evaluation(protocol, "validation_selection", None, self.ledger, self.legacy)
+        record = read_ledger(self.ledger)["records"][0]
+        self.assertEqual(record["attempts"][0]["attempt_id"], attempt)
+        self.assertIsNone(record["attempts"][0]["incumbent_artifact_sha256"])
+        finish_evaluation(attempt, "failed", self.ledger, detail="synthetic policy test")
+
+    def test_candidate_runner_refuses_bootstrap_before_consuming_window(self):
+        protocol = self.build_bootstrap_protocol()
+        protocol_path = self.root / "bootstrap-protocol.json"
+        protocol_path.write_text(json.dumps(protocol), encoding="utf-8")
+        with patch("bike_mlops.training.begin_evaluation") as begin:
+            with self.assertRaisesRegex(ValueError, "no evaluation window was consumed"):
+                train_candidate(incumbent_version=None, register=False, evaluation_protocol_path=protocol_path)
+        begin.assert_not_called()
 
     def test_legacy_overlap_blocks_before_any_ledger_write(self):
         protocol = self.build_protocol()

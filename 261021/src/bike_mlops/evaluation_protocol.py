@@ -20,10 +20,43 @@ from bike_mlops.data import sha256_file
 from bike_mlops.features import FEATURE_COLUMNS
 from bike_mlops.profiles import load_data_profile
 
-PROTOCOL_SCHEMA_VERSION = 1
+PROTOCOL_SCHEMA_VERSION = 2
+LEGACY_PROTOCOL_SCHEMA_VERSION = 1
 LEDGER_SCHEMA_VERSION = 1
 DEFAULT_LEGACY_REGISTRY = PROJECT_ROOT / "configs/evaluation-legacy-windows.json"
 DEFAULT_LEDGER = PROJECT_ROOT / "data/evaluations/consumption-ledger.json"
+
+BOOTSTRAP_QUALITY_GATE_POLICY = {
+    "policy_id": "capital-bootstrap-baseline-mae-rmse-v1",
+    "selection": {
+        "reference": "historical_baseline_only",
+        "conditions": [
+            "candidate.mae < historical_baseline.mae",
+            "candidate.rmse <= historical_baseline.rmse",
+        ],
+    },
+    "final_evaluation": {
+        "reference": "historical_baseline_only",
+        "conditions": [
+            "candidate.mae < historical_baseline.mae",
+            "candidate.rmse <= historical_baseline.rmse",
+        ],
+    },
+    "segments": "diagnostic_only; report counts, candidate MAE, baseline MAE, and delta",
+    "operational_gate": "separate_evidence_required; not established by accuracy metrics",
+}
+BOOTSTRAP_SELECTION_RULE = (
+    "candidate validation MAE must be strictly below historical baseline MAE "
+    "and candidate RMSE must not exceed historical baseline RMSE"
+)
+BOOTSTRAP_QUALITY_GATE_POLICY_SHA256 = hashlib.sha256(
+    json.dumps(
+        BOOTSTRAP_QUALITY_GATE_POLICY,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+).hexdigest()
 
 
 def _canonical_json(value: dict) -> bytes:
@@ -51,9 +84,9 @@ def build_capital_protocol(
     validation_end: str,
     evaluation_start: str,
     evaluation_end: str,
-    incumbent_version: str | int,
-    incumbent_artifact_sha256: str,
-    incumbent_quality_gate: str,
+    incumbent_version: str | int | None,
+    incumbent_artifact_sha256: str | None,
+    incumbent_quality_gate: str | None,
     candidate_recipe: dict,
     raw_dir: Path = DEFAULT_RAW_ARCHIVE_DIR,
 ) -> dict:
@@ -78,16 +111,21 @@ def build_capital_protocol(
         raise ValueError("training_cutoff must be no later than validation_start")
     if eval_start < val_end:
         raise ValueError("evaluation window must start at or after the validation window ends")
-    if not isinstance(incumbent_artifact_sha256, str) or len(incumbent_artifact_sha256) != 64:
-        raise ValueError("A verified incumbent artifact SHA-256 is required")
-    try:
-        int(incumbent_artifact_sha256, 16)
-    except ValueError as error:
-        raise ValueError("incumbent_artifact_sha256 must be lowercase hexadecimal") from error
-    if incumbent_artifact_sha256 != incumbent_artifact_sha256.lower():
-        raise ValueError("incumbent_artifact_sha256 must be lowercase hexadecimal")
-    if int(incumbent_version) <= 0 or incumbent_quality_gate != "passed":
-        raise ValueError("The incumbent must be an explicitly selected passed model version")
+    incumbent_values = (incumbent_version, incumbent_artifact_sha256, incumbent_quality_gate)
+    has_incumbent = any(value is not None for value in incumbent_values)
+    if has_incumbent and not all(value is not None for value in incumbent_values):
+        raise ValueError("An incumbent must be supplied as a complete version/hash/passed-gate tuple")
+    if has_incumbent:
+        if not isinstance(incumbent_artifact_sha256, str) or len(incumbent_artifact_sha256) != 64:
+            raise ValueError("A verified incumbent artifact SHA-256 is required")
+        try:
+            int(incumbent_artifact_sha256, 16)
+        except ValueError as error:
+            raise ValueError("incumbent_artifact_sha256 must be lowercase hexadecimal") from error
+        if incumbent_artifact_sha256 != incumbent_artifact_sha256.lower():
+            raise ValueError("incumbent_artifact_sha256 must be lowercase hexadecimal")
+        if int(incumbent_version) <= 0 or incumbent_quality_gate != "passed":
+            raise ValueError("The incumbent must be an explicitly selected passed model version")
 
     timestamps = frame["timestamp"]
     data_profile = load_data_profile("capital-bikeshare")
@@ -111,8 +149,8 @@ def build_capital_protocol(
         raise AssertionError("Protocol splits overlap")
 
     protocol = {
-        "schema_version": PROTOCOL_SCHEMA_VERSION,
-        "protocol_name": "capital-bikeshare-rolling-candidate-v1",
+        "schema_version": LEGACY_PROTOCOL_SCHEMA_VERSION if has_incumbent else PROTOCOL_SCHEMA_VERSION,
+        "protocol_name": "capital-bikeshare-rolling-candidate-v1" if has_incumbent else "capital-bikeshare-bootstrap-v1",
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "dataset": {
             "data_profile_id": data_profile["profile_id"],
@@ -151,15 +189,29 @@ def build_capital_protocol(
             "rows": int(evaluation_mask.sum()),
             "purpose": "one_paired_out_of_time_comparison_after_candidate_selection",
         },
-        "incumbent": {
-            "model_version": str(incumbent_version),
-            "artifact_sha256": incumbent_artifact_sha256,
-            "quality_gate": incumbent_quality_gate,
-        },
-        "selection_gate": {
-            "rule": "candidate validation MAE must strictly beat incumbent and previous-day/weekday-hour baseline",
-            "final_evaluation_used_for_selection": False,
-        },
+        "incumbent": (
+            {
+                "model_version": str(incumbent_version),
+                "artifact_sha256": incumbent_artifact_sha256,
+                "quality_gate": incumbent_quality_gate,
+            }
+            if has_incumbent
+            else None
+        ),
+        "selection_gate": (
+            {
+                "rule": "candidate validation MAE must strictly beat incumbent and previous-day/weekday-hour baseline",
+                "final_evaluation_used_for_selection": False,
+            }
+            if has_incumbent
+            else {
+                "policy_id": BOOTSTRAP_QUALITY_GATE_POLICY["policy_id"],
+                "policy_sha256": BOOTSTRAP_QUALITY_GATE_POLICY_SHA256,
+                "policy": BOOTSTRAP_QUALITY_GATE_POLICY,
+                "rule": BOOTSTRAP_SELECTION_RULE,
+                "final_evaluation_used_for_selection": False,
+            }
+        ),
         "split_counts": {
             "train": int(training_mask.sum()),
             "validation": int(validation_mask.sum()),
@@ -182,13 +234,30 @@ def build_capital_protocol(
 def validate_protocol(protocol: object) -> dict:
     if not isinstance(protocol, dict):
         raise ValueError("Evaluation protocol must be a JSON object")
-    if protocol.get("schema_version") != PROTOCOL_SCHEMA_VERSION:
+    schema_version = protocol.get("schema_version")
+    if schema_version not in {LEGACY_PROTOCOL_SCHEMA_VERSION, PROTOCOL_SCHEMA_VERSION}:
         raise ValueError("Unsupported evaluation protocol schema version")
     if not isinstance(protocol.get("protocol_sha256"), str) or protocol["protocol_sha256"] != protocol_sha256(protocol):
         raise ValueError("Evaluation protocol SHA-256 mismatch; the frozen protocol was modified")
     required = ("dataset", "features", "candidate_recipe", "training", "validation", "evaluation", "incumbent", "selection_decision_time")
     if any(key not in protocol for key in required):
         raise ValueError("Evaluation protocol is missing required fields")
+    if schema_version == LEGACY_PROTOCOL_SCHEMA_VERSION:
+        if not isinstance(protocol.get("incumbent"), dict):
+            raise ValueError("Legacy evaluation protocol must identify its incumbent model")
+    else:
+        gate = protocol.get("selection_gate")
+        if protocol.get("protocol_name") != "capital-bikeshare-bootstrap-v1" or protocol.get("incumbent") is not None:
+            raise ValueError("Schema 2 is reserved for the incumbent-free Capital bootstrap protocol")
+        if (
+            not isinstance(gate, dict)
+            or gate.get("policy_id") != BOOTSTRAP_QUALITY_GATE_POLICY["policy_id"]
+            or gate.get("policy_sha256") != BOOTSTRAP_QUALITY_GATE_POLICY_SHA256
+            or gate.get("policy") != BOOTSTRAP_QUALITY_GATE_POLICY
+            or gate.get("rule") != BOOTSTRAP_SELECTION_RULE
+            or gate.get("final_evaluation_used_for_selection") is not False
+        ):
+            raise ValueError("Bootstrap quality gate policy is missing, unsupported, or modified")
     if (
         not isinstance(protocol["dataset"], dict)
         or protocol["dataset"].get("data_profile_id") != "capital-bikeshare"
@@ -421,12 +490,13 @@ def begin_evaluation(
             raise ValueError(
                 f"Evaluation window was already consumed or started (status={record['status']}, key={key})"
             )
+        incumbent = protocol.get("incumbent")
         attempt = {
             "attempt_id": attempt_id,
             "status": "started",
             "protocol_sha256": protocol["protocol_sha256"],
             "candidate_artifact_sha256": candidate_artifact_sha256,
-            "incumbent_artifact_sha256": protocol["incumbent"]["artifact_sha256"],
+            "incumbent_artifact_sha256": incumbent["artifact_sha256"] if incumbent else None,
             "started_at_utc": now,
             "events": [{"status": "started", "at_utc": now}],
         }
