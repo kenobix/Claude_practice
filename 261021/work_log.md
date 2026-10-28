@@ -1111,3 +1111,44 @@ git diff --check
 ```
 
 実候補の測定・新規データ取得・実評価は行っていない。次はbenchmark実行前に同じ候補とregistry/DBを照合し、測定中に観測表の変更を防ぎ、APIが使用したlag観測の出典を候補データから再計算して各応答と照合する。失敗やロック消失は運用gateに合格させない。CLI全体を合成MLflow/PostgreSQL/APIで検証してから実測を再有効化する。
+
+## 2026-10-28: stagingチェックポイント後の差分レビュー
+
+ユーザー依頼により、前回の正式レビューを確定した`7609af5`から`5df03f7`までの13コミット・45ファイルを点検した。対象はR04 timezone固定、R06 baseline-only gate、候補登録/staging、合成system test、seed/DB再照合、学習期間確認。詳細は[`docs/reviews/20261028-staging-checkpoint-review.md`](docs/reviews/20261028-staging-checkpoint-review.md)、秘密値を含まない集計は[`20261028-staging-checkpoint-evidence.json`](docs/reviews/20261028-staging-checkpoint-evidence.json)に保存した。
+
+実装の方向と評価窓保護は妥当。ローカル86 testsを再実行して成功（10.996秒）、対象13コミットのcontract CI/Pages計26 runも全てsuccess。最新contract run `40693844897`のstepsではlock install、editable install、pip check、unit tests、compileallまでを確認した。CIはDocker buildや実MLflow/PostgreSQL/Caddy integrationを実施しないため、CI成功をそれらの成功へ読み替えない。
+
+新たなレビューでは以下を残課題として具体化した。
+
+- S01/P1: DB照合ロックは検査後に解放され、benchmarkに保持されていない。API出典hashも形式確認だけで候補からの再計算比較がない。任意の有効64桁hashをsynthetic probeが受理することを確認した。
+- S02/P1: `require_deployment_eligible`は7個のstatus/policy tagだけで受理する。report・candidate/版・理由付き承認証拠の照合が未実装。registry変更や実配信を試したという意味ではない。
+- S03/P1: 対象週・入力規則・policy・資源を最初の要求前に凍結する運用planの保存がない。現在の入力確認はfinal reportが必要で、事前の計画固定とは別物。
+- S04/P1: 最新HEADの本来のDockerfileで全stackを再現するharnessがない。過去のPostgreSQL試験は一時スクリプト削除済みで独立した再現証拠が弱い。今後は実行コードとcleanupを保存する。
+- S05/P2: runbookのseed照合、計画書のCLI実行状況が古い表現だった。今回現行説明を修正し、過去ログ・旧合成reportは維持した。
+- S06/P1: 旧計画はmanual approvalと復旧試験の順序が曖昧だった。実候補の測定はblockedで行い、監視・隔離復旧の証拠後に採否を決めるよう順序を修正した。
+
+合成benchmark JSONのhashを照合し、1,050新規ID/HTTP200/error0、測定1,000件のp95 `106.46448500119732ms`を保存値から再計算した。同時に、学習cutoffまでにラベルが到着しない2対象時刻を再確認。旧JSONの`passed`は当時の数値判定として残すが、運用合格証拠には採用しない。再推論・実評価はしていない。
+
+UCIの入口はready 200・版3で、基準commit時刻以降のDB prediction/deployment/monitor差分0、MLflow新規run/model作成更新0。取得可能なCompose差分ログ10行に検索した既知エラー語は0件。Capital/一時test containerは残っていない。Capital原本41 ZIPは存在し、canonical candidate/final reportは0。既存Capital reportは`data-audit-v2.json`だけだった。これは現存成果物と利用可能なログの点検で、原本全hashの再監査や消去された一時storeの復元ではない。
+
+主な確認コマンド:
+
+```bash
+git log --reverse --format='%h %s' 7609af5..5df03f7
+git diff --name-only 7609af5..5df03f7
+gh run list --limit 50 --json databaseId,workflowName,headSha,status,conclusion,url
+gh run view 40693844897 --json headSha,status,conclusion,url,jobs
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -v
+# 86 tests, OK (10.996s)。出力は data/reports/review-20261028-staging/unit-tests.log。
+.venv/bin/python -m compileall -q src scripts tests
+.venv/bin/python -m pip check
+sh -n scripts/bikectl
+docker compose -f compose.yaml -f compose.capital.yaml -f compose.capital-staging.yaml config -q
+# 成功。既存Starlette/httpx非推奨警告とpip cache書込不可警告あり。
+```
+
+DBは時刻条件付きSELECT、MLflowは全pageの検索API、Composeは`logs --since`を使った。実施した集計probeのコードはGit対象外の`data/reports/review-20261028-staging/review-probes.py`に保存した。これは今回の実施記録で、汎用integration harnessではない。
+
+計画書11.5へ優先度・依存関係・完了条件を再整理した。次の節目は、部品を追加するだけでなく、凍結plan/候補/DB/HTTP出典/監査/reportを再現可能な合成system testでつなぎ、測定CLIを復帰させること。実データ取得・一度限りの精度評価はその後、理由付き承認は監視・復旧証拠の後に行う。今回の追跡変更はレビュー・計画・現行ドキュメントのみ。実装や稼働版は変更していない。
+
+レビュー・計画・現行ドキュメントのローカルリンク49件（anchor含む）は全て解決し、証拠JSONのparse/対象26 CIの成功状態、`git diff --check`も確認した。既存の無関係な未追跡4ファイルはコミット対象から除外した。

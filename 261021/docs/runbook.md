@@ -276,7 +276,7 @@ Capital用Composeのファイル結合を確かめるだけなら、サービス
 docker compose -f compose.yaml -f compose.capital.yaml config -q
 ```
 
-validation/final gateを通過した未承認candidateの登録と運用測定は、通常のblue/greenやCaddyへ接続せず、専用DB付きstaging APIで行います。candidate/final reportの照合、blocked登録、起動、candidate IDを固定したbenchmarkの手順と残る検証項目は[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)を参照してください。staging seedはprofileの`default_csv`と`default_manifest`を読みます。実候補のデータ版との一致を強制する仕組みは未完成なので、実candidateで測定する前に計画書の残作業を完了してください。Composeのstaging設定だけを確認するときは次を実行できます。これはサービスを起動しません。
+validation/final gateを通過した未承認candidateの登録と運用測定は、通常のblue/greenやCaddyへ接続せず、専用DB付きstaging APIで行います。candidate/final reportの照合、blocked登録、起動、残る検証項目は[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)を参照してください。staging seedはprofileのCSV/manifestを候補・registryと照合し、`--verify-only`で投入後の全観測も確認できます。現在benchmark CLIは`--check-input-only`による学習期間の入力確認専用です。測定中のDB固定とAPI出典照合は未実装なので、実測前に[最新残課題](../../261014/plan_mlops.md#115-2026-10-28-stagingチェックポイント後の残課題)を完了します。Composeのstaging設定だけを確認するときは次を実行できます。これはサービスを起動しません。
 
 ```bash
 docker compose -f compose.yaml -f compose.capital.yaml -f compose.capital-staging.yaml config -q

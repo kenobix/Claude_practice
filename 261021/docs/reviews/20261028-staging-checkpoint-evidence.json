@@ -1,0 +1,327 @@
+{
+  "schema_version": 1,
+  "review_date_jst": "2026-10-28",
+  "baseline_commit": "7609af5d175216052485df1060c4148fb4ccbeb5",
+  "reviewed_head": "5df03f7852ccbf9107f88d7bae6ee7aa3f5506b0",
+  "baseline_committed_at": "2026-10-28T16:13:24+09:00",
+  "reviewed_commit_count": 13,
+  "commits": [
+    "13ea918 Pin timezone data for Capital profile",
+    "b43cb76 Record R04 timezone verification results",
+    "513436b Add baseline-only Capital bootstrap protocol",
+    "35065bd Implement Capital bootstrap gates and runtime benchmark",
+    "0cdac25 Record R06 benchmark CI evidence",
+    "d263f8e Add isolated Capital candidate staging lane",
+    "2a193c0 Record staging lane verification and CI results",
+    "f365dfa Clarify synthetic staging integration order",
+    "a07c581 Verify isolated staging and preserve candidate identity",
+    "41bf7e9 Record staging verification CI results",
+    "ea722b4 Bind staging seed to verified candidate data",
+    "85b6e7c Verify staging observation snapshots",
+    "5df03f7 Validate frozen benchmark training windows"
+  ],
+  "changed_file_count": 45,
+  "tests": {
+    "count": 86,
+    "seconds": 10.996,
+    "status": "success",
+    "local_log_sha256": "5beedabeaeaee92e951df342632381133c4a20980f6d160b33bcc93034cde86f"
+  },
+  "ci": [
+    {
+      "conclusion": "success",
+      "databaseId": 40693844897,
+      "headSha": "5df03f7852ccbf9107f88d7bae6ee7aa3f5506b0",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40693844897",
+      "workflowName": "Bike MLOps contract checks"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40693843604,
+      "headSha": "5df03f7852ccbf9107f88d7bae6ee7aa3f5506b0",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40693843604",
+      "workflowName": "pages-build-deployment"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40693084858,
+      "headSha": "85b6e7ce01a57ca1559861d33ea6d2406a42d5b6",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40693084858",
+      "workflowName": "Bike MLOps contract checks"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40693083609,
+      "headSha": "85b6e7ce01a57ca1559861d33ea6d2406a42d5b6",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40693083609",
+      "workflowName": "pages-build-deployment"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40692422683,
+      "headSha": "ea722b4eb6dbcbfeacf7f08285bb5735b102a52d",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40692422683",
+      "workflowName": "Bike MLOps contract checks"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40692421337,
+      "headSha": "ea722b4eb6dbcbfeacf7f08285bb5735b102a52d",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40692421337",
+      "workflowName": "pages-build-deployment"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40667818428,
+      "headSha": "41bf7e90551003849b6ca671b07ef7c9d4dae6e5",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40667818428",
+      "workflowName": "Bike MLOps contract checks"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40667816744,
+      "headSha": "41bf7e90551003849b6ca671b07ef7c9d4dae6e5",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40667816744",
+      "workflowName": "pages-build-deployment"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40667516861,
+      "headSha": "a07c581016f1261afd3e0af48525d0499193fd5c",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40667516861",
+      "workflowName": "Bike MLOps contract checks"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40667516327,
+      "headSha": "a07c581016f1261afd3e0af48525d0499193fd5c",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40667516327",
+      "workflowName": "pages-build-deployment"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40663764902,
+      "headSha": "f365dfa5a0a0752d69db7f8b0a2148c936ca5bae",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40663764902",
+      "workflowName": "pages-build-deployment"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40663764134,
+      "headSha": "f365dfa5a0a0752d69db7f8b0a2148c936ca5bae",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40663764134",
+      "workflowName": "Bike MLOps contract checks"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40663415810,
+      "headSha": "2a193c008eb8c14d45c1bd782a394eca0fe947f7",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40663415810",
+      "workflowName": "Bike MLOps contract checks"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40663415214,
+      "headSha": "2a193c008eb8c14d45c1bd782a394eca0fe947f7",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40663415214",
+      "workflowName": "pages-build-deployment"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40663177779,
+      "headSha": "d263f8ec52beebcc57f04000f1f95c618e9a7d49",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40663177779",
+      "workflowName": "Bike MLOps contract checks"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40663177219,
+      "headSha": "d263f8ec52beebcc57f04000f1f95c618e9a7d49",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40663177219",
+      "workflowName": "pages-build-deployment"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40659904153,
+      "headSha": "0cdac25d68d9337b2ef5a33c23bb5e7a1ce78d27",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40659904153",
+      "workflowName": "Bike MLOps contract checks"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40659903739,
+      "headSha": "0cdac25d68d9337b2ef5a33c23bb5e7a1ce78d27",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40659903739",
+      "workflowName": "pages-build-deployment"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40659664964,
+      "headSha": "35065bdcff3add392998a6ed5dfdb33e88058442",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40659664964",
+      "workflowName": "pages-build-deployment"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40659664076,
+      "headSha": "35065bdcff3add392998a6ed5dfdb33e88058442",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40659664076",
+      "workflowName": "Bike MLOps contract checks"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40656621926,
+      "headSha": "513436b6b0e43dde557a325545b6cb28b62b0e1e",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40656621926",
+      "workflowName": "pages-build-deployment"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40656621848,
+      "headSha": "513436b6b0e43dde557a325545b6cb28b62b0e1e",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40656621848",
+      "workflowName": "Bike MLOps contract checks"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40655740173,
+      "headSha": "b43cb7639978d0b0cd40ec159298eb3428873820",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40655740173",
+      "workflowName": "Bike MLOps contract checks"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40655739054,
+      "headSha": "b43cb7639978d0b0cd40ec159298eb3428873820",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40655739054",
+      "workflowName": "pages-build-deployment"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40655472121,
+      "headSha": "13ea91800060aef43da936665ef700dd0de33198",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40655472121",
+      "workflowName": "Bike MLOps contract checks"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40655471660,
+      "headSha": "13ea91800060aef43da936665ef700dd0de33198",
+      "status": "completed",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/40655471660",
+      "workflowName": "pages-build-deployment"
+    }
+  ],
+  "synthetic_report": {
+    "path": "docs/reviews/20261028-synthetic-staging-benchmark.json",
+    "sha256": "cc68b465ae2dc1b819148f367361d1c92677731d6a883964a9383bf9b503c8f5",
+    "requests": 1050,
+    "measured": 1000,
+    "errors": 0,
+    "p95_ms_recomputed": 106.46448500119732,
+    "nontraining_target_hours": [
+      "2024-01-14 22:00:00",
+      "2024-01-14 23:00:00"
+    ],
+    "original_gate_status": "passed",
+    "accepted_as_operational_evidence": false
+  },
+  "confirmed_gaps": {
+    "eligibility_accepts_status_tags_without_report_or_approval_evidence": true,
+    "prediction_schema_accepts_arbitrary_wellformed_feature_source_hash": true,
+    "scope": "pure function probes with synthetic values; no registry tags or services modified"
+  },
+  "runtime": {
+    "containers": [
+      "bike-mlops-api-blue-1|Up 12 hours|127.0.0.1:8001->8000/tcp",
+      "bike-mlops-api-green-1|Up 12 hours|127.0.0.1:8002->8000/tcp",
+      "bike-mlops-caddy-1|Up 12 hours|127.0.0.1:8080->8080/tcp",
+      "bike-mlops-mlflow-1|Up 12 hours|127.0.0.1:5000->5000/tcp",
+      "bike-mlops-postgres-1|Up 12 hours (healthy)|127.0.0.1:55432->5432/tcp"
+    ],
+    "uci_db_changes_since_baseline": {
+      "predictions": 0,
+      "deployments": 0,
+      "monitor_windows": 0
+    },
+    "uci_mlflow_runs_since_baseline": 0,
+    "uci_model_versions_created_or_updated_since_baseline": 0,
+    "compose_logs": {
+      "lines": 10,
+      "matched_error_patterns": {
+        "Traceback": 0,
+        "ERROR": 0,
+        "permission denied": 0,
+        "Invalid Host header": 0,
+        "No such artifact": 0
+      },
+      "scope": "compose logs since baseline; unavailable rotated history cannot be reconstructed"
+    },
+    "uci_ready": {
+      "http_status": 200,
+      "body": {
+        "status": "ready",
+        "model_name": "bike-demand",
+        "model_version": "3",
+        "quality_gate_status": "passed"
+      }
+    },
+    "uci_version": {
+      "http_status": 200,
+      "body": {
+        "application_version": "0.1.0",
+        "model_name": "bike-demand",
+        "model_version": "3",
+        "artifact_sha256": "79f06eb9d5a6efc378f20ba37fe98a8367762c1cb6c699200152a121a2af4a43",
+        "quality_gate_status": "passed",
+        "feature_contract_version": "bike-demand-features-v1"
+      }
+    }
+  },
+  "local_capital_artifacts": {
+    "canonical_candidate_reports": 0,
+    "capital_report_files": 1,
+    "raw_archives": 41,
+    "capital_report_names": [
+      "data-audit-v2.json"
+    ],
+    "canonical_final_reports": 0
+  },
+  "limits": [
+    "Historical ephemeral PostgreSQL test scripts were deleted; their exact final source is unavailable.",
+    "CI does not build Docker images or run real MLflow/PostgreSQL/Caddy integration.",
+    "No real evaluation windows were scored in this review."
+  ],
+  "static_checks": {
+    "compileall": "success",
+    "pip_check": "success",
+    "shell_syntax": "success",
+    "compose_three_file_config": "success",
+    "git_diff_check": "success"
+  }
+}

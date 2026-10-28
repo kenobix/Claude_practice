@@ -12,6 +12,8 @@
 
 判断根拠と差分レビューは[20261028-r06-delta-review.md](reviews/20261028-r06-delta-review.md)に記録する。
 
+その後の実装・作業過程の確認は[stagingチェックポイントレビュー](reviews/20261028-staging-checkpoint-review.md)を参照。最新の残課題と依存関係は[計画書11.5](../../261014/plan_mlops.md#115-2026-10-28-stagingチェックポイント後の残課題)を正規の一覧とする。
+
 ## 前提とデータの状態
 
 - Capital Bikeshareは`capital-trip-starts-hourly-v1`、UCIは`uci-bike-sharing-cnt-dataset-local-hour`。初回Capitalモデルには同target incumbentがないため、比較対象は同targetのhistorical baselineにする。
