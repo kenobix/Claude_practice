@@ -546,3 +546,42 @@ MLFLOW_TRACKING_URI=http://127.0.0.1:5000 ./.venv/bin/python scripts/evaluate_ca
 候補評価後もComposeは稼働し、Caddy入口`/ready`はHTTP 200・版3・quality gate passed、`/version`のartifact SHAは`79f06eb9d5a6efc378f20ba37fe98a8367762c1cb6c699200152a121a2af4a43`。モデル版3を維持し、新候補をMLflow登録・API昇格していない。報告書は端末出力とローカル`data/reports/`で確認する。MLflow UIは既存の登録runを見る画面、localhost:8080の`/ready`・`/version`は稼働状態を返すだけで、評価ダッシュボードではない。
 
 このvalidationと最終out-of-time期間は今回の候補に使用済み。次の別候補を比較・調整する場合は、新しい独立データ期間を事前確保する。
+
+## 2026-10-28: 前回確認以降の差分監査と計画追補
+
+ユーザー依頼により、版2のAPI・再送・再起動確認を記録した`cb79db0`を基準に、`485286c`と`6b99746`の変更14ファイルと関連する既存の配信・監視・DB・CIを確認した。詳細は[`docs/reviews/20261028-review.md`](docs/reviews/20261028-review.md)、集計証拠は[`20261028-evidence.json`](docs/reviews/20261028-evidence.json)。途中でチャットが中断されたが、保存済みの監査結果から再開し、同じ最終評価をやり直していない。
+
+### 実行確認
+
+```bash
+./.venv/bin/python -m unittest discover -s tests -v
+./.venv/bin/python -m compileall -q src tests scripts
+./.venv/bin/python -m pip check
+docker compose config -q
+docker compose ps
+gh run list --repo kenobix/Claude_practice --workflow bike-mlops-contracts.yml --branch main --limit 5
+```
+
+- 既存13テスト成功（テスト本体0.396秒）、構文検査成功、pip checkは`No broken requirements found`。Starletteのhttpx非推奨警告は残る。最初の隔離実行は最初のAPIテストで進まなくなり、自分の検証プロセスを終了して許可付き実行で成功した。隔離時の停止原因は確定していない。
+- 対象2コミットのCIはsuccess。ただし試験は既存13件、CIのcompile対象はsrc/testsのみであり、新規scripts・candidate・manifest・最終評価・配信復旧の十分な回帰試験はなかった。
+- Compose全サービス起動、PostgreSQL healthy。MLflow health、Blue版3・Green版2・Caddy版3のreadyが200。配信台帳の版2/3昇格completed・probeあり、入口とartifact SHAが一致。
+- 保存済みQ4予測をDBからSELECTし、元UCIと再結合。各版2,168予測、特徴量と入力出典hashの不一致0。全Q4・直近週のMAE/RMSEとPSIは既存reportに一致。新規APIリプレイやモデル再推論は実行していない。
+- 新データ41 ZIP（742,925,529 bytes）のSHA、CSVとmanifest SHAが保存済み記録に一致。分割は17,538/4,343/7,294、重複0、境界2行除外、DST処理後の時刻集合差0。
+- 月境界・DSTを含む7日166時間を7 ZIPから別のID辞書方式で再集計し、166/166一致。サンプル98,733 ID、重複204行。全1,944万行を別実装で再集計したわけではない。
+- 直近6時間・サービスごと末尾300行の保持ログ計923行にERROR/Traceback/HTTP403/503なし。保持外の履歴まで正常と断定しない。
+
+### 見つかった不足と前回説明の訂正
+
+1. 新データ候補のvalidation時modelはno-registerで保存しておらず、最終評価では再学習していた。以前の「固定候補」という説明は不十分だった。設定・行数・seed一致だけでは、同一artifactを使った証拠にならない。元の数値は保存し、暫定評価としてREADMEと評価文書を訂正した。
+2. 最終評価の防止策は出力ファイル名だけに依存する。合成CSVと固定モデルで出力名を変えた2回が両方成功した。実データ最終期間は再採点していない。分割planもmanifestへ手作業で加えられており、生成scriptからは出力されない。
+3. 新データへ監視を流用すると2012年以前という参照filterで0行になる。配信seedとprobeもUCI固定。新target契約と別DB/Compose profileが必要。
+4. 合成検査でarchive0件から24行の全0データを作れること、不正manifest配列`[1]`でAttributeErrorになることを確認。今回の実CSVが壊れた証拠はなく、範囲・型・収支検査の欠如として記録した。
+5. 計画した主要時間帯・欠測・応答時間の許容幅は未実装。現行passedはvalidation MAE比較の合格だけ。Q4のlatencyも制御した負荷比較とは扱わない。
+6. Q4監視でstart指定を省略したため、各版4,416窓のうちQ3の空窓2,208が余分に保存されていた。最終週と別集計したQ4全誤差には影響なし。runbook例をQ4の明示期間へ修正し、既存DB/レポートは維持した。
+7. PSIは参照が定数の合成例`[1,1,1]`対`[100,100,100]`で0となる。今回のlag_24参照は非定数で、報告済み2.095への影響はない。
+8. runtime stateの理由は版1bootstrap時のままで、配信台帳が正確な承認根拠。既知の利用不可版1もREADY/passedと過去版一覧に残る。明示的な配信可否・状態同期が必要。
+9. 検証ラベルを待つ評価判断時刻が未定義。UCI Q3末尾と新データvalidation末尾は23時で、+3時間の到着は後続評価開始日の02時となり、00/01時の評価対象より遅い。学習や最終正解の混入は確認されなかったが、当時の配信判断を再現するには境界の待機時間が必要。数値は変更せず、計画書R02へ判断時刻の固定を追加した。
+
+rollback、中断復旧、破損artifact拒否、PostgreSQL並行要求、障害注入、DB/artifact復元の完了証拠も不足していた。元計画の「企画・未実装」という状態を現状に更新し、native NaN処理という実装選択を反映。新しく判明した作業をR01〜R10として、優先順位・依存関係・個別チェック項目・完了条件付きで`261014/plan_mlops.md`第11節へ追記した。
+
+今回の変更は監査報告・計画・既存文書の訂正のみ。実装上の未解決項目は計画に明示し、モデルの学習/登録/昇格や評価済み最終期間の再推論は行っていない。詳細ログはGit対象外の`data/reports/review-20261028-*`、原本/乗車ID/認証値を含まない集計証拠はdocs/reviewsへ保存した。

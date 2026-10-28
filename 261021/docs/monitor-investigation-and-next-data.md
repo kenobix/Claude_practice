@@ -2,6 +2,8 @@
 
 この文書は2026-10-28の記録です。冒頭のPSI・直近誤差の調査はQ3/Q4を見た後の分析で、次候補の調整には使いません。後半に、独立した新データで候補選定と最終評価を行った結果を記録します。
 
+同日の[差分監査](reviews/20261028-review.md)で、候補artifactを保存せず最終評価時に再学習していたこと、再実行防止が同一出力ファイルだけに依存することを確認しました。後半の結果は同じ学習設定による後続期間評価の暫定記録であり、同一モデルartifactを評価した証拠としては不足しています。元の数値は保存し、計画書R01〜R04を解消するまで新たな最終評価や新候補の昇格根拠には使いません。
+
 ## 調査結果
 
 調査レポート: [`data/reports/model-drift-investigation-2012100100-2013010100.json`](../data/reports/model-drift-investigation-2012100100-2013010100.json)。保存済みのDB予測と元のUCI `hour.csv`を時刻で照合しました。
@@ -58,22 +60,22 @@ validation `[2025-01-01, 2025-07-01)`で候補を一度だけ比較しました�
 
 候補MAEは同じvalidation時刻上で版3とbaselineを厳密に下回り、品質ゲートを通過しました。これはCapital Bikeshareの新しい件数定義へ移行する候補としての結果です。UCIの版3に学習時と異なる新システムのデータを与えた比較なので、旧データ上のMAEと数値を直接比較して「実運用精度が何%上がった」とは言えません。候補はMLflowへ登録せず、API配信も変更していません。
 
-validation後に候補を固定し、独立期間`[2025-07-01, 2026-05-01)`の7,294行を一度だけ採点しました。学習を同じcutoff・行数・ハイパーパラメータで再現し、版3は登録済みartifact SHAがvalidation時と同じことを確認してから同じ時刻で比較しています。
+validation後に同じcutoff・行数・ハイパーパラメータで候補を再学習し、後続期間`[2025-07-01, 2026-05-01)`の7,294行を採点しました。候補の選定時artifactは保存されておらず、同一artifactかは未証明です。比較対象の版3については登録済みartifact SHAがvalidation時と同じことを確認しています。
 
-| out-of-time評価指標 | 固定候補 | 現行版3 | 履歴baseline |
+| out-of-time評価指標 | 同設定で再学習した候補 | 現行版3 | 履歴baseline |
 |---|---:|---:|---:|
 | MAE | 126.941 | 326.387 | 181.185 |
 | RMSE | 211.578 | 518.660 | 296.180 |
 
-固定候補はこの期間でも版3とbaselineより誤差が小さく、候補改善の独立した時系列根拠が得られました。ただしout-of-time結果に別の合否基準は定義していないため、「最終holdout品質ゲートに合格」とは呼びません。元データのターゲット定義差、集計監査で全期間統計を見たこと、3時間のラベル遅延が実測でなく実験仮定であることを含めて解釈します。月別MAEは`data/reports/capitalbikeshare-2025h2-202604-final-evaluation.json`にあります。
+この再学習候補は後続期間でも版3とbaselineより誤差が小さい結果でした。モデルの同一性を示す記録が不足し、out-of-time結果に別の合否基準も定義していないため、これだけを昇格の根拠にはしません。元データのターゲット定義差、集計監査で全期間統計を見たこと、3時間のラベル遅延が実測でなく実験仮定であることも含めて解釈します。月別MAEは`data/reports/capitalbikeshare-2025h2-202604-final-evaluation.json`にあります。
 
 実行レポートはローカルの`data/reports/candidate-capitalbikeshare-2025h1-v3.json`と`data/reports/capitalbikeshare-2025h2-202604-final-evaluation.json`です。どちらもMLflowに自動登録していません。候補validationの実行時JSONはターミナルにも表示されます。MLflow UIには過去に登録したrunが表示され、APIの`/ready`と`/version`には稼働状態だけが表示されます。
 
-最終期間を固定候補に対して採点済みのため、今後このvalidationまたは最終期間を使って別候補を選んだり調整したりしません。候補を修正して比較する場合は、新しい期間または新しい外部データを先に確保します。レポート生成scriptは既定出力が既にある場合、二度目の最終採点を拒否します。
+最終期間は採点済みのため、今後このvalidationまたは最終期間を使って別候補を選んだり調整したりしません。候補を修正して比較する場合は、新しい期間または新しい外部データを先に確保します。現行scriptは同じ出力ファイルの存在を検査するだけで、出力名の変更による重複採点は防げません。計画書R02の消費台帳を実装する必要があります。
 
 生の月次データは`data/raw/capitalbikeshare/monthly/`、集計CSVと取得・変換manifestは`data/derived/`に置きます。どちらもGitに追加しません。公式[Data License Agreement](https://capitalbikeshare.com/data-license-agreement)に従い、単体データセットとして再配布しません。集計結果は学習・評価のローカル分析に使い、実サービスの効果を主張しません。
 
-再現用の候補validationコマンドは次のとおりです。validationは既に候補選択に使っているため、再実行結果を使って別候補を選ばないでください。次の候補の比較には別のデータ期間が必要です。
+実行時の候補validationコマンドを履歴として示します。audit中や次の候補選定のためには再実行せず、既存reportを読みます。次の候補にはR01〜R04の修正と別のデータ期間が必要です。
 
 ```bash
 MLFLOW_TRACKING_URI=http://127.0.0.1:5000 ./.venv/bin/mlops-bikectl candidate \
@@ -87,7 +89,7 @@ MLFLOW_TRACKING_URI=http://127.0.0.1:5000 ./.venv/bin/mlops-bikectl candidate \
   --no-register
 ```
 
-一度だけ実施したout-of-time採点コマンドは次のとおりです。結果ファイルが既にある場合は二重採点を防ぐため停止します。
+実行時のout-of-time採点コマンドを履歴として示します。この期間は採点済みです。出力名を変えた再実行は現行scriptで防止できないため行いません。
 
 ```bash
 MLFLOW_TRACKING_URI=http://127.0.0.1:5000 ./.venv/bin/python scripts/evaluate_capitalbikeshare_holdout.py

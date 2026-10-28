@@ -1,0 +1,274 @@
+{
+  "review_date": "2026-10-28",
+  "scope": {
+    "baseline_commit": "cb79db02c7d38714f626f40c11fd828f64717e22",
+    "reviewed_commits": [
+      "485286c20c830d70d98eacd63f9dbeb0ffda2538",
+      "6b99746feab7c301c6ccf854902ebee3d2f98d09"
+    ],
+    "application_code_changed_during_review": false,
+    "new_candidate_training_or_final_holdout_scoring_during_review": false
+  },
+  "data_checks": {
+    "archives_checked": 41,
+    "archive_bytes": 742925529,
+    "archive_sha256_mismatch_count": 0,
+    "derived_csv_sha256": "cc4b39c67db286d30300cc6fb10a0f37e942eb337a7bd964795bbdd891762a96",
+    "csv_and_source_manifest_hashes_match_previous_reports": true,
+    "rows": 29177,
+    "train_rows": 17538,
+    "validation_rows": 4343,
+    "final_rows": 7294,
+    "overlapping_rows": 0,
+    "excluded_label_boundary_rows": 2,
+    "dst_expected_hour_set_difference": 0,
+    "source_rows_sum": 19440291,
+    "deduplicated_row_count": 205,
+    "final_monthly_weighted_mae": 126.94098831272723,
+    "reported_final_mae": 126.94098831272721,
+    "candidate_artifact_identity_independently_verified": false
+  },
+  "source_sample_checks": {
+    "dates": [
+      "2023-01-01",
+      "2023-01-31",
+      "2023-11-05",
+      "2024-03-10",
+      "2024-05-31",
+      "2024-06-01",
+      "2026-04-30"
+    ],
+    "archives_scanned": [
+      "202301-capitalbikeshare-tripdata.zip",
+      "202311-capitalbikeshare-tripdata.zip",
+      "202403-capitalbikeshare-tripdata.zip",
+      "202405-capitalbikeshare-tripdata.zip",
+      "202406-capitalbikeshare-tripdata.zip",
+      "202604-capitalbikeshare-tripdata.zip",
+      "202605-capitalbikeshare-tripdata.zip"
+    ],
+    "unique_trip_ids_in_sample": 98733,
+    "duplicate_rows_in_sample": 204,
+    "hourly_buckets_checked": 166,
+    "mismatch_count": 0,
+    "mismatches": [],
+    "intentionally_excluded_fall_back_hour_raw_count": 341
+  },
+  "live_checks": {
+    "checked_at_utc": "2026-10-28T03:00:40.962456+00:00",
+    "http": {
+      "http://127.0.0.1:5000/health": {
+        "status": 200,
+        "body": "OK"
+      },
+      "http://127.0.0.1:8001/ready": {
+        "status": 200,
+        "body": {
+          "status": "ready",
+          "model_name": "bike-demand",
+          "model_version": "3",
+          "quality_gate_status": "passed"
+        }
+      },
+      "http://127.0.0.1:8002/ready": {
+        "status": 200,
+        "body": {
+          "status": "ready",
+          "model_name": "bike-demand",
+          "model_version": "2",
+          "quality_gate_status": "passed"
+        }
+      },
+      "http://127.0.0.1:8080/ready": {
+        "status": 200,
+        "body": {
+          "status": "ready",
+          "model_name": "bike-demand",
+          "model_version": "3",
+          "quality_gate_status": "passed"
+        }
+      },
+      "http://127.0.0.1:8080/version": {
+        "status": 200,
+        "body": {
+          "application_version": "0.1.0",
+          "model_name": "bike-demand",
+          "model_version": "3",
+          "artifact_sha256": "79f06eb9d5a6efc378f20ba37fe98a8367762c1cb6c699200152a121a2af4a43",
+          "quality_gate_status": "passed",
+          "feature_contract_version": "bike-demand-features-v1"
+        }
+      }
+    },
+    "registered_versions": [
+      {
+        "version": "3",
+        "run_id": "a0c6d543bb464f5aac88dd87a9712339",
+        "status": "READY",
+        "quality_gate": "passed",
+        "artifact_sha256": "79f06eb9d5a6efc378f20ba37fe98a8367762c1cb6c699200152a121a2af4a43",
+        "training_cutoff": "2012-07-01 00:00:00",
+        "validation_mae": "62.41599141189019"
+      },
+      {
+        "version": "2",
+        "run_id": "f55812c02dac4084a8185856cf7b4793",
+        "status": "READY",
+        "quality_gate": "passed",
+        "artifact_sha256": "42bb5f3c7dc5a28d562d3fe2b01fe2aaf832af34ef5496b05b0fe65e9a79b337",
+        "training_cutoff": "2012-01-01 03:00:00",
+        "validation_mae": "55.07279690055694"
+      },
+      {
+        "version": "1",
+        "run_id": "0db7aa07461b4b8785145156d8de9a66",
+        "status": "READY",
+        "quality_gate": "passed",
+        "artifact_sha256": "894ebde8080a022f5dc28573babf394c2bfbec1d6e6f4abeadb41d86ea331aab",
+        "training_cutoff": "2012-01-01 03:00:00",
+        "validation_mae": "55.07279690055694"
+      }
+    ],
+    "q4_saved_prediction_checks": {
+      "2": {
+        "rows": 2168,
+        "distinct_times": 2168,
+        "mae": 70.50089095668359,
+        "rmse": 113.27010335184048,
+        "last_week_scored_rows": 164,
+        "last_week_mae": 37.27775155353658,
+        "last_week_rmse": 58.158205647623625,
+        "feature_value_mismatches": 0,
+        "source_hash_mismatches": 0,
+        "artifact_hashes": [
+          "42bb5f3c7dc5a28d562d3fe2b01fe2aaf832af34ef5496b05b0fe65e9a79b337"
+        ]
+      },
+      "3": {
+        "rows": 2168,
+        "distinct_times": 2168,
+        "mae": 59.40269794432242,
+        "rmse": 91.94132089624146,
+        "last_week_scored_rows": 164,
+        "last_week_mae": 44.176335568292686,
+        "last_week_rmse": 74.2858248735777,
+        "feature_value_mismatches": 0,
+        "source_hash_mismatches": 0,
+        "artifact_hashes": [
+          "79f06eb9d5a6efc378f20ba37fe98a8367762c1cb6c699200152a121a2af4a43"
+        ]
+      }
+    },
+    "psi_recomputed_from_original_feature_rows": {
+      "annual_reference": 2.095416249145052,
+      "matched_late_december_reference": 0.19825041801897508
+    },
+    "monitor_window_counts": [
+      {
+        "model_version": "v2",
+        "rows": 4416,
+        "empty_windows": 2208,
+        "start": "2012-07-01 00:00:00",
+        "finish": "2012-12-31 23:00:00"
+      },
+      {
+        "model_version": "v3",
+        "rows": 4416,
+        "empty_windows": 2208,
+        "start": "2012-07-01 00:00:00",
+        "finish": "2012-12-31 23:00:00"
+      }
+    ],
+    "recent_compose_logs": {
+      "lines": 923,
+      "error_or_traceback_lines": [],
+      "http_503_lines": 0,
+      "http_403_lines": 0,
+      "scope": "last 6 hours, last 300 lines per service; absence of errors applies only to this retained window"
+    }
+  },
+  "verification": {
+    "unit_tests": {
+      "count": 13,
+      "seconds": 0.396,
+      "result": "passed",
+      "log_local_path": "data/reports/review-20261028-unit-tests.log",
+      "warning": "StarletteDeprecationWarning for httpx test client",
+      "initial_isolated_attempt": "stalled on first API test; own process terminated; same suite passed in approved host execution"
+    },
+    "compileall_src_tests_scripts": "passed",
+    "pip_check": "No broken requirements found",
+    "ci_runs": [
+      {
+        "commit": "485286c",
+        "result": "success",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40615414384"
+      },
+      {
+        "commit": "6b99746",
+        "result": "success",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40622122344"
+      }
+    ],
+    "ci_coverage_limit": "existing 13 tests; CI compile step covers src/tests, not scripts"
+  },
+  "synthetic_probes": {
+    "same_final_period_with_two_output_filenames": {
+      "first_output_created": true,
+      "second_output_created": true,
+      "models": "fixed stubs; only temporary synthetic CSV, no historical holdout accessed"
+    },
+    "zero_fill_without_source_archives": {
+      "input_archives": 0,
+      "output_hours": 24,
+      "target_min": 0,
+      "target_max": 0
+    },
+    "constant_reference_psi": {
+      "reference": [
+        1,
+        1,
+        1
+      ],
+      "current": [
+        100,
+        100,
+        100
+      ],
+      "actual_psi": 0.0
+    },
+    "non_object_source_manifest": {
+      "input_json": "[1]",
+      "raised_type": "AttributeError",
+      "message": "'list' object has no attribute 'get'"
+    },
+    "new_source_psi_reference": {
+      "source_time_range": "2023-2026",
+      "implemented_filter": "timestamp < 2012-01-01",
+      "reference_rows": 0
+    }
+  },
+  "limitations": [
+    "Current hashes prove consistency with the acquisition manifest, not independent publisher signatures.",
+    "Only seven selected source days were independently reaggregated; all 41 ZIP contents were not fully reaggregated in this review.",
+    "No original unregistered candidate artifact or per-row candidate predictions were retained, so its exact identity and metrics could not be independently replayed.",
+    "No rollback, crash injection, backup restore, deployment or new holdout evaluation was executed against the active stack.",
+    "Log inspection is limited to the retained six-hour/tail window."
+  ],
+  "evaluation_decision_clock_checks": [
+    {
+      "validation": "UCI Q3",
+      "last_target": "2012-09-30 23:00:00",
+      "last_label_available_at": "2012-10-01 02:00:00",
+      "final_start": "2012-10-01 00:00:00",
+      "final_targets_before_all_validation_labels_arrive": 2
+    },
+    {
+      "validation": "Capital 2025H1",
+      "last_target": "2025-06-30 23:00:00",
+      "last_label_available_at": "2025-07-01 02:00:00",
+      "final_start": "2025-07-01 00:00:00",
+      "final_targets_before_all_validation_labels_arrive": 2
+    }
+  ]
+}

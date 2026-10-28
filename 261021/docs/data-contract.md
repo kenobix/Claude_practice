@@ -2,6 +2,8 @@
 
 初学者向けの用語は[用語集](glossary.md)を参照してください。
 
+この契約は現在配信中のUCIモデル用です。Capital Bikeshareの月次trip-start集計は[移行実験の記録](monitor-investigation-and-next-data.md)を参照してください。新target契約・データprofile・独立した作業DB・監視参照・配信probeは未整備で、[差分監査のF03](reviews/20261028-review.md)と計画書R05に残しています。
+
 ## 出典と加工
 
 - 原本: [UCI Bike Sharing Dataset](https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset)、`hour.csv`。
