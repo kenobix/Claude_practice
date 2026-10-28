@@ -1152,3 +1152,32 @@ DBは時刻条件付きSELECT、MLflowは全pageの検索API、Composeは`logs -
 計画書11.5へ優先度・依存関係・完了条件を再整理した。次の節目は、部品を追加するだけでなく、凍結plan/候補/DB/HTTP出典/監査/reportを再現可能な合成system testでつなぎ、測定CLIを復帰させること。実データ取得・一度限りの精度評価はその後、理由付き承認は監視・復旧証拠の後に行う。今回の追跡変更はレビュー・計画・現行ドキュメントのみ。実装や稼働版は変更していない。
 
 レビュー・計画・現行ドキュメントのローカルリンク49件（anchor含む）は全て解決し、証拠JSONのparse/対象26 CIの成功状態、`git diff --check`も確認した。既存の無関係な未追跡4ファイルはコミット対象から除外した。
+
+## 2026-10-28: 測定中の観測固定・出典と監査の照合部品
+
+計画11.5のS01/S03を進めた。`capital_measurement_guard.py`に、候補データとstaging観測の全行を照合してPostgreSQLの`observations`表を同じtransaction内でロックし、呼び出し元の処理終了まで保持するcontext managerを追加した。ロック待ちは設定したtimeoutで失敗し、接続喪失・ロック解除は`assert_held`で拒否する。監査行が別connectionからcommitされた後に見えるよう、transactionはREAD COMMITTEDを明示した。SQLiteは監査書き込みを妨げるため測定guardでは拒否する。
+
+候補データの24/168時間lag・欠測・ラベル到着からAPIの`data_version_sha256`と特徴量を再計算し、request、response、保存したaudit行のcandidate/版/artifact/profile/入力hash/特徴量/予測値/出典を照合する処理を追加した。request prefix内の全監査行を照合してID重複・欠落・余分な行も拒否する。`data_version_sha256`はCSV全体のSHAではなく、実際に使ったlag情報のhashである。
+
+再現可能な部分試験として`scripts/test_capital_snapshot_postgres.py`を保存した。既存image `postgres:17.6-bookworm`から、ランダム名・loopback自動割当port・使い捨てcredentials・独立DBを作る。DBの所有者は非superuser。合成モデルで起動したFastAPIの同じrouteを用い、2件の予測を実際に保存して次を確認した。
+
+- 観測表の検査中、別connectionの観測更新がtimeoutする一方、予測と監査INSERTは成功。
+- 応答/監査の候補ID・入力・特徴量・出典hash・予測値が候補データと一致し、改変値、誤ったhash、監査行の欠落/余分、ID重複は拒否。
+- 別writerが先に表を使用している場合のguard取得timeout、観測変更後の不一致、guard connectionの切断、context終了後のlock解放を確認。
+- containerは`--rm`付きで起動し、終了時に一意の名前とlabelを照合して削除した。同名prefixの残存containerなし。既存UCI入口はversion 3・readyを返した。
+
+```bash
+.venv/bin/python scripts/test_capital_snapshot_postgres.py
+# status=passed。上記のPostgreSQL/API合成試験を実施し、一時containerを削除。
+# data/reports/20261028-snapshot-guard/postgres-api.log
+# SHA-256: 79630d62a0b338835fa6e94d253316689b16a7a367053c5ae2ba8bae3f4f9a25
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -v
+# 90 tests, OK (11.680s)。API testclientの既存StarletteDeprecationWarningあり。
+# data/reports/20261028-snapshot-guard/unit-tests.log
+# SHA-256: 275bd7b70553466f724845485fb9f5ebd36842902777effc46430d02550a50ac
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+# 成功。全suite後に部分integrationスクリプトを非superuser構成・ローカルDocker socket確認・名前とlabelを照合するcleanupへ修正し、再実行して成功。
+```
+
+この部分試験のモデルはmock、FastAPIはTestClientであり、実MLflow登録・staging Docker image・ネットワーク越しのAPI・1,050要求は試していない。これらのguardはbenchmark本体にもまだ接続していない。従って測定CLIは引き続き入力確認専用、運用gateは未完成。次に固定運用planの事前保存、候補・registry identity、guardと全要求の接続、接続喪失時partial reportと監査batchの証拠保存を実装し、最新Dockerfile・隔離MLflow/PostgreSQL/APIを通すsystem testを完成させる。新しい実データ取得、実評価、既存UCIへの予測・配信操作はしていない。

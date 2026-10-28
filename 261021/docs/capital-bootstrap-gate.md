@@ -121,6 +121,14 @@ curl -fsS http://127.0.0.1:8110/ready
 
 seedは候補・最終reportを再検証し、指定したMLflow版のtag、CSVとmanifestのSHA-256を候補に照合する。DBの既存観測は時刻・台数・利用可能時刻・データSHAまで比較し、余分な行や不一致があればseed全体を拒否する。PostgreSQLでは検査と挿入を同じトランザクション内でロックする。上記seedコマンドに`--verify-only`を付けると、観測を追加せずに全行が揃っていることも検査する。これは照合した時点のDB状態を示し、確認後の変更を防ぐものではない。benchmark側での再照合、training split、APIデータ出典の検証は未対応であり、実候補のbenchmarkを実行する前に対応する。
 
+測定中のロックと出典照合に使う部品は`capital_measurement_guard.py`に追加済み。PostgreSQLで観測表の照合とロックを同じtransactionに保持し、候補のlagから期待hash・特徴量を求め、応答と監査行を検査する。失われた接続、重複IDや監査の過不足も拒否する。次の再現用スクリプトは一時PostgreSQLと合成モデルのFastAPIでこれらを試す。通常のMLflow・staging image・1,050件測定は含まない。
+
+```bash
+.venv/bin/python scripts/test_capital_snapshot_postgres.py
+```
+
+このスクリプトはUnix socket経由のローカルDockerと、取得済み`postgres:17.6-bookworm` imageが必要。ランダムな名前とloopback自動port、使い捨てパスワードを用い、作成したcontainerを最後に停止・削除する。既存サービスのDBは使わない。これらの部品はまだbenchmark本体に接続していないため、CLIは引き続き入力確認専用。
+
 計測中にCtrl-Cで止めても、送信済み要求を含むpartial reportを保存し、`completed=false`・運用gate failedとして扱う。完了しなかった計測結果を成功としてMLflowへ記録する経路はない。
 
 この結果は当該PC・逐次要求の運用目標への適合を示す。同時負荷への耐性や本番SLOの達成を示すものではない。
