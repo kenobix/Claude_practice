@@ -58,7 +58,7 @@ MLFLOW_TRACKING_URI=http://127.0.0.1:5001 \
 
 `./scripts/bikectl`を使う場合も、先頭に`DATA_PROFILE_ID=capital-bikeshare`を付けるとCapital用のPostgreSQL `55433`とMLflow `5001`を選びます。UCI profileでは従来どおり`.env`の`APP_DB_HOST_PORT`（既定`55432`）とMLflow `5000`です。コマンド行で明示した`DATABASE_URL`と`MLFLOW_TRACKING_URI`は`.env`より優先されます。
 
-厳格なmanifest v2とprofile別seedは検証済みですが、同targetのmodel・承認済みmonitor参照、隔離PostgreSQL/MLflowの実起動は未完了です。このためAPIはまだreadyになりません。次のbootstrap評価案と未使用期間の提案は[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)を参照してください。候補作成・評価は[R06のgateとprotocol](../../261014/plan_mlops.md#r06-比較gateと昇格条件の完成)を凍結するまで行いません。実環境を起動する場合もUCIと同時に受け付けず、先にCompose設定の適用・別port・profile表示を確認します。
+厳格なmanifest v2とprofile別seedは検証済みですが、同targetのmodel・承認済みmonitor参照、隔離PostgreSQL/MLflowの実起動は未完了です。このためAPIはまだreadyになりません。決定済みのbootstrap基準と未使用期間の事前案は[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)を参照してください。基準の判断待ちは解消しましたが、候補作成・評価には[R06の実装とprotocol](../../261014/plan_mlops.md#r06-比較gateと昇格条件の完成)が必要です。実環境を起動する場合も先にCompose設定の適用・別port・profile表示を確認します。
 
 ## 特徴量の情報時点
 

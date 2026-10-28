@@ -182,7 +182,7 @@ MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0
 
 ### 時系列を保った再学習候補
 
-新データ候補の登録・昇格前に[差分監査](reviews/20261028-review.md)と[計画書R01〜R09](../../261014/plan_mlops.md#11-2026-10-28差分監査後の実行計画)を確認します。現行CLIの新データ最終評価は候補artifactを再利用せず再学習し、配信/監視はUCIデータを前提にしています。下記の過去コマンドをそのまま新データ移行へ流用しません。
+新データ候補の登録・昇格前に[差分監査](reviews/20261028-review.md)と[計画書R01〜R09](../../261014/plan_mlops.md#11-2026-10-28差分監査後の実行計画)を確認します。過去のCapital最終評価は再学習していましたが、P0修正後の最終評価scriptは保存済み候補artifactを照合・loadします。現行の候補経路には同target incumbentが必要で、Capital初回bootstrapの基準適用は未実装です。下記の過去コマンドは履歴として扱います。
 
 2026-10-28に版2をincumbentとして候補版3を比較し、Q3ゲート合格後に昇格しました。現行版は3です。旧版1は誤ったartifact URIで登録され、読み込みできないため比較・rollbackに使いません。Q3・Q4は評価済みで、同じ期間を次候補の選択に使ってはいけません。次の候補には新しいデータと事前に決めた後続期間を用意します。
 
@@ -207,7 +207,7 @@ MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0
 
 2026-10-28時点で手元にあるCapital Bikeshareの2025年上期validationと2025-07〜2026-04の後続期間は、いずれも既評価として再利用禁止です。UCI登録版3は別targetのモデルなので、Capital候補のincumbentとして使いません。まだ`bike-demand-capital`配下の同target incumbentも承認済みmonitor参照期間もありません。このため、現在は新protocolの作成・候補選定・最終評価を実行しないでください。まず別target用の初回modelと合否規則をR06に従って確立します。
 
-初回Capital modelのvalidation/後続期間と比較gateの提案は[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)にあります。これは未承認の案です。2026年6〜9月公式archiveはURLの存在確認のみで、内容をまだ取得・閲覧していません。gateとsplitを合意・凍結するまで、ダウンロード後の集計データを候補学習や評価に使わないでください。
+初回Capital modelの基準は、ユーザーからの判断委任により[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)へ決定事項として記録しました。MAEの厳密改善とRMSE非悪化、エラー0件/p95 250ms以下のローカル運用目標、segmentは記録のみを採用します。追加の確認待ちはありませんが、bootstrapコード適用・未使用データ検証・protocol freezeは未完了です。2026年6〜9月公式archiveは前回URLの存在を確認しただけで、内容をまだ取得・閲覧していません。新しい実験前にR04のtimezone供給元固定とR06の実装・protocolを整えます。
 
 初回modelが用意され、未使用のvalidation・後続期間を確保した後の手順は次のとおりです。出典の公開が遅れている場合は、新期間が入手できるまで待ちます。
 

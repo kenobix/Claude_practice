@@ -646,7 +646,7 @@ UCI Bike SharingとCapital Bikeshareの件数は意味が異なるため、UCI�
 - API応答・新しい予測/観測要求・replay・deploy probeにprofile/targetを含める。UCIの従来要求とidempotency hashは互換維持。Capital APIはprofile/targetの不一致とDSTの存在しない/曖昧な壁時計時刻を拒否する。
 - Seed/audit/model probeを選択profileに対応させ、Capitalはmanifest schema v2と全原本archive hashを検査する。Capitalには凍結monitor referenceがないため、UCI 2011の参照分布を流用せずmonitorを停止する。
 - 追加レビューで`./scripts/bikectl`が`.env`から秘密値を読み込んでから接続先をUCI portへ強制していた問題を修正した。明示的なprofile/DB/MLflow URLを保持し、`.env`のDBパスワードでホスト接続を作る場合はCapitalを55433/5001、UCIを設定済みport/5000へ振り分ける。
-- `tzdata==2026.5`をlockへ追加し、このWSL venvにもインストールした。Python `zoneinfo`がOSのzoneinfoに依存しないようにするため。profile loaderの不正label設定検査とwrapperのprofile path選択を加えた。
+- `tzdata==2026.5`をlockへ追加し、このWSL venvにもインストールした。profile loaderの不正label設定検査とwrapperのprofile path選択を加えた。（供給元に関する当初の「OSに依存しない」という説明は、下記のR06差分レビューで訂正。）
 
 ### 検証と未完了
 
@@ -680,5 +680,20 @@ UCI Bike SharingとCapital Bikeshareの件数は意味が異なるため、UCI�
 
 - 変更後の全44テストが成功。`compileall -q src tests scripts`、`pip check`、`sh -n scripts/bikectl`、`docker compose -f compose.yaml -f compose.capital.yaml config -q`、`git diff --check`も成功。
 - commit `05b6c95` push後のGitHub Actions run `40644880384`がsuccess。lock install、`pip check`、44テスト、compileallが完了した。
-- `tzdata==2026.5`を依存lockとこのWSL venvに追加し、zoneinfoがシステム設定に依存しないことを確認した。
+- `tzdata==2026.5`を依存lockとこのWSL venvに追加した。（当初記載した「zoneinfoがシステム設定に依存しないことを確認」は誤り。下記のR06差分レビューでOS優先検索と未解決の供給元固定を記録。）
 - R05の隔離Compose実起動、PostgreSQL接続、Capital model loading、offline/API parity、deployは未実施。R05は部分完了のまま。
+
+## 2026-10-28: 前回以降のログ差分と3点の基準決定
+
+ユーザー依頼に従い、前回最終commit `9131b1f`（15:38:10 JST）以降だけを確認した。対象・コマンド・証拠の限界は[`docs/reviews/20261028-r06-delta-review.md`](docs/reviews/20261028-r06-delta-review.md)に記録する。
+
+- 作業開始時のHEADは同じで追跡差分0。保存済みreports/raw/derived/runtime、Capital SQLiteのmtimeに追加更新なし。candidate/評価台帳の新規ファイルもなし。
+- `docker compose logs --since '2026-10-28T15:38:10+09:00' ...`は成功し差分ログ0行。UCI全5コンテナはrunning、PostgreSQL healthy。今回はready再probeをしていないため、稼働可能を新たに実証したとは記録しない。
+- MLflowへ基準時刻以降のruns検索とmodel version作成/更新時刻照会を実施し、追加0件。PostgreSQLのSELECTでは新規prediction 0、deployment作成/更新0、monitor window 0。学習・評価・配信を再実行して確かめる方法は使っていない。
+- `gh run view 40645058486 ...`で`9131b1f`のCI successを再確認。隔離環境のDocker socket/GitHub接続制限は、許可付きの読み取り実行で解消した。Docker設定・権限変更やサービス再起動はしていない。
+- 前回評価案の学習末尾ラベルがvalidation開始より後に到着する不整合を修正。training cutoffを2026-06-01 00:00とし、5月31日22/23時の2行を除外する。Python日時算術でvalidation 1,464時間、後続1,461時間、選択判断8月1日02時を照合した。
+- 前回のtimezone説明を訂正。`tzdata` package版2026.5はinstall済みだが、実行時の`TZPATH`とPython標準ライブラリ実装はOS側を優先する。実際のprovider/versionを揃えて記録する作業をR04/P0の残作業に追加した。既存DSTデータの誤りを発見したという意味ではない。
+
+ユーザーから判断を委任されたため、3点をCodexが決定した。validation/後続精度gateはMAEの厳密改善とRMSE非悪化、運用は暖機50件後の逐次1,000件でエラー0・p95 250ms以下、weekday/weekend・通勤時間帯は件数/MAE/差を記録する診断値とする。全要求は新規ID・再試行0とし、保存済み応答の計測を避ける。追加の確認待ちは解消した。
+
+`docs/capital-bootstrap-gate.md`を決定済み基準へ更新し、runbook・data profile文書の未承認表記を修正、計画書R06を仕様決定と未実装/未実測へ分割した。計画書11.4へ実行順序を追記した。今回完了したのは差分レビューと基準/残作業の更新で、新規fit・評価・登録・昇格・負荷試験は行っていない。変更は文書のみのため、ローカルでのテストsuite再実行は省略し、文書リンク・日時算術・diffを確認する。push後は自動CIの結果を確認する。

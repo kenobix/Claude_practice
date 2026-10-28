@@ -269,7 +269,8 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 - [x] hostとコンテナは同じrequirements.lockを使い、Python 3.12.11とDocker base tagを設定。候補reportには実際のhost Python/依存版を記録する。lockは現venvの99 packageと一致。
 - [x] candidate bundleにsource snapshotを保存する。
 - [x] 同じ合成開発データで2回学習し、予測完全一致を試験。final期間は使っていない。
-- 完了条件: 44テスト、compileall、pip check、CI上のclean lock installが成功。CI `40638852598`とUbuntu 24.04 runner/Node 24対応actionへ更新後の`40639053590`に加え、R05変更後のCI `40642840800`もsuccess。Starlette/httpx非推奨警告は既知制限としてwork_logへ記録した。
+- [ ] timezone供給元と版を集計・API・host/container間で固定し、reportへ記録する。`tzdata` installだけでは`zoneinfo`のOS優先検索を無効にできないことを今回確認した。必要なprovider設定とDSTの一致を試験し、新しい候補実験前に解消する。
+- 検証済みの範囲: 44テスト、compileall、pip check、CI上のclean lock installが成功。CI `40638852598`とUbuntu 24.04 runner/Node 24対応actionへ更新後の`40639053590`に加え、R05変更後のCI `40642840800`、前回最終コミットのCI `40645058486`もsuccess。Starlette/httpx非推奨警告は既知制限としてwork_logへ記録した。timezone供給元の固定・証跡は未完了なのでR04全体は完了扱いにしない。
 
 #### R05 新しいtarget定義の移行プロファイル
 
@@ -283,13 +284,16 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 
 #### R06 比較gateと昇格条件の完成
 
-- [ ] 新targetの初回modelには同target incumbentが存在しない。UCI版3をincumbentとして流用せず、初回bootstrapをhistorical baselineと事前固定validationでどう評価するか決め、target-specific model card・artifact・判断記録を作る。bootstrap validationは選定に使用済みとして台帳登録し、同じwindowを最終評価へ再使用しない。
-- [ ] 現在の`passed`がvalidation MAE比較の結果であることをタグ/文書で明確化し、artifact整合性・入力契約・運用試験を含む配信許可と分ける。
-- [ ] 全体MAE、RMSEの役割、主要時間帯、欠測率、必要件数、API latency/エラー率の許容条件と根拠を評価前にprotocolへ固定する。既に見た最終結果へ閾値を後付けしない。
-- [ ] APIの同時数・件数・暖機・hardware条件を固定した測定を、予測精度と別に実施する。学習データ量/季節差を理由に改善の因果を断定しない。
-- [ ] 未使用の後続データ期間を確保してから、新しい候補を固定・評価する。必要なデータが未公開なら未達のまま待ち、使用済み期間を新しい独立評価と呼ばない。
-- [ ] 初回bootstrap用のprotocol/candidate/final-evaluation経路を実装する。incumbentなしでは同target historical baselineだけを比較対象にし、UCI modelや未登録の仮モデルをincumbent扱いしない。
-- 完了条件: 同じreportとprotocolから採用/見送りが一意に説明でき、条件不足・悪い候補は昇格を拒否する。最終採用は理由付きの手動承認を記録する。初回bootstrap基準の提案と未使用評価候補期間は[`capital-bootstrap-gate.md`](../261021/docs/capital-bootstrap-gate.md)を参照。数値gateはユーザー合意・protocol freeze前には適用しない。
+- [x] 2026-10-28にユーザーから判断を委任され、初回Capitalの基準を決定した。validationと一度限りの後続評価の両方で同target baselineに対し`candidate MAE < baseline MAE`かつ`candidate RMSE <= baseline RMSE`。weekday/weekend・通勤時間帯は件数/MAE/差を記録する診断値とする。個別の自動gateは置かない。根拠・境界条件は[`capital-bootstrap-gate.md`](../261021/docs/capital-bootstrap-gate.md)に固定した。
+- [x] 運用目標の仕様を決定した。暖機50要求後、同時数1・新規request IDで1,000要求、再試行0、timeout10秒、エラー0件、p95 250ms以下。hardware/資源条件と全計測値を保存する。これは学習用PC上の目標であり、業務SLOではない。
+- [x] 現在のUCI `passed`は従来のvalidation MAE比較、新Capitalの精度gateは上記MAE/RMSE条件を指すと文書化した。配信許可には別途artifact/入力/運用/復旧の証拠と理由付き手動承認を要求する。旧結果・タグへ新基準を遡及適用しない。
+- [ ] 初回bootstrap用のprotocol/candidate/final-evaluation経路を実装する。incumbentなしでは同target historical baselineだけを比較し、UCI modelや仮modelを流用しない。新gate・policy識別子/SHA・行集合と件数・未設定/非有限指標/不合格拒否を回帰試験する。現在のCLIは新基準未対応。
+- [ ] report/model card/MLflow tagsとdeploy側で、validation選択gate・後続精度gate・運用gate・配信許可を区別し、条件不足や不合格を昇格前に拒否する。手動承認で不合格を上書きできる経路を作らない。
+- [ ] 原本範囲と月境界buffer規則を先に確定し、未使用2026年6〜9月のデータを取得・監査する。前回は10月archiveが404だったため、10月bufferを必要とする契約なら公開を待つ。結果を見て評価期間を短縮しない。
+- [ ] 新pathのmanifest v2、日時grid/DST/欠測理由・出典、分割件数、特徴量版、固定recipe、比較対象、gateとpolicy hashを実験protocolへ保存し、消費台帳の重複を検査する。候補fit前にvalidation開始を記録する。
+- [ ] bootstrap validationを一度実行してtarget-specific model card・artifact・行別予測・判断記録を固定する。合格時だけ同一artifactで後続評価を一度実行し、再fitしない。使用済みwindowを最終評価や調整後候補へ再利用しない。
+- [ ] 固定条件のAPI測定を実装・実行する。学習期間内の固定168時間入力を使い、精度採点はしない。HTTP 200・schema/識別/有限非負予測を確認し、失敗要求を除外せず、再送cacheの計測を避ける。hardware条件を保存し、予測精度とは別に運用gateを算出する。
+- 完了条件: 同じreportとprotocolから採用/見送りが一意に説明でき、条件不足・悪い候補は昇格を拒否する。最終採用は理由付きの手動承認を記録する。今回完了したのは基準の判断・文書化で、コード適用・protocol freeze・実験は未完了。追加のユーザー確認待ちはない。
 
 #### R07 監視の参照・期間・退化ケース
 
@@ -320,3 +324,18 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 - [ ] データ出典からモデル・予測・承認・rollbackへ遡る5分デモと、遅延ラベルを待つ監視画面またはCLI記録を用意する。
 - [ ] 予測誤差、API実測、入力分布、復旧時間、資源消費を区別して掲載し、実業務の改善や現在需要の精度を主張しない。
 - 完了条件: 別の人が再現手順から開発用検証と隔離復旧実験を追え、根拠不足の候補を昇格しない判断まで説明できる。公開する場合は出典・利用条件とホスティング方針に従う。
+
+### 11.4 R06判断後の残作業の実行順序
+
+今回の差分チェックは`9131b1f`以降のみ。結果は[差分レビュー](../261021/docs/reviews/20261028-r06-delta-review.md)に記録した。3点の判断待ちは解消したが、実装・実測の完了には振り替えない。
+
+| 順番 | 対象 | 次に実施する作業・完了の証拠 |
+|---|---|---|
+| 1 | R04/P0 | timezone供給元/版を固定・記録し、集計とAPIのDST一致を検証する。新しい実験前の前提条件。 |
+| 2 | R06/P1 | incumbentなしのprotocol/candidate/final経路、新MAE/RMSE gate、policy hashと拒否条件を実装し、合成データで回帰試験する。 |
+| 3 | R06/P1 | 月境界bufferを含む原本範囲を決定→取得/manifest v2監査→未使用split/件数/recipe/gateをprotocolへ凍結する。training cutoffは2026-06-01 00:00、未到着の直前2時間を除外。 |
+| 4 | R06/P1 | validationを一度実施→artifact/evidence固定→合格時だけ同一artifactで後続評価を一度実施する。 |
+| 5 | R05/R06/P1 | Capital隔離PostgreSQL/MLflowとmodel loading、offline/API parityを実証し、固定benchmarkを実装・測定して運用gateを判定する。 |
+| 6 | R07/P1 | 同profile training reference/PSI bins、monitor期間継承、定数分布/件数不足/ラベル待ち/欠測増加の状態を実装・試験する。 |
+| 7 | R08/R09/P1 | 隔離環境で並行要求、拒否/障害注入、rollback/recover、backup/restoreを検証し、配信可否・承認metadata・進行表示を整合させる。 |
+| 8 | R10/P2 | 採否と未達理由、再現手順、5分デモと成果の証拠をまとめる。 |
