@@ -1,0 +1,121 @@
+{
+  "created_at_utc": "2026-10-28T01:27:27.805976+00:00",
+  "window": {
+    "start_inclusive": "2012-10-01 00:00:00",
+    "end_exclusive": "2013-01-01 00:00:00",
+    "scoring_clock": "2013-01-01 02:00:00"
+  },
+  "label_availability_rule": "timestamp + 3 hours; every Q4 label is available by the scoring clock",
+  "dataset": {
+    "name": "UCI Bike Sharing Dataset, hour.csv",
+    "sha256": "e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f",
+    "hour_slots_in_window": 2208,
+    "observed_and_replayed_hours": 2168,
+    "missing_source_hours": 40
+  },
+  "candidate_validation": {
+    "run_id": "a0c6d543bb464f5aac88dd87a9712339",
+    "model_version": "3",
+    "quality_gate_passed": true,
+    "validation_window": {
+      "start": "2012-07-01 00:00:00",
+      "end_exclusive": "2012-10-01 00:00:00"
+    },
+    "candidate": {
+      "mae": 62.41599141189019,
+      "rmse": 95.79949136347821
+    },
+    "incumbent_version": "2",
+    "incumbent": {
+      "mae": 84.16778769421023,
+      "rmse": 133.40239166251746
+    },
+    "baseline": {
+      "mae": 83.69202898550725,
+      "rmse": 139.92904516632498
+    }
+  },
+  "replay_id": "e03de4ee4ef4-2012100100-2013010100",
+  "models": {
+    "2": {
+      "prediction_count": 2168,
+      "scored_count": 2168,
+      "api_http_errors": 0,
+      "api_http_error_rate": 0.0,
+      "latency_ms": {
+        "p50": 71.28261899993049,
+        "p95": 104.60558365005001,
+        "measurement": "client-observed wall time for POST /predict; includes local network and DB/model work"
+      },
+      "q4_metrics": {
+        "mae": 70.50089095668359,
+        "rmse": 113.27010335184048
+      },
+      "latest_week_monitor": {
+        "window_end": "2012-12-31 23:00:00",
+        "window_start": "2012-12-24 23:00:00",
+        "prediction_count": 167,
+        "scored_count": 164,
+        "label_coverage": 0.9820359281437125,
+        "mae": 37.27775155353658,
+        "rmse": 58.158205647623625,
+        "quality_status": "within_review_threshold",
+        "psi": {
+          "lag_24": 2.095416249145052,
+          "lag_168": 0.0767513930813474,
+          "hour": 0.00022650419740037457
+        },
+        "feature_missing_rates": {
+          "lag_24": 0.011976047904191617,
+          "lag_168": 0.005988023952095809
+        },
+        "distribution_status": "investigate_distribution_change"
+      }
+    },
+    "3": {
+      "prediction_count": 2168,
+      "scored_count": 2168,
+      "api_http_errors": 0,
+      "api_http_error_rate": 0.0,
+      "latency_ms": {
+        "p50": 71.65235899992695,
+        "p95": 111.92992614999186,
+        "measurement": "client-observed wall time for POST /predict; includes local network and DB/model work"
+      },
+      "q4_metrics": {
+        "mae": 59.40269794432242,
+        "rmse": 91.94132089624146
+      },
+      "latest_week_monitor": {
+        "window_end": "2012-12-31 23:00:00",
+        "window_start": "2012-12-24 23:00:00",
+        "prediction_count": 167,
+        "scored_count": 164,
+        "label_coverage": 0.9820359281437125,
+        "mae": 44.176335568292686,
+        "rmse": 74.2858248735777,
+        "quality_status": "within_review_threshold",
+        "psi": {
+          "lag_24": 2.095416249145052,
+          "lag_168": 0.0767513930813474,
+          "hour": 0.00022650419740037457
+        },
+        "feature_missing_rates": {
+          "lag_24": 0.011976047904191617,
+          "lag_168": 0.005988023952095809
+        },
+        "distribution_status": "investigate_distribution_change"
+      }
+    }
+  },
+  "candidate_v3_improvement_vs_v2": {
+    "mae_reduction": 11.098193012361172,
+    "mae_reduction_percent": 15.741918806643177,
+    "rmse_reduction": 21.32878245559901,
+    "rmse_reduction_percent": 18.830019417698757
+  },
+  "limitations": [
+    "Historical UCI replay only; not a measurement of current demand or business impact.",
+    "The final Q4 window was scored after all labels became available; Q4 must not be reused for model tuning."
+  ]
+}

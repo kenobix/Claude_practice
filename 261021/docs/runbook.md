@@ -101,7 +101,7 @@ git pull --ff-only origin main
 
 2026-10-27にこの手順を実行し、run `f55812c02dac4084a8185856cf7b4793`からモデル版`2`が登録されました。validation MAEは55.0728、基準MAEは63.9628、`quality_gate_passed`は`true`、`final_holdout`は`null`です。`quality_gate`文字列は合格条件の説明で、合否は`quality_gate_passed`で確認します。
 
-`git status --short`に自分の未保存作業が表示された場合は、先にその変更を保全してからpullします。レポートでは`registration.model_version`と`quality_gate_passed`を確認します。今回の学習ではモデル版2が作られ、ゲートに合格しました。続けて行った昇格も完了し、現在は版2が稼働中です。今回のコマンドをもう一度実行しないでください。
+`git status --short`に自分の未保存作業が表示された場合は、先にその変更を保全してからpullします。レポートでは`registration.model_version`と`quality_gate_passed`を確認します。2026-10-27の学習ではモデル版2が作られ、ゲートに合格して当時の稼働版になりました。2026-10-28に版3へ更新済みです。以下の版2学習・昇格コマンドをもう一度実行しないでください。
 
 ```bash
 MODEL_VERSION=2 # 学習レポートのregistration.model_versionに置き換える
@@ -120,11 +120,11 @@ curl -sS -i http://127.0.0.1:8002/ready
 
 今回の旧稼働枠はblue、候補はgreen（8002）でした。`/ready`の一時的な503は起動中ならあり得ます。Ctrl+Cで中断すると自動復旧処理が走らない可能性があるため、中断済みの場合は再昇格の前に`./scripts/bikectl deploy recover`を実行し、状態を確認します。
 
-2026-10-27にGreen枠の`/ready`とCaddy入口の`/ready`がHTTP 200を返し、両方ともモデル版2を示しました。Caddy入口の`/version`はartifact SHA-256 `42bb5f3c7dc5a28d562d3fe2b01fe2aaf832af34ef5496b05b0fe65e9a79b337`、quality gate `passed`を返しました。`data/runtime/deployment-state.json`はactive slot `green`、active version `2`、mode `approved`、deployment ID `dded8d98-6e6c-4082-9419-df62cc08adb7`でした。モデル版1の初期化をやり直さず、現在版2が稼働中です。
+2026-10-27にGreen枠の`/ready`とCaddy入口の`/ready`がHTTP 200を返し、両方ともモデル版2を示しました。Caddy入口の`/version`はartifact SHA-256 `42bb5f3c7dc5a28d562d3fe2b01fe2aaf832af34ef5496b05b0fe65e9a79b337`、quality gate `passed`を返しました。`data/runtime/deployment-state.json`はactive slot `green`、active version `2`、mode `approved`、deployment ID `dded8d98-6e6c-4082-9419-df62cc08adb7`でした。これは2026-10-27時点の状態です。
 
 昇格処理はGreen側でモデルを読み込み、readinessと固定予測を確かめてからCaddyの入口を切り替えます。成功後に`/ready`と`/version`を確認します。`final_holdout`は過去の初回評価を再利用するため、再実行レポートでは`null`が正しい状態です。
 
-今回のruntimeは当初モデル版1で初期化し、その後版2へ昇格済みです。以下の初回初期化コマンドは実行しないでください。次の新版を昇格するときも`runtime init`ではなく`deploy promote`を使います。初回構築時の参考として手順を残します。
+runtimeは当初モデル版1で初期化し、2026-10-27に版2、2026-10-28に版3へ昇格済みです。以下の初回初期化コマンドは実行しないでください。次の新版を昇格するときも`runtime init`ではなく`deploy promote`を使います。初回構築時の参考として手順を残します。
 
 ```bash
 MODEL_VERSION=1 # 学習レポートのregistration.model_versionに置き換える
@@ -158,7 +158,7 @@ curl -fsS http://127.0.0.1:8080/version
 
 このHost allowlist修正後も、次のモデル登録元の問題が見つかりました。下記の再学習・昇格が済むまではreadiness 503が続きます。修正版で昇格した後は`/ready`の`status`が`ready`、`/version`の`model_version`が昇格した版、`artifact_sha256`が非null、`quality_gate_status`が`passed`であることを確認します。
 
-検証MAEが固定ベースラインを下回らなかった場合は通常の初期化・昇格を拒否します。基盤の起動・復旧動作を確認する目的に限り、失敗タグが記録された状態で`--diagnostic`を明示できます。現在の実行環境ではruntimeは版1で初期化後、版2へ昇格済みです。以下の初回初期化例を再実行しません。
+検証MAEが固定ベースラインを下回らなかった場合は通常の初期化・昇格を拒否します。基盤の起動・復旧動作を確認する目的に限り、失敗タグが記録された状態で`--diagnostic`を明示できます。現在の実行環境ではruntimeは版1で初期化後、版2、版3へ順に昇格済みです。以下の初回初期化例を再実行しません。
 
 ```bash
 MODEL_VERSION=1 # 学習レポートの登録版番号に置き換える
@@ -173,15 +173,16 @@ MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0
 
 ### 時系列を保った再学習候補
 
-現在の比較対象モデル版2を使って、同一の後続期間で候補を比べます。既定例では初回固定ホールドアウトの後ろにある2012年第3四半期を候補検証に使い、トレーニングカットオフ以降のラベルを学習に入れません。第3四半期の結果を確認後に、第4四半期を独立したAPIリプレイ期間として使います。旧版1は誤ったartifact URIで登録され、読み込みできないため比較・rollbackに使いません。
+2026-10-28に版2をincumbentとして候補版3を比較し、Q3ゲート合格後に昇格しました。現行版は3です。旧版1は誤ったartifact URIで登録され、読み込みできないため比較・rollbackに使いません。Q3・Q4は評価済みで、同じ期間を次候補の選択に使ってはいけません。次の候補には新しいデータと事前に決めた後続期間を用意します。
 
 ```bash
+# 2026-10-28に実行した履歴コマンド。Q3窓は再利用しない。
 ./scripts/bikectl candidate --incumbent-version 2
 ```
 
 出力レポートにincumbent、履歴ベースラインとの同一行MAE/RMSE、候補のカットオフ、検証窓が記録されます。候補品質ゲートはincumbentの品質ゲートが`passed`で、かつ候補MAEがincumbentと履歴ベースラインの双方を厳密に下回る場合だけ通ります。登録後も人が審査するまで稼働版は変わりません。検証窓を変更するときは、期間を見てから都合のよい窓を選ばず、選択理由を作業記録に残します。
 
-任意の評価窓は、候補の学習カットオフ以降に置きます。
+任意の評価窓は、候補の学習カットオフ以降に置きます。2026-10-28の実行条件は以下です。同じQ3窓を後続候補の選択に再利用しません。
 
 ```bash
 ./scripts/bikectl candidate \
@@ -196,7 +197,7 @@ MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0
 新しい学習版を作り、validationゲート結果をMLflowで確認したあと、承認理由を付けて昇格します。
 
 ```bash
-./scripts/bikectl deploy promote --version 2 --approver kenshin --reason '検証MAEが固定ベースラインを下回り、readinessと固定予測を確認'
+./scripts/bikectl deploy promote --version 3 --approver kenshin --reason 'Q3 candidate gate passed; user requested independent Q4 replay'
 ```
 
 通常昇格は`quality_gate=passed`を必須にします。未達版の試験だけ、明示的に`--diagnostic`を付けます。
@@ -218,7 +219,7 @@ MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0
 入口が対象登録版を配信していることを確認してから実行します。
 
 ```bash
-./scripts/bikectl replay --model-version 2 --start '2012-10-01 00:00:00' --end '2013-01-01 00:00:00'
+./scripts/bikectl replay --model-version 3 --start '2012-10-01 00:00:00' --end '2013-01-01 00:00:00'
 ```
 
 この候補例では第3四半期を学習候補の選定に使ったため、独立した後続評価には第4四半期だけを使います。候補をローカルの手動承認済み試験版として配信してから、`--model-version`にその登録版を指定します。初回版と比較する場合は、同じ第4四半期を別途初回版でもリプレイし、版ごとのレポートを並べて確認します。
@@ -226,10 +227,24 @@ MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0
 出力の`replay_id`を指定して監視窓を計算します。
 
 ```bash
-./scripts/bikectl monitor --replay-id DATAHASH-2012070100-2013010100 --model-version 2
+./scripts/bikectl monitor --replay-id e03de4ee4ef4-2012100100-2013010100 --model-version 3
 ```
 
 CSVとDBに窓ごとの予測数、到着ラベル数、到着率、MAE/RMSE、固定ビンPSIを保存します。ラベル到着前は誤差を0扱いせず分母から外します。PSIと誤差悪化は別々に読み、通知は調査開始にだけ使います。
+
+### 2026-10-28実行記録: 候補版3とQ4比較
+
+以下は実行済みの比較です。Q3を候補選定に使い、Q4は選択後の独立評価に使いました。結果は[`data/reports/q4-comparison-e03de4ee4ef4-2012100100-2013010100.json`](../data/reports/q4-comparison-e03de4ee4ef4-2012100100-2013010100.json)に保存しています。
+
+- 候補run `a0c6d543bb464f5aac88dd87a9712339`、登録版3。学習カットオフは`2012-07-01 00:00:00`、最新利用可能ラベルも同時刻。学習13,001行、Q3検証2,208行。
+- Q3: 版3候補MAE/RMSE `62.416 / 95.799`、incumbent版2 `84.168 / 133.402`、履歴ベースライン`83.692 / 139.929`。候補は両方を上回り`quality_gate_passed=true`。
+- 版3はdeployment ID `8a6a63f0-875a-4c5b-8c85-bc0fe1538d1e`でBlue枠へ昇格。固定probeのoffline/API予測差は`0.000000492`、許容差内。Caddy入口は版3、artifact SHA-256 `79f06eb9d5a6efc378f20ba37fe98a8367762c1cb6c699200152a121a2af4a43`、quality gate `passed`。
+- 版2と版3を、同一UCI CSV SHA-256 `e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f`、同じQ4期間`[2012-10-01, 2013-01-01)`でリプレイ。実データの欠損40時間を除き、各版2,168件、HTTPエラー0件、DBへの観測追加0件。
+- Q4全期間をラベル到着後に集計: 版2 MAE/RMSE `70.501 / 113.270`、版3 `59.403 / 91.941`。版3は版2に比べMAE約15.7%、RMSE約18.8%改善。p50 API遅延は版2/3で`71.3 / 71.7 ms`、p95は`104.6 / 111.9 ms`。
+- 最新7日窓では版2 MAE/RMSE `37.278 / 58.158`、版3 `44.176 / 74.286`で版3の誤差が大きかった。両方の窓は`within_review_threshold`。一方、両版とも`lag_24` PSI `2.095`で分布変化の調査対象。分布変化は精度悪化と同じ指標ではないため、Q4全期間の改善と最新週の差を分けて記録する。
+- Q4の全期間結果は見た後の再学習・候補選択に使わない。次候補の検証には新しいデータと独立した期間が必要。
+
+候補イメージの再ビルドは約5分かかりました。Buildxログでは、Dockerfileの`pip install .`が依存関係を新規取得・インストールしており、昇格コマンドが無表示でもビルドは進行中でした。ビルド中に非稼働のBlue枠が旧版1で503を返しましたが、CaddyはGreen版2を維持し、昇格後にBlue版3へ切り替わりました。
 
 ## 障害時
 
