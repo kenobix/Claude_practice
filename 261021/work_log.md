@@ -1360,7 +1360,7 @@ git diff --check
 
 `monitor`の既定出力を実行UUID付きの新規CSV/JSONとし、DB窓IDにも同じUUIDを付ける。既存ファイル・JSON・完了markerやsymlinkがある場合は上書きを拒否し、旧DB行は更新しない。CSV/JSONを新規保存し、窓をtransactionでINSERTした後、両ファイルのSHA・件数・run IDを持つ完了markerを新規作成する。ファイルとDBは一体のtransactionではないため、途中失敗でmarkerがなければDB commitが成功したか未確定として、run IDと照会prefixを記録する。CSVだけ残った場合にもCSV内のrun IDから追跡できる。これは自動復旧ではなく、状態を調べてから処理する必要がある。
 
-実装前から存在するUCIのCSV/JSON・DB行は読み書きせず、合成SQLiteで旧行保持、2回の独立実行、既存ファイル・symlink拒否、INSERT途中のrollback、commit後marker失敗を検証した。実PostgreSQLでの検証はこの時点では含まない。
+実装前から存在するUCIのCSV/JSON・DB行は読み書きせず、合成SQLiteで旧行保持、2回の独立実行、既存ファイル・symlink拒否、INSERT途中のrollback、commit後marker失敗を検証した。さらに既存のPostgreSQL imageから一時containerを作り、非superuserの隔離DBで旧行保全・2回の保存・2行目の重複によるtransaction全体のrollbackを実証した。テストcontainerは所有確認後に削除した。
 
 ```bash
 MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_monitor_persistence.py' -v
@@ -1371,4 +1371,8 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s 
 # 新保存経路とのCLI統合を含め6 tests OK (0.082s)。
 # data/reports/20261029-continuation/monitor-window-persistence.log
 # SHA-256: 8d7ada9348b382cd4aef33c1a92e9a8f5e342c783145224749bc15ba6c4f33dc
+.venv/bin/python scripts/test_monitor_persistence_postgres.py
+# 使い捨てPostgreSQLで成功。既存imageのみ使用し、自動pullはしない。
+# data/reports/20261029-monitor-persistence/postgres-integration.log
+# SHA-256: 04dc3b290942c1e199f430b351171900bb6723b7c77609fa28df1e6610002a30
 ```
