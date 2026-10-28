@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import sqlite3
 import urllib.request
@@ -110,17 +111,111 @@ def _valid_local_hours(
     )
 
 
+def _build_lock_has_live_owner(lock_path: Path) -> bool:
+    """Return whether the recorded PID still holds this exact lock file open."""
+    try:
+        lines = lock_path.read_text(encoding="utf-8").splitlines()
+    except OSError as error:
+        raise RuntimeError(f"Cannot inspect existing build lock {lock_path}: {error}") from error
+    owner_line = next((line for line in lines if line.startswith("pid=")), None)
+    if owner_line is None:
+        raise RuntimeError(f"Build lock has no readable owner PID; inspect before removing it: {lock_path}")
+    try:
+        owner_pid = int(owner_line.removeprefix("pid="))
+    except ValueError as error:
+        raise RuntimeError(f"Build lock owner PID is invalid; inspect before removing it: {lock_path}") from error
+    fd_directory = Path(f"/proc/{owner_pid}/fd")
+    if not fd_directory.is_dir():
+        return False
+    expected = str(lock_path.resolve())
+    try:
+        for descriptor in fd_directory.iterdir():
+            try:
+                if os.path.realpath(descriptor) == expected:
+                    return True
+            except OSError:
+                continue
+    except OSError:
+        # If the process exists but its file descriptors cannot be inspected,
+        # fail closed and require an operator to check it.
+        return True
+    return False
+
+
 def aggregate_archives(
     months: list[str],
     start: pd.Timestamp,
     end_exclusive: pd.Timestamp,
     output_csv: Path,
+    output_manifest: Path | None = None,
+    raw_dir: Path = RAW_DIR,
 ) -> dict:
-    RAW_DIR.mkdir(parents=True, exist_ok=True)
+    if not months:
+        raise ValueError("At least one monthly archive is required; an empty archive list cannot imply zero demand")
+    if len(months) != len(set(months)):
+        raise ValueError("Archive month list contains duplicates")
+    if months != month_range(months[0], months[-1]):
+        raise ValueError("Archive months must be sorted and contiguous with no missing month")
+    if start.tzinfo is not None or end_exclusive.tzinfo is not None:
+        raise ValueError("Data bounds must use naive local timestamps")
+    if start != start.floor("h") or end_exclusive != end_exclusive.floor("h") or start >= end_exclusive:
+        raise ValueError("Data bounds must be ordered hour boundaries")
+    first_window_month = start.strftime("%Y%m")
+    last_window_month = (end_exclusive - pd.Timedelta(nanoseconds=1)).strftime("%Y%m")
+    if months[0] > first_window_month or months[-1] < last_window_month:
+        raise ValueError("Declared archive months do not cover every month in the requested data window")
+
+    output_csv = output_csv.resolve()
+    output_manifest = (output_manifest or output_csv.with_name(f"{output_csv.stem}-manifest.json")).resolve()
+    if output_csv == output_manifest:
+        raise ValueError("CSV and manifest must use different output paths")
+    if output_csv.parent != output_manifest.parent:
+        raise ValueError("CSV and manifest must be in the same directory for commit-marker semantics")
+    output_csv.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = output_csv.parent / f".{output_csv.name}.build.lock"
+    try:
+        lock_fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    except FileExistsError:
+        if _build_lock_has_live_owner(lock_path):
+            raise FileExistsError(f"Another archive build is actively holding the lock: {lock_path}")
+        lock_path.unlink()
+        try:
+            lock_fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        except FileExistsError as error:
+            raise FileExistsError(f"Another archive build acquired the lock: {lock_path}") from error
+    os.write(lock_fd, f"pid={os.getpid()}\n".encode())
+    try:
+        if output_csv.exists() or output_manifest.exists():
+            raise FileExistsError(
+                "Refusing to overwrite existing data evidence; choose new output paths or inspect the existing pair"
+            )
+        return _aggregate_archives_locked(
+            months, start, end_exclusive, output_csv, output_manifest, raw_dir
+        )
+    finally:
+        os.close(lock_fd)
+        lock_path.unlink(missing_ok=True)
+
+
+def _aggregate_archives_locked(
+    months: list[str],
+    start: pd.Timestamp,
+    end_exclusive: pd.Timestamp,
+    output_csv: Path,
+    output_manifest: Path,
+    raw_dir: Path,
+) -> dict:
+    raw_dir.mkdir(parents=True, exist_ok=True)
     counts: Counter[pd.Timestamp] = Counter()
     month_reports: list[dict] = []
     raw_rows = 0
     duplicate_ids = 0
+    unique_ids = 0
+    unique_out_of_window = 0
+    unique_dst_excluded = 0
+    valid_hours, ambiguous_hours, nonexistent_hours = _valid_local_hours(start, end_exclusive)
+    ambiguous_set = {pd.Timestamp(value) for value in ambiguous_hours}
+    nonexistent_set = {pd.Timestamp(value) for value in nonexistent_hours}
 
     with TemporaryDirectory(prefix="capitalbikeshare-dedup-") as temp_dir:
         seen_path = Path(temp_dir) / "seen.sqlite"
@@ -132,7 +227,7 @@ def aggregate_archives(
 
             for month in months:
                 print(f"Processing archive {month}...", flush=True)
-                archive_path = RAW_DIR / f"{month}-capitalbikeshare-tripdata.zip"
+                archive_path = raw_dir / f"{month}-capitalbikeshare-tripdata.zip"
                 archive_report = acquire_archive(month, archive_path)
                 row_count = 0
                 month_unique = 0
@@ -193,18 +288,23 @@ def aggregate_archives(
                                 "SELECT ride_id,started_at FROM current_chunk RETURNING ride_id,started_at"
                             ).fetchall()
                             month_unique += len(inserted)
+                            unique_ids += len(inserted)
                             skipped = len(chunk) - len(inserted)
                             month_duplicates += skipped
                             duplicate_ids += skipped
 
-                            new_times = pd.Series(
-                                [pd.Timestamp(started_at) for _, started_at in inserted], dtype="datetime64[ns]"
-                            )
-                            in_range = new_times.loc[(new_times >= start) & (new_times < end_exclusive)]
-                            if not in_range.empty:
-                                counts.update(in_range.dt.floor("h").value_counts().to_dict())
+                            for _, started_at in inserted:
+                                hour = pd.Timestamp(started_at)
+                                if hour < start or hour >= end_exclusive:
+                                    unique_out_of_window += 1
+                                elif hour in ambiguous_set or hour in nonexistent_set:
+                                    unique_dst_excluded += 1
+                                else:
+                                    counts[hour] += 1
 
                 raw_rows += row_count
+                if row_count == 0:
+                    raise ValueError(f"Monthly source archive {month} contains no trip rows; refusing to zero-fill it")
                 month_reports.append(
                     {
                         **archive_report,
@@ -220,7 +320,30 @@ def aggregate_archives(
                     flush=True,
                 )
 
-    valid_hours, ambiguous_hours, nonexistent_hours = _valid_local_hours(start, end_exclusive)
+    source_spans = sorted(
+        (
+            pd.Timestamp(item["started_at_min"]).floor("h"),
+            pd.Timestamp(item["started_at_max"]).floor("h") + pd.Timedelta(hours=1),
+        )
+        for item in month_reports
+    )
+    merged_spans: list[list[pd.Timestamp]] = []
+    for span_start, span_end in source_spans:
+        if not merged_spans or span_start > merged_spans[-1][1]:
+            merged_spans.append([span_start, span_end])
+        else:
+            merged_spans[-1][1] = max(merged_spans[-1][1], span_end)
+    if not merged_spans or merged_spans[0][0] > start or merged_spans[-1][1] < end_exclusive:
+        raise ValueError(
+            "Observed source timestamp bounds do not span the requested window; refusing to infer zero-count hours"
+        )
+    if any(merged_spans[index][1] < merged_spans[index + 1][0] for index in range(len(merged_spans) - 1)):
+        raise ValueError("Observed source timestamp bounds contain an uncovered gap; refusing to zero-fill it")
+    source_timestamp_coverage = [
+        {"start_inclusive": span_start.isoformat(sep=" "), "end_exclusive": span_end.isoformat(sep=" ")}
+        for span_start, span_end in merged_spans
+    ]
+
     hourly = pd.Series(counts, dtype="int64").reindex(valid_hours, fill_value=0).rename("cnt")
     derived = hourly.rename_axis("timestamp").reset_index()
     derived["dteday"] = derived["timestamp"].dt.strftime("%Y-%m-%d")
@@ -228,48 +351,89 @@ def aggregate_archives(
     derived["cnt"] = derived["cnt"].astype("int64")
     derived = derived[["dteday", "hr", "cnt"]]
 
-    output_csv.parent.mkdir(parents=True, exist_ok=True)
-    derived.to_csv(output_csv, index=False)
-    loaded = load_hourly(output_csv)
-    audit = audit_hourly(loaded, sha256_file(output_csv))
-    audit["timezone_interpretation"] = (
-        "naive America/New_York local wall time inferred from the service area; no UTC conversion applied"
-    )
-    if loaded["timestamp"].duplicated().any():
-        raise AssertionError("Derived timestamps must be unique")
+    output_trip_count = int(derived["cnt"].sum())
+    if raw_rows != duplicate_ids + unique_ids:
+        raise AssertionError("Source row accounting failed: rows read != duplicate rows + unique IDs")
+    if unique_ids != unique_out_of_window + unique_dst_excluded + output_trip_count:
+        raise AssertionError(
+            "Unique-trip accounting failed: unique IDs != out-of-window + DST-excluded + output trips"
+        )
+    if len(derived) != len(valid_hours):
+        raise AssertionError("Derived row count does not match the valid local-hour grid")
 
-    return {
-        "source": "Capital Bikeshare monthly trip history",
-        "source_page": SOURCE_PAGE,
-        "license_page": LICENSE_PAGE,
-        "license_summary": "Use is governed by the Capital Bikeshare Data License Agreement; do not publish the source as a standalone dataset.",
-        "processing": {
-            "input_field": "started_at",
-            "target": "trip starts counted by local wall-clock hour",
-            "source_time_strings_have_timezone_offset": False,
-            "timezone_interpretation": "America/New_York wall time inferred from the Capital Bikeshare service area; source strings themselves have no offset.",
-            "ambiguous_fall_back_hours": "Excluded in full because the source cannot distinguish the two repeated local 01:00 hours.",
-            "spring_forward_hours": "Remain absent because those local hours do not exist.",
-            "empty_valid_hours": "Filled with zero after all monthly source archives in the declared range were acquired.",
-            "duplicate_ride_ids": "Deduplicated across all monthly archives after canonicalizing started_at to the local hour; conflicting hour buckets for one ID are rejected.",
-            "retained_fields": ["dteday", "hr", "cnt"],
-            "raw_trip_identifiers_retained_in_derived_csv": False,
-        },
-        "data_window": {
-            "start_inclusive": start.isoformat(sep=" "),
-            "end_exclusive": end_exclusive.isoformat(sep=" "),
-        },
-        "archive_months": month_reports,
-        "archive_count": len(month_reports),
-        "source_rows_read": raw_rows,
-        "duplicate_rows_skipped": duplicate_ids,
-        "ambiguous_local_hours_excluded": ambiguous_hours,
-        "nonexistent_spring_forward_hours": nonexistent_hours,
-        "derived_csv": str(output_csv.relative_to(PROJECT_ROOT)) if output_csv.is_relative_to(PROJECT_ROOT) else str(output_csv),
-        "derived_csv_sha256": sha256_file(output_csv),
-        "audit": audit,
-        "created_at_utc": pd.Timestamp.now(tz="UTC").isoformat(),
-    }
+    with TemporaryDirectory(prefix="capitalbikeshare-pair-", dir=output_csv.parent) as staging_name:
+        staging = Path(staging_name)
+        staged_csv = staging / output_csv.name
+        staged_manifest = staging / output_manifest.name
+        derived.to_csv(staged_csv, index=False)
+        loaded = load_hourly(staged_csv)
+        data_hash = sha256_file(staged_csv)
+        audit = audit_hourly(loaded, data_hash)
+        audit["timezone_interpretation"] = (
+            "naive America/New_York local wall time inferred from the service area; no UTC conversion applied"
+        )
+        if loaded["timestamp"].duplicated().any():
+            raise AssertionError("Derived timestamps must be unique")
+
+        report = {
+            "manifest_schema_version": 2,
+            "source": "Capital Bikeshare monthly trip history",
+            "source_page": SOURCE_PAGE,
+            "license_page": LICENSE_PAGE,
+            "license_summary": "Use is governed by the Capital Bikeshare Data License Agreement; do not publish the source as a standalone dataset.",
+            "processing": {
+                "contract_version": "capital-trip-starts-hourly-v1",
+                "processing_version": "capital-hourly-aggregation-v2",
+                "input_field": "started_at",
+                "target": "trip starts counted by local wall-clock hour",
+                "source_time_strings_have_timezone_offset": False,
+                "timezone_interpretation": "America/New_York wall time inferred from the Capital Bikeshare service area; source strings themselves have no offset.",
+                "ambiguous_fall_back_hours": "Excluded in full because the source cannot distinguish the two repeated local 01:00 hours.",
+                "spring_forward_hours": "Remain absent because those local hours do not exist.",
+                "empty_valid_hours": "Filled with zero only after every contiguous, non-empty monthly archive covering the data window was read; completeness within publisher archives is not independently proven.",
+                "duplicate_ride_ids": "Deduplicated across all monthly archives after canonicalizing started_at to the local hour; conflicting hour buckets for one ID are rejected.",
+                "retained_fields": ["dteday", "hr", "cnt"],
+                "raw_trip_identifiers_retained_in_derived_csv": False,
+            },
+            "data_window": {
+                "start_inclusive": start.isoformat(sep=" "),
+                "end_exclusive": end_exclusive.isoformat(sep=" "),
+            },
+            "archive_buffer_rationale": (
+                "Monthly archives outside the target window may be included to detect duplicate ride IDs across "
+                "publication boundaries; only unique starts inside data_window contribute to target counts."
+            ),
+            "source_timestamp_coverage": source_timestamp_coverage,
+            "archive_months": month_reports,
+            "archive_count": len(month_reports),
+            "source_rows_read": raw_rows,
+            "duplicate_rows_skipped": duplicate_ids,
+            "unique_ride_ids": unique_ids,
+            "unique_out_of_window": unique_out_of_window,
+            "unique_dst_excluded": unique_dst_excluded,
+            "output_rows": int(len(derived)),
+            "output_trip_count": output_trip_count,
+            "ambiguous_local_hours_excluded": ambiguous_hours,
+            "nonexistent_spring_forward_hours": nonexistent_hours,
+            "derived_csv": str(output_csv.relative_to(PROJECT_ROOT)) if output_csv.is_relative_to(PROJECT_ROOT) else str(output_csv),
+            "data_sha256": data_hash,
+            "derived_csv_sha256": data_hash,
+            "audit": audit,
+            "created_at_utc": pd.Timestamp.now(tz="UTC").isoformat(),
+        }
+        staged_manifest.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        created_csv = False
+        try:
+            # The manifest is the commit marker. Readers accept a pair only after
+            # both hard links exist and the manifest SHA matches the CSV.
+            os.link(staged_csv, output_csv)
+            created_csv = True
+            os.link(staged_manifest, output_manifest)
+        except Exception:
+            if created_csv:
+                output_csv.unlink(missing_ok=True)
+            raise
+    return report
 
 
 def main() -> None:
@@ -285,10 +449,8 @@ def main() -> None:
     if start.tzinfo is not None or end.tzinfo is not None or start >= end:
         raise ValueError("data bounds must be ordered, timezone-naive timestamps")
     report = aggregate_archives(
-        month_range(args.archive_start, args.archive_end), start, end, args.output_csv
+        month_range(args.archive_start, args.archive_end), start, end, args.output_csv, args.output_manifest
     )
-    args.output_manifest.parent.mkdir(parents=True, exist_ok=True)
-    args.output_manifest.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps({key: report[key] for key in ("archive_count", "source_rows_read", "duplicate_rows_skipped", "ambiguous_local_hours_excluded", "derived_csv", "derived_csv_sha256", "audit")}, indent=2, ensure_ascii=False))
     print(f"manifest={args.output_manifest}")
 

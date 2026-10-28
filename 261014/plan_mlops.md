@@ -236,40 +236,40 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 
 #### R01 原本と集計の入力契約
 
-- [ ] archive一覧の非空、重複、欠落月、対象期間をカバーする範囲、時刻境界を検査する。取得対象月と時間別target期間の対応・翌月bufferの理由をmanifestへ残す。
-- [ ] 原本がない時間帯を「乗車0件」にしない。公式snapshot内で取得済み範囲と確認できた時間だけ0埋めを許可する。月次公開の完全性・後日訂正・長時間乗車に関する限界も記載する。
-- [ ] 読込行数 = ID重複 + 一意行数、一意行数 = 対象範囲外 + DST除外 + 出力件数合計、という収支を同じ集計単位で記録する。
-- [ ] manifestのJSON object、必須項目、hash形式、処理版、時刻・target契約を検査する。型違反は分かる入力エラーとして拒否する。
-- [ ] CSV・manifest・split protocolを一時出力から一組で確定し、不一致の途中成果物を正式出力にしない。既存証拠の上書きを既定で拒否する。
-- 完了条件: 小さなZIP fixtureで未取得月・空archive・重複ID・矛盾ID・小数秒・月境界・DSTを試験し、正しい件数または明示的な拒否を確認。今回の原本は読取専用の基準物として保持する。
+- [x] archive一覧の非空、重複、欠落月、対象期間をカバーする範囲、時刻境界を検査する。取得対象月と時間別target期間の対応・翌月bufferの理由をmanifestへ残す。
+- [x] 原本がない時間帯を「乗車0件」にしない。連続・非空のarchiveとsource timestamp boundsが対象期間を覆う場合だけ0埋めする。月次公開snapshotの完全性は独立に証明できない限界も記載する。
+- [x] 読込行数 = ID重複 + 一意行数、一意行数 = 対象範囲外 + DST除外 + 出力件数合計、という収支を同じ集計単位で記録する。
+- [x] manifestのJSON object、必須項目、hash形式、処理版、時刻・target契約、archive実体のbyte数とSHAを検査する。型違反は入力エラーとして拒否する。
+- [x] CSV・manifestを一時出力しmanifestをcommit markerとして保存する。lockを使い既存証拠の上書きを拒否し、stale lockとlive lockを区別する。
+- 完了条件: 合成ZIP fixtureの空archive、欠落月、重複ID、矛盾ID、小数秒、月境界、DST、出力保全を試験し、32件の全テスト成功。全41 ZIPを新コードで再集約する追加確認は途中停止し、新v2 CSV/manifestはまだ作成していない。以前の原本とCSVは読取専用で維持した。
 
 #### R02 評価protocolと期間の消費台帳
 
-- [ ] target定義、データ版、学習cutoff、validation/最終期間、ラベル利用可能時刻、評価判断時刻、比較対象、特徴量版、判定規則、件数/許容差を版付きprotocolにまとめる。候補の学習前に確定する。
-- [ ] 学習締切と評価判断時刻を区別する。採否に使うvalidationラベルは判断時刻までに到着済み、後続の配信評価対象は判断時刻以降とする。既存のQ3/Q4境界と新データ境界には最後のvalidationラベル到着まで2時間の重なりがあり、事後比較として残す。新protocolでは待機時間またはvalidation末尾の除外を事前固定する。
-- [ ] データ取得manifestに手作業で加えたplan欄へ依存せず、protocolから分割manifestを生成できるようにする。
-- [ ] データ/target契約と期間・用途をキーに、独立評価へ使った期間を管理する。評価runにはモデルSHA・データSHA・protocol SHAを記録し、開始/失敗/完了をロック付き台帳へ保存する。事前に指定した候補・incumbentの同一時刻比較を1回の評価として扱う。
-- [ ] 出力名を変えても消費済み期間を新候補の独立評価に戻せないようにする。失敗/中断後も消費状態を自動で消さず、復旧または監査上の再確認を明記する。
-- [ ] Q3/Q4 2012、2025年上期、新データ2025-07〜2026-04は既存利用をlegacy記録として登録する。欠けたモデルSHAはunknownとし、後から架空の値で埋めない。取得時manifestのfalseを現在状態と誤読しない。
-- 完了条件: 合成データで出力名変更・期間変更・二重起動・途中停止・入力hash変更を試験。禁止操作はモデル評価前に止まり、正規の1回は再開可能な履歴を残す。
+- [x] target定義、データ版、学習cutoff、validation/最終期間、ラベル利用可能時刻、評価判断時刻、比較対象、特徴量版、候補recipe、判定規則、件数を版付きprotocolにまとめる。候補の学習前に保存する。
+- [x] 学習締切と評価判断時刻を区別し、全validationラベル到着後にreserved periodが始まることを検査する。既存Q3/Q4・Capital期間の境界は歴史として残し、新protocolではdecision time以降を必須にした。
+- [x] manifestに手書きで加えたplan欄へ依存せず、CSV/manifestからprotocolのsplit件数を生成する。
+- [x] target contract/期間単位のOS file-lock付き台帳で管理し、protocol/model/data SHAとstarted/failed/completedを保存する。プロセス終了時にOSがlockを解放し、lockファイルが残っても復旧を妨げない。候補/incumbentを同一期間で比較するpaired runを一つの消費として扱う。
+- [x] 出力ファイル名やdata hashを変えても同target contractの重複/部分重複期間を拒否する。失敗/中断は維持し、人・理由付きreview後のみ再試行できる。
+- [x] UCI初期validation/holdout、Q3/Q4 2012、Capital 2025H1、新データ2025-07〜2026-04をlegacyとして記録する。欠けたartifact/protocol hashはunknownのまま。
+- 完了条件: 合成データで判断時刻・入力hash変更・期間重複・同時開始・失敗/中断とreviewを検査し成功。実際の新protocol保存はlegacy期間が使えないため、未使用データ入手後に行う。
 
 #### R03 選定候補と最終評価のartifact同一性
 
-- [ ] `--no-register`でも候補modelをレビュー済みskops型でローカル保存し、model SHA・feature/target契約・学習データ/行集合・環境・ソース・protocolを結び付ける。
-- [ ] validationの行別予測と集計を保存し、品質gate結果をモデルSHAに固定する。モデル不保存の既存reportは暫定結果のまま保持する。
-- [ ] 最終評価から`fit()`を除き、選定済みartifactをhash照合してロードする。候補・incumbent・入力・protocol・期間・環境条件の照合に失敗したら評価前に止める。
-- [ ] 最終評価の行別予測、対象時刻、正解の利用可能時点、件数、指標、参照hashを保存し、集計を後から検算できるようにする。
-- 完了条件: 合成データで破損artifact、別model、特徴量版違い、データ/期間違いを拒否。選定と最終評価に同一SHAが残り、最終評価コードが学習器を呼ばないことを試験する。既存最終期間の再採点でこの条件を後付け達成しない。
+- [x] `--no-register`でも候補modelをレビュー済みskops型でbundleへ保存し、model SHA・feature/target契約・学習行hash・環境・ソースsnapshot・protocolを結び付ける。bundle IDはmodel/validation/source/protocolのhashと品質gate・指標を含み、最終評価時にrow-level evidenceとモデル予測を再照合する。
+- [x] validationの行別予測と集計を保存し、品質gate結果をcandidate SHAへ固定する。モデル不保存の既存reportは暫定結果のまま保持する。
+- [x] 最終評価scriptは選定済みartifactをhash照合してloadし、候補再fitをしない。候補・incumbent・入力・protocol・期間・特徴量を検査する。
+- [x] 最終評価の行別予測、対象時刻、正解利用可能時点、件数、指標、参照hashを新規出力する。
+- 完了条件: 合成model hash round-tripと破損hash拒否、同一開発データ2回fit、最終scriptにcandidate.fitがないことを試験した。実際の候補bundle/最終評価は既評価窓しかなく未実行。既存最終期間を再採点してこの条件を後付け達成しない。
 
 #### R04 回帰試験・環境・実行コードの再現
 
 - [x] 今回の既存13テスト、src/tests/scripts構文検査、pip check、対象コミットCI結果を確認。
-- [ ] candidateの時刻mask、manifest一致/不一致/不正型、失敗gate、ZIP集計、R02/R03の拒否条件を小さな合成データで回帰試験にする。参照する未来targetを変更しても学習結果が変わらないことも検査する。
-- [ ] CIでscriptsもcompileし、新テストを実行する。外部原本・稼働中MLflow・既存holdoutに依存しない。
-- [ ] hostとコンテナに同じ依存constraints/lockを適用し、MLflow/skops/NumPy/pandas/scikit-learn/FastAPI等の解決版、Python版、コンテナ版またはdigestを保存する。
-- [ ] clean Git commitまたはdirty差分を含むソースsnapshotを保存する。hashだけで再構成不能な状態を避ける。
-- [ ] 開発用の小データまたは既使用の学習/validationで2回学習し、事前の許容差で予測・指標・特徴量を比較する。最終評価を再現性試験の入力にしない。
-- 完了条件: 新規checkoutと別の一時環境から、記録されたソース・依存・データ識別に従って開発用結果を再現できる。httpxの非推奨警告は互換性を確認して解消または既知の制限として記録する。
+- [x] candidate/protocol/manifest/ZIP集計/hash拒否の合成回帰試験を追加。小さな人工データで2回学習した予測は完全一致した。
+- [x] CIでscriptsもcompileし、新テストとpip checkを実行する設定にした。CI結果はpush後に確認する。
+- [x] hostとコンテナは同じrequirements.lockを使い、Python 3.12.11とDocker base tagを設定。候補reportには実際のhost Python/依存版を記録する。lockは現venvの99 packageと一致。
+- [x] candidate bundleにsource snapshotを保存する。
+- [x] 同じ合成開発データで2回学習し、予測完全一致を試験。final期間は使っていない。
+- 完了条件: 32テスト、compileall、pip check成功。GitHub Actionsとclean checkoutからのlock再インストールはpush後確認が必要。Starlette/httpx非推奨警告は既知制限としてwork_logへ記録した。
 
 #### R05 新しいtarget定義の移行プロファイル
 

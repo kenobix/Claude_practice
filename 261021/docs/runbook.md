@@ -31,7 +31,8 @@ Python 3.12とパッケージインデックスへの接続を用意します。
 cd /home/kenshin/work/claude_practice/261021
 python3.12 -m venv .venv
 . .venv/bin/activate
-python -m pip install -e '.[dev]'
+python -m pip install -r requirements.lock
+python -m pip install --no-deps --no-build-isolation -e '.[dev]'
 mlops-bikectl data download
 mlops-bikectl data audit
 python -m unittest discover -s tests -v
@@ -200,6 +201,69 @@ MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0
   --validation-start '2012-07-01 00:00:00' \
   --validation-end '2012-10-01 00:00:00'
 ```
+
+### 凍結protocolに基づく新規候補
+
+2026-10-28時点で手元にあるCapital Bikeshareの2025年上期validationと2025-07〜2026-04の後続期間は、いずれも既評価として再利用禁止です。新しい月次データを取得し、未使用のvalidation・後続期間を確保してから進めます。出典の公開が遅れている場合は、新期間が入手できるまで待ちます。
+
+取込先は新しいパスを指定します。既存CSV/manifestの上書きは拒否されます。`--archive-start`/`--archive-end`は取得したZIPの全月を連続して指定し、data期間の境界月も含めます。出力CSV・manifestは一組で保存され、manifestのSHA-256が一致してから利用できます。
+
+```bash
+CSV='data/derived/capitalbikeshare-next/hourly.csv'
+MANIFEST='data/derived/capitalbikeshare-next/manifest.json'
+
+# YYYYMMとtimestampを、実際に取得した新しい連続月・未使用期間に置き換える。
+python scripts/prepare_capitalbikeshare.py \
+  --archive-start YYYYMM \
+  --archive-end YYYYMM \
+  --data-start 'YYYY-MM-DD 00:00:00' \
+  --data-end-exclusive 'YYYY-MM-DD 00:00:00' \
+  --output-csv "$CSV" \
+  --output-manifest "$MANIFEST"
+```
+
+次に、既存の品質合格incumbentをMLflowからhash確認し、validation・判断時刻・最終評価期間・分割件数・candidate recipeを含むprotocolを凍結します。最終評価開始は、validation期間の最後のラベルが到着する時刻以降でなければなりません。プロトコル保存時に既存台帳とlegacy期間を照合し、重複窓を拒否します。
+
+```bash
+mkdir -p configs/evaluation-protocols
+python scripts/create_capital_evaluation_protocol.py \
+  --csv "$CSV" \
+  --source-manifest "$MANIFEST" \
+  --training-cutoff 'YYYY-MM-DD HH:00:00' \
+  --validation-start 'YYYY-MM-DD HH:00:00' \
+  --validation-end 'YYYY-MM-DD HH:00:00' \
+  --evaluation-start 'YYYY-MM-DD HH:00:00' \
+  --evaluation-end 'YYYY-MM-DD HH:00:00' \
+  --incumbent-version 3 \
+  --output configs/evaluation-protocols/capital-next-v1.json
+```
+
+候補は明示的に未登録で学習します。候補bundleにはskops model、validationの行別予測、source/依存snapshot、protocol copy、各SHA-256が保存されます。既存bundleは上書きされません。
+
+```bash
+mlops-bikectl candidate \
+  --csv "$CSV" \
+  --source-manifest "$MANIFEST" \
+  --evaluation-protocol configs/evaluation-protocols/capital-next-v1.json \
+  --incumbent-version 3 \
+  --no-register
+
+python scripts/evaluation_ledger.py list
+```
+
+最終評価はbundle内の選定済みmodelをhash検査してロードします。評価scriptは候補を再学習しません。候補reportは`data/candidates/<candidate_id>/candidate-report.json`です。最終評価には未使用期間を指定したprotocolと同じCSV/manifestを使い、出力先には新規パスを指定します。
+
+```bash
+python scripts/evaluate_capitalbikeshare_holdout.py \
+  --csv "$CSV" \
+  --source-manifest "$MANIFEST" \
+  --selection-report data/candidates/<candidate_id>/candidate-report.json \
+  --output data/reports/capital-next-final-evaluation.json
+```
+
+同じtarget contractの評価期間は、別データhashや出力名でも重複・部分重複が拒否されます。失敗・中断も自動で未使用に戻りません。まず`python scripts/evaluation_ledger.py list`と成果物を調べ、正当な再試行と判断した場合だけ、記録されたkeyに人の理由を付けて`reopen --key ... --operator ... --reason ...`を実行します。startedのままの場合は実行中プロセスがないことを確認してから判断します。
+
+Capital Bikeshareのtrip startsとUCIのrentalsは同じtarget定義ではありません。ここでのcandidate比較・後続採点は移行調査であり、それだけでUCI配信の昇格承認に使いません。新データ用API/監視/target profileと全体の昇格条件は、計画書R05〜R07を完了してから扱います。
 
 ### 手動の昇格
 

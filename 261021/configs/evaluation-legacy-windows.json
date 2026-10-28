@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "description": "Previously inspected/evaluated windows. Missing historical protocol or candidate artifact hashes remain null; this file does not retroactively certify them.",
+  "windows": [
+    {
+      "record_id": "legacy-uci-initial-2012-q1-validation",
+      "dataset": "UCI Bike Sharing Dataset (ID 275)",
+      "data_sha256": "e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f",
+      "target_contract": "uci-bike-sharing-cnt-dataset-local-hour",
+      "start_inclusive": "2012-01-01 00:00:00",
+      "end_exclusive": "2012-04-01 00:00:00",
+      "purpose": "initial_candidate_validation",
+      "model_artifact_sha256": null,
+      "protocol_sha256": null,
+      "historical_evidence": "Initial training reports use this validation window; protocol/model hashes were not captured as an immutable selection bundle."
+    },
+    {
+      "record_id": "legacy-uci-initial-2012-q2-final-holdout",
+      "dataset": "UCI Bike Sharing Dataset (ID 275)",
+      "data_sha256": "e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f",
+      "target_contract": "uci-bike-sharing-cnt-dataset-local-hour",
+      "start_inclusive": "2012-04-01 00:00:00",
+      "end_exclusive": "2012-07-01 00:00:00",
+      "purpose": "initial_final_holdout",
+      "model_artifact_sha256": null,
+      "protocol_sha256": null,
+      "historical_evidence": "Initial training run evaluated the fixed holdout; later retraining correctly left final_holdout null."
+    },
+    {
+      "record_id": "legacy-uci-2012-q3-candidate-selection",
+      "dataset": "UCI Bike Sharing Dataset (ID 275)",
+      "data_sha256": "e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f",
+      "target_contract": "uci-bike-sharing-cnt-dataset-local-hour",
+      "start_inclusive": "2012-07-01 00:00:00",
+      "end_exclusive": "2012-10-01 00:00:00",
+      "purpose": "candidate_selection",
+      "model_artifact_sha256": "79f06eb9d5a6efc378f20ba37fe98a8367762c1cb6c699200152a121a2af4a43",
+      "protocol_sha256": null,
+      "historical_evidence": "candidate-a0c6d543bb464f5aac88dd87a9712339.json; candidate version 3 was compared with incumbent version 2."
+    },
+    {
+      "record_id": "legacy-uci-2012-q4-paired-replay",
+      "dataset": "UCI Bike Sharing Dataset (ID 275)",
+      "data_sha256": "e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f",
+      "target_contract": "uci-bike-sharing-cnt-dataset-local-hour",
+      "start_inclusive": "2012-10-01 00:00:00",
+      "end_exclusive": "2013-01-01 00:00:00",
+      "purpose": "paired_retrospective_comparison",
+      "model_artifact_sha256": null,
+      "protocol_sha256": null,
+      "historical_evidence": "Saved prediction and Q4 comparison reports; versions 2 and 3 were scored on the same timestamps."
+    },
+    {
+      "record_id": "legacy-capital-2025h1-candidate-selection",
+      "dataset": "Capital Bikeshare monthly trip history",
+      "data_sha256": "cc4b39c67db286d30300cc6fb10a0f37e942eb337a7bd964795bbdd891762a96",
+      "target_contract": "capital-trip-starts-hourly-v1",
+      "start_inclusive": "2025-01-01 00:00:00",
+      "end_exclusive": "2025-07-01 00:00:00",
+      "purpose": "candidate_selection",
+      "model_artifact_sha256": null,
+      "protocol_sha256": null,
+      "historical_evidence": "candidate-capitalbikeshare-2025h1-v3.json; selected no-register candidate did not retain its model artifact."
+    },
+    {
+      "record_id": "legacy-capital-2025h2-202604-final-comparison",
+      "dataset": "Capital Bikeshare monthly trip history",
+      "data_sha256": "cc4b39c67db286d30300cc6fb10a0f37e942eb337a7bd964795bbdd891762a96",
+      "target_contract": "capital-trip-starts-hourly-v1",
+      "start_inclusive": "2025-07-01 00:00:00",
+      "end_exclusive": "2026-05-01 00:00:00",
+      "purpose": "paired_retrospective_comparison",
+      "model_artifact_sha256": null,
+      "protocol_sha256": null,
+      "historical_evidence": "capitalbikeshare-2025h2-202604-final-evaluation.json; the report says the selection-period aggregates had already been inspected."
+    }
+  ]
+}

@@ -99,12 +99,16 @@ def command_candidate(args) -> None:
         validation_end=args.validation_end,
         training_cutoff=args.training_cutoff,
         source_manifest_path=args.source_manifest,
-        register=not args.no_register,
+        register=False,
+        evaluation_protocol_path=args.evaluation_protocol,
     )
-    run_id = report.get("registration", {}).get("run_id", "unregistered")
-    report_path = args.output or REPORT_DIR / f"candidate-{run_id}.json"
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    report_path = PROJECT_ROOT / report["candidate_artifacts"]["candidate_report"]
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        with args.output.open("x", encoding="utf-8") as output:
+            json.dump(report, output, indent=2, ensure_ascii=False)
+            output.write("\n")
+        report_path = args.output
     _print({"report_path": report_path, **report})
 
 
@@ -688,18 +692,25 @@ def build_parser() -> argparse.ArgumentParser:
     candidate = subparsers.add_parser(
         "candidate", help="Fit a point-in-time rolling candidate and compare it with an incumbent"
     )
-    candidate.add_argument("--csv", type=Path, default=DEFAULT_DATASET)
+    candidate.add_argument("--csv", type=Path, required=True)
     candidate.add_argument("--incumbent-version", required=True)
-    candidate.add_argument("--training-cutoff", default="2012-07-01 00:00:00")
-    candidate.add_argument("--validation-start", default="2012-07-01 00:00:00")
-    candidate.add_argument("--validation-end", default="2012-10-01 00:00:00")
+    candidate.add_argument("--training-cutoff")
+    candidate.add_argument("--validation-start")
+    candidate.add_argument("--validation-end")
     candidate.add_argument(
         "--source-manifest",
         type=Path,
+        required=True,
         help="Manifest that identifies the selected CSV by SHA-256",
     )
+    candidate.add_argument(
+        "--evaluation-protocol",
+        type=Path,
+        required=True,
+        help="Frozen, hashed split and decision-time protocol created before candidate fitting",
+    )
     candidate.add_argument("--output", type=Path)
-    candidate.add_argument("--no-register", action="store_true")
+    candidate.add_argument("--no-register", action="store_true", required=True)
     candidate.set_defaults(func=command_candidate)
 
     runtime = subparsers.add_parser("runtime", help="Prepare local blue-green runtime files")

@@ -585,3 +585,50 @@ gh run list --repo kenobix/Claude_practice --workflow bike-mlops-contracts.yml -
 rollback、中断復旧、破損artifact拒否、PostgreSQL並行要求、障害注入、DB/artifact復元の完了証拠も不足していた。元計画の「企画・未実装」という状態を現状に更新し、native NaN処理という実装選択を反映。新しく判明した作業をR01〜R10として、優先順位・依存関係・個別チェック項目・完了条件付きで`261014/plan_mlops.md`第11節へ追記した。
 
 今回の変更は監査報告・計画・既存文書の訂正のみ。実装上の未解決項目は計画に明示し、モデルの学習/登録/昇格や評価済み最終期間の再推論は行っていない。詳細ログはGit対象外の`data/reports/review-20261028-*`、原本/乗車ID/認証値を含まない集計証拠はdocs/reviewsへ保存した。
+
+## 2026-10-28: P0残作業R01〜R04
+
+監査計画の優先度に従い、データ取込契約・評価protocol/消費台帳・候補artifact固定・回帰試験とlockを実装した。既存Capital CSV/manifest、過去レポート、MLflow登録版、稼働中APIは変更していない。新たなモデル学習・登録・昇格・既評価期間の再採点も行っていない。
+
+### R01 データ取込・manifest契約
+
+- `prepare_capitalbikeshare.py`は空/重複/月欠落/月順違いのarchive一覧、data期間を含まない月範囲、時間境界違反、空CSV archiveを拒否する。CSV/manifestは同一ディレクトリの一時出力から保存し、manifestのhashがCSVと一致した組だけを利用可能にする。既存出力は上書きせずbuild lockを使う。
+- schema v2 manifestにtarget/processing版、各archive SHA/byte count/month、source timestamp bounds、行数、ID重複、DST除外、期間外、出力時間数/件数とSHAを記録する。収支は`raw rows = duplicate rows + unique IDs`、`unique IDs = out-of-window + DST-excluded + output trips`で検査する。
+- `capital_data.py`はJSON object/型/必須値/hash、全raw ZIPのbyte数/SHA、連続月、timestamp coverage、CSV列とDST後の時刻gridを再検査する。過去manifest schema v1は履歴証拠として残し、新しい候補protocolには使わない。
+- 合成ZIPの空archive、月欠落、同一ID重複・矛盾、月境界重複、分/秒timestamp、春DST、既存出力保全を試験した。stale lockはPIDがそのlockを開いていない場合だけ再取得し、live lockは奪わない。
+- 追加確認として既存41 ZIPの全期間再集約を開始したが、2023年1〜11月処理後、追加検証としては時間がかかるため停止した。新CSV/manifestは生成されていない。プロセス終了を確認し、今回残ったstale lockと一時SQLite 292MBだけを削除した。元ZIPと既存CSV/manifestは維持。新コードで全41 archiveを完走した証拠はない。
+
+### R02 評価protocolと消費台帳
+
+- `evaluation_protocol.py`はdata/target/manifest/feature SHA、候補recipe、学習cutoff、validation、全ラベル到着後のselection decision time、後続評価期間、incumbent version/SHA、split件数とgateを正規化してhash化する。後続評価開始が判断時刻より前なら拒否する。
+- legacy registryにUCIの初期validation/holdoutとQ3/Q4、Capital Bikeshare 2025H1 validationと2025-07〜2026-04 final periodを登録した。歴史的にprotocol/model hashが不明なものは`null`のままとし、後から埋めない。
+- local ledgerはdata SHA、target contract、評価窓、protocol/model SHA、started/failed/completedと試行履歴を記録する。OSの`flock`付き追記で、プロセス終了時はlockを自動解放し、lockファイルが残っても再開を妨げない。失敗後は人によるreview/reopenを要求する。同target contractの期間は、別data hashでも部分重複すれば再利用を拒否する。
+- 合成試験で判断時刻境界、legacy窓拒否、異なるdata hashでの重複拒否、同時開始1件のみ許可、失敗状態保持と理由付きreview/reopenを確認した。
+
+### R03 選定artifactの固定
+
+- `candidate --no-register`はskops model、SHA、validation行別actual/predictions/label availability、report、protocol、決定的source snapshotを`data/candidates/<candidate_id>/`へ一度だけ保存する。source snapshot内の全ファイルを再hashし、reportのsource-tree hash/file countと一致することを確認してから保存する。bundle IDはartifact/evidence hashとgate指標を含み、同一性の変更を検知する。
+- 新候補は凍結protocolとstrict manifestが必須。登録/昇格はせず、候補reportのdata/row hashes、features、recipe、incumbent、出典、判断時刻をprotocolと照合する。
+- 最終評価scriptは選定bundleのartifact hashとskops許可型、bundle ID、source snapshot、validation predictionsを照合してロードし、validationのcandidate/incumbent/baseline予測・MAE/RMSE・gateを再計算する。候補をfitせず、protocolの期間・data/manifest/model/incumbent hashを照合し、行別予測とsummaryを新規出力してledgerへ記録する。
+- 既存候補reportには当時のmodel artifactがないため、過去の選定を後から完全なbundleに見せかけていない。未使用期間の候補bundleやfinal evaluationは未生成。
+
+### R04 回帰試験・lock・CI
+
+```bash
+.venv/bin/python -m compileall -q src tests scripts
+.venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python -m pip check
+```
+
+- 最終確認は32テスト成功（2.462秒）。`pip check`は`No broken requirements found`。隔離環境では既存APIテスト先頭で停止したため、許可付き通常WSL環境でsuiteを完走した。隔離時停止の原因は未確定。
+- `requirements.lock`は101 package/versionを固定する。現行venvの99 packageと全て一致し、setuptools/wheelはbuild用に追加固定した。DockerfileとGitHub Actionsで同じlockを使い、CIはPython 3.12.11、scriptsを含むcompile、`pip check`、新テストを実行する。
+- source-tree hashに対応する決定的tar snapshotをcandidate bundleへ保存し、合成開発データで2回fitした予測の完全一致を確認した。httpx2の非推奨警告は残す。別checkoutからの完全なlock installとGitHub Actionsの結果はpush後に確認する。
+
+作業ログ: `data/reports/p0-r01-r04-tests-20261028.log`（Git対象外）。R01〜R04のコードと合成回帰検証を実装したが、新しい未使用評価期間はないので実候補学習/最終採点には進めない。CIとclean-checkout確認はこの変更のpush後、P1の新target API/監視/昇格条件はR05〜R07として継続する。
+
+### 追加コードレビューでの修正
+
+- 評価台帳を排他lockファイル作成方式からPOSIX `flock`方式へ変更。プロセスがkill/停止してもOSが排他を解放するため、残ったlockファイルを手動削除しなくてよい。既存lockファイルが残った状態からの開始と並行開始をテストした。
+- protocolの宣言期間同士の重複を、観測行の有無に関係なく拒否する。CSVとmanifestへ同じパスを指定する入力も先に拒否する。
+- candidate IDがモデルartifact/validation evidence/source snapshot/品質gate/指標を含むようにし、snapshot内ファイルを再hashしてsource-tree hashと比較する。最終評価時はbundle ID、各SHA、row-level validation、候補/incumbent/baseline予測とvalidation指標を照合し、品質gateを再計算する。
+- 修正後の確認: compileall成功、32テスト成功（2.462秒）、`pip check`成功。Starlette/httpx deprecation warningは引き続き表示される。

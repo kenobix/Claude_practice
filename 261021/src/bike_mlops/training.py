@@ -27,6 +27,9 @@ from bike_mlops.config import (
     PROJECT_ROOT,
 )
 from bike_mlops.data import load_hourly, sha256_file
+from bike_mlops.capital_data import validate_capital_manifest
+from bike_mlops.candidate_artifacts import persist_candidate_bundle, source_tree_inventory
+from bike_mlops.evaluation_protocol import begin_evaluation, finish_evaluation, read_protocol
 from bike_mlops.features import FEATURE_COLUMNS, feature_frame_for_dataset
 from bike_mlops.model import directory_sha256, load_registered_model
 
@@ -128,25 +131,7 @@ def _source_revision() -> dict:
         ).strip()
     except (OSError, subprocess.CalledProcessError):
         commit = None
-    digest = hashlib.sha256()
-    file_count = 0
-    for path in sorted(PROJECT_ROOT.rglob("*")):
-        if not path.is_file():
-            continue
-        relative = path.relative_to(PROJECT_ROOT)
-        if any(
-            part in {".git", ".venv", "__pycache__", ".pytest_cache", ".mypy_cache", "data", "build", "dist"}
-            or part.endswith(".egg-info")
-            for part in relative.parts
-        ):
-            continue
-        if relative.name == ".env":
-            continue
-        digest.update(relative.as_posix().encode("utf-8"))
-        with path.open("rb") as stream:
-            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-                digest.update(chunk)
-        file_count += 1
+    source_digest, file_count = source_tree_inventory(PROJECT_ROOT)
     try:
         status = subprocess.check_output(
             ["git", "status", "--short", "--", "261021"],
@@ -160,7 +145,7 @@ def _source_revision() -> dict:
         "git_commit": commit,
         "worktree_dirty": bool(status),
         "worktree_status_entries": status,
-        "source_tree_sha256": digest.hexdigest(),
+        "source_tree_sha256": source_digest,
         "source_file_count": file_count,
     }
 
@@ -171,10 +156,22 @@ def _versions() -> dict:
         for distribution in importlib.metadata.distributions()
         if distribution.metadata.get("Name")
     }
-    names = ("bike-demand-mlops", "numpy", "pandas", "scikit-learn", "mlflow", "psycopg", "fastapi", "uvicorn")
+    names = (
+        "bike-demand-mlops", "numpy", "pandas", "scikit-learn", "skops", "mlflow",
+        "psycopg", "fastapi", "uvicorn",
+    )
+    dockerfile = PROJECT_ROOT / "Dockerfile"
+    configured_container_image = None
+    if dockerfile.is_file():
+        for line in dockerfile.read_text(encoding="utf-8").splitlines():
+            if line.startswith("FROM "):
+                configured_container_image = line.split(maxsplit=1)[1]
+                break
     return {
         "python": sys.version,
         "platform": platform.platform(),
+        "container_image_configured": configured_container_image,
+        "training_execution": "host Python; container image is recorded for the API/MLflow services",
         "direct_dependencies": {name: packages.get(name) for name in names},
         "all_installed_packages": dict(sorted(packages.items(), key=lambda pair: pair[0].lower())),
     }
@@ -448,14 +445,16 @@ def train(
     return report
 
 
-def train_candidate(
+def _train_candidate_impl(
     data_path: Path = DEFAULT_DATASET,
     incumbent_version: str | int = 1,
-    validation_start: str | pd.Timestamp = "2012-07-01 00:00:00",
-    validation_end: str | pd.Timestamp = "2012-10-01 00:00:00",
-    training_cutoff: str | pd.Timestamp = "2012-07-01 00:00:00",
+    validation_start: str | pd.Timestamp | None = None,
+    validation_end: str | pd.Timestamp | None = None,
+    training_cutoff: str | pd.Timestamp | None = None,
     source_manifest_path: Path | None = None,
     register: bool = True,
+    evaluation_protocol_path: Path | None = None,
+    protocol: dict | None = None,
 ) -> dict:
     """Train a point-in-time candidate and compare it on a later time window.
 
@@ -463,9 +462,13 @@ def train_candidate(
     been fitted. Validation labels are only used for retrospective scoring;
     they never enter the candidate's fit.
     """
-    start = pd.Timestamp(validation_start)
-    end = pd.Timestamp(validation_end)
-    cutoff = pd.Timestamp(training_cutoff)
+    if protocol is None or evaluation_protocol_path is None:
+        raise ValueError("Internal candidate training requires a validated frozen evaluation protocol")
+    if register:
+        raise ValueError("Candidate evaluation must remain unregistered until deployment gates are implemented")
+    start = pd.Timestamp(validation_start if validation_start is not None else protocol["validation"]["start_inclusive"])
+    end = pd.Timestamp(validation_end if validation_end is not None else protocol["validation"]["end_exclusive"])
+    cutoff = pd.Timestamp(training_cutoff if training_cutoff is not None else protocol["training"]["cutoff"])
     for name, value in (("validation_start", start), ("validation_end", end), ("training_cutoff", cutoff)):
         if value.tzinfo is not None:
             raise ValueError(f"{name} must be a naive dataset-local timestamp")
@@ -493,7 +496,7 @@ def train_candidate(
             candidate_manifest = None
         manifest_data_hash = (
             candidate_manifest.get("data_sha256", candidate_manifest.get("derived_csv_sha256"))
-            if candidate_manifest
+            if isinstance(candidate_manifest, dict)
             else None
         )
         if manifest_data_hash == data_hash:
@@ -503,6 +506,36 @@ def train_candidate(
                 "The supplied source manifest does not identify the selected CSV "
                 f"(manifest hash={manifest_data_hash!r}, CSV hash={data_hash})"
             )
+    if source_manifest is None:
+        raise ValueError("A verified source manifest is required for frozen candidate evaluation")
+    if source_manifest.get("source") == "Capital Bikeshare monthly trip history":
+        source_manifest, strict_frame = validate_capital_manifest(source_manifest, data_path)
+        if not frame["timestamp"].equals(strict_frame["timestamp"]) or not frame["cnt"].equals(strict_frame["cnt"]):
+            raise ValueError("Candidate CSV differs from the validated Capital Bikeshare manifest")
+    else:
+        raise ValueError("Frozen candidate protocols currently support only strict Capital Bikeshare manifest schema v2")
+    if protocol["dataset"]["data_sha256"] != data_hash:
+        raise ValueError("Evaluation protocol data SHA-256 does not match the candidate CSV")
+    if protocol["dataset"]["source_manifest_sha256"] != sha256_file(manifest_path):
+        raise ValueError("Evaluation protocol source-manifest SHA-256 does not match the selected manifest")
+    if protocol["dataset"]["target_contract"] != source_manifest.get("processing", {}).get("contract_version"):
+        raise ValueError("Evaluation protocol target contract differs from the source manifest")
+    if protocol["features"]["contract_version"] != FEATURE_CONTRACT_VERSION or protocol["features"]["columns"] != list(FEATURE_COLUMNS):
+        raise ValueError("Candidate feature contract differs from the frozen evaluation protocol")
+    if (
+        protocol["candidate_recipe"].get("model_family")
+        != "scikit-learn HistGradientBoostingRegressor in a Pipeline"
+        or protocol["candidate_recipe"].get("hyperparameters") != HYPERPARAMETERS
+    ):
+        raise ValueError("Candidate model family/hyperparameters differ from the frozen evaluation protocol")
+    if str(protocol["incumbent"]["model_version"]) != str(incumbent_version):
+        raise ValueError("Candidate incumbent version differs from the frozen evaluation protocol")
+    if (
+        cutoff != pd.Timestamp(protocol["training"]["cutoff"])
+        or start != pd.Timestamp(protocol["validation"]["start_inclusive"])
+        or end != pd.Timestamp(protocol["validation"]["end_exclusive"])
+    ):
+        raise ValueError("Candidate cutoffs/windows differ from the frozen evaluation protocol")
     features = feature_frame_for_dataset(frame)
     train_mask = (frame["timestamp"] < start) & (
         frame["timestamp"] + pd.Timedelta(hours=3) <= cutoff
@@ -512,6 +545,10 @@ def train_candidate(
         raise ValueError("No training labels are available by the candidate training cutoff")
     if not validation_mask.any():
         raise ValueError("Dataset does not cover the requested candidate validation window")
+    if int(train_mask.sum()) != int(protocol["training"]["rows"]):
+        raise ValueError("Candidate training row count differs from the frozen protocol")
+    if int(validation_mask.sum()) != int(protocol["validation"]["rows"]):
+        raise ValueError("Candidate validation row count differs from the frozen protocol")
 
     train_frame = frame.loc[train_mask].reset_index(drop=True)
     train_features = features.loc[train_mask, FEATURE_COLUMNS].reset_index(drop=True)
@@ -530,6 +567,11 @@ def train_candidate(
     incumbent, incumbent_artifact_sha256, incumbent_quality_gate = load_registered_model(
         MODEL_NAME, incumbent_version
     )
+    if (
+        incumbent_artifact_sha256 != protocol["incumbent"]["artifact_sha256"]
+        or incumbent_quality_gate != protocol["incumbent"]["quality_gate"]
+    ):
+        raise ValueError("Loaded incumbent differs from the frozen evaluation protocol")
     incumbent_predictions = np.maximum(incumbent.predict(validation_features), 0.0)
     candidate_metrics = regression_metrics(validation_frame["cnt"], candidate_predictions)
     incumbent_metrics = regression_metrics(validation_frame["cnt"], incumbent_predictions)
@@ -561,6 +603,14 @@ def train_candidate(
     except ValueError:
         manifest_path_report = str(manifest_path)
     manifest_hash = sha256_file(manifest_path) if source_manifest else None
+
+    def row_keys_sha256(split_frame: pd.DataFrame) -> str:
+        payload = "".join(
+            f"{timestamp.isoformat(sep=' ')}\t{int(target)}\n"
+            for timestamp, target in zip(split_frame["timestamp"], split_frame["cnt"])
+        )
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
     report = {
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "candidate_mode": "rolling_time_series",
@@ -572,6 +622,10 @@ def train_candidate(
         "hyperparameters": HYPERPARAMETERS,
         "training_cutoff": cutoff.isoformat(sep=" "),
         "training_latest_label_available_at": latest_label_available.isoformat(sep=" "),
+        "selection_decision_time": protocol["selection_decision_time"],
+        "evaluation_protocol_sha256": protocol["protocol_sha256"],
+        "training_row_keys_sha256": row_keys_sha256(train_frame),
+        "validation_row_keys_sha256": row_keys_sha256(validation_frame),
         "split_counts": {"train": int(train_mask.sum()), "validation": int(validation_mask.sum())},
         "validation_window": {"start": start.isoformat(sep=" "), "end_exclusive": end.isoformat(sep=" ")},
         "validation": {
@@ -615,7 +669,7 @@ def train_candidate(
         "model_card": {
             "name": MODEL_NAME,
             "model_family": "scikit-learn HistGradientBoostingRegressor in a Pipeline",
-            "prediction_target": "hourly aggregate bike rentals (cnt) for the hour starting at target_hour",
+            "prediction_target": source_manifest["processing"]["target"],
             "intended_use": "education and controlled historical MLOps replay only",
             "candidate_training_cutoff": cutoff.isoformat(sep=" "),
             "validation_window": {"start": start.isoformat(sep=" "), "end_exclusive": end.isoformat(sep=" ")},
@@ -641,6 +695,62 @@ def train_candidate(
             ],
         },
     }
+    validation_evidence = pd.DataFrame(
+        {
+            "timestamp": validation_frame["timestamp"].map(lambda stamp: stamp.isoformat(sep=" ")),
+            "label_available_at": (validation_frame["timestamp"] + pd.Timedelta(hours=3)).map(
+                lambda stamp: stamp.isoformat(sep=" ")
+            ),
+            "actual": validation_frame["cnt"].astype(int),
+            "candidate_prediction": candidate_predictions,
+            "incumbent_prediction": incumbent_predictions,
+            "baseline_prediction": baseline_predictions,
+        }
+    )
+    report["candidate_artifacts"] = persist_candidate_bundle(
+        estimator,
+        report,
+        validation_evidence,
+        protocol_bytes=evaluation_protocol_path.read_bytes(),
+    )
+    return report
+
+
+def train_candidate(
+    data_path: Path = DEFAULT_DATASET,
+    incumbent_version: str | int = 1,
+    validation_start: str | pd.Timestamp | None = None,
+    validation_end: str | pd.Timestamp | None = None,
+    training_cutoff: str | pd.Timestamp | None = None,
+    source_manifest_path: Path | None = None,
+    register: bool = True,
+    evaluation_protocol_path: Path | None = None,
+) -> dict:
+    if evaluation_protocol_path is None:
+        raise ValueError("A frozen --evaluation-protocol is required before any new candidate comparison")
     if register:
-        report["registration"] = _log_and_register(report, estimator, train_features)
+        raise ValueError("Candidate evaluation must remain unregistered until deployment gates are implemented")
+    protocol = read_protocol(evaluation_protocol_path)
+    attempt_id = begin_evaluation(protocol, "validation_selection", candidate_artifact_sha256=None)
+    try:
+        report = _train_candidate_impl(
+            data_path=data_path,
+            incumbent_version=incumbent_version,
+            validation_start=validation_start,
+            validation_end=validation_end,
+            training_cutoff=training_cutoff,
+            source_manifest_path=source_manifest_path,
+            register=False,
+            evaluation_protocol_path=evaluation_protocol_path,
+            protocol=protocol,
+        )
+    except Exception as error:
+        finish_evaluation(attempt_id, "failed", detail=f"{type(error).__name__}: {error}")
+        raise
+    finish_evaluation(
+        attempt_id,
+        "completed",
+        detail=report["candidate_artifacts"]["candidate_artifact_sha256"],
+        candidate_artifact_sha256=report["candidate_artifacts"]["candidate_artifact_sha256"],
+    )
     return report

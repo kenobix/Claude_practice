@@ -25,7 +25,8 @@ Python 3.12を使います。依存関係の取得にはパッケージインデ
 cd 261021
 python3.12 -m venv .venv
 . .venv/bin/activate
-python -m pip install -e '.[dev]'
+python -m pip install -r requirements.lock
+python -m pip install --no-deps --no-build-isolation -e '.[dev]'
 mlops-bikectl data download
 mlops-bikectl data audit
 python -m unittest discover -s tests -v
@@ -40,11 +41,12 @@ mlops-bikectl train --evaluate-final-holdout
 mlflow ui --backend-store-uri sqlite:///data/mlflow.db --host 127.0.0.1
 ```
 
-2026-10-28に候補版3を版2と2012年第3四半期で比較し、合格後に手動昇格しました。その後、独立した2012年第4四半期を版2・版3の両方でリプレイしました。このQ4期間は評価済みなので、以後のモデル調整には再利用しません。新しい候補には新しいデータと事前に決めた評価期間が必要です。
+2026-10-28に候補版3を版2と2012年第3四半期で比較し、合格後に手動昇格しました。その後、独立した2012年第4四半期を版2・版3の両方でリプレイしました。このQ3/Q4とCapital Bikeshareの既評価期間は再利用禁止台帳に登録しています。新しい候補には未使用期間を含むデータ、新しいprotocol、validation終了後の判断時刻が必要です。
 
 ```bash
-# 2026-10-28に実行した候補比較。Q3の再学習・選択には再利用しない。
-mlops-bikectl candidate --incumbent-version 2
+# 過去の実行例。Q3の再学習・選択には再利用しない。
+# 新規候補は docs/runbook.md の「凍結protocolに基づく新規候補」を使う。
+mlops-bikectl candidate --help
 ```
 
 Composeによる運用構成は[実行・運用手順](docs/runbook.md)を参照してください。DBやMLflowを外部へ公開する設定は含めていません。
