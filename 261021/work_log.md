@@ -982,11 +982,13 @@ docker compose -f compose.yaml -f compose.capital.yaml -f compose.capital-stagin
 
 ### 更新後の最優先残作業
 
-1. 未使用Capitalデータ範囲とbufferを確定し、protocol凍結→一度のvalidation→同一artifactで一度の独立final評価を行う。
-2. 実report/ledgerが揃った後でblocked MLflow登録を行い、登録のidempotency/hash/tagを実serverで照合する。
-3. isolated staging PostgreSQLへのseedとCompose API起動、DB分離・prediction記録・artifact load・HTTP/offline parity・通常deploy拒否をsystem testする。
-4. stagingで50 warmup/1,000 sequential benchmarkを実測し、report hash/statusを該当MLflow versionへ追記する処理を実装・検証する。
-5. validation/final/operational全gateと理由付き承認がある場合のみ`eligible`を最後に設定する経路を検証する。これが完了するまで新しいデータを取得せず、UCI版は変更しない。
+1. 実データ取得前に、disposable Compose project/volumeと一時MLflow storeでsynthetic model/evidence/観測だけを使うsystem testを行う。blocked登録/idempotency、artifact・tag拒否、API ready/predict、DB分離、offline/API parity、通常deploy拒否を確認してtest resourceを破棄する。
+2. operational report hash/status/policy/candidateを正確なMLflow versionへ反映するコードを実装し、synthetic reportでfail-closed動作を検証する。全gateと理由付き承認後だけ`eligible`にする。
+3. 月境界bufferと未取得原本範囲を決定し、未使用データを取得・manifest監査してprotocolをfreezeする。
+4. validationを一度実施し、合格時だけ同一artifactで独立final評価を一度行う。
+5. 実candidateをblocked登録し、Capital staging DB/API/HTTP parityを実環境で確認してから、50 warmup/1,000 sequential benchmarkとMLflow report tagを実測・記録する。gate未完了中は配信を承認せず、UCI版を変更しない。
+
+計画の順序に残っていた依存の循環（system testにcandidateが要るがcandidateを作る前に新データ取得を禁じていた）を解消した。実データ取得前のsystem testは合成evidenceを使う使い捨て環境、実候補を使うstaging/benchmarkはvalidation/final評価後と区別し、`261014/plan_mlops.md`と`docs/capital-bootstrap-gate.md`へ反映した。
 
 ### push後の環境・CI確認
 

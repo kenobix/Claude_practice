@@ -119,11 +119,10 @@ curl -fsS http://127.0.0.1:8110/ready
 
 1. **R04/P0: 完了。** Python `tzdata==2026.5`のゾーンファイルを集計・manifest検査・APIで直接読み込み、OSのtimezone検索順に依存しない。manifest schema 3にゾーン名・package版・TZifバイト数・SHA-256を保存する。DST切替テストと新しいmanifestでの実データ再集計・hash検証を行った。詳細は[`data-profiles.md`](data-profiles.md)と`work_log.md`を参照。
 2. **R06/P1:** incumbentなしbootstrap経路とcandidate/final精度gateを合成試験する。実装済み。ここで合格した合成結果を実データの合格根拠に使わない。
-3. **R06/P1:** blocked candidate登録と通常runtime/promoteから分離したCapital staging APIを実装した。合成fixtureでreport/row-evidence/ledger照合、registry tag・artifact pinning、API blocked identityを試験済み。実MLflow・PostgreSQL・Composeのsystem testは未完了。
-4. **R06/P1:** benchmarkがそのcandidate ID/artifact hashと、固定した50/1,000要求・timeout・p95規則を結び付けることを確認し、DB/MLflowを含む隔離Compose試験を行う。benchmark結果は運用gateだけを確定し、精度/承認gateを変更しない。
-5. **R06/P1:** gate結果・policy ID/SHA・validation/final/operational report hashをMLflow model tagsへ記録する経路を追加する。不足・不合格を拒否し、配信許可は理由付き手動承認がある場合だけ`eligible`にする。
-6. **R06/P1:** 月境界buffer規則を確定→未使用archive取得→新pathのmanifest schema 3監査→非重複を確認→protocol freeze→validation一度→合格時のみ同じartifactで後続評価を一度行う。
-7. **R05/R06/P1:** 登録artifact loading、offline/API parity、deployment拒否/許可を隔離PostgreSQL/MLflow/Composeで確認する。モデル・データ準備後に限り、staging candidateで運用benchmarkを実測する。
-8. **R07〜R10:** 監視参照とPSI、障害・復旧、配信台帳と進行表示、採否記録・デモを計画書に従って完了する。
+3. **R06/P1・新データ前:** disposable Compose project/volumeと一時MLflow storeを使い、人工model/evidence/時間別観測でblocked registration、再実行、artifact/tag拒否、staging APIのready/predict/DB記録、offline/API parity、通常deploy拒否をsystem testする。既存Capital registry/DB/評価期間は使わず、test resourceを終了後に破棄する。ここは未完了。
+4. **R06/P1・新データ前:** operational report hash/statusとcandidate identityをexact versionへ記録する経路を実装・synthetic testする。全gate passedかつ理由付き手動承認がある時だけ`eligible`、failed/missing/mismatchならblockedのままにする。
+5. **R06/P1:** 月境界buffer規則を確定→未取得の原本を取得→新pathのmanifest schema 3監査→非重複を確認→protocol freeze→validationを一度→合格時のみ同じartifactで独立final評価を一度行う。
+6. **R05/R06/P1・実候補後:** 実candidateをblocked登録し、Capital隔離PostgreSQLへseed、staging APIを起動してartifact loading、DB分離、offline/API parity、通常deploy拒否を確認する。50 warmup/1,000 sequential benchmarkを実測し、結果hash/statusをそのversionへ記録する。
+7. **R07〜R10:** 監視参照とPSI、障害・復旧、配信台帳と進行表示、採否記録・デモを計画書に従って完了する。
 
 追加のユーザー確認を開始条件にはしない。精度gate・運用gateの実装/証拠、artifact整合性、入力契約、復旧試験、理由付き手動承認が揃うまでは、Capital profileはmigration-onlyを維持する。

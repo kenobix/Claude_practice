@@ -294,6 +294,8 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 - [ ] 新pathのmanifest schema 3、日時grid/DST/欠測理由・出典、分割件数、特徴量版、固定recipe、比較対象、gateとpolicy hashを実験protocolへ保存し、消費台帳の重複を検査する。候補fit前にvalidation開始を記録する。
 - [ ] bootstrap validationを一度実行してtarget-specific model card・artifact・行別予測・判断記録を固定する。合格時だけ同一artifactで後続評価を一度実行し、再fitしない。使用済みwindowを最終評価や調整後候補へ再利用しない。
 - [ ] 固定条件のAPI測定コードを実装した。`scripts/benchmark_capital_runtime.py`は学習期間内の168時間を繰り返し、50暖機+1,000逐次要求、HTTP 200・schema/識別/有限非負予測、候補ID/version/artifactの固定、再試行0、timeout10秒、nearest-rank p95を確認し全リクエストを記録する。合成HTTP試験は成功。**実際の計測は未実施**。通常runtimeのeligible gateを変えず、別DBを持つ`api-staging`を`127.0.0.1:8110`で起動するCompose定義と、同profileの検査済みCSV/manifestでseedするscriptを追加した。最終row-level prediction SHA・集計値・完了台帳、registry tags・artifact SHAのfail-closed検査も合成fixtureで確認した。実MLflow登録、Compose実起動、DB/API system test、stagingでの実測は未実施。精度採点は行わず、hardware/container資源条件を保存する。
+- [ ] **実データ取得前の統合検証:** disposable Compose project/volumeと一時MLflow storeを使い、人工model/evidenceと人工の時間別観測だけでblocked registration、同一候補の再実行、artifact/tag拒否、staging APIのready/predict/DB記録、offline/API parity、通常deployの拒否をsystem testする。DB seedは合成fixtureで行う。実Capital registry/volumeや既存runtimeは使わず、終了後にtest resourceだけを確認して破棄する。これで実候補がなくてもstaging経路を先に検証できる。現在は単体fixtureとCompose静的検査までで、実Compose統合試験は未実施。
+- [ ] 全gateのMLflow更新経路を実装する。operational report SHA/status・既知policy・candidate identityを正確なversionへ追加し、全gateがpassedかつ理由付き手動承認がある場合だけ`deployment_permission=eligible`を設定する。failed/missing report、identity不一致、再実行時の異なる値を拒否する。synthetic registry fixtureで検証する。
 - 完了条件: 同じreportとprotocolから採用/見送りが一意に説明でき、条件不足・悪い候補は昇格を拒否する。最終採用は理由付きの手動承認を記録する。baseline-only精度gate、固定条件benchmark、fail-closed deployment check、blocked登録とstagingのコードは合成試験済み。実MLflow登録、Compose起動、API/DB system test、実運用benchmark、operational report/tag反映、実データprotocol freeze/精度評価・手動承認は未完了。新評価データを取得する前に、登録・隔離stagingを実環境で検証し、その後tags/system testsを完了する。追加のユーザー判断待ちはない。
 
 #### R07 監視の参照・期間・退化ケース
@@ -333,11 +335,11 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 | 順番 | 対象 | 次に実施する作業・完了の証拠 |
 |---|---|---|
 | 1 | R04/P0 | 完了。Python `tzdata==2026.5`を集計・manifest検査・APIで明示的に使い、schema 3/report/APIのidentity記録、DST・後方互換境界テスト、全41 ZIPの再集計とhash確認を行った。旧期間の再集計物は新規評価には使わない。 |
-| 2 | R06/P1 | **部分完了:** baseline-only protocol/candidate/final scoring、MAE/RMSE gate、fixed operational benchmark、blocked candidate registration script、専用staging API/DB Compose定義、専用DB seed scriptを追加。合成fixtureでcandidate/final reportとrow CSV hash・指標・完了台帳、registry tags・artifact hash、APIのblocked identityを検査し、Composeは静的検証済み。実MLflow登録、Compose system test、実データseed、実候補のロード/benchmarkは未実施。これらが終わるまでは新しい評価データを取得しない。 |
-| 3 | R06/P1 | benchmarkはcandidate ID/version/artifactとstaging API応答を照合する。次に実登録し、staging API/DBを起動してready・予測保存先の分離・通常deploy拒否をsystem testする。実測後、operational report hash/statusをMLflow version tagsへ追加する。validation/final/operational report hash・policy ID/SHAと理由付き手動承認を記録し、`eligible`は全gateがpassedの場合のみ最後に設定してfailed/欠損上書きを拒否する。 |
-| 4 | R06/P1 | 月境界bufferを含む原本範囲を決定→取得/manifest schema 3監査→未使用split/件数/recipe/gateをprotocolへ凍結する。training cutoffは2026-06-01 00:00、未到着の直前2時間を除外。 |
-| 5 | R06/P1 | validationを一度実施→artifact/evidence固定→合格時だけ同一artifactで後続評価を一度実施する。 |
-| 6 | R05/R06/P1 | Capital隔離PostgreSQL/MLflowとmodel loading、offline/API parity、promotion rejection/acceptanceをsystem testする。candidate/DBが揃った後に固定benchmarkを隔離staging APIで実測する。 |
+| 2 | R06/P1 | **部分完了:** baseline-only protocol/candidate/final scoring、MAE/RMSE gate、fixed operational benchmark、blocked candidate registration script、専用staging API/DB Compose定義、専用DB seed scriptを追加。合成fixtureでcandidate/final reportとrow CSV hash・指標・完了台帳、registry tags・artifact hash、APIのblocked identityを検査し、Composeは静的検証済み。次はsynthetic evidence専用の使い捨てCompose/MLflow/DBでsystem testし、production Capital registryや評価期間には触れない。 |
+| 3 | R06/P1 | synthetic integrationの後、operational report hash/statusをexact MLflow versionへ付ける経路を実装・試験する。全gate passedかつ理由付き手動承認がある場合だけ`eligible`にし、failed/missing/mismatchを拒否する。 |
+| 4 | R06/P1 | 月境界bufferを含む未取得原本範囲を確認→未使用archiveを取得→manifest schema 3監査→protocolへ未使用split/件数/recipe/gateを固定する。training cutoffは2026-06-01 00:00、直前の未到着2時間を除外。 |
+| 5 | R06/P1 | protocolを凍結しvalidationを一度実施→artifact/evidence固定→合格時だけ同一artifactで独立final評価を一度行う。 |
+| 6 | R05/R06/P1 | 実candidate後にCapital staging DBへseedし、blocked MLflow registration/API load、offline/API parity、promotion rejectionを実stackで確認。candidate ID/artifactを固定した1,050 request benchmarkを一度測定する。operational result/hashを付け、manual approval gateを最後に判定する。 |
 | 7 | R07/P1 | 同profile training reference/PSI bins、monitor期間継承、定数分布/件数不足/ラベル待ち/欠測増加の状態を実装・試験する。 |
 | 8 | R08/R09/P1 | 隔離環境で並行要求、拒否/障害注入、rollback/recover、backup/restoreを検証し、配信可否・承認metadata・進行表示を整合させる。 |
 | 9 | R10/P2 | 採否と未達理由、再現手順、5分デモと成果の証拠をまとめる。 |
