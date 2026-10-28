@@ -1181,3 +1181,40 @@ git diff --check
 ```
 
 この部分試験のモデルはmock、FastAPIはTestClientであり、実MLflow登録・staging Docker image・ネットワーク越しのAPI・1,050要求は試していない。これらのguardはbenchmark本体にもまだ接続していない。従って測定CLIは引き続き入力確認専用、運用gateは未完成。次に固定運用planの事前保存、候補・registry identity、guardと全要求の接続、接続喪失時partial reportと監査batchの証拠保存を実装し、最新Dockerfile・隔離MLflow/PostgreSQL/APIを通すsystem testを完成させる。新しい実データ取得、実評価、既存UCIへの予測・配信操作はしていない。
+
+## 2026-10-28: 運用測定planの凍結と候補・登録版の再照合
+
+計画11.5のS03として`capital_operational_plan.py`と`scripts/prepare_capital_operational_plan.py`を追加した。候補・final report、学習期間、CSV/manifest、登録済みCapital版のREADY状態とtagを照合し、検証後にregistered artifactを一時directoryへdownloadして`MLmodel`とdirectory SHAを検査する。version/tagが違えばartifact取得前に拒否する。ローカルCapital MLflow port 5001とstaging API port 8110に限定する。
+
+計画JSONにはcandidate/model/version、candidateおよびregistered artifact・source data・manifest・evaluation protocol・reportのSHA、training row SHA、対象168時間、暖機50・測定1,000・同時数1・retry0・timeout10秒・p95 250ms/nearest-rank、各phaseで先頭から時刻を繰り返す規則と取得可能な資源情報を固定する。専用directoryへの新規作成をatomicなlinkで行い、同時作成時も片方だけ成功し、既存fileやsymlink経由の領域外への上書きは拒否する。SHA不一致、変更されたpolicy、未到着ラベル、別target/版/データ/成果物を拒否する。`verify_operational_plan_binding`は利用時に検証済み候補・データ・登録版・artifactと再照合する部品である。
+
+plan作成は予測要求を送らず、DBを更新せず、運用gate・配信を許可しない。自己ハッシュだけでは内容とハッシュの同時書換えを防げない。**plan SHA/attemptを先に台帳へ固定し測定中のguard・全応答/監査へつなぐ経路はまだない。** 資源取得が不可でもその状態をplanに記録するため、未測定を合格証拠としない。実測CLIは停止中。
+
+### 実行・デバッグ・検証
+
+初めに一時SQLiteの実MLflow registryへ合成artifactを登録して調べたところ、downloadに`registered_model_meta`が追加され、元のdirectoryだけで付けたfixtureのSHAと一致しなかった。既存staging登録はdownload後のdirectory全体のSHAをtagに保存するため、合成fixtureも同じ条件に修正した。download 2回のSHA一致、実MLflowのversion/tag取得、plan作成・再照合、candidate tag変更後の拒否を確認。artifactは合成の小さなplaceholderで、モデルの逆シリアライズや実モデル評価はしていない。
+
+さらにMLflowのコードを確認すると、tracking URIとregistry URIは別に設定でき、`MLFLOW_REGISTRY_URI`がtracking先とは別の登録先を選ぶ場合があると分かった。plan作成だけでなく既存のCapital staging登録・loader・seedも、明示したtracking URIと同じregistry URIを使うよう修正した。登録とloaderはartifact取得のためのMLflow global registry URIも同じ値へ設定する。別registry URIの環境変数を与えたmockで、登録・seedが正しいURIを指定することを確認した。実際の別registryへ接続・書込みはしていない。
+
+最初の手動probeは、エラーをログへredirectした後に`tail`を実行したため、最後の`tail`の終了コード0が返ってしまった。ログの例外を読み、以後はコマンド自体の終了コードを確認して修正後を再実行した。失敗時のログは`data/reports/20261028-operational-plan/mlflow-test-debug.log`に残した。今回の実MLflow検証は独立した一時SQLite storeであり、既存UCI/Capital registryを変更していない。
+
+```bash
+DATA_PROFILE_ID=capital-bikeshare .venv/bin/python scripts/prepare_capital_operational_plan.py --help
+# 成功。実候補なしでplanを生成したわけではない。
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 120 .venv/bin/python -m unittest discover -s tests -v
+# 登録先固定後、98 tests, OK (15.415s)。実MLflowの隔離SQLite registry testを含む。
+# data/reports/20261028-operational-plan/unit-tests.log
+# SHA-256: ca11cbc12cebc7ad7e772922d0522f57845f45023bec977820ba51633c06f1d9
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_capital_operational_plan.py' -v
+# 同時作成・symlink脱出の負例と登録tag事前確認追加後、8 tests OK (5.973s)。
+# data/reports/20261028-operational-plan/plan-tests.log
+# SHA-256: 2c3dda8098bcf2e458f993d4de2a0368dbe9c586d22a7e91075fc61af23f9211
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_capital_staging.py' -v
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_capital_staging_seed.py' -v
+# 全suite後に追加した登録URIの負例を含め、staging 8 tests、seed 5 tests OK。
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+# 成功。Starlette/httpxとMLflow/SQLAlchemyの既存非推奨警告あり。
+```
+
+手動probeの最終版と生ログはGit対象外の`data/reports/20261028-operational-plan/`に保存。再現用の実MLflow registry testは`tests/test_capital_operational_plan.py`にも追加した。計画書11.5とgate文書を進捗に合わせて更新。実candidate/final reportやCapital MLflow HTTP serverを使ったplan作成、DBロック中の1,050件、MLflow tag更新、実評価・実配信は未実施。次はattempt台帳と既存guardを測定の実行順へ結び付け、ロック喪失・部分失敗・監査不一致を非合格として記録し、隔離した実stackで通す。

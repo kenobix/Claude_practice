@@ -92,6 +92,20 @@ DATA_PROFILE_ID=capital-bikeshare .venv/bin/python scripts/benchmark_capital_run
   --end '2026-04-08 00:00:00' --check-input-only
 ```
 
+実候補のblocked登録とfinal reportが揃った後、運用測定の条件だけを先に凍結するコマンドを用意した。候補・final report・学習行・CSV/manifestを検証し、Capital MLflowの指定version/tagと、ダウンロードしたregistered artifactのハッシュを照合する。入力168時間、要求数、順序、タイムアウト、p95条件、モデル・データ・protocol・reportのハッシュ、取得可能な資源情報を新規JSONに保存する。予測要求は送信しない。
+
+```bash
+DATA_PROFILE_ID=capital-bikeshare MLFLOW_TRACKING_URI=http://127.0.0.1:5001 \
+  .venv/bin/python scripts/prepare_capital_operational_plan.py \
+  --candidate-id '<candidate-id>' --model-version '<登録版番号>' \
+  --selection-report 'data/candidates/<candidate-id>/candidate-report.json' \
+  --final-report 'data/reports/capital-bikeshare/<final-report>.json' \
+  --start '2026-04-01 00:00:00' --end '2026-04-08 00:00:00' \
+  --output 'data/evaluations/capital-bikeshare/operational-plans/<plan-name>.json'
+```
+
+計画ファイルの上書きは拒否し、内容のSHAを保持する。自己ハッシュは偶発的な変更の検出用であり、本人が内容とハッシュを両方書き換えた場合の真正性は証明しない。実測時にplanを候補・registry・DBと再照合し、最初の要求前に別の台帳へplan SHAとattemptを固定する経路、失敗時の再試行規則、出典/監査照合との統合は未実装。resourceの取得不能や他の負荷の未測定も合格証拠にしない。計画作成だけで運用gateは合格にならず、現在の測定CLIは停止中。
+
 測定前にblocked registrationを作成し、生成された`data/runtime-capital-staging/staging.env`を使って、staging DBへのseed、staging API起動の順に行う。seedは検査済みCapital profileのCSV/manifestを使い、専用PostgreSQLのloopback port 55434へ記録する。
 
 ```bash
@@ -118,6 +132,8 @@ curl -fsS http://127.0.0.1:8110/ready
 ```
 
 登録先はlocalhostのport 5001にあるCapital用MLflowに限定する。精度gateが不合格、またはreport/artifact identityが一致しない場合は登録しない。staging loaderは配信許可を`blocked`のまま保ち、`runtime init`/`deploy promote`は全gateと明示的な承認を引き続き要求する。診断flagや環境変数でこれらの確認を迂回しない。benchmark reportは`data/reports/capital-bikeshare/`へ新しいファイルとして保存し、既存reportを上書きしない。
+
+MLflowでは実験のtracking先とモデルregistry先を別々に設定できる。このstaging経路の登録、seed、loader、plan作成は、registry先も指定したtracking先と同一に固定する。異なる`MLFLOW_REGISTRY_URI`が環境にある場合も、別のregistryへ誤って登録・参照しないための設定である。
 
 seedは候補・最終reportを再検証し、指定したMLflow版のtag、CSVとmanifestのSHA-256を候補に照合する。DBの既存観測は時刻・台数・利用可能時刻・データSHAまで比較し、余分な行や不一致があればseed全体を拒否する。PostgreSQLでは検査と挿入を同じトランザクション内でロックする。上記seedコマンドに`--verify-only`を付けると、観測を追加せずに全行が揃っていることも検査する。これは照合した時点のDB状態を示し、確認後の変更を防ぐものではない。benchmark側での再照合、training split、APIデータ出典の検証は未対応であり、実候補のbenchmarkを実行する前に対応する。
 

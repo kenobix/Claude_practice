@@ -46,7 +46,7 @@ def main() -> None:
         raise ValueError("Staging CSV or manifest does not match the verified candidate")
     frame = _load_profile_hourly(DEFAULT_DATASET)
     from mlflow.tracking import MlflowClient
-    registered = MlflowClient(tracking_uri=tracking_uri).get_model_version(MODEL_NAME, args.model_version)
+    registered = MlflowClient(tracking_uri=tracking_uri, registry_uri=tracking_uri).get_model_version(MODEL_NAME, args.model_version)
 
     encoded_password = quote(password, safe="")
     database_url = f"postgresql://bike_app:{encoded_password}@127.0.0.1:{args.port}/bikeops"

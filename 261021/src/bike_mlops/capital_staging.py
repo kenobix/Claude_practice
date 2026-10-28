@@ -441,7 +441,8 @@ def register_blocked_capital_candidate(selection_path: Path, final_path: Path) -
     ):
         raise ValueError("Blocked candidate registration is restricted to local Capital MLflow at port 5001")
     mlflow.set_tracking_uri(tracking_uri)
-    client = MlflowClient(tracking_uri=tracking_uri)
+    mlflow.set_registry_uri(tracking_uri)
+    client = MlflowClient(tracking_uri=tracking_uri, registry_uri=tracking_uri)
     tags = _registration_tags(evidence)
 
     try:
@@ -567,7 +568,8 @@ def load_staging_registered_model():
     if not tracking_uri:
         raise ValueError("MLFLOW_TRACKING_URI is required")
     mlflow.set_tracking_uri(tracking_uri)
-    registered = MlflowClient(tracking_uri=tracking_uri).get_model_version(MODEL_NAME, version)
+    mlflow.set_registry_uri(tracking_uri)
+    registered = MlflowClient(tracking_uri=tracking_uri, registry_uri=tracking_uri).get_model_version(MODEL_NAME, version)
     if registered.status != "READY":
         raise ValueError(f"Staging candidate registration is not READY: {registered.status}")
     expected_tags = {

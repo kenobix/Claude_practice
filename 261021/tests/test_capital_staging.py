@@ -281,6 +281,46 @@ class CapitalStagingTests(unittest.TestCase):
             with patch.object(capital_staging, "TARGET_CONTRACT_ID", "capital-trip-starts-hourly-v1"):
                 capital_staging.validate_staging_model_tags(tags, {"candidate_id": "0" * 64})
 
+    def test_registration_pins_registry_uri_even_if_environment_selects_another(self):
+        import mlflow
+        import mlflow.artifacts
+        import mlflow.tracking
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            model_dir = root / "model"
+            model_dir.mkdir()
+            (model_dir / "MLmodel").write_text("synthetic metadata\n")
+            evidence = {
+                "candidate_id": "a" * 64, "candidate_artifact_sha256": "b" * 64,
+                "selection_report_sha256": "c" * 64, "final_report_sha256": "d" * 64,
+                "evaluation_protocol_sha256": "e" * 64,
+                "candidate_artifact_path": root / "raw.skops",
+                "quality_gate_policy_id": BOOTSTRAP_QUALITY_GATE_POLICY["policy_id"],
+                "quality_gate_policy_sha256": BOOTSTRAP_QUALITY_GATE_POLICY_SHA256,
+                "selection": {"data_sha256": "f" * 64, "feature_contract_version": "bike-demand-features-v1"},
+            }
+            with (patch.object(capital_staging, "TARGET_CONTRACT_ID", "capital-trip-starts-hourly-v1"),
+                  patch.object(capital_staging, "PROJECT_ROOT", root)):
+                tags = capital_staging._registration_tags(evidence)
+                tags["artifact_sha256"] = capital_staging.directory_sha256(model_dir)
+                registered = SimpleNamespace(tags=tags, status="READY", version="7")
+                with (patch.dict(os.environ, {"MLFLOW_TRACKING_URI": "http://127.0.0.1:5001",
+                                              "MLFLOW_REGISTRY_URI": "http://other.invalid"}),
+                      patch.object(capital_staging, "verify_candidate_for_staging", return_value=evidence),
+                      patch.object(capital_staging, "load_candidate_model", return_value=(object(), "b" * 64)),
+                      patch.object(capital_staging, "_write_staging_environment", return_value=root / "staging.env"),
+                      patch.object(mlflow, "set_tracking_uri"), patch.object(mlflow, "set_registry_uri") as registry_setter,
+                      patch.object(mlflow.tracking, "MlflowClient") as factory,
+                      patch.object(mlflow.artifacts, "download_artifacts", return_value=str(model_dir))):
+                    factory.return_value.search_model_versions.return_value = [registered]
+                    factory.return_value.get_model_version.return_value = registered
+                    result = capital_staging.register_blocked_capital_candidate(root / "selection", root / "final")
+                    self.assertEqual(result["model_version"], "7")
+                    registry_setter.assert_called_once_with("http://127.0.0.1:5001")
+                    factory.assert_called_once_with(tracking_uri="http://127.0.0.1:5001",
+                                                   registry_uri="http://127.0.0.1:5001")
+
     def test_staging_loader_loads_only_the_pinned_blocked_registry_artifact(self):
         import mlflow
         import mlflow.artifacts
@@ -329,6 +369,7 @@ class CapitalStagingTests(unittest.TestCase):
                 patch.object(capital_staging, "TARGET_CONTRACT_ID", "capital-trip-starts-hourly-v1"),
                 patch.dict(os.environ, environment),
                 patch.object(mlflow, "set_tracking_uri"),
+                patch.object(mlflow, "set_registry_uri") as registry_setter,
                 patch.object(mlflow.tracking, "MlflowClient") as client_class,
                 patch.object(mlflow.artifacts, "download_artifacts", return_value=str(model_path)),
                 patch.object(mlflow.sklearn, "load_model", return_value=model),
@@ -337,6 +378,8 @@ class CapitalStagingTests(unittest.TestCase):
                     status="READY", tags=tags
                 )
                 result = capital_staging.load_staging_registered_model()
+                registry_setter.assert_called_once_with("http://mlflow:5000")
+                client_class.assert_called_once_with(tracking_uri="http://mlflow:5000", registry_uri="http://mlflow:5000")
         self.assertIs(result[0], model)
         self.assertEqual(result[1:4], ("9", artifact_sha, "passed"))
         self.assertIsNone(result[4])
@@ -381,6 +424,7 @@ class CapitalStagingTests(unittest.TestCase):
                 patch.object(capital_staging, "TARGET_CONTRACT_ID", "capital-trip-starts-hourly-v1"),
                 patch.dict(os.environ, environment),
                 patch.object(mlflow, "set_tracking_uri"),
+                patch.object(mlflow, "set_registry_uri"),
                 patch.object(mlflow.tracking, "MlflowClient") as client_class,
                 patch.object(mlflow.artifacts, "download_artifacts", return_value=str(model_path)),
             ):

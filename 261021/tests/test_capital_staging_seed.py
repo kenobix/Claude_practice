@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 import tempfile
+import importlib.util
+import io
+import os
+import sys
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -118,6 +123,27 @@ class StagingSeedTests(unittest.TestCase):
                 with self.db.transaction() as connection:
                     self.db.execute(connection, "DELETE FROM observations")
                 self.seed()
+
+    def test_seed_cli_pins_registry_uri_independently_of_environment(self):
+        script = Path(__file__).resolve().parents[1] / "scripts/seed_capital_staging.py"
+        spec = importlib.util.spec_from_file_location("capital_seed_cli_for_test", script)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        evidence = {"selection": {"data_sha256": "a" * 64,
+                                  "data_source": {"source_manifest_sha256": "b" * 64}}}
+        argv = ["seed", "--selection-report", "candidate.json", "--final-report", "final.json",
+                "--model-version", "7"]
+        with (patch.object(module, "DATA_PROFILE_ID", "capital-bikeshare"),
+              patch.object(module, "verify_candidate_for_staging", return_value=evidence),
+              patch.object(module, "sha256_file", side_effect=["a" * 64, "b" * 64]),
+              patch.object(module, "_load_profile_hourly", return_value=self.frame),
+              patch.object(module, "Database"), patch.object(module, "seed_verified_candidate", return_value={}),
+              patch("mlflow.tracking.MlflowClient") as factory,
+              patch.dict(os.environ, {"APP_DB_PASSWORD": "synthetic", "MLFLOW_TRACKING_URI": "http://127.0.0.1:5001",
+                                      "MLFLOW_REGISTRY_URI": "http://other.invalid"}),
+              patch.object(sys, "argv", argv), redirect_stdout(io.StringIO())):
+            module.main()
+            factory.assert_called_once_with(tracking_uri="http://127.0.0.1:5001", registry_uri="http://127.0.0.1:5001")
 
 
 if __name__ == "__main__":
