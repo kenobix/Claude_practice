@@ -271,7 +271,7 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 - [x] 同じ合成開発データで2回学習し、予測完全一致を試験。final期間は使っていない。
 - [x] timezone供給元と版を固定した。依存定義とlockは`tzdata==2026.5`。集計・manifest検査・APIはOSの`zoneinfo` search pathを使わず、Python package内の対象zone TZif bytesから`ZoneInfo.from_file`を作る。manifest schema 3、training report、API `/ready`・`/version`にprovider/package版/zone名/bytes/hashを記録。春の欠落時刻・秋の重複時刻のテスト、schema 2から新protocolを作れない回帰テストを追加。旧manifest schema 2は監査・seedの後方互換用で、新protocol/candidateでは拒否する。
 - 完了確認: 全41 ZIPを既存出力を上書きせず新pathへ再集計し、schema 3 manifestのTZif identity、全archive hash・行収支、CSV hashを検証した。新CSVとschema 2 CSVのhash一致は時刻処理のbyte同一性を示すが、同期間・同原本なので新しい評価データとは扱わない。既存のsystem DB確認（`2026c`）とPython package identityを別々に記録し、同一版だとは推定しない。
-- 検証済みの範囲: 以前の44テスト、compileall、pip check、CI上のclean lock installに加え、今回のtimezone変更後は48テスト、compileall、pip check、Docker image build、host/container間のpackage版・TZif SHA・春DST grid一致、全41 ZIPのschema 3再集計・独立manifest検証が成功した。Starlette/httpx非推奨warningはwork_logへ記録した。今回の変更をpushした後、同じlockを使うCI結果を確認して記録する。
+- 検証済みの範囲: 以前の44テスト、compileall、pip check、CI上のclean lock installに加え、今回のtimezone変更後は48テスト、compileall、pip check、Docker image build、host/container間のpackage版・TZif SHA・春DST grid一致、全41 ZIPのschema 3再集計・独立manifest検証が成功した。Starlette/httpx非推奨warningはwork_logへ記録した。commit `13ea918`の契約テストCI `40655472121`とPages build/deploy `40655471660`はいずれもsuccess。
 
 #### R05 新しいtarget定義の移行プロファイル
 

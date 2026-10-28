@@ -738,4 +738,4 @@ UCI Bike SharingとCapital Bikeshareの件数は意味が異なるため、UCI�
 - 生成後に`validate_capital_manifest`でschema 3を再読込し、41原本すべてのbyte数/SHA、timestamp coverage/grid、行収支、CSV SHAを検査した。新旧manifest間で41件すべてのarchive SHAが一致し、CSV SHAも一致。再集計の再現証拠であり、原本・期間が同じなので未使用の新評価データではない。
 - 検査後の出力先: `data/derived/capitalbikeshare-r04-tzdata2026-5/`（local generated data、Git対象外）。
 
-計画書R04を完了とし、`capital-bootstrap-gate.md`、`data-profiles.md`、`runbook.md`もschema 3/未使用データの条件へ更新した。次の優先作業はR06のincumbentなしbootstrap protocol/candidate/final-evaluation実装。その後に初めて未使用2026年データを取得・監査する。新規検証後のGitHub CIと変更pushはまだ行っていない。
+計画書R04を完了とし、`capital-bootstrap-gate.md`、`data-profiles.md`、`runbook.md`もschema 3/未使用データの条件へ更新した。commit `13ea918`を`origin/main`へpushした。契約テストCI `40655472121`はlock install、`pip check`、48テスト、compileallをすべて通過してsuccess。GitHub Pages build/deploy `40655471660`もsuccess。次の優先作業はR06のincumbentなしbootstrap protocol/candidate/final-evaluation実装。その後に初めて未使用2026年データを取得・監査する。
