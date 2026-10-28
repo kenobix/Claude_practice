@@ -267,6 +267,20 @@ class OperationalBenchmarkTests(unittest.TestCase):
         self.assertEqual(len(calls), 2)
         self.assertTrue(all(payload is None for _, payload in calls))
 
+    def test_preflight_keyboard_interrupt_closes_http_client(self):
+        profile = {"model_name": "bike-demand-capital", "feature_contract_version": "bike-demand-features-v1",
+                   "target": {"timezone_name": "America/New_York"}}
+        client = Mock(side_effect=KeyboardInterrupt)
+        with (patch.object(benchmark, "DATA_PROFILE_ID", "capital-bikeshare"),
+              patch.object(benchmark, "TARGET_CONTRACT_ID", "capital-trip-starts-hourly-v1"),
+              patch.object(benchmark, "DATA_PROFILE", profile),
+              patch.object(benchmark, "_PersistentJsonClient", return_value=client)):
+            with self.assertRaises(KeyboardInterrupt):
+                benchmark.run_capital_operational_benchmark(
+                    api_url="http://127.0.0.1:8110", model_version="7", candidate_id="c" * 64,
+                    start="2026-04-01 00:00:00", end="2026-04-08 00:00:00")
+        client.close.assert_called_once_with()
+
     def test_keyboard_interrupt_is_saved_as_an_incomplete_failed_report(self):
         profile = {
             "model_name": "bike-demand-capital",

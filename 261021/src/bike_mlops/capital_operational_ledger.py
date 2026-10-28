@@ -192,7 +192,7 @@ class MeasurementAttempt:
                     or body.get("operational_plan_file_sha256") != self.plan_file_sha256
                     or not isinstance(gate, dict) or gate.get("status") not in {"passed", "failed", "not_evaluated"}
                     or type(body.get("completed")) is not bool
-                    or (status == "completed" and (body["completed"] is not True or gate["status"] != "passed"))
+                    or (status == "completed" and (body["completed"] is not True or gate["status"] not in {"passed", "not_evaluated"}))
                     or (status == "failed" and body["completed"] is True and gate["status"] == "passed")):
                 raise ValueError("Operational report does not match the attempt, plan or outcome")
             report = {"path": relative, "sha256": report_hash, "gate_status": gate["status"]}

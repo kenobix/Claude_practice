@@ -168,6 +168,29 @@ class OperationalLedgerTests(unittest.TestCase):
         self.assertEqual(record["status"], "interrupted")
         self.assertTrue(record["attempts"][0]["partial_evidence_missing"])
 
+    def test_completed_means_finished_not_operational_gate_passed(self):
+        with self.attempt() as lease:
+            lease.mark_requests_started()
+            report = self.report(lease)
+            body = json.loads(report.read_text())
+            body["operational_gate"]["status"] = "not_evaluated"
+            report.write_text(json.dumps(body))
+            lease.finish(status="completed", report_path=report)
+        record = ledger.read_operational_ledger(self.ledger_path)["records"][0]
+        self.assertEqual(record["status"], "completed")
+        self.assertEqual(record["attempts"][0]["report"]["gate_status"], "not_evaluated")
+
+    def test_failed_gate_cannot_be_recorded_as_completed(self):
+        with self.attempt() as lease:
+            lease.mark_requests_started()
+            report = self.report(lease)
+            body = json.loads(report.read_text())
+            body["operational_gate"]["status"] = "failed"
+            report.write_text(json.dumps(body))
+            with self.assertRaisesRegex(ValueError, "does not match"):
+                lease.finish(status="completed", report_path=report)
+        self.assertEqual(ledger.read_operational_ledger(self.ledger_path)["records"][0]["status"], "interrupted")
+
     def test_report_changed_after_finish_cannot_be_committed(self):
         with self.assertRaisesRegex(ValueError, "report changed before ledger commit"):
             with self.attempt() as lease:

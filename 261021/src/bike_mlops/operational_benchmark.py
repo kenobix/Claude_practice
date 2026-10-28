@@ -352,7 +352,7 @@ def run_capital_operational_benchmark(
             or ready.get("deployment_permission") != "blocked"
         ):
             raise RuntimeError("Capital API /ready identity differs from /version")
-    except Exception:
+    except BaseException:
         if request_client is not None:
             request_client.close()
         raise
@@ -443,7 +443,10 @@ def run_capital_operational_benchmark(
                 interrupted = True
             except Exception as exception:  # Preserve every failed request; never retry.
                 latency_ms = (time.perf_counter() - began) * 1000.0
-                error = f"{type(exception).__name__}: {exception}"
+                # A guard or client exception may contain connection details; the
+                # integrated measurement report records its type, not secrets.
+                error = (type(exception).__name__ if request_observer is not None
+                         else f"{type(exception).__name__}: {exception}")
             record_measurement(
                 phase, phase_index, request_id, target_text, status_code, latency_ms, response, error
             )
@@ -557,7 +560,16 @@ def write_benchmark_report(path: Path, report: dict) -> None:
     resolved.parent.mkdir(parents=True, exist_ok=True)
     temporary = resolved.with_name(f".{resolved.name}.{uuid.uuid4().hex}.tmp")
     try:
-        temporary.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        with temporary.open("x", encoding="utf-8") as stream:
+            json.dump(report, stream, indent=2, ensure_ascii=False, allow_nan=False)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
         os.link(temporary, resolved)
+        directory_fd = os.open(resolved.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
     finally:
         temporary.unlink(missing_ok=True)

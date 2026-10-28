@@ -1335,3 +1335,23 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s 
 ```
 
 Capital候補に紐づく参照の作成、v2のmonitor接続、既存監視履歴の上書き防止、ラベル待ちやmissing増加の区別は残っている。計画書とrunbookに進捗と制約を反映した。
+
+## 2026-10-29: 測定内部の通し処理
+
+`capital_measurement_runner.py`を追加し、候補ごとの試行台帳、plan/候補/registryの事前再照合、staging観測表のロック、50暖機+1,000逐次要求、応答出典、全IDと監査行の照合、report保存、ロック解放と台帳の順に実行する内部経路を作った。入力DBはCapital profile・local PostgreSQL 55434・bike_app/bikeopsに限定する。エラー時は後続を止め、可能な部分証拠を新規failure reportへ保存し、失敗ステージ・例外型と`completed=false`を記録する。例外に含まれる接続先や秘密値の文字列はfailure reportへ書かない。API事前確認中のCtrl-CでHTTP clientを閉じる処理も修正した。
+
+成功しても台帳の`completed`は測定処理の完了を意味するだけで、reportのoperational gateは`not_evaluated`、配信許可は`blocked`のまま。台帳は`not_evaluated`の完了reportを保持できるようにした。監査後でもDBロックの解放や台帳最終書込みが失敗すると、採用されないreportが孤立して残りうるため、台帳の状態と参照先を正規の結果とし、孤立reportの検出・整理は残課題。実際のMLflow・PostgreSQL・APIを組み合わせた一連の検証、実候補への計測と独立したgate判定は未実施。CLIは入力確認専用を維持する。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_capital_measurement_runner.py' -v
+# 7 tests OK。benchmark本体を用いた1,050要求は合成通信、DB snapshot/監査/候補はmock。
+# data/reports/20261029-measurement-runner/runner-tests-report-fix.log
+# SHA-256: 2196cc0d427b1176b6e16e0ec579090a4af7a31fe7c82703215add3bffbb20d7
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 180 .venv/bin/python -m unittest discover -s tests -v
+# 153 tests OK (23.071s)。monitorと隔離harnessのunit testsも含む。
+# data/reports/20261029-continuation/unit-tests-all.log
+# SHA-256: d709e7e34449e7c7e4e8a6d25be1a3a409cfdd70a1ce9b2b497fa381f9c3d6f9
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+# 成功。既存Starlette/httpxとMLflow/SQLAlchemyの非推奨警告あり。
+```
