@@ -325,7 +325,7 @@ docker compose -f compose.yaml -f compose.capital.yaml -f compose.capital-stagin
 
 現在は`--start`と`--end`を両方省略すると、対象replayのJSONから実行時に指定された期間を引き継ぎます。片方だけの指定や、JSONに記録された期間を超える指定は拒否します。JSONがない場合は両方を明示してください。JSONの期間はリプレイで指定した範囲であり、`--limit`やエラーなどにより範囲内の全時刻が実際に処理された証拠ではありません。旧UCIのQ4 JSONにはprofile情報がないため、既知のUCI CSVハッシュに基づき推定したことを監視結果の`monitor_period.profile_identity_source`に記録します。実際の予測件数とCSV由来も別に確認します。
 
-既存の監視コマンドは同じ出力先・窓IDを再利用するとファイルやDB行を更新するため、過去の監査記録を残す必要がある場合はそのコマンドを再実行しないでください。監視結果の履歴を保護した再実行方法は未完成です。
+監視は実行ごとにIDを作り、既定のCSV/JSON名とDB窓IDを分けます。`--output`で既存ファイルを指定した場合は上書きせず停止します。正常にDBへ保存できた実行には、CSV・JSONのハッシュと実行IDを含む`*.complete.json`を追加します。ファイルとDBは別々に保存するため、途中停止して完了ファイルがない場合はDB保存の成否を決めつけず、JSONに記載された`database_window_id_prefix`で`monitor_windows.window_id`を調べてください。過去の記録を自動更新・削除しません。
 
 CSVとDBに窓ごとの予測数、到着ラベル数、到着率、MAE/RMSE、固定ビンPSIを保存します。ラベル到着前は誤差を0扱いせず分母から外します。PSIと誤差悪化は別々に読み、通知は調査開始にだけ使います。
 

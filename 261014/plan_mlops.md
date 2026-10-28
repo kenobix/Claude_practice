@@ -301,7 +301,7 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 
 #### R07 監視の参照・期間・退化ケース
 
-- [ ] replay manifestの期間とmonitor入力を一致させる。**進捗:** start/end省略時は対象replay reportを識別・CSV hash確認のうえ継承し、明示指定は両端必須でreport範囲内に限定。旧UCI Q4 reportのprofile欠落は既知CSV SHAに基づく推定として記録する。実report 2件と合成CLI試験で確認。既存の空窓は出自を注記し保持した。ただし同一出力先・DB窓IDの再利用は既存結果を更新するため、履歴保護は未完了。report期間はlimit等による実処理完了を証明しない。
+- [x] replay manifestの期間とmonitor入力を一致させる。start/end省略時は対象replay reportを識別・CSV hash確認のうえ継承し、明示指定は両端必須でreport範囲内に限定。旧UCI Q4 reportのprofile欠落は既知CSV SHAに基づく推定として記録する。実report 2件と合成CLI試験で確認。既存の空窓は出自を注記し保持した。新しい監視runごとのIDと新規ファイル・DB行で履歴上書きを防ぎ、ファイルとDBの非原子性は完了markerと未確定状態で明示する。report期間はlimit等による実処理完了を証明しない。
 - [ ] 学習/データprofileに対応する参照期間とPSIビンを成果物として保存する。季節対応の比較は別の診断指標にし、過去の警告値を事後に置き換えない。
 - [ ] 定数参照で大きな変化がPSI=0となる問題を修正する。**進捗:** 独立した明示versionのPSI v2に定数参照より小・等・大の固定binと参照SHA、欠測・無限・母数不足の状態を実装し、合成試験済み。既存monitorには未接続で、過去のUCI値に遡及適用していない。候補の学習データとの参照結合・許容差検討と、ラベル待ち、誤差基準未設定、missing増加の区別が残る。
 - [ ] 合成入力・遅延/欠落/重複ラベルで、入力分布警告と誤差悪化、誤警報/見逃し、検知までの遅れを別々に検証する。
@@ -362,7 +362,7 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 | 4 / P1 | R01/R02/R06 | **未使用原本とprotocolを固定する。** 既存41 ZIP/2026-05までの原本と評価消費台帳を確認し、未取得範囲と月境界buffer・公開状態を決定する。新規原本は新pathへ取得、schema 3・TZif identity・集計収支/DST/欠測理由を監査。既評価Q3/Q4/旧Capital窓は再利用しない。training cutoff 2026-06-01 00時、未到着の前日22/23時除外、validation/finalの非重複・判断時刻・件数・recipe・精度policyを候補fit前に凍結する。10月bufferが必要なら公開を確認し、結果を見て窓を短縮しない。 |
 | 5 / P1 | R03/R06 | **実データ精度評価を一度行う。** 台帳でvalidation開始を記録し、固定recipeで候補artifact/row evidence/source snapshotを保存。MAE厳密改善かつRMSE baseline以下を確認。合格時だけ同じartifactの独立final評価を一度実施し、再fitしない。weekday/weekend/通勤時間帯の件数と差も報告。未達なら見送り、同じ窓で選び直さない。 |
 | 6 / P1 | R05/R06 | **実候補をblockedのまま運用測定する。** exact versionで登録/seed/staging APIを検証し、凍結planに従う50+1,000要求を測定。offline/API一致、DB分離、通常deployの拒否、input/artifact/監査/資源証拠を確認する。候補のoperational report/hashを保存する。この時点では手動採用を確定しない。 |
-| 7 / P1 | R05/R07 | **Capital監視を完成する。** replay reportから期間を継承する処理と定数分布に対応した未接続のPSI v2部品を追加。同profileのtraining referenceとPSI binsの候補への結合、既存監視履歴の上書き防止、v2接続が残る。定数分布・件数不足・ラベル待ち・誤差基準未設定・欠測増加を区別する。合成の分布変化/誤差悪化/遅延・重複ラベルで警告・遅れ・母数を検証する。過去のUCI警告値を置き換えない。 |
+| 7 / P1 | R05/R07 | **Capital監視を完成する。** replay期間の継承、run別の監視履歴保存、定数分布に対応した未接続のPSI v2部品を追加。同profileのtraining referenceとPSI binsの候補への結合、v2接続、DBとファイルの未確定状態を調査する運用が残る。定数分布・件数不足・ラベル待ち・誤差基準未設定・欠測増加を区別する。合成の分布変化/誤差悪化/遅延・重複ラベルで警告・遅れ・母数を検証する。過去のUCI警告値を置き換えない。 |
 | 8 / P1 | R08/R09 | **隔離配信・復旧とmetadataを確認する。** PostgreSQLで同一ID並行再送/409/保存失敗、悪いartifact/gate/ready、API停止、ラベル停止を試験。Caddy切替前後と台帳確定前の中断からrollback/recoverし、入口・runtime・DBが一致することを確認する。DB/artifactの対応backupを別volumeへ復元する。承認metadata・利用不可版1の扱い・段階/経過時間/timeout表示を整合させる。合成fixturesを使う隔離試験は順番3以降に先行可。通常の未達gateを緩めず、既存UCIを障害実験に使わない。 |
 | 9 / P1 | R06/R09 | **実候補の理由付き採否を記録する。** 順番5〜8の精度・運用・監視・復旧証拠が揃い、同じcandidate/version/artifactを指すことを確認する。承認者と理由を記録し、未達は採用しない。採用する場合だけ証拠を照合した上でeligibleを確定し、対象profileの配信を操作する。別targetのUCIを自動で置き換えない。 |
 | 10 / P2 | R10 | **成果と再現手順を整理する。** Rタスク/commit/CI/証拠の一覧、見送り・未達理由、5分デモ、予測誤差/API時間/分布/復旧時間/資源の区別を記録する。実測の範囲・ラベル遅延の仮定を明示し、外部公開時は出典・利用条件・既定ホスティング方針を確認する。 |

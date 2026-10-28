@@ -36,6 +36,7 @@ from bike_mlops.db import Database, canonical_time, stable_hash
 from bike_mlops.deployment_gates import require_deployment_eligible
 from bike_mlops.features import FEATURE_COLUMNS, available_observation_frame, feature_frame_for_dataset
 from bike_mlops.monitoring import score_monitor_windows
+from bike_mlops.monitor_persistence import persist_monitor_run
 from bike_mlops.monitoring_window import resolve_monitor_window
 
 
@@ -372,33 +373,13 @@ def command_monitor(args) -> None:
         minimum_labels=args.minimum_labels,
         validation_mae=validation_mae,
     )
-    output = args.output or REPORT_DIR / f"monitor-{args.replay_id}-v{version}.csv"
-    output.parent.mkdir(parents=True, exist_ok=True)
-    windows.to_csv(output, index=False)
-    now = datetime.now().astimezone().isoformat()
-    with database.transaction(immediate=database.sqlite) as connection:
-        for index, row in windows.iterrows():
-            window_id = f"{args.replay_id}:v{version}:{row['window_end']}"
-            psi_value = json.dumps(row["psi"], sort_keys=True)
-            database.execute(
-                connection,
-                "INSERT INTO monitor_windows(window_id,replay_id,window_end,prediction_count,scored_count,"
-                "label_coverage,mae,rmse,psi_json,missing_json,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?) "
-                "ON CONFLICT(window_id) DO UPDATE SET prediction_count=excluded.prediction_count,"
-                "scored_count=excluded.scored_count,label_coverage=excluded.label_coverage,mae=excluded.mae,"
-                "rmse=excluded.rmse,psi_json=excluded.psi_json,missing_json=excluded.missing_json,created_at=excluded.created_at",
-                (
-                    window_id, args.replay_id, row["window_end"], int(row["prediction_count"]),
-                    int(row["scored_count"]), row["label_coverage"], row["mae"], row["rmse"],
-                    psi_value, json.dumps(row["feature_missing_rates"], sort_keys=True), now,
-                ),
-            )
+    monitor_run_id = str(uuid.uuid4())
+    output = args.output or REPORT_DIR / f"monitor-{args.replay_id}-v{version}-{monitor_run_id}.csv"
     summary = windows.iloc[-1].to_dict()
     summary = {
         key: (None if isinstance(value, (float, np.floating)) and pd.isna(value) else value)
         for key, value in summary.items()
     }
-    json_output = output.with_suffix(".json")
     report = {
         "replay_id": args.replay_id,
         "model_name": MODEL_NAME,
@@ -428,11 +409,10 @@ def command_monitor(args) -> None:
             "Labels are scored only after available_at. Distribution change and error increase are separate signals."
         ),
     }
-    json_output.write_text(json.dumps(report, indent=2, ensure_ascii=False, default=str) + "\n", encoding="utf-8")
+    persisted = persist_monitor_run(database, windows, output, report, run_id=monitor_run_id)
     _print(
         {
-            "report_path": output,
-            "summary_path": json_output,
+            **persisted,
             "replay_id": args.replay_id,
             "windows": len(windows),
             "latest_window": summary,
