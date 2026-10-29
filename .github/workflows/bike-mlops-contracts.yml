@@ -59,11 +59,19 @@ jobs:
           mkdir -p data/reports
           timeout --signal=TERM 1200 python scripts/capital_system_harness.py --run-synthetic-system 2>&1 \
             | tee data/reports/synthetic-system-ci.log
+      - name: Run disposable PostgreSQL snapshot-lock test
+        env:
+          MLFLOW_DISABLE_AGENT_HINT: "1"
+        run: |
+          timeout --signal=TERM 300 python scripts/test_capital_snapshot_postgres.py 2>&1 \
+            | tee data/reports/snapshot-postgres-ci.log
       - name: Upload synthetic system test log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bike-mlops-synthetic-system-log
-          path: 261021/data/reports/synthetic-system-ci.log
+          name: bike-mlops-docker-integration-logs
+          path: |
+            261021/data/reports/synthetic-system-ci.log
+            261021/data/reports/snapshot-postgres-ci.log
           if-no-files-found: ignore
           retention-days: 14

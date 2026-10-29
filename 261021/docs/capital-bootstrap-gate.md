@@ -154,6 +154,14 @@ MLFLOW_REGISTRY_URI=http://127.0.0.1:5001 \
 
 GitHub Actionsでは`.github/workflows/bike-mlops-contracts.yml`の`synthetic-system` jobが同じ隔離system testを実行し、ログを14日間のartifactとして保存する。workflowを追加した後のGitHub上での初回実行結果は未確認であり、ローカルでの合成成功とは別に確認する。
 
+PostgreSQLの観測snapshot lock、writer競合、接続喪失の使い捨てDB試験は次でも実行できる。イメージ`postgres:17.6-bookworm`がローカルに必要で、テスト自身が一時containerを作成して最後に削除する。
+
+```bash
+.venv/bin/python scripts/test_capital_snapshot_postgres.py
+```
+
+CI jobではsystem testに続けてこのPostgreSQL試験も実行し、両方のログを同一artifactに保存する。
+
 測定前にblocked registrationを作成し、生成された`data/runtime-capital-staging/staging.env`を使って、staging DBへのseed、staging API起動の順に行う。seedは検査済みCapital profileのCSV/manifestを使い、専用PostgreSQLのloopback port 55434へ記録する。
 
 ```bash

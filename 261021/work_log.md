@@ -1697,3 +1697,16 @@ git diff --check
 - 既存の同じ隔離system testと206件のunit suiteはローカルで成功済み。ただし新workflowのGitHub Actions初回runはpush後まで未確認。従ってCI job追加をCI導入完了とは扱わない。
 - YAMLを `261021/.venv/bin/python` のPyYAMLでparseし、`tests`/`synthetic-system`のjob名とstep数を確認した。`actionlint`はこの環境にインストールされていないため、GitHub Actions固有schema lintは未実施。
 - 続きはpush後にrun resultとupload artifactを確認する。Dockerでの強制終了、実API timeout後の遅延commit、audit保存失敗などのfailure-injection matrixは別タスクであり、本変更では実施していない。
+
+### 使い捨てPostgreSQL failure-injection確認
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 300 \
+  .venv/bin/python scripts/test_capital_snapshot_postgres.py 2>&1 \
+  | tee data/reports/20261029-system/snapshot-postgres-final.log
+```
+
+- 結果`passed`; log SHA-256: `88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9`.
+- 使い捨て・非superuser DBで、観測writerの阻止、API予測と監査のlock内保存、由来SHA照合、監査行の不足/余剰/重複/改変拒否、観測変化拒否、lock取得timeout、lock接続喪失拒否と解放を確認した。
+- scriptは専用labelのcontainerを削除。実行後の`docker ps -a --filter label=bike.snapshot.test`は空で、既存Composeサービスは変更していない。
+- GitHub ActionsのDocker jobにもこの試験を追加し、system harnessと同じ14日保持artifactへログをまとめるよう更新した。今回取得中のCI runは直前commitのworkflow定義であり、新しいstepのCI結果は次のpush run待ち。
