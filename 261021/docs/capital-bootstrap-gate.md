@@ -12,7 +12,7 @@
 
 判断根拠と差分レビューは[20261028-r06-delta-review.md](reviews/20261028-r06-delta-review.md)に記録する。
 
-その後の実装・作業過程の確認は[stagingチェックポイントレビュー](reviews/20261028-staging-checkpoint-review.md)を参照。最新の残課題と依存関係は[計画書11.5](../../261014/plan_mlops.md#115-2026-10-28-stagingチェックポイント後の残課題)を正規の一覧とする。
+その後の実装・作業過程の確認は[stagingチェックポイントレビュー](reviews/20261028-staging-checkpoint-review.md)を参照。最新の残課題と依存関係は[計画書11.5](../../261014/plan_mlops.md#115-2026-10-29-synthetic-system-test後の残課題)を正規の一覧とする。
 
 ## 前提とデータの状態
 
@@ -152,7 +152,9 @@ MLFLOW_REGISTRY_URI=http://127.0.0.1:5001 \
 
 隔離system testは `.venv/bin/python scripts/capital_system_harness.py --run-synthetic-system` で実行する。人工データで候補を作り、使い捨てCompose projectへ登録・seed・API起動・計測・監査・数値再確認・exact version tag記録まで通す。タグの同値再実行、異なるreport hashの拒否、拒否後もblockedを維持することを検査する。ランダムなproject名・一時credential・所有labelを用い、自分が作ったcontainer/network/volume/imageだけを削除する。port 5001・8110・55433・55434が使用中なら既存サービスを止めずに失敗する。test成功は実データの精度やdeployment承認を示さない。Docker imageのbuildと依存取得が必要になる場合がある。
 
-GitHub Actionsでは`.github/workflows/bike-mlops-contracts.yml`の`synthetic-system` jobが合成system testとPostgreSQL snapshot-lock testを実行し、ログを14日間のartifactとして保存する。最初の2 runでは合成計測とPostgreSQL testが完了したが、system test後のDocker image cleanupが失敗し、`pipefail`なしのpipelineがそれを隠してsummaryをsuccessにしていた。cleanupの共有image ID重複除去とimage rmのsecret-redacted診断を実装し、ローカル再実行は`cleanup_complete`を確認した。修正後のGitHub Actions再実行はpush後に追跡し、両テストとcleanupのログを確認する。
+GitHub Actionsでは`.github/workflows/bike-mlops-contracts.yml`の`synthetic-system` jobが合成system testとPostgreSQL snapshot-lock testを実行し、ログを14日間のartifactとして保存する。最初の2 runはcleanup失敗を`pipefail`なしのpipelineが隠していた。これを修正後のGitHub run `40876827423`はunit job成功、synthetic job失敗となり、偽の総合successを防いだ。保存ログでは合成測定・独立再確認まで成功した一方、Dockerは同じimage IDが複数repository名に参照されているためID指定の削除を拒否していた。単純にIDを重複除去するだけでは直らないため、現行ハーネスはownership labelを確認後に`repository:tag`単位で削除し、最後に残存container/network/volume/imageを再照合する。削除に`--force`は使わない。
+
+tag-scoped cleanupを使う以前の版では、blocked synthetic model version 1の登録、744観測seed、API/offline prediction差0、1,050件の逐次要求とaudit、数値再確認、exact version evidence tagsの再実行/競合拒否まで通り、`cleanup_complete`を返した。p95 `127.520839 ms`は人工データ・この実行環境の値で、Capital実候補や本番SLOの合格ではない。さらにexact codeに、image参照名がランダムCompose project prefixで始まる場合だけ削除を認める安全確認を足した。このexact codeではinfrastructure-onlyの起動・cleanupが成功したが、full synthetic runはpreflightでlocal port `55433`の`EADDRINUSE`を検出し、Dockerを起動せず終了した。事後の読み取り照会でも該当ハーネスprojectのDocker resourceは見つからず、既存listenerの正体はこの環境から特定できなかった。既存サービスは停止していない。全213 tests、harness 23 tests、compileall、pip check、workflow YAML parse、diff checkが成功。full system pathは修正後のGitHub Actionsで確認する。snapshot-lock testは、依存導入が成功していればsynthetic jobが失敗しても実行し、別の検証結果をartifactへ残す。GitHub Actions固有schema lintは`actionlint`未導入のため未実施。
 
 PostgreSQLの観測snapshot lock、writer競合、接続喪失の使い捨てDB試験は次でも実行できる。イメージ`postgres:17.6-bookworm`がローカルに必要で、テスト自身が一時containerを作成して最後に削除する。
 

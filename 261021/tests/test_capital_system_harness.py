@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import errno
 import importlib.util
 import io
 import json
@@ -21,6 +22,57 @@ class DisposableHarnessTests(unittest.TestCase):
     def test_shared_compose_image_ids_are_deduplicated_before_cleanup(self):
         self.assertEqual(harness.unique_resource_ids("sha256:abc\nsha256:abc\n\nsha256:def\n"),
                          ["sha256:abc", "sha256:def"])
+
+    def test_docker_image_records_remove_exact_owned_tags_for_shared_id(self):
+        project = "bikemlopstest" + "a" * 16
+        records = harness.parse_docker_image_records("\n".join([
+            json.dumps({"ID": "sha256:abc", "Repository": f"{project}-mlflow", "Tag": "latest"}),
+            json.dumps({"ID": "sha256:abc", "Repository": f"{project}-api-staging", "Tag": "test"}),
+            json.dumps({"ID": "sha256:abc", "Repository": f"{project}-mlflow", "Tag": "latest"}),
+            json.dumps({"ID": "sha256:def", "Repository": "<none>", "Tag": "<none>"}),
+        ]))
+        self.assertEqual(harness.unique_resource_ids("\n".join(record["ID"] for record in records)),
+                         ["sha256:abc", "sha256:def"])
+        self.assertEqual(harness.unique_owned_image_references(records, project),
+                         [f"{project}-mlflow:latest", f"{project}-api-staging:test"])
+
+    def test_image_cleanup_rejects_repository_reference_outside_project(self):
+        project = "bikemlopstest" + "a" * 16
+        records = [{"ID": "sha256:abc", "Repository": "unrelated/application", "Tag": "latest"}]
+        with self.assertRaisesRegex(harness.HarnessError, "outside this disposable project"):
+            harness.unique_owned_image_references(records, project)
+
+    def test_cleanup_removes_owned_tags_without_using_shared_image_ids(self):
+        project = "bikemlopstest" + "a" * 16
+        instance = harness.Harness(Path("/tmp/test-workspace"), project, "b" * 32)
+        image_rows = "\n".join([
+            json.dumps({"ID": "sha256:abc", "Repository": f"{project}-mlflow", "Tag": "latest"}),
+            json.dumps({"ID": "sha256:abc", "Repository": f"{project}-api-staging", "Tag": "test"}),
+        ])
+        with patch.object(instance, "resources", return_value={
+            "container": [], "network": [], "volume": [], "image": []
+        }), patch.object(harness, "docker", side_effect=[
+            image_rows, json.dumps({harness.LABEL: instance.token}), ""
+        ]) as command:
+            instance.cleanup()
+        self.assertEqual(command.call_count, 3)
+        self.assertEqual(command.call_args_list[-1].args,
+                         ("image", "rm", f"{project}-mlflow:latest", f"{project}-api-staging:test"))
+        self.assertNotIn("sha256:abc", command.call_args_list[-1].args)
+
+    def test_cleanup_fails_if_owned_resources_remain_after_removal(self):
+        project = "bikemlopstest" + "a" * 16
+        instance = harness.Harness(Path("/tmp/test-workspace"), project, "b" * 32)
+        image_rows = json.dumps({"ID": "sha256:abc", "Repository": f"{project}-mlflow", "Tag": "latest"})
+        empty = {"container": [], "network": [], "volume": [], "image": []}
+        remaining = {"container": [], "network": [], "volume": [], "image": ["sha256:abc"]}
+        with patch.object(instance, "resources", side_effect=[empty, remaining]), \
+             patch.object(harness, "docker", side_effect=[
+                 image_rows, json.dumps({harness.LABEL: instance.token}), ""
+             ]) as command:
+            with self.assertRaisesRegex(harness.HarnessError, "remain after cleanup"):
+                instance.cleanup()
+        self.assertEqual(command.call_args_list[-1].args, ("image", "rm", f"{project}-mlflow:latest"))
 
     def test_json_result_is_parsed_after_prefix_logs(self):
         value = harness.parse_json_object_with_log_prefix('worker ready\n{"status":"ok","count":2}\n')
@@ -82,11 +134,22 @@ class DisposableHarnessTests(unittest.TestCase):
         probe = Mock()
         probe.__enter__ = Mock(return_value=probe)
         probe.__exit__ = Mock(return_value=False)
-        probe.bind.side_effect = OSError("simulated occupied port")
+        probe.bind.side_effect = OSError(errno.EADDRINUSE, "simulated occupied port")
         with patch.object(harness.socket, "socket", return_value=probe), patch.object(harness, "docker") as docker_mock:
             with self.assertRaisesRegex(harness.HarnessError, f"port {port}"):
                 harness.check_ports_free((port,))
             docker_mock.assert_not_called()
+
+    def test_port_permission_error_is_not_reported_as_in_use(self):
+        port = 54321
+        probe = Mock()
+        probe.__enter__ = Mock(return_value=probe)
+        probe.__exit__ = Mock(return_value=False)
+        probe.bind.side_effect = PermissionError(errno.EPERM, "sandbox blocked bind")
+        with patch.object(harness.socket, "socket", return_value=probe):
+            with self.assertRaisesRegex(harness.HarnessError, "Could not check local port") as caught:
+                harness.check_ports_free((port,))
+        self.assertNotIn("already in use", str(caught.exception))
 
     def test_compose_override_and_credentials_are_isolated(self):
         with tempfile.TemporaryDirectory() as directory:

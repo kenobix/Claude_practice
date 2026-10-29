@@ -1736,3 +1736,44 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 240 \
 - Docker system testはsynthetic candidate `4e7f1fa488a8a190788ee627e7b44032a13478386aeb4db65289b068ba9aa6a8`、model version `1`、attempt `8b905f9f-9c46-4500-abf7-69b78f30f55b`で、744観測・API/offline delta `0.0`・50 warmup+1,000 requests・audit 1,050行・独立recheck一致・exact version evidence tag/idempotency/conflict拒否までpass。synthetic p95は`86.32213300006697 ms`。正式gateは`not_evaluated`、deploymentは`blocked`を維持。
 - harnessは`cleanup_complete`を出力し、専用projectの残存container/network/volume照会は空。system log SHA-256: `1abb326b41dc0a4d66f43a7fdcc3e625b3480b9181748f0dcb62591216b97639`。これは人工dataとこの計算機の結果で、Capital実candidateや本番SLOの合格根拠ではない。
 - GitHub run `40874601329`もunit jobとsnapshot PostgreSQL testはsuccessだったが、downloadしたartifactでimage cleanup失敗を再確認した。これは修正前workflow/sourceのrunなので成功扱いしない。dedup/secret-redacted image diagnostic/pipefailを含む修正後GitHub runは次のpush後に確認する。
+
+## 2026-10-29: cleanupの原因確定とtag単位の削除
+
+修正後run `40876827423`はunit jobがsuccess、synthetic-system jobがfailureとなった。`pipefail`が有効になり、previous runsで見えなかったcleanup失敗を検出できた。job logでは、synthetic測定・numeric recheck・registry evidence tagの検査後にDockerが次のエラーを返していた。
+
+```text
+conflict: unable to delete ... (must be forced) - image is referenced in multiple repositories
+```
+
+このrunのsynthetic測定は1,050要求・audit 1,050行・p95 `33.777445 ms`で、evidence tagsと数値再確認も成功したが、image cleanup失敗でjobを完全成功とは扱わない。確定した原因は「同じIDが一覧に重複した」だけではなく、Docker image IDが複数のrepository/tag参照を持ち、ID指定の削除自体が拒否されたこと。先に追加したIDの重複除去では根治していなかった。
+
+ハーネスを次のように修正した。
+
+- `docker image ls --format '{{json .}}'`からrepository/tagを読み、ownership labelに加えrandom Compose project prefixの一致を確認してから正確な参照名だけを削除する。foreign tagは拒否し、`--force`やimage IDの一括削除は使わない。
+- 削除前にunique image IDのlabelをinspectし、削除後に専用projectのcontainer/network/volume/imageを再確認する。残ればcleanup失敗にする。
+- `check_ports_free`で本当に使用中の`EADDRINUSE`と、sandboxなどのbind権限不足`EPERM`を別の診断にする。sandboxでの初回試行はEPERMだったのに「port unavailable」と誤表示したため修正した。VS Code TestClient suiteもrestricted socket環境だと起動待ちで止まった。権限付きの再実行ではsuiteが完走し、sandbox timeoutを実装不具合の失敗と混同しないよう記録した。
+- GitHub Actionsのsnapshot PostgreSQL試験は、依存install/checkが成功した後なら先行system testがfailureでも実行し、独立した結果をartifactに残す。YAML parseとstep conditionを確認した。`actionlint`は未導入なのでGitHub固有schema lintはしていない。
+
+現行コードの検証結果:
+
+```bash
+.venv/bin/python -m unittest tests.test_capital_system_harness -v
+```
+
+- harness専用23 tests passed。全suite log: `data/reports/20261029-system/unit-tests-project-scoped-cleanup.log`。
+
+```bash
+set -e -o pipefail
+.venv/bin/python -u -m unittest discover -s tests -v 2>&1 \
+  | tee data/reports/20261029-system/unit-tests-project-scoped-cleanup.log
+.venv/bin/python -m compileall -q src tests scripts
+.venv/bin/python -m pip check
+git diff --check
+```
+
+- 213 tests passed in `23.541s`; log SHA-256 `7f82233f29b179750ed5d3d9d2621b400f52954fd3e60ced04a1b3976cc39f8b`。`compileall`、`pip check`、`git diff --check`も成功。23 testにはproject外のreference拒否とcleanup後残存resource拒否を含む。
+- tag-scoped cleanupを使う版での隔離system testは`data/reports/20261029-system/synthetic-system-owned-tag-cleanup.log`。synthetic candidate `37542902cd5784b48374e969af1d90eb1f67faf94e554baad32fa41cfe609313`、version 1、744観測、API/offline absolute delta `0.0`、1,050要求と1,050 audit行、numeric recheck matched、exact version evidence tags/idempotency/conflict拒否まで成功。p95 `127.52083899977151 ms`。log SHA-256 `d9e1c645663fce250f786671492baaf9bc1e198710da50d0896f64cb3d375485`。これは、次に記すproject-prefix guard追加前の人工fixture検証である。
+- project-prefix guardを含むexact codeでは、`.venv/bin/python scripts/capital_system_harness.py --run-infrastructure`が`infrastructure_ready`・`cleanup_complete`まで成功。log `data/reports/20261029-system/infrastructure-owned-tag-cleanup.log`、SHA-256 `0c55e55eeac9e7adb5705032822bd008024520b6b83721142763c146892f4c82`。full synthetic system runはport 55433の`EADDRINUSE`をpreflightで検出し、compose起動前に終了した。log `data/reports/20261029-system/synthetic-system-project-scoped-cleanup.log`、SHA-256 `6ed6d860be1dbe64800f648419eb49d8dc04d76798e46753e27f87c472498ffe`。事後に`docker ps -a`・`ss`・`fuser`・`lsof`で同projectまたはLinux listenerを特定できなかった。既存サービス停止やDocker変更はしていない。
+- prior synthetic runのmeasurement statusはpassでも正式operational gateは`not_evaluated`、deploymentは`blocked`。人工fixtureの結果で、実Capital dataや本番性能を示さない。新しいproject-prefix guardを含むfull synthetic pathは、port利用可能なGitHub Actions runnerで確認する。
+
+次は修正をレビュー可能な単位としてcommit/pushし、新CIでcleanup failureが解消し、PostgreSQL試験が依存導入後に独立実行されることを確認する。これが通った後も、意図的な中断/API遅延commit/audit保存失敗のfailure injection、独立review gate、未使用data protocolの固定・実候補評価、R07〜R10は残る。

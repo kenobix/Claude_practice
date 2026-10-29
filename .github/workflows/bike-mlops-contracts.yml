@@ -49,9 +49,12 @@ jobs:
           cache-dependency-path: |
             261021/pyproject.toml
             261021/requirements.lock
-      - run: python -m pip install -r requirements.lock
-      - run: python -m pip install --no-deps --no-build-isolation -e '.[dev]'
-      - run: python -m pip check
+      - id: install-lock
+        run: python -m pip install -r requirements.lock
+      - id: install-project
+        run: python -m pip install --no-deps --no-build-isolation -e '.[dev]'
+      - id: pip-check
+        run: python -m pip check
       - name: Run isolated synthetic Docker system test
         env:
           MLFLOW_DISABLE_AGENT_HINT: "1"
@@ -61,6 +64,9 @@ jobs:
           timeout --signal=TERM 1200 python scripts/capital_system_harness.py --run-synthetic-system 2>&1 \
             | tee data/reports/synthetic-system-ci.log
       - name: Run disposable PostgreSQL snapshot-lock test
+        if: >-
+          ${{ !cancelled() && steps.install-lock.outcome == 'success' &&
+          steps.install-project.outcome == 'success' && steps.pip-check.outcome == 'success' }}
         env:
           MLFLOW_DISABLE_AGENT_HINT: "1"
         run: |

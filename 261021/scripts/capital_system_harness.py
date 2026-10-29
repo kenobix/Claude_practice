@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import fnmatch
 import hashlib
 import json
@@ -77,12 +78,47 @@ def check_ports_free(ports=PORTS) -> None:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
                 probe.bind(("127.0.0.1", port))
         except OSError as error:
-            raise HarnessError(f"Required local port {port} is unavailable; existing services were not stopped") from error
+            if error.errno == errno.EADDRINUSE:
+                raise HarnessError(f"Required local port {port} is already in use; existing services were not stopped") from error
+            raise HarnessError(f"Could not check local port {port} (OS error {error.errno}); existing services were not stopped") from error
 
 
 def unique_resource_ids(output: str) -> list[str]:
-    """Deduplicate Docker list output before removing shared build image IDs."""
+    """Deduplicate Docker list output before ownership inspection."""
     return list(dict.fromkeys(line.strip() for line in output.splitlines() if line.strip()))
+
+
+def parse_docker_image_records(output: str) -> list[dict]:
+    records = []
+    for line in output.splitlines():
+        if not line.strip():
+            continue
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError as error:
+            raise HarnessError("Docker image list returned invalid JSON") from error
+        if not isinstance(record, dict) or not isinstance(record.get("ID"), str) or not record["ID"]:
+            raise HarnessError("Docker image list returned an invalid image record")
+        records.append(record)
+    return records
+
+
+def unique_owned_image_references(records: list[dict], project: str) -> list[str]:
+    """Return project-scoped repository:tag refs, avoiding shared image IDs."""
+    references = []
+    for record in records:
+        repository, tag = record.get("Repository"), record.get("Tag")
+        if (repository is None or repository == "<none>") and (tag is None or tag == "<none>"):
+            continue
+        if not isinstance(repository, str) or not repository or not isinstance(tag, str) or not tag:
+            raise HarnessError("Docker image list returned an incomplete image reference")
+        if not repository.startswith(f"{project}-"):
+            raise HarnessError("Docker image reference is outside this disposable project; refusing cleanup")
+        reference = f"{repository}:{tag}"
+        if any(character.isspace() for character in reference):
+            raise HarnessError("Docker image list returned an invalid image reference")
+        references.append(reference)
+    return list(dict.fromkeys(references))
 
 
 def copy_workspace(source: Path, destination: Path) -> None:
@@ -260,10 +296,25 @@ class Harness:
         self.assert_owned(resources)
         if any(resources[kind] for kind in ("container", "network", "volume")):
             docker(*self.compose, "down", "--volumes", env=self.env, timeout=120)
-        ids = docker("image", "ls", "-q", "--no-trunc", "--filter", f"label={LABEL}={self.token}").splitlines()
-        if ids:
-            self.assert_owned({"image": ids})
-            docker("image", "rm", *ids)
+        image_output = docker("image", "ls", "-a", "--no-trunc", "--format", "{{json .}}",
+                              "--filter", f"label={LABEL}={self.token}")
+        records = parse_docker_image_records(image_output)
+        image_ids = unique_resource_ids("\n".join(record["ID"] for record in records))
+        if image_ids:
+            self.assert_owned({"image": image_ids})
+            references = unique_owned_image_references(records, self.project)
+            if references:
+                docker("image", "rm", *references)
+            tagged_ids = {record["ID"] for record in records
+                          if (record.get("Repository") is not None and record.get("Repository") != "<none>")
+                          or (record.get("Tag") is not None and record.get("Tag") != "<none>")}
+            untagged_ids = unique_resource_ids("\n".join(
+                record["ID"] for record in records if record["ID"] not in tagged_ids
+            ))
+            if untagged_ids:
+                docker("image", "rm", *untagged_ids)
+        if any(self.resources().values()):
+            raise HarnessError("Disposable project resources remain after cleanup")
 
 
 def write_synthetic_credentials(root: Path) -> None:
