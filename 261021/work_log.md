@@ -1576,3 +1576,124 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 240 .venv/bin/python scripts/c
 ```
 
 対象project `bikemlopstest8060464b64f968c4` のcontainer/network/volume/tagged imageは残っておらず、既存UCI入口はversion 3・readyを返した。合成候補を同じstackのregistryへ登録し、seed・API・1,050要求・監査・gateまでつなぐ試験は引き続き未実施。
+
+## 2026-10-29: synthetic system testを完了し計測CLIを復帰
+
+### 実施内容
+
+- `capital_system_harness.py --run-synthetic-system`を拡張し、人工データから候補作成・登録・再実行・staging DB seed・API起動・offline/API照合・request retry/409・監査・通常runtime拒否・固定運用測定・再計算・所有確認付きcleanupまでを一時Compose project内で連結した。
+- 固定168時間の人工replayから作成した候補をblocked状態で登録し、MLflow model version `1`のidentityをAPI応答と監査記録で照合する。実データ、既存評価台帳、既存registry、既存UCI/Capitalサービスは使わない。
+- 前回まで未接続だったDB出典固定・1,050要求測定・監査を同一runner内で確認できたため、`benchmark_capital_runtime.py`に明示選択の`--run-measurement --plan ...`を接続した。`--check-input-only`はread-onlyの入力確認として残し、どちらも指定しない呼び出しはargparseで拒否する。実測はrunnerのlocal Capital staging PostgreSQL・candidate evidence・frozen plan・API data provenance・監査条件をすべて通らなければ開始できない。完了だけでは運用gateをpassedにせず、deployment permissionもblockedのまま。
+- PostgreSQLの`predictions.predicted`が`REAL`型だったため保存時に単精度へ丸められ、API値`15.189926`とoffline値`15.189926280821982`が`2.8082198255674484e-7`ずれていた。許容誤差は広げず、新規schemaを`DOUBLE PRECISION`へ変更し、既存PostgreSQL列も初期化時に`REAL`から`DOUBLE PRECISION`へ移す処理を追加した。既存の単精度行は過去の丸め値から復元できないが、今後の保存は倍精度となる。
+- 計画作成時のDocker資源調査が、一時workspaceに既定`.env`がなくCompose必須変数を解決できず`unavailable`だった。秘密値を子環境へ追加せず、mode `0600`の使い捨て`harness.env` pathを資源調査に渡す。存在・権限も検査し、不安全なenv fileならDocker呼び出し前に拒否する。
+
+### デバッグの記録
+
+最初の通し試験は順番に異なる問題で止まった。失敗した仮説と修正は次のとおり。
+
+1. Registry登録CLIは成功していたが、stdoutの先頭にMLflowの案内ログがあり、出力全体がJSONだと仮定したparserが失敗した。ログprefix後のJSON objectを抽出する処理と、秘密値を伏せた子プロセス診断を追加した。
+2. offline helperの`predict_non_negative`が配列を返すと誤認して`[0]`を参照していた。実際はscalar floatなのでそのまま変換する。
+3. すべてのcandidate/version/artifact identityは一致したが、API/offline予測の微差が発生した。PostgreSQL `REAL`の精度不足を特定し、schema変更後は差分0.0を確認した。
+4. Docker stack自体は起動しAPIもreadyだったが、plan資源調査のみ`unavailable`だった。安全診断でCompose env fileの未指定を特定した。修正後はDocker engine版、対象container/resource統計をplan・reportに保存できた。
+
+いずれの失敗も測定結果を成功と扱わず、専用Compose projectのcontainer/network/volume/imageをcleanupした。最終成功後も同じ対象を照会し、使い捨て資源が残っていないことを確認した。既存スタックは停止・変更していない。
+
+### 最終の隔離system test
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 600 \
+  .venv/bin/python scripts/capital_system_harness.py --run-synthetic-system
+```
+
+- 結果ログ: `data/reports/20261029-system/synthetic-system-cli.log`
+- ログSHA-256: `f26a6d1a1c5c6894c6cbec73d01c08254583dd6473fb9c2c51d829c1b810e879`
+- 人工候補ID: `aa7bb846a03b3c07df75a912db8cb45b63b025e6039a396b1993034d4cef2d1c`
+- 試行ID: `f0506ced-14b2-4743-9c0e-331ec7528595`
+- staging DBへ744観測をseed・全件照合。Model version `1`はblocked registrationとして2回の登録で版・artifact SHAが不変。
+- `/ready`成功、候補artifactをload。offline/API差分`0.0`。同一要求のretryは同じ応答、同じIDで入力変更はHTTP 409。
+- `runtime init`は通常と`--diagnostic`の双方で拒否。runtime生成物は残らない。
+- warmup 50件と計測1,000件を逐次送信、エラー0、監査1050行。独立再計算が一致。合成試験のp95は`103.25777599791763 ms`で数値条件内だった。
+- ただしreportの`operational_gate=not_evaluated`、deployment permissionは`blocked`。この値は人工データとこのPCの隔離環境だけの測定で、Capital実候補・業務負荷・本番SLOの合格根拠ではない。
+- `cleanup_complete`を確認し、該当projectのcontainer/network/volume/labeled imageはすべて0件。
+
+直前のrunner直接呼び出し版でも同じsystem testが成功した（p95 `96.83226500055753 ms`）。その後CLIの接続を含む現在版を改めて実行し、同じ結果を再確認した。
+
+### 検証
+
+```bash
+PYTHONPATH=tests .venv/bin/python -m unittest \
+  test_capital_benchmark_inputs test_operational_benchmark \
+  test_capital_measurement_runner test_capital_system_harness -v
+# 48 tests OK
+
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 180 \
+  .venv/bin/python -m unittest discover -s tests -v
+# 199 tests OK (22.847s)
+# data/reports/20261029-system/unit-tests-cli-final.log
+# SHA-256: 69d7dba4c817379d000d2eba9564fd4a8b2a0039b5a10bcf507c05dd2f6c1dcd
+
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+# 成功。
+```
+
+既存のStarlette/httpx deprecation warningは残る。次は、測定report・hash・数値statusをMLflowのexact model versionへ記録する経路、未使用実データの取得・protocol固定と一度限りのvalidation/final評価、監視・障害復旧・採否証拠を計画順に進める。実候補がないため本番データの計測や承認はまだ行わない。
+
+## 2026-10-29: operational evidence tagsと最終確認
+
+### exact MLflow versionへの証拠記録
+
+- `src/bike_mlops/capital_operational_registry.py`と`scripts/record_capital_operational_evidence.py`を追加した。完了済みattemptの台帳/plan/report SHA、1050行の保存recordを使う独立p95再計算、DB audit、snapshot/input provenance、計測前後のhost/container資源、Capital registryの正確なmodel version/artifact/gate tagsを照合してから、証拠の参照tagを追加する。
+- recordはcandidate lock・ledger lockとversion別のprivate lockを取得する。同じtag値の再実行は冪等に成功し、異なるreport/attempt値は上書きしない。未知の`capital_operational_*` tagも拒否する。
+- このCLIは`operational_gate_status`や`deployment_permission`を書かず、書込前後に`not_evaluated` / `blocked`を検査する。tag記録は独立review・運用gate合格・手動承認ではない。
+- system harnessへ初回記録、同じreportの再実行、異なるreport hashの拒否、拒否後のblocked確認を追加した。conflict検証では使い捨てversionのtagを一時変更し、拒否確認後に戻してから冪等再実行した。操作は全て破棄するsynthetic registry内だけで行った。
+
+### 初回失敗とデバッグ
+
+- 初回system testは全体600秒の上限に達し、計測開始後にTERMで中断した。ハーネスは`cleanup_complete`を出力。後続の読み取り確認では対象projectのcontainer/network/volume/imageは0件で、既存stackも変更されていなかった。起動・工程が遅かったため、子scriptの開始/完了時間を進行ログへ追加し、上限1200秒で再実行した。
+- 最終system testはcandidate生成後にblocked登録、seed、API、plan、1,050要求、tag記録へ進み完了。measurement処理自体は約92秒。初回timeoutは失敗として扱い、成功値には使っていない。
+
+### 開発テスト依存と実行sandbox
+
+- 全suiteを通常sandbox内で始めたところ、最初のStarlette TestClient testで停止した。最小FastAPI appでも再現。faulthandlerでAnyIO blocking portalのevent loopがselector待ちのまま、別threadの`portal.call()`が待機している状態を確認した。
+- AnyIO portalの最小checkはsandbox内でtimeoutし、sandbox外では`portal.call`と`start_task_soon`の双方が完了した。アプリ・Docker・DBの失敗ではなく、このコマンドsandbox内のthread wakeup制約と切り分けた。sandbox外での再試験もローカル・人工dataだけに限定した。
+- Starlette 1.9.0の公式推奨に従い`httpx2>=2,<3`をdev extraへ追加。`requirements.lock`には現環境で解決した`httpx2==2.16.0`、`httpcore2==2.16.0`、`truststore==0.10.5`を追加した。通常APIのHTTP client (`httpx==0.28.1`)は変更していない。
+- lockを全再解決する試みはsandboxのDNS制限でPyPIへ接続できず失敗。既存の依存versionは変えず、導入された3 packageだけを追加した。`pip check`は通過し、Starlette/httpx warningは消えた。
+
+### 最終隔離system test
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 1200 \
+  .venv/bin/python scripts/capital_system_harness.py --run-synthetic-system 2>&1 \
+  | tee data/reports/20261029-system/synthetic-system-evidence-tags-final.log
+```
+
+- log SHA-256: `2587dbcd320f255cd159416545a31540178c9e1c79e91a5768948478bfbf343e`
+- candidate: `58a678230ded1a5eb4220cd7362f3b51a45c7faa11418718b077eacfee6a8ae4`; synthetic MLflow version `1`; attempt `2a9a623b-dbbc-4c44-896b-43ce081b6f61`.
+- 744 synthetic observations seeded/verified; API ready; offline/API delta `0.0`; same request retry passed; changed input returned HTTP 409; normal/diagnostic runtime init both rejected the blocked candidate.
+- warmup 50 + measured 1,000 requests completed; 1,050 rows matched DB audit; independent p95 recheck matched. Artificial p95: `88.94697499636095 ms`.
+- exact-version tags recorded; identical evidence was idempotent; different report hash was refused. Gate remained `not_evaluated`, deployment remained `blocked`.
+- `cleanup_complete` printed. Read-only Docker filters for the unique project showed no remaining container/network/volume/labeled image. This synthetic PC result is not real-data quality or production-SLO evidence.
+
+### 全テスト・静的確認
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 240 \
+  .venv/bin/python -m unittest discover -s tests -v 2>&1 \
+  | tee data/reports/20261029-system/unit-tests-evidence-tags-final.log
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+.venv/bin/python -m pip check
+```
+
+- 206 tests passed in `22.759s`; log SHA-256: `7ad4e91316c5f576783b9adc051218ed84a39c674ee2e9ba482902c88a9539dd`.
+- `compileall`, `git diff --check`, and `pip check` succeeded. Starlette/httpx warning is resolved; one MLflow/SQLAlchemy `noload` deprecation warning remains in the isolated MLflow test.
+
+正規の優先順位は[`261014/plan_mlops.md` §11.5](../261014/plan_mlops.md)へ更新した。次は記録済み証拠の独立review結果をoperational gateへ反映する経路と、通常loader/runtime/promoteがreport evidence/approvalを確認する接続である。その後、未使用原本とprotocolを固定し、初回実candidate validation/final評価へ進む。Docker統合CI、timeout後遅延commit・強制終了/failure injection、監視、隔離rollback/recovery、最終採否も残っている。実candidateの運用計測・承認は今回実施していない。
+
+## 2026-10-29: 合成Docker system testをGitHub Actionsへ追加
+
+- 既存のunit/compile jobに影響を与えない独立job `synthetic-system` を `.github/workflows/bike-mlops-contracts.yml` に追加した。jobは35分で停止し、runner内では`capital_system_harness.py --run-synthetic-system`を最大20分で実行する。workflowのGITHUB_TOKEN権限は`contents: read`に絞る。合成system testログは常にartifactとしてuploadし、14日保存する。credentialやreal-data secretは渡さない。
+- 既存の同じ隔離system testと206件のunit suiteはローカルで成功済み。ただし新workflowのGitHub Actions初回runはpush後まで未確認。従ってCI job追加をCI導入完了とは扱わない。
+- YAMLを `261021/.venv/bin/python` のPyYAMLでparseし、`tests`/`synthetic-system`のjob名とstep数を確認した。`actionlint`はこの環境にインストールされていないため、GitHub Actions固有schema lintは未実施。
+- 続きはpush後にrun resultとupload artifactを確認する。Dockerでの強制終了、実API timeout後の遅延commit、audit保存失敗などのfailure-injection matrixは別タスクであり、本変更では実施していない。

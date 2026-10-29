@@ -3,14 +3,13 @@ from __future__ import annotations
 import importlib.util
 import io
 import json
-import socket
 import tempfile
 import time
 import types
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/capital_system_harness.py"
 spec = importlib.util.spec_from_file_location("capital_system_harness_for_tests", SCRIPT)
@@ -19,6 +18,17 @@ spec.loader.exec_module(harness)
 
 
 class DisposableHarnessTests(unittest.TestCase):
+    def test_json_result_is_parsed_after_prefix_logs(self):
+        value = harness.parse_json_object_with_log_prefix('worker ready\n{"status":"ok","count":2}\n')
+        self.assertEqual(value, {"status": "ok", "count": 2})
+
+    def test_child_diagnostics_redact_environment_secrets(self):
+        diagnostic = harness.safe_child_diagnostic(
+            "connected with top-secret", "password=top-secret", {"APP_DB_PASSWORD": "top-secret"}
+        )
+        self.assertNotIn("top-secret", diagnostic)
+        self.assertEqual(diagnostic.count("[REDACTED]"), 2)
+
     def test_copy_is_current_build_source_and_excludes_local_data(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -64,14 +74,15 @@ class DisposableHarnessTests(unittest.TestCase):
                     harness.copy_workspace(source_path, Path(target))
 
     def test_occupied_port_rejected_without_docker(self):
-        with socket.socket() as listener:
-            listener.bind(("127.0.0.1", 0))
-            listener.listen()
-            port = listener.getsockname()[1]
-            with patch.object(harness, "docker") as docker_mock:
-                with self.assertRaisesRegex(harness.HarnessError, f"port {port}"):
-                    harness.check_ports_free((port,))
-                docker_mock.assert_not_called()
+        port = 54321
+        probe = Mock()
+        probe.__enter__ = Mock(return_value=probe)
+        probe.__exit__ = Mock(return_value=False)
+        probe.bind.side_effect = OSError("simulated occupied port")
+        with patch.object(harness.socket, "socket", return_value=probe), patch.object(harness, "docker") as docker_mock:
+            with self.assertRaisesRegex(harness.HarnessError, f"port {port}"):
+                harness.check_ports_free((port,))
+            docker_mock.assert_not_called()
 
     def test_compose_override_and_credentials_are_isolated(self):
         with tempfile.TemporaryDirectory() as directory:

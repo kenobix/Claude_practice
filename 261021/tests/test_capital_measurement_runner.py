@@ -31,6 +31,7 @@ class MeasurementRunnerTests(unittest.TestCase):
         self.frame = pd.DataFrame({"timestamp": pd.to_datetime(["2024-01-01"]), "cnt": [1]})
         self.verified = SimpleNamespace(plan=self.plan, frame=self.frame)
         self.events = []
+        self.measurement_status = "passed"
         self.stack = ExitStack()
         self.addCleanup(self.stack.close)
         self.stack.enter_context(patch.object(runner, "PROJECT_ROOT", self.fixture.root))
@@ -69,7 +70,7 @@ class MeasurementRunnerTests(unittest.TestCase):
                 "model_identity": {"candidate_id": identity["candidate_id"], "model_name": identity["model_name"],
                     "model_version": identity["model_version"], "artifact_sha256": identity["registered_artifact_sha256"],
                     "feature_contract_version": identity["feature_contract_version"]},
-                "operational_gate": {"status": "not_evaluated", "measurement_status": "passed", "observed": {
+                "operational_gate": {"status": "not_evaluated", "measurement_status": self.measurement_status, "observed": {
                     "request_id_sha256": hashlib.sha256("\n".join(ids).encode()).hexdigest()}}}
 
     def execute(self):
@@ -90,6 +91,20 @@ class MeasurementRunnerTests(unittest.TestCase):
         self.assertEqual(report["audit"]["verified_rows"], 1050)
         self.assertEqual(report["snapshot"]["observation_count"], 350)
         self.assertEqual(self.read_record()["attempts"][0]["report"]["gate_status"], "not_evaluated")
+
+    def test_numeric_threshold_failure_still_completes_and_audits_all_requests(self):
+        self.measurement_status = "failed"
+        result = self.execute()
+        self.assertEqual(self.events, ["lock", "measure", "audit", "release"])
+        self.assertEqual(result["status"], "completed")
+        self.assertEqual(result["measurement_status"], "failed")
+        self.assertEqual(result["operational_gate"], "not_evaluated")
+        self.assertEqual(result["deployment_permission"], "blocked")
+        self.assertEqual(self.read_record()["status"], "completed")
+        report = json.loads(Path(result["report_path"]).read_text(encoding="utf-8"))
+        self.assertEqual(report["operational_gate"]["measurement_status"], "failed")
+        self.assertEqual(report["audit"]["status"], "passed")
+        self.assertEqual(report["audit"]["verified_rows"], 1050)
 
     def test_real_benchmark_sequence_with_synthetic_transport(self):
         identity = self.plan["identity"]

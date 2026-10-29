@@ -22,7 +22,7 @@ SCHEMA = (
         input_hash TEXT NOT NULL,
         target_hour TEXT NOT NULL,
         as_of TEXT NOT NULL,
-        predicted REAL NOT NULL CHECK (predicted >= 0),
+        predicted DOUBLE PRECISION NOT NULL CHECK (predicted >= 0),
         model_name TEXT NOT NULL,
         model_version TEXT NOT NULL,
         candidate_id TEXT,
@@ -130,6 +130,19 @@ class Database:
                 self.execute(connection, "SELECT pg_advisory_xact_lock(726314092)")
             for statement in SCHEMA:
                 self.execute(connection, statement)
+            if not self.sqlite:
+                prediction_column = self.execute(
+                    connection,
+                    "SELECT data_type FROM information_schema.columns "
+                    "WHERE table_schema=current_schema() AND table_name='predictions' "
+                    "AND column_name='predicted'",
+                ).fetchone()
+                if prediction_column and prediction_column["data_type"] == "real":
+                    self.execute(
+                        connection,
+                        "ALTER TABLE predictions ALTER COLUMN predicted TYPE DOUBLE PRECISION "
+                        "USING predicted::DOUBLE PRECISION",
+                    )
             self._ensure_prediction_profile_columns(connection)
             self._ensure_deployment_profile_columns(connection)
             metadata = self.execute(

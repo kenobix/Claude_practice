@@ -220,12 +220,35 @@ def _machine_and_container_resources() -> dict:
         },
         "capital_stack_containers": {"status": "unavailable", "containers": [], "stats": []},
     }
+    project_name = os.getenv("CAPITAL_COMPOSE_PROJECT_NAME", "bike-mlops-capital")
+    if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,62}", project_name):
+        result["capital_stack_containers"] = {
+            "status": "unavailable", "containers": [], "stats": [],
+            "detail": "Invalid isolated Compose project name",
+        }
+        return result
+    compose_env_file = os.getenv("CAPITAL_COMPOSE_ENV_FILE")
+    compose_env_args = []
+    if compose_env_file:
+        env_path = Path(compose_env_file).resolve()
+        try:
+            mode = env_path.stat().st_mode & 0o777
+        except OSError:
+            mode = None
+        if not env_path.is_file() or mode != 0o600:
+            result["capital_stack_containers"] = {
+                "status": "unavailable", "containers": [], "stats": [],
+                "detail": "Compose environment file is missing or has unsafe permissions",
+            }
+            return result
+        compose_env_args = ["--env-file", str(env_path)]
     compose = [
-        "docker", "compose", "--project-name", "bike-mlops-capital",
+        "docker", "compose", *compose_env_args, "--project-name", project_name,
         "-f", str(PROJECT_ROOT / "compose.yaml"),
         "-f", str(PROJECT_ROOT / "compose.capital.yaml"),
         "-f", str(PROJECT_ROOT / "compose.capital-staging.yaml"),
     ]
+    stage = "compose_ps"
     try:
         listed = subprocess.run(
             compose + ["ps", "--status", "running", "-q", "postgres", "mlflow", "api-blue", "api-green", "caddy", "postgres-staging", "api-staging"],
@@ -235,14 +258,17 @@ def _machine_and_container_resources() -> dict:
         if not container_ids:
             result["capital_stack_containers"]["status"] = "no_running_services"
             return result
+        stage = "docker_inspect"
         inspected = subprocess.run(
             ["docker", "inspect", "--format", "{{.Name}}|{{.Config.Image}}|{{.HostConfig.NanoCpus}}|{{.HostConfig.Memory}}", *container_ids],
             check=True, capture_output=True, text=True, timeout=15,
         )
+        stage = "docker_stats"
         stats = subprocess.run(
             ["docker", "stats", "--no-stream", "--format", "{{.Container}}|{{.CPUPerc}}|{{.MemUsage}}|{{.MemPerc}}", *container_ids],
             check=True, capture_output=True, text=True, timeout=15,
         )
+        stage = "docker_version"
         docker_version = subprocess.run(
             ["docker", "version", "--format", "{{.Server.Version}}"],
             check=True, capture_output=True, text=True, timeout=15,
@@ -254,11 +280,14 @@ def _machine_and_container_resources() -> dict:
             "stats": stats.stdout.splitlines(),
         }
     except (OSError, subprocess.SubprocessError) as error:
+        detail = f"{stage}: {type(error).__name__}"
+        if isinstance(error, subprocess.CalledProcessError) and error.stderr:
+            detail += ": " + error.stderr.strip()[-500:]
         result["capital_stack_containers"] = {
             "status": "unavailable",
             "containers": [],
             "stats": [],
-            "detail": f"{type(error).__name__}: {error}",
+            "detail": detail,
         }
     return result
 

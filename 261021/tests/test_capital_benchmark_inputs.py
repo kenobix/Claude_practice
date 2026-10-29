@@ -81,20 +81,46 @@ class BenchmarkTrainingWindowTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "sorted and unique"):
             self.validate()
 
-    def test_cli_only_checks_inputs_until_provenance_is_enforced(self):
+    def test_cli_keeps_input_check_read_only_and_requires_explicit_mode(self):
         script = Path(__file__).resolve().parents[1] / "scripts/benchmark_capital_runtime.py"
         spec = importlib.util.spec_from_file_location("benchmark_cli_for_test", script)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         argv = ["benchmark", "--candidate-id", "c" * 64,
                 "--selection-report", "candidate.json", "--final-report", "final.json"]
-        with patch.object(module, "check_candidate_training_window", return_value={"hours": 168}) as check:
-            with patch.object(sys, "argv", argv), self.assertRaisesRegex(SystemExit, "disabled"):
+        with (patch.object(module, "DATA_PROFILE_ID", "capital-bikeshare"),
+              patch.object(module, "TARGET_CONTRACT_ID", "capital-trip-starts-hourly-v1"),
+              patch.object(module, "check_candidate_training_window", return_value={"hours": 168}) as check):
+            with patch.object(sys, "argv", argv), self.assertRaises(SystemExit):
                 module.main()
             with patch.object(sys, "argv", argv + ["--check-input-only"]), redirect_stdout(io.StringIO()) as output:
                 module.main()
             self.assertIn('"status": "training_window_verified"', output.getvalue())
-            self.assertEqual(check.call_count, 2)
+            self.assertEqual(check.call_count, 1)
+
+    def test_cli_run_mode_calls_the_guarded_runner_with_exact_evidence(self):
+        script = Path(__file__).resolve().parents[1] / "scripts/benchmark_capital_runtime.py"
+        spec = importlib.util.spec_from_file_location("benchmark_cli_measurement_for_test", script)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        plan, selection, final = Path("plan.json"), Path("candidate.json"), Path("final.json")
+        database = object()
+        result = {"status": "completed", "measurement_status": "failed",
+                  "operational_gate": "not_evaluated", "deployment_permission": "blocked"}
+        import bike_mlops.capital_measurement_runner as runner_module
+
+        argv = ["benchmark", "--run-measurement", "--plan", str(plan),
+                "--candidate-id", "c" * 64, "--selection-report", str(selection), "--final-report", str(final)]
+        with (patch.object(module, "DATA_PROFILE_ID", "capital-bikeshare"),
+              patch.object(module, "TARGET_CONTRACT_ID", "capital-trip-starts-hourly-v1"),
+              patch.object(module, "DEFAULT_DATABASE_URL", "postgresql://bike_app:synthetic@localhost:55434/bikeops"),
+              patch.object(module, "Database", return_value=database),
+              patch.object(runner_module, "run_staging_measurement", return_value=result) as runner,
+              patch.object(sys, "argv", argv), redirect_stdout(io.StringIO()) as output):
+            module.main()
+        runner.assert_called_once_with(plan, selection, final, database)
+        self.assertIn('"status": "completed"', output.getvalue())
+        self.assertIn('"deployment_permission": "blocked"', output.getvalue())
 
     def test_candidate_evidence_and_source_are_checked_before_window(self):
         with tempfile.TemporaryDirectory() as directory:

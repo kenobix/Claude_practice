@@ -1,15 +1,11 @@
-"""Disposable infrastructure foundation for the future Capital system test.
-
-It can prepare a synthetic candidate, but does not register it, start the
-staging API, send predictions or claim that the operational gate passed.
-Infrastructure startup is opt-in.
-"""
+"""Run isolated synthetic Capital checks without touching the user's project data."""
 from __future__ import annotations
 
 import argparse
 import fnmatch
 import hashlib
 import json
+import math
 import os
 import re
 import secrets
@@ -27,7 +23,7 @@ from pathlib import Path
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
 PORTS = (5001, 8110, 55433, 55434)
 LABEL = "bike.mlops.harness"
-SERVICES = {"postgres", "mlflow", "postgres-staging"}
+SERVICES = {"postgres", "mlflow", "postgres-staging", "api-staging"}
 
 
 class HarnessError(RuntimeError):
@@ -173,6 +169,7 @@ def make_override(destination: Path, token: str) -> Path:
             "postgres": {"labels": labels},
             "postgres-staging": {"labels": labels},
             "mlflow": {"labels": labels, "build": {"labels": labels}},
+            "api-staging": {"labels": labels, "build": {"labels": labels}},
         },
         "volumes": {name: {"labels": labels} for name in (
             "postgres-data", "mlflow-artifacts", "capital-staging-postgres-data")},
@@ -192,7 +189,6 @@ class Harness:
         self.compose = ["compose", "-p", project, "--project-directory", str(root), "--env-file", str(root / "harness.env"),
                         "-f", str(root / "compose.yaml"), "-f", str(root / "compose.capital.yaml"),
                         "-f", str(root / "compose.capital-staging.yaml"), "-f", str(root / "harness-override.json")]
-        self.image = f"{project}-mlflow:latest"
 
     def resources(self):
         project_filter = f"label=com.docker.compose.project={self.project}"
@@ -200,26 +196,30 @@ class Harness:
             "container": docker("ps", "-a", "-q", "--no-trunc", "--filter", project_filter).splitlines(),
             "network": docker("network", "ls", "-q", "--no-trunc", "--filter", project_filter).splitlines(),
             "volume": docker("volume", "ls", "-q", "--filter", project_filter).splitlines(),
+            "image": docker("image", "ls", "-q", "--no-trunc", "--filter", f"label={LABEL}={self.token}").splitlines(),
         }
 
     def assert_owned(self, resources: dict) -> None:
         for kind, values in resources.items():
             for value in values:
-                command = ("inspect",) if kind == "container" else (kind, "inspect")
-                selector = "{{json .Config.Labels}}" if kind == "container" else "{{json .Labels}}"
+                command = ("inspect",) if kind in {"container", "image"} else (kind, "inspect")
+                selector = "{{json .Config.Labels}}" if kind in {"container", "image"} else "{{json .Labels}}"
                 labels = json.loads(docker(*command, "--format", selector, value)) or {}
-                if labels.get("com.docker.compose.project") != self.project or labels.get(LABEL) != self.token:
+                if labels.get(LABEL) != self.token or (kind != "image" and labels.get("com.docker.compose.project") != self.project):
                     raise HarnessError(f"Refusing cleanup: {kind} is not owned by this harness")
                 if kind == "container" and labels.get("com.docker.compose.service") not in SERVICES:
                     raise HarnessError("Refusing cleanup: unexpected Compose service")
 
     def assert_empty(self) -> None:
-        if any(self.resources().values()) or docker("image", "ls", "-q", self.image):
+        if any(self.resources().values()):
             raise HarnessError("Disposable project identity already exists; refusing to reuse it")
 
-    def verify_ports(self) -> None:
-        for service, internal, expected in (("postgres", "5432/tcp", 55433), ("postgres-staging", "5432/tcp", 55434),
-                                             ("mlflow", "5000/tcp", 5001)):
+    def verify_ports(self, *, require_staging_api: bool = False) -> None:
+        expected_ports = [("postgres", "5432/tcp", 55433), ("postgres-staging", "5432/tcp", 55434),
+                          ("mlflow", "5000/tcp", 5001)]
+        if require_staging_api:
+            expected_ports.append(("api-staging", "8000/tcp", 8110))
+        for service, internal, expected in expected_ports:
             ids = docker(*self.compose, "ps", "-q", service, env=self.env).splitlines()
             if len(ids) != 1:
                 raise HarnessError("Expected exactly one container per infrastructure service")
@@ -245,16 +245,12 @@ class Harness:
     def cleanup(self) -> None:
         resources = self.resources()
         self.assert_owned(resources)
-        if any(resources.values()):
+        if any(resources[kind] for kind in ("container", "network", "volume")):
             docker(*self.compose, "down", "--volumes", env=self.env, timeout=120)
-        ids = docker("image", "ls", "-q", self.image).splitlines()
+        ids = docker("image", "ls", "-q", "--no-trunc", "--filter", f"label={LABEL}={self.token}").splitlines()
         if ids:
-            if len(ids) != 1:
-                raise HarnessError("Refusing cleanup: unexpected image identity")
-            labels = json.loads(docker("image", "inspect", "--format", "{{json .Config.Labels}}", ids[0])) or {}
-            if labels.get(LABEL) != self.token:
-                raise HarnessError("Refusing cleanup: image is not owned by this harness")
-            docker("image", "rm", self.image)
+            self.assert_owned({"image": ids})
+            docker("image", "rm", *ids)
 
 
 def write_synthetic_credentials(root: Path) -> None:
@@ -280,11 +276,442 @@ def wait_ready() -> None:
     raise HarnessError("Disposable MLflow did not become ready")
 
 
+def read_synthetic_credentials(root: Path) -> str:
+    path = root / "harness.env"
+    if path.stat().st_mode & 0o777 != 0o600:
+        raise HarnessError("Synthetic credential file permissions are not restricted")
+    values = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        key, separator, value = line.partition("=")
+        if not separator or not key or not value or key in values:
+            raise HarnessError("Synthetic credentials file has an invalid format")
+        values[key] = value
+    if set(values) != {"POSTGRES_ADMIN_PASSWORD", "MLFLOW_DB_PASSWORD", "APP_DB_PASSWORD"}:
+        raise HarnessError("Synthetic credentials file has unexpected entries")
+    if len(set(values.values())) != 1:
+        raise HarnessError("Synthetic isolated credentials are inconsistent")
+    return values["APP_DB_PASSWORD"]
+
+
+def isolated_python_environment(root: Path, project: str, password: str) -> dict:
+    return {
+        "PATH": os.environ.get("PATH", ""),
+        "LANG": "C.UTF-8",
+        "PYTHONPATH": os.pathsep.join((str(root / "src"), str(root))),
+        "PYTHONNOUSERSITE": "1",
+        "DATA_PROFILE_ID": "capital-bikeshare",
+        "MLFLOW_TRACKING_URI": "http://127.0.0.1:5001",
+        "MLFLOW_REGISTRY_URI": "http://127.0.0.1:5001",
+        "MLFLOW_DISABLE_AGENT_HINT": "1",
+        "APP_DB_PASSWORD": password,
+        "DATABASE_URL": f"postgresql://bike_app:{password}@127.0.0.1:55434/bikeops",
+        "CAPITAL_COMPOSE_PROJECT_NAME": project,
+        "CAPITAL_COMPOSE_ENV_FILE": str(root / "harness.env"),
+    }
+
+
+def safe_child_diagnostic(stdout: str, stderr: str, env: dict) -> str:
+    sensitive = [value for key, value in env.items()
+                 if value and any(marker in key.upper() for marker in ("PASSWORD", "TOKEN", "SECRET"))]
+    combined = f"stdout={stdout[-1200:]!r}; stderr={stderr[-1200:]!r}"
+    for value in sensitive:
+        combined = combined.replace(value, "[REDACTED]")
+    return combined
+
+
+def parse_json_object_with_log_prefix(output: str) -> dict:
+    decoder = json.JSONDecoder()
+    candidates = []
+    for index, character in enumerate(output):
+        if character != "{":
+            continue
+        try:
+            value, consumed = decoder.raw_decode(output[index:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict):
+            candidates.append((index + consumed, value))
+    if not candidates:
+        raise ValueError("No JSON object found")
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def run_isolated_python(root: Path, env: dict, stage: str, code: str, arguments: list[str] | None = None,
+                        timeout: int = 90) -> dict:
+    began = time.monotonic()
+    print(json.dumps({"status": "stage_started", "stage": stage}), flush=True)
+    try:
+        result = subprocess.run([sys.executable, "-c", code, *(arguments or [])], cwd=root, env=env,
+                                capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise HarnessError(f"Synthetic system stage {stage} could not finish ({type(error).__name__})") from error
+    if result.returncode:
+        raise HarnessError(f"Synthetic system stage {stage} failed (exit {result.returncode}); "
+                           f"{safe_child_diagnostic(result.stdout, result.stderr, env)}")
+    try:
+        value = parse_json_object_with_log_prefix(result.stdout)
+    except ValueError as error:
+        raise HarnessError(f"Synthetic system stage {stage} returned invalid JSON; "
+                           f"{safe_child_diagnostic(result.stdout, result.stderr, env)}") from error
+    if not isinstance(value, dict):
+        raise HarnessError(f"Synthetic system stage {stage} returned an unexpected result")
+    print(json.dumps({"status": "stage_completed", "stage": stage,
+                      "elapsed_seconds": round(time.monotonic() - began, 3)}), flush=True)
+    return value
+
+
+def run_isolated_script(root: Path, env: dict, stage: str, script: str, arguments: list[str], timeout: int = 300) -> dict:
+    path = SOURCE_ROOT / "scripts" / script
+    began = time.monotonic()
+    print(json.dumps({"status": "stage_started", "stage": stage}), flush=True)
+    try:
+        result = subprocess.run([sys.executable, str(path), *arguments], cwd=root, env=env,
+                                capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise HarnessError(f"Synthetic system stage {stage} could not finish ({type(error).__name__})") from error
+    if result.returncode:
+        raise HarnessError(f"Synthetic system stage {stage} failed (exit {result.returncode}); "
+                           f"{safe_child_diagnostic(result.stdout, result.stderr, env)}")
+    try:
+        value = parse_json_object_with_log_prefix(result.stdout)
+    except ValueError as error:
+        raise HarnessError(f"Synthetic system stage {stage} returned invalid JSON; "
+                           f"{safe_child_diagnostic(result.stdout, result.stderr, env)}") from error
+    if not isinstance(value, dict):
+        raise HarnessError(f"Synthetic system stage {stage} returned an unexpected result")
+    print(json.dumps({"status": "stage_completed", "stage": stage,
+                      "elapsed_seconds": round(time.monotonic() - began, 3)}), flush=True)
+    return value
+
+
+def run_expected_script_rejection(root: Path, env: dict, stage: str, script: str,
+                                 arguments: list[str], expected_error: str) -> None:
+    """Require a specific safe refusal without printing child diagnostics."""
+    path = SOURCE_ROOT / "scripts" / script
+    began = time.monotonic()
+    print(json.dumps({"status": "stage_started", "stage": stage}), flush=True)
+    try:
+        result = subprocess.run([sys.executable, str(path), *arguments], cwd=root, env=env,
+                                capture_output=True, text=True, timeout=90)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise HarnessError(f"Synthetic system stage {stage} could not finish ({type(error).__name__})") from error
+    if result.returncode == 0 or expected_error not in result.stderr:
+        raise HarnessError(f"Synthetic system stage {stage} did not reject the intended mismatch")
+    print(json.dumps({"status": "stage_completed", "stage": stage, "expected": "rejected",
+                      "elapsed_seconds": round(time.monotonic() - began, 3)}), flush=True)
+
+
+def request_json(url: str, payload: dict | None = None) -> tuple[int, dict]:
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    body = None if payload is None else json.dumps(payload).encode("utf-8")
+    request = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"},
+                                     method="GET" if payload is None else "POST")
+    try:
+        with opener.open(request, timeout=10) as response:
+            return response.status, json.loads(response.read())
+    except urllib.error.HTTPError as error:
+        try:
+            return error.code, json.loads(error.read())
+        except (ValueError, OSError):
+            return error.code, {}
+    except (OSError, urllib.error.URLError, json.JSONDecodeError) as error:
+        raise HarnessError(f"Synthetic staging API request failed ({type(error).__name__})") from error
+
+
+def wait_staging_api(candidate_id: str, version: str, artifact_sha256: str) -> tuple[dict, dict]:
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    until = time.monotonic() + 90
+    while time.monotonic() < until:
+        try:
+            with opener.open("http://127.0.0.1:8110/ready", timeout=3) as response:
+                status, ready = response.status, json.loads(response.read())
+            if (status == 200 and ready.get("status") == "ready"
+                    and ready.get("candidate_id") == candidate_id and str(ready.get("model_version")) == version
+                    and ready.get("deployment_permission") == "blocked"):
+                version_status, version_info = request_json("http://127.0.0.1:8110/version")
+                if (version_status == 200 and version_info.get("candidate_id") == candidate_id
+                        and str(version_info.get("model_version")) == version
+                        and version_info.get("artifact_sha256") == artifact_sha256
+                        and version_info.get("deployment_permission") == "blocked"):
+                    return ready, version_info
+        except (OSError, urllib.error.URLError, json.JSONDecodeError):
+            pass
+        time.sleep(0.5)
+    raise HarnessError("Disposable staging API did not become ready with the pinned candidate identity")
+
+
+def run_synthetic_system(root: Path, harness: "Harness", synthetic: dict, project: str) -> dict:
+    """Register, seed, serve and audit a candidate generated only from synthetic data."""
+    password = read_synthetic_credentials(root)
+    env = isolated_python_environment(root, project, password)
+    candidate_id = synthetic["candidate_id"]
+    selection = f"data/candidates/{candidate_id}/candidate-report.json"
+    final = "data/reports/capital-bikeshare/synthetic-final.json"
+
+    registered = run_isolated_script(root, env, "blocked registration", "register_capital_candidate.py",
+                                     ["--selection-report", selection, "--final-report", final])
+    registered_again = run_isolated_script(root, env, "idempotent registration", "register_capital_candidate.py",
+                                           ["--selection-report", selection, "--final-report", final])
+    version = str(registered.get("model_version", ""))
+    if (not version.isdecimal() or version != str(registered_again.get("model_version"))
+            or registered.get("candidate_id") != candidate_id
+            or registered.get("deployment_permission") != "blocked"
+            or registered.get("operational_gate_status") != "not_evaluated"
+            or registered.get("registered_artifact_sha256") != registered_again.get("registered_artifact_sha256")):
+        raise HarnessError("Blocked registration or idempotent rerun did not preserve the exact synthetic identity")
+
+    env_path = root / "data/runtime-capital-staging/staging.env"
+    values = dict(line.split("=", 1) for line in env_path.read_text(encoding="utf-8").splitlines())
+    if (values.get("CAPITAL_STAGING_CANDIDATE_ID") != candidate_id
+            or values.get("CAPITAL_STAGING_MODEL_VERSION") != version
+            or values.get("CAPITAL_STAGING_REGISTERED_ARTIFACT_SHA256") != registered["registered_artifact_sha256"]):
+        raise HarnessError("Generated staging environment does not pin the registered synthetic candidate")
+    if any("PASSWORD" in key or "TOKEN" in key or "SECRET" in key for key in values):
+        raise HarnessError("Generated staging identity unexpectedly contains credential fields")
+
+    seed_args = ["--selection-report", selection, "--final-report", final, "--model-version", version]
+    seeded = run_isolated_script(root, env, "staging database seed", "seed_capital_staging.py", seed_args)
+    verified = run_isolated_script(root, env, "staging database verification", "seed_capital_staging.py",
+                                   [*seed_args, "--verify-only"])
+    if (seeded.get("new_observations_inserted") != synthetic["hourly_rows"]
+            or verified.get("verified_rows") != synthetic["hourly_rows"]
+            or seeded.get("candidate_id") != candidate_id or verified.get("candidate_id") != candidate_id):
+        raise HarnessError("Staging database did not contain the complete candidate-bound synthetic snapshot")
+
+    legacy_schema = run_isolated_python(root, env, "legacy precision migration setup", (
+        "import json,os,psycopg; "
+        "conn=psycopg.connect(os.environ['DATABASE_URL']); "
+        "conn.execute('ALTER TABLE predictions ALTER COLUMN predicted TYPE REAL USING predicted::REAL'); "
+        "conn.commit(); "
+        "row=conn.execute(\"SELECT data_type FROM information_schema.columns WHERE table_schema=current_schema() "
+        "AND table_name='predictions' AND column_name='predicted'\").fetchone(); conn.close(); "
+        "print(json.dumps({'data_type':row[0]}))"
+    ), timeout=60)
+    if legacy_schema.get("data_type") != "real":
+        raise HarnessError("Synthetic legacy database precision setup did not produce a REAL prediction column")
+
+    docker(*harness.compose, "up", "-d", "--build", "api-staging", env=harness.env, timeout=600,
+           progress="build_and_start")
+    harness.verify_ports(require_staging_api=True)
+    ready, _version_info = wait_staging_api(candidate_id, version, registered["registered_artifact_sha256"])
+    migrated_schema = run_isolated_python(root, env, "prediction precision migration verification", (
+        "import json,os,psycopg; "
+        "conn=psycopg.connect(os.environ['DATABASE_URL']); "
+        "row=conn.execute(\"SELECT data_type FROM information_schema.columns WHERE table_schema=current_schema() "
+        "AND table_name='predictions' AND column_name='predicted'\").fetchone(); conn.close(); "
+        "print(json.dumps({'data_type':row[0]}))"
+    ), timeout=60)
+    if migrated_schema.get("data_type") != "double precision":
+        raise HarnessError("Staging API did not migrate a legacy prediction column to double precision")
+
+    target = synthetic["measurement_start"]
+    offline_code = (
+        "import json,sys; from pathlib import Path; import pandas as pd; "
+        "from bike_mlops.candidate_artifacts import load_candidate_model; "
+        "from bike_mlops.cli import _load_profile_hourly; from bike_mlops.config import DEFAULT_DATASET; "
+        "from bike_mlops.features import feature_frame_for_dataset; from bike_mlops.model import predict_non_negative; "
+        "root=Path.cwd(); selection=json.loads((root/sys.argv[1]).read_text()); "
+        "frame=_load_profile_hourly(DEFAULT_DATASET); stamp=pd.Timestamp(sys.argv[2]); "
+        "indices=frame.index[frame.timestamp.eq(stamp)]; assert len(indices)==1; idx=indices[0]; "
+        "model,sha=load_candidate_model(root/selection['candidate_bundle']/'model.skops',selection['candidate_artifact']['sha256']); "
+        "value=float(predict_non_negative(model,feature_frame_for_dataset(frame).loc[[idx]])); "
+        "print(json.dumps({'prediction':value,'candidate_id':selection['candidate_id'],'artifact_sha256':sha}))"
+    )
+    offline = run_isolated_python(root, env, "offline prediction", offline_code, [selection, target], timeout=90)
+    prefix = "synthetic-system-" + secrets.token_hex(8)
+    request_id = prefix + "-parity"
+    payload = {"request_id": request_id, "target_hour": target, "as_of": target,
+               "feature_contract_version": "bike-demand-features-v1",
+               "data_profile_id": "capital-bikeshare", "target_contract_id": "capital-trip-starts-hourly-v1"}
+    status, prediction = request_json("http://127.0.0.1:8110/predict", payload)
+    try:
+        prediction_value = float(prediction.get("prediction", float("nan")))
+        offline_value = float(offline["prediction"])
+        parity_delta = abs(prediction_value - offline_value)
+    except (TypeError, ValueError, KeyError):
+        prediction_value, offline_value, parity_delta = float("nan"), float("nan"), float("nan")
+    parity_checks = {
+        "http_200": status == 200,
+        "api_candidate": prediction.get("candidate_id") == candidate_id,
+        "api_version": prediction.get("model_version") == version,
+        "api_blocked": prediction.get("deployment_permission") == "blocked",
+        "api_artifact": prediction.get("artifact_sha256") == registered["registered_artifact_sha256"],
+        "offline_candidate": offline.get("candidate_id") == candidate_id,
+        "offline_artifact": offline.get("artifact_sha256") == registered["candidate_artifact_sha256"],
+        "prediction_numeric": math.isfinite(prediction_value) and math.isfinite(offline_value),
+        "prediction_parity": math.isfinite(parity_delta) and math.isclose(
+            prediction_value, offline_value, rel_tol=1e-12, abs_tol=1e-12
+        ),
+    }
+    if not all(parity_checks.values()):
+        raise HarnessError("Synthetic parity checks failed: " + json.dumps({
+            "checks": parity_checks, "api_prediction": prediction_value,
+            "offline_prediction": offline_value, "absolute_delta": parity_delta,
+        }, sort_keys=True))
+    retry_status, retry = request_json("http://127.0.0.1:8110/predict", payload)
+    changed = {**payload, "target_hour": "2024-01-07 23:00:00", "as_of": "2024-01-07 23:00:00"}
+    conflict_status, _ = request_json("http://127.0.0.1:8110/predict", changed)
+    if retry_status != 200 or retry != prediction or conflict_status != 409:
+        raise HarnessError("Staging API did not preserve idempotent retry and changed-input conflict behavior")
+
+    audit_code = (
+        "import json,os; from datetime import datetime; "
+        "from bike_mlops.config import DATA_PROFILE_ID,TARGET_CONTRACT_ID; from bike_mlops.db import Database; "
+        "db=Database(os.environ['DATABASE_URL'],DATA_PROFILE_ID,TARGET_CONTRACT_ID); "
+        f"rows=db.list_predictions(datetime.fromisoformat('2024-01-07 22:00:00'),datetime.fromisoformat('2024-01-07 23:00:00'),'{version}','{prefix}'); "
+        f"assert len(rows)==1 and rows[0]['candidate_id']=='{candidate_id}' and rows[0]['artifact_sha256']=='{registered['registered_artifact_sha256']}'; "
+        "print(json.dumps({'audit_rows':len(rows),'candidate_id':rows[0]['candidate_id']}))"
+    )
+    audit_result = run_isolated_python(root, env, "staging prediction audit", audit_code, timeout=60)
+    if audit_result.get("audit_rows") != 1 or audit_result.get("candidate_id") != candidate_id:
+        raise HarnessError("Staging database audit row count or candidate identity is wrong")
+
+    runtime_rejections = []
+    for diagnostic in (False, True):
+        argv = ["mlops-bikectl", "runtime", "init", "--version", version,
+                "--approver", "synthetic-system-test", "--reason", "verify blocked candidate rejection"]
+        if diagnostic:
+            argv.append("--diagnostic")
+        code = "import sys; from bike_mlops.cli import main; sys.argv=" + repr(argv) + "; main()"
+        rejected = subprocess.run([sys.executable, "-c", code], cwd=root, env=env,
+                                  capture_output=True, text=True, timeout=60)
+        if rejected.returncode == 0 or "not eligible for deployment" not in rejected.stderr:
+            raise HarnessError("Normal runtime initialization accepted or misclassified a blocked synthetic candidate")
+        runtime_rejections.append("diagnostic" if diagnostic else "normal")
+    runtime_dir = root / "data/runtime-capital-bikeshare"
+    if any((runtime_dir / name).exists() for name in ("deployment-state.json", "blue.env", "green.env", "Caddyfile")):
+        raise HarnessError("Rejected runtime initialization left a deployable state behind")
+
+    plan_path = "data/evaluations/capital-bikeshare/operational-plans/synthetic-system-plan.json"
+    plan = run_isolated_script(root, env, "operational plan freeze", "prepare_capital_operational_plan.py", [
+        "--candidate-id", candidate_id, "--model-version", version,
+        "--selection-report", selection, "--final-report", final,
+        "--start", synthetic["measurement_start"], "--end", synthetic["measurement_end"],
+        "--output", plan_path,
+    ])
+    if plan.get("status") != "plan_frozen_no_predictions_sent" or plan.get("candidate_id") != candidate_id:
+        raise HarnessError("Synthetic operational plan was not frozen before prediction traffic")
+    plan_resources = run_isolated_python(root, env, "plan resource verification", (
+        "import json,sys; from pathlib import Path; context=json.loads(Path(sys.argv[1]).read_text())"
+        "['resource_context_before_requests']['capital_stack_containers']; "
+        "print(json.dumps({'resource_status':context['status'],'detail':context.get('detail'),"
+        "'container_count':len(context.get('containers',[])),'stats_count':len(context.get('stats',[]))}))"
+    ), [plan_path], timeout=30)
+    if plan_resources.get("resource_status") != "captured":
+        raise HarnessError("Frozen operational plan did not capture isolated stack resources: "
+                           + json.dumps(plan_resources, sort_keys=True))
+
+    measurement = run_isolated_script(root, env, "audited synthetic measurement", "benchmark_capital_runtime.py", [
+        "--run-measurement", "--plan", plan_path, "--candidate-id", candidate_id,
+        "--selection-report", selection, "--final-report", final,
+    ], timeout=600)
+    if (measurement.get("status") != "completed" or measurement.get("operational_gate") != "not_evaluated"
+            or measurement.get("deployment_permission") != "blocked"):
+        raise HarnessError("Synthetic measurement did not finish with deployment blocked")
+    report = json.loads(Path(measurement["report_path"]).read_text(encoding="utf-8"))
+    if (report.get("completed") is not True or report.get("audit", {}).get("status") != "passed"
+            or report.get("operational_gate", {}).get("status") != "not_evaluated"
+            or report.get("operational_gate", {}).get("input_provenance_status") != "passed"
+            or len(report.get("measurements", [])) != 1050
+            or report.get("resource_context", {}).get("capital_stack_containers", {}).get("status") != "captured"):
+        raise HarnessError("Synthetic measurement report lacks completed requests, audit or resource evidence")
+    recheck = run_isolated_script(root, env, "ledger-linked numeric recheck", "recheck_capital_measurement.py", [
+        "--candidate-id", candidate_id, "--attempt-id", measurement["attempt_id"],
+    ])
+    if (recheck.get("ledger_binding") != "matched" or recheck.get("operational_gate") != "not_evaluated"
+            or recheck.get("deployment_permission") != "blocked"
+            or recheck.get("numeric_status") != report["operational_gate"]["measurement_status"]):
+        raise HarnessError("Linked recheck differs from the report or changes a non-evaluated gate")
+    evidence_record = run_isolated_script(root, env, "exact-version operational evidence recording",
+                                          "record_capital_operational_evidence.py", [
+        "--candidate-id", candidate_id, "--attempt-id", measurement["attempt_id"],
+    ])
+    conflicting_report_sha = "0" * 64 if recheck["report_sha256"] != "0" * 64 else "1" * 64
+    run_isolated_python(root, env, "synthetic conflicting registry tag setup", (
+        "import os,sys; from mlflow.tracking import MlflowClient; "
+        "c=MlflowClient(tracking_uri=os.environ['MLFLOW_TRACKING_URI'],registry_uri=os.environ['MLFLOW_REGISTRY_URI']); "
+        f"c.set_model_version_tag('bike-demand-capital','{version}','capital_operational_report_sha256',sys.argv[1]); "
+        "print('{}')"
+    ), [conflicting_report_sha])
+    run_expected_script_rejection(
+        root, env, "conflicting exact-version evidence rejection", "record_capital_operational_evidence.py",
+        ["--candidate-id", candidate_id, "--attempt-id", measurement["attempt_id"]],
+        "Refusing to overwrite different operational evidence tags",
+    )
+    conflict_check = run_isolated_python(root, env, "blocked gate after conflict rejection", (
+        "import json,os; from mlflow.tracking import MlflowClient; "
+        "c=MlflowClient(tracking_uri=os.environ['MLFLOW_TRACKING_URI'],registry_uri=os.environ['MLFLOW_REGISTRY_URI']); "
+        f"v=c.get_model_version('bike-demand-capital','{version}'); "
+        "print(json.dumps({'report_sha':v.tags.get('capital_operational_report_sha256'),"
+        "'gate':v.tags.get('operational_gate_status'),'permission':v.tags.get('deployment_permission')}))"
+    ))
+    if (conflict_check.get("report_sha") != conflicting_report_sha
+            or conflict_check.get("gate") != "not_evaluated"
+            or conflict_check.get("permission") != "blocked"):
+        raise HarnessError("Conflicting evidence refusal changed registry tags or unblocked the model")
+    run_isolated_python(root, env, "restore disposable synthetic tag after conflict test", (
+        "import os,sys; from mlflow.tracking import MlflowClient; "
+        "c=MlflowClient(tracking_uri=os.environ['MLFLOW_TRACKING_URI'],registry_uri=os.environ['MLFLOW_REGISTRY_URI']); "
+        f"c.set_model_version_tag('bike-demand-capital','{version}','capital_operational_report_sha256',sys.argv[1]); "
+        "print('{}')"
+    ), [recheck["report_sha256"]])
+    evidence_record_again = run_isolated_script(root, env, "idempotent exact-version evidence recording",
+                                                "record_capital_operational_evidence.py", [
+        "--candidate-id", candidate_id, "--attempt-id", measurement["attempt_id"],
+    ])
+    registry_tags = run_isolated_python(root, env, "exact-version evidence tag verification", (
+        "import json,os; from mlflow.tracking import MlflowClient; "
+        "c=MlflowClient(tracking_uri=os.environ['MLFLOW_TRACKING_URI'],registry_uri=os.environ['MLFLOW_REGISTRY_URI']); "
+        f"v=c.get_model_version('bike-demand-capital','{version}'); "
+        "keys=[k for k in v.tags if k.startswith('capital_operational_')]; "
+        "print(json.dumps({'tags':{k:v.tags[k] for k in keys},'gate':v.tags.get('operational_gate_status'),"
+        "'permission':v.tags.get('deployment_permission')}))"
+    ), timeout=60)
+    if (evidence_record.get("status") != "evidence_recorded"
+            or evidence_record.get("report_sha256") != evidence_record_again.get("report_sha256")
+            or evidence_record_again.get("idempotent") is not True
+            or registry_tags.get("gate") != "not_evaluated"
+            or registry_tags.get("permission") != "blocked"
+            or registry_tags.get("tags", {}).get("capital_operational_attempt_id") != measurement["attempt_id"]
+            or registry_tags.get("tags", {}).get("capital_operational_report_sha256") != recheck["report_sha256"]):
+        raise HarnessError("Operational evidence tags did not persist idempotently on the blocked exact version")
+    return {
+        "status": "synthetic_system_passed",
+        "data": "synthetic_only",
+        "candidate_id": candidate_id,
+        "model_version": version,
+        "candidate_registration": "blocked_and_idempotent",
+        "staging_rows_seeded_and_verified": seeded["new_observations_inserted"],
+        "api_ready": ready.get("status"),
+        "offline_api_parity_absolute_delta": abs(float(prediction["prediction"]) - float(offline["prediction"])),
+        "api_idempotent_retry": "passed",
+        "api_changed_input_conflict": conflict_status,
+        "api_audit_rows": audit_result["audit_rows"],
+        "runtime_init_rejections": runtime_rejections,
+        "measurement_attempt": measurement["attempt_id"],
+        "requests": len(report["measurements"]),
+        "audited_rows": report["audit"]["verified_rows"],
+        "measurement_status": recheck["numeric_status"],
+        "p95_ms": recheck["p95_ms"],
+        "numeric_recheck": "matched",
+        "exact_version_evidence_tags": "recorded_and_idempotent",
+        "conflicting_evidence_rejected_without_unblocking": True,
+        "operational_gate": "not_evaluated",
+        "deployment_permission": "blocked",
+        "resource_context": "captured_before_and_after",
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-infrastructure", action="store_true", help="Build and briefly start disposable DB and MLflow")
     parser.add_argument("--prepare-synthetic", action="store_true", help="Generate a synthetic evaluated candidate in the temporary workspace")
+    parser.add_argument("--run-synthetic-system", action="store_true",
+                        help="Run blocked registration, staging seed/API, audited 1,050-request measurement and cleanup using synthetic data")
     args = parser.parse_args()
+    run_synthetic = args.run_synthetic_system
+    prepare_synthetic = args.prepare_synthetic or run_synthetic
+    run_infrastructure = args.run_infrastructure or run_synthetic
     project = "bikemlopstest" + secrets.token_hex(8)
     token = secrets.token_hex(16)
     root = Path(tempfile.mkdtemp(prefix="capital-system-harness-"))
@@ -304,11 +731,13 @@ def main() -> None:
         make_override(root, token)
         write_synthetic_credentials(root)
         harness = Harness(root, project, token)
-        if args.prepare_synthetic:
+        synthetic = None
+        if prepare_synthetic:
             stage = "synthetic_candidate"
-            print(json.dumps(prepare_synthetic_workspace(root), ensure_ascii=False), flush=True)
-        if not args.run_infrastructure:
-            print(json.dumps({"status": "workspace_prepared", "candidate_generation": "prepared" if args.prepare_synthetic else "not_implemented",
+            synthetic = prepare_synthetic_workspace(root)
+            print(json.dumps(synthetic, ensure_ascii=False), flush=True)
+        if not run_infrastructure:
+            print(json.dumps({"status": "workspace_prepared", "candidate_generation": "prepared" if prepare_synthetic else "not_implemented",
                               "prediction_requests": 0, "docker_started": False}))
             return
         stage = "preflight"
@@ -331,14 +760,22 @@ def main() -> None:
         wait_ready()
         stage = "verify_ports"
         harness.verify_ports()
-        print(json.dumps({"status": "infrastructure_ready", "candidate_generation": "prepared" if args.prepare_synthetic else "not_implemented",
+        print(json.dumps({"status": "infrastructure_ready", "candidate_generation": "prepared" if prepare_synthetic else "not_implemented",
                           "api_started": False, "prediction_requests": 0,
                           "operational_gate": "not_evaluated", "project": project}))
+        if run_synthetic:
+            stage = "synthetic_system"
+            result = run_synthetic_system(root, harness, synthetic, project)
+            print(json.dumps(result, ensure_ascii=False), flush=True)
     except HarnessError as error:
         cause = "required_port_unavailable" if str(error).startswith("Required local port ") else "not_determined"
         print(json.dumps({"status": "failed", "stage": stage, "cause": cause,
                           "diagnostic_output": "suppressed"}), flush=True)
         raise
+    except KeyboardInterrupt:
+        print(json.dumps({"status": "interrupted", "stage": stage,
+                          "resources_cleanup": "attempted"}), flush=True)
+        raise SystemExit(130)
     finally:
         try:
             if cleanup_required:

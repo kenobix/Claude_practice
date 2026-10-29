@@ -5,7 +5,7 @@ import sqlite3
 
 import pandas as pd
 
-from bike_mlops.db import Database, RequestConflict
+from bike_mlops.db import Database, RequestConflict, SCHEMA
 
 
 class StorageTests(unittest.TestCase):
@@ -16,6 +16,28 @@ class StorageTests(unittest.TestCase):
 
     def tearDown(self):
         self.tempdir.cleanup()
+
+    def test_prediction_schema_declares_double_precision(self):
+        prediction_schema = next(statement for statement in SCHEMA
+                                 if "CREATE TABLE IF NOT EXISTS predictions" in statement)
+        self.assertIn("predicted DOUBLE PRECISION", prediction_schema)
+        precise_value = 15.189926280821982
+        record = {
+            "request_id": "precision-check",
+            "input_hash": "same-input",
+            "target_hour": "2012-07-01 10:00:00",
+            "as_of": "2012-07-01 10:00:00",
+            "predicted": precise_value,
+            "model_name": "bike-demand",
+            "model_version": "1",
+            "model_quality_gate": "passed",
+            "artifact_sha256": "model-sha",
+            "data_version_sha256": "data-sha",
+            "feature_contract_version": "bike-demand-features-v1",
+            "features_json": "{}",
+            "created_at": "2012-07-01T10:00:00+00:00",
+        }
+        self.assertEqual(self.database.save_prediction(record)["predicted"], precise_value)
 
     def test_query_excludes_late_and_future_observations(self):
         target = pd.Timestamp("2012-07-01 10:00:00")

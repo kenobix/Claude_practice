@@ -12,6 +12,56 @@ from bike_mlops.capital_benchmark_observer import CapitalBenchmarkObserver
 
 
 class OperationalBenchmarkTests(unittest.TestCase):
+    def test_resource_capture_targets_the_requested_isolated_compose_project(self):
+        outputs = [
+            Mock(stdout="isolated-container\n"),
+            Mock(stdout="/api-staging|bike-api|0|0\n"),
+            Mock(stdout="/api-staging|0.10%|10MiB / 1GiB|1.00%\n"),
+            Mock(stdout="29.9.1\n"),
+        ]
+        with (patch.dict("os.environ", {"CAPITAL_COMPOSE_PROJECT_NAME": "bikemlopstest0123456789abcdef"}),
+              patch.object(benchmark.subprocess, "run", side_effect=outputs) as run):
+            result = benchmark._machine_and_container_resources()
+        self.assertEqual(result["capital_stack_containers"]["status"], "captured")
+        self.assertIn("--project-name", run.call_args_list[0].args[0])
+        self.assertIn("bikemlopstest0123456789abcdef", run.call_args_list[0].args[0])
+
+    def test_resource_capture_uses_restricted_compose_env_file(self):
+        outputs = [Mock(stdout="isolated-container\n"), Mock(stdout="container|image|0|0\n"),
+                   Mock(stdout="container|0.10%|10MiB / 1GiB|1.00%\n"), Mock(stdout="29.9.1\n")]
+        with tempfile.TemporaryDirectory() as directory:
+            env_file = Path(directory) / "harness.env"
+            env_file.write_text("POSTGRES_ADMIN_PASSWORD=test-only\n", encoding="utf-8")
+            env_file.chmod(0o600)
+            with (patch.dict("os.environ", {"CAPITAL_COMPOSE_PROJECT_NAME": "bikemlopstest0123456789abcdef",
+                                             "CAPITAL_COMPOSE_ENV_FILE": str(env_file)}),
+                  patch.object(benchmark.subprocess, "run", side_effect=outputs) as run):
+                result = benchmark._machine_and_container_resources()
+        self.assertEqual(result["capital_stack_containers"]["status"], "captured")
+        command = run.call_args_list[0].args[0]
+        self.assertIn("--env-file", command)
+        self.assertIn(str(env_file), command)
+
+    def test_resource_capture_rejects_unsafe_compose_env_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            env_file = Path(directory) / "harness.env"
+            env_file.write_text("secret\n", encoding="utf-8")
+            env_file.chmod(0o644)
+            with (patch.dict("os.environ", {"CAPITAL_COMPOSE_PROJECT_NAME": "bikemlopstest0123456789abcdef",
+                                             "CAPITAL_COMPOSE_ENV_FILE": str(env_file)}),
+                  patch.object(benchmark.subprocess, "run") as run):
+                result = benchmark._machine_and_container_resources()
+        self.assertEqual(result["capital_stack_containers"]["status"], "unavailable")
+        run.assert_not_called()
+
+    def test_resource_capture_rejects_invalid_project_name_without_docker(self):
+        with (patch.dict("os.environ", {"CAPITAL_COMPOSE_PROJECT_NAME": "../bike-mlops-capital"}),
+              patch.object(benchmark.subprocess, "run") as run):
+            result = benchmark._machine_and_container_resources()
+        self.assertEqual(result["capital_stack_containers"]["status"], "unavailable")
+        self.assertFalse(any(call.args and call.args[0] and call.args[0][0] == "docker"
+                             for call in run.call_args_list))
+
     def test_nearest_rank_p95_and_failed_metrics_are_explicit(self):
         self.assertEqual(benchmark.percentile_nearest_rank([4, 1, 3, 2], 50), 2.0)
         self.assertEqual(benchmark.percentile_nearest_rank(list(range(1, 101)), 95), 95.0)

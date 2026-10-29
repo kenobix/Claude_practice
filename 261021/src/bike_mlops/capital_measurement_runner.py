@@ -1,8 +1,4 @@
-"""Internal staging measurement sequence; deployment approval is deliberately absent.
-
-The user-facing benchmark CLI remains disabled until a full isolated system test
-and independent operational evidence verification have been completed.
-"""
+"""Run one frozen staging measurement; deployment approval is deliberately absent."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -104,10 +100,12 @@ def run_staging_measurement(plan_path: Path, selection_path: Path, final_path: P
                     expected_artifact_sha256=identity["artifact_sha256"], request_observer=observer,
                 )
                 _attach_attempt(report, attempt)
-                if not report.get("completed") or report.get("operational_gate", {}).get("measurement_status") != "passed":
-                    raise RuntimeError("Incomplete or failed measurement")
+                if not report.get("completed"):
+                    raise RuntimeError("Incomplete measurement sequence")
                 if report.get("operational_gate", {}).get("status") != "not_evaluated":
                     raise ValueError("Operational gate must remain unevaluated")
+                if report.get("operational_gate", {}).get("measurement_status") not in {"passed", "failed"}:
+                    raise ValueError("Completed measurement must retain its numerical result")
                 if (report.get("benchmark_id") != attempt.attempt_id or not isinstance(report.get("model_identity"), dict)
                         or any(report["model_identity"].get(key) != value for key, value in identity.items()
                                if key in {"candidate_id", "model_name", "model_version", "artifact_sha256", "feature_contract_version"})):
@@ -132,7 +130,8 @@ def run_staging_measurement(plan_path: Path, selection_path: Path, final_path: P
             # successfully checks and releases its lock.
             stage = "ledger"
             attempt.finish(status="completed", report_path=success_report_path)
-            outcome = {"status": "completed", "operational_gate": "not_evaluated", "deployment_permission": "blocked",
+            outcome = {"status": "completed", "measurement_status": report["operational_gate"]["measurement_status"],
+                       "operational_gate": "not_evaluated", "deployment_permission": "blocked",
                        "attempt_id": attempt.attempt_id, "report_path": str(success_report_path)}
         except (Exception, KeyboardInterrupt) as error:
             interrupted = isinstance(error, KeyboardInterrupt)

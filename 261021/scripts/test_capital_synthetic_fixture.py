@@ -70,10 +70,12 @@ def _run_child() -> None:
             start="2024-01-07 22:00:00", end="2024-01-14 22:00:00")
         if window["hours"] != 168 or window["latest_replay_label_available_at"] != "2024-01-15 00:00:00":
             raise RuntimeError("Synthetic measurement window violates the training cutoff")
-    summary = {"status": "passed", "data": "synthetic", "rides": ride_id,
+    summary = {"status": "passed", "data": "synthetic", "rides": ride_id, "hourly_rows": len(pd.read_csv(DEFAULT_DATASET)),
                "candidate_id": report["candidate_artifacts"]["candidate_id"],
                "validation_gate": report["validation_gate_status"],
                "final_gate": final["final_accuracy_gate"]["status"],
+               "measurement_start": "2024-01-07 22:00:00",
+               "measurement_end": "2024-01-14 22:00:00",
                "measurement_window_hours": window["hours"],
                "latest_label_available_at": window["latest_replay_label_available_at"],
                "registry_writes": 0, "prediction_requests": 0,
