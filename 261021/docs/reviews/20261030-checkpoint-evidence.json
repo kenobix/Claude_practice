@@ -1,0 +1,1143 @@
+{
+  "schema_version": 1,
+  "review_date_jst": "2026-10-30",
+  "scope": {
+    "checkpoint_commit": "10dfb8f484255ca062e7cdb895c097800afbd77d",
+    "previous_review_code_end": "5df03f7852ccbf9107f88d7bae6ee7aa3f5506b0",
+    "examined_head": "070b033fc527f99e09e3406e16cae8943fa5234c",
+    "commit_count": 28,
+    "changed_file_count": 65,
+    "diff_summary": "65 files changed, 8060 insertions(+), 119 deletions(-)",
+    "method": "Diff inventory, targeted critical-path source review, saved-log SHA checks, GitHub runs/artifacts, pure synthetic negative probes, read-only UCI state. Not a line-by-line proof of all code."
+  },
+  "commits": [
+    {
+      "sha": "1401ebe09c153e6292c7d960a97ceb98385e0f3a",
+      "authored_at": "2026-10-28T22:44:51+09:00",
+      "subject": "Verify locked staging observation provenance",
+      "workflow_runs": [
+        40699277363,
+        40699276907
+      ]
+    },
+    {
+      "sha": "34b7547f48f48dd90b282ed2e128c415719f91bc",
+      "authored_at": "2026-10-28T23:05:47+09:00",
+      "subject": "Freeze candidate operational measurement plans",
+      "workflow_runs": [
+        40702606419,
+        40702605286
+      ]
+    },
+    {
+      "sha": "a81b524053aed39962aaf753dae06b2e5dfc81f5",
+      "authored_at": "2026-10-29T07:51:21+09:00",
+      "subject": "Pin registry endpoint in operational plans",
+      "workflow_runs": [
+        40783110854,
+        40783111386
+      ]
+    },
+    {
+      "sha": "a6c5c5d848ad24feb0c95792e82b72d4ba13ae50",
+      "authored_at": "2026-10-29T07:58:09+09:00",
+      "subject": "Record and review operational measurement attempts",
+      "workflow_runs": [
+        40783932501,
+        40783932763
+      ]
+    },
+    {
+      "sha": "dd5a3c61a37db83313b8954bc6821951fe5ef38c",
+      "authored_at": "2026-10-29T08:05:16+09:00",
+      "subject": "Connect benchmark request provenance checks",
+      "workflow_runs": [
+        40784815791,
+        40784816357
+      ]
+    },
+    {
+      "sha": "b3c0acf4be2de2af2ec9aa0673fba4dcf5c08ac6",
+      "authored_at": "2026-10-29T08:10:09+09:00",
+      "subject": "Revalidate frozen inputs before operational measurement",
+      "workflow_runs": [
+        40785408310,
+        40785408800
+      ]
+    },
+    {
+      "sha": "63656ca028affce586efcb81de94a4438d8de76a",
+      "authored_at": "2026-10-29T08:16:07+09:00",
+      "subject": "Resolve monitoring periods and add versioned PSI",
+      "workflow_runs": [
+        40786147562,
+        40786146172
+      ]
+    },
+    {
+      "sha": "a0e604183f80b3d839f30229b7fe597ab734d2dc",
+      "authored_at": "2026-10-29T08:17:56+09:00",
+      "subject": "Connect guarded staging measurement sequence",
+      "workflow_runs": [
+        40786359536,
+        40786360464
+      ]
+    },
+    {
+      "sha": "d2bb73b21b9a56211c3122f68d206f4507e83a29",
+      "authored_at": "2026-10-29T08:20:10+09:00",
+      "subject": "Preserve separate monitoring run histories",
+      "workflow_runs": [
+        40786624083,
+        40786624729
+      ]
+    },
+    {
+      "sha": "4d9b54326a2a170d837d0bf4a93f58c56af864c4",
+      "authored_at": "2026-10-29T08:20:56+09:00",
+      "subject": "Verify monitoring history on disposable PostgreSQL",
+      "workflow_runs": [
+        40786720818,
+        40786720684
+      ]
+    },
+    {
+      "sha": "748f2f8b393a8af5cb5bc585b1b9feca054455aa",
+      "authored_at": "2026-10-29T08:22:54+09:00",
+      "subject": "Inspect operational evidence and isolate system test setup",
+      "workflow_runs": [
+        40786964849,
+        40786965430
+      ]
+    },
+    {
+      "sha": "8a8a45867fd94c5c9e0effe5ec957c4fa27c293f",
+      "authored_at": "2026-10-29T19:32:06+09:00",
+      "subject": "Preserve partial measurement request evidence",
+      "workflow_runs": [
+        40858329615,
+        40858328600
+      ]
+    },
+    {
+      "sha": "42cfd60dd25223982e2bc1bb33b237d4776b1b1d",
+      "authored_at": "2026-10-29T19:35:17+09:00",
+      "subject": "Recalculate fixed measurement report metrics",
+      "workflow_runs": [
+        40858751923,
+        40858752724
+      ]
+    },
+    {
+      "sha": "c01b2d12f3fe91ca5bef7656a48539658516726e",
+      "authored_at": "2026-10-29T19:39:44+09:00",
+      "subject": "Bind numeric recheck to recorded measurement evidence",
+      "workflow_runs": [
+        40859326653,
+        40859327118
+      ]
+    },
+    {
+      "sha": "5f3ba9afa322df76a781ddc7d7c7739087e9c04e",
+      "authored_at": "2026-10-29T19:44:54+09:00",
+      "subject": "Generate isolated synthetic candidate fixtures",
+      "workflow_runs": [
+        40859996164,
+        40859996686
+      ]
+    },
+    {
+      "sha": "3035ab1739ed4f0563b69449d41e3ee0893f6fb3",
+      "authored_at": "2026-10-29T19:50:30+09:00",
+      "subject": "Inspect ambiguous prediction audit records",
+      "workflow_runs": [
+        40860729842,
+        40860730963
+      ]
+    },
+    {
+      "sha": "9b169e69ec148ade3073a99c8b787e9c2bc314eb",
+      "authored_at": "2026-10-29T19:53:22+09:00",
+      "subject": "Verify profiles in isolated Docker image",
+      "workflow_runs": [
+        40861098817,
+        40861097672
+      ]
+    },
+    {
+      "sha": "a1aac780e1917ebc2244959c5cc61d212cd34d86",
+      "authored_at": "2026-10-29T19:56:00+09:00",
+      "subject": "Record cached isolated infrastructure verification",
+      "workflow_runs": [
+        40861435491,
+        40861435351
+      ]
+    },
+    {
+      "sha": "9bf8649ac1c2d7ba068389a93db3889fbe1657a8",
+      "authored_at": "2026-10-29T21:32:09+09:00",
+      "subject": "Add audited Capital measurement evidence flow",
+      "workflow_runs": []
+    },
+    {
+      "sha": "dd1741e1672314472c6401c0912135417444b8fc",
+      "authored_at": "2026-10-29T21:32:20+09:00",
+      "subject": "Update Capital MLOps checkpoint and runbook",
+      "workflow_runs": [
+        40874109839,
+        40874108625
+      ]
+    },
+    {
+      "sha": "b290dc5c9b53fe9b0678f01cdeb95d77cdf5bc88",
+      "authored_at": "2026-10-29T21:35:58+09:00",
+      "subject": "Add PostgreSQL lock checks to Docker CI",
+      "workflow_runs": [
+        40874601329,
+        40874600051
+      ]
+    },
+    {
+      "sha": "9692c4f131d7da129c4ef33767e017e19101ca43",
+      "authored_at": "2026-10-29T21:51:36+09:00",
+      "subject": "Make Docker harness cleanup failures visible",
+      "workflow_runs": []
+    },
+    {
+      "sha": "a0344f9e6ff3468a8f7b0d5236379dd0c230d667",
+      "authored_at": "2026-10-29T21:51:50+09:00",
+      "subject": "Record Docker cleanup failure and recovery",
+      "workflow_runs": [
+        40876827043,
+        40876827423
+      ]
+    },
+    {
+      "sha": "6079903c4b53af3fdfb09ec2c105973611a21f1e",
+      "authored_at": "2026-10-29T22:11:29+09:00",
+      "subject": "Scope synthetic Docker cleanup to project tags",
+      "workflow_runs": [
+        40879693259,
+        40879692956
+      ]
+    },
+    {
+      "sha": "0cbcdbc251272906fedc4050badde7670b428bb2",
+      "authored_at": "2026-10-29T22:17:44+09:00",
+      "subject": "Record passing isolated system CI",
+      "workflow_runs": [
+        40880637698,
+        40880635973
+      ]
+    },
+    {
+      "sha": "77fe955afaac1b8d22c9b227bb03c0af1d52774a",
+      "authored_at": "2026-10-29T22:35:28+09:00",
+      "subject": "Add two-person Capital deployment gate",
+      "workflow_runs": [
+        40883359147,
+        40883357739
+      ]
+    },
+    {
+      "sha": "dae897a1a6c2a905e3f64e6711636f3732d4231a",
+      "authored_at": "2026-10-30T07:28:33+09:00",
+      "subject": "Test Capital deployment decision write failures",
+      "workflow_runs": [
+        40966167637,
+        40966168109
+      ]
+    },
+    {
+      "sha": "070b033fc527f99e09e3406e16cae8943fa5234c",
+      "authored_at": "2026-10-30T07:34:47+09:00",
+      "subject": "Record passing Capital review CI",
+      "workflow_runs": [
+        40966966169,
+        40966966672
+      ]
+    }
+  ],
+  "examined_file_sha256_at_target": {
+    ".github/workflows/bike-mlops-contracts.yml": "0394672d7c1bcfbeb0f9dd14eb2796496d369d49508e06d183a5cf4b71bb8950",
+    "261014/plan_mlops.md": "588ad1405b5a92cad0931d13e43beddb1deb1f2410c38c06a0d9c4931751e99c",
+    "261021/Dockerfile": "54a7114cae3e3a17cbba0ee61e309837f4c61aaddc45c5a5cf78cb3a10b8dadb",
+    "261021/README.md": "c17e98e2c0dc19c772194797691f184911a370cbeab78ddac4a9ec8104ff89ba",
+    "261021/docs/capital-bootstrap-gate.md": "ac5a492626d0c706ac3d118803f106587aa74b84cb7311952b81ab6fc590f97b",
+    "261021/docs/glossary.md": "d8c60e4613eafb13ed16f93ef045b47fa70a9b15dfb7f553916d66ac82941754",
+    "261021/docs/runbook.md": "92471f86e5341cf575bec7ef5715075f84c2930b7384f579a23981a8ec1e1ffc",
+    "261021/pyproject.toml": "49a0f60f65534f2a90922b97f38f80d54527510d39bd0c86bdff2a0ab7ef6f61",
+    "261021/requirements.lock": "50689497eb1d3e13dc27fdbcf4d1d327b10b2d7940672a7a8a726908a18d3353",
+    "261021/scripts/benchmark_capital_runtime.py": "f72d89b1ebd2efbebc0157919d7095d690d3dd306da5dce8ccffa2646dde5246",
+    "261021/scripts/capital_system_harness.py": "4682242803d2860b448f24352511e53bfb03d7e0d9b879a8f91983f8164f4961",
+    "261021/scripts/inspect_capital_operational_reports.py": "de6948f9236a95347065f35aa94ceb38c589261ef84078c16aeb105fd15afb4d",
+    "261021/scripts/inspect_capital_pending_audit.py": "cffe4f9714310cbe82f7547892d2077c1d0bba2e1e4a02c35bba66ac21405283",
+    "261021/scripts/operational_attempt_ledger.py": "56fa3452b7f6988c4a91fe8f694daaf74d4176ee630bf704374c332caaae5558",
+    "261021/scripts/prepare_capital_operational_plan.py": "f5552723fe8cebf735bbbcfd7b4027ac781d3273496350b5ebfe5e2bc2df2e1c",
+    "261021/scripts/recheck_capital_measurement.py": "4db6f8803fc82c0ff6bd56961568146243b76769f0a9eb414c422c38a1beabce",
+    "261021/scripts/record_capital_deployment_decision.py": "47b2ca3e483eb3cdcf514b3d983c0f3deab7dc035faff0bc48411cfd617f5197",
+    "261021/scripts/record_capital_operational_evidence.py": "6878e439549b293d33135005c82aee113f6c2bafe0b330a098d2c7c57e071b58",
+    "261021/scripts/seed_capital_staging.py": "19dc1f401cb4609e56423fa507b58a8f10e630904d63e185ed23970dd1e53c99",
+    "261021/scripts/test_capital_snapshot_postgres.py": "c8215d2446289b94bfb4e747dd1518c04429e09f2621ca8736cd6ba707b631f8",
+    "261021/scripts/test_capital_synthetic_fixture.py": "1a8f6b82409f3b3445a9e67f3ecc3267bb69a039332aa655bd986d69b523d178",
+    "261021/scripts/test_monitor_persistence_postgres.py": "86f6e8c9c29c25a5cd89158a3614feb8b063a1f418756abeab67f32cb738e5f9",
+    "261021/src/bike_mlops/capital_benchmark_observer.py": "97f38799e930900c4b4d3c11f67abc42d461a57084e235fc9f73acc791e97f1e",
+    "261021/src/bike_mlops/capital_deployment_decisions.py": "631cb5ab5839c45c60e4a609cb89d3fb85927be6c1e41a98523fb6ccc1fd5176",
+    "261021/src/bike_mlops/capital_measurement_guard.py": "c4a67e1af0df1a18682a444c71c05b88cd221a82060ad8dd2f9109c3c499e8ec",
+    "261021/src/bike_mlops/capital_measurement_preflight.py": "1caae999e7cab90658acf33c6e92151ef87b2bac59cdec6818a464fd8e7b49c6",
+    "261021/src/bike_mlops/capital_measurement_recheck.py": "697ca76ced9fa84d4ea275140f02c4720eca1488781b396b6968ac95a64e2a96",
+    "261021/src/bike_mlops/capital_measurement_runner.py": "f074b0379812f91d97720e6c9e62bd951a162bab621fc6aac6823b10fe44fc32",
+    "261021/src/bike_mlops/capital_operational_ledger.py": "53837d855fba26233a5740cd2f5fe2ba493ef507c8d1744c6790ab4b26deeab9",
+    "261021/src/bike_mlops/capital_operational_plan.py": "d565b58477f8c63c458fb0d231fe73444994e219fbfae4fba102143fe43ffdc0",
+    "261021/src/bike_mlops/capital_operational_recovery.py": "d406bffa36380a3625c41c7a54500f3a93c8cb83a0e8f47a34fb9696e393972c",
+    "261021/src/bike_mlops/capital_operational_registry.py": "950fbfa3798628129b69bb50874bf358c2d4f4ce8cc3cf7b7c5b8c0b1a14b10e",
+    "261021/src/bike_mlops/capital_pending_audit.py": "dfb9a8372795bb108f4cbb4d8c805b03e7727dfdfe50934feec8bde1e442d66a",
+    "261021/src/bike_mlops/capital_staging.py": "2af1296a90bfa8b5a24f561b62146d3def5a281c0fba34826d155d6c684bab71",
+    "261021/src/bike_mlops/cli.py": "fbaf6c5527595b0c32bd8224e3368f0b96394a4736677456a9d35c7ce7f26c9a",
+    "261021/src/bike_mlops/db.py": "0be31f1560243b0201447c4f5caca63438eee42ab7358b7e901edae7f8f83536",
+    "261021/src/bike_mlops/deployment_gates.py": "e12d9c3e5284537455bc2726a18ac999de8e4eb56ace842a793add5b041a280e",
+    "261021/src/bike_mlops/model.py": "865f7e453dcce35ed01d37c7571f0f7b33b41e52a123bbc9084fc0339bb4a4c3",
+    "261021/src/bike_mlops/monitor_persistence.py": "5344ca87c732c0c6c1807e7b021205990d8a3b7fb8086adf3db576e3a17c150e",
+    "261021/src/bike_mlops/monitoring_psi_v2.py": "8f9a815dbe9ab86fcee2ab3335d257c431aa166b03e9c6bb2a38f0f9bda1c004",
+    "261021/src/bike_mlops/monitoring_window.py": "3a39efd1555de7ccea1351771b279d399fdbc075e79ccd329f42ec13fccb7970",
+    "261021/src/bike_mlops/operational_benchmark.py": "0a2468de3fb7062cdc4e1cebf78dd748d6c83517695cb821b32f5a40f97565ec",
+    "261021/tests/test_capital_benchmark_inputs.py": "9492d5f3bc38d277688908b8dd48ca9c559300d14fdda7d6ee7a4eadff9731bc",
+    "261021/tests/test_capital_benchmark_observer.py": "315dffe9532b91e9cd214d152fbf4034ab62ca6ccfbc27c893f2fc9389076c8d",
+    "261021/tests/test_capital_deployment_decisions.py": "b1adb34bc8fa6dd6bf609a0113091c27d92705e2ed29a0a6e7110869c0136670",
+    "261021/tests/test_capital_measurement_guard.py": "865fb581b31d2d0a5e5250129097173b70d9bfdfcda9614e40a6275faebeaf8b",
+    "261021/tests/test_capital_measurement_preflight.py": "233469e9d7501c0359d526bf19f833391fb784e1a89b889c882e6efe67472260",
+    "261021/tests/test_capital_measurement_recheck.py": "e7c012aa6d1cc36c5a8b09c48fae25645fac5c7dd9dcf5d1dab07a06ad9c6cdb",
+    "261021/tests/test_capital_measurement_runner.py": "3abd14d8e39dbfa1b25ed9a77721eddd145c4b50668c2ca317122be8574c492c",
+    "261021/tests/test_capital_operational_ledger.py": "179dc47460503e7c68669a1d90bb2bc446119ccf52fc16255a7d1e90b510675e",
+    "261021/tests/test_capital_operational_plan.py": "e7a27f1d82a82bffe056581b190f69d3cd271ad03795aa111d16a5b880fc6f49",
+    "261021/tests/test_capital_operational_recovery.py": "32044b8997eafe5d42a60d11dbceacbef6d71c2e1117067065194889a246d226",
+    "261021/tests/test_capital_operational_registry.py": "541cc5ea059b95e743f45d77ff57ed18d94ba7dfc28c1f1f80b8acae7f040c56",
+    "261021/tests/test_capital_pending_audit.py": "9dc793ddacba8e95eebc35d5b166875ff10c1103385b75e3e61d9a16a93785de",
+    "261021/tests/test_capital_staging.py": "b5276b6080399327425ea4c0ce157d4c2bd9e2e9c3a35f2abdc8f914a447aaaa",
+    "261021/tests/test_capital_staging_seed.py": "9a9af74c4e70797d1b58b3d059f096affe1401bbb7169352eb5f61cdd9e2f951",
+    "261021/tests/test_capital_synthetic_fixture.py": "bca7261bef565c7403ad11f6e70e4e87f289907217e2ca7d63d48a840464cb8e",
+    "261021/tests/test_capital_system_harness.py": "66e4dbe11e974bce2b90f71297014de3a6a742448e3445e17bd1c5f5abb5da42",
+    "261021/tests/test_deployment_gates.py": "738c26d8849123013d8f38d926976b971fc65b6d4f150bbfcf616e77531686ab",
+    "261021/tests/test_monitor_persistence.py": "1140f16cf18daa2c225f87e53a5be8f71947a32b098c75ae84c1652436fd9216",
+    "261021/tests/test_monitoring_psi_v2.py": "13587071df6d07c78dd69330a230dc0745775bd14ced6294fc0877f50354b3d9",
+    "261021/tests/test_monitoring_window.py": "8a012278e2439d34808845737264347573ca66061e0d35383de4dbe5a0f0417f",
+    "261021/tests/test_operational_benchmark.py": "c46da128b945db56c0cd478da6ef76aeb3ea33e6ca3ac3866624df4382ab0a49",
+    "261021/tests/test_storage.py": "dda989d69e84cd0953c5c82d43462bf87b77269f735f60a66bf23e43dd972aed",
+    "261021/work_log.md": "5ab291430c8b087e932f53693bc3662b434c3ab049e3c361c32992e025039779"
+  },
+  "ci": {
+    "runs": [
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T22:35:00Z",
+        "databaseId": 40966966169,
+        "headSha": "070b033fc527f99e09e3406e16cae8943fa5234c",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40966966169",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T22:35:00Z",
+        "databaseId": 40966966672,
+        "headSha": "070b033fc527f99e09e3406e16cae8943fa5234c",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40966966672",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T22:28:46Z",
+        "databaseId": 40966167637,
+        "headSha": "dae897a1a6c2a905e3f64e6711636f3732d4231a",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40966167637",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T22:28:46Z",
+        "databaseId": 40966168109,
+        "headSha": "dae897a1a6c2a905e3f64e6711636f3732d4231a",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40966168109",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T13:35:40Z",
+        "databaseId": 40883359147,
+        "headSha": "77fe955afaac1b8d22c9b227bb03c0af1d52774a",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40883359147",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T13:35:39Z",
+        "databaseId": 40883357739,
+        "headSha": "77fe955afaac1b8d22c9b227bb03c0af1d52774a",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40883357739",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T13:17:53Z",
+        "databaseId": 40880637698,
+        "headSha": "0cbcdbc251272906fedc4050badde7670b428bb2",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40880637698",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T13:17:52Z",
+        "databaseId": 40880635973,
+        "headSha": "0cbcdbc251272906fedc4050badde7670b428bb2",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40880635973",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T13:11:39Z",
+        "databaseId": 40879693259,
+        "headSha": "6079903c4b53af3fdfb09ec2c105973611a21f1e",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40879693259",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T13:11:39Z",
+        "databaseId": 40879692956,
+        "headSha": "6079903c4b53af3fdfb09ec2c105973611a21f1e",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40879692956",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T12:51:57Z",
+        "databaseId": 40876827043,
+        "headSha": "a0344f9e6ff3468a8f7b0d5236379dd0c230d667",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40876827043",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "failure",
+        "createdAt": "2026-10-29T12:51:57Z",
+        "databaseId": 40876827423,
+        "headSha": "a0344f9e6ff3468a8f7b0d5236379dd0c230d667",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40876827423",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T12:36:06Z",
+        "databaseId": 40874601329,
+        "headSha": "b290dc5c9b53fe9b0678f01cdeb95d77cdf5bc88",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40874601329",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T12:36:05Z",
+        "databaseId": 40874600051,
+        "headSha": "b290dc5c9b53fe9b0678f01cdeb95d77cdf5bc88",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40874600051",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T12:32:33Z",
+        "databaseId": 40874109839,
+        "headSha": "dd1741e1672314472c6401c0912135417444b8fc",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40874109839",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T12:32:32Z",
+        "databaseId": 40874108625,
+        "headSha": "dd1741e1672314472c6401c0912135417444b8fc",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40874108625",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T10:56:05Z",
+        "databaseId": 40861435491,
+        "headSha": "a1aac780e1917ebc2244959c5cc61d212cd34d86",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40861435491",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T10:56:05Z",
+        "databaseId": 40861435351,
+        "headSha": "a1aac780e1917ebc2244959c5cc61d212cd34d86",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40861435351",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T10:53:28Z",
+        "databaseId": 40861098817,
+        "headSha": "9b169e69ec148ade3073a99c8b787e9c2bc314eb",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40861098817",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T10:53:27Z",
+        "databaseId": 40861097672,
+        "headSha": "9b169e69ec148ade3073a99c8b787e9c2bc314eb",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40861097672",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T10:50:34Z",
+        "databaseId": 40860729842,
+        "headSha": "3035ab1739ed4f0563b69449d41e3ee0893f6fb3",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40860729842",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T10:50:34Z",
+        "databaseId": 40860730963,
+        "headSha": "3035ab1739ed4f0563b69449d41e3ee0893f6fb3",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40860730963",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T10:44:59Z",
+        "databaseId": 40859996164,
+        "headSha": "5f3ba9afa322df76a781ddc7d7c7739087e9c04e",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40859996164",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T10:44:59Z",
+        "databaseId": 40859996686,
+        "headSha": "5f3ba9afa322df76a781ddc7d7c7739087e9c04e",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40859996686",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T10:39:49Z",
+        "databaseId": 40859326653,
+        "headSha": "c01b2d12f3fe91ca5bef7656a48539658516726e",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40859326653",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T10:39:49Z",
+        "databaseId": 40859327118,
+        "headSha": "c01b2d12f3fe91ca5bef7656a48539658516726e",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40859327118",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T10:35:22Z",
+        "databaseId": 40858751923,
+        "headSha": "42cfd60dd25223982e2bc1bb33b237d4776b1b1d",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40858751923",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T10:35:22Z",
+        "databaseId": 40858752724,
+        "headSha": "42cfd60dd25223982e2bc1bb33b237d4776b1b1d",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40858752724",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T10:32:12Z",
+        "databaseId": 40858329615,
+        "headSha": "8a8a45867fd94c5c9e0effe5ec957c4fa27c293f",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40858329615",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-29T10:32:12Z",
+        "databaseId": 40858328600,
+        "headSha": "8a8a45867fd94c5c9e0effe5ec957c4fa27c293f",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40858328600",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T23:22:59Z",
+        "databaseId": 40786964849,
+        "headSha": "748f2f8b393a8af5cb5bc585b1b9feca054455aa",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40786964849",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T23:22:59Z",
+        "databaseId": 40786965430,
+        "headSha": "748f2f8b393a8af5cb5bc585b1b9feca054455aa",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40786965430",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T23:20:59Z",
+        "databaseId": 40786720818,
+        "headSha": "4d9b54326a2a170d837d0bf4a93f58c56af864c4",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40786720818",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T23:20:59Z",
+        "databaseId": 40786720684,
+        "headSha": "4d9b54326a2a170d837d0bf4a93f58c56af864c4",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40786720684",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "cancelled",
+        "createdAt": "2026-10-28T23:20:12Z",
+        "databaseId": 40786624083,
+        "headSha": "d2bb73b21b9a56211c3122f68d206f4507e83a29",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40786624083",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T23:20:12Z",
+        "databaseId": 40786624729,
+        "headSha": "d2bb73b21b9a56211c3122f68d206f4507e83a29",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40786624729",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T23:17:58Z",
+        "databaseId": 40786359536,
+        "headSha": "a0e604183f80b3d839f30229b7fe597ab734d2dc",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40786359536",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T23:17:58Z",
+        "databaseId": 40786360464,
+        "headSha": "a0e604183f80b3d839f30229b7fe597ab734d2dc",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40786360464",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T23:16:12Z",
+        "databaseId": 40786147562,
+        "headSha": "63656ca028affce586efcb81de94a4438d8de76a",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40786147562",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T23:16:11Z",
+        "databaseId": 40786146172,
+        "headSha": "63656ca028affce586efcb81de94a4438d8de76a",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40786146172",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T23:10:12Z",
+        "databaseId": 40785408310,
+        "headSha": "b3c0acf4be2de2af2ec9aa0673fba4dcf5c08ac6",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40785408310",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T23:10:12Z",
+        "databaseId": 40785408800,
+        "headSha": "b3c0acf4be2de2af2ec9aa0673fba4dcf5c08ac6",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40785408800",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T23:05:20Z",
+        "databaseId": 40784815791,
+        "headSha": "dd5a3c61a37db83313b8954bc6821951fe5ef38c",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40784815791",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T23:05:20Z",
+        "databaseId": 40784816357,
+        "headSha": "dd5a3c61a37db83313b8954bc6821951fe5ef38c",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40784816357",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T22:58:13Z",
+        "databaseId": 40783932501,
+        "headSha": "a6c5c5d848ad24feb0c95792e82b72d4ba13ae50",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40783932501",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T22:58:13Z",
+        "databaseId": 40783932763,
+        "headSha": "a6c5c5d848ad24feb0c95792e82b72d4ba13ae50",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40783932763",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T22:51:25Z",
+        "databaseId": 40783110854,
+        "headSha": "a81b524053aed39962aaf753dae06b2e5dfc81f5",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40783110854",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T22:51:25Z",
+        "databaseId": 40783111386,
+        "headSha": "a81b524053aed39962aaf753dae06b2e5dfc81f5",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40783111386",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T14:05:56Z",
+        "databaseId": 40702606419,
+        "headSha": "34b7547f48f48dd90b282ed2e128c415719f91bc",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40702606419",
+        "workflowName": "Bike MLOps contract checks"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T14:05:55Z",
+        "databaseId": 40702605286,
+        "headSha": "34b7547f48f48dd90b282ed2e128c415719f91bc",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40702605286",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T13:44:54Z",
+        "databaseId": 40699277363,
+        "headSha": "1401ebe09c153e6292c7d960a97ceb98385e0f3a",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40699277363",
+        "workflowName": "pages-build-deployment"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-10-28T13:44:54Z",
+        "databaseId": 40699276907,
+        "headSha": "1401ebe09c153e6292c7d960a97ceb98385e0f3a",
+        "status": "completed",
+        "url": "https://github.com/kenobix/Claude_practice/actions/runs/40699276907",
+        "workflowName": "Bike MLOps contract checks"
+      }
+    ],
+    "total": 52,
+    "status_counts": {
+      "success": 50,
+      "failure": 1,
+      "cancelled": 1
+    },
+    "historical_cleanup_recheck": {
+      "false_success_artifacts": [
+        {
+          "run_id": 40874109839,
+          "artifact_id": 12896549530,
+          "sha256": "d535fd8a600f3197c0727f4e661faef77dec829d4273b655f69ab6ec68d4e3d8",
+          "digest_matches": true,
+          "has_traceback": true,
+          "has_cleanup_complete": false,
+          "has_multiple_repositories_error": false
+        },
+        {
+          "run_id": 40874601329,
+          "artifact_id": 12897577384,
+          "sha256": "1953f0e8f6f47e946b84a44da64a924e451e099ad10843afe5720c7164914b3b",
+          "digest_matches": true,
+          "has_traceback": true,
+          "has_cleanup_complete": false,
+          "has_multiple_repositories_error": false
+        }
+      ],
+      "pipefail_failure_run": 40876827423,
+      "failure_mentions_multiple_repositories": true
+    },
+    "latest_run": 40966966672,
+    "latest_tests": {
+      "count": 221,
+      "seconds": 9.85,
+      "status": "OK"
+    },
+    "latest_artifact": {
+      "id": 12938433488,
+      "name": "bike-mlops-docker-integration-logs",
+      "size_in_bytes": 1844,
+      "digest": "sha256:40171b0546328a39b813a26815fc32036c248c18b75269167c4b9e9ee33afe79",
+      "expired": false
+    },
+    "downloaded_zip_sha256": "40171b0546328a39b813a26815fc32036c248c18b75269167c4b9e9ee33afe79",
+    "artifact_digest_matches": true,
+    "synthetic_summary": {
+      "status": "synthetic_system_passed",
+      "data": "synthetic_only",
+      "candidate_id": "ad46f6f2ebbd984010153e613c418e9659a9fbb2fadc12ac4cfe554e8214deb0",
+      "model_version": "1",
+      "candidate_registration": "blocked_and_idempotent",
+      "staging_rows_seeded_and_verified": 744,
+      "api_ready": "ready",
+      "offline_api_parity_absolute_delta": 0.0,
+      "api_idempotent_retry": "passed",
+      "api_changed_input_conflict": 409,
+      "api_audit_rows": 1,
+      "runtime_init_rejections": [
+        "normal",
+        "diagnostic"
+      ],
+      "measurement_attempt": "5814f5a9-0bbc-477e-b0f2-04011e38febb",
+      "requests": 1050,
+      "audited_rows": 1050,
+      "measurement_status": "passed",
+      "p95_ms": 31.070696000028875,
+      "numeric_recheck": "matched",
+      "exact_version_evidence_tags": "recorded_and_idempotent",
+      "conflicting_evidence_rejected_without_unblocking": true,
+      "operational_gate": "not_evaluated",
+      "deployment_permission": "blocked",
+      "resource_context": "captured_before_and_after"
+    }
+  },
+  "audit_probes": {
+    "scope": "synthetic fake registry only; no real registration, locks, report files or deployment",
+    "without_monitoring_or_recovery_evidence_accepted": true,
+    "tag_mutations": [
+      {
+        "changed_key": "final_report_sha256",
+        "after_value": "9999999999999999999999999999999999999999999999999999999999999999",
+        "accepted": true,
+        "decision_hashes_unchanged": true
+      },
+      {
+        "changed_key": "capital_operational_plan_sha256",
+        "after_value": "8888888888888888888888888888888888888888888888888888888888888888",
+        "accepted": true,
+        "decision_hashes_unchanged": true
+      },
+      {
+        "changed_key": "capital_operational_p95_ms",
+        "after_value": "-1",
+        "accepted": true,
+        "decision_hashes_unchanged": true
+      }
+    ],
+    "constant_reference_probe": {
+      "legacy_psi": 0.0,
+      "v2": {
+        "algorithm": "psi-v2-constant-bins",
+        "reference_sha256": "4f98ce8823b135c1f72fbe1604ef38cafc5bec2be4a5964cc6a213257c866f41",
+        "reference_status": "ready",
+        "reference_input_counts": {
+          "total": 20,
+          "finite": 20,
+          "missing": 0,
+          "nonfinite": 0
+        },
+        "current_input_counts": {
+          "total": 20,
+          "finite": 20,
+          "missing": 0,
+          "nonfinite": 0
+        },
+        "minimum_current_count": 2,
+        "status": "ready",
+        "psi": 27.630940223106876,
+        "current_bin_counts": [
+          0,
+          0,
+          20
+        ]
+      }
+    }
+  },
+  "registry_uri_probe": {
+    "scope": "constructor only; no API calls",
+    "tracking_uri": "http://127.0.0.1:5001",
+    "registry_uri_from_environment": "http://127.0.0.1:5999",
+    "resolved_registry_uri": "http://127.0.0.1:5999"
+  },
+  "uci_readonly": {
+    "runtime": {
+      "containers": [
+        {
+          "Name": "bike-mlops-api-blue-1",
+          "Service": "api-blue",
+          "State": "running",
+          "Health": ""
+        },
+        {
+          "Name": "bike-mlops-api-green-1",
+          "Service": "api-green",
+          "State": "running",
+          "Health": ""
+        },
+        {
+          "Name": "bike-mlops-caddy-1",
+          "Service": "caddy",
+          "State": "running",
+          "Health": ""
+        },
+        {
+          "Name": "bike-mlops-mlflow-1",
+          "Service": "mlflow",
+          "State": "running",
+          "Health": ""
+        },
+        {
+          "Name": "bike-mlops-postgres-1",
+          "Service": "postgres",
+          "State": "running",
+          "Health": "healthy"
+        }
+      ],
+      "ready": {
+        "http_status": 200,
+        "body": {
+          "status": "ready",
+          "model_name": "bike-demand",
+          "model_version": "3",
+          "quality_gate_status": "passed"
+        }
+      },
+      "version": {
+        "http_status": 200,
+        "body": {
+          "application_version": "0.1.0",
+          "model_name": "bike-demand",
+          "model_version": "3",
+          "artifact_sha256": "79f06eb9d5a6efc378f20ba37fe98a8367762c1cb6c699200152a121a2af4a43",
+          "quality_gate_status": "passed",
+          "feature_contract_version": "bike-demand-features-v1"
+        }
+      }
+    },
+    "database_visible_rows_since_checkpoint": {
+      "predictions_created_since_checkpoint": 0,
+      "deployments_created_or_updated_since_checkpoint": 0,
+      "monitor_windows_created_since_checkpoint": 0,
+      "predicted_data_type": "real"
+    },
+    "limitation": "SELECT and current readiness do not establish absence of deleted records, every historical update, or external/other-registry actions."
+  },
+  "raw_archives": [
+    {
+      "month": "202606",
+      "bytes": 25458172,
+      "sha256": "82deffbb845ddc6a841c23f1759ed18d4ac52091fff81f2d2b27af7435fa8c9c",
+      "matches_recorded_sha256": true
+    },
+    {
+      "month": "202607",
+      "bytes": 24191626,
+      "sha256": "60ac4ee82ab65ff818b60afccf6293056626ff4757460d31bce41e0d0bf8aadd",
+      "matches_recorded_sha256": true
+    },
+    {
+      "month": "202608",
+      "bytes": 24268203,
+      "sha256": "bd59385ba5a872f687d685269d6f6fec7cfe3e7bbf5c4de29422e73b87db4471",
+      "matches_recorded_sha256": true
+    },
+    {
+      "month": "202609",
+      "bytes": 25848624,
+      "sha256": "5f4517b46f7c11e5eb088221f0b83d8c348931e157c117a93346048958171435",
+      "matches_recorded_sha256": true
+    }
+  ],
+  "local_canonical_candidate_report_count": 0,
+  "local_test_log": {
+    "path": "261021/data/reports/20261029-decisions/unit-tests-review-approval.log",
+    "current_sha256": "970a8bf515006d2188c21f8f631df8a65f46da8f116a895833040b8af84c26bf",
+    "current_count": 221,
+    "old_220_log_sha256": "cc910fc1961a068ef479e273f025673d708e9c2431b607c2dc5723a2667fb074",
+    "old_220_bytes_preserved_at_same_path": false
+  },
+  "targeted_test": {
+    "command": ".venv/bin/python -m unittest discover -s tests -p 'test_*deployment*' -v",
+    "count": 11,
+    "seconds": 1.42,
+    "status": "OK",
+    "single_decision_file_test_count": 7,
+    "sha256": "cd537b612acfda6a4258122b037620095ad86629d58294b27fc003420c50312f"
+  },
+  "raw_evidence_sha256": {
+    "snapshot-postgres-ci.log": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9",
+    "synthetic-system-ci.log": "e3144a9727bca182a2ea21eb5976befd7ea8e19b904430f285ec11405eb1fb69",
+    "deployment-tests-070b033.log": "cd537b612acfda6a4258122b037620095ad86629d58294b27fc003420c50312f",
+    "uci-runtime-readonly.json": "c2e7d7212b933837cf7f04b681f3e85d7f0110cf3ac74535cbe5394b6c678601",
+    "ci-latest.zip": "40171b0546328a39b813a26815fc32036c248c18b75269167c4b9e9ee33afe79",
+    "workflow-runs.json": "2e17f581d61c932ca231a0d1946f0274f15738d615ff05f470e56ceac69dbebd",
+    "ci-40874601329.zip": "1953f0e8f6f47e946b84a44da64a924e451e099ad10843afe5720c7164914b3b",
+    "ci-main.log": "57cb7ef27ed75e82224f744a2c0d087c3b815008cdbaa5f79ead47366a34a953",
+    "gate-probes.json": "43f7c25374484aaa97adc1e2ec67dbd7c30a8024197c4f40bfa8d3e1129af90e",
+    "old-ci-cleanup-audit.json": "faea7d8a91932f1c2af06d7c43ca61e40817a905c5fedb5aa877b917a3e44cb6",
+    "registry-uri-probe.json": "8dbf201a3f3f132e2906067b86df04497c6988df88a33925e0b3785ede6fd218",
+    "ci-40874109839.zip": "d535fd8a600f3197c0727f4e661faef77dec829d4273b655f69ab6ec68d4e3d8",
+    "ci-failing-cleanup.log": "3a98dabf4356f3496abd77af221948d573fecff139a59dd45cef3518a2ed9280",
+    "ci-artifacts.json": "31cfc7857fc55f3d5579bcfb11e5a01eef4248a939a86809703e7a9fd89ab4f0",
+    "uci-db-readonly.json": "e2ad9f1beadf628c78ad6c879cf27e6288d949b66d10b1a31158e840ef14b04b",
+    "document-checks.json": "a544a56bd4ce193c03c2719751bc8113d130e451c41ec1815f67a7ec4e9628a8"
+  },
+  "not_performed": [
+    "real candidate fit/validation/final scoring",
+    "real registry gate writes or approvals",
+    "traffic switch",
+    "database initialization/schema migration",
+    "new Docker system run; reused latest archived CI",
+    "full unit-suite rerun; latest CI checked, targeted 11 rerun"
+  ],
+  "document_checks": {
+    "markdown_files_checked": 7,
+    "relative_links_checked": 85,
+    "explicit_new_plan_anchor": "remaining-work-20261030",
+    "task_rows_checked": 17,
+    "problems": [],
+    "local_html_render": "not performed; no markdown/markdown_it/mistune/commonmark/marko parser installed; no dependency installed"
+  },
+  "findings": [
+    {
+      "id": "A01",
+      "priority": "P0",
+      "tasks": [
+        "T01"
+      ]
+    },
+    {
+      "id": "A02",
+      "priority": "P0",
+      "tasks": [
+        "T02"
+      ]
+    },
+    {
+      "id": "A03",
+      "priority": "P1",
+      "tasks": [
+        "T01"
+      ]
+    },
+    {
+      "id": "A04",
+      "priority": "P1",
+      "tasks": [
+        "T03"
+      ]
+    },
+    {
+      "id": "A05",
+      "priority": "P1",
+      "tasks": [
+        "T04",
+        "T05",
+        "T06"
+      ]
+    },
+    {
+      "id": "A06",
+      "priority": "P1",
+      "tasks": [
+        "T08"
+      ]
+    },
+    {
+      "id": "A07",
+      "priority": "P1",
+      "tasks": [
+        "T16"
+      ]
+    },
+    {
+      "id": "A08",
+      "priority": "P2",
+      "tasks": [
+        "T14",
+        "T15"
+      ]
+    }
+  ],
+  "plan_assignment": {
+    "task_count": 17,
+    "sol_lead_d3": 11,
+    "luna_candidate_d2": 4,
+    "luna_candidate_d1": 2,
+    "p0_tasks": [
+      "T01",
+      "T02",
+      "T10"
+    ],
+    "basis": "project risk and fixed acceptance criteria; not a comparative model benchmark"
+  }
+}

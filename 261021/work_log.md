@@ -1955,7 +1955,7 @@ gh api repos/kenobix/Claude_practice/actions/runs/40966168109/artifacts
 gh run view 40966167637 --json databaseId,headSha,status,conclusion,jobs,url
 ```
 
-## 残っている作業の順序
+## 2026-10-30時点の残作業の順序（今回差分監査前）
 
 1. **データ公開待ち:** 202610 archiveが現時点で404。公開後に隣月buffer込みで全期間を再集約し、manifest schema 3・DST・境界・重複・row accounting・hashを監査して評価protocolをfreezeする。
 2. **実データ評価:** 既評価Q3/Q4/旧Capital窓を再利用せず、一度だけvalidationし、通過した同じartifactを独立final期間で一度だけ評価する。
@@ -1963,3 +1963,61 @@ gh run view 40966167637 --json databaseId,headSha,status,conclusion,jobs,url
 4. **R07 monitoring:** Capitalのtraining referenceとPSI v2の接続、period継承、run履歴永続化、label delay・不足母数・error drift等の警告を検証する。実評価データに依存しないfailure caseは合成fixtureで先行できる。
 5. **R08/R09:** 隔離環境でAPI停止、Caddy切替/rollback、中断復旧、保存失敗、backup/restoreを試し、実候補の証拠がそろうまでeligibleにしない。
 6. **R10:** commit/CI/evidence map、再現手順と短いdemoをまとめる。
+
+## 2026-10-30: checkpoint差分監査とモデル別の残課題整理
+
+依頼に従い、前回正式レビューを記録した10dfb8fから070b033までの28コミット・65ファイルを確認した。前回レビューのコード終点は5df03f7。過去全範囲の再監査ではなく、追加差分の実装・作業ログ・CI/artifactと主要な失敗経路を照合した。成果物は[差分レビュー](docs/reviews/20261030-checkpoint-review.md)と[証拠JSON](docs/reviews/20261030-checkpoint-evidence.json)。今回の製品コード変更はない。
+
+### 確認した実装・結果
+
+- 固定plan/attempt台帳、candidate/CSV/registry再照合、PostgreSQL観測lock、lag出典hash、HTTP応答と1,050監査行、report、独立数値recheckまで合成systemで接続されている。
+- 対象コミットに52 workflow runがあり、GitHub表示はsuccess 50/failure 1/cancelled 1。直接runがない2コミットは後続pushで検証された。success表示の40874109839/40874601329もartifactを再取得するとTracebackあり・cleanup_completeなしだったため、system全体の成功に数えない。pipefail後の40876827423では複数repository参照によるDocker cleanup失敗を検出した。
+- 最新070b033のrun 40966966672は221 tests（9.850秒）、synthetic system、PostgreSQL、cleanupがsuccess。最新artifact ID 12938433488の実ZIP SHA-256は40171b0546328a39b813a26815fc32036c248c18b75269167c4b9e9ee33afe79でGitHub digestと一致、ZIP integrity正常。保存したログ2本も確認した。
+- 最新synthetic resultは744観測、1,050要求/監査行、offline/API差0、p95 31.070696000028875ms、numeric recheck一致。正式gateはnot_evaluated、deploymentはblocked。これは実Capital精度/本番SLO/配信承認の結果ではない。
+- deployment系11 testsを再実行し1.420秒で成功。全221件は同じコードの最新CIで確認したため、同一suite/Docker systemのローカル全再実行は重ねなかった。pip checkとsh -nも成功した。pip cache非書込warningは依存整合の失敗ではなかった。
+- 既存UCIの5 containerは稼働、PostgreSQL healthy、ready/versionは200・版3・従来artifact SHA一致。READ ONLYでcheckpoint後に見えるprediction新規、deployment新規/更新、monitor新規行は各0。predicted列はrealのままだった。initialize/schema移行は行っていない。
+- 6〜9月原本4 ZIPのbytes/SHAを再照合して一致。canonical candidate reportは0件。今回は原本の新規取得・再集約、candidate fit、validation/final、実registry tag更新、配信切替を実施していない。10月archiveの公開状態は前作業のHEAD記録を参照し、再照会しなかった。
+
+### 合成負例と計画への反映
+
+A01: fake registryでreview→approve後にfinal_report_sha256またはcapital_operational_plan_sha256を変更しても通常配信判定が通った。承認後のp95を-1へ変更してもruntime validatorが通った。review/approve開始時の負数検査は存在するため、承認後metadataずれへの拒否不足として扱う。
+
+A02: 監視・復旧証拠やreportファイルなしでも合成approveがeligibleまで進んだ。計画の「監視/復旧を先に揃える」条件が実装へ接続されていない。A01/A02を実Capital配信前P0にした。実registryには書いていない。
+
+A03: MLflow client constructorだけでtracking URI=localhost:5001、環境registry URI=localhost:5999を与えるとregistryは5999へ解決した。通常loader/cli clientのURI固定をT01へ追加した。APIは呼んでいない。
+
+A04〜A07: 強制終了journal/実timeout遅延commit、PSI v2の接続、旧REAL列の移行リハーサル、summaryのみのCI artifactから外部再計算するための要求record保存を残課題へ具体化した。
+
+### 過去の記録の訂正
+
+2026-10-30の前節にある単独test_capital_deployment_decisionsコマンドの11 testsという注記は誤り。当該ファイルは7件で、test_deployment_gatesの4件と合わせたglob実行が11件である。今回その2ファイルの実行を再確認した。元の記録を削除せずここへ訂正する。
+
+220件/221件の全suiteが同じunit-tests-review-approval.logを使っており、現在は221件のSHA 970a8bf515006d2188c21f8f631df8a65f46da8f116a895833040b8af84c26bfだけを確認できた。以前のcc910fc...の220件logは同pathに保存されていない。以後はcommit/UTC/attempt付きの新規log名を使う。R06のCLI停止・入力固定未接続・原本未取得という古い説明も現在状態へ更新した。
+
+### 主なコマンドと証拠保存
+
+~~~bash
+git log --reverse --format='%h %aI %s' 10dfb8f..070b033
+git diff --stat 10dfb8f..070b033
+gh run list --branch main --limit 100 --json databaseId,headSha,status,conclusion,workflowName,url,createdAt
+gh run view 40966966672 --log
+gh api repos/kenobix/Claude_practice/actions/runs/40966966672/artifacts
+gh api repos/kenobix/Claude_practice/actions/artifacts/12938433488/zip
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 120 .venv/bin/python -m unittest discover -s tests -p 'test_*deployment*' -v
+.venv/bin/python -m pip check
+sh -n scripts/bikectl
+~~~
+
+GitHubコマンドはrepo root、Python/シェルは261021から実行。GitHub connectorのcommit run検索はPR限定のため、push-run一覧の照合にはghを使用した。Docker/DB/HTTPはread-only操作だけを行った。DB確認にはpostgres containerのpsqlでBEGIN READ ONLYを使い、predictions.created_at、deployments.created_at/updated_at、monitor_windows.created_atが2026-10-28 13:23:39 UTC以降の件数とinformation_schemaの型だけをSELECTした。削除済み行や全外部操作の不在を証明する確認ではない。
+
+raw ZIP/CI log、11件test log、合成probe JSON、READ ONLY runtime/DB JSONはdata/reports/review-20261030へ保存しGit対象外のまま保全した。commitする証拠JSONには元HEADの差分65ファイルのSHA、コミット/run一覧、raw証拠SHA、probe結果を格納し、secretや.envは含めない。
+
+### 更新した計画とモデルの使い分け
+
+計画書11.6を最新の正規一覧とし、T01〜T17を追加した。P0は承認証拠結合・監視/復旧必須化・実fit前protocol固定。Sol推奨はD3の11課題、Luna候補は固定仕様のD2が4課題と定型D1が2課題。Luna候補でも配信契約に関わる設計はSolが先に固定し、同じ受入条件で確認する。
+
+OpenAI Docs skillを参照し、公式model selectionと指定モデルのページを確認した。公式案内は一般的な用途選択の根拠、具体的なT課題への割当は本repoの変更リスクに基づく推奨である。両モデルで同条件比較した実測や解決保証ではなく、今回別モデルへ委譲・自動切替もしていない。
+
+次回の第一作業はSolでT01、続いてT02の必須証拠仕様。Lunaで先行できるのはT14の記録/説明整備で、T16/T05/T06/T15は範囲と受入条件が決まってから着手できる。元の10月archive待ちに全課題を依存させない。
+
+文書の最終確認では7 Markdownの相対リンク85件、新しい明示anchor、17 taskの行構造、証拠JSONを検査し不一致0件、git diff --checkも成功した。HTML renderを試した際はmarkdown moduleがなく失敗し、markdown_it/mistune/commonmark/markoも未導入だった。parserを新規installせず、構造/リンク検査へ切り替えた。シェルの最終exitだけでrender成功と判定せず、document-checks.jsonにHTML render未実施を明記した。Jekyll buildはpush後のPages CIで確認する。探索時に存在しないdeployment.pyを指定したrgはexit 2となり、実際のdeployment_gates.pyを確認し直した。

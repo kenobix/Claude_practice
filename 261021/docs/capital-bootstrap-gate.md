@@ -12,7 +12,9 @@
 
 判断根拠と差分レビューは[20261028-r06-delta-review.md](reviews/20261028-r06-delta-review.md)に記録する。
 
-その後の実装・作業過程の確認は[stagingチェックポイントレビュー](reviews/20261028-staging-checkpoint-review.md)を参照。最新の残課題と依存関係は[計画書11.5](../../261014/plan_mlops.md#115-2026-10-29-synthetic-system-test後の残課題)を正規の一覧とする。
+その後の実装・作業過程は[2026-10-30 checkpoint差分レビュー](reviews/20261030-checkpoint-review.md)を参照。最新の残課題・依存関係・難易度・Sol/Luna担当推奨は[計画書11.6](../../261014/plan_mlops.md#remaining-work-20261030)を正規の一覧とする。
+
+同監査のA01/A02では、承認後のfinal report/plan SHA変更と負のp95を通常配信判定が受理すること、監視・復旧証拠なしでも合成approveが成立することを確認した。review/approveの実装は配信前条件の全面完成を意味しない。実Capital候補のeligible化・通常配信へ進む前にT01/T02を修正し、必要証拠の欠落・不一致を拒否する。
 
 ## 前提とデータの状態
 
@@ -151,7 +153,7 @@ MLFLOW_REGISTRY_URI=http://127.0.0.1:5001 \
 
 このコマンドはledger/候補の既存lockを保持してfrozen plan・linked report SHA・全1,050要求のp95再計算・DB監査・input provenance・前後のhost/container resource context・MLflow version/artifact identityを照合する。同じ証拠の再実行は同じtagを確認して成功するが、別report/attemptで既存tagを上書きしない。tag書込み後も`operational_gate_status=not_evaluated`と`deployment_permission=blocked`を維持する。タグは証拠の参照であり、独立review、運用gate合格、理由付き手動承認、eligible化の代わりにはならない。合成system testで成功・冪等再実行・異なるhashの拒否を確認した。組織的な承認・監査サービスやローカルファイルを直接変更できる人への耐性は提供しない。
 
-実candidateの証拠を独立して読み、運用gateを判断してから別の人が配信承認する操作は次の2段階で記録する。先にreviewerが候補・final report、凍結plan、measurement report、監査/再計算ログを確認し、その後にreviewコマンドを使う。
+review/approveの開発用操作は次の2段階で記録する。実candidateでの使用には上記T01/T02の修正と、監視・復旧を含む必要証拠の完成が先に必要である。reviewerが候補・final report、凍結plan、measurement report、監査/再計算ログと復旧証拠を確認してから、意図した担当者・理由で記録する。
 
 ```bash
 DATA_PROFILE_ID=capital-bikeshare MLFLOW_TRACKING_URI=http://127.0.0.1:5001 \
@@ -239,8 +241,9 @@ seedは候補・最終reportを再検証し、指定したMLflow版のtag、CSV�
 5. **R06/P1・review/approval経路実装・mock検証済み/実候補未検証:** `record_capital_deployment_decision.py review`はexact candidate/version/artifact/reportを含むoperational evidence tagsを検査し、人のreview理由と内容SHAを固定してからoperational gateをpassedにする。reviewだけではblockedを維持する。`approve`は別の名前のapprover、理由、review hashの一致、accuracy/operational gateを要求し、全て有効な場合だけeligibleを最後に書く。通常model loader・runtime init・promoteも決定hashと正確なmodel versionを照合する。部分tag書込後もblockedのまま、同じ内容のretryで完了するmock failure-injection testを追加した。commit `dae897a`のGitHub run `40966168109`で221 testsとsynthetic system/PostgreSQL CIに成功した（[作業ログ](../work_log.md)）。実MLflowでのtag更新と実候補は未確認。名前は認証済みidentityではなく、強いIAM境界でもない。
 6. **R01/R02/R06・原本取得済み/10月buffer待ち:** 202606〜202609 archiveはdownload/ZIP integrity/member/hash検査済み。6〜9月、5〜9月の一時aggregationはgrid/count diagnosticsとして成功したが、protocolへ使う全期間manifestではない。診断CSV/manifestは一時`/tmp`に生成して集計値を記録後に削除済み。202610はHTTP 404。202510 archiveに2025-09-30 startsが含まれる過去実績があり、月境界bufferが必要な可能性を無視できないため10月原本公開後に全archiveを別pathへ集計し、manifest schema 3・row accounting・DST/coverage・hashを監査する。既評価Q3/Q4/旧Capital windowは除外し、計画済みsplit/decision time/gateを固定した後にvalidationを一度行う。原本のbytes/SHA-256は[作業ログ](../work_log.md)に記録する。
 
-最新CI `40966168109`ではcandidate `343a1bbbfd6a068c74fa472ca28bc49274cc9c750a73c8faaaf76766eb6ebd19`のsynthetic-only測定を再現し、744行seed、1,050件要求/監査、offline/API差0、p95 32.332672ms、numeric recheck一致、cleanup完了とPostgreSQL snapshot-lock test成功を確認した。合成データなので実Capital精度・deployment承認を意味せず、gate=`not_evaluated`、permission=`blocked`を維持した。CI artifact ID `12938826361`。GitHub Pages build/deploy run `40966167637`もsuccess。
 7. **R05/R06/P1・実候補後:** 実candidateをblocked登録し、Capital隔離PostgreSQLへseed、staging APIを起動してartifact loading、DB分離、offline/API parity、通常deploy拒否を確認する。復帰したCLIで50 warmup/1,000 sequential benchmarkを実測し、report/hash/statusをexact model versionへ記録する。
 8. **R07〜R10:** 監視参照とPSI、障害・復旧、配信台帳と進行表示、採否記録・デモを計画書に従って完了する。
+
+最新070b033のCI `40966966672`ではcandidate `ad46f6f2ebbd984010153e613c418e9659a9fbb2fadc12ac4cfe554e8214deb0`のsynthetic-only測定を再現し、744行seed、1,050件要求/監査、offline/API差0、p95 31.070696ms、numeric recheck一致、cleanupとPostgreSQL snapshot-lock test成功を確認した。合成データなので実Capital精度・deployment承認を意味せず、gate=`not_evaluated`、permission=`blocked`を維持した。artifact ID `12938433488`のZIP SHAはGitHub digestと一致した。ただしartifactはsummary中心で要求別recordを含まないため、外部でのp95再計算用の保存をT16へ追加した。Pages run `40966966169`もsuccess。
 
 追加のユーザー確認を開始条件にはしない。精度gate・運用gateの実装/証拠、artifact整合性、入力契約、復旧試験、理由付き手動承認が揃うまでは、Capital profileはmigration-onlyを維持する。

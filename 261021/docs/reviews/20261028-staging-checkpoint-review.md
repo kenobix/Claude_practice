@@ -80,7 +80,7 @@ runbookには「実候補とseedデータの一致強制が未完成」とあり
 
 ## 更新した残課題
 
-正規の順序・依存関係・完了条件は[計画書11.5](../../../261014/plan_mlops.md#115-2026-10-28-stagingチェックポイント後の残課題)。次の一つの完成節目はS01〜S04を結んだ「再現可能な合成system testで測定CLIと証拠保存を復帰」。その後に初めて未使用原本を取得し、protocol freeze→一度のvalidation→合格時だけ同一artifactの独立final→実候補の運用測定へ進む。監視・rollback/recover・backup/restore・採否デモも未完了として維持する。
+当時の順序・依存関係・完了条件は計画書11.5へ反映した（後続更新後の正規一覧は[計画書11.6](../../../261014/plan_mlops.md#remaining-work-20261030)）。次の一つの完成節目はS01〜S04を結んだ「再現可能な合成system testで測定CLIと証拠保存を復帰」。その後に初めて未使用原本を取得し、protocol freeze→一度のvalidation→合格時だけ同一artifactの独立final→実候補の運用測定へ進む。監視・rollback/recover・backup/restore・採否デモも未完了として維持する。
 
 ## 今回の主なコマンド
 
