@@ -1541,3 +1541,25 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout 180 .venv/bin/python -m unittest discover -s
 git diff --check
 # 成功。
 ```
+
+## 2026-10-29: 合成候補と最新Dockerfileの隔離基盤を同時に確認
+
+Dockerfileの依存installをsource copyより前のlayerに分離した。依存fileが変わらずsourceだけを変更した場合、Dockerが依存layerを再利用できるようにする目的であり、実際の再build時間短縮は未測定。隔離harnessは所有labelを確認したMLflow container内で、UCI・Capitalそれぞれについてprofile ID・target contract・model nameを確認するようにした。
+
+`--prepare-synthetic --run-infrastructure`で、合成候補のvalidation/final、168時間の学習cutoff条件を確認した後、同一の一時workspaceからDockerfileをbuildし、隔離DB・MLflowを起動した。DB 2台はhealth表示、MLflowのhealthと両profileの設定確認が通り、`infrastructure_ready`、`prediction_requests=0`、`operational_gate=not_evaluated`と`cleanup_complete`を確認した。起動途中の手動health確認では一度connection resetを受けたが、その後harnessのhealth確認は成功した。対象projectのcontainer/network/volume/tagged imageが残っていないことと、既存UCI入口のversion 3・readyを確認した。CLIの最終終了コードは出力取得時に記録し損ねたため、ログ中の正常・cleanup表示と区別して扱う。
+
+試験用sourceは開始時点のcommit `5f3ba9a`と未コミットのDockerfile/profile確認変更をコピーしたもの。並行して後から追加したpending監査照会commit `3035ab1`はimageに含まない。合成candidateのregistry登録・seed・API・予測は実行しておらず、同一stackでの全体試験は未完了。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 600 .venv/bin/python scripts/capital_system_harness.py --prepare-synthetic --run-infrastructure
+# synthetic passed、candidate_generation=prepared、infrastructure_ready、cleanup_complete。
+# data/reports/20261029-retry/harness-combined.log
+# SHA-256: 4b7fa5d9252ab8367abba2cab0fd0f8eba7577f0f0ee8086b08267cac5d6484f
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 180 .venv/bin/python -m unittest discover -s tests -v
+# 190 tests OK (29.632s)。pending監査・profile検証mockを含む。
+# data/reports/20261029-retry/unit-tests-pending.log
+# SHA-256: 5544b3ac200e1a9cfda13c5fdb9ca204820a1e2f4d46f6212febab32601317d4
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+# 成功。
+```

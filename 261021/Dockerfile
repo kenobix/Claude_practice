@@ -6,10 +6,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 COPY pyproject.toml README.md requirements.lock ./
+RUN python -m pip install --no-cache-dir -r requirements.lock
 COPY src ./src
 COPY configs/data-profiles ./configs/data-profiles
-RUN python -m pip install --no-cache-dir -r requirements.lock \
-    && python -m pip install --no-cache-dir --no-deps --no-build-isolation .
+RUN python -m pip install --no-cache-dir --no-deps --no-build-isolation .
 
 # The application resolves profile files relative to its source-tree root /app.
 ENV PYTHONPATH=/app/src

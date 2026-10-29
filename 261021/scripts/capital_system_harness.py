@@ -227,6 +227,21 @@ class Harness:
             if docker("port", ids[0], internal) != f"127.0.0.1:{expected}":
                 raise HarnessError("Published port is not the expected loopback binding")
 
+    def verify_profiles(self) -> None:
+        ids = docker(*self.compose, "ps", "-q", "mlflow", env=self.env).splitlines()
+        if len(ids) != 1:
+            raise HarnessError("Expected exactly one isolated MLflow container")
+        self.assert_owned({"container": ids})
+        program = ("import json; from bike_mlops.config import DATA_PROFILE_ID,TARGET_CONTRACT_ID,MODEL_NAME; "
+                   "print(json.dumps([DATA_PROFILE_ID,TARGET_CONTRACT_ID,MODEL_NAME]))")
+        for profile, target, model in (
+            ("uci-bike-sharing", "uci-bike-sharing-cnt-dataset-local-hour", "bike-demand"),
+            ("capital-bikeshare", "capital-trip-starts-hourly-v1", "bike-demand-capital"),
+        ):
+            result = docker("exec", "--env", f"DATA_PROFILE_ID={profile}", ids[0], "python", "-c", program)
+            if json.loads(result) != [profile, target, model]:
+                raise HarnessError("The current Docker image resolved an unexpected data profile")
+
     def cleanup(self) -> None:
         resources = self.resources()
         self.assert_owned(resources)
@@ -310,6 +325,8 @@ def main() -> None:
                env=harness.env, timeout=600, progress="build_and_start")
         stage = "verify_ports"
         harness.verify_ports()
+        stage = "verify_profiles"
+        harness.verify_profiles()
         stage = "wait_mlflow"
         wait_ready()
         stage = "verify_ports"
