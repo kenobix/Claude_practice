@@ -276,7 +276,7 @@ Capital用Composeのファイル結合を確かめるだけなら、サービス
 docker compose -f compose.yaml -f compose.capital.yaml config -q
 ```
 
-validation/final gateを通過した未承認candidateの登録と運用測定は、通常のblue/greenやCaddyへ接続せず、専用DB付きstaging APIで行います。candidate/final reportの照合、blocked登録、起動、残る検証項目は[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)を参照してください。staging seedはprofileのCSV/manifestを候補・registryと照合し、`--verify-only`で投入後の全観測も確認できます。現在benchmark CLIは`--check-input-only`による学習期間の入力確認専用です。測定中のDB固定とAPI出典照合は未実装なので、実測前に[最新残課題](../../261014/plan_mlops.md#115-2026-10-28-stagingチェックポイント後の残課題)を完了します。Composeのstaging設定だけを確認するときは次を実行できます。これはサービスを起動しません。
+validation/final gateを通過した未承認candidateの登録と運用測定は、通常のblue/greenやCaddyへ接続せず、専用DB付きstaging APIで行います。candidate/final reportの照合、blocked登録、起動、残る検証項目は[`capital-bootstrap-gate.md`](capital-bootstrap-gate.md)を参照してください。staging seedはprofileのCSV/manifestを候補・registryと照合し、`--verify-only`で投入後の全観測も確認できます。benchmark CLIには入力確認専用の`--check-input-only`と、frozen planに基づく`--run-measurement --plan`があります。後者はDB snapshot lock、API data provenance、監査照合を行いますが、計測完了だけでoperational gateやdeploymentを合格にしません。完了reportの確認後は`record_capital_operational_evidence.py`でreport hash/statusをexact MLflow versionへ記録できますが、この記録も承認ではありません。現在は未使用実データのcandidateがないため、実candidateの測定はまだ行いません。Composeのstaging設定だけを確認するときは次を実行できます。これはサービスを起動しません。
 
 ```bash
 docker compose -f compose.yaml -f compose.capital.yaml -f compose.capital-staging.yaml config -q

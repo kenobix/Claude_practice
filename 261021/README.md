@@ -86,5 +86,6 @@ Composeによる運用構成は[実行・運用手順](docs/runbook.md)を参照
 - [x] Capital Bikeshare公式月次データ2023-01〜2026-05を取得し、2023-01〜2026-04の時間別データをローカル生成。候補validationと最終評価の期間を固定。元データと派生CSVはライセンスと`.gitignore`に従いGit対象外。
 - [x] 版3を基準に新データ候補を2025年上期validationで比較。候補MAE/RMSE `168.266 / 265.934`、版3 `389.762 / 608.320`、履歴baseline `208.061 / 329.878`で品質ゲート通過。MLflow登録・昇格は未実施。
 - [x] 同じ学習設定で候補を再学習し、2025年7月〜2026年4月の7,294時間をout-of-time評価。候補MAE/RMSE `126.941 / 211.578`、版3 `326.387 / 518.660`、履歴baseline `181.185 / 296.180`。選定時と同じ候補artifactかは未証明。JSONレポートを保存し、候補登録・API切替は未実施。
+- [x] 2026-10-29、現行計測CLIから合成candidateの隔離system testを完了。744観測・blocked登録・staging API・offline/API一致・retry/409・runtime init拒否・1,050要求・監査・独立数値再確認・MLflow exact-version証拠tagを検証。同値再実行は成功し異なるreport hashは拒否。p95 88.947msは人工データの結果で、operational gateは`not_evaluated`、deploymentは`blocked`。ログは[`work_log.md`](work_log.md)参照。
 
 詳細な実行記録は[work_log.md](work_log.md)を参照してください。今回のvalidationとout-of-time評価期間はこの候補に使い終えています。今後の候補選択には新しい期間または別の外部データが必要です。データ品質監査で全期間集計を閲覧済みのため、未閲覧のblind holdoutではありません。2012年Q3/Q4は再利用していません。現在の稼働版は3です。
