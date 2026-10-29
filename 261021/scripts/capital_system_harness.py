@@ -55,6 +55,9 @@ def docker(*args: str, env: dict | None = None, timeout: int = 90,
             worker.join()
     if result.returncode:
         # Docker/Compose errors can contain connection strings and env values.
+        if args[:2] == ("image", "rm"):
+            details = safe_child_diagnostic(result.stdout, result.stderr, env or {})
+            raise HarnessError(f"Docker operation image removal failed (exit {result.returncode}); {details}")
         raise HarnessError(f"Docker operation {args[0]} failed (exit {result.returncode}); "
                            "details suppressed; underlying cause not determined")
     return result.stdout.strip()
@@ -75,6 +78,11 @@ def check_ports_free(ports=PORTS) -> None:
                 probe.bind(("127.0.0.1", port))
         except OSError as error:
             raise HarnessError(f"Required local port {port} is unavailable; existing services were not stopped") from error
+
+
+def unique_resource_ids(output: str) -> list[str]:
+    """Deduplicate Docker list output before removing shared build image IDs."""
+    return list(dict.fromkeys(line.strip() for line in output.splitlines() if line.strip()))
 
 
 def copy_workspace(source: Path, destination: Path) -> None:
@@ -196,7 +204,12 @@ class Harness:
             "container": docker("ps", "-a", "-q", "--no-trunc", "--filter", project_filter).splitlines(),
             "network": docker("network", "ls", "-q", "--no-trunc", "--filter", project_filter).splitlines(),
             "volume": docker("volume", "ls", "-q", "--filter", project_filter).splitlines(),
-            "image": docker("image", "ls", "-q", "--no-trunc", "--filter", f"label={LABEL}={self.token}").splitlines(),
+            # Multiple Compose service tags can point to one identical image ID.
+            # Passing duplicate IDs to `docker image rm` can make the repeated
+            # removal fail after the first reference has already been removed.
+            "image": unique_resource_ids(docker(
+                "image", "ls", "-q", "--no-trunc", "--filter", f"label={LABEL}={self.token}"
+            )),
         }
 
     def assert_owned(self, resources: dict) -> None:

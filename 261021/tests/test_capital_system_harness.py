@@ -18,6 +18,10 @@ spec.loader.exec_module(harness)
 
 
 class DisposableHarnessTests(unittest.TestCase):
+    def test_shared_compose_image_ids_are_deduplicated_before_cleanup(self):
+        self.assertEqual(harness.unique_resource_ids("sha256:abc\nsha256:abc\n\nsha256:def\n"),
+                         ["sha256:abc", "sha256:def"])
+
     def test_json_result_is_parsed_after_prefix_logs(self):
         value = harness.parse_json_object_with_log_prefix('worker ready\n{"status":"ok","count":2}\n')
         self.assertEqual(value, {"status": "ok", "count": 2})
@@ -189,6 +193,15 @@ class DisposableHarnessTests(unittest.TestCase):
                 harness.docker("compose", "config")
         self.assertNotIn("secret", str(caught.exception))
         self.assertIn("underlying cause not determined", str(caught.exception))
+
+    def test_image_remove_failure_diagnostic_redacts_environment_secrets(self):
+        result = types.SimpleNamespace(returncode=1, stdout="", stderr="conflict for local-secret")
+        with patch.object(harness.subprocess, "run", return_value=result):
+            with self.assertRaises(harness.HarnessError) as caught:
+                harness.docker("image", "rm", "sha256:synthetic", env={"APP_DB_PASSWORD": "local-secret"})
+        self.assertIn("conflict", str(caught.exception))
+        self.assertNotIn("local-secret", str(caught.exception))
+        self.assertIn("[REDACTED]", str(caught.exception))
 
     def test_build_heartbeat_reports_elapsed_without_command_or_environment(self):
         def slow_command(*args, **kwargs):
