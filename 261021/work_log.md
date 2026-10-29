@@ -1777,3 +1777,29 @@ git diff --check
 - prior synthetic runのmeasurement statusはpassでも正式operational gateは`not_evaluated`、deploymentは`blocked`。人工fixtureの結果で、実Capital dataや本番性能を示さない。新しいproject-prefix guardを含むfull synthetic pathは、port利用可能なGitHub Actions runnerで確認する。
 
 次は修正をレビュー可能な単位としてcommit/pushし、新CIでcleanup failureが解消し、PostgreSQL試験が依存導入後に独立実行されることを確認する。これが通った後も、意図的な中断/API遅延commit/audit保存失敗のfailure injection、独立review gate、未使用data protocolの固定・実候補評価、R07〜R10は残る。
+
+## 2026-10-29: project-scoped cleanup修正のGitHub CI確認
+
+commit `6079903` (`Scope synthetic Docker cleanup to project tags`) のpushで起動したGitHub Actions run [`40879692956`](https://github.com/kenobix/Claude_practice/actions/runs/40879692956)を確認した。前run `40876827423`で確定したDocker imageの複数repository参照によるcleanup失敗に対し、所有labelとrandom Compose project prefixの両方を確認してexact tagを消す変更が、CIの全system経路で成功した。
+
+### CI結果
+
+- `tests` job: **success**。213 tests passed（8.818秒）。
+- `synthetic-system` job: **success**。synthetic system test、project-scoped cleanup、PostgreSQL snapshot-lock test、ログartifact uploadがすべて成功。
+- synthetic candidate ID: `bcd2842892b6423125a014003d8e79b3b6dd19120a2f4428919e035595ceeb6c`。人工データ744時間をseedし、blocked model version 1の再登録、API ready、offline/API予測差0、同一request retry、変更入力の409を確認。
+- 逐次measurement: warmup後1,000 request、合計1,050 request/audit行、エラー0、p95 `26.522195000012516 ms`。独立した数値再計算は一致し、exact model version evidence tagsの同一値再実行は成功、競合する証拠の上書きは拒否された。
+- 正式operational gateは`not_evaluated`、deployment permissionは`blocked`を維持。上記はsynthetic fixtureとGitHub runnerの結果であり、実Capital candidate・実需要・本番SLOを示すものではない。
+- cleanupは`cleanup_complete`（Compose project `bikemlopstestd5ad46d1fc0ee354`）。強制削除を使わず、所有resourceを除去した。PostgreSQLの使い捨てtest containerも停止・削除された。
+- PostgreSQL snapshot-lock test: `status=passed`。非superuserの一時DBで観測更新の阻止、lock中のAPI予測/audit成功、候補とsource hash一致、missing/extra rows・duplicate IDs・changed audit/data・wrong hashの拒否、lock acquisition timeout、lock接続喪失の拒否、context終了後のlock解放を確認。
+- 14日保持artifact `bike-mlops-docker-integration-logs`、artifact ID `12898819750`、size 1,840 bytes、digest `sha256:4e53e8e84e17c4d12e9d86ea7bf1f65251728468d65ea7c41908202223c6dbd2`。
+
+### 結果の確認方法
+
+GitHub Actions画面: [run 40879692956](https://github.com/kenobix/Claude_practice/actions/runs/40879692956)。workflowのartifact一覧から`bike-mlops-docker-integration-logs`を取得できる。job logではsynthetic system testの`synthetic_system_passed`・`cleanup_complete`と、snapshot testの`status: passed`を確認した。artifactは2026-11-12まで保持予定。
+
+このCI成功により、前回の計画にあった「project-prefix guardを含むfull synthetic pathはport利用可能なGitHub runnerで確認する」は完了とする。exact codeのlocal full runがport `55433`の`EADDRINUSE`でpreflight停止した事実は失敗のまま記録し、CIの成功でローカル実行まで成功したとは言い換えない。実データのprotocol凍結・candidate/final評価、独立review gate、異常時の中断/遅延commit/audit failure、R07〜R10は未完了である。
+
+### 更新対象
+
+- `261014/plan_mlops.md` §11.5: cleanup/CI taskを「CI合成system/DB検証完了」とし、run、candidate、p95、artifactを追記。
+- `261021/docs/capital-bootstrap-gate.md`: GitHub CI evidenceと使い捨てPostgreSQLの確認範囲を更新。実candidate評価・gate・配信はblockedのまま。
