@@ -152,7 +152,7 @@ MLFLOW_REGISTRY_URI=http://127.0.0.1:5001 \
 
 隔離system testは `.venv/bin/python scripts/capital_system_harness.py --run-synthetic-system` で実行する。人工データで候補を作り、使い捨てCompose projectへ登録・seed・API起動・計測・監査・数値再確認・exact version tag記録まで通す。タグの同値再実行、異なるreport hashの拒否、拒否後もblockedを維持することを検査する。ランダムなproject名・一時credential・所有labelを用い、自分が作ったcontainer/network/volume/imageだけを削除する。port 5001・8110・55433・55434が使用中なら既存サービスを止めずに失敗する。test成功は実データの精度やdeployment承認を示さない。Docker imageのbuildと依存取得が必要になる場合がある。
 
-GitHub Actionsでは`.github/workflows/bike-mlops-contracts.yml`の`synthetic-system` jobが同じ隔離system testを実行し、ログを14日間のartifactとして保存する。workflowを追加した後のGitHub上での初回実行結果は未確認であり、ローカルでの合成成功とは別に確認する。
+GitHub Actionsでは`.github/workflows/bike-mlops-contracts.yml`の`synthetic-system` jobが合成system testとPostgreSQL snapshot-lock testを実行し、ログを14日間のartifactとして保存する。最初の2 runでは合成計測とPostgreSQL testが完了したが、system test後のDocker image cleanupが失敗し、`pipefail`なしのpipelineがそれを隠してsummaryをsuccessにしていた。cleanupの共有image ID重複除去とimage rmのsecret-redacted診断を実装し、ローカル再実行は`cleanup_complete`を確認した。修正後のGitHub Actions再実行はpush後に追跡し、両テストとcleanupのログを確認する。
 
 PostgreSQLの観測snapshot lock、writer競合、接続喪失の使い捨てDB試験は次でも実行できる。イメージ`postgres:17.6-bookworm`がローカルに必要で、テスト自身が一時containerを作成して最後に削除する。
 

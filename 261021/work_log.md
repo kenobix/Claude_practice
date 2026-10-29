@@ -1710,3 +1710,29 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 300 \
 - 使い捨て・非superuser DBで、観測writerの阻止、API予測と監査のlock内保存、由来SHA照合、監査行の不足/余剰/重複/改変拒否、観測変化拒否、lock取得timeout、lock接続喪失拒否と解放を確認した。
 - scriptは専用labelのcontainerを削除。実行後の`docker ps -a --filter label=bike.snapshot.test`は空で、既存Composeサービスは変更していない。
 - GitHub ActionsのDocker jobにもこの試験を追加し、system harnessと同じ14日保持artifactへログをまとめるよう更新した。今回取得中のCI runは直前commitのworkflow定義であり、新しいstepのCI結果は次のpush run待ち。
+
+## 2026-10-29: GitHub system jobのcleanup失敗を検出
+
+- GitHub Actions run `40874109839`のjob/API表示はsuccessだったが、downloadした`bike-mlops-synthetic-system-log`を確認すると、合成measurementとnumeric recheck後に`docker image rm`がexit 1となり、`cleanup_complete`が出ずTracebackで終わっていた。従ってこのrunはsystem testの完全成功として採用しない。artifactのmeasurementは人工データの計測成功を示すが、cleanup失敗を含む。
+- runner job logはshellを`/usr/bin/bash -e {0}`としており`pipefail`が無かった。`timeout ... python ... | tee ...`では先頭processの失敗がpipeline statusから隠れるため、workflow両pipelineに`set -o pipefail`を追加した。
+- Compose buildで複数serviceが同じimage IDを共有した場合、`docker image ls -q`に同IDが複数現れ、同じIDを繰り返し`image rm`へ渡す可能性がある。このケースをcleanup前にdeduplicateするpure helperとunit testを追加した。runnerはすでに破棄され、当時のimage rm詳細stderrも安全な診断方針により出力されていないため、これが実障害の原因だったとは断定しない。
+- 更新workflowで両system testとcleanupの終了コードが検出されることをpush後に再確認する。failureはsuccessとして記録せず、Docker daemonのimage removal詳細causeが分からない場合はログartifactで特定する。
+
+### 修正後のローカル再実行
+
+```bash
+set -o pipefail
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 1200 \
+  .venv/bin/python scripts/capital_system_harness.py --run-synthetic-system 2>&1 \
+  | tee data/reports/20261029-system/synthetic-system-cleanup-dedup.log
+
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 240 \
+  .venv/bin/python -m unittest discover -s tests -v 2>&1 \
+  | tee data/reports/20261029-system/unit-tests-cleanup-pipefail.log
+```
+
+- Full suiteは207 tests passed in `23.082s`。log SHA-256: `f455e60de2c2ffb533679d44d9ce4746702e7f79b1f47bfed4d1b6c4c82ca017`。その後に追加したimage rm診断のsecret redactionを含むharness専用18 testsもpass。
+- `compileall`, `pip check`, `git diff --check`は成功。MLflow/SQLAlchemy `noload` deprecation warningは残る。
+- Docker system testはsynthetic candidate `4e7f1fa488a8a190788ee627e7b44032a13478386aeb4db65289b068ba9aa6a8`、model version `1`、attempt `8b905f9f-9c46-4500-abf7-69b78f30f55b`で、744観測・API/offline delta `0.0`・50 warmup+1,000 requests・audit 1,050行・独立recheck一致・exact version evidence tag/idempotency/conflict拒否までpass。synthetic p95は`86.32213300006697 ms`。正式gateは`not_evaluated`、deploymentは`blocked`を維持。
+- harnessは`cleanup_complete`を出力し、専用projectの残存container/network/volume照会は空。system log SHA-256: `1abb326b41dc0a4d66f43a7fdcc3e625b3480b9181748f0dcb62591216b97639`。これは人工dataとこの計算機の結果で、Capital実candidateや本番SLOの合格根拠ではない。
+- GitHub run `40874601329`もunit jobとsnapshot PostgreSQL testはsuccessだったが、downloadしたartifactでimage cleanup失敗を再確認した。これは修正前workflow/sourceのrunなので成功扱いしない。dedup/secret-redacted image diagnostic/pipefailを含む修正後GitHub runは次のpush後に確認する。
