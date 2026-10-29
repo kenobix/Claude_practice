@@ -1931,4 +1931,35 @@ test ! -e /tmp/capitalbikeshare-202605-202609-boundary-diagnostic-manifest.json
 
 ### 計画と次の節目
 
-`261014/plan_mlops.md` §11.5と `docs/capital-bootstrap-gate.md` に、追加test後の221件結果、GitHub再実行待ち、202610 buffer待ちを反映した。次の節目はこの差分を対象パスだけでcommit/pushし、新しい221 tests・synthetic system・PostgreSQL CIを確認すること。その後も実データprotocol固定、candidate評価、blocked運用計測、実MLflow復旧、R07〜R10が残る。
+`261014/plan_mlops.md` §11.5と `docs/capital-bootstrap-gate.md` に、追加test後の221件結果と202610 buffer待ちを反映した。commit/push後のCIも成功した。データ待ちの間に既評価窓を消費しない。次はR07 monitoring等のデータ到着と独立して進められる残課題を確認する。
+
+## 2026-10-30: 追加failure-injection testのGitHub CI確認
+
+commit `dae897a1a6c2a905e3f64e6711636f3732d4231a`をpushし、GitHub Actions run [`40966168109`](https://github.com/kenobix/Claude_practice/actions/runs/40966168109)を確認した。全体`success`。
+
+- `tests` job: success。**221 tests passed in 7.992秒**、pip checkとcompileallもsuccess。review/approvalの部分tag書込失敗testを含む。
+- `synthetic-system` job: success。candidate `343a1bbbfd6a068c74fa472ca28bc49274cc9c750a73c8faaaf76766eb6ebd19`、model version 1、744行seed、offline/API予測差0、idempotent retry pass、変更入力409、runtime init拒否を確認。
+- synthetic workload: 1,050要求/1,050監査行、errorなし、p95 `32.332671999995455 ms`、numeric recheck matched、exact version evidence tagsは記録・冪等、競合証拠は拒否。`cleanup_complete`も確認。
+- 正式operational gate=`not_evaluated`、deployment permission=`blocked`。これは人工fixture/GitHub runnerでの結果で、実Capitalモデルの精度や配信承認ではない。
+- disposable PostgreSQL snapshot-lock testも`passed`。
+- artifact `bike-mlops-docker-integration-logs`、ID `12938826361`、size 1,841 bytes、SHA-256 `82747f77d96dd7445514c659ed4b8b3fef5790092a6fb972137035c7a990aa92`。
+- 同時に起動したGitHub Pages build/deploy run [`40966167637`](https://github.com/kenobix/Claude_practice/actions/runs/40966167637)もsuccess。
+
+CI確認コマンド:
+
+```bash
+gh run list --branch main --limit 10 --json databaseId,headSha,status,conclusion,workflowName,createdAt,url
+gh run view 40966168109 --json databaseId,headSha,status,conclusion,jobs,url
+gh run view 40966168109 --log
+gh api repos/kenobix/Claude_practice/actions/runs/40966168109/artifacts
+gh run view 40966167637 --json databaseId,headSha,status,conclusion,jobs,url
+```
+
+## 残っている作業の順序
+
+1. **データ公開待ち:** 202610 archiveが現時点で404。公開後に隣月buffer込みで全期間を再集約し、manifest schema 3・DST・境界・重複・row accounting・hashを監査して評価protocolをfreezeする。
+2. **実データ評価:** 既評価Q3/Q4/旧Capital窓を再利用せず、一度だけvalidationし、通過した同じartifactを独立final期間で一度だけ評価する。
+3. **実candidate運用測定:** exact versionをblockedで登録し、隔離DB/APIでseed・1,000件benchmark・出典/監査/hashを確認する。
+4. **R07 monitoring:** Capitalのtraining referenceとPSI v2の接続、period継承、run履歴永続化、label delay・不足母数・error drift等の警告を検証する。実評価データに依存しないfailure caseは合成fixtureで先行できる。
+5. **R08/R09:** 隔離環境でAPI停止、Caddy切替/rollback、中断復旧、保存失敗、backup/restoreを試し、実候補の証拠がそろうまでeligibleにしない。
+6. **R10:** commit/CI/evidence map、再現手順と短いdemoをまとめる。
