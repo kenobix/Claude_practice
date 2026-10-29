@@ -147,6 +147,8 @@ class MeasurementRunnerTests(unittest.TestCase):
         self.assertTrue(report["request_sequence_completed"])
         self.assertEqual(report["operational_gate"]["status"], "failed")
         self.assertEqual(report["audit"]["status"], "not_evaluated")
+        self.assertEqual(report["partial_evidence"]["verified_response_count"], 1050)
+        self.assertIsNone(report["partial_evidence"]["pending_request_id"])
 
     def test_snapshot_release_failure_does_not_commit_success(self):
         @contextmanager
@@ -172,7 +174,25 @@ class MeasurementRunnerTests(unittest.TestCase):
         report_path = self.fixture.root / record["attempts"][0]["report"]["path"]
         report = json.loads(report_path.read_text())
         self.assertTrue(report["pending_request_id"].endswith(":warmup:0000"))
+        self.assertEqual(report["partial_evidence"]["pending_request_status"], "outcome_unknown_may_have_been_sent")
         self.assertEqual(report["operational_gate"]["status"], "failed")
+
+    def test_returned_incomplete_report_includes_verified_and_pending_ids(self):
+        def partial(*, request_observer, attempt_id, **_):
+            first = {"request_id": f"capital-op:{attempt_id}:warmup:0000", "target_hour": "2024-01-01 00:00:00"}
+            second = {"request_id": f"capital-op:{attempt_id}:warmup:0001", "target_hour": "2024-01-01 01:00:00"}
+            request_observer.before_request(first)
+            request_observer.after_response(first, {"data_version_sha256": "b" * 64})
+            request_observer.before_request(second)
+            return {"completed": False, "measurements": [], "operational_gate": {"measurement_status": "failed"}}
+        self.run.side_effect = partial
+        result = self.execute()
+        report = json.loads(Path(result["report_path"]).read_text())
+        evidence = report["partial_evidence"]
+        self.assertEqual(evidence["verified_response_count"], 1)
+        self.assertTrue(evidence["verified_response_ids"][0].endswith(":warmup:0000"))
+        self.assertTrue(evidence["pending_request_id"].endswith(":warmup:0001"))
+        self.assertEqual(evidence["pending_request_status"], "outcome_unknown_may_have_been_sent")
 
     def test_foreign_database_rejected_before_attempt(self):
         self.db.url = "postgresql://bike_app:unused@127.0.0.1:55432/bikeops"

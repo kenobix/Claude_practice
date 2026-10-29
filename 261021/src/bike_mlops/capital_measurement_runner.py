@@ -46,13 +46,20 @@ def _attach_attempt(report: dict, attempt) -> None:
 
 def _failure_report(attempt, stage: str, error_kind: str, report: dict | None, observer) -> dict:
     """Preserve partial request evidence without writing exception text or credentials."""
+    exchanges = observer.exchanges if observer is not None else []
+    pending = getattr(observer, "_pending", None) if observer is not None else None
+    verified_ids = [payload["request_id"] for payload, _ in exchanges]
     if report is None:
-        exchanges = observer.exchanges if observer is not None else []
-        pending = getattr(observer, "_pending", None) if observer is not None else None
-        report = {"schema_version": 1, "completed": False, "measurements": [], "verified_response_ids": [
-            payload["request_id"] for payload, _ in exchanges],
+        report = {"schema_version": 1, "completed": False, "measurements": [], "verified_response_ids": verified_ids,
             "pending_request_id": pending.get("request_id") if isinstance(pending, dict) else None}
     _attach_attempt(report, attempt)
+    report["partial_evidence"] = {
+        "verified_response_ids": verified_ids,
+        "verified_response_count": len(verified_ids),
+        "pending_request_id": pending.get("request_id") if isinstance(pending, dict) else None,
+        "pending_request_status": "outcome_unknown_may_have_been_sent" if isinstance(pending, dict) else None,
+        "limitation": "In-memory evidence; a killed process may lose it and a timed-out request may commit later.",
+    }
     report["request_sequence_completed"] = report.get("completed") is True
     report["completed"] = False
     gate = report.setdefault("operational_gate", {})

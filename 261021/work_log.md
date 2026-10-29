@@ -1422,3 +1422,23 @@ git diff --check
 ```
 
 CIでは監視期間・PSIのcommit `63656ca`と内部runnerのcommit `a0e6041`の各workflow成功を確認した。後続commitには処理中またはキャンセルされたworkflowがあり、その時点で全成功とは扱わない。合成試験と実PostgreSQL試験だけでは、実Capital候補の精度やAPI運用目標の達成を意味しない。
+
+## 2026-10-29: Dockerビルドの追跡と測定失敗時の部分証拠
+
+前回中断した隔離buildのDocker Buildx履歴 `khtt5z0ot54cs60f436e1ojuy` を読み取り、ベースimageのmetadata取得と`COPY src`は完了し、`pip install -r requirements.lock`の段階で中止されたことを確認した。履歴のpip出力には多数のwheelダウンロードがあり、確認した範囲でretry・timeout・ERRORの表示はなかった。最後に見えた取得はnumpyのwheelで、複数wheelの表示速度はおよそ192〜521 kB/sだった。従って依存取得が時間を要していたことは確認できるが、他の停滞要因の有無や完了までの時間は判定できない。通常のDocker image一覧に同名base imageがなくても、BuildKit履歴ではmetadataとFROMが完了していたため、image一覧だけから取得失敗とは判断しない。
+
+測定失敗reportでは、benchmarkからreportが返っている場合も、応答の出典を検証済みの要求ID・件数と処理中の要求IDを`partial_evidence`へ保存するよう補強した。処理中の要求は送信済みか不明で、timeout後に遅れてDBへcommitされる可能性もあるため、`outcome_unknown_may_have_been_sent`とする。これらはメモリ上に残った証拠であり、強制終了時の完全な復元は保証しない。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_capital_measurement_runner.py' -v
+# 8 tests OK (1.143s)。途中停止・監査失敗での部分証拠を含む合成試験。
+# data/reports/20261029-retry/runner-partial-tests.log
+# SHA-256: 2a54a7f2f37cd6dd976c48aca16e8c86b412ed14b4d5e522253f22c53ceede67
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 180 .venv/bin/python -m unittest discover -s tests -v
+# 176 tests OK (22.697s)。
+# data/reports/20261029-retry/unit-tests.log
+# SHA-256: 55d1a866cf146a47065d73d38adf4f0fbde822f0e44e8fd2fb79a7e0fb94125e
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+# 成功。既存の非推奨警告あり。
+```
