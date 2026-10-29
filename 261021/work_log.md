@@ -1803,3 +1803,39 @@ GitHub Actions画面: [run 40879692956](https://github.com/kenobix/Claude_practi
 
 - `261014/plan_mlops.md` §11.5: cleanup/CI taskを「CI合成system/DB検証完了」とし、run、candidate、p95、artifactを追記。
 - `261021/docs/capital-bootstrap-gate.md`: GitHub CI evidenceと使い捨てPostgreSQLの確認範囲を更新。実candidate評価・gate・配信はblockedのまま。
+
+## 2026-10-29: Capital operational reviewと別人承認のfail-closed経路
+
+### 実装
+
+- `src/bike_mlops/capital_deployment_decisions.py`を追加。registry versionがREADYで、Capital profile/target、accuracy gate/policy、operational report/plan/request hash、監査・source provenance・numeric recheck・resource contextを照合する。
+- review/approvalのtag更新は既存operational evidence writerと同じmodel-version lockを使い、協調する操作同士を直列化する。
+- 独立reviewの`passed`は、登録済み測定statusがpassedかつp95が250ms以下の場合に限る。review理由と正確なversion/candidate/registered artifact/reportの組から決定SHAを作りMLflow tagsへ記録する。review後も配信permissionはblockedのまま。`rejected`はoperational gateをfailedにしblockedを維持する。
+- 2段階目の`approve`はreviewがpassedで、別人名のapproverと理由があり、review hashと同じmodel version/candidate/artifact/reportへ結び付いている場合だけ許可する。registryでは承認tag群を先に記録し、`deployment_permission=eligible`を最後に設定する。途中で書き込みが途切れた場合はeligibleに到達しない。既存の同一decisionは再実行可能、内容が違うtagは上書き拒否。
+- `require_deployment_eligible`を強化し、Capital profileはmodel name/versionを必須にした。通常API model loader、`runtime init`、`deploy promote`が決定SHA、reviewer/approverの分離、運用証拠、p95上限、version/artifact/report bindingを検証する。UCI profileの既存条件は変えていない。
+- `scripts/record_capital_deployment_decision.py review|approve`を追加。実候補は存在しないため、MLflow上の実tag更新・実review・実promoteは行っていない。
+- 限界: reviewer/approverの名前はこのローカル学習用ツール内の自己申告であり、OS/MLflowの認証identityを検証しない。hashは内容の整合性を検出する仕組みで、権限管理・電子署名・組織の独立監査ではない。reportファイル実体のAPI起動時再取得と、MLflowへのreport artifact upload、partial tag書込からの実MLflow復旧試験は今後の残課題。
+
+### 試験と検証
+
+```bash
+.venv/bin/python -m unittest discover -s tests -p 'test_*deployment*' -v
+# 10 tests OK
+
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 240 \
+  .venv/bin/python -u -m unittest discover -s tests -v \
+  2>&1 | tee data/reports/20261029-decisions/unit-tests-review-approval.log
+.venv/bin/python -m compileall -q src scripts tests
+.venv/bin/python -m pip check
+git diff --check
+```
+
+- 全suite: 220 tests passed in 23.466秒。log SHA-256 `cc910fc1961a068ef479e273f025673d708e9c2431b607c2dc5723a2667fb074`。compileall、pip check、diff checkも成功。
+- 合成/mock確認: review→blocked維持→別人approval→eligible、同じdecisionの冪等再実行、review decision競合拒否、同一actor拒否、measurement failed/p95 >250拒否、audit欠落・decision理由改変・別model version拒否、UCI gate後方互換。
+- 初回の通常sandbox実行ではTestClient最初のtestの時点で出力を得られず停止した。以前調査したloopback/socket制限と同じ実行環境問題と判断し、socket利用を許可した実行条件で再実行したところ全suiteが完了した。最初の試行は成功扱いしていない。
+- CLI `--help`でreview/approve引数とsubcommandを確認した。MLflow実接続・Docker test・実候補はこの作業では未実施。
+
+### 計画の更新
+
+- `261014/plan_mlops.md` §11.5順番2を「review/approval経路は合成実装済み、実候補・実MLflowは未検証」に更新。
+- `docs/capital-bootstrap-gate.md`へ2段階コマンドと自己申告identityの制限を追記。現時点で実candidateがないため、approval/eligible/promoteは実行していない。

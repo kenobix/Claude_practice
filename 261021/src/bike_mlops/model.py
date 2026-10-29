@@ -51,7 +51,10 @@ def load_registered_model(model_name: str, model_version: str | int, tracking_ur
             f"Registered model version {model_version} uses target contract {registered_target!r}, "
             f"not {TARGET_CONTRACT_ID!r}"
         )
-    require_deployment_eligible(DATA_PROFILE_ID, registered_version.tags)
+    require_deployment_eligible(
+        DATA_PROFILE_ID, registered_version.tags,
+        model_name=registered_version.name, model_version=str(registered_version.version),
+    )
     expected_hash = registered_version.tags.get("artifact_sha256")
     if not expected_hash:
         raise ValueError(f"Registered model version {model_version} has no artifact SHA-256")

@@ -155,7 +155,10 @@ def command_runtime_init(args) -> None:
         raise ValueError(f"Model version {version} is not READY in MLflow")
     quality_gate = registered_version.tags.get("quality_gate")
     _assert_registered_model_profile(registered_version)
-    require_deployment_eligible(DATA_PROFILE_ID, registered_version.tags)
+    require_deployment_eligible(
+        DATA_PROFILE_ID, registered_version.tags,
+        model_name=registered_version.name, model_version=str(registered_version.version),
+    )
     if quality_gate != "passed" and not args.diagnostic:
         raise ValueError("Initial runtime model did not pass the validation quality gate")
     if not registered_version.tags.get("artifact_sha256"):
@@ -609,7 +612,10 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
             raise ValueError(f"Model version {version} is not READY in MLflow")
         if not model_version.tags.get("artifact_sha256"):
             raise ValueError(f"Model version {version} has no artifact SHA-256")
-        require_deployment_eligible(DATA_PROFILE_ID, model_version.tags)
+        require_deployment_eligible(
+            DATA_PROFILE_ID, model_version.tags,
+            model_name=model_version.name, model_version=str(model_version.version),
+        )
         quality_gate = model_version.tags.get("quality_gate")
         if quality_gate != "passed" and not (rollback or diagnostic):
             raise ValueError("Model version did not pass the validation quality gate; use --diagnostic only for a controlled local test")
