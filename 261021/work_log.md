@@ -1442,3 +1442,23 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout 180 .venv/bin/python -m unittest discover -s
 git diff --check
 # 成功。既存の非推奨警告あり。
 ```
+
+## 2026-10-29: 保存済み測定行の数値再計算
+
+`capital_measurement_recheck.py`を追加した。呼出側が台帳の正規reportとファイルSHAを確認する前提で、planとreportのattempt/モデル/endpoint/期間を照合し、暖機50と本測定1,000件の順序、各ID、時刻、HTTP結果、数値、出典hashの形式を検査する。保存されたIDのdigestと件数を再計算し、1,000件のlatencyからnearest-rank p95を計算してreportの記載値・250ms条件と照合する。結果は数値の再確認だけであり、運用gateは`not_evaluated`、配信は`blocked`のまま。記録した内容そのものが正しいこと、DB監査、retryの不在、資源状態、reportファイルの真正性はこの関数だけでは保証しない。候補の承認・MLflow tag更新には未接続。
+
+合成の正常、p95超過、ID重複、時刻・件数・モデル・hash・p95改変、未完了を検査した。実benchmarkループで合成通信から作った1,050件のreportも入力し、再計算できることを確認した。これは実モデルや実APIの性能測定ではない。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_capital_measurement_recheck.py' -v
+# 5 tests OK (0.467s)。
+# data/reports/20261029-retry/measurement-recheck-integration.log
+# SHA-256: 4d713ceaf2d73948bc877c614140b81e0cbf7599989251eb5b9ac393664f4a75
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 180 .venv/bin/python -m unittest discover -s tests -v
+# 181 tests OK (24.802s)。
+# data/reports/20261029-retry/unit-tests-recheck.log
+# SHA-256: 7eb040b6e1aca16189c62d83fb8654169c1e1e35981ac6201f629e9e5d471c20
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+# 成功。既存の非推奨警告あり。
+```

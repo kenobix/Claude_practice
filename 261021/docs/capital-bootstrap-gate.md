@@ -114,6 +114,8 @@ DATA_PROFILE_ID=capital-bikeshare MLFLOW_TRACKING_URI=http://127.0.0.1:5001 \
 
 測定の失敗reportには、出典を確認できた応答のIDと件数、処理途中の要求IDを`partial_evidence`に保存する。処理途中の要求は送信されたか、または後からDBに保存されるかが不明なため、未送信や失敗確定とは扱わない。これらはメモリ上の情報から記録するため、強制終了や電源断のときに失われる場合がある。
 
+保存された測定行を固定planと照合し、要求順・時刻・ID・件数・p95を再計算する独立部品を追加した。これは記録された数値だけを点検するもので、入力出典、DB監査、retryの有無、資源、reportファイルの真正性や配信可否は証明しない。利用する側は先に台帳の参照とreportのSHAを確認する必要があり、この部品は運用gateの判定や登録先への結果反映にまだ接続していない。
+
 隔離system test用の基盤は `.venv/bin/python scripts/capital_system_harness.py` で、Dockerを起動せず一時workspace作成と削除を確認できる。`--run-infrastructure`を付けた場合のみ、専用Compose projectでDBとMLflowの起動を試み、終了時に所有labelを確認して片付ける。port 5001・8110・55433・55434が使用中なら既存のサービスを止めずに失敗する。この基盤はまだ候補やAPIを作らず、通し試験の完成を示さない。実行にはDocker imageのbuildと依存取得が必要になる場合がある。
 
 測定前にblocked registrationを作成し、生成された`data/runtime-capital-staging/staging.env`を使って、staging DBへのseed、staging API起動の順に行う。seedは検査済みCapital profileのCSV/manifestを使い、専用PostgreSQLのloopback port 55434へ記録する。
