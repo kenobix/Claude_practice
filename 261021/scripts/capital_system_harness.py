@@ -1,7 +1,8 @@
 """Disposable infrastructure foundation for the future Capital system test.
 
-It does not generate a candidate, start the staging API, send predictions or
-claim that the operational gate passed. Infrastructure startup is opt-in.
+It can prepare a synthetic candidate, but does not register it, start the
+staging API, send predictions or claim that the operational gate passed.
+Infrastructure startup is opt-in.
 """
 from __future__ import annotations
 
@@ -135,6 +136,36 @@ def compose_environment() -> dict:
     return env
 
 
+def prepare_synthetic_workspace(root: Path) -> dict:
+    """Create synthetic candidate evidence inside the already isolated workspace."""
+    root = root.resolve()
+    if (root.parent != Path(tempfile.gettempdir()).resolve()
+            or not root.name.startswith(("capital-synthetic-test-", "capital-system-harness-"))):
+        raise HarnessError("Synthetic data requires a disposable workspace")
+    (root / ".synthetic-fixture-owned").write_text("synthetic only\n", encoding="utf-8")
+    scripts = root / "scripts"
+    scripts.mkdir()
+    for name in ("test_capital_synthetic_fixture.py", "prepare_capitalbikeshare.py", "evaluate_capitalbikeshare_holdout.py"):
+        source = SOURCE_ROOT / "scripts" / name
+        if source.is_symlink() or not source.is_file():
+            raise HarnessError(f"Synthetic fixture script missing or symlinked: {name}")
+        before = hashlib.sha256(source.read_bytes()).hexdigest()
+        shutil.copy2(source, scripts / name)
+        if (source.is_symlink() or hashlib.sha256(source.read_bytes()).hexdigest() != before
+                or hashlib.sha256((scripts / name).read_bytes()).hexdigest() != before):
+            raise HarnessError(f"Synthetic fixture script changed while copying: {name}")
+    environment = {"PATH": os.environ.get("PATH", ""), "LANG": "C.UTF-8", "DATA_PROFILE_ID": "capital-bikeshare",
+                   "MLFLOW_DISABLE_AGENT_HINT": "1", "PYTHONPATH": os.pathsep.join((str(root / "src"), str(root)))}
+    result = subprocess.run([sys.executable, str(scripts / "test_capital_synthetic_fixture.py"), "--internal-child"],
+                            cwd=root, env=environment, capture_output=True, text=True, timeout=240)
+    if result.returncode:
+        raise HarnessError(f"Synthetic candidate subprocess failed (exit {result.returncode}); no real data was used")
+    summary = json.loads((root / "synthetic-fixture-result.json").read_text(encoding="utf-8"))
+    if summary.get("status") != "passed" or summary.get("data") != "synthetic":
+        raise HarnessError("Synthetic candidate summary is invalid")
+    return summary
+
+
 def make_override(destination: Path, token: str) -> Path:
     labels = {LABEL: token}
     override = {
@@ -237,6 +268,7 @@ def wait_ready() -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-infrastructure", action="store_true", help="Build and briefly start disposable DB and MLflow")
+    parser.add_argument("--prepare-synthetic", action="store_true", help="Generate a synthetic evaluated candidate in the temporary workspace")
     args = parser.parse_args()
     project = "bikemlopstest" + secrets.token_hex(8)
     token = secrets.token_hex(16)
@@ -250,21 +282,24 @@ def main() -> None:
         print(json.dumps({"status": "interrupted", "cause": signal.Signals(signum).name}), flush=True)
         raise KeyboardInterrupt(f"Harness received {signal.Signals(signum).name}")
 
+    for signum in old_handlers:
+        signal.signal(signum, interrupt_on_signal)
     try:
         copy_workspace(SOURCE_ROOT, root)
         make_override(root, token)
         write_synthetic_credentials(root)
         harness = Harness(root, project, token)
+        if args.prepare_synthetic:
+            stage = "synthetic_candidate"
+            print(json.dumps(prepare_synthetic_workspace(root), ensure_ascii=False), flush=True)
         if not args.run_infrastructure:
-            print(json.dumps({"status": "workspace_prepared", "candidate_generation": "not_implemented",
+            print(json.dumps({"status": "workspace_prepared", "candidate_generation": "prepared" if args.prepare_synthetic else "not_implemented",
                               "prediction_requests": 0, "docker_started": False}))
             return
         stage = "preflight"
         check_local_daemon()
         check_ports_free()
         harness.assert_empty()
-        for signum in old_handlers:
-            signal.signal(signum, interrupt_on_signal)
         print(json.dumps({"status": "starting_disposable_infrastructure", "project": project,
                           "workspace": str(root)}), flush=True)
         stage = "compose_config"
@@ -279,7 +314,7 @@ def main() -> None:
         wait_ready()
         stage = "verify_ports"
         harness.verify_ports()
-        print(json.dumps({"status": "infrastructure_ready", "candidate_generation": "not_implemented",
+        print(json.dumps({"status": "infrastructure_ready", "candidate_generation": "prepared" if args.prepare_synthetic else "not_implemented",
                           "api_started": False, "prediction_requests": 0,
                           "operational_gate": "not_evaluated", "project": project}))
     except HarnessError as error:

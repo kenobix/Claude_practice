@@ -115,6 +115,20 @@ class DisposableHarnessTests(unittest.TestCase):
         self.assertFalse(json.loads(output.getvalue())["docker_started"])
         command.assert_not_called()
 
+    def test_synthetic_option_runs_in_isolation_before_infrastructure(self):
+        events = []
+        with patch.object(harness, "prepare_synthetic_workspace", side_effect=lambda _: events.append("synthetic") or {"status": "passed", "data": "synthetic"}), \
+             patch("sys.argv", ["harness", "--prepare-synthetic", "--run-infrastructure"]), \
+             patch.object(harness, "check_local_daemon"), patch.object(harness, "check_ports_free"), \
+             patch.object(harness.Harness, "assert_empty"), patch.object(harness.Harness, "cleanup"), \
+             patch.object(harness.Harness, "verify_ports"), patch.object(harness, "wait_ready"), \
+             patch.object(harness, "docker", side_effect=lambda *a, **kw: events.append("docker") or ""), \
+             redirect_stdout(io.StringIO()) as output:
+            harness.main()
+        self.assertEqual(events[0], "synthetic")
+        completed = [json.loads(line) for line in output.getvalue().splitlines() if '"status": "infrastructure_ready"' in line]
+        self.assertEqual(completed[0]["candidate_generation"], "prepared")
+
     def test_failed_compose_up_still_attempts_cleanup(self):
         def operation(*args, **kwargs):
             if "up" in args:

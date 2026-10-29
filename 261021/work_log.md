@@ -1493,3 +1493,26 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout 180 .venv/bin/python -m unittest discover -s
 git diff --check
 # 成功。先行commit 8a8a458 / 42cfd60 の各2 workflowはsuccess。
 ```
+
+## 2026-10-29: 隔離ハーネス内の合成候補の再現
+
+`capital_system_harness.py --prepare-synthetic`と単独確認用`scripts/test_capital_synthetic_fixture.py`を追加した。必要なsourceと3 scriptsを一時workspaceへコピーし、コピー前後のSHAを照合する。子プロセスは限定した環境変数・一時workspace内の`PYTHONPATH`を使い、project root・profile・一時directory名とmarkerが一致しない場合は生成前に停止する。外部データや既存評価台帳、registryは使用しない。正常終了と通常の中断時には一時workspaceを削除する。SIGKILLや電源断はcleanupを保証しない。
+
+合成の1月の貸出21,612件を生成し、集計・protocol凍結・候補学習・validation・独立したfinal評価を実施した。今回の合成候補IDは`ec2dd283216fa183cd5fa223434d135074b760159758eda38515ea5f6d78f54a`。固定された精度条件でvalidation/finalは合格したが、実データの精度を示すものではない。運用測定用の168時間 `[2024-01-07 22:00, 2024-01-14 22:00)` は最後のラベル到着が学習cutoff `2024-01-15 00:00` と一致する。旧合成試験の締切違反2時間を使用していない。registry登録・API・予測要求は行わず、配信はblockedである。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 240 .venv/bin/python scripts/capital_system_harness.py --prepare-synthetic
+# synthetic passed、candidate_generation=prepared、prediction_requests=0、docker_started=false。
+# 成功後、一時workspaceを削除。生成物は永続保存していない。
+# data/reports/20261029-retry/harness-synthetic-final.log
+# SHA-256: 55359ad93b03216561d51d18fa9e1ad18ec939f54b6d379b6d37fbae985cb17f
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 180 .venv/bin/python -m unittest discover -s tests -v
+# 185 tests OK (22.457s)。実projectからの直接生成拒否、中断時の一時領域cleanup、optionの順序も検証。
+# data/reports/20261029-retry/unit-tests-synthetic.log
+# SHA-256: bc85a0688565cbb802e56755869469c2c2ff717e8bdea0378b19bee837a42110
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+# 成功。既存の非推奨警告あり。
+```
+
+合成候補を生成したworkspaceと隔離MLflow/DBを同じ実行で維持してregistry登録・seed・API・監査まで渡す経路は未完成。`--prepare-synthetic`と`--run-infrastructure`を同時指定した順序はmockで検査したが、双方を同時に実Dockerで実行していない。次は候補をblocked登録し、seedからstaging API・監査・結果照合へつなぐ。未使用の実評価窓はまだ消費しない。

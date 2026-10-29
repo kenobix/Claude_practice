@@ -116,7 +116,7 @@ DATA_PROFILE_ID=capital-bikeshare MLFLOW_TRACKING_URI=http://127.0.0.1:5001 \
 
 保存された測定行を固定planと照合し、要求順・時刻・ID・件数・p95を再計算する独立部品を追加した。`.venv/bin/python scripts/recheck_capital_measurement.py --candidate-id <候補ID> --attempt-id <試行ID>`は候補・台帳の既存ロックを取得し、台帳が参照するplanとreportのSHAを確認してから数値を再計算する。これは記録された数値だけを点検するもので、入力出典、DB監査、retryの有無、資源、記録の真正性や配信可否は証明しない。運用gateの判定や登録先への結果反映にはまだ接続していない。
 
-隔離system test用の基盤は `.venv/bin/python scripts/capital_system_harness.py` で、Dockerを起動せず一時workspace作成と削除を確認できる。`--run-infrastructure`を付けた場合のみ、専用Compose projectでDBとMLflowの起動を試み、終了時に所有labelを確認して片付ける。port 5001・8110・55433・55434が使用中なら既存のサービスを止めずに失敗する。この基盤はまだ候補やAPIを作らず、通し試験の完成を示さない。実行にはDocker imageのbuildと依存取得が必要になる場合がある。
+隔離system test用の基盤は `.venv/bin/python scripts/capital_system_harness.py` で、Dockerを起動せず一時workspace作成と削除を確認できる。`--prepare-synthetic`を付けると、一時領域で人工データから候補を学習・評価し、学習締切に合う168時間の入力も確認する。`--run-infrastructure`を付けた場合のみ、専用Compose projectでDBとMLflowの起動を試み、終了時に所有labelを確認して片付ける。port 5001・8110・55433・55434が使用中なら既存のサービスを止めずに失敗する。合成候補のregistry登録・API・予測は未実装であり、通し試験の完成を示さない。実行にはDocker imageのbuildと依存取得が必要になる場合がある。
 
 測定前にblocked registrationを作成し、生成された`data/runtime-capital-staging/staging.env`を使って、staging DBへのseed、staging API起動の順に行う。seedは検査済みCapital profileのCSV/manifestを使い、専用PostgreSQLのloopback port 55434へ記録する。
 
