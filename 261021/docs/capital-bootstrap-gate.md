@@ -1,6 +1,6 @@
 # Capital Bikeshare初回モデルの評価基準
 
-更新日: 2026-10-28
+更新日: 2026-10-30
 
 ユーザーから3点の判断を委任されたため、以下を採用した。仕様上の確認待ちは解消したが、実データのprotocol凍結・評価・運用測定は未完了。実装済みの範囲は「実装状況」で区別し、判断前の結果をこの基準で合格扱いに変更しない。
 
@@ -19,8 +19,9 @@
 - Capital Bikeshareは`capital-trip-starts-hourly-v1`、UCIは`uci-bike-sharing-cnt-dataset-local-hour`。初回Capitalモデルには同target incumbentがないため、比較対象は同targetのhistorical baselineにする。
 - Capitalの評価済み期間（2025年上期validation、2025年7月〜2026年4月の後続評価）は新しいvalidation/後続評価に再利用しない。過去の期間を学習材料に含める場合も、未使用の評価期間が増えたとは扱わない。
 - `timestamp + 3時間`は履歴再生用のラベル遅延仮定。月次履歴が実際に3時間で公開されることを意味しない。
-- 2026年6〜9月archiveは前回のHEAD requestでHTTP 200、10月archiveは404だった。今回それらのURLは再照会していない。6〜9月の内容は未取得・未閲覧のまま。
+- 2026-10-30に公式[system-data page](https://capitalbikeshare.com/system-data)とS3 archive objectを再確認した。検索結果のbucket index表示は202605までだったが、直接HTTP HEADで202609は200、202610は404 Not Foundと確認した。202606〜202609は取得済みで、ZIPとCSV memberを検査した。4 ZIPは`data/raw/capitalbikeshare/monthly/`にローカル保存し、各bytes/SHAは[`work_log.md`](../work_log.md)へ記録した。これらは公開ソース原本で、Gitには入れない。
 - 月次archiveが隣月に始まるtripを含む実績がある。新snapshotには対象範囲・隣月bufferの採否と理由を事前記録する。9月末までの評価に10月bufferが必要と判断した場合は公開を待ち、結果を見て期間を短縮しない。snapshotへの収録を超える母集団の完全性は保証しない。
+- 6〜9月だけの一時diagnostic aggregationは6/1〜9/30の2,928時間で欠測・timestamp重複0。さらに既存の5月archiveを含む5〜9月diagnosticも3,672時間で欠測・timestamp重複0、読込3,224,860行中、この5 archive内でID重複0だった。ただし202604 archiveと202610 archiveを含まず、9月末の重複/後続境界を確認できない。両CSV/manifestは`/tmp`の診断出力であり、candidate・validation・final評価に使わない。
 
 ## 評価窓の事前案
 
@@ -235,8 +236,8 @@ seedは候補・最終reportを再検証し、指定したMLflow版のtag、CSV�
 2. **R06/P1:** incumbentなしbootstrap経路とcandidate/final精度gateを合成試験する。実装済み。ここで合格した合成結果を実データの合格根拠に使わない。
 3. **R06/P1・CI合成system/DB検証完了:** run `40879692956`でblocked登録の冪等性、744行seed、artifact ready、offline/API一致、retry/409、runtime init拒否、1,050要求、DB監査、独立numeric recheck、exact version tags、conflict拒否、project-scoped cleanupを確認。p95 `26.522195ms`は人工fixture/GitHub runnerの数値に限る。snapshot-lock PostgreSQL testも合格し、観測writer阻止、監査/出典/件数/hashの拒否、lock timeout・接続喪失・解放を確認した。artifact ID `12898819750`。正式gateは`not_evaluated`、deploymentは`blocked`。実Caddy切替と実候補評価は未試験。
 4. **R06/P1・合成検証済み/実データ前:** seed時・投入後のDB照合、training split/label cutoff/168時刻検査、測定中DB snapshot lock、API応答と監査出典照合を実装し、合成SQLite/PostgreSQLとsystem testで検証した。未使用実データから作る候補での再検証は未実施。
-5. **R06/P1・review/approval経路実装・mock検証済み/実候補未検証:** `record_capital_deployment_decision.py review`はexact candidate/version/artifact/reportを含むoperational evidence tagsを検査し、人のreview理由と内容SHAを固定してからoperational gateをpassedにする。reviewだけではblockedを維持する。`approve`は別の名前のapprover、理由、review hashの一致、accuracy/operational gateを要求し、全て有効な場合だけeligibleを最後に書く。通常model loader・runtime init・promoteも決定hashと正確なmodel versionを照合する。単体試験はmock registryのみ。実MLflowでのtag更新、最終報告ファイル実体の取得、意図的な中断後のpartial-tag復旧は未確認。名前は認証済みidentityではなく、強いIAM境界でもない。
-6. **R06/P1:** 月境界buffer規則を確定→未取得の原本を取得→新pathのmanifest schema 3監査→非重複を確認→protocol freeze→validationを一度→合格時のみ同じartifactで独立final評価を一度行う。
+5. **R06/P1・review/approval経路実装・mock検証済み/実候補未検証:** `record_capital_deployment_decision.py review`はexact candidate/version/artifact/reportを含むoperational evidence tagsを検査し、人のreview理由と内容SHAを固定してからoperational gateをpassedにする。reviewだけではblockedを維持する。`approve`は別の名前のapprover、理由、review hashの一致、accuracy/operational gateを要求し、全て有効な場合だけeligibleを最後に書く。通常model loader・runtime init・promoteも決定hashと正確なmodel versionを照合する。部分tag書込後もblockedのまま、同じ内容のretryで完了するmock failure-injection testを追加した。commit `77fe955`のGitHub run `40883359147`は当時の220 testsとsynthetic/PostgreSQL CIに成功し、追加test後の最終221 testsはlocalで全件成功した（[作業ログ](../work_log.md)）。この変更を含む新CI結果待ち。実MLflowでのtag更新と実候補は未確認。名前は認証済みidentityではなく、強いIAM境界でもない。
+6. **R01/R02/R06・原本取得済み/10月buffer待ち:** 202606〜202609 archiveはdownload/ZIP integrity/member/hash検査済み。6〜9月、5〜9月の一時aggregationはgrid/count diagnosticsとして成功したが、protocolへ使う全期間manifestではない。診断CSV/manifestは一時`/tmp`に生成して集計値を記録後に削除済み。202610はHTTP 404。202510 archiveに2025-09-30 startsが含まれる過去実績があり、月境界bufferが必要な可能性を無視できないため10月原本公開後に全archiveを別pathへ集計し、manifest schema 3・row accounting・DST/coverage・hashを監査する。既評価Q3/Q4/旧Capital windowは除外し、計画済みsplit/decision time/gateを固定した後にvalidationを一度行う。原本のbytes/SHA-256は[作業ログ](../work_log.md)に記録する。
 7. **R05/R06/P1・実候補後:** 実candidateをblocked登録し、Capital隔離PostgreSQLへseed、staging APIを起動してartifact loading、DB分離、offline/API parity、通常deploy拒否を確認する。復帰したCLIで50 warmup/1,000 sequential benchmarkを実測し、report/hash/statusをexact model versionへ記録する。
 8. **R07〜R10:** 監視参照とPSI、障害・復旧、配信台帳と進行表示、採否記録・デモを計画書に従って完了する。
 

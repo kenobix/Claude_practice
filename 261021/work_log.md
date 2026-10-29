@@ -1839,3 +1839,96 @@ git diff --check
 
 - `261014/plan_mlops.md` §11.5順番2を「review/approval経路は合成実装済み、実候補・実MLflowは未検証」に更新。
 - `docs/capital-bootstrap-gate.md`へ2段階コマンドと自己申告identityの制限を追記。現時点で実candidateがないため、approval/eligible/promoteは実行していない。
+
+## 2026-10-30: 残課題の再開と最新確認
+
+### review/approvalの部分書込失敗
+
+commit `77fe955`後に、MLflow tagの保存自体は成功したが応答だけ失われる状態をreviewer tagとapprover tagで注入するunit testを追加した。初回はfake registryの故障注入キーが実コードのtag名と不一致で、想定地点で例外が発生しなかった。test fixtureを正しい `capital_deployment_approver` に直した。これは製品コードの不具合ではなくtest設定の誤りだった。
+
+```bash
+.venv/bin/python -m unittest tests.test_capital_deployment_decisions -v
+# 11 tests passed
+```
+
+追加testでは、review tagの部分書込後もgateは `not_evaluated`、deploymentは `blocked` のまま、同一reviewの再実行は回復することを確認した。approval tagの部分書込後も `blocked` を維持し、同じ承認を再実行したときだけ `eligible` になる。
+
+### 全suiteの実行と検証
+
+通常sandboxで全suiteを始めたところ、最初のFastAPI TestClient testから進まず、Ctrl-Cで終了した（exit 130）。環境制限下の停止として記録し、test失敗とは扱わない。同じコマンドをloopback socketが使える実行条件で再実行した。
+
+```bash
+set -e -o pipefail
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 240 .venv/bin/python -u -m unittest discover -s tests -v 2>&1 | tee data/reports/20261029-decisions/unit-tests-review-approval.log
+.venv/bin/python -m compileall -q src scripts tests
+.venv/bin/python -m pip check
+git diff --check
+```
+
+全221 tests passed in 23.820秒。記録logのSHA-256は `970a8bf515006d2188c21f8f631df8a65f46da8f116a895833040b8af84c26bf`。compileallとdiff checkはexit 0、pip checkは `No broken requirements found.`。MLflow/SQLAlchemyから `noload` 非推奨warningが出たがtestは成功した。このunit/integration suiteは実MLflowへのtag書込や実Capital candidateの審査を検証してはいない。新しいGitHub CIはcommit/push後に確認する。
+
+### Capital archiveの公開状態と原本
+
+公式 [System Dataページ](https://capitalbikeshare.com/system-data) はtrip履歴が月次公開であると案内している。検索エンジンが返したS3 index表示は202605までだったが、キャッシュが古い可能性があるため、S3 objectへ直接HTTP HEADを行って確認した。
+
+```text
+202609: 200, 25,848,624 bytes, Last-Modified Mon, 05 Oct 2026 19:09:57 GMT
+202610: 404 Not Found
+```
+
+確認には公式S3 objectへのHTTP HEADを使った。bucket indexの検索表示ではなく、対象object自身のstatus/headersを確認する。
+
+```bash
+python3 - <<'PY'
+import urllib.error
+import urllib.request
+
+for month in ('202609', '202610'):
+    url = f'https://s3.amazonaws.com/capitalbikeshare-data/{month}-capitalbikeshare-tripdata.zip'
+    request = urllib.request.Request(url, method='HEAD')
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            print(month, response.status, response.headers.get('Content-Length'), response.headers.get('Last-Modified'))
+    except urllib.error.HTTPError as error:
+        print(month, error.code, error.reason)
+PY
+```
+
+202606〜202609の原本4件はZIP/CSV構造を検査済みで、bytesとSHA-256をローカルで再確認した。原本は `data/raw/capitalbikeshare/monthly/` に置き、Gitには追加しない。
+
+| archive | bytes | SHA-256 |
+|---|---:|---|
+| `202606-capitalbikeshare-tripdata.zip` | 25,458,172 | `82deffbb845ddc6a841c23f1759ed18d4ac52091fff81f2d2b27af7435fa8c9c` |
+| `202607-capitalbikeshare-tripdata.zip` | 24,191,626 | `60ac4ee82ab65ff818b60afccf6293056626ff4757460d31bce41e0d0bf8aadd` |
+| `202608-capitalbikeshare-tripdata.zip` | 24,268,203 | `bd59385ba5a872f687d685269d6f6fec7cfe3e7bbf5c4de29422e73b87db4471` |
+| `202609-capitalbikeshare-tripdata.zip` | 25,848,624 | `5f4517b46f7c11e5eb088221f0b83d8c348931e157c117a93346048958171435` |
+
+SHA-256は次のように照合した。
+
+```bash
+sha256sum data/raw/capitalbikeshare/monthly/202606-capitalbikeshare-tripdata.zip \
+  data/raw/capitalbikeshare/monthly/202607-capitalbikeshare-tripdata.zip \
+  data/raw/capitalbikeshare/monthly/202608-capitalbikeshare-tripdata.zip \
+  data/raw/capitalbikeshare/monthly/202609-capitalbikeshare-tripdata.zip
+```
+
+4件の合計は99,766,625 bytes。6〜9月診断aggregateは2,928時間、欠測・timestamp重複0。5月archiveを加えた別診断は3,672時間、欠測・timestamp重複0、3,224,860入力行、対象5archive内のride ID重複0。出力CSVのSHA-256は6〜9月 `759cf4080e062d2e51b20f9e41bff69b1a894bc61289866c9e360a43b9a589bf`、5〜9月 `17555b113bb9724d36c9e53dcc58ae55c02e857d980734fbd4751c710e8fd002`。どちらも `/tmp` の一時診断物で、学習や評価には使用していない。
+
+前月境界が必要と考えて5月archiveを追加したが、4月と10月のbufferがなく、9月末の重複や完全性は確定できない。過去の202510 archiveには2025-09-30開始tripが含まれていた。従って評価窓を縮めず、202610が公開された後に全期間snapshotを作り直す。
+
+一時診断CSVとmanifest 4件を `rm -f` で削除し、それぞれ `test ! -e` を実行して不存在を確認した。集計値とhashは本ログへ転記した。今回もcandidate fit、validation、final評価、MLflow登録はしていない。既評価Q3/Q4の再利用もしていない。
+
+```bash
+rm -f /tmp/capitalbikeshare-202606-202609-diagnostic.csv \
+  /tmp/capitalbikeshare-202606-202609-diagnostic-manifest.json \
+  /tmp/capitalbikeshare-202605-202609-boundary-diagnostic.csv \
+  /tmp/capitalbikeshare-202605-202609-boundary-diagnostic-manifest.json
+test ! -e /tmp/capitalbikeshare-202606-202609-diagnostic.csv
+test ! -e /tmp/capitalbikeshare-202606-202609-diagnostic-manifest.json
+test ! -e /tmp/capitalbikeshare-202605-202609-boundary-diagnostic.csv
+test ! -e /tmp/capitalbikeshare-202605-202609-boundary-diagnostic-manifest.json
+```
+
+### 計画と次の節目
+
+`261014/plan_mlops.md` §11.5と `docs/capital-bootstrap-gate.md` に、追加test後の221件結果、GitHub再実行待ち、202610 buffer待ちを反映した。次の節目はこの差分を対象パスだけでcommit/pushし、新しい221 tests・synthetic system・PostgreSQL CIを確認すること。その後も実データprotocol固定、candidate評価、blocked運用計測、実MLflow復旧、R07〜R10が残る。

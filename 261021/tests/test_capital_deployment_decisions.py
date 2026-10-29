@@ -17,15 +17,19 @@ from bike_mlops.profiles import load_data_profile
 
 
 class FakeRegistry:
-    def __init__(self, tags=None, version="2"):
+    def __init__(self, tags=None, version="2", fail_after_tag=None):
         self.version = version
         self.tags = dict(tags or {})
+        self.fail_after_tag = fail_after_tag
 
     def get_model_version(self, name, version):
         return SimpleNamespace(name=name, version=str(version), status="READY", tags=dict(self.tags))
 
     def set_model_version_tag(self, name, version, key, value):
         self.tags[key] = value
+        if self.fail_after_tag == key:
+            self.fail_after_tag = None
+            raise RuntimeError("simulated lost response after registry tag write")
 
 
 def eligible_registry():
@@ -126,6 +130,26 @@ class CapitalDeploymentDecisionTests(unittest.TestCase):
         result = record_operational_review(self.client, "2", "reviewer-a", "rejected", "evidence is incomplete")
         self.assertEqual(result["operational_gate_status"], "failed")
         self.assertEqual(self.client.tags["deployment_permission"], "blocked")
+
+    def test_partial_review_or_approval_tag_write_fails_closed_and_same_retry_recovers(self):
+        client = eligible_registry()
+        client.fail_after_tag = "capital_operational_review_reviewer"
+        with self.assertRaisesRegex(RuntimeError, "simulated lost response"):
+            record_operational_review(client, "2", "reviewer-a", "passed", "reviewed")
+        self.assertEqual(client.tags["operational_gate_status"], "not_evaluated")
+        self.assertEqual(client.tags["deployment_permission"], "blocked")
+        record_operational_review(client, "2", "reviewer-a", "passed", "reviewed")
+
+        client.fail_after_tag = "capital_deployment_approver"
+        with self.assertRaisesRegex(RuntimeError, "simulated lost response"):
+            record_deployment_approval(client, "2", "approver-b", "approved")
+        self.assertEqual(client.tags["deployment_permission"], "blocked")
+        record_deployment_approval(client, "2", "approver-b", "approved")
+        self.assertEqual(client.tags["deployment_permission"], "eligible")
+        require_deployment_eligible(
+            "capital-bikeshare", client.tags,
+            model_name=CAPITAL_MODEL_NAME, model_version="2",
+        )
 
 
 if __name__ == "__main__":
