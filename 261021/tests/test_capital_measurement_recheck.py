@@ -3,12 +3,15 @@ from __future__ import annotations
 import copy
 import hashlib
 import unittest
+import json
 from unittest.mock import patch
 
 import pandas as pd
 
-from bike_mlops.capital_measurement_recheck import recheck_measurement_records
+from bike_mlops.capital_measurement_recheck import recheck_linked_measurement, recheck_measurement_records
 from bike_mlops import operational_benchmark as benchmark
+from bike_mlops import capital_operational_recovery as recovery
+from bike_mlops import capital_operational_ledger as ledger
 import test_capital_operational_ledger as ledger_tests
 
 
@@ -111,6 +114,34 @@ class MeasurementRecheckTests(unittest.TestCase):
         report.update({"operational_attempt_id": self.attempt_id, "operational_plan_sha256": self.plan["plan_sha256"],
                        "operational_plan_file_sha256": self.file_sha})
         self.assertEqual(self.check(report)["numeric_status"], "passed")
+
+    def test_ledger_link_and_hash_are_checked_without_rewriting_evidence(self):
+        with self.fixture.attempt() as lease:
+            lease.mark_requests_started()
+            report = copy.deepcopy(self.report)
+            report.update({"operational_attempt_id": lease.attempt_id, "benchmark_id": lease.attempt_id,
+                           "operational_plan_file_sha256": lease.plan_file_sha256})
+            for row in report["measurements"]:
+                row["request_id"] = row["request_id"].replace(self.attempt_id, lease.attempt_id)
+            report["operational_gate"]["observed"]["request_id_sha256"] = hashlib.sha256(
+                "\n".join(row["request_id"] for row in report["measurements"]).encode()).hexdigest()
+            path = self.fixture.report_dir / f"operational-{lease.attempt_id}.json"
+            path.write_text(json.dumps(report))
+            lease.finish(status="completed", report_path=path)
+        before = (path.read_bytes(), self.fixture.ledger_path.read_bytes())
+        args = dict(candidate_id=self.fixture.candidate, attempt_id=lease.attempt_id,
+                    ledger_path=self.fixture.ledger_path, lock_dir=self.fixture.lock_dir)
+        with patch.object(recovery, "PROJECT_ROOT", self.fixture.root):
+            result = recheck_linked_measurement(**args)
+            self.assertEqual(result["ledger_binding"], "matched")
+            self.assertEqual(result["numeric_status"], "passed")
+            self.assertEqual(before, (path.read_bytes(), self.fixture.ledger_path.read_bytes()))
+            with ledger._exclusive_lock(self.fixture.lock_dir / f"{self.fixture.candidate}.lock"):
+                with self.assertRaisesRegex(RuntimeError, "locked"):
+                    recheck_linked_measurement(**args)
+            path.write_text(path.read_text() + " ")
+            with self.assertRaisesRegex(ValueError, "different SHA-256"):
+                recheck_linked_measurement(**args)
 
 
 if __name__ == "__main__":

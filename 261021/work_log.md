@@ -1462,3 +1462,34 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout 180 .venv/bin/python -m unittest discover -s
 git diff --check
 # 成功。既存の非推奨警告あり。
 ```
+
+## 2026-10-29: 隔離基盤の再起動試験と台帳からの数値照合
+
+前回の中断後にBuildx履歴を確認し、依存wheelの取得が進んでいたため、最終版harnessを使用しタイムアウト480秒で再試行した。ベースimageと依存を取得し、専用project `bikemlopsteste40f08cefe079fae`でPostgreSQL・MLflowが起動、固定loopback portとMLflow healthを確認し、正常終了・cleanupした。履歴では少なくとも204件のwheel取得とアプリのpip install完了を確認した。試験開始時に一時directoryへコピーされたsourceは`748f2f8`相当で、その後の部分証拠・数値照合の変更は含まない。試験用projectのcontainer・network・volume・tagged imageの残存はなく、既存UCI入口はversion 3・readyを返した。合成candidate、staging API、予測要求は実行しておらず、運用gateは未評価。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 480 .venv/bin/python scripts/capital_system_harness.py --run-infrastructure
+# infrastructure_ready、prediction_requests=0、operational_gate=not_evaluated、cleanup_complete。終了0。
+# data/reports/20261029-retry/infrastructure.log
+# SHA-256: 5b0468e80a7898131a626135941b4af59ab870dccf47990a183ca34446e909ad
+```
+
+数値再計算には、候補・台帳の既存ロックを取得し、正規のplan・completed attempt・reportのSHAとIDを読み取りで確認してから再計算する入口`recheck_linked_measurement`とCLIを追加した。ロック中は拒否し、report改変は検出する。処理は台帳やreportを書き換えず、DB監査・retry・資源・実際の入力の独立した検証や運用gate/配信判定ではない。台帳・ファイル自体を変更できる第三者による真正性も証明しない。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_capital_measurement_recheck.py' -v
+# 6 tests OK (1.397s)。台帳との対応、SHA改変・ロック競合を含む合成試験。
+# data/reports/20261029-retry/measurement-linked-recheck-final.log
+# SHA-256: 78e071d4128a46559bfc2cf1b8363d2d93f21e80ce0c8f49d7f1f9b2183beb3d
+```
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 180 .venv/bin/python -m unittest discover -s tests -v
+# 台帳連携追加後 182 tests OK (23.509s)。
+# data/reports/20261029-retry/unit-tests-linked.log
+# SHA-256: 000959e644894bc67017526380f6c1173de9dab43b455942e8fb682c63b051c0
+.venv/bin/python scripts/recheck_capital_measurement.py --help
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+# 成功。先行commit 8a8a458 / 42cfd60 の各2 workflowはsuccess。
+```

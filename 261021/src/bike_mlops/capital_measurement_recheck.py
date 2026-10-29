@@ -93,3 +93,46 @@ def recheck_measurement_records(plan: dict, report: dict, *, attempt_id: str, pl
     return {"numeric_status": numeric_status, "measured_requests": measured, "p95_ms": p95,
             "request_id_sha256": digest, "operational_gate": "not_evaluated", "deployment_permission": "blocked",
             "limitations": ["Recalculates saved rows only; does not independently verify DB audit, resource context, retry behavior or file authenticity."]}
+
+
+def recheck_linked_measurement(candidate_id: str, attempt_id: str, *, ledger_path=None, lock_dir=None) -> dict:
+    """Recheck only a ledger-linked report while candidate and ledger locks are held.
+
+    This remains a numeric check, not independent audit, resource or approval proof.
+    Missing locks, changed files and incomplete attempts are rejected; nothing is written.
+    """
+    from bike_mlops import capital_operational_ledger as ledger
+    from bike_mlops import capital_operational_recovery as recovery
+
+    if not isinstance(candidate_id, str) or not re.fullmatch(r"[0-9a-f]{64}", candidate_id):
+        raise ValueError("A lowercase candidate ID is required")
+    if not recovery._canonical_attempt(attempt_id):
+        raise ValueError("A canonical measurement attempt ID is required")
+    ledger_path = ledger_path if ledger_path is not None else ledger.DEFAULT_LEDGER
+    lock_dir = lock_dir if lock_dir is not None else ledger.DEFAULT_LOCK_DIR
+    with recovery._existing_lock(lock_dir / f"{candidate_id}.lock"):
+        with recovery._existing_lock(ledger_path.with_suffix(ledger_path.suffix + ".lock")):
+            state = ledger.read_operational_ledger(ledger_path)
+            record = next((item for item in state["records"] if item["candidate_id"] == candidate_id), None)
+            if record is None:
+                raise ValueError("Candidate has no operational attempt record")
+            attempt = next((item for item in record["attempts"] if item["attempt_id"] == attempt_id), None)
+            if attempt is None or attempt.get("status") != "completed":
+                raise ValueError("A completed ledger-linked measurement is required")
+            plan, plan_status = recovery._plan_check(attempt, candidate_id)
+            if plan is None or plan_status != "matched":
+                raise ValueError("Frozen operational plan does not match the ledger")
+            report_path = f"data/reports/capital-bikeshare/operational-{attempt_id}.json"
+            descriptor = attempt.get("report")
+            if not isinstance(descriptor, dict) or descriptor.get("path") != report_path:
+                raise ValueError("Ledger does not link the canonical measurement report")
+            report, digest, error = recovery._read_report(recovery.PROJECT_ROOT / report_path)
+            if error or digest != descriptor.get("sha256"):
+                raise ValueError("Ledger-linked measurement report is missing, invalid or has a different SHA-256")
+            issue = recovery._report_error(report, attempt, candidate_id, plan, linked=True)
+            if issue:
+                raise ValueError(f"Ledger-linked measurement report identity or outcome is invalid: {issue}")
+            result = recheck_measurement_records(plan, report, attempt_id=attempt_id,
+                                                  plan_file_sha256=attempt["plan_file_sha256"])
+            return {**result, "candidate_id": candidate_id, "attempt_id": attempt_id,
+                    "report_path": report_path, "report_sha256": digest, "ledger_binding": "matched"}
