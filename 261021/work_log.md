@@ -1563,3 +1563,16 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout 180 .venv/bin/python -m unittest discover -s
 git diff --check
 # 成功。
 ```
+
+## 2026-10-29: 最新sourceでのcache付き隔離再試験
+
+commit `9b169e6`のsourceを新規一時workspaceへコピーし、合成候補の作成と隔離DB・MLflowの起動、Docker image内のUCI/Capital profile、MLflow health、所有確認付きcleanupを同じ試験で再実行した。合成validation/finalと168時間のcutoff条件は合格、API起動・予測・registry登録は行っていない。Buildx履歴 `wb6a1s0htkvx07iqcawmo1a0d` は`pip install -r requirements.lock`のlayerがcachedと示し、source変更後の依存再利用を確認した。これは当該環境・当該buildの結果であり、一般的な速度の保証ではない。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 240 .venv/bin/python scripts/capital_system_harness.py --prepare-synthetic --run-infrastructure
+# synthetic passed、infrastructure_ready、cleanup_complete、harness_exit_code=0。
+# data/reports/20261029-retry/harness-cached.log
+# SHA-256: 017bb40055089e346eb0e6dcc2add35c77f80c11fac9662b8c0c3157ed622fd7
+```
+
+対象project `bikemlopstest8060464b64f968c4` のcontainer/network/volume/tagged imageは残っておらず、既存UCI入口はversion 3・readyを返した。合成候補を同じstackのregistryへ登録し、seed・API・1,050要求・監査・gateまでつなぐ試験は引き続き未実施。
