@@ -114,6 +114,8 @@ DATA_PROFILE_ID=capital-bikeshare MLFLOW_TRACKING_URI=http://127.0.0.1:5001 \
 
 測定の失敗reportには、出典を確認できた応答のIDと件数、処理途中の要求IDを`partial_evidence`に保存する。処理途中の要求は送信されたか、または後からDBに保存されるかが不明なため、未送信や失敗確定とは扱わない。これらはメモリ上の情報から記録するため、強制終了や電源断のときに失われる場合がある。
 
+失敗reportに処理途中の要求が残った場合、`DATA_PROFILE_ID=capital-bikeshare`と`APP_DB_PASSWORD`を環境変数に設定したうえで、`.venv/bin/python scripts/inspect_capital_pending_audit.py --candidate-id <候補ID> --attempt-id <試行ID>`を実行すると、隔離staging DBのそのIDだけを読み取り専用で照会できる。見つからない場合は照会時点で未確認という意味であり、その後に記録される可能性を排除しない。見つかった場合も候補・版・artifact等の識別確認にとどまり、入力や予測の完全な監査、再送、合格判定、配信許可は行わない。使い捨てPostgreSQLで、別transactionによる記録前後の照会を検証した。実APIのtimeoutと遅延commitの再現は未完了。
+
 保存された測定行を固定planと照合し、要求順・時刻・ID・件数・p95を再計算する独立部品を追加した。`.venv/bin/python scripts/recheck_capital_measurement.py --candidate-id <候補ID> --attempt-id <試行ID>`は候補・台帳の既存ロックを取得し、台帳が参照するplanとreportのSHAを確認してから数値を再計算する。これは記録された数値だけを点検するもので、入力出典、DB監査、retryの有無、資源、記録の真正性や配信可否は証明しない。運用gateの判定や登録先への結果反映にはまだ接続していない。
 
 隔離system test用の基盤は `.venv/bin/python scripts/capital_system_harness.py` で、Dockerを起動せず一時workspace作成と削除を確認できる。`--prepare-synthetic`を付けると、一時領域で人工データから候補を学習・評価し、学習締切に合う168時間の入力も確認する。`--run-infrastructure`を付けた場合のみ、専用Compose projectでDBとMLflowの起動を試み、終了時に所有labelを確認して片付ける。port 5001・8110・55433・55434が使用中なら既存のサービスを止めずに失敗する。合成候補のregistry登録・API・予測は未実装であり、通し試験の完成を示さない。実行にはDocker imageのbuildと依存取得が必要になる場合がある。

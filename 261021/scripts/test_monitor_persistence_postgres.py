@@ -12,7 +12,9 @@ import subprocess
 import tempfile
 import time
 import uuid
+import sys
 from pathlib import Path
+from unittest.mock import patch
 
 
 def docker(*args: str, env=None) -> str:
@@ -120,10 +122,58 @@ def main() -> None:
             failed_report = json.loads((root / "failed.json").read_text())
             if failed_report.get("monitor_run_id") != failing or "unconfirmed" not in failed_report.get("persistence_status", ""):
                 raise AssertionError("Failed report does not identify its unconfirmed run")
+        # A second disposable database tests a pending request before and after
+        # a delayed commit. Its random port is allowed only in this test.
+        with psycopg.connect(admin_url, autocommit=True) as connection:
+            connection.execute("CREATE DATABASE pending_test OWNER monitor_test_app")
+        pending_db = Database(f"postgresql://monitor_test_app:{app_password}@127.0.0.1:{port}/pending_test",
+                              "capital-bikeshare", "capital-trip-starts-hourly-v1")
+        pending_db.initialize()
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tests"))
+        import test_capital_operational_ledger as ledger_tests
+        from bike_mlops import capital_operational_recovery as recovery
+        from bike_mlops import capital_pending_audit
+        fixture = ledger_tests.OperationalLedgerTests(methodName="runTest")
+        fixture.setUp()
+        try:
+            with fixture.attempt() as lease:
+                lease.mark_requests_started()
+                pending_id = f"capital-op:{lease.attempt_id}:warmup:0000"
+                report_path = fixture.report_dir / f"operational-{lease.attempt_id}-failure.json"
+                failure = {"operational_attempt_id": lease.attempt_id, "operational_plan_sha256": lease.plan_sha256,
+                           "operational_plan_file_sha256": lease.plan_file_sha256, "completed": False,
+                           "operational_gate": {"status": "failed"},
+                           "partial_evidence": {"pending_request_id": pending_id,
+                             "pending_request_status": "outcome_unknown_may_have_been_sent"}}
+                report_path.write_text(json.dumps(failure))
+                lease.finish(status="failed", report_path=report_path, failure_code="request_failed")
+            identity = fixture.plan["identity"]
+            with patch.object(recovery, "PROJECT_ROOT", fixture.root), \
+                 patch.object(capital_pending_audit, "_validate_staging_database"):
+                def inspect():
+                    return capital_pending_audit.inspect_pending_audit(fixture.candidate, lease.attempt_id, pending_db,
+                        ledger_path=fixture.ledger_path, lock_dir=fixture.lock_dir)
+                if inspect()["audit_observation"] != "not_seen_at_query_time":
+                    raise AssertionError("Pending request was unexpectedly visible before commit")
+                with pending_db.transaction() as connection:
+                    pending_db.execute(connection,
+                        "INSERT INTO predictions(request_id,input_hash,target_hour,as_of,predicted,model_name,"
+                        "model_version,candidate_id,model_quality_gate,artifact_sha256,data_version_sha256,"
+                        "data_profile_id,target_contract_id,feature_contract_version,features_json,created_at) "
+                        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        (pending_id, "a" * 64, "2024-01-08 00:00:00", "2024-01-08 00:00:00", 1.0,
+                         identity["model_name"], identity["model_version"], fixture.candidate, "passed",
+                         identity["registered_artifact_sha256"], "b" * 64, identity["data_profile_id"],
+                         identity["target_contract_id"], identity["feature_contract_version"], "{}", "synthetic"))
+                observation = inspect()
+                if observation["audit_observation"] != "identity_matches_unverified" or observation["later_commit_possible"]:
+                    raise AssertionError("Pending request identity was not observed after commit")
+        finally:
+            fixture.doCleanups()
         print(json.dumps({"status": "passed", "database": "disposable PostgreSQL, non-superuser app owner",
                           "checks": ["legacy row unchanged", "two independent monitor runs",
                                      "second-row unique conflict rolls back first insert",
-                                     "failed report has no completion marker"]}, indent=2))
+                                     "failed report has no completion marker", "pending request before and after delayed commit"]}, indent=2))
     finally:
         remaining = docker("ps", "-a", "-q", "--no-trunc", "--filter", f"name=^/{name}$",
                            "--filter", f"label=bike.monitor.test={suffix}").splitlines()

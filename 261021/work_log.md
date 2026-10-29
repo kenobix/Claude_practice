@@ -1516,3 +1516,28 @@ git diff --check
 ```
 
 合成候補を生成したworkspaceと隔離MLflow/DBを同じ実行で維持してregistry登録・seed・API・監査まで渡す経路は未完成。`--prepare-synthetic`と`--run-infrastructure`を同時指定した順序はmockで検査したが、双方を同時に実Dockerで実行していない。次は候補をblocked登録し、seedからstaging API・監査・結果照合へつなぐ。未使用の実評価窓はまだ消費しない。
+
+## 2026-10-29: 結果不明の要求の監査照会
+
+`capital_pending_audit.py`と`scripts/inspect_capital_pending_audit.py`を追加した。候補と台帳の既存lockを取得し、失敗attempt・plan/reportのハッシュ・処理中request ID・固定負荷条件を確認したうえで、隔離staging PostgreSQLの該当IDだけを`READ ONLY` transactionで照会する。見つからない場合は照会時点で未確認とし、その後のcommitを否定しない。見つかった場合も候補・版・artifact・profileなどの識別照合に限定し、入力や予測値の完全な監査とはしない。再送・台帳/report更新・合格や配信判断は行わない。CLIは`DATA_PROFILE_ID=capital-bikeshare`と環境変数`APP_DB_PASSWORD`を使い、値は出力しない。
+
+使い捨てPostgreSQLで、照会後に別transactionから合成監査行をINSERTし、その前後で未確認から識別一致へ変わることを確認した。動的な一時portを使うこの試験では本番用の固定port検査のみmockし、その検査自体はunit testで別portを拒否することを確認した。実API timeoutやネットワーク中断は再現していない。テストcontainerは所有確認して削除した。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 90 .venv/bin/python -m unittest discover -s tests -p 'test_capital_pending_audit.py' -v
+# 4 tests OK。後に発見済みの行のlater_commit_possibleをfalseにする補強を追加。
+# data/reports/20261029-retry/pending-audit-tests.log
+# SHA-256: f5434bdc60f1cc005e1159de822030cf1a32a5411dcc584b18c2ac054741cb23
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 120 .venv/bin/python scripts/test_monitor_persistence_postgres.py
+# monitor履歴とpending要求の前後照会が成功。既存PostgreSQL imageを使い自動pullせず、containerを削除。
+# data/reports/20261029-retry/pending-postgres.log
+# SHA-256: 8d5f8fdc9d453fbb706b8e1fd526a6bb35c5d8ebf058033591b7e2dfe4e5ddc9
+MLFLOW_DISABLE_AGENT_HINT=1 timeout 180 .venv/bin/python -m unittest discover -s tests -v
+# 補強後 190 tests OK (29.632s)。
+# data/reports/20261029-retry/unit-tests-pending.log
+# SHA-256: 5544b3ac200e1a9cfda13c5fdb9ca204820a1e2f4d46f6212febab32601317d4
+.venv/bin/python scripts/inspect_capital_pending_audit.py --help
+.venv/bin/python -m compileall -q src scripts tests
+git diff --check
+# 成功。
+```
