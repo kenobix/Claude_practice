@@ -208,6 +208,9 @@ def verify_candidate_for_staging(selection_path: Path, final_path: Path) -> dict
     artifact_path = selection_path.parent / "model.skops"
     if sha256_file(artifact_path) != artifact.get("sha256"):
         raise ValueError("Candidate model artifact SHA-256 differs from its report")
+    if "monitor_reference" in selection:
+        from bike_mlops.training_monitor_reference import read_candidate_reference
+        read_candidate_reference(selection, selection_path.parent)
     if not isinstance(protocol_artifact, dict) or protocol_artifact.get("path") != "evaluation-protocol.json":
         raise ValueError("Candidate report does not identify its frozen protocol")
     protocol_path = selection_path.parent / "evaluation-protocol.json"
@@ -340,8 +343,10 @@ def verify_candidate_for_staging(selection_path: Path, final_path: Path) -> dict
 
 
 def _registration_tags(evidence: dict) -> dict[str, str]:
+    from bike_mlops.training_monitor_reference import reference_registry_tags
     selection = evidence["selection"]
     return {
+        **reference_registry_tags(selection),
         "data_profile_id": "capital-bikeshare",
         "target_contract_id": TARGET_CONTRACT_ID,
         "quality_gate": "passed",
@@ -472,6 +477,9 @@ def register_blocked_capital_candidate(selection_path: Path, final_path: Path) -
             mlflow.set_tags({**tags, "staging_registration": "blocked_candidate"})
             mlflow.log_artifact(str(evidence["selection_report_path"]), artifact_path="evidence")
             mlflow.log_artifact(str(evidence["final_report_path"]), artifact_path="evidence")
+            if "monitor_reference" in evidence["selection"]:
+                mlflow.log_artifact(str(evidence["selection_report_path"].parent / "monitor-reference.json"),
+                                    artifact_path="evidence")
             model_info = mlflow.sklearn.log_model(
                 model,
                 name="sklearn-model",

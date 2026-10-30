@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-30T00:28:13.478522+00:00",
+  "base_commit": "b84382511801dd77323b7aed44b1008504df4068",
+  "task": "T04 training reference and PSI v2 integration",
+  "final_local_suite": {
+    "tests": 255,
+    "seconds": 33.254,
+    "status": "passed"
+  },
+  "source_files": {
+    "261021/scripts/evaluate_capitalbikeshare_holdout.py": "5467f26aac358bc293ff202c6a33ec0285e9abd7ab9ddebd06b35911f8ce0fdd",
+    "261021/src/bike_mlops/candidate_artifacts.py": "3989ef64d807c0651f61d54afb867decce44118b8a1093057427d74f6cf33aa6",
+    "261021/src/bike_mlops/capital_staging.py": "2337fce73dc6b551938d0a585d25d45698af32788ecc2cce15eca4673dea7ec7",
+    "261021/src/bike_mlops/cli.py": "a2774141f527af602ed48843104cc72f0b56b654bde4e3d6e8b634276f27049f",
+    "261021/src/bike_mlops/evaluation_protocol.py": "4fc8eefb43360e0e6ba6c51a9943c6577d278ddd2e931cc81916417fb3dcbfff",
+    "261021/src/bike_mlops/monitoring.py": "5566a988e5730984c20efd764ee33d9ee0a50d35df0afbd698678022c5d57b2a",
+    "261021/src/bike_mlops/monitoring_psi_v2.py": "e9fc09e06163ed942089f6037f9b1b5688dd5d76e2c9d1535a1b439422efcffe",
+    "261021/src/bike_mlops/training.py": "23d530d88be4249e7d5d3d57fe2eecc6430e10ef09e23c416e19c527a0d499fc",
+    "261021/src/bike_mlops/training_monitor_reference.py": "6a153b5edba24f43efe024756c161100c88e00d1885ede7d8a13cd4c0e005705",
+    "261021/tests/test_evaluation_protocol.py": "9de24b2e23046fd4f8930931f76d842a7c80a76e32a87afd397f654338fffea6",
+    "261021/tests/test_training_monitor_reference.py": "d11095c9643afc5bfd75cd5ffec9f9e9e096db9e6f47c47f765d622f0ef40120"
+  },
+  "logs": [
+    {
+      "path": "261021/data/reports/20261030-t04/b843825-full-final-v2.log",
+      "sha256": "9cbe6e02c1831c4a3487610bd015c5a951b8e7b68d7240ebda1de26b99639804",
+      "bytes": 48587,
+      "observed_mtime_utc": "2026-10-30T00:25:50.107699+00:00",
+      "result": [
+        "Ran 255 tests in 33.254s",
+        "OK"
+      ]
+    },
+    {
+      "path": "261021/data/reports/20261030-t04/b843825-full-v1.log",
+      "sha256": "fbae6e1ff439b30f79bfbb01e90e2559bdc15575a91db4be60e22b50200f6300",
+      "bytes": 48348,
+      "observed_mtime_utc": "2026-10-30T00:23:25.043541+00:00",
+      "result": [
+        "Ran 254 tests in 33.188s",
+        "OK"
+      ]
+    },
+    {
+      "path": "261021/data/reports/20261030-t04/b843825-monitor-first-v1.log",
+      "sha256": "5b5f089681f65fc410fe6297518586f9184abc7daab875adb2f70e628598b00c",
+      "bytes": 6599,
+      "observed_mtime_utc": "2026-10-30T00:21:55.939800+00:00",
+      "result": [
+        "Ran 35 tests in 2.837s",
+        "OK"
+      ]
+    },
+    {
+      "path": "261021/data/reports/20261030-t04/b843825-protocol-v1.log",
+      "sha256": "d336c459b12cc73bb6d552afd9481df6912dc75c66b85dabedecb5f1539c182c",
+      "bytes": 2819,
+      "observed_mtime_utc": "2026-10-30T00:24:34.637293+00:00",
+      "result": [
+        "Ran 10 tests in 6.151s",
+        "OK"
+      ]
+    },
+    {
+      "path": "261021/data/reports/20261030-t04/b843825-reference-policy-v1.log",
+      "sha256": "506aec2fce9fe2a9cc4185759cdcc25efd97ea960aba3371963bbca66db652dc",
+      "bytes": 3269,
+      "observed_mtime_utc": "2026-10-30T00:24:13.076473+00:00",
+      "result": [
+        "Ran 14 tests in 2.942s",
+        "OK"
+      ]
+    }
+  ],
+  "verified": [
+    "training-only bins and feature binding",
+    "explicit algorithm and frozen pre-fit policy",
+    "candidate atomic persistence and registered run retrieval with fake registry",
+    "real CLI with disposable SQLite persistence and marker",
+    "semantic changed-reference and prediction rejection",
+    "legacy UCI compatibility",
+    "compileall",
+    "pip check",
+    "monitor --help"
+  ],
+  "not_verified": [
+    "actual Capital candidate fit/evaluation/monitoring",
+    "HTTP MLflow monitor execution",
+    "all T05 label/drift cases",
+    "T06 DB/file reconciliation",
+    "T02 real readiness evidence producer"
+  ],
+  "live_runtime_changed": false
+}

@@ -356,6 +356,9 @@ def main() -> None:
         raise ValueError("Selected candidate model recipe differs from the frozen protocol")
     if selection.get("training_row_keys_sha256") is None or selection.get("validation_row_keys_sha256") is None:
         raise ValueError("Selected candidate report is missing row-level split lineage")
+    if "monitor_reference" in selection:
+        from bike_mlops.training_monitor_reference import read_candidate_reference
+        read_candidate_reference(selection, args.selection_report.parent, frame=frame)
 
     if bootstrap_protocol:
         if args.incumbent_version:

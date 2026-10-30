@@ -51,3 +51,7 @@ UCIの通常昇格はMLflowモデル版の`quality_gate=passed`が必要です�
 - リプレイは7日窓で予測数・ラベル到着率・MAE/RMSEを集計します。24件未満では誤差値を判定に使いません。
 - ラグ値のPSI、ラグ欠測率、曜日・時間帯等の入力分布を別々に記録します。PSI 0.2以上と検証時モデルMAEの1.25倍超過は調査用の閾値です。少数ラベルの不確実性や合否を表すものではなく、自動昇格には結び付けません。
 - UCIの従来経路は`--diagnostic`による未達版の試験配信を区別します。Capitalの通常配信は全gateと配信許可を要求し、`--diagnostic`では未達条件を上書きできません。
+
+## Capitalの学習参照と監視の版
+
+新規Capital候補では、学習に使った行だけからPSI v2のbins/件数を保存し、参照ファイルSHAをcandidate IDへ含めます。policyはfit前の評価protocolに固定し、監視は登録版の元runから参照と候補reportを取得して元CSV/manifest/学習行/特徴量を照合します。通常UCIのPSI方式と履歴値は維持します。実Capital候補・全監視受入は未完了です。[仕様・コマンド・結果の読み方](training-monitor-reference.md)を参照してください。

@@ -14,7 +14,7 @@
 
 - `src/bike_mlops/`: データ契約、時刻付き特徴量、学習、API、DB、監視、運用CLI。
 - `configs/`: 時系列分割と特徴量契約。
-- `configs/data-profiles/`と`compose.capital.yaml`: UCIとCapital Bikeshareのデータ/targetを別DB・別Compose projectへ分離する設定。Capital用modelとmonitor参照が未準備のため、移行実験専用です。
+- `configs/data-profiles/`と`compose.capital.yaml`: UCIとCapital Bikeshareのデータ/targetを別DB・別Compose projectへ分離する設定。実Capital modelと参照artifactは未生成のため、移行実験専用です。参照の保存・検証仕様は[学習参照とPSI v2](docs/training-monitor-reference.md)を参照してください。
 - `tests/`: 時刻リーク、欠損時間、入力重複、ストレージの回帰試験。
 - `docs/`: データ・アーキテクチャ・運用判断。
 - `compose.yaml`: MLflow、PostgreSQL、FastAPIの青緑2枠、Caddyを使うローカル運用構成。
@@ -91,5 +91,7 @@ Composeによる運用構成は[実行・運用手順](docs/runbook.md)を参照
 - [x] 2026-10-29、現行計測CLIから合成candidateの隔離system testを完了。744観測・blocked登録・staging API・offline/API一致・retry/409・runtime init拒否・1,050要求・監査・独立数値再確認・MLflow exact-version証拠tagを検証。同値再実行は成功し異なるreport hashは拒否。p95 88.947msは人工データの結果で、operational gateは`not_evaluated`、deploymentは`blocked`。ログは[`work_log.md`](work_log.md)参照。
 
 - [x] 2026-10-30、T01とT02の必須証拠schema/拒否処理を実装。承認後の証拠変更・不正p95・本文破損・監視/復旧証拠不足を拒否。一時SQLite MLflowの保存/取得/合成承認を確認。全241 tests成功。実監視/復旧とHTTP障害の検証は残ります。
+
+- [x] 2026-10-30、T04の学習参照・PSI v2を候補保存/MLflow登録/monitor CLIへ接続。学習行・bins・policyをhashで結び、別参照・別版・特徴量変更を拒否。全255 tests成功。実Capital監視と全監視受入は後続課題です。
 
 詳細な実行記録は[work_log.md](work_log.md)を参照してください。今回のvalidationとout-of-time評価期間はこの候補に使い終えています。今後の候補選択には新しい期間または別の外部データが必要です。データ品質監査で全期間集計を閲覧済みのため、未閲覧のblind holdoutではありません。2012年Q3/Q4は再利用していません。現在の稼働版は3です。

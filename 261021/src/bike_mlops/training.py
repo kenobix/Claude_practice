@@ -813,6 +813,8 @@ def _train_candidate_impl(
         report,
         validation_evidence,
         protocol_bytes=evaluation_protocol_path.read_bytes(),
+        training_frame=train_frame,
+        training_features=train_features,
     )
     return report
 
@@ -832,6 +834,9 @@ def train_candidate(
     if register:
         raise ValueError("Candidate evaluation must remain unregistered until deployment gates are implemented")
     protocol = read_protocol(evaluation_protocol_path)
+    if DATA_PROFILE_ID == "capital-bikeshare":
+        from bike_mlops.training_monitor_reference import validate_frozen_monitor_policy
+        validate_frozen_monitor_policy(protocol)
     if protocol.get("incumbent") is None and incumbent_version is not None:
         raise ValueError("Baseline-only bootstrap protocol must not be paired with an incumbent version")
     if protocol.get("incumbent") is not None and incumbent_version is None:

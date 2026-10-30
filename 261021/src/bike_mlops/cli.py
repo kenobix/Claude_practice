@@ -306,9 +306,26 @@ def command_replay(args) -> None:
     _print(summary)
 
 
+def _read_feature_values(value: str) -> dict:
+    from bike_mlops.capital_deployment_evidence import strict_json
+    return strict_json(value)
+
+
 def command_monitor(args) -> None:
+    from bike_mlops.monitoring_psi_v2 import PSI_ALGORITHM_V2
+    capital = DATA_PROFILE_ID == "capital-bikeshare"
+    psi_version = getattr(args, "psi_version", None)
+    if capital and psi_version != PSI_ALGORITHM_V2:
+        raise ValueError("Capital monitoring requires --psi-version psi-v2-constant-bins")
+    if capital and MODEL_NAME != "bike-demand-capital":
+        raise ValueError("Capital monitoring requires its isolated model name")
+    if not capital and psi_version not in {None, "legacy-uci-v1"}:
+        raise ValueError("UCI monitoring retains legacy PSI; Capital PSI v2 needs a bound training reference")
+    initial_hash = sha256_file(args.csv) if capital else None
     frame = load_hourly(args.csv)
     data_hash = sha256_file(args.csv)
+    if capital and data_hash != initial_hash:
+        raise ValueError("Capital monitoring CSV changed while loading")
     version = str(args.model_version)
     start, end, window_source = resolve_monitor_window(
         replay_id=args.replay_id, model_version=version, data_sha256=data_hash,
@@ -350,24 +367,65 @@ def command_monitor(args) -> None:
                 f"Persisted feature source hash does not match the selected CSV for {prediction.target_hour}"
             )
     observations = available_observation_frame(frame)
-    reference_config = DATA_PROFILE.get("monitor_reference")
-    if not isinstance(reference_config, dict):
-        raise ValueError(
-            f"Data profile {DATA_PROFILE_ID!r} has no frozen monitoring reference; "
-            "monitoring must wait until the candidate training reference is approved and recorded"
-        )
-    reference_start = pd.Timestamp(reference_config["start_inclusive"])
-    reference_end = pd.Timestamp(reference_config["end_exclusive"])
-    if reference_start.tzinfo is not None or reference_end.tzinfo is not None or reference_start >= reference_end:
-        raise ValueError("The profile monitoring reference has invalid local-time boundaries")
-    reference_mask = (frame["timestamp"] >= reference_start) & (frame["timestamp"] < reference_end)
-    if not reference_mask.any():
-        raise ValueError("Selected CSV does not contain the profile's frozen monitoring reference period")
-    reference = feature_frame_for_dataset(frame).loc[reference_mask].reset_index(drop=True)
     client = _model_registry_client()
-    registered_version = client.get_model_version(MODEL_NAME, int(version))
-    candidate_validation_mae = registered_version.tags.get("validation_mae")
-    validation_mae = float(candidate_validation_mae) if candidate_validation_mae else None
+    score_options = {}
+    if capital:
+        from bike_mlops.training_monitor_reference import registered_training_reference
+        manifest_path = getattr(args, "manifest", None) or args.csv.with_name("manifest.json")
+        frozen, selection, registry_tags = registered_training_reference(
+            client, version, data_sha256=data_hash, manifest_path=manifest_path, frame=frame,
+        )
+        if sha256_file(args.csv) != data_hash:
+            raise ValueError("Capital monitoring CSV changed during reference verification")
+        expected_prediction_tags = {key: registry_tags[key] for key in (
+            "candidate_id", "artifact_sha256", "feature_contract_version", "data_profile_id", "target_contract_id")}
+        expected_prediction_tags.update(model_name=MODEL_NAME, model_version=version)
+        for key, expected in expected_prediction_tags.items():
+            if key not in predictions or not predictions[key].eq(expected).all():
+                raise ValueError(f"Persisted predictions differ from the monitored registered identity: {key}")
+        expected_features = feature_frame_for_dataset(frame)
+        expected_features.index = frame["timestamp"]
+        for prediction in predictions.itertuples(index=False):
+            target = pd.Timestamp(prediction.target_hour)
+            observed = _read_feature_values(prediction.features_json)
+            if target not in expected_features.index:
+                raise ValueError("Persisted prediction target is absent from the selected CSV")
+            expected = expected_features.loc[target].to_dict()
+            if set(observed) != set(FEATURE_COLUMNS) or any(
+                (observed[name] is not None if pd.isna(value)
+                 else type(observed[name]) not in {int, float} or observed[name] != value)
+                for name, value in expected.items()
+            ):
+                raise ValueError("Persisted prediction features differ from the selected CSV/contract")
+        reference = pd.DataFrame()
+        reference_config = {"source": "candidate_training_rows", "algorithm": psi_version,
+                            **frozen["training_window"], "candidate_id": registry_tags["candidate_id"],
+                            "candidate_report_sha256": registry_tags["candidate_report_sha256"],
+                            "candidate_model_sha256": registry_tags["candidate_model_sha256"],
+                            "registered_artifact_sha256": registry_tags["artifact_sha256"],
+                            "source_manifest_sha256": frozen["identity"]["source_manifest_sha256"],
+                            "training_row_keys_sha256": frozen["identity"]["training_row_keys_sha256"],
+                            "training_features_sha256": frozen["training_features_sha256"],
+                            "reference_sha256": frozen["reference_sha256"],
+                            "file_sha256": registry_tags["monitor_reference_sha256"],
+                            "policy": frozen["policy"], "feature_missing_rates": frozen["feature_missing_rates"]}
+        validation_mae = selection.get("validation", {}).get("model", {}).get("mae")
+        score_options = {"psi_version": psi_version, "frozen_reference": frozen}
+    else:
+        reference_config = DATA_PROFILE.get("monitor_reference")
+        if not isinstance(reference_config, dict):
+            raise ValueError(f"Data profile {DATA_PROFILE_ID!r} has no frozen monitoring reference")
+        reference_start = pd.Timestamp(reference_config["start_inclusive"])
+        reference_end = pd.Timestamp(reference_config["end_exclusive"])
+        if reference_start.tzinfo is not None or reference_end.tzinfo is not None or reference_start >= reference_end:
+            raise ValueError("The profile monitoring reference has invalid local-time boundaries")
+        reference_mask = (frame["timestamp"] >= reference_start) & (frame["timestamp"] < reference_end)
+        if not reference_mask.any():
+            raise ValueError("Selected CSV does not contain the profile's frozen monitoring reference period")
+        reference = feature_frame_for_dataset(frame).loc[reference_mask].reset_index(drop=True)
+        registered_version = client.get_model_version(MODEL_NAME, int(version))
+        candidate_validation_mae = registered_version.tags.get("validation_mae")
+        validation_mae = float(candidate_validation_mae) if candidate_validation_mae else None
     windows = score_monitor_windows(
         predictions,
         observations,
@@ -377,6 +435,7 @@ def command_monitor(args) -> None:
         window_hours=args.window_hours,
         minimum_labels=args.minimum_labels,
         validation_mae=validation_mae,
+        **score_options,
     )
     monitor_run_id = str(uuid.uuid4())
     output = args.output or REPORT_DIR / f"monitor-{args.replay_id}-v{version}-{monitor_run_id}.csv"
@@ -864,6 +923,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     monitor = subparsers.add_parser("monitor", help="Score delayed-label and feature-drift windows")
     monitor.add_argument("--csv", type=Path, default=DEFAULT_DATASET)
+    monitor.add_argument("--manifest", type=Path, help="Capital source manifest; defaults to manifest.json beside the CSV")
+    monitor.add_argument("--psi-version", choices=("legacy-uci-v1", "psi-v2-constant-bins"),
+                         help="Capital requires explicit PSI v2; UCI retains its historical algorithm")
     monitor.add_argument("--replay-id", required=True)
     monitor.add_argument("--model-version", required=True)
     monitor.add_argument("--start", help="Start (inclusive); requires --end. Omit both to use the replay report")

@@ -148,7 +148,10 @@ def build_capital_protocol(
     if (validation_mask & evaluation_mask).any() or (training_mask & validation_mask).any():
         raise AssertionError("Protocol splits overlap")
 
+    from bike_mlops.training_monitor_reference import frozen_monitor_policy
+
     protocol = {
+        "monitoring_reference_policy": frozen_monitor_policy(),
         "schema_version": LEGACY_PROTOCOL_SCHEMA_VERSION if has_incumbent else PROTOCOL_SCHEMA_VERSION,
         "protocol_name": "capital-bikeshare-rolling-candidate-v1" if has_incumbent else "capital-bikeshare-bootstrap-v1",
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -235,6 +238,9 @@ def validate_protocol(protocol: object) -> dict:
     if not isinstance(protocol, dict):
         raise ValueError("Evaluation protocol must be a JSON object")
     schema_version = protocol.get("schema_version")
+    if "monitoring_reference_policy" in protocol:
+        from bike_mlops.training_monitor_reference import validate_frozen_monitor_policy
+        validate_frozen_monitor_policy(protocol)
     if schema_version not in {LEGACY_PROTOCOL_SCHEMA_VERSION, PROTOCOL_SCHEMA_VERSION}:
         raise ValueError("Unsupported evaluation protocol schema version")
     if not isinstance(protocol.get("protocol_sha256"), str) or protocol["protocol_sha256"] != protocol_sha256(protocol):

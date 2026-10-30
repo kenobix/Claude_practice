@@ -1,6 +1,6 @@
 """Versioned PSI reference bins with explicit constant-reference handling.
 
-This module is not connected to the existing monitor or historical UCI reports.
+Capital monitoring uses these frozen bins; historical UCI reports retain PSI v1.
 A reference SHA detects accidental changes; it is not proof of authenticity.
 """
 from __future__ import annotations

@@ -2110,3 +2110,54 @@ gh api repos/kenobix/Claude_practice/actions/artifacts/12942189420/zip
 ghのjob log取得初回はterminal escape sequencesを含むため出力拒否でexit 1、保存先は空だった。`--allow-escape-sequences`を付けて新規v2 logへリダイレクトし、表示時は制御文字を除いた該当行だけ照合した。ZIPも新規pathへリダイレクトし、raw bytesを端末へ表示していない。50秒上限の`gh run watch`が返したexit 124はwatchだけの期限で、CI試験のtimeoutや停止ではない。最終successと保存ログを別途確認した。
 
 この追記は検証済みcode commitのCI結果の記録で、製品コードは変更しない。最終git差分とJSON/hashを再確認して記録用commit/pushを行う。
+
+## 2026-10-30: T04 学習参照とPSI v2を候補保存・登録・監視へ接続
+
+基点`b843825`から計画の次優先T04を進めた。PSI v2単体部品が既存monitorへ未接続、Capitalのprofile参照はnullという状態を確認した。新規候補ごとのtraining referenceを保存して登録版から取得する設計とした。仕様・操作・結果の場所・T05受入範囲は[training-monitor-reference.md](docs/training-monitor-reference.md)、コード/log hashは[証拠JSON](docs/reviews/20261030-t04-checks.json)。
+
+### 実装した範囲
+
+- `training_monitor_reference.py`: 学習row-key・全特徴量行列・期間/件数/ラベル到着時刻・CSV/manifest/protocol/profile/target/feature契約・元モデルSHAを結ぶschema 1参照を作成する。lag_24/lag_168/hourのPSI v2 bins・件数・欠測を保存する。policyは10 bins、参照/対象各24有限値、PSI>=0.2、誤差>validation MAE×1.25。閾値は調査用で採用gateではない。
+- 新規protocolにpolicy本文とSHAを保存。現行Capital fitは欠落/変更したpolicyをfit・消費台帳開始前に拒否する。古いprotocolの読取と古いcandidate IDは保存し、参照の後付けで格上げしない。
+- candidate保存でfitに使ったtraining frame/featuresを渡し、model.skopsのSHA確定後にmonitor-reference.jsonを生成。descriptorをcandidate identityに含めてdirectory全体を公開する。最終評価は参照を含む候補の元学習行を検査してからfinal消費台帳を開始する。
+- staging登録では参照を検査し、元runのevidence/monitor-reference.jsonへ保存してSHA/algorithm/path tagを記録する。通常Capital monitorはexact READY版からcandidate reportと参照を取得し、SHA/content/candidate ID/元モデル/manifest/全学習行/特徴量/binsを照合する。取得前後のregistry変更とCSV読込中の変更を拒否する。
+- monitorの`--psi-version psi-v2-constant-bins`をCapital必須とし、`--manifest`を追加した。予測のcandidate/artifact/model name/version/profile/target/feature契約、lag出典hash、全特徴量値も照合する。数値だけのtagや出典hashだけでは誤った特徴量の監視を通さない。
+- v2の窓にはalgorithm・参照SHA・featureごとのPSI詳細/母数/不足状態を保存する。定数参照は3区分で変化を検出し、欠測率は実際の特徴量値から算出する。比較MAEが未設定ならperformance_reference_unsetとする。既存UCI計算と保存済み履歴は維持する。
+
+### 検証・見直した点
+
+新規14 testsで、締切前の未到着2時間の除外、後続データを大きく変えてもtraining binsが不変、行不足/逆順/未到着行拒否、参照descriptorのcandidate IDへの結合、別分布でbinsと全hashを作り直しても元学習行の再構成で拒否、異なるprofile/feature/model/manifest・本文・取得中registry変更・artifact欠落、atomic候補保存を確認した。
+
+実monitor CLIをparserから起動し、使い捨てSQLiteへ観測・保存済み予測を入れて27監視窓をCSV/JSON/DBへ保存した。最終窓24ラベル、版付きPSI詳細、参照SHA、complete markerを確認した。MLflow取得はfake registryで、実HTTP MLflowからのmonitorは未実施。外れたartifactや変更特徴量の拒否はreport作成前に確認した。低水準scoreでは定数shift・小標本・非有限・全欠測・誤差基準未設定を確認した。全T05ケースが完成したわけではない。
+
+最初の全254件成功後、監視方式/閾値自体もfit前にprotocolへ固定すべきと見直した。policy固定と、最終評価台帳開始前の参照照合を追加し、最終コードで全255件を確認した。成功した同条件suiteを無理由に反復したものではない。policy不在/変更時にledgerとestimatorが呼ばれない負例も追加した。単なる自己hashでは真正性を証明できないため、元CSVの学習行からの独立照合を必須にした。
+
+| 保存log（data/reports/20261030-t04/） | 結果 | SHA-256 |
+|---|---|---|
+| b843825-monitor-first-v1.log | 監視関連35件成功、2.837秒 | 5b5f089681f65fc410fe6297518586f9184abc7daab875adb2f70e628598b00c |
+| b843825-full-v1.log | 全254件成功、33.188秒（policy追加前） | fbae6e1ff439b30f79bfbb01e90e2559bdc15575a91db4be60e22b50200f6300 |
+| b843825-reference-policy-v1.log | 新参照14件成功、2.942秒 | 506aec2fce9fe2a9cc4185759cdcc25efd97ea960aba3371963bbca66db652dc |
+| b843825-protocol-v1.log | protocol 10件成功、6.151秒 | d336c459b12cc73bb6d552afd9481df6912dc75c66b85dabedecb5f1539c182c |
+| b843825-full-final-v2.log | **全255件成功、33.254秒（最終コード）** | 9cbe6e02c1831c4a3487610bd015c5a951b8e7b68d7240ebda1de26b99639804 |
+
+主なコマンド（261021から。logリダイレクト先は上表の新規pathで、set -o noclobberを使って上書きを拒否した）:
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 120 .venv/bin/python -u -m unittest discover -s tests -p 'test_*monitor*.py' -v
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 120 .venv/bin/python -u -m unittest discover -s tests -p 'test_*reference.py' -v
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM 120 .venv/bin/python -u -m unittest discover -s tests -p test_evaluation_protocol.py -v
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 240 .venv/bin/python -u -m unittest discover -s tests -v
+.venv/bin/python -m compileall -q src scripts tests
+.venv/bin/python -m pip check
+.venv/bin/python -m bike_mlops.cli monitor --help
+```
+
+全suiteはTestClientのlocal socketを許す実行権限で実施した。compileall、pip check、monitor help成功。pip cache非書込とMLflow/SQLAlchemy noloadの既知warningは残り、依存不整合はない。探索時に存在しないyamlやsynthetic fixture moduleのpathを指定したrgはexit 2となり、実際のJSON設定・scripts/test_capital_synthetic_fixture.pyを確認し直した。テスト失敗や実データ処理失敗は今回発生していない。
+
+### 残課題・実環境への影響
+
+実Capitalのfit/validation/final、新規原本取得、稼働UCIのDB/schema/container/配信変更は行っていない。人工fixtureのfit・評価は一時workspace内だけで実施した。実Capital版をeligibleにせず、T02の監視証拠producerも作成していない。既存T01/T02のbundle schemaとpolicyは維持し、candidate reportを通じて新参照descriptorのhashが結ばれる。
+
+T04の実装/合成検証を記録し、次のSol優先をT03（中断journal/測定policy）へ更新した。T05は固定した参照/警告仕様で、分布のみ・誤差のみ・両方・ラベル遅延/停止/重複・欠測増加の期待窓/母数/検知時刻を決めてCLI受入を進められる。T06のDB/file未確定照合、実候補/HTTP監視、復旧/復元/metadata実証は残る。10月原本とT10条件が揃わない間は実fitを先行しない。
+
+最終確認では7 Markdownの相対リンク65件、11コード/テストと5 logのSHA、証拠JSONを照合し不一致0件。結果は`data/reports/20261030-t04/b843825-document-checks-v1.json`。`git diff --check`も成功。HTML renderは未実施で、push後のPages CIを確認する。変更ファイルを確認し、無関係な260701/charts・logsと260905の画像はstageしない。

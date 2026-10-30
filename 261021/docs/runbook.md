@@ -327,6 +327,8 @@ docker compose -f compose.yaml -f compose.capital.yaml -f compose.capital-stagin
 
 監視は実行ごとにIDを作り、既定のCSV/JSON名とDB窓IDを分けます。`--output`で既存ファイルを指定した場合は上書きせず停止します。正常にDBへ保存できた実行には、CSV・JSONのハッシュと実行IDを含む`*.complete.json`を追加します。ファイルとDBは別々に保存するため、途中停止して完了ファイルがない場合はDB保存の成否を決めつけず、JSONに記載された`database_window_id_prefix`で`monitor_windows.window_id`を調べてください。過去の記録を自動更新・削除しません。
 
+Capital監視は[学習参照とPSI v2](training-monitor-reference.md)の手順を使います。`--psi-version psi-v2-constant-bins`と、同じ登録候補の学習参照artifactが必要です。UCIは従来の呼出しとPSIを維持します。
+
 CSVとDBに窓ごとの予測数、到着ラベル数、到着率、MAE/RMSE、固定ビンPSIを保存します。ラベル到着前は誤差を0扱いせず分母から外します。PSIと誤差悪化は別々に読み、通知は調査開始にだけ使います。
 
 ### 2026-10-28実行記録: 候補版3とQ4比較

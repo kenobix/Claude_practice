@@ -242,7 +242,7 @@ seedは候補・最終reportを再検証し、指定したMLflow版のtag、CSV�
 6. **R01/R02/R06・原本取得済み/10月buffer待ち:** 202606〜202609 archiveはdownload/ZIP integrity/member/hash検査済み。6〜9月、5〜9月の一時aggregationはgrid/count diagnosticsとして成功したが、protocolへ使う全期間manifestではない。診断CSV/manifestは一時`/tmp`に生成して集計値を記録後に削除済み。202610はHTTP 404。202510 archiveに2025-09-30 startsが含まれる過去実績があり、月境界bufferが必要な可能性を無視できないため10月原本公開後に全archiveを別pathへ集計し、manifest schema 3・row accounting・DST/coverage・hashを監査する。既評価Q3/Q4/旧Capital windowは除外し、計画済みsplit/decision time/gateを固定した後にvalidationを一度行う。原本のbytes/SHA-256は[作業ログ](../work_log.md)に記録する。
 
 7. **R05/R06/P1・実候補後:** 実candidateをblocked登録し、Capital隔離PostgreSQLへseed、staging APIを起動してartifact loading、DB分離、offline/API parity、通常deploy拒否を確認する。復帰したCLIで50 warmup/1,000 sequential benchmarkを実測し、report/hash/statusをexact model versionへ記録する。
-8. **R07〜R10:** 監視参照とPSI、障害・復旧、配信台帳と進行表示、採否記録・デモを計画書に従って完了する。
+8. **R07〜R10:** T04の学習参照/PSI v2接続は実装・合成検証済み（[仕様](training-monitor-reference.md)）。T05の全監視受入・T06照合・実候補監視、障害/復旧、配信metadata、採否記録・デモを計画書に従って完了する。
 
 最新070b033のCI `40966966672`ではcandidate `ad46f6f2ebbd984010153e613c418e9659a9fbb2fadc12ac4cfe554e8214deb0`のsynthetic-only測定を再現し、744行seed、1,050件要求/監査、offline/API差0、p95 31.070696ms、numeric recheck一致、cleanupとPostgreSQL snapshot-lock test成功を確認した。合成データなので実Capital精度・deployment承認を意味せず、gate=`not_evaluated`、permission=`blocked`を維持した。artifact ID `12938433488`のZIP SHAはGitHub digestと一致した。ただしartifactはsummary中心で要求別recordを含まないため、外部でのp95再計算用の保存をT16へ追加した。Pages run `40966966169`もsuccess。
 

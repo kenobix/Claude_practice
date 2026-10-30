@@ -120,7 +120,7 @@ def source_snapshot_inventory(snapshot_path: Path) -> tuple[str, int]:
 
 
 def candidate_identity(report: dict) -> dict:
-    return {
+    identity = {
         "data_sha256": report["data_sha256"],
         "source_manifest_sha256": report["data_source"].get("source_manifest_sha256"),
         "source_tree_sha256": report["source_revision"]["source_tree_sha256"],
@@ -148,6 +148,10 @@ def candidate_identity(report: dict) -> dict:
         "validation": report["validation"],
         "comparison": report["comparison"],
     }
+    # Preserve historical candidate IDs; new references become part of the ID.
+    if "monitor_reference" in report:
+        identity["monitor_reference"] = report["monitor_reference"]
+    return identity
 
 
 def persist_candidate_bundle(
@@ -156,6 +160,8 @@ def persist_candidate_bundle(
     validation_predictions: pd.DataFrame,
     *,
     protocol_bytes: bytes | None = None,
+    training_frame: pd.DataFrame | None = None,
+    training_features: pd.DataFrame | None = None,
 ) -> dict:
     """Atomically publish the estimator, validation evidence, protocol, and source snapshot."""
     import skops.io as sio
@@ -205,6 +211,16 @@ def persist_candidate_bundle(
             ),
             "candidate_bundle": None,
         }
+        if report.get("data_profile_id") == "capital-bikeshare":
+            from bike_mlops.training_monitor_reference import make_training_reference, reference_descriptor
+            from bike_mlops.capital_deployment_evidence import canonical_bytes
+
+            if training_frame is None or training_features is None:
+                raise ValueError("Capital candidate persistence requires the exact training rows/features")
+            reference = make_training_reference(bundle_report, training_frame, training_features)
+            reference_body = canonical_bytes(reference)
+            (staging / "monitor-reference.json").write_bytes(reference_body)
+            bundle_report["monitor_reference"] = reference_descriptor(reference, reference_body)
         identity = candidate_identity(bundle_report)
         candidate_id = hashlib.sha256(
             json.dumps(identity, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()

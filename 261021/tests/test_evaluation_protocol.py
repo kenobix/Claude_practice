@@ -269,12 +269,15 @@ class EvaluationProtocolTests(unittest.TestCase):
 
         captured = {}
 
-        def capture_candidate_bundle(estimator, candidate_report, validation_predictions, *, protocol_bytes=None):
+        def capture_candidate_bundle(estimator, candidate_report, validation_predictions, *, protocol_bytes=None,
+                                     training_frame=None, training_features=None):
             captured.update({
                 "estimator": estimator,
                 "report": candidate_report,
                 "validation_predictions": validation_predictions,
                 "protocol_bytes": protocol_bytes,
+                "training_frame": training_frame,
+                "training_features": training_features,
             })
             return {"candidate_artifact_sha256": "a" * 64}
 
@@ -326,6 +329,8 @@ class EvaluationProtocolTests(unittest.TestCase):
                 report,
                 captured["validation_predictions"],
                 protocol_bytes=captured["protocol_bytes"],
+                training_frame=captured["training_frame"],
+                training_features=captured["training_features"],
             )
         output_path = self.root / "data/reports/bootstrap-final-evaluation.json"
         original_final_validator = final_evaluation.validate_capital_manifest
