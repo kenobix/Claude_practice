@@ -2431,3 +2431,19 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 180 .venv/bin/
 help/compileallはexit 0。`docker image inspect postgres:17.6-bookworm --format '{{.Id}}'`で既存image ID `sha256:f3bd19c606e442c3d7bdfa8002e03fe260a1023351e0ea4598032022b68dd6e3`を確認し、pullは行っていない。source/log/hashと実施/未実施範囲は[設計証拠JSON](docs/reviews/20261030-t06-design.json)へ保存した。production codeは変えていないため全suiteのlocal再実行は省き、このprobeと静的確認を設計の確認単位にする。共通運用に従い確認後に設計commitをpushし、CIの成否は実装受入と区別して追記する。
 
 設計commit前にsource 4ファイルのSHA、契約/依頼書2ファイルとlocal log 3件のSHA/bytes、相対リンク59件、23 case IDの連番、JSONを照合した。新しいscriptの全差分、local-only/所有label/cleanup、認証情報非出力、既存producer/CLIを変えていないことを確認した。新規8ファイル分の作業単位（既存4ファイルの更新と4ファイル追加）だけをstageし、無関係な未追跡3パスは含めない。
+
+設計・probe・Luna依頼書の8ファイルを`ebb6611a11cbaffba915bac7bd471dca6b2dff85`（Define monitor reconciliation contract and Luna implementation scope）としてcommitしorigin/mainへpushした。無関係な未追跡3パスは含めていない。post-push CIでは既存suite/compile/systemの回帰を確認するが、新規storage probeの自動実行やT06 inspectorの受入実証とは区別する。
+
+### T06設計commitのCI確認
+
+`ebb6611`の[CI 41011570113](https://github.com/kenobix/Claude_practice/actions/runs/41011570113)はtests/synthetic-systemの全job/stepがsuccess。unit job `123918396951`のraw logから既存277 testsの32.019秒成功、pip check、新しいprobe scriptを含むcompileallの成功を確認した。[Pages 41011570458](https://github.com/kenobix/Claude_practice/actions/runs/41011570458)もsuccess。**CIでT06 storage probeを実行したわけではなく、未実装inspectorの23 caseを通したわけでもない**。probeの実行証拠は先のlocal使い捨てDB logである。
+
+CIのraw unit log、進行中metadata（`ebb6611-ci-progress-v1.json`）、最終metadata（同v2）、artifact metadataとZIPを`data/reports/20261030-t06/`へ保存した。raw unit logは121,035 bytes、SHA `965b979012a42f945fe3b7429e3139c88f846b2fc1700a3991c740a55668dfb9`。表示用にANSIを除いて件数を調べたがraw fileは変更していない。source 4ファイルと固定文書2ファイルのhashは、CI対象commitのGit blobとも一致した。
+
+artifact `12957718388`、2,278 bytesのZIPはSHA `5dd44065a7a672ffd18d5b9066ec8df5e6cfd75b064ad978401f5ea702b790bd`でGitHub digestと一致し、ZIP integrityも成功した。本文からsynthetic-systemの`synthetic_system_passed`、data=synthetic_only、operational gate=not_evaluated、配信blocked、cleanup_completeを確認。snapshot PostgreSQLの9項目とrequest interruption PostgreSQLの6項目もpassedでcleanupした。既存運用経路の回帰確認であり、T06の実装完了や実Capital/HTTP監視の証拠にはしない。ZIP内3ログのhashは設計証拠JSONへ保存した。
+
+CI追跡では`timeout --signal=TERM 50 gh run watch 41011570113 --repo kenobix/Claude_practice --exit-status --interval 15`を区切って使い、一度のexit 124は監視期限だった。後のwatch/run metadata/artifact本文でsuccessを確定した。追加コマンドは`gh run view ... --json headSha,status,conclusion,jobs,url`、`gh api --allow-escape-sequences repos/kenobix/Claude_practice/actions/jobs/123918396951/logs`、`gh api repos/kenobix/Claude_practice/actions/runs/41011570113/artifacts`、`gh api repos/kenobix/Claude_practice/actions/artifacts/12957718388/zip`。再取得時は既存証拠を上書きせず新しい保存名を使う。
+
+今回の節目はT06設計と保存挙動の確認。次は[Luna依頼書](docs/t06-luna-handoff.md)に従ってT06aを実装し、Solへreviewを戻す。T06b、T03/T13追加追跡、実候補/監視証拠等は未完了のまま。最後に証拠JSONとこのログだけを記録用commitへ含め、固定契約/probe/production codeを変更せずpushする。
+
+記録用commit前に、source 4ファイル、契約/依頼書とlocal/CI保存ファイル計10件のSHA/bytes、ZIP内3件のSHA、資料と今回T06ログ節の相対リンク63件、JSON、diff checkを再確認して一致した。固定文書/probe/production codeに追加差分はなく、証拠JSONとwork_logの2ファイルだけを記録用commitへ含める。
