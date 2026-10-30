@@ -2259,3 +2259,42 @@ compileall/pip check/diff check成功。YAML parser、workflow内11 Bash block�
 27ファイルを確認して明示stageし、`deea05cd14d5a74f342f856f0e63d51ddf2fffef`（Persist Capital request journals and define interruption measurement rules）をcommitしorigin/mainへpushした。CI [40999499322](https://github.com/kenobix/Claude_practice/actions/runs/40999499322)の最終コードsuite/Docker障害試験を確認中。
 
 push後のreviewで、新しいjournal policyが入れ子のdictであるため、`dict(PLAN_POLICY)`だけでは返したplanと固定policyが内側の同じobjectを参照すると気付いた。ファイル読込による改変とは別の、同一process内の変更である。plan生成をdeepcopyへ変更し、返したplanのtimeoutルールを変えて再hashしても固定ルールは変わらず、不正planが拒否されるtestを追加した。`timeout --signal=TERM --kill-after=10 90 261021/.venv/bin/python -u -m unittest discover -s 261021/tests -p test_capital_operational_plan.py -v`で9件6.613秒成功。保存logは`data/reports/20261030-t03/deea05c-plan-copy-v1.log`。変更2ファイルのSHAは証拠JSONのfollowup_policy_copyへ別記し、先の実装commitのSHAを上書きしていない。追加修正の全suiteも次のCIで確認する。
+
+### T03最終CI・artifact照合（完了）
+
+追加修正は`24115cf248aa1136e95367e763ea53f30674fff5`（Isolate frozen measurement policy from returned plan mutations）として対象4ファイルだけをcommit/pushした。[最終CI 40999776550](https://github.com/kenobix/Claude_practice/actions/runs/40999776550)はtests/synthetic-systemの両jobがsuccess。**全265 testsが29.205秒で成功**し、pip check/compileallも成功した。Docker system、snapshot PostgreSQL、今回追加したrequest interruption PostgreSQL、log uploadとcleanupの全stepを確認した。Pages [40999776873](https://github.com/kenobix/Claude_practice/actions/runs/40999776873)もsuccess。先のdeea05cのCI 40999499322も両jobがsuccess。
+
+最終artifact ID `12953450428`（2,292 bytes）を取得し、ZIP SHA `794bed34a655297a2093aac8eea0e10d7d619e7985c4306be1c17852a172c6e0`がGitHub digestと一致、ZIP integrityも成功。本文から以下を確認した。
+
+- 合成candidate `567e7d7ad83e18e22b148c11bf12651ea2f381e736515d32e08e217045310a20`、登録版1、744観測、offline/API差0、同一ID再送と異入力409、通常/diagnostic runtime拒否。
+- attempt `c7f6ec15-0fe8-4285-b696-418c5e8f831d`、1,050要求/監査行、p95 `39.530652999985705 ms`、numeric recheck matched。T03 journalを作る現行runnerと、journal照合を含むexact-version証拠tag記録・冪等再記録・競合拒否まで成功。operational gateはnot_evaluated、配信blocked。人工データの性能値で実候補の性能とは説明しない。
+- snapshot PostgreSQLの9チェック成功。request interruption PostgreSQLは実HTTP ReadTimeout・未commit不在・遅延commit・読取による証拠不変・監査接続断・snapshot接続断の6項目成功。全て使い捨てcontainerを削除。
+- synthetic-system-ci.log SHA: `b57723cf3f12923b47485a9e9aba0c916906e6afe87f55f0eb9248b48908dd4b`。
+- snapshot-postgres-ci.log SHA: `88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9`。
+- request-interruption-postgres-ci.log SHA: `efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb`。
+
+保存先は`data/reports/20261030-t03/24115cf-ci-artifact-12953450428.zip`。unit job `123881205961`のraw logは同directoryの`24115cf-ci-unit-job-123881205961.log`（118,095 bytes、SHA `b799ad5d983246c933ac7bd4bcfb35efdf6e299477a90dd727c951015b5a93c1`）。ANSIを除いた表示用テキストから件数とOKを照合したが、raw fileは書き換えていない。
+
+追加の主要コマンド（repo root）:
+
+```bash
+git status --short
+git diff --cached --check
+git diff --cached --stat
+git commit -m "Persist Capital request journals and define interruption measurement rules"
+git push origin main
+git commit -m "Isolate frozen measurement policy from returned plan mutations"
+git push origin main
+gh run list --branch main --limit 4 --json databaseId,headSha,status,conclusion,workflowName,url
+gh run view 40999776550 --json headSha,status,conclusion,jobs,url
+gh run view 40999776873 --json status,conclusion,url
+gh api --allow-escape-sequences repos/kenobix/Claude_practice/actions/jobs/123881205961/logs
+gh api repos/kenobix/Claude_practice/actions/runs/40999776550/artifacts
+gh api repos/kenobix/Claude_practice/actions/artifacts/12953450428/zip
+```
+
+`timeout --signal=TERM 50 gh run watch ... --exit-status --interval 10`（一部15秒間隔）を区切って使用した。watchのexit 124は監視コマンドの期限で、CI試験自体のtimeoutではない。最終のstatus/conclusion・job step・artifact本文を別取得して成功を確定した。コードを変えない記録用commitで計画書・証拠JSON・このログへ反映する。
+
+T03の受入範囲を完了とし、次はT05、または高難易度のT07/T08/T17へ進む。T16のjournal原本archive、実候補のT10〜T13等は引き続き未完了である。
+
+最終の記録確認では、初回実装と追加修正を組み合わせた全source SHA、local log/CI unit log/ZIPと3 memberのSHAを再照合し一致した。変更資料と今回ログ節の相対リンク54件、証拠JSON、`git diff --check`も成功。無関係な未追跡3パスは保持し、対象の計画書・証拠JSON・work_logだけを記録用commitへ含める。

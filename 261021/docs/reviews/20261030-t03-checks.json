@@ -118,7 +118,66 @@
     "No new operational overall-elapsed threshold; HTTPX timeout is per connect/read/write/pool, not a total deadline"
   ],
   "ci": {
-    "status": "pending_after_push"
+    "status": "success",
+    "head_sha": "24115cf248aa1136e95367e763ea53f30674fff5",
+    "run_id": 40999776550,
+    "url": "https://github.com/kenobix/Claude_practice/actions/runs/40999776550",
+    "jobs": {
+      "tests": {
+        "id": 123881205961,
+        "tests": 265,
+        "seconds": 29.205,
+        "status": "success"
+      },
+      "synthetic-system": {
+        "id": 123881206092,
+        "status": "success",
+        "steps": [
+          "synthetic Docker system",
+          "snapshot PostgreSQL",
+          "request interruption PostgreSQL",
+          "artifact upload",
+          "cleanup"
+        ]
+      }
+    },
+    "unit_log": {
+      "path": "261021/data/reports/20261030-t03/24115cf-ci-unit-job-123881205961.log",
+      "bytes": 118095,
+      "sha256": "b799ad5d983246c933ac7bd4bcfb35efdf6e299477a90dd727c951015b5a93c1"
+    },
+    "artifact": {
+      "id": 12953450428,
+      "path": "261021/data/reports/20261030-t03/24115cf-ci-artifact-12953450428.zip",
+      "bytes": 2292,
+      "sha256": "794bed34a655297a2093aac8eea0e10d7d619e7985c4306be1c17852a172c6e0",
+      "github_digest_matched": true,
+      "zip_integrity": "passed",
+      "member_sha256": {
+        "synthetic-system-ci.log": "b57723cf3f12923b47485a9e9aba0c916906e6afe87f55f0eb9248b48908dd4b",
+        "snapshot-postgres-ci.log": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9",
+        "request-interruption-postgres-ci.log": "efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb"
+      }
+    },
+    "synthetic_summary": {
+      "candidate_id": "567e7d7ad83e18e22b148c11bf12651ea2f381e736515d32e08e217045310a20",
+      "operational_attempt_id": "c7f6ec15-0fe8-4285-b696-418c5e8f831d",
+      "requests": 1050,
+      "audit_rows": 1050,
+      "p95_ms": 39.530652999985705,
+      "numeric_recheck": "matched",
+      "deployment_permission": "blocked",
+      "cleanup": "complete"
+    },
+    "pages": {
+      "run_id": 40999776873,
+      "status": "success"
+    },
+    "previous_implementation_run": {
+      "run_id": 40999499322,
+      "head_sha": "deea05cd14d5a74f342f856f0e63d51ddf2fffef",
+      "status": "success"
+    }
   },
   "implementation_commit": "deea05cd14d5a74f342f856f0e63d51ddf2fffef",
   "followup_policy_copy": {
@@ -134,6 +193,7 @@
       "seconds": 6.613,
       "status": "passed"
     },
-    "ci": "pending_followup_push"
+    "ci": "success: 40999776550, 265 tests and disposable Docker/PostgreSQL checks",
+    "commit": "24115cf248aa1136e95367e763ea53f30674fff5"
   }
 }
