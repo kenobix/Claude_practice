@@ -1,6 +1,6 @@
 # Capitalの学習参照とPSI v2
 
-2026-10-30、計画T04の候補保存・登録・監視CLI接続を実装した。実Capital候補はまだ作成しておらず、検証は合成データで行った。T05の全監視ケース、T06の保存照合、T02の実証報告producer、実HTTP MLflowからの監視は後続課題である。[残作業計画](../../261014/plan_mlops.md#remaining-work-20261030)を正規の一覧とする。
+2026-10-30、計画T04の候補保存・登録・監視CLI接続を実装し、T05の10シナリオと2境界の合成受入をSol review後に確認した。実Capital候補はまだ作成しておらず、検証は合成データで行った。T06の異常保存照合、T02の実証報告producer、実候補/HTTP MLflowからの監視は後続課題である。[残作業計画](../../261014/plan_mlops.md#remaining-work-20261030)を正規の一覧とする。
 
 ## 何を固定するか
 
@@ -87,3 +87,5 @@ Capital用DB接続を事前に設定する。`scripts/bikectl`のprofile別port�
 現行UCIの定数参照は変化を0とすることがある。過去の数値は維持し、Capital v2では定数から上下に変化した場合を検知する。今回の合成testはこの違い、24件不足、欠測、非有限、基準未設定、参照の意味を変えて全hashを再計算しても元学習行との照合で拒否することを確認した。実CLIからSQLiteへ27窓を保存し、24ラベルの最終窓とmarkerを確認した。
 
 T05では、時点ごとの期待窓・母数・警告・検知時刻を先に固定し、分布のみ/誤差のみ/両方、ラベル遅延/停止/重複、欠測増加をCLIまで通す。今回の部分ケースだけで、T02のmonitoring 6項目すべてをpassedにしない。T06のDB/file読取照合、実候補とHTTP MLflowでの監視、実証producerは未完了。
+
+T05の具体的な受入期待値とSol reviewの判断は[Capital監視の合成受入基準](monitoring-acceptance.md)を参照。fake registryと一時SQLiteを通る10ケースと2境界を追加し、対象26件13.348秒、全277件127.327秒がlocalで成功した。保存したCSV/JSON/markerとDB全窓の値・hashも照合した。[全試行の証拠](reviews/20261030-t05-checks.json)には既存T03/T13の一度ずつの失敗も残し、原因を残課題として扱う。これはCLIの合成経路の受入であり、実MLflow/Capital候補の監視証拠ではない。

@@ -2298,3 +2298,64 @@ gh api repos/kenobix/Claude_practice/actions/artifacts/12953450428/zip
 T03の受入範囲を完了とし、次はT05、または高難易度のT07/T08/T17へ進む。T16のjournal原本archive、実候補のT10〜T13等は引き続き未完了である。
 
 最終の記録確認では、初回実装と追加修正を組み合わせた全source SHA、local log/CI unit log/ZIPと3 memberのSHAを再照合し一致した。変更資料と今回ログ節の相対リンク54件、証拠JSON、`git diff --check`も成功。無関係な未追跡3パスは保持し、対象の計画書・証拠JSON・work_logだけを記録用commitへ含める。
+
+## 2026-10-30 T05 Luna実装チェックポイント（未検証・Sol review待ち）
+
+### 開始時の状態
+
+開始commitは`2d6de34`（T03最終CI/記録）で、`main`は`origin/main`と一致していた。追跡差分はなく、無関係な未追跡3パス`260701/charts/`、`260701/logs/`、`260905/sets/bookkeeping-2kyu/images/assekiritono-flow.png`があったため保持した。確認コマンドは`git status --short --branch`、`git log -6 --oneline --decorate`、既存T05計画/monitoring実装/既存CLI testへの`sed`・`rg`、最後に`git diff`。
+
+### 固定した期待と変更
+
+T04の既存policyを変更せず、1時間刻み・`(t-168h,t]`の窓、ラベル`available_at <= t`、24ラベルの誤差算出最低件数、PSIのcurrent/reference最低24件、PSI 0.2以上、誤差は`MAE > validation_MAE * 1.25`を受入基準に記録した。`261021/docs/monitoring-acceptance.md`に10シナリオの期待窓・母数・状態・初回検知時刻を定義した。開始時点に欠測率警告の固定閾値はないため新設せず、欠測率・PSI component状態を記録し、窓を`insufficient_data`として扱う基準にした。重複timestampは既存loaderがreport作成前に拒否する仕様を受入条件にした。
+
+`tests/test_training_monitor_reference.py`の合成CLIハーネスを拡張し、registered referenceを取得し、一時SQLite・CSV/JSON/markerへ保存する既存CLI経路で、分布変化のみ/誤差悪化のみ/両方、追加遅延、ラベル停止、重複timestamp、定数分布、小標本、validation MAE未設定、lag_24欠測増加を確認する10ケースを追加した。合成source変更後はCSV hash、manifest、training reference、candidate identity/registry tagsを作り直す。既存のPSI計算式をtest内に複製していない。説明リンクをREADMEと`docs/training-monitor-reference.md`に、実行・review待ちを計画書11.6へ追記した。
+
+### 未実施・review境界
+
+追加したtestはまだ実行していない。構文コンパイル、ローカル全suite、Docker/PostgreSQL、実Capital data、実MLflow/HTTP監視も未確認。よってT05完了・CI成功とは記載しない。割当どおりSol review後に対象testを実行し、必要に応じて直してからcommit/pushする。特に、(1)欠測率を新たな警告へ昇格するか閾値を含めSolが決めること、(2)validation MAEが欠けたcandidate reportをmonitor CLIが受け付ける扱いが妥当か確認すること、(3)10ケースの検知時刻・データ生成が意図した窓に一致することをreview対象にする。
+
+変更ファイル: `261014/plan_mlops.md`、`261021/README.md`、`261021/docs/monitoring-acceptance.md`、`261021/docs/training-monitor-reference.md`、`261021/tests/test_training_monitor_reference.py`、`261021/work_log.md`。Sol reviewと受入実行前のため、今回commit/pushしていない。
+
+## 2026-10-30 T05 Sol review・受入検証
+
+### reviewで補った点と判断
+
+基点は引き続き`2d6de34`で、Lunaの未commit差分を対象に確認した。`tests/test_training_monitor_reference.py`の欠測fixtureが`NaN`をfeatures_jsonへ保存しており、CLIのstrict JSON検査と合わないことをsource reviewで発見した。実APIと同じnullへ変換し、`allow_nan=False`で保存するよう修正した（この修正前のtest実行失敗を観測したという意味ではない）。通常caseでラベル到着関数を常にmockしていた点も直し、遅延/停止caseだけで監視対象24ラベルの到着をずらす。lag出典となる過去のラベルは遅らせず、保存済み予測の特徴量と利用可能時刻を矛盾させない。source変更caseでは元学習行・元学習特徴量のhashが変わらないことも検査する。
+
+各caseの保存確認を、markerの存在確認から、CSV/JSON/markerのhash・run ID・件数、全窓のDB値（時刻/件数/coverage/MAE/RMSE/PSI/欠測率）、JSON最新窓とCSV最終行の一致へ拡張した。正常系のtest用比較であり、T06の未確定/破損/旧runを扱う読取照合コマンドの実装ではない。10シナリオに、MAEが1.25倍と同値の場合の非警告と、168時間窓の下端除外の境界2件を追加した。PSI式はtestへ複製していない。通常・遅延・停止の全時計で予測母数/採点母数/警告状態を期待列と照合する。
+
+欠測率に独立した警告閾値を足す実データ上の根拠はないため、既存policyは維持する。全欠測と小標本は明示的な計算不足として扱い、一部欠測があって有限値24件が残る場合のPSI非警告は「欠測増加なし」の証明ではないと文書化した。validation MAE未設定のcandidateは出典/hash照合後の診断monitorを許し、24ラベル到着後は`performance_reference_unset`、reportは`automatic_promotion=false`とする。これは候補の登録・配信を許可する判断ではない。通常配信は既存の証拠bundle検査で数値と行別validationの一致が別途必要となる。重複timestampは同値/異値とも採点前に拒否し、reportファイルもmonitor DB行も残らないことを確認する仕様とした。
+
+### 実行履歴（全試行を保存）
+
+log directoryは`data/reports/20261030-t05/`（Git対象外）。log名は基点commitを表し、最終source SHAと各log SHAは別のT05証拠JSONへ記録する。
+
+| log | 結果 |
+|---|---|
+| `2d6de34-target-v1.log` | 対象26件成功、12.057秒。監視対象以外のラベルも遅らせていたfixtureの追加修正前。 |
+| `2d6de34-full-v1.log` | 通常sandboxでは最初のFastAPI TestClientで待機し180秒でexit 124。既存ログにあるAnyIO/thread wakeup制限を踏まえ、以後の全suiteはlocal socket利用可能な条件で実行。成功扱いしない。 |
+| `2d6de34-full-socket-v2.log` | 全277件実行、138.304秒、既存T03のSIGTERM子プロセス終了待ち10秒で1 error。T05は全件成功。 |
+| `2d6de34-sigterm-diagnostic-v1.log` | 同じSIGTERM/SIGKILL試験を単独で実行し1件成功、5.734秒。原因解消の証明とはしない。 |
+| `2d6de34-target-final-v2.log` | 最終T05 sourceで対象26件成功、13.348秒。 |
+| `2d6de34-full-final-v3.log` | 最終sourceで全277件実行、126.537秒、既存SQLite MLflow承認試験で直前のreview timestampをfutureと判定し1 error。SIGTERMとT05は成功。 |
+| `2d6de34-clock-diagnostic-v1.log` | 同じ一時SQLite承認試験を単独で実行し1件成功、7.044秒。 |
+| `2d6de34-wall-clock-sample-v1.json` | 別途500,000回のwall clock読取で逆行0件。限られた観測であり、先のfuture判定の原因は特定できていない。 |
+| `2d6de34-full-final-v4.log` | 最終sourceで全277件成功、127.327秒。SIGTERM・一時SQLite承認・T05も成功。先の失敗は消さず原因未特定として追跡する。 |
+
+`pip check`は`No broken requirements found.`、`compileall -q src tests scripts`もexit 0。pip cacheの非書込warningと既存MLflow/SQLAlchemyのnoload warningは残る。探索中に存在しない`mlops.yml`を指定したreadはexit 1となり、`rg --files .github/workflows`で実在する`bike-mlops-contracts.yml`を確認し直した。
+
+主要コマンド（261021から実行。各testは`set -o pipefail`でstderrもtee保存）:
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 120 .venv/bin/python -m unittest discover -s tests -p test_training_monitor_reference.py -v
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 240 .venv/bin/python -m unittest discover -s tests -v
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 70 .venv/bin/python -m unittest discover -s tests -p test_capital_request_journal.py -k sigterm -v
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 90 .venv/bin/python -m unittest discover -s tests -p test_capital_deployment_evidence_publisher.py -k report_artifact_review -v
+.venv/bin/python -m pip check
+.venv/bin/python -m compileall -q src tests scripts
+```
+
+最終全suite（`2d6de34-full-final-v4.log`）は全277件127.327秒で成功した。既存T03/T13の2件の非決定的な失敗はT05修正に混ぜず、原因を特定するP1/D3/Solの残課題として計画書へ残す。待ち時間・時刻検証の緩和や失敗ログの削除はしていない。T05の合成受入は完了とし、post-push CIはこの後の記録へ追記する。実Capital fit/評価・実registry/HTTP監視・既存UCIの配信変更は行っていない。
+
+commit前に変更資料の相対リンク47件、最終source 8ファイルのSHA、local log/JSON 9件のSHAとbytes、`git diff --check`を照合し成功した。差分全体を読み、T05の7ファイルだけを明示stageする。GitHub連携のrun一覧取得はPR起点に限られるため、push CI追跡は接続確認済みの`gh`を使う。

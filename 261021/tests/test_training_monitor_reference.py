@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import copy
+import ast
 import hashlib
 import json
 import tempfile
 import unittest
+from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -227,32 +229,70 @@ class TrainingMonitorReferenceTests(unittest.TestCase):
         self.assertEqual(result.psi_details["hour"]["reference_status"], "insufficient_reference")
         self.assertEqual(result.psi_details["lag_24"]["reference_status"], "no_reference")
 
-    def setup_cli(self):
+    def replace_source_frame(self, frame):
+        """Rebuild the synthetic registered identity after a post-training source change."""
+        training_rows_sha = self.selection["training_row_keys_sha256"]
+        training_features_sha = self.reference["training_features_sha256"]
+        self.frame = frame.reset_index(drop=True)
+        pd.DataFrame({"dteday": self.frame.timestamp.dt.strftime("%Y-%m-%d"),
+                      "hr": self.frame.timestamp.dt.hour, "cnt": self.frame.cnt}).to_csv(self.csv, index=False)
+        self.manifest.write_text(json.dumps({"synthetic": True, "data_sha256": sha256_file(self.csv)}))
+        self.mask = self.frame.timestamp + pd.Timedelta(hours=3) <= pd.Timestamp(self.selection["training_cutoff"])
+        self.train = self.frame.loc[self.mask].reset_index(drop=True)
+        self.features = feature_frame_for_dataset(self.frame).loc[self.mask].reset_index(drop=True)
+        self.selection.update(data_sha256=sha256_file(self.csv), feature_columns=list(FEATURE_COLUMNS))
+        self.selection["data_source"]["source_manifest_sha256"] = sha256_file(self.manifest)
+        self.selection["split_counts"]["train"] = len(self.train)
+        self.selection["training_row_keys_sha256"] = refs.row_keys_sha256(self.train)
+        self.reference = refs.make_training_reference(self.selection, self.train, self.features)
+        self.assertEqual(self.selection["training_row_keys_sha256"], training_rows_sha)
+        self.assertEqual(self.reference["training_features_sha256"], training_features_sha)
+        self.refresh()
+
+    def setup_cli(self, *, prediction=11.0, end="2024-01-19 03:00:00"):
         self.database = Database(f"sqlite:///{self.root / 'ops.db'}", data_profile_id="capital-bikeshare",
                                  target_contract_id=refs.PROFILE["target_contract_id"])
         self.database.initialize()
         self.database.add_observations(available_observation_frame(self.frame), self.tags["data_sha256"])
         features = feature_frame_for_dataset(self.frame)
-        for pos in range(408,432):  # Jan 18, all 24 local hours.
-            target = self.frame.timestamp.iloc[pos]
-            sources = {f"lag_{lag}": {"timestamp":canonical_time(target-pd.Timedelta(hours=lag)),
-                       "cnt":10,"data_hash":self.tags["data_sha256"]} for lag in (24,168)}
+        source_counts = dict(zip(self.frame.timestamp, self.frame.cnt))
+        target_times = pd.date_range("2024-01-18", periods=24, freq="h")
+        for pos, target in enumerate(target_times):
+            sources = {}
+            for lag in (24, 168):
+                source_timestamp = target - pd.Timedelta(hours=lag)
+                count = source_counts.get(source_timestamp)
+                sources[f"lag_{lag}"] = ({"timestamp":canonical_time(source_timestamp),
+                    "cnt":int(count),"data_hash":self.tags["data_sha256"]} if count is not None else None)
+            frame_pos = int(self.frame.index[self.frame.timestamp.eq(target)][0])
+            feature_values = {name: None if pd.isna(value) else float(value)
+                              for name, value in features.iloc[frame_pos].items()}
             self.database.save_prediction({**self.tags,"model_name":"bike-demand-capital", "model_version":"7",
                 "model_quality_gate":"passed", "request_id":f"replay:synthetic:v7:{pos}", "input_hash":str(pos),
-                "target_hour":canonical_time(target), "as_of":canonical_time(target), "predicted":11.,
-                "data_version_sha256":stable_hash(sources), "features_json":json.dumps(features.iloc[pos].to_dict()),
+                "target_hour":canonical_time(target), "as_of":canonical_time(target), "predicted":prediction,
+                "data_version_sha256":stable_hash(sources), "features_json":json.dumps(feature_values, allow_nan=False),
                 "created_at":"2024-02-01T00:00:00+00:00"})
         args = cli.build_parser().parse_args(["monitor", "--csv",str(self.csv), "--manifest",str(self.manifest),
             "--replay-id","synthetic", "--model-version","7", "--psi-version",PSI_ALGORITHM_V2,
-            "--start","2024-01-18", "--end","2024-01-19 03:00:00", "--output",str(self.root/'monitor.csv')])
+            "--start","2024-01-18", "--end",end, "--output",str(self.root/'monitor.csv')])
         return args
 
-    def run_cli(self, args):
+    def run_cli(self, args, *, availability_shift_hours=0):
+        availability_patch = nullcontext()
+        if availability_shift_hours:
+            observations = available_observation_frame(self.frame)
+            # Delay the 24 monitored labels only; keep the historical lag sources
+            # available when the already-persisted predictions were produced.
+            monitored = observations.timestamp.between("2024-01-18", "2024-01-19", inclusive="left")
+            self.assertEqual(int(monitored.sum()), 24)
+            observations.loc[monitored, "available_at"] += pd.Timedelta(hours=availability_shift_hours)
+            availability_patch = patch.object(cli, "available_observation_frame", return_value=observations)
         with (patch.object(cli,"DATA_PROFILE_ID","capital-bikeshare"),
               patch.object(cli,"MODEL_NAME","bike-demand-capital"),
               patch.object(cli,"TARGET_CONTRACT_ID", refs.PROFILE["target_contract_id"]),
               patch.object(cli,"REPORT_DIR",self.root), patch.object(cli,"_database",return_value=self.database),
-              patch.object(cli,"_model_registry_client",return_value=self.registry), patch.object(cli,"_print")):
+              patch.object(cli,"_model_registry_client",return_value=self.registry), patch.object(cli,"_print"),
+              availability_patch):
             args.func(args)
 
     def test_real_cli_scores_registered_reference_and_persists_versioned_summary_and_db_windows(self):
@@ -293,6 +333,214 @@ class TrainingMonitorReferenceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"features differ"):
             self.run_cli(args)
         self.assertFalse((self.root/'monitor.csv').exists())
+
+    def read_monitor_acceptance_outputs(self):
+        csv_path = self.root / "monitor.csv"
+        summary_path = self.root / "monitor.json"
+        rows = pd.read_csv(csv_path)
+        summary = json.loads(summary_path.read_text())
+        marker = json.loads((self.root / "monitor.complete.json").read_text())
+        run_id = summary["monitor_run_id"]
+        self.assertEqual(marker["monitor_run_id"], run_id)
+        self.assertEqual(marker["status"], "database_commit_succeeded")
+        self.assertEqual(marker["csv_sha256"], sha256_file(csv_path))
+        self.assertEqual(summary["csv_sha256"], sha256_file(csv_path))
+        self.assertEqual(marker["summary_sha256"], sha256_file(summary_path))
+        self.assertEqual(marker["window_count"], len(rows))
+        self.assertEqual(summary["window_count"], len(rows))
+        self.assertEqual(rows.monitor_run_id.tolist(), [run_id] * len(rows))
+        expected_clocks = pd.date_range(summary["monitor_period"]["start_inclusive"],
+                                       summary["monitor_period"]["end_exclusive"], freq="h", inclusive="left")
+        self.assertEqual(rows.window_end.tolist(), [canonical_time(t) for t in expected_clocks])
+        self.assertEqual(rows.window_start.tolist(), [canonical_time(t - pd.Timedelta(hours=168)) for t in expected_clocks])
+        self.assertEqual(summary["reference"]["reference_sha256"], self.reference["reference_sha256"])
+        self.assertFalse(summary["automatic_promotion"])
+        with self.database.session() as connection:
+            stored = [dict(row) for row in self.database.execute(connection,
+                "SELECT * FROM monitor_windows ORDER BY window_end").fetchall()]
+        self.assertEqual(len(stored), len(rows))
+        for persisted, row in zip(stored, rows.to_dict("records")):
+            self.assertEqual(persisted["window_id"], f"monitor:{run_id}:{row['window_end']}")
+            self.assertEqual(persisted["replay_id"], summary["replay_id"])
+            self.assertEqual(persisted["window_end"], row["window_end"])
+            for name in ("prediction_count", "scored_count", "label_coverage", "mae", "rmse"):
+                if pd.isna(row[name]):
+                    self.assertIsNone(persisted[name], name)
+                else:
+                    self.assertAlmostEqual(persisted[name], row[name], msg=name)
+            self.assertEqual(json.loads(persisted["psi_json"]), ast.literal_eval(row["psi"]))
+            self.assertEqual(json.loads(persisted["missing_json"]), ast.literal_eval(row["feature_missing_rates"]))
+        for name, expected in summary["latest_window"].items():
+            observed = rows.iloc[-1][name]
+            if isinstance(expected, dict):
+                self.assertEqual(ast.literal_eval(observed), expected, name)
+            elif expected is None:
+                self.assertTrue(pd.isna(observed), name)
+            elif isinstance(expected, (int, float)):
+                self.assertAlmostEqual(observed, expected, msg=name)
+            else:
+                self.assertEqual(observed, expected, name)
+        return rows, summary
+
+    def assert_acceptance_timeline(self, rows, *, distribution, quality, delay=3):
+        """Assert the frozen 24-request scenario, without recalculating PSI or MAE."""
+        clocks = len(rows)
+        self.assertEqual(rows.prediction_count.tolist(), list(range(1, min(clocks, 24) + 1)) + [24] * max(0, clocks - 24))
+        self.assertEqual(rows.scored_count.tolist(), [0] * min(delay, clocks)
+                         + list(range(1, min(24, max(0, clocks - delay)) + 1))
+                         + [24] * max(0, clocks - delay - 24))
+        self.assertEqual(rows.distribution_status.tolist(), ["insufficient_data"] * min(23, clocks)
+                         + [distribution] * max(0, clocks - 23))
+        self.assertEqual(rows.quality_status.tolist(), ["insufficient_labels"] * min(delay + 23, clocks)
+                         + [quality] * max(0, clocks - delay - 23))
+
+    def test_monitor_cli_acceptance_distribution_change_only_and_detection_hour(self):
+        changed = self.frame.copy()
+        changed.loc[changed.timestamp.between("2024-01-17", "2024-01-17 23:00:00"), "cnt"] = 20
+        self.replace_source_frame(changed)
+        args = self.setup_cli(prediction=10.)
+        self.run_cli(args)
+        rows, summary = self.read_monitor_acceptance_outputs()
+        self.assert_acceptance_timeline(rows, distribution="investigate_distribution_change", quality="within_review_threshold")
+        first = rows.loc[rows.distribution_status.eq("investigate_distribution_change"), "window_end"].iloc[0]
+        self.assertEqual(len(rows), 27)
+        self.assertEqual(first, "2024-01-18 23:00:00")
+        self.assertEqual(summary["latest_window"]["quality_status"], "within_review_threshold")
+        self.assertEqual(summary["latest_window"]["scored_count"], 24)
+
+    def test_monitor_cli_acceptance_error_change_only_and_detection_hour(self):
+        args = self.setup_cli(prediction=12.)
+        self.run_cli(args)
+        rows, summary = self.read_monitor_acceptance_outputs()
+        self.assert_acceptance_timeline(rows, distribution="no_threshold_crossing", quality="investigate_error_increase")
+        first = rows.loc[rows.quality_status.eq("investigate_error_increase"), "window_end"].iloc[0]
+        self.assertEqual(first, "2024-01-19 02:00:00")
+        self.assertEqual(summary["latest_window"]["distribution_status"], "no_threshold_crossing")
+        self.assertEqual(summary["latest_window"]["mae"], 2.0)
+
+    def test_monitor_cli_acceptance_records_distribution_and_error_as_independent_signals(self):
+        changed = self.frame.copy()
+        changed.loc[changed.timestamp.between("2024-01-17", "2024-01-17 23:00:00"), "cnt"] = 20
+        self.replace_source_frame(changed)
+        args = self.setup_cli(prediction=12.)
+        self.run_cli(args)
+        rows, summary = self.read_monitor_acceptance_outputs()
+        self.assert_acceptance_timeline(rows, distribution="investigate_distribution_change", quality="investigate_error_increase")
+        first_distribution = rows.loc[rows.distribution_status.eq("investigate_distribution_change"), "window_end"].iloc[0]
+        first_error = rows.loc[rows.quality_status.eq("investigate_error_increase"), "window_end"].iloc[0]
+        self.assertEqual(first_distribution, "2024-01-18 23:00:00")
+        self.assertEqual(first_error, "2024-01-19 02:00:00")
+        self.assertEqual(summary["latest_window"]["distribution_status"], "investigate_distribution_change")
+        self.assertEqual(summary["latest_window"]["quality_status"], "investigate_error_increase")
+
+    def test_monitor_cli_acceptance_delayed_labels_wait_until_their_availability_time(self):
+        args = self.setup_cli(prediction=12., end="2024-01-19 06:00:00")
+        self.run_cli(args, availability_shift_hours=3)
+        rows, summary = self.read_monitor_acceptance_outputs()
+        self.assert_acceptance_timeline(rows, distribution="no_threshold_crossing", quality="investigate_error_increase", delay=6)
+        full = rows.loc[rows.scored_count.eq(24), "window_end"].iloc[0]
+        first_error = rows.loc[rows.quality_status.eq("investigate_error_increase"), "window_end"].iloc[0]
+        self.assertEqual(len(rows), 30)
+        self.assertEqual(full, "2024-01-19 05:00:00")
+        self.assertEqual(first_error, "2024-01-19 05:00:00")
+        self.assertEqual(summary["latest_window"]["scored_count"], 24)
+
+    def test_monitor_cli_acceptance_stopped_labels_remain_insufficient_not_normal(self):
+        args = self.setup_cli(end="2024-01-19 03:00:00")
+        self.run_cli(args, availability_shift_hours=69)
+        rows, summary = self.read_monitor_acceptance_outputs()
+        self.assert_acceptance_timeline(rows, distribution="no_threshold_crossing", quality="insufficient_labels", delay=72)
+        self.assertEqual(len(rows), 27)
+        self.assertEqual(summary["latest_window"]["scored_count"], 0)
+        self.assertEqual(summary["latest_window"]["quality_status"], "insufficient_labels")
+        self.assertIsNone(summary["latest_window"]["mae"])
+        self.assertFalse(rows.quality_status.eq("within_review_threshold").any())
+
+    def test_monitor_cli_acceptance_duplicate_timestamp_is_rejected_before_outputs(self):
+        args = self.setup_cli()
+        source = pd.read_csv(self.csv)
+        duplicate = source.loc[source.dteday.eq("2024-01-18") & source.hr.eq(0)].copy()
+        for count in (10, 999):
+            with self.subTest(duplicate_count=count):
+                duplicate["cnt"] = count
+                pd.concat([source, duplicate], ignore_index=True).to_csv(self.csv, index=False)
+                with self.assertRaisesRegex(ValueError, "Duplicate"):
+                    self.run_cli(args)
+                for name in ("monitor.csv", "monitor.json", "monitor.complete.json"):
+                    self.assertFalse((self.root / name).exists())
+                with self.database.session() as connection:
+                    n = self.database.execute(connection, "SELECT count(*) AS n FROM monitor_windows").fetchone()["n"]
+                self.assertEqual(n, 0)
+
+    def test_monitor_cli_acceptance_constant_distribution_has_zero_psi(self):
+        args = self.setup_cli(prediction=10.)
+        self.run_cli(args)
+        rows, summary = self.read_monitor_acceptance_outputs()
+        self.assert_acceptance_timeline(rows, distribution="no_threshold_crossing", quality="within_review_threshold")
+        detail = summary["latest_window"]["psi_details"]["lag_24"]
+        self.assertEqual(self.reference["features"]["lag_24"]["mode"], "constant_three_way")
+        self.assertEqual(detail["status"], "ready")
+        self.assertEqual(detail["psi"], 0.0)
+        self.assertEqual(summary["latest_window"]["distribution_status"], "no_threshold_crossing")
+
+    def test_monitor_cli_acceptance_small_sample_preserves_insufficient_states(self):
+        args = self.setup_cli(end="2024-01-18 23:00:00")
+        self.run_cli(args)
+        rows, summary = self.read_monitor_acceptance_outputs()
+        self.assert_acceptance_timeline(rows, distribution="insufficient_data", quality="insufficient_labels")
+        latest = summary["latest_window"]
+        self.assertEqual(summary["window_count"], 23)
+        self.assertEqual(latest["prediction_count"], 23)
+        self.assertEqual(latest["scored_count"], 20)
+        self.assertEqual(latest["quality_status"], "insufficient_labels")
+        self.assertEqual(latest["psi_details"]["lag_24"]["status"], "insufficient_current_data")
+        self.assertEqual(latest["distribution_status"], "insufficient_data")
+        self.assertIsNone(latest["mae"])
+
+    def test_monitor_cli_acceptance_missing_error_reference_is_explicit(self):
+        self.selection["validation"]["model"]["mae"] = None
+        self.refresh()
+        args = self.setup_cli(prediction=10.)
+        self.run_cli(args)
+        rows, summary = self.read_monitor_acceptance_outputs()
+        self.assert_acceptance_timeline(rows, distribution="no_threshold_crossing", quality="performance_reference_unset")
+        self.assertEqual(summary["latest_window"]["scored_count"], 24)
+        self.assertEqual(summary["latest_window"]["quality_status"], "performance_reference_unset")
+
+    def test_monitor_cli_acceptance_missing_feature_increase_is_recorded_not_called_stable(self):
+        changed = self.frame.loc[~self.frame.timestamp.between("2024-01-17", "2024-01-17 23:00:00")].copy()
+        self.replace_source_frame(changed)
+        args = self.setup_cli(prediction=10.)
+        self.run_cli(args)
+        rows, summary = self.read_monitor_acceptance_outputs()
+        self.assert_acceptance_timeline(rows, distribution="insufficient_data", quality="within_review_threshold")
+        latest = summary["latest_window"]
+        self.assertEqual(latest["scored_count"], 24)
+        self.assertEqual(latest["feature_missing_rates"]["lag_24"], 1.0)
+        self.assertEqual(latest["psi_details"]["lag_24"]["current_input_counts"]["missing"], 24)
+        self.assertEqual(latest["psi_details"]["lag_24"]["status"], "no_current_data")
+        self.assertEqual(latest["distribution_status"], "insufficient_data")
+
+    def test_monitor_cli_acceptance_error_threshold_equality_does_not_alert(self):
+        args = self.setup_cli(prediction=11.25)
+        self.run_cli(args)
+        rows, summary = self.read_monitor_acceptance_outputs()
+        self.assert_acceptance_timeline(rows, distribution="no_threshold_crossing", quality="within_review_threshold")
+        self.assertEqual(summary["latest_window"]["mae"], 1.25)
+
+    def test_monitor_cli_acceptance_168_hour_boundary_excludes_oldest_prediction(self):
+        args = self.setup_cli(prediction=10., end="2024-01-25 01:00:00")
+        self.run_cli(args)
+        rows, summary = self.read_monitor_acceptance_outputs()
+        before = rows.loc[rows.window_end.eq("2024-01-24 23:00:00")].iloc[0]
+        boundary = summary["latest_window"]
+        self.assertEqual(len(rows), 169)
+        self.assertEqual((before.prediction_count, before.scored_count), (24, 24))
+        self.assertEqual(before.distribution_status, "no_threshold_crossing")
+        self.assertEqual(boundary["window_end"], "2024-01-25 00:00:00")
+        self.assertEqual((boundary["prediction_count"], boundary["scored_count"]), (23, 23))
+        self.assertEqual(boundary["distribution_status"], "insufficient_data")
+        self.assertEqual(boundary["quality_status"], "insufficient_labels")
 
 
 if __name__ == "__main__":

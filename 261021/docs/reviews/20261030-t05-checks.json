@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-30T04:47:53.741058+00:00",
+  "base_commit": "2d6de346b8a1b87aaec684a1dc6ea2d0d4eaca31",
+  "task": "T05 synthetic monitoring CLI acceptance and Sol review",
+  "main_scenarios": 10,
+  "additional_boundaries": [
+    "MAE equals 1.25 times validation MAE",
+    "168-hour lower boundary is exclusive"
+  ],
+  "target_suite": {
+    "tests": 26,
+    "seconds": 13.348,
+    "status": "passed",
+    "log": "2d6de34-target-final-v2.log"
+  },
+  "final_local_suite": {
+    "tests": 277,
+    "seconds": 127.327,
+    "status": "passed",
+    "log": "2d6de34-full-final-v4.log"
+  },
+  "review_fixes": [
+    "serialize missing features as JSON null, rejecting NaN encoding",
+    "use production availability function for normal cases",
+    "delay only 24 monitored labels, preserving historical feature availability",
+    "prove training row/feature hashes unchanged after post-training source changes",
+    "compare every clock count/status and every DB row with persisted CSV/JSON/marker hashes",
+    "reject both identical and conflicting duplicate monitored timestamps before persistence"
+  ],
+  "decisions": {
+    "missing_rate_alert_threshold": "not introduced; no data-grounded limit in existing policy",
+    "unset_validation_mae": "diagnostic monitor permitted; performance_reference_unset, automatic_promotion false",
+    "duplicate_source_timestamps": "reject before reports and monitor DB rows"
+  },
+  "verified": [
+    "CLI parser and command with fake registered artifacts and disposable SQLite",
+    "10 scenarios plus 2 boundaries",
+    "CSV/JSON/complete marker SHA and run identity",
+    "all persisted DB window values",
+    "pip check",
+    "compileall"
+  ],
+  "not_verified": [
+    "actual Capital candidate fit/evaluation/monitoring",
+    "HTTP MLflow monitoring",
+    "T06 production reconciliation of partial/corrupt/old runs",
+    "T02 real monitoring prerequisite producer"
+  ],
+  "observed_unresolved": [
+    {
+      "task": "T03",
+      "priority": "P1",
+      "difficulty": "D3",
+      "owner": "Sol",
+      "observation": "SIGTERM child communicate timeout at 10 seconds once in full-socket-v2; isolated and later suites passed; cause unknown"
+    },
+    {
+      "task": "T13",
+      "priority": "P1",
+      "difficulty": "D3",
+      "owner": "Sol",
+      "observation": "new review timestamp rejected as future once in full-final-v3; isolated and later suite passed; cause unknown; limited wall-clock sample saw no reversal"
+    }
+  ],
+  "source_files": {
+    "261021/tests/test_training_monitor_reference.py": "b229ec9f8e7571c6aa3cb374562ea2e1569d20094169aa998ba244f2818c6a12",
+    "261021/tests/capital_deployment_fixture.py": "bf001e87eeb6d52bbe87fa3c8621f194ea5d23fe657a875a2d44c2c23079bfcf",
+    "261021/src/bike_mlops/cli.py": "a2774141f527af602ed48843104cc72f0b56b654bde4e3d6e8b634276f27049f",
+    "261021/src/bike_mlops/monitoring.py": "5566a988e5730984c20efd764ee33d9ee0a50d35df0afbd698678022c5d57b2a",
+    "261021/src/bike_mlops/monitor_persistence.py": "5344ca87c732c0c6c1807e7b021205990d8a3b7fb8086adf3db576e3a17c150e",
+    "261021/src/bike_mlops/training_monitor_reference.py": "6a153b5edba24f43efe024756c161100c88e00d1885ede7d8a13cd4c0e005705",
+    "261021/src/bike_mlops/features.py": "ff2196a42f428e6dbc38c4b03bffcff0cab827c88250191a6af6ce4c43dcc0d4",
+    "261021/src/bike_mlops/data.py": "bdb2285f961806aa9b45b10665a741501cb3ae9953e1ff330ebed3d6bbbf76be"
+  },
+  "logs": [
+    {
+      "path": "261021/data/reports/20261030-t05/2d6de34-clock-diagnostic-v1.log",
+      "sha256": "23ca82d1fb921f0c4aad0972d8a25e1d53ac3cad1bea1ad5cb54c790dcc65366",
+      "bytes": 899,
+      "exit_code": 0,
+      "status": "passed",
+      "tests": 1,
+      "seconds": 7.044
+    },
+    {
+      "path": "261021/data/reports/20261030-t05/2d6de34-full-final-v3.log",
+      "sha256": "dd7100db98bc0772b2665cd4b66a87ebcbc5a1da1da44285ce830f6c83573654",
+      "bytes": 54831,
+      "exit_code": 1,
+      "status": "failed",
+      "tests": 277,
+      "seconds": 126.537
+    },
+    {
+      "path": "261021/data/reports/20261030-t05/2d6de34-full-final-v4.log",
+      "sha256": "d06effa73f80b7b7efd40dd2912c04d4630509cfa8ad70316beb6e33ec97d5d1",
+      "bytes": 53155,
+      "exit_code": 0,
+      "status": "passed",
+      "tests": 277,
+      "seconds": 127.327
+    },
+    {
+      "path": "261021/data/reports/20261030-t05/2d6de34-full-socket-v2.log",
+      "sha256": "7468a1748678c2a38dd890b5723d9d28a6a4923988c2e2c9ec8b7ffdf33a6d16",
+      "bytes": 55684,
+      "exit_code": 1,
+      "status": "failed",
+      "tests": 277,
+      "seconds": 138.304
+    },
+    {
+      "path": "261021/data/reports/20261030-t05/2d6de34-full-v1.log",
+      "sha256": "58b4c276366e78fc8146b01844530b092fd4e7617b4ba2ae52f7744de05f2d1e",
+      "bytes": 152,
+      "exit_code": 124,
+      "status": "sandbox_timeout"
+    },
+    {
+      "path": "261021/data/reports/20261030-t05/2d6de34-sigterm-diagnostic-v1.log",
+      "sha256": "363a4b448a15b58a4aabe36fb8b606a4e52e76f960504ffe5eae6f93bbbbfc09",
+      "bytes": 299,
+      "exit_code": 0,
+      "status": "passed",
+      "tests": 1,
+      "seconds": 5.734
+    },
+    {
+      "path": "261021/data/reports/20261030-t05/2d6de34-target-final-v2.log",
+      "sha256": "dd1e73b56a5b21509449551d10cfe9839e62030aca922b282c7909fd7db5a71b",
+      "bytes": 5858,
+      "exit_code": 0,
+      "status": "passed",
+      "tests": 26,
+      "seconds": 13.348
+    },
+    {
+      "path": "261021/data/reports/20261030-t05/2d6de34-target-v1.log",
+      "sha256": "9d78a01b739f30f5d33ec0d19b379494140ac354c79ea9619e985381e33e10d9",
+      "bytes": 5858,
+      "exit_code": 0,
+      "status": "passed",
+      "tests": 26,
+      "seconds": 12.057
+    },
+    {
+      "path": "261021/data/reports/20261030-t05/2d6de34-wall-clock-sample-v1.json",
+      "sha256": "6366e6e81f954f564d9aa81419f0a7fd7bdfca291aa499c96f81c0ff92696c37",
+      "bytes": 119,
+      "observed": {
+        "at_utc": "2026-10-30T04:43:20.201095+00:00",
+        "samples": 500000,
+        "backward_steps": 0,
+        "max_backward_ns": 0
+      }
+    }
+  ],
+  "live_runtime_changed": false,
+  "ci": {
+    "status": "pending"
+  },
+  "static_checks": {
+    "local_links": 47,
+    "source_hashes": 8,
+    "log_hashes": 9,
+    "git_diff_check": "passed"
+  }
+}
