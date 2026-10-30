@@ -76,10 +76,21 @@ class OperationalPlanTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "inside the operational-plans"):
                 plans.save_operational_plan(plan, self.root / "outside.json")
 
+    def test_returned_nested_policy_cannot_change_the_fixed_measurement_rules(self):
+        plan = self.build()
+        original = copy.deepcopy(plans.PLAN_POLICY)
+        plan["policy"]["request_journal"]["timeout_outcome"] = "unsafe_retry"
+        plan["plan_sha256"] = plans._digest(plan)
+        self.assertEqual(plans.PLAN_POLICY, original)
+        self.assertEqual(self.build()["policy"], original)
+        with self.assertRaisesRegex(ValueError, "policy"):
+            plans.validate_operational_plan(plan)
+
     def test_mismatched_registry_artifact_and_source_are_rejected(self):
         self.registered.tags["candidate_id"] = "0" * 64
         with self.assertRaisesRegex(ValueError, "candidate_id"):
             self.build()
+
         self.registered.tags["candidate_id"] = "a" * 64
         (self.artifact / "model.skops").write_bytes(b"changed")
         with self.assertRaisesRegex(ValueError, "artifact"):

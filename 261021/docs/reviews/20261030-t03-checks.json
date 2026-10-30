@@ -119,5 +119,21 @@
   ],
   "ci": {
     "status": "pending_after_push"
+  },
+  "implementation_commit": "deea05cd14d5a74f342f856f0e63d51ddf2fffef",
+  "followup_policy_copy": {
+    "reason": "Nested journal policy must not share mutable state with returned plans",
+    "source_sha256": {
+      "261021/src/bike_mlops/capital_operational_plan.py": "6fafd9c56fe16acd71520391a81342095dc78df3dffe457b5b0e727b6a894ed5",
+      "261021/tests/test_capital_operational_plan.py": "d9cadc58259f188b9f47aac5cf96c886aaffbd79f7cfc069e4a3aea8a03e91c2"
+    },
+    "test_log": {
+      "path": "261021/data/reports/20261030-t03/deea05c-plan-copy-v1.log",
+      "sha256": "4caa89f39895ade9baad295b1a08dc1f1c332e46e1ba0e928739d7758f87fc6c",
+      "tests": 9,
+      "seconds": 6.613,
+      "status": "passed"
+    },
+    "ci": "pending_followup_push"
   }
 }

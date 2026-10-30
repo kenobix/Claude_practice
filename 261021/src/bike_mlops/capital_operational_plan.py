@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from copy import deepcopy
 import json
 import os
 import re
@@ -139,7 +140,7 @@ def build_operational_plan(*, evidence: dict, window: dict, registered, artifact
         "input_window": dict(window),
         "api_url": _staging_url(api_url),
         "registry_uri": local_registry_url(registry_uri),
-        "policy": dict(PLAN_POLICY),
+        "policy": deepcopy(PLAN_POLICY),
         "resource_context_before_requests": resource_context,
         "other_host_load": "not fully measured; assess separately before deciding operational eligibility",
         "deployment_permission": "blocked",

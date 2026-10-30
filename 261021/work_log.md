@@ -2253,3 +2253,9 @@ compileall/pip check/diff check成功。YAML parser、workflow内11 Bash block�
 ### 完了範囲と残る検証
 
 今回のHTTP/PostgreSQL fixtureは人工予測行を保存する試験serverであり、学習済みFastAPIモデルやCaddyの配信切替ではない。未使用実Capital candidateのfit/validation/final/運用測定、実配信承認、UCI版3のDB/schema/container/配信変更は行っていない。実Caddyや配信途中停止はT07/T17、実候補の計測はT12、実MLflow採否はT13で扱う。T03のjournal原本はlocal保全で、既存remote 11報告書bundleにはdescriptorだけが含まれる。再計算可能なCI archiveへ原本を保存するT16は未完了。原本のremote読込まで実証したとは説明しない。
+
+### T03実装pushと追加review
+
+27ファイルを確認して明示stageし、`deea05cd14d5a74f342f856f0e63d51ddf2fffef`（Persist Capital request journals and define interruption measurement rules）をcommitしorigin/mainへpushした。CI [40999499322](https://github.com/kenobix/Claude_practice/actions/runs/40999499322)の最終コードsuite/Docker障害試験を確認中。
+
+push後のreviewで、新しいjournal policyが入れ子のdictであるため、`dict(PLAN_POLICY)`だけでは返したplanと固定policyが内側の同じobjectを参照すると気付いた。ファイル読込による改変とは別の、同一process内の変更である。plan生成をdeepcopyへ変更し、返したplanのtimeoutルールを変えて再hashしても固定ルールは変わらず、不正planが拒否されるtestを追加した。`timeout --signal=TERM --kill-after=10 90 261021/.venv/bin/python -u -m unittest discover -s 261021/tests -p test_capital_operational_plan.py -v`で9件6.613秒成功。保存logは`data/reports/20261030-t03/deea05c-plan-copy-v1.log`。変更2ファイルのSHAは証拠JSONのfollowup_policy_copyへ別記し、先の実装commitのSHAを上書きしていない。追加修正の全suiteも次のCIで確認する。
