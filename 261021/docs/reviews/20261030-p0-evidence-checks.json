@@ -88,5 +88,56 @@
     "authenticated reviewer/approver identity"
   ],
   "live_runtime_changed": false,
-  "synthetic_readiness_only": true
+  "synthetic_readiness_only": true,
+  "ci": {
+    "verified_at_utc": "2026-10-30T00:08:55.551283+00:00",
+    "head_sha": "29ed87923eb01100bd6af71eb7a1833f24537ca5",
+    "run_id": 40977087079,
+    "conclusion": "success",
+    "unit_tests": 241,
+    "unit_seconds": 8.204,
+    "unit_job_log": {
+      "path": "261021/data/reports/20261030-p0/29ed879-ci-unit-job-123807682950-v2.log",
+      "sha256": "18d551df46b1d5f3ffdf5095b386027cdb7fa63ab62c1992a0022714f987e5fc"
+    },
+    "artifact_id": 12942189420,
+    "artifact_path": "261021/data/reports/20261030-p0/29ed879-ci-artifact-12942189420.zip",
+    "artifact_zip_sha256": "748cd5f0a3ee4463ba2a1170e104db132ea2e47358c52874ea5591d2e8d2c329",
+    "artifact_members": {
+      "synthetic-system-ci.log": "1e6f277bbfa2c4e94451116d03740e9fef55f7f27f62bef31db263de7b73939c",
+      "snapshot-postgres-ci.log": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9"
+    },
+    "synthetic_summary": {
+      "status": "synthetic_system_passed",
+      "data": "synthetic_only",
+      "candidate_id": "6156f0d45de2879da3ac75ee819efc80db32bf55af0896623f2944184d653c8a",
+      "model_version": "1",
+      "candidate_registration": "blocked_and_idempotent",
+      "staging_rows_seeded_and_verified": 744,
+      "api_ready": "ready",
+      "offline_api_parity_absolute_delta": 0.0,
+      "api_idempotent_retry": "passed",
+      "api_changed_input_conflict": 409,
+      "api_audit_rows": 1,
+      "runtime_init_rejections": [
+        "normal",
+        "diagnostic"
+      ],
+      "measurement_attempt": "5483320b-9c40-4605-b18c-b3120518952d",
+      "requests": 1050,
+      "audited_rows": 1050,
+      "measurement_status": "passed",
+      "p95_ms": 31.186767999997755,
+      "numeric_recheck": "matched",
+      "exact_version_evidence_tags": "recorded_and_idempotent",
+      "conflicting_evidence_rejected_without_unblocking": true,
+      "operational_gate": "not_evaluated",
+      "deployment_permission": "blocked",
+      "resource_context": "captured_before_and_after"
+    },
+    "cleanup_complete": true,
+    "postgres_snapshot_test": "passed",
+    "pages_run_id": 40977086506,
+    "pages_conclusion": "success"
+  }
 }

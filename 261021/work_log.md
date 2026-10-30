@@ -2076,3 +2076,37 @@ git diff --check
 次はT04のtraining reference/PSI v2接続を進め、実fit前のbundle形式とT05受入条件を固定する。T03の中断journal/測定policy、T06のmonitor照合、T07/T08/T17の障害/復元/metadata、T13のHTTP書込障害は残る。T09/T10の原本とprotocolが揃うまで実fitを先行しない。
 
 最終文書確認では5 Markdownの相対リンク47件、T01〜T17の行、13コード/テストファイルと5 raw logのSHA、証拠JSONを照合し不一致0件。`git diff --check`成功。結果は`data/reports/20261030-p0/bd49f91-document-checks-v1.json`。HTML renderは未実施でpush後のPages CIを確認する。変更全体を確認し、無関係な260701/charts・logs、260905の画像はstageしない。
+
+### 実装commitとGitHub CIの確認
+
+実装・テスト・計画・仕様・ログの20ファイルを明示stageし、`29ed87923eb01100bd6af71eb7a1833f24537ca5`（Bind Capital deployment decisions to complete evidence artifacts）としてcommit、`origin/main`へpushした。無関係な未追跡ファイルはstageしていない。
+
+GitHub run [40977087079](https://github.com/kenobix/Claude_practice/actions/runs/40977087079)は全体success。tests jobは**241 tests / 8.204秒**、pip check・compileallもsuccess。`synthetic-system` jobの合成Docker試験、使い捨てPostgreSQL snapshot-lock試験、artifact保存もsuccess。Pages build/deploy [40977086506](https://github.com/kenobix/Claude_practice/actions/runs/40977086506)もsuccess。
+
+保存artifactを取得してZIP integrity・GitHub digest・本文を確認した。synthetic candidate `6156f0d45de2879da3ac75ee819efc80db32bf55af0896623f2944184d653c8a`、版1、744観測、offline/API差0、retry成功・異入力409、通常/diagnostic runtime init拒否、1,050要求/監査行、measurement passed、p95 `31.186767999997755 ms`、numeric recheck matched。競合証拠拒否と冪等再記録を通し、`cleanup_complete`を確認した。PostgreSQL logにもpassedとcontainer削除がある。これらは既存の合成計測経路の回帰確認で、新bundleの22ケース実証や実Capital採用の代替ではない。正式運用gateはnot_evaluated、配信はblocked。
+
+- artifact ID `12942189420`、1,844 bytes、ZIP SHA-256 `748cd5f0a3ee4463ba2a1170e104db132ea2e47358c52874ea5591d2e8d2c329`（GitHub digestと一致）。
+- `synthetic-system-ci.log`: SHA `1e6f277bbfa2c4e94451116d03740e9fef55f7f27f62bef31db263de7b73939c`。
+- `snapshot-postgres-ci.log`: SHA `88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9`。
+- 成功unit jobのraw logは`data/reports/20261030-p0/29ed879-ci-unit-job-123807682950-v2.log`。SHA `18d551df46b1d5f3ffdf5095b386027cdb7fa63ab62c1992a0022714f987e5fc`。
+- ZIPは同directoryの`29ed879-ci-artifact-12942189420.zip`。証拠JSONへCI commit/run/結果/hashを追記した。
+
+主な追加コマンド（repo root）:
+
+```bash
+git status --short
+git diff --cached --stat
+git diff --cached --check
+git commit -m "Bind Capital deployment decisions to complete evidence artifacts"
+git push origin main
+gh run list --branch main --limit 6 --json databaseId,headSha,status,conclusion,workflowName,url,createdAt
+gh run view 40977087079 --json headSha,status,conclusion,jobs,url
+gh run view 40977086506 --json status,conclusion,jobs,url
+gh api --allow-escape-sequences repos/kenobix/Claude_practice/actions/jobs/123807682950/logs
+gh api repos/kenobix/Claude_practice/actions/runs/40977087079/artifacts
+gh api repos/kenobix/Claude_practice/actions/artifacts/12942189420/zip
+```
+
+ghのjob log取得初回はterminal escape sequencesを含むため出力拒否でexit 1、保存先は空だった。`--allow-escape-sequences`を付けて新規v2 logへリダイレクトし、表示時は制御文字を除いた該当行だけ照合した。ZIPも新規pathへリダイレクトし、raw bytesを端末へ表示していない。50秒上限の`gh run watch`が返したexit 124はwatchだけの期限で、CI試験のtimeoutや停止ではない。最終successと保存ログを別途確認した。
+
+この追記は検証済みcode commitのCI結果の記録で、製品コードは変更しない。最終git差分とJSON/hashを再確認して記録用commit/pushを行う。

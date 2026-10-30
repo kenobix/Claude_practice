@@ -382,7 +382,7 @@ registry URIの進捗補足: Capital staging登録・loader・seed・preflight�
 
 本節を残作業の正規一覧とする。前回checkpoint記録10dfb8fから070b033までの28コミット・65ファイルを確認した結果と、[差分レビュー](../261021/docs/reviews/20261030-checkpoint-review.md)・[証拠JSON](../261021/docs/reviews/20261030-checkpoint-evidence.json)を根拠にする。R01〜R10は目的のIDとして維持し、以下のT番号を実際の作業単位にする。11.4/11.5の旧順番やチェック数より本節が優先する。
 
-現在の到達点は、UCI版3の稼働と合成Capitalの入力固定・監査付き運用計測・CI成功。最新070b033のCI 40966966672では221 testsとDocker/PostgreSQL/cleanupが成功した。実Capitalの新候補、独立final、運用合格、通常配信の完成は未達。監査時の合成registryでは、承認後のfinal/plan SHA変更・負のp95の受理、監視・復旧証拠なしのeligible化を確認した。その後T01とT02の必須schema/拒否処理を実装し、全241 tests（30.810秒）が成功した。11報告書本体を持つbundleとschema 2の決定で結合し、一時SQLite MLflowで保存/承認/本文破損拒否も確認した。実Capital候補と監視・復旧producerの実証は残る。実運用registryは変更していない。詳細は[配信証拠仕様](../261021/docs/capital-deployment-evidence.md)と[作業ログ](../261021/work_log.md)。
+現在の到達点は、UCI版3の稼働と合成Capitalの入力固定・監査付き運用計測・CI成功。監査時点の070b033のCI 40966966672では221 testsとDocker/PostgreSQL/cleanupが成功した。今回の実装commit 29ed879のCI 40977087079では全241 tests（8.204秒）と合成Docker/PostgreSQL/cleanupが成功した。合成計測は1,050要求/監査行、p95 31.186768msでblockedを維持。Pages run 40977086506も成功した。実Capitalの新候補、独立final、運用合格、通常配信の完成は未達。監査時の合成registryでは、承認後のfinal/plan SHA変更・負のp95の受理、監視・復旧証拠なしのeligible化を確認した。その後T01とT02の必須schema/拒否処理を実装し、全241 tests（30.810秒）が成功した。11報告書本体を持つbundleとschema 2の決定で結合し、一時SQLite MLflowで保存/承認/本文破損拒否も確認した。実Capital候補と監視・復旧producerの実証は残る。実運用registryは変更していない。詳細は[配信証拠仕様](../261021/docs/capital-deployment-evidence.md)と[作業ログ](../261021/work_log.md)。
 
 #### 優先度と難易度の基準
 
