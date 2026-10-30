@@ -1,6 +1,6 @@
 # 監視保存の読取照合契約（T06）
 
-policy IDは `monitor-run-reconciliation-v1`。2026-10-30にSolで状態・比較・読取境界を固定した。SQLite版T06aは実装し、Sol reviewで修正・受入を進めた。PostgreSQL版T06bは未実装である。設計時点の保存挙動確認は[設計証拠](reviews/20261030-t06-design.json)を参照。
+policy IDは `monitor-run-reconciliation-v1`。2026-10-30にSolで状態・比較・読取境界を固定した。SQLite版T06aは実装し、Sol reviewで修正・SQLite受入を完了した。PostgreSQL版T06bは未実装である。設計時点の保存挙動確認は[設計証拠](reviews/20261030-t06-design.json)を参照。
 
 ## 目的と担当範囲
 
@@ -165,3 +165,5 @@ DATABASE_URL='sqlite:////absolute/path/ops.db' \
 Sol reviewでは期間末尾の未確認窓、JSON boolと数値の同値扱い、旧形式とDB障害の優先順、最終再読取中のinode交換、field上限の分類、欠落window_hoursの分類を修正した。固定した状態表・数値ルールを変えず、ファイル判定・DB profile/接続・行比較を順に検査し、最後にファイルsnapshotを再確認する。SQLiteの未知の数値列型はunsupported、DB JSONのbool/非有限/文字列は数値へ変換しない。
 
 対象54 testsではUCI形式とCapital追加列、read-only接続へのUPDATE拒否、metadata/行の同一SQLite snapshot、他run/旧行とreportの非変更、CLI exit 0/1/2、許可・ロック失敗の秘匿、差分50件/値512文字上限も確認した。実行・失敗・修正と全suite/CIの最終成否は[検証記録](reviews/20261030-t06a-checks.json)と[作業ログ](../work_log.md)を参照する。PostgreSQL接続、REAL量子化、SQL NaN、遅延commitはT06bの残件であり、SQLiteや既存CIのPostgreSQL試験成功をT06bの受入へ転用しない。
+
+実装commit df4c3b9の[CI 41038726909](https://github.com/kenobix/Claude_practice/actions/runs/41038726909)は全331 tests、既存の隔離Docker/PG試験とcleanupまで成功した。これはSQLite版T06aと既存機能の回帰確認である。T06bのPG inspectorは未実装のままで、S13のOS実権限/実busy timeoutの組合せも追加確認として残る。

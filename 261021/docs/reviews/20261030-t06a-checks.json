@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "recorded_at_utc": "2026-10-30T10:08:46.335873+00:00",
+  "recorded_at_utc": "2026-10-30T10:19:06.273495+00:00",
   "base_commit": "12debff2f4572529fcbfb8bb527720b2dc8a21c7",
   "task": "T06a SQLite inspector and CLI, Sol reviewed and repaired",
   "policy_id": "monitor-run-reconciliation-v1",
-  "status": "sol_review_approved_ci_pending",
+  "status": "T06a_sol_review_approved_and_implementation_CI_passed",
   "implementation": {
     "public_function": "bike_mlops.monitor_inspection.inspect_monitor_run",
     "cli": "mlops-bikectl monitor-inspect --csv PATH --run-id UUID",
@@ -72,7 +72,7 @@
     "compileall": "passed",
     "git_diff_check": "passed",
     "full_suite": "passed 328, same production code; last 3 new tests passed in final target",
-    "CI": "pending_push",
+    "CI": "passed 331 unit tests, existing synthetic-system/PostgreSQL checks and cleanup",
     "PostgreSQL_integration": "T06b_not_run",
     "pip_check": "passed"
   },
@@ -482,33 +482,34 @@
       "sha256": "d1c56fe9bb0d6a1dcf295704c4b6652d2863703a757f4bc4eebd6ded246fe65c"
     },
     "docs/monitor-reconciliation.md": {
-      "bytes": 22696,
-      "sha256": "8ceb785eb7e4151c29ba46ce9a36a7fc79df37581944c9f73d5f4f43b4015fcb"
+      "bytes": 23082,
+      "sha256": "87eae4cfdb03ad1afb73991e2f330e61e5daa62da04572e4d447749d827fffb0"
     },
     "work_log.md": {
-      "bytes": 288940,
-      "sha256": "de61466bb3760ba683aa59d73750c48ca87582bb7cf11f41f91b34c3b0746a28"
+      "bytes": 293083,
+      "sha256": "a7869a9c6c139c18bbb5ea61ca09a8dfc9af44c03244beabeb6d9ed31e3d2b69"
     },
     "../261014/plan_mlops.md": {
-      "bytes": 79856,
-      "sha256": "e51bd386495b878c8250837ca39277bd7ec2a4fb90afe3d4bd2c8036261da1d2"
+      "bytes": 80646,
+      "sha256": "8d46e62827170cc6cfe0b451b44f508ba8279ba7e87bc00fb3e461e79daa3078"
     }
   },
   "not_verified": [
     "T06b PostgreSQL inspector and S18/S19/S21/PG S20",
-    "post-push CI (pending)",
     "real Capital/HTTP monitoring and T02 producer",
-    "S13 OS filesystem permission/real busy-timeout combinations"
+    "S13 OS filesystem permission/real busy-timeout combinations",
+    "CI completion of subsequent documentation-only evidence commit"
   ],
   "git": {
     "base_commit": "12debff2f4572529fcbfb8bb527720b2dc8a21c7",
-    "implementation_commit": null,
-    "push_status": "pending",
+    "implementation_commit": "df4c3b940a4fc633086e9ef087ecb6dc720b154f",
+    "push_status": "pushed_origin_main",
     "unrelated_untracked_paths_preserved": [
       "260701/charts/",
       "260701/logs/",
       "260905/sets/bookkeeping-2kyu/images/assekiritono-flow.png"
-    ]
+    ],
+    "review_evidence_record": "Documentation/evidence update after implementation CI; no production source changes."
   },
   "luna_handoff": {
     "evidence_snapshot": {
@@ -686,7 +687,99 @@
     ],
     "T03_T13_previous_intermittent_failures": "not reproduced; root causes remain open",
     "ci": {
-      "status": "pending_push"
+      "status": "completed",
+      "run_id": 41038726909,
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/41038726909",
+      "head_sha": "df4c3b940a4fc633086e9ef087ecb6dc720b154f",
+      "unit_job_id": 124005916822,
+      "unit_status": "success",
+      "unit_tests": 331,
+      "unit_seconds": 36.205,
+      "unit_log": {
+        "path": "data/reports/20261030-t06a-sol/df4c3b9-ci-unit-124005916822.log",
+        "bytes": 131453,
+        "sha256": "f834ac2ec277f4bcf050e834db7474e36d239b1ef6d8e39dc3fea1f11e2c63db"
+      },
+      "progress_snapshots": [
+        {
+          "path": "data/reports/20261030-t06a-sol/df4c3b9-ci-progress-v1.json",
+          "bytes": 4676,
+          "sha256": "9b631a043322acc20b12bad1a3cb20363cd2b014edf85850ab552035528bb7c7"
+        }
+      ],
+      "pages_run_id": 41038726332,
+      "production_source_hashes_match_commit": true,
+      "conclusion": "success",
+      "verified_at_utc": "2026-10-30T10:18:23.254441+00:00",
+      "run_metadata": {
+        "path": "data/reports/20261030-t06a-sol/df4c3b9-ci-final.json",
+        "bytes": 4888,
+        "sha256": "0ecf0d685e366996d8a9c1e077e16247b3704f7317dad3cf547d7df99dd866dd"
+      },
+      "jobs": [
+        {
+          "name": "synthetic-system",
+          "id": 124005916544,
+          "conclusion": "success"
+        },
+        {
+          "name": "tests",
+          "id": 124005916822,
+          "conclusion": "success"
+        }
+      ],
+      "artifact_metadata": {
+        "path": "data/reports/20261030-t06a-sol/df4c3b9-ci-artifacts-from-connector.json",
+        "bytes": 841,
+        "sha256": "7ec4fc9d82ceed6bd9f92a5fe63bb689489b0b09fcf8f7371ea3e1b9a7806e2b"
+      },
+      "artifact_archive": {
+        "path": "data/reports/20261030-t06a-sol/df4c3b9-ci-artifact-12969202554.zip",
+        "bytes": 2290,
+        "sha256": "c7ab3ac28ceacdff532af0042f7bd763451e21a663ec70c1f7b00400e28f69c0"
+      },
+      "artifact_validation": {
+        "path": "data/reports/20261030-t06a-sol/df4c3b9-ci-artifact-validation.json",
+        "bytes": 989,
+        "sha256": "30d0937565b020d569c90db62b3429de7677d94eefa15a1c32034d3eafa17ef9"
+      },
+      "artifact_checks": {
+        "recorded_at_utc": "2026-10-30T10:17:20.599178+00:00",
+        "artifact_id": 12969202554,
+        "zip_bytes": 2290,
+        "zip_sha256": "c7ab3ac28ceacdff532af0042f7bd763451e21a663ec70c1f7b00400e28f69c0",
+        "digest_matches_github": true,
+        "zip_integrity": "passed",
+        "members": {
+          "synthetic-system-ci.log": {
+            "bytes": 5370,
+            "sha256": "519f39e1e66dd2016272969263ea711cce6caf7a6b5faaab77cee6c22d91ffa8"
+          },
+          "snapshot-postgres-ci.log": {
+            "bytes": 560,
+            "sha256": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9"
+          },
+          "request-interruption-postgres-ci.log": {
+            "bytes": 459,
+            "sha256": "efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb"
+          }
+        },
+        "synthetic_system": "passed",
+        "synthetic_only": true,
+        "deployment_permission": "blocked",
+        "operational_gate": "not_evaluated",
+        "cleanup_complete": true,
+        "postgres_snapshot_checks": 9,
+        "postgres_interruption_checks": 6,
+        "T06b_inspector_executed": false
+      },
+      "pages_status": "success",
+      "pages_metadata": {
+        "path": "data/reports/20261030-t06a-sol/df4c3b9-pages-final.json",
+        "bytes": 175,
+        "sha256": "78ede75dbcc8850776d3a0684af9e1917200d60087737e874a68f4e9b857042f"
+      },
+      "regression_scope": "54 T06a SQLite tests in full 331-test suite; existing synthetic Docker/PostgreSQL checks; T06b not implemented"
     },
     "precommit_validation": {
       "path": "data/reports/20261030-t06a-sol/12debff-precommit-validation-v1.log",
@@ -697,6 +790,12 @@
       "test_count": null,
       "exit_code_source": "embedded_terminal_code",
       "interpretation": "passed"
+    },
+    "final_validation": {
+      "path": "data/reports/20261030-t06a-sol/df4c3b9-final-evidence-check.log",
+      "bytes": 336,
+      "sha256": "ed854012664aaf4b1e5cf678794521ee892313aceed5669f1e23d30d3f9c4d9e",
+      "exit_code": 0
     }
   },
   "luna_handoff_git": {
@@ -707,5 +806,39 @@
       "260701/logs/",
       "260905/sets/bookkeeping-2kyu/images/assekiritono-flow.png"
     ]
+  },
+  "implementation_source_files": {
+    "src/bike_mlops/monitor_inspection.py": {
+      "bytes": 35121,
+      "sha256": "72fd944a7e7cf359c2e7773b0e7666c8cea632b86bbafc02e612a5d716de078c"
+    },
+    "src/bike_mlops/cli.py": {
+      "bytes": 47241,
+      "sha256": "7ba839357238b849c1e73a820febb681a5fcbc351a04596ec1941edf77af9713"
+    },
+    "tests/test_monitor_inspection.py": {
+      "bytes": 38817,
+      "sha256": "31f1fa3d44b01efce2c98cd97fa1554eb2662ad72d6e40e88407c736aaad9827"
+    },
+    "README.md": {
+      "bytes": 12549,
+      "sha256": "ff5fb77f061569f4341fa7c3c28b6ccc9c9f8603892e623f9dc2067b5c98891c"
+    },
+    "docs/runbook.md": {
+      "bytes": 32814,
+      "sha256": "d1c56fe9bb0d6a1dcf295704c4b6652d2863703a757f4bc4eebd6ded246fe65c"
+    },
+    "docs/monitor-reconciliation.md": {
+      "bytes": 22696,
+      "sha256": "8ceb785eb7e4151c29ba46ce9a36a7fc79df37581944c9f73d5f4f43b4015fcb"
+    },
+    "work_log.md": {
+      "bytes": 288940,
+      "sha256": "de61466bb3760ba683aa59d73750c48ca87582bb7cf11f41f91b34c3b0746a28"
+    },
+    "../261014/plan_mlops.md": {
+      "bytes": 79856,
+      "sha256": "e51bd386495b878c8250837ca39277bd7ec2a4fb90afe3d4bd2c8036261da1d2"
+    }
   }
 }

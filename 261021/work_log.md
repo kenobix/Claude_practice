@@ -2525,3 +2525,23 @@ docs/monitor-reconciliation.mdは仕様本文を変えず、実装状況と使�
 Luna引継ぎ検証JSONの原本は12debff-luna-evidence-before-review.jsonへ退避してhashを保存した。Lunaのtarget-v1/v2/v3 raw logには終了値が埋め込まれていなかった（terminalには表示）。rawを変更せず、根拠を区別して検証JSONを修正する。全log/source SHA・実施/未実施・case対応はdocs/reviews/20261030-t06a-checks.jsonへ更新する。PostgreSQLのS18/S19/S21・PG版S20、OSの実権限/実busy timeoutの組合せ、実Capital/HTTP監視・T02証拠producerは未実施である。SQLite成功や既存CIのPG試験をそれらへ転用しない。T06aをSol reviewで承認し、対象9ファイルだけcommit/pushした後にCIの結果を追記する。
 
 commit前に検証JSONのsource 8件・log/退避証拠37件のSHA/bytes、相対リンク60件、target 54件とsuite 328件の原文、全変更ファイルの末尾改行/空白、git diff --checkを照合し成功した（12debff-precommit-validation-v1.log、exit 0）。T06aの修正後実装はlocalで承認できるため、対象9ファイルを明示stageし差分全体とgit statusを確認してcommit/pushする。CIはその実装commitに結んで別途記録し、T06bを完了にしない。
+
+### T06a 実装commitとpost-push CI
+
+承認した9ファイルをdf4c3b940a4fc633086e9ef087ecb6dc720b154f（Add reviewed read-only SQLite monitor reconciliation）としてcommitしorigin/mainへpushした。対象パス以外はstageせず、未追跡3 pathは残した。CIは41038726909、Pagesは41038726332。GitHub connectorのcommit workflow取得はPR起動だけを返すため、push runの発見とraw保存はghを使い、runのjob/step/artifact状態はconnectorでも照合した。短いSHAのrun検索は空だったため、branch一覧の完全headShaで対象を確認した。
+
+CI unit job 124005916822は331 tests 36.205秒、pip check、compileallすべてsuccess。raw log df4c3b9-ci-unit-124005916822.logは131,453 bytes、SHA f834ac2ec277f4bcf050e834db7474e36d239b1ef6d8e39dc3fea1f11e2c63db。ANSIを除いた表示で件数を調べたがraw bytesは変更していない。実装commitのGit blobと記録source/document 8件のSHAも一致した。system jobは進行中のため、CI全体の成功はまだ宣言せず、完了metadataとartifactを後続で確認する。
+
+CIコマンドはgh run list --repo kenobix/Claude_practice --branch main --json databaseId,workflowName,status,conclusion,headSha,url、gh run view 41038726909 --json headSha,status,conclusion,jobs,url、gh api --allow-escape-sequences repos/kenobix/Claude_practice/actions/jobs/124005916822/logs。timeout --signal=TERM 50 gh run watch ... --exit-status --interval 15を区切って使い、exit 124はwatch期限でCI testのtimeoutではない。進行中metadataをdf4c3b9-ci-progress-v1.jsonへ保存した。
+
+### T06a post-push CIの完了確認
+
+実装commit df4c3b9の[CI 41038726909](https://github.com/kenobix/Claude_practice/actions/runs/41038726909)はtests/synthetic-systemの全job/stepがsuccessで完了した。[Pages 41038726332](https://github.com/kenobix/Claude_practice/actions/runs/41038726332)も同じheadShaでsuccess。最終metadataをdf4c3b9-ci-final.json、Pagesをdf4c3b9-pages-final.jsonへ保存し、進行中v1を保持した。
+
+artifact 12969202554のraw ZIP（2,290 bytes）はSHA c7ab3ac28ceacdff532af0042f7bd763451e21a663ec70c1f7b00400e28f69c0でGitHub digestと一致し、ZIP integrityも成功した。3 memberのbytes/SHAと内容をdf4c3b9-ci-artifact-validation.jsonへ記録した。synthetic-system-ci.logはsynthetic_system_passed/data=synthetic_only/operational_gate=not_evaluated/deployment_permission=blocked/cleanup_completeを確認。既存PostgreSQL snapshot 9項目、request interruption 6項目もpassedで各使い捨てcontainerの削除を確認した。これらは既存systemの回帰であり、未実装T06bのPG inspectorや実Capital監視の証拠ではない。
+
+artifact metadataはGitHub connectorからdf4c3b9-ci-artifacts-from-connector.jsonへ保存し、raw ZIPはgh api repos/kenobix/Claude_practice/actions/artifacts/12969202554/zipで取得した。zipfile.testzip、各member原文、SHA-256を検算し、取得したrun metadataの完全headShaと全job/step結果を照合した。生log/ZIPとLuna失敗証拠は上書きしていない。
+
+T06aは修正後のSol review・local受入・実装commit CIまで完了。次は別taskのT06bをSolで進める。OS実権限/実busy timeoutのSQLite補足はP2/D2として計画へ残した。実Capital/HTTP監視とT02 producer、T03/T13原因追跡も残る。今回の追加commitは計画、照合文書、検証JSON、このログの4ファイルだけを対象にし、production source/test/CLIを変えない。実装commitのCI成功を記録するcommitであり、記録commit自身のCI完了を観測したとは記載しない。
+
+記録commit前にcurrent source/document 8件、実装commit Git blob 8件、raw証拠45件、ZIP内3 member、相対リンク60件を再照合し、全331件のCI原文・全job/step成功・cleanupを確認した。検証logはdf4c3b9-final-evidence-check.log（exit 0）。差分は上記4記録ファイルのみで、production/test/CLIの追加差分はない。記録用commitもorigin/mainへpushし、この作業をT06aの完了節目とする。
