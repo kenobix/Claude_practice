@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import unittest
 from types import SimpleNamespace
+from pathlib import Path
+import tempfile
+from unittest.mock import patch
+from tests.capital_deployment_fixture import fixture
 
 from bike_mlops.capital_deployment_decisions import (
     CAPITAL_MODEL_NAME,
@@ -17,13 +21,29 @@ from bike_mlops.profiles import load_data_profile
 
 
 class FakeRegistry:
-    def __init__(self, tags=None, version="2", fail_after_tag=None):
+    def __init__(self, tags=None, version="2", fail_after_tag=None, body=None):
         self.version = version
         self.tags = dict(tags or {})
         self.fail_after_tag = fail_after_tag
+        self.body = body
+        self.run_id = "synthetic-run"
+        self.artifact_path = self.tags.get("capital_deployment_evidence_path")
 
     def get_model_version(self, name, version):
-        return SimpleNamespace(name=name, version=str(version), status="READY", tags=dict(self.tags))
+        return SimpleNamespace(name=name, version=str(version), status="READY", run_id=self.run_id, tags=dict(self.tags))
+
+    def download_artifacts(self, run_id, artifact_path, dst_path):
+        if run_id != self.run_id or artifact_path != self.artifact_path or self.body is None:
+            raise FileNotFoundError("Synthetic evidence not found")
+        path = Path(dst_path) / "bundle.json"
+        path.write_bytes(self.body)
+        return str(path)
+
+    def log_artifact(self, run_id, local_path, artifact_path):
+        if run_id != self.run_id:
+            raise ValueError("Wrong synthetic source run")
+        self.body = Path(local_path).read_bytes()
+        self.artifact_path = artifact_path + "/" + Path(local_path).name
 
     def set_model_version_tag(self, name, version, key, value):
         self.tags[key] = value
@@ -33,43 +53,18 @@ class FakeRegistry:
 
 
 def eligible_registry():
-    profile = load_data_profile("capital-bikeshare")
-    tags = {
-        "data_profile_id": profile["profile_id"],
-        "target_contract_id": profile["target_contract_id"],
-        "quality_gate": "passed",
-        "validation_gate_status": "passed",
-        "final_accuracy_gate_status": "passed",
-        "quality_gate_policy_id": BOOTSTRAP_QUALITY_GATE_POLICY["policy_id"],
-        "quality_gate_policy_sha256": BOOTSTRAP_QUALITY_GATE_POLICY_SHA256,
-        "operational_gate_status": "not_evaluated",
-        "deployment_permission": "blocked",
-        "candidate_id": "a" * 64,
-        "candidate_model_sha256": "b" * 64,
-        "candidate_report_sha256": "c" * 64,
-        "final_report_sha256": "d" * 64,
-        "evaluation_protocol_sha256": "e" * 64,
-        "data_sha256": "f" * 64,
-        "artifact_sha256": "1" * 64,
-        "capital_operational_evidence_status": "recorded",
-        "capital_operational_attempt_id": "11111111-1111-4111-8111-111111111111",
-        "capital_operational_report_sha256": "2" * 64,
-        "capital_operational_plan_sha256": "3" * 64,
-        "capital_operational_plan_file_sha256": "4" * 64,
-        "capital_operational_measurement_status": "passed",
-        "capital_operational_numeric_recheck_status": "matched",
-        "capital_operational_input_provenance_status": "passed",
-        "capital_operational_audit_status": "passed",
-        "capital_operational_resource_context_status": "captured",
-        "capital_operational_request_id_sha256": "5" * 64,
-        "capital_operational_p95_ms": "250",
-    }
-    client = FakeRegistry(tags)
-    return client
+    tags, _bundle, body = fixture()
+    return FakeRegistry(tags, body=body)
 
 
 class CapitalDeploymentDecisionTests(unittest.TestCase):
     def setUp(self):
+        from bike_mlops import capital_operational_registry
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        change = patch.object(capital_operational_registry, "PROJECT_ROOT", Path(directory.name))
+        change.start()
+        self.addCleanup(change.stop)
         self.client = eligible_registry()
 
     def test_review_and_separate_approval_bind_exact_version_and_evidence(self):
@@ -83,7 +78,7 @@ class CapitalDeploymentDecisionTests(unittest.TestCase):
         self.assertEqual(approved["deployment_permission"], "eligible")
         require_deployment_eligible(
             "capital-bikeshare", self.client.tags,
-            model_name=CAPITAL_MODEL_NAME, model_version="2",
+            model_name=CAPITAL_MODEL_NAME, model_version="2", client=self.client,
         )
 
     def test_review_is_idempotent_for_same_record_but_immutable_on_conflict(self):
@@ -123,7 +118,7 @@ class CapitalDeploymentDecisionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "record hash"):
             require_deployment_eligible(
                 "capital-bikeshare", self.client.tags,
-                model_name=CAPITAL_MODEL_NAME, model_version="2",
+                model_name=CAPITAL_MODEL_NAME, model_version="2", client=self.client,
             )
 
     def test_rejected_review_keeps_deployment_blocked(self):
@@ -148,7 +143,7 @@ class CapitalDeploymentDecisionTests(unittest.TestCase):
         self.assertEqual(client.tags["deployment_permission"], "eligible")
         require_deployment_eligible(
             "capital-bikeshare", client.tags,
-            model_name=CAPITAL_MODEL_NAME, model_version="2",
+            model_name=CAPITAL_MODEL_NAME, model_version="2", client=client,
         )
 
 

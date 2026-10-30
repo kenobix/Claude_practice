@@ -29,7 +29,9 @@ def load_registered_model(model_name: str, model_version: str | int, tracking_ur
 
     resolved_uri = tracking_uri or os.getenv("MLFLOW_TRACKING_URI", DEFAULT_MLFLOW_URI)
     mlflow.set_tracking_uri(resolved_uri)
-    registered_version = MlflowClient(tracking_uri=resolved_uri).get_model_version(
+    client = (MlflowClient(tracking_uri=resolved_uri, registry_uri=resolved_uri)
+              if DATA_PROFILE_ID == "capital-bikeshare" else MlflowClient(tracking_uri=resolved_uri))
+    registered_version = client.get_model_version(
         model_name, str(int(model_version))
     )
     registered_profile = registered_version.tags.get("data_profile_id")
@@ -54,6 +56,7 @@ def load_registered_model(model_name: str, model_version: str | int, tracking_ur
     require_deployment_eligible(
         DATA_PROFILE_ID, registered_version.tags,
         model_name=registered_version.name, model_version=str(registered_version.version),
+        client=client,
     )
     expected_hash = registered_version.tags.get("artifact_sha256")
     if not expected_hash:
@@ -62,7 +65,9 @@ def load_registered_model(model_name: str, model_version: str | int, tracking_ur
     if quality_gate not in {"passed", "failed"}:
         raise ValueError(f"Registered model version {model_version} has no recognized quality-gate status")
     uri = f"models:/{model_name}/{int(model_version)}"
-    local_path = Path(mlflow.artifacts.download_artifacts(artifact_uri=uri))
+    artifact_options = ({"tracking_uri": resolved_uri, "registry_uri": resolved_uri}
+                        if DATA_PROFILE_ID == "capital-bikeshare" else {})
+    local_path = Path(mlflow.artifacts.download_artifacts(artifact_uri=uri, **artifact_options))
     if not (local_path / "MLmodel").is_file():
         raise ValueError(f"Registered model version {model_version} artifact is missing its MLmodel file")
     actual_hash = directory_sha256(local_path)

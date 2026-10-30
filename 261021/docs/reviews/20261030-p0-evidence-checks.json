@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-30T00:00:45.058657+00:00",
+  "base_commit": "bd49f9165b1bd199c439dc548fdb24592542f4d8",
+  "scope": [
+    "T01",
+    "T02 schema and mandatory rejection"
+  ],
+  "readiness_policy_id": "capital-deployment-evidence-v1",
+  "readiness_policy_sha256": "b91bb7f3846e78ff38fa5311847328ade64f92aafe022fc5725aa8fba2161685",
+  "full_suite": {
+    "tests": 241,
+    "seconds": 30.81,
+    "status": "passed"
+  },
+  "source_files": {
+    "261021/scripts/prepare_capital_deployment_evidence.py": "d88f11ee1e58d9b48228aeb8d6e58ac4fe55b5631bb1227a0446fff4416d4706",
+    "261021/scripts/record_capital_deployment_decision.py": "90bb3afdf072462b5095a6bd81f2ff92723fd9b7ede1457267f8dcc8834ef398",
+    "261021/src/bike_mlops/capital_deployment_decisions.py": "63ca0c9eae8e68de99e40338aa9843f53d428911a4b1d59deb51e9c03f18b577",
+    "261021/src/bike_mlops/capital_deployment_evidence.py": "2e9c37644f204256b7535815047937097f1f3f0801d292b46f4348903b8693e5",
+    "261021/src/bike_mlops/capital_deployment_evidence_publisher.py": "d52a3bcea4ae7f2da56f433738e97bb5f3935dfae93f2468708ae5715dce805e",
+    "261021/src/bike_mlops/cli.py": "a7597d6d1c1c5a096683eb39f9bb527b2620697cbf45b0749020e99c7bcd06a3",
+    "261021/src/bike_mlops/deployment_gates.py": "583506e79db38af623d4c59c495176a648bdc584c609781b99c257839f9b6fa3",
+    "261021/src/bike_mlops/model.py": "93fd05dab899829580446629e25710d091579dfd705dc1f6f3a028bde5fc9465",
+    "261021/tests/capital_deployment_fixture.py": "bf001e87eeb6d52bbe87fa3c8621f194ea5d23fe657a875a2d44c2c23079bfcf",
+    "261021/tests/test_capital_deployment_decisions.py": "c5309038cf9b6b41eb4e431f64b54f203a5c76f03c8cc2c7bf6402bd05c497df",
+    "261021/tests/test_capital_deployment_evidence.py": "ddbc101ba6f82cb42abe6e3a675f89f24ab09ec8296ee47da48de2367bc36aa2",
+    "261021/tests/test_capital_deployment_evidence_publisher.py": "3c10128cadfb5f55651eef09941ca585d5d189cab8fd1c623a2dd7e6ceb3d208",
+    "261021/tests/test_deployment_gates.py": "b0989f1b027d59798c02881bf2b8453ee82dfe6bf6a9d2cbb1e224a3fa88a347"
+  },
+  "logs": [
+    {
+      "path": "261021/data/reports/20261030-p0/bd49f91-deployment-body-negatives.log",
+      "bytes": 4979,
+      "sha256": "411b7b0e1963733e4f420a01cc64e4250f8751dd43f247370ca8ca053081e4f0",
+      "result": [
+        "Ran 24 tests in 6.070s",
+        "OK"
+      ]
+    },
+    {
+      "path": "261021/data/reports/20261030-p0/bd49f91-deployment-first.log",
+      "bytes": 2179,
+      "sha256": "ecc530a7805a43e31b6e4bdb4614067c2620fa67633b4db8d7a2e01578d5505e",
+      "result": [
+        "Ran 11 tests in 1.477s",
+        "OK"
+      ]
+    },
+    {
+      "path": "261021/data/reports/20261030-p0/bd49f91-deployment-publisher-first.log",
+      "bytes": 10831,
+      "sha256": "e59a4f93b865f0e8b2d7252695f571606ed4603ac0c1cde85c8a162c2fcf8284",
+      "result": [
+        "Ran 29 tests in 11.405s",
+        "FAILED (failures=1, errors=4)"
+      ]
+    },
+    {
+      "path": "261021/data/reports/20261030-p0/bd49f91-p0-full-v1.log",
+      "bytes": 45417,
+      "sha256": "9a8b914ef39cc6d3502221e8605473a61e8e9953d15075eab3a733878eeda96c",
+      "result": [
+        "Ran 241 tests in 30.810s",
+        "OK"
+      ]
+    },
+    {
+      "path": "261021/data/reports/20261030-p0/bd49f91-publisher-fix-fixtures.log",
+      "bytes": 1734,
+      "sha256": "5d561b4d249decf36badcc3d3f247989ead5649967c286bcb7a392a8f54c00ed",
+      "result": [
+        "Ran 5 tests in 7.363s",
+        "OK"
+      ]
+    }
+  ],
+  "verified": [
+    "mock registry negative cases",
+    "temporary SQLite MLflow registry and local file artifact store",
+    "compileall",
+    "pip check"
+  ],
+  "not_verified": [
+    "HTTP registry interruption and network loss",
+    "actual Capital candidate fit or deployment",
+    "actual monitoring/recovery/restore/metadata readiness producers",
+    "authenticated reviewer/approver identity"
+  ],
+  "live_runtime_changed": false,
+  "synthetic_readiness_only": true
+}

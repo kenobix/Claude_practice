@@ -9,6 +9,11 @@ import hashlib
 import json
 import math
 import re
+from datetime import datetime, timezone
+
+from bike_mlops.capital_deployment_evidence import (
+    REF_KEYS, binding, utc_time, verified_registered_evidence,
+)
 
 from bike_mlops.evaluation_protocol import (
     BOOTSTRAP_QUALITY_GATE_POLICY,
@@ -41,7 +46,7 @@ def _sha_tag(tags: dict, key: str) -> str:
 
 
 def _validate_registered_version(client, version: str):
-    if not isinstance(version, str) or not version.isdecimal() or int(version) < 1:
+    if not isinstance(version, str) or not version.isdecimal() or int(version) < 1 or str(int(version)) != version:
         raise ValueError("A positive exact Capital model version is required")
     registered = client.get_model_version(CAPITAL_MODEL_NAME, int(version))
     if (registered.name != CAPITAL_MODEL_NAME or str(registered.version) != version
@@ -50,6 +55,9 @@ def _validate_registered_version(client, version: str):
     tags = registered.tags
     if not isinstance(tags, dict):
         raise ValueError("Registered Capital model version has no tag mapping")
+    binding(tags)
+    if tags.get("capital_operational_review_sha256") and tags.get("capital_deployment_decision_schema_version") != "2":
+        raise ValueError("Legacy decisions cannot be upgraded in place")
     profile = _CAPITAL_PROFILE
     for key, expected in {
         "data_profile_id": profile["profile_id"],
@@ -86,38 +94,44 @@ def _validate_registered_version(client, version: str):
     return registered, tags
 
 
+def _snapshot(tags: dict, *, require_reference: bool = True) -> dict:
+    result = binding(tags)
+    for key in REF_KEYS:
+        result[key] = _required(tags, key) if require_reference else tags.get(key)
+    return result
+
+
+def _decision_time(tags: dict, key: str) -> str:
+    at = tags.get(key, datetime.now(timezone.utc).isoformat())
+    utc_time(at)
+    return at
+
+
 def _review_payload(*, model_version: str, tags: dict, reviewer: str, decision: str, reason: str) -> dict:
     return {
-        "schema_version": 1,
-        "decision_type": "capital_operational_review",
-        "model_name": CAPITAL_MODEL_NAME,
-        "model_version": model_version,
-        "candidate_id": tags["candidate_id"],
-        "artifact_sha256": tags["artifact_sha256"],
-        "report_sha256": tags["capital_operational_report_sha256"],
-        "reviewer": reviewer,
-        "decision": decision,
-        "reason": reason,
+        "schema_version": 2, "decision_type": "capital_operational_review",
+        "model_name": CAPITAL_MODEL_NAME, "model_version": model_version,
+        "evidence": _snapshot(tags, require_reference=decision == "passed"),
+        "reviewer": reviewer, "decision": decision, "reason": reason,
+        "recorded_at_utc": _required(tags, "capital_operational_review_at_utc"),
     }
 
 
 def _approval_payload(*, model_version: str, tags: dict, approver: str, reason: str) -> dict:
     return {
-        "schema_version": 1,
-        "decision_type": "capital_deployment_approval",
-        "model_name": CAPITAL_MODEL_NAME,
-        "model_version": model_version,
-        "candidate_id": tags["candidate_id"],
-        "artifact_sha256": tags["artifact_sha256"],
-        "report_sha256": tags["capital_operational_report_sha256"],
-        "review_sha256": tags["capital_operational_review_sha256"],
-        "approver": approver,
-        "reason": reason,
+        "schema_version": 2, "decision_type": "capital_deployment_approval",
+        "model_name": CAPITAL_MODEL_NAME, "model_version": model_version,
+        "evidence": _snapshot(tags), "review_sha256": tags["capital_operational_review_sha256"],
+        "approver": approver, "reason": reason,
+        "recorded_at_utc": _required(tags, "capital_deployment_approval_at_utc"),
     }
 
 
-def _write_tags_immutably(client, version: str, tags_to_write: dict[str, str]) -> None:
+def _write_tags_immutably(client, version: str, tags_to_write: dict[str, str], expected: dict) -> None:
     current = client.get_model_version(CAPITAL_MODEL_NAME, int(version))
+    if (binding(current.tags) != binding(expected)
+            or any(current.tags.get(key) != expected.get(key) for key in REF_KEYS)):
+        raise ValueError("Deployment evidence changed before decision write")
     for key, value in tags_to_write.items():
         existing = current.tags.get(key)
         if existing is not None and existing != value:
@@ -159,11 +173,17 @@ def _record_operational_review_locked(client, version: str, reviewer: str, decis
     ):
         raise ValueError("Operational review cannot pass: measurement status or p95 violates the fixed gate")
 
+    if decision == "passed":
+        verified_registered_evidence(client, version, tags)
+    tags = dict(tags)
+    tags["capital_operational_review_at_utc"] = _decision_time(tags, "capital_operational_review_at_utc")
     payload = _review_payload(model_version=version, tags=tags, reviewer=reviewer,
                               decision=decision, reason=reason)
     digest = _canonical_sha256(payload)
     outcome = "passed" if decision == "passed" else "rejected"
     tags_to_write = {
+        "capital_operational_review_at_utc": tags["capital_operational_review_at_utc"],
+        "capital_deployment_decision_schema_version": "2",
         "capital_operational_review_status": outcome,
         "capital_operational_review_reviewer": reviewer,
         "capital_operational_review_decision": decision,
@@ -175,13 +195,15 @@ def _record_operational_review_locked(client, version: str, reviewer: str, decis
         "capital_operational_review_sha256": digest,
     }
     # Gate status is written last: interrupted writes remain fail-closed.
-    _write_tags_immutably(client, version, tags_to_write)
+    _write_tags_immutably(client, version, tags_to_write, tags)
     gate_status = "passed" if decision == "passed" else "failed"
     client.set_model_version_tag(CAPITAL_MODEL_NAME, version, "operational_gate_status", gate_status)
     verified = client.get_model_version(CAPITAL_MODEL_NAME, int(version))
     if (verified.tags.get("operational_gate_status") != gate_status
             or verified.tags.get("deployment_permission") != "blocked"
-            or verified.tags.get("capital_operational_review_sha256") != digest):
+            or verified.tags.get("capital_operational_review_sha256") != digest
+            or any(verified.tags.get(k) != v for k, v in tags_to_write.items())
+            or _snapshot(verified.tags, require_reference=decision == "passed") != _snapshot(tags, require_reference=decision == "passed")):
         raise RuntimeError("Operational review did not persist in the expected blocked state")
     return {"status": "review_recorded", "model_version": version, "decision": decision,
             "operational_gate_status": gate_status, "deployment_permission": "blocked",
@@ -228,9 +250,15 @@ def _record_deployment_approval_locked(client, version: str, approver: str, reas
         raise ValueError("Operational review hash or exact candidate/version/artifact binding is invalid")
     if approver.casefold() == tags["capital_operational_review_reviewer"].casefold():
         raise ValueError("The deployment approver must differ from the operational reviewer")
+    verified_registered_evidence(client, version, tags)
+    tags = dict(tags)
+    tags["capital_deployment_approval_at_utc"] = _decision_time(tags, "capital_deployment_approval_at_utc")
+    if utc_time(tags["capital_deployment_approval_at_utc"]) < utc_time(tags["capital_operational_review_at_utc"]):
+        raise ValueError("Approval cannot predate its review")
     payload = _approval_payload(model_version=version, tags=tags, approver=approver, reason=reason)
     digest = _canonical_sha256(payload)
     tags_to_write = {
+        "capital_deployment_approval_at_utc": tags["capital_deployment_approval_at_utc"],
         "capital_deployment_approval_status": "approved",
         "capital_deployment_approver": approver,
         "capital_deployment_approval_reason": reason,
@@ -241,7 +269,7 @@ def _record_deployment_approval_locked(client, version: str, approver: str, reas
         "capital_deployment_approval_artifact_sha256": tags["artifact_sha256"],
         "capital_deployment_approval_sha256": digest,
     }
-    _write_tags_immutably(client, version, tags_to_write)
+    _write_tags_immutably(client, version, tags_to_write, tags)
     # This is the only state transition to eligible and is intentionally last.
     client.set_model_version_tag(CAPITAL_MODEL_NAME, version, "deployment_permission", "eligible")
     verified = client.get_model_version(CAPITAL_MODEL_NAME, int(version))
@@ -249,6 +277,7 @@ def _record_deployment_approval_locked(client, version: str, approver: str, reas
             or verified.tags.get("operational_gate_status") != "passed"
             or verified.tags.get("capital_deployment_approval_sha256") != digest):
         raise RuntimeError("Deployment approval did not persist with all evidence bindings")
+    validate_capital_decision_tags(verified.tags, model_name=CAPITAL_MODEL_NAME, model_version=version)
     return {"status": "deployment_approved", "model_version": version,
             "operational_gate_status": "passed", "deployment_permission": "eligible",
             "approval_sha256": digest}
@@ -257,10 +286,12 @@ def _record_deployment_approval_locked(client, version: str, approver: str, reas
 def validate_capital_decision_tags(tags: dict, *, model_name: str | None = None,
                                    model_version: str | None = None) -> None:
     """Validate review/approval records before a Capital model is loaded or promoted."""
-    if model_name is not None and model_name != CAPITAL_MODEL_NAME:
+    binding(tags)
+    _required(tags, "capital_deployment_decision_schema_version", "2")
+    if model_name != CAPITAL_MODEL_NAME:
         raise ValueError("Capital decision is bound to a different registered-model name")
     version = _required(tags, "capital_operational_review_model_version")
-    if model_version is not None and version != str(model_version):
+    if version != str(model_version):
         raise ValueError("Capital decision is bound to a different model version")
     if not version.isdecimal() or int(version) < 1:
         raise ValueError("Capital decision model version is invalid")
@@ -283,6 +314,7 @@ def validate_capital_decision_tags(tags: dict, *, model_name: str | None = None,
     if (review_status != "passed" or review_decision != "passed"
             or tags.get("operational_gate_status") != "passed"):
         raise ValueError("Capital operational review has not passed")
+    utc_time(_required(tags, "capital_operational_review_at_utc"))
     review_payload = _review_payload(model_version=version, tags=tags, reviewer=reviewer,
                                      decision=review_decision, reason=review_reason)
     review_hash = _sha_tag(tags, "capital_operational_review_sha256")
@@ -301,7 +333,7 @@ def validate_capital_decision_tags(tags: dict, *, model_name: str | None = None,
         p95 = float(_required(tags, "capital_operational_p95_ms"))
     except ValueError as error:
         raise ValueError("Capital operational p95 is invalid") from error
-    if not math.isfinite(p95) or p95 > 250.0:
+    if not math.isfinite(p95) or p95 < 0 or p95 > 250.0:
         raise ValueError("Capital operational p95 exceeds the fixed 250 ms limit")
     approver = _required(tags, "capital_deployment_approver")
     approval_reason = _required(tags, "capital_deployment_approval_reason")
@@ -311,6 +343,8 @@ def validate_capital_decision_tags(tags: dict, *, model_name: str | None = None,
             or _required(tags, "deployment_permission") != "eligible"
             or _required(tags, "operational_gate_status") != "passed"):
         raise ValueError("Capital deployment approval is incomplete")
+    if utc_time(_required(tags, "capital_deployment_approval_at_utc")) < utc_time(tags["capital_operational_review_at_utc"]):
+        raise ValueError("Approval cannot predate its review")
     approval_payload = _approval_payload(model_version=version, tags=tags,
                                          approver=approver, reason=approval_reason)
     approval_hash = _sha_tag(tags, "capital_deployment_approval_sha256")

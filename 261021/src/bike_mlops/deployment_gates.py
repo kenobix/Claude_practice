@@ -7,10 +7,11 @@ from bike_mlops.evaluation_protocol import (
     BOOTSTRAP_QUALITY_GATE_POLICY_SHA256,
 )
 from bike_mlops.capital_deployment_decisions import validate_capital_decision_tags
+from bike_mlops.capital_deployment_evidence import verified_registered_evidence
 
 
 def require_deployment_eligible(profile_id: str, tags: object, *, model_name: str | None = None,
-                                model_version: str | None = None) -> None:
+                                model_version: str | None = None, client=None) -> None:
     """Fail closed for Capital unless every accuracy/operations gate is explicitly passed."""
     if profile_id != "capital-bikeshare":
         return
@@ -35,5 +36,6 @@ def require_deployment_eligible(profile_id: str, tags: object, *, model_name: st
         )
     try:
         validate_capital_decision_tags(tags, model_name=model_name, model_version=model_version)
+        verified_registered_evidence(client, str(model_version), tags)
     except ValueError as error:
         raise ValueError(f"Capital model is not eligible for deployment; decision evidence is invalid: {error}") from error

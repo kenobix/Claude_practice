@@ -10,13 +10,13 @@ from bike_mlops.capital_deployment_decisions import (
     record_deployment_approval,
     record_operational_review,
 )
-from bike_mlops.config import MODEL_NAME
+from bike_mlops.config import DATA_PROFILE_ID, MODEL_NAME
 
 
 def _client():
     uri = os.getenv("MLFLOW_TRACKING_URI", "")
     parsed = urlsplit(uri)
-    if (MODEL_NAME != "bike-demand-capital" or parsed.scheme != "http"
+    if (DATA_PROFILE_ID != "capital-bikeshare" or MODEL_NAME != "bike-demand-capital" or parsed.scheme != "http"
             or parsed.hostname not in {"localhost", "127.0.0.1"}
             or parsed.port != 5001 or parsed.path not in {"", "/"}
             or parsed.query or parsed.fragment):

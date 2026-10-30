@@ -150,7 +150,8 @@ def command_runtime_init(args) -> None:
     state_path = RUNTIME_DIR / "deployment-state.json"
     if state_path.exists():
         raise FileExistsError("Runtime is already initialized; use deploy promote instead")
-    registered_version = _model_registry_client().get_model_version(MODEL_NAME, int(version))
+    client = _model_registry_client()
+    registered_version = client.get_model_version(MODEL_NAME, int(version))
     if registered_version.status != "READY":
         raise ValueError(f"Model version {version} is not READY in MLflow")
     quality_gate = registered_version.tags.get("quality_gate")
@@ -158,6 +159,7 @@ def command_runtime_init(args) -> None:
     require_deployment_eligible(
         DATA_PROFILE_ID, registered_version.tags,
         model_name=registered_version.name, model_version=str(registered_version.version),
+        client=client,
     )
     if quality_gate != "passed" and not args.diagnostic:
         raise ValueError("Initial runtime model did not pass the validation quality gate")
@@ -433,6 +435,8 @@ def _model_registry_client():
     uri = os.getenv("MLFLOW_TRACKING_URI", DEFAULT_MLFLOW_URI)
     if uri:
         mlflow.set_tracking_uri(uri)
+    if DATA_PROFILE_ID == "capital-bikeshare":
+        return MlflowClient(tracking_uri=uri, registry_uri=uri)
     return MlflowClient(tracking_uri=mlflow.get_tracking_uri())
 
 
@@ -615,6 +619,7 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
         require_deployment_eligible(
             DATA_PROFILE_ID, model_version.tags,
             model_name=model_version.name, model_version=str(model_version.version),
+            client=client,
         )
         quality_gate = model_version.tags.get("quality_gate")
         if quality_gate != "passed" and not (rollback or diagnostic):

@@ -8,7 +8,7 @@
 
 2026-10-28の[初回差分監査](docs/reviews/20261028-review.md)では、UCIの保存済み予測・誤差・PSIを照合し、当時の旧Capital実験は最終評価で再学習したため同一artifactの証明にならないと確認しました。その後、同一artifactを評価する候補bundleと消費台帳、隔離計測を合成データで実装しました。旧実験の結果を後から新しい合格証拠へ変更していません。
 
-2026-10-30の[最新checkpoint差分監査](docs/reviews/20261030-checkpoint-review.md)では、前回監査以降の28コミットと最新221 tests/Docker/PostgreSQL CIを確認しました。承認後の証拠変更や監視・復旧証拠欠落の拒否には未完了があり、実Capital候補の配信前P0です。優先度・難易度とSol/GPT-6 Lunaの担当推奨は[計画書11.6](../261014/plan_mlops.md#remaining-work-20261030)を参照してください。
+2026-10-30の[最新checkpoint差分監査](docs/reviews/20261030-checkpoint-review.md)では、前回監査以降の28コミットと最新221 tests/Docker/PostgreSQL CIを確認しました。同監査のP0に対し、報告書本体を束ねて照合する[配信証拠bundle](docs/capital-deployment-evidence.md)と決定schema 2を実装し、全241 testsが成功しました。監視・復旧等の実証がない候補はblockedを保ちます。実Capital候補の承認・通常配信は未実施です。優先度・難易度とSol/GPT-6 Lunaの担当推奨は[計画書11.6](../261014/plan_mlops.md#remaining-work-20261030)を参照してください。
 
 ## 構成
 
@@ -89,5 +89,7 @@ Composeによる運用構成は[実行・運用手順](docs/runbook.md)を参照
 - [x] 版3を基準に新データ候補を2025年上期validationで比較。候補MAE/RMSE `168.266 / 265.934`、版3 `389.762 / 608.320`、履歴baseline `208.061 / 329.878`で品質ゲート通過。MLflow登録・昇格は未実施。
 - [x] 同じ学習設定で候補を再学習し、2025年7月〜2026年4月の7,294時間をout-of-time評価。候補MAE/RMSE `126.941 / 211.578`、版3 `326.387 / 518.660`、履歴baseline `181.185 / 296.180`。選定時と同じ候補artifactかは未証明。JSONレポートを保存し、候補登録・API切替は未実施。
 - [x] 2026-10-29、現行計測CLIから合成candidateの隔離system testを完了。744観測・blocked登録・staging API・offline/API一致・retry/409・runtime init拒否・1,050要求・監査・独立数値再確認・MLflow exact-version証拠tagを検証。同値再実行は成功し異なるreport hashは拒否。p95 88.947msは人工データの結果で、operational gateは`not_evaluated`、deploymentは`blocked`。ログは[`work_log.md`](work_log.md)参照。
+
+- [x] 2026-10-30、T01とT02の必須証拠schema/拒否処理を実装。承認後の証拠変更・不正p95・本文破損・監視/復旧証拠不足を拒否。一時SQLite MLflowの保存/取得/合成承認を確認。全241 tests成功。実監視/復旧とHTTP障害の検証は残ります。
 
 詳細な実行記録は[work_log.md](work_log.md)を参照してください。今回のvalidationとout-of-time評価期間はこの候補に使い終えています。今後の候補選択には新しい期間または別の外部データが必要です。データ品質監査で全期間集計を閲覧済みのため、未閲覧のblind holdoutではありません。2012年Q3/Q4は再利用していません。現在の稼働版は3です。

@@ -2021,3 +2021,58 @@ OpenAI Docs skillを参照し、公式model selectionと指定モデルのペー
 次回の第一作業はSolでT01、続いてT02の必須証拠仕様。Lunaで先行できるのはT14の記録/説明整備で、T16/T05/T06/T15は範囲と受入条件が決まってから着手できる。元の10月archive待ちに全課題を依存させない。
 
 文書の最終確認では7 Markdownの相対リンク85件、新しい明示anchor、17 taskの行構造、証拠JSONを検査し不一致0件、git diff --checkも成功した。HTML renderを試した際はmarkdown moduleがなく失敗し、markdown_it/mistune/commonmark/markoも未導入だった。parserを新規installせず、構造/リンク検査へ切り替えた。シェルの最終exitだけでrender成功と判定せず、document-checks.jsonにHTML render未実施を明記した。Jekyll buildはpush後のPages CIで確認する。探索時に存在しないdeployment.pyを指定したrgはexit 2となり、実際のdeployment_gates.pyを確認し直した。
+
+## 2026-10-30: P0 T01とT02の証拠結合・必須schemaを実装
+
+依頼「優先度の高いタスクから進める」に従い、基点`bd49f9165b1bd199c439dc548fdb24592542f4d8`からT01とT02のschema/拒否処理を実装した。T02全体の実証完了ではない。監査A01/A02/A03の元レビューは当時の記録として残し、現在状態を計画書11.6・README・bootstrap gateへ追記した。仕様は[capital-deployment-evidence.md](docs/capital-deployment-evidence.md)、コード/テストのSHAとraw log結果は[証拠JSON](docs/reviews/20261030-p0-evidence-checks.json)。
+
+### 実装と理由
+
+- `capital_deployment_evidence.py`: candidate/final/protocol/validation行/final行/plan/operational/monitoring/recovery/restore/metadataの11本文を含むbundle schema 1を検証。元UTF-8バイトのSHAを保持し、exact version/run/profile/target/candidate/artifact/data・policy・attempt・要求集合・p95と結合する。保存済み行のMAE/RMSEと1,000件p95を再計算しreportと照合する。新規fitやモデル予測ではない。
+- T02のpolicy `capital-deployment-evidence-v1`を固定。監視6、復旧8、復元4、metadata4の22ケースを必須とし、欠落/failed/未確定/別候補/不正hash/不正時刻/空観測を拒否。policy SHAは`b91bb7f3846e78ff38fa5311847328ade64f92aafe022fc5725aa8fba2161685`。観測申告のschemaであり、署名・本人認証・全障害試験の自動再実行を提供しない。
+- `capital_deployment_evidence_publisher.py`と`prepare_capital_deployment_evidence.py`: 完了attempt台帳・凍結plan・linked report・元CSV/manifest/candidateを既存lockと検証部品で照合し、登録版の元MLflow runへbundleをcontent-addressed artifactとして保存。取得し直して検証し、参照tagを記録する。同値retryを許し、別bundleの上書きは拒否する。保存ではblockedと既存運用gateを維持する。
+- 決定schema 2では全証拠snapshot、UTC時刻、担当者、理由、exact versionをhashへ含める。同一retryは既存時刻を使用し、旧schemaのその場での格上げは拒否する。review passed後もblocked、approvalは全tagの後にeligibleを最後に書く。
+- review/approveと通常Capital loader/runtime init/promoteで本文取得・hash/content照合を必須化。取得前後のversion/run/証拠/決定tag変更も拒否する。承認後final/plan SHA変更と負/NaN/Infinity p95を通さない。Capitalの通常clientとartifact取得のtracking/registry URIを同じ先へ固定した。
+- deployment unit testのversion lockを一時directoryへ分離した（T15の一部）。publisher unitはcandidate-staging検証境界だけmockし、台帳/plan/report/file処理は実際の一時ファイルで試験した。合成fixtureを実証として扱わない。
+
+### 試験結果とデバッグ
+
+raw logはGit対象外`261021/data/reports/20261030-p0/`に基点commit prefix付きの新規名で保存し、過去logを上書きしていない。
+
+| log名 | 結果 | SHA-256 |
+|---|---|---|
+| bd49f91-deployment-first.log | 既存deployment 11件成功、1.477秒 | ecc530a7805a43e31b6e4bdb4614067c2620fa67633b4db8d7a2e01578d5505e |
+| bd49f91-deployment-body-negatives.log | 24件成功、6.070秒 | 411b7b0e1963733e4f420a01cc64e4250f8751dd43f247370ca8ca053081e4f0 |
+| bd49f91-deployment-publisher-first.log | 29件中failure 1/error 4、11.405秒 | e59a4f93b865f0e8b2d7252695f571606ed4603ac0c1cde85c8a162c2fcf8284 |
+| bd49f91-publisher-fix-fixtures.log | publisher/一時MLflow 5件成功、7.363秒 | 5d561b4d249decf36badcc3d3f247989ead5649967c286bcb7a392a8f54c00ed |
+| bd49f91-p0-full-v1.log | **全241件成功、30.810秒** | 9a8b914ef39cc6d3502221e8605473a61e8e9953d15075eab3a733878eeda96c |
+
+publisher初回の4 errorはfixtureのplan保存バイトが原因だった。`save_operational_plan`のindent付きJSONはfixtureのcompact JSONとはファイルSHAが異なる。検査を弱めず、reportへ台帳の実`plan_file_sha256`を渡すfixtureへ修正した。
+
+一時MLflowの破損拒否test初回では「SDKのdownload先を書き換えれば保存元artifactも破損する」という仮説が違っていた。download先は原本と別になりうるため、runのartifact_uriから一時file storeの原本を取得し、そちらを破損させて通常gateの拒否を確認した。期待値を緩めて成功にしていない。
+
+新規20 testsは、意味を変えてSHAを再計算した不正証拠、本文破損、重複JSON key、未知policy、bool schema、巨大/一時directory外download、registry変更、最終eligible書込後の応答喪失と同値retry、通常loader/runtimeの本文拒否、URI固定、publisherと実MLflow clientを含む。実MLflow試験は使い捨てSQLite registryとfile artifact storeに合成versionを作ったもの。HTTP serverや実候補の性能を検証したものではない。
+
+主な再現コマンド（261021から）:
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m unittest discover -s tests -p 'test_*deployment*' -v
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 240 \
+  .venv/bin/python -u -m unittest discover -s tests -v \
+  > data/reports/20261030-p0/bd49f91-p0-full-v1.log 2>&1
+.venv/bin/python -m compileall -q src scripts tests
+.venv/bin/python -m pip check
+.venv/bin/python scripts/prepare_capital_deployment_evidence.py --help
+.venv/bin/python scripts/record_capital_deployment_decision.py --help
+git diff --check
+```
+
+実際のsuite保存時は`set -o noclobber`を設定して終了値も確認した。上記log名は実施済み証拠の所在であり、再実行には新規名を使う。全suiteはTestClientのlocal socketを許す実行権限で実行した。compileall、CLI help、pip check、diff checkも成功。pipのcache非書込warning、MLflow/SQLAlchemyのnoload非推奨warningは残り、依存不整合はない。repo rootから`.venv/bin/python`を呼んだpath誤りは261021をworkdirにして確認し直した。workflow探索では誤ってbike-mlops.ymlを指定した後、実在するbike-mlops-contracts.ymlを確認した。
+
+### 実環境と残課題
+
+今回、原本取得/再集約、実candidate fit、validation/finalの新規評価、実運用MLflow tag更新、UCI container/DB変更・REAL移行・配信切替を行っていない。AIで実reviewer/approverを作って承認していない。正例fixtureの監視・復旧報告は人工物であり、T02実証producerへ転用しない。
+
+次はT04のtraining reference/PSI v2接続を進め、実fit前のbundle形式とT05受入条件を固定する。T03の中断journal/測定policy、T06のmonitor照合、T07/T08/T17の障害/復元/metadata、T13のHTTP書込障害は残る。T09/T10の原本とprotocolが揃うまで実fitを先行しない。
+
+最終文書確認では5 Markdownの相対リンク47件、T01〜T17の行、13コード/テストファイルと5 raw logのSHA、証拠JSONを照合し不一致0件。`git diff --check`成功。結果は`data/reports/20261030-p0/bd49f91-document-checks-v1.json`。HTML renderは未実施でpush後のPages CIを確認する。変更全体を確認し、無関係な260701/charts・logs、260905の画像はstageしない。

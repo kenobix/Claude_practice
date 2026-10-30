@@ -374,7 +374,7 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 
 補助の保守項目（P2）: Starlette/httpx TestClient警告は2026-10-29に`httpx2==2.16.0`をdev依存と`requirements.lock`へ追加して解消し、206件のsuiteを確認した。統合CLIの候補同一ID判定は全page検索と並行登録の扱いを確認し、逐次再実行の成功を同時実行の保証と説明しない。MLflow/SQLAlchemyの`noload`非推奨warningは残る。これらは未使用評価期間を消費して検証しない。
 
-registry URIの進捗補足: Capital staging登録・loader・seed・preflightはtracking/registryを同一URIへ固定済み。通常model loader/cli clientには環境変数で別registryへ解決する余地が残ることを2026-10-30監査で確認し、T01へ追加した。Capital合成systemは既にCIで成功しており、実候補systemと実Caddy切替は別の残課題である。
+registry URIの進捗補足: Capital staging登録・loader・seed・preflightはtracking/registryを同一URIへ固定済み。通常model loader/cli clientには環境変数で別registryへ解決する余地が残ることを2026-10-30監査で確認した。その後T01でCapitalの通常client/artifact取得も両URIを固定し、異なる環境変数の負例を検証した。Capital合成systemは既にCIで成功しており、実候補systemと実Caddy切替は別の残課題である。
 
 <a id="remaining-work-20261030"></a>
 
@@ -382,7 +382,7 @@ registry URIの進捗補足: Capital staging登録・loader・seed・preflight�
 
 本節を残作業の正規一覧とする。前回checkpoint記録10dfb8fから070b033までの28コミット・65ファイルを確認した結果と、[差分レビュー](../261021/docs/reviews/20261030-checkpoint-review.md)・[証拠JSON](../261021/docs/reviews/20261030-checkpoint-evidence.json)を根拠にする。R01〜R10は目的のIDとして維持し、以下のT番号を実際の作業単位にする。11.4/11.5の旧順番やチェック数より本節が優先する。
 
-現在の到達点は、UCI版3の稼働と合成Capitalの入力固定・監査付き運用計測・CI成功。最新070b033のCI 40966966672では221 testsとDocker/PostgreSQL/cleanupが成功した。実Capitalの新候補、独立final、運用合格、通常配信の完成は未達。合成registryでは、承認後にfinal/planのSHAを変えた状態や負のp95を配信判定が受理すること、監視・復旧証拠なしでもeligible化できることを確認した。実registryは変更していない。
+現在の到達点は、UCI版3の稼働と合成Capitalの入力固定・監査付き運用計測・CI成功。最新070b033のCI 40966966672では221 testsとDocker/PostgreSQL/cleanupが成功した。実Capitalの新候補、独立final、運用合格、通常配信の完成は未達。監査時の合成registryでは、承認後のfinal/plan SHA変更・負のp95の受理、監視・復旧証拠なしのeligible化を確認した。その後T01とT02の必須schema/拒否処理を実装し、全241 tests（30.810秒）が成功した。11報告書本体を持つbundleとschema 2の決定で結合し、一時SQLite MLflowで保存/承認/本文破損拒否も確認した。実Capital候補と監視・復旧producerの実証は残る。実運用registryは変更していない。詳細は[配信証拠仕様](../261021/docs/capital-deployment-evidence.md)と[作業ログ](../261021/work_log.md)。
 
 #### 優先度と難易度の基準
 
@@ -400,8 +400,8 @@ registry URIの進捗補足: Capital staging登録・loader・seed・preflight�
 
 | ID / 対象 | 優先度 / 難易度 / 推奨 | 状態・依存 | 作業内容と完了条件 |
 |---|---|---|---|
-| T01 / R06・A01/A03 | **P0 / D3 / Sol** | 今すぐ着手可 | **承認した証拠の全体を固定する。** candidate、exact model/version、profile/target、登録artifact、candidate/final/operational report、protocol/plan/policyのhashと検証済み指標を版付きpayloadへ結ぶ。report本体を取得・hash/content照合し、不足・SHA変更・理由変更・負/NaN/無限p95・別versionを通常loader/runtime/promoteで拒否する。通常Capital clientとartifact取得のtracking/registry URIも同じ先へ固定し、異なる環境変数の負例を試す。値違いを人の承認で上書きしない。まず合成fixtureでA01/A03が再現しなくなったことを確認する。 |
-| T02 / R06・S06・A02 | **P0 / D3 / Sol** | schema設計は今すぐ。最終証拠はT04/T05/T07/T08/T12/T17に依存 | **監視・復旧を配信の必須条件へ接続する。** 必要なmonitor/recovery/restore証拠のschema・同一profile/version/artifactへの結合・policyを事前固定する。欠落、failed、別候補、未確定DB/fileをapprove/通常配信で拒否し、時刻・操作者・理由を持つ決定を保存する。実MLflow書込はT13。必要証拠がない間はblockedを保つ。名前の自己申告と認証済みidentityは区別し、AIが二つの名前を作って独立した人の審査と説明しない。 |
+| T01 / R06・A01/A03 | **P0 / D3 / Sol** | **実装・合成/一時SQLite検証済み**。HTTP実証はT13 | **承認した証拠の全体を固定する。** candidate、exact model/version、profile/target、登録artifact、candidate/final/operational report、protocol/plan/policyのhashと検証済み指標を版付きpayloadへ結ぶ。report本体を取得・hash/content照合し、不足・SHA変更・理由変更・負/NaN/無限p95・別versionを通常loader/runtime/promoteで拒否する。通常Capital clientとartifact取得のtracking/registry URIも同じ先へ固定し、異なる環境変数の負例を試す。値違いを人の承認で上書きしない。合成fixtureでA01/A03の拒否、通常loader/runtimeの本文拒否、URI固定を確認済み。11報告書のSHA/content・保存済み予測行の精度と要求別p95を検算し、取得前後のregistry変更も拒否する。 |
+| T02 / R06・S06・A02 | **P0 / D3 / Sol** | **schema・必須化・拒否処理は実装済み**。実証はT04/T05/T06/T07/T08/T12/T17に依存 | **監視・復旧を配信の必須条件へ接続する。** 必要なmonitor/recovery/restore証拠のschema・同一profile/version/artifactへの結合・policyを事前固定する。欠落、failed、別候補、未確定DB/fileをapprove/通常配信で拒否し、時刻・操作者・理由を持つ決定を保存する。実MLflow書込はT13。policy `capital-deployment-evidence-v1`で監視6・復旧8・復元4・metadata4ケースを固定し、4分類すべての本文を要求する。失敗・未確定・別candidate・不足の負例を確認した。実producerの観測申告は未作成で、合成fixtureを実証へ転用しない。必要証拠がない間はblockedを保つ。名前の自己申告と認証済みidentityは区別し、AIが二つの名前を作って独立した人の審査と説明しない。 |
 | T03 / R06/R08・A04 | P1 / D3 / Sol | 今すぐ合成で着手可。実測前にpolicy固定 | **中断・遅延commitを追跡する。** attemptと固定request IDの送信予定/送信中/応答確認を、強制終了後に調べられる形へ永続化する。fsyncの位置、HTTP時間とjournal等の全体時間の区別、計測policyへの影響を先に決める。実HTTP timeout後の遅延commit、SIGTERM/SIGKILL、DB接続喪失を使い捨て環境で注入し、照会時不在を未送信と断定しない。再試行は理由付き別attemptとし速い結果だけを採用しない。 |
 | T04 / R05/R07・A05 | P1 / D3 / Sol | 今すぐ合成で着手可。実candidate fit前にbundle仕様を固定 | **training referenceとPSI v2を接続する。** 参照行集合・期間・CSV/manifest/profile/feature契約・固定bins・algorithm versionを候補artifactへ結び、hashの違いを拒否する。既存monitorからversionを明示して使い、定数参照・小標本・非有限・欠測を別状態にする。後続評価の分布を使ってbinsや閾値を選び直さず、旧UCIの履歴値を保存する。 |
 | T05 / R07 | P1 / D2 / **Luna実装、Sol review** | T04の入出力・警告仕様が固定後 | **合成監視の受入ケースを実装する。** 分布変化のみ、誤差悪化のみ、両方、ラベル待ち/停止/重複、定数分布、小標本、誤差基準未設定、欠測増加をCLIまで通す。期待窓・件数・警告・検知遅れを先に固定し、未設定を異常なしにしない。既存v2単体testと同じ式を写すだけのtestは追加しない。 |
@@ -412,16 +412,16 @@ registry URIの進捗補足: Capital staging登録・loader・seed・preflight�
 | T10 / R01/R02 | **P0（fit前） / D3 / Sol** | T09、T04のbundle仕様。T01/T02の新policyと整合 | **全期間snapshotと未使用protocolを固定する。** 隣月bufferの範囲/理由、全原本manifest schema 3、TZif identity、重複/収支/DST/欠測理由、target gridを監査する。6〜9月の診断aggregateは正式入力へ流用せず新pathへ集約する。既評価窓との非重複、training cutoff=2026-06-01 00時と前日22/23時のラベル未到着除外、validation/finalの判断時点・件数・recipe・MAE/RMSE policyをfit前に保存する。10月bufferなしで窓を短縮しない。 |
 | T11 / R03/R06 | P1 / D3 / Sol | T10完了 | **一度限りの実candidate評価。** 消費台帳を先に更新し固定recipeでfit・candidate bundleを保存する。同じ行のbaselineにMAE厳密改善かつRMSE以下を確認し、通過した同じartifactだけを独立finalで一度評価する。weekday/weekend/通勤時間帯も件数付きで報告し再fitしない。不合格なら見送り、同じ窓で候補を選び直さない。 |
 | T12 / R05/R06 | P1 / D3 / Sol | T11の精度条件通過、T03の測定policy | **実候補のblocked運用測定。** exact version登録/seed/ready/offline-API一致/通常deploy拒否を確認し、固定planの50暖機+1,000逐次要求、DB監査・出典hash・資源条件を保存する。別attemptや失敗も残し、数値再計算とreport本体をexact versionへ結ぶ。この段階で実配信の採否は確定しない。 |
-| T13 / R06/R09 | P1 / D3 / Sol | 合成MLflowはT01/T02後。実採否はT05/T07/T08/T12/T17等の必須証拠後 | **実MLflowの決定書込復旧と最終採否。** 使い捨てregistryで部分tag書込、最後のgate書込後の応答喪失、同じretry、競合decisionを試す。実候補では必要証拠が同一artifactを指すことを確認し、ユーザーの意図するreviewer/approver・理由・時刻を記録する。未達を人名/理由で上書きしない。別targetのUCIへ自動移行しない。 |
+| T13 / R06/R09 | P1 / D3 / Sol | 一時SQLite MLflowの正常保存/承認/破損拒否は確認済み。HTTP障害と実採否は未実施。実採否はT05/T06/T07/T08/T12/T17等の必須証拠後 | **実MLflowの決定書込復旧と最終採否。** 使い捨てregistryで部分tag書込、最後のgate書込後の応答喪失、同じretry、競合decisionを試す。実候補では必要証拠が同一artifactを指すことを確認し、ユーザーの意図するreviewer/approver・理由・時刻を記録する。未達を人名/理由で上書きしない。別targetのUCIへ自動移行しない。 |
 | T14 / R10・A08 | P2 / D1 / **Luna** | 今すぐ着手可。実結果の追加は当該task完了後 | **証拠と説明を整理する。** R/T task→commit→CI→artifact/log hashの一覧、用語、読取手順、5分demoを作る。logはcommit/UTC/attempt付きの新規pathにし、過去の件数訂正・上書き済み証拠の限界も残す。予測誤差・API時間・PSI・復旧時間を混同せず、未実施項目を完了にしない。 |
-| T15 / R04 | P2 / D2 / **Luna実装、Sol review** | 既存monitor PostgreSQL scriptの仕様を保つ範囲で着手可 | **CI保守と検査の接続。** 既存の使い捨てmonitor persistence PostgreSQL scriptを独立CIへ接続し、失敗を隠さずlogを保存する。fake registry unit testのversion lockも一時directoryへ分離する。変更YAMLの検査と既知のaction/dependency警告を整理する。lockや共通runnerを広く更新する必要が出たらSolへ戻し、警告だけで全面upgradeしない。 |
+| T15 / R04 | P2 / D2 / **Luna実装、Sol review** | 既存monitor PostgreSQL scriptの仕様を保つ範囲で着手可 | **CI保守と検査の接続。** 既存の使い捨てmonitor persistence PostgreSQL scriptを独立CIへ接続し、失敗を隠さずlogを保存する。fake registry unit testのversion lockはT01作業で一時directoryへ分離済み。残るCI接続を進める。変更YAMLの検査と既知のaction/dependency警告を整理する。lockや共通runnerを広く更新する必要が出たらSolへ戻し、警告だけで全面upgradeしない。 |
 | T16 / R04/R10・A07 | P1 / D2 / **Luna実装、Sol review** | 保存path・公開許可リストをSolで固定後。実データ到着は不要 | **合成CIの再計算可能な証拠を保全する。** cleanup前にsynthetic-only plan/report/ledger/要求別latency等を新規archiveへ保存する。.env/credential/外部pathを含めず、artifact ZIPと中身のhashを照合する。artifactだけを取得した別processで1,000件p95を再計算しsummaryと一致すること、cleanupが引き続き完了することを確認する。 |
 | T17 / R09 | P1 / D3 / Sol（進行文言は固定仕様後Luna可） | 状態設計は今すぐ。切替検証はT07と連動 | **現在版・承認metadata・利用不可版の扱いを揃える。** 入口/runtime/配信台帳の版・操作ID・承認者/理由をrecoverでも一致させる。読み込み不可の旧版1を履歴に残し、rollback候補から除外する。実deploy/model取得の段階・経過時間・参照log・timeout時の未確定状態を表示する。harnessだけのheartbeatで製品側まで完了としない。 |
 
 #### 次の着手順とモデルへの引継ぎ
 
-1. SolでT01を修正し、T02の必須証拠schemaと拒否条件を固定する。実Capitalのeligible化はその修正と必要証拠の完成まで進めない。
-2. データ公開待ちと独立に、SolでT03/T04/T07/T08/T17を進める。最初はT04の候補bundle仕様を決め、実fit前に必要な形式を揃える。
+1. T01とT02のschema/拒否処理は実装済み。実Capitalのeligible化は必要証拠の完成まで進めない。合成fixtureだけでT02全体を完了にせず、各producerが同じ版・candidate・artifactの観測結果を出すことを後続taskで検証する。
+2. **次はT04のtraining reference/PSI v2接続**を進め、実fit前のcandidate bundle形式とT05の受入仕様を固定する。T03の中断journal/測定policyも実測前に必要。データ公開待ちと独立にT07/T08/T17およびT13の使い捨てHTTP試験を進められる。
 3. Lunaには今すぐT14、仕様確定後にT16/T05/T06/T15を割り当てられる。T09は公開後の定型取得/照合に向く。小さな単位で受入結果を残し、配信条件・データ分割・schema判断はSolへ戻す。
 4. 原本到着後にT09→T10→T11→T12。監視/復旧/metadataの必要証拠が揃ったらT13の実採否へ進む。T10の前提を満たさないまま、既評価窓で実験を先行しない。
 

@@ -14,7 +14,7 @@
 
 その後の実装・作業過程は[2026-10-30 checkpoint差分レビュー](reviews/20261030-checkpoint-review.md)を参照。最新の残課題・依存関係・難易度・Sol/Luna担当推奨は[計画書11.6](../../261014/plan_mlops.md#remaining-work-20261030)を正規の一覧とする。
 
-同監査のA01/A02では、承認後のfinal report/plan SHA変更と負のp95を通常配信判定が受理すること、監視・復旧証拠なしでも合成approveが成立することを確認した。review/approveの実装は配信前条件の全面完成を意味しない。実Capital候補のeligible化・通常配信へ進む前にT01/T02を修正し、必要証拠の欠落・不一致を拒否する。
+同監査のA01/A02では、承認後のfinal report/plan SHA変更と負のp95を通常配信判定が受理すること、監視・復旧証拠なしでも合成approveが成立することを確認した。review/approveの実装は配信前条件の全面完成を意味しない。その後T01とT02のschema/拒否処理を実装した。[配信証拠bundle仕様](capital-deployment-evidence.md)に従って11報告書本体と全hashを結合し、欠落・不一致を拒否する。実Capital候補のeligible化には、T04/T05/T06/T07/T08/T12/T17等での実証が引き続き必要である。
 
 ## 前提とデータの状態
 
@@ -153,7 +153,7 @@ MLFLOW_REGISTRY_URI=http://127.0.0.1:5001 \
 
 このコマンドはledger/候補の既存lockを保持してfrozen plan・linked report SHA・全1,050要求のp95再計算・DB監査・input provenance・前後のhost/container resource context・MLflow version/artifact identityを照合する。同じ証拠の再実行は同じtagを確認して成功するが、別report/attemptで既存tagを上書きしない。tag書込み後も`operational_gate_status=not_evaluated`と`deployment_permission=blocked`を維持する。タグは証拠の参照であり、独立review、運用gate合格、理由付き手動承認、eligible化の代わりにはならない。合成system testで成功・冪等再実行・異なるhashの拒否を確認した。組織的な承認・監査サービスやローカルファイルを直接変更できる人への耐性は提供しない。
 
-review/approveの開発用操作は次の2段階で記録する。実candidateでの使用には上記T01/T02の修正と、監視・復旧を含む必要証拠の完成が先に必要である。reviewerが候補・final report、凍結plan、measurement report、監査/再計算ログと復旧証拠を確認してから、意図した担当者・理由で記録する。
+review/approveの前に、監視・復旧・復元・metadataの必須証拠を完成させ、[配信証拠bundleの保存CLI](capital-deployment-evidence.md)を実行する。bundle保存はblockedを維持する。未実証の報告書をpassedとして作ってはいけない。その後のreview/approveは次の2段階で記録する。reviewerが候補・final report、凍結plan、measurement report、監査/再計算ログと復旧証拠を確認してから、意図した担当者・理由で記録する。
 
 ```bash
 DATA_PROFILE_ID=capital-bikeshare MLFLOW_TRACKING_URI=http://127.0.0.1:5001 \
@@ -173,7 +173,7 @@ MLFLOW_REGISTRY_URI=http://127.0.0.1:5001 \
   --reason '<why this exact version is authorized>'
 ```
 
-review/approvalはexact version、candidate、registered artifact、operational report hashへ結び付き、理由を含む決定レコードのSHAをtagに保存する。成功reviewにはoperational measurement=`passed`かつp95 250ms以下、出典・監査・再計算・資源context成功を必須にする。runtime loader、`runtime init`、`deploy promote`も同じ結び付きを検査する。reviewerとapproverは異なる名前でなければならない。これはローカル学習用の証跡であり、名前は利用者が自己申告する。GitHub/MLflowのIAM、電子署名、独立した組織監査を代替しない。現時点では実candidateがないため、このコマンドは実行していない。合成testは判定拒否・承認経路をmock registryで確認しただけで、実MLflowのeligible遷移や実配信は未検証。
+review/approvalはschema 2でexact version、candidate、registered artifact、11報告書のbundleと関連hashへ結び付き、UTC時刻・担当者・理由を含む決定レコードのSHAをtagに保存する。成功reviewにはoperational measurement=`passed`かつp95 250ms以下、出典・監査・再計算・資源context成功を必須にする。runtime loader、`runtime init`、`deploy promote`も同じ結び付きを検査する。reviewerとapproverは異なる名前でなければならない。これはローカル学習用の証跡であり、名前は利用者が自己申告する。GitHub/MLflowのIAM、電子署名、独立した組織監査を代替しない。現時点では実candidateがないため、このコマンドは実行していない。合成testの判定拒否・承認経路に加え、一時SQLite registry/file storeを使う実MLflow clientでbundle保存/取得・eligible遷移・保存元artifact破損拒否を確認した。HTTP経由の部分書込/応答喪失と実candidateの配信は未検証。
 
 隔離system testは `.venv/bin/python scripts/capital_system_harness.py --run-synthetic-system` で実行する。人工データで候補を作り、使い捨てCompose projectへ登録・seed・API起動・計測・監査・数値再確認・exact version tag記録まで通す。タグの同値再実行、異なるreport hashの拒否、拒否後もblockedを維持することを検査する。ランダムなproject名・一時credential・所有labelを用い、自分が作ったcontainer/network/volume/imageだけを削除する。port 5001・8110・55433・55434が使用中なら既存サービスを止めずに失敗する。test成功は実データの精度やdeployment承認を示さない。Docker imageのbuildと依存取得が必要になる場合がある。
 

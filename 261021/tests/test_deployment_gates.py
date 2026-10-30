@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import unittest
+import tempfile
+from pathlib import Path
+from unittest.mock import patch
 
 from bike_mlops.capital_deployment_decisions import record_deployment_approval, record_operational_review
 from bike_mlops.deployment_gates import require_deployment_eligible
@@ -9,6 +12,12 @@ from test_capital_deployment_decisions import eligible_registry
 
 class DeploymentGateTests(unittest.TestCase):
     def setUp(self):
+        from bike_mlops import capital_operational_registry
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        change = patch.object(capital_operational_registry, "PROJECT_ROOT", Path(directory.name))
+        change.start()
+        self.addCleanup(change.stop)
         self.registry = eligible_registry()
         record_operational_review(self.registry, "2", "reviewer-a", "passed", "all evidence reviewed")
         record_deployment_approval(self.registry, "2", "approver-b", "approve after review")
@@ -17,7 +26,7 @@ class DeploymentGateTests(unittest.TestCase):
     def test_capital_requires_all_gates_and_matching_decision_evidence(self):
         require_deployment_eligible(
             "capital-bikeshare", self.tags,
-            model_name="bike-demand-capital", model_version="2",
+            model_name="bike-demand-capital", model_version="2", client=self.registry,
         )
         for key in (
             "quality_gate", "validation_gate_status", "final_accuracy_gate_status",
@@ -35,7 +44,7 @@ class DeploymentGateTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "not eligible for deployment"):
                     require_deployment_eligible(
                         "capital-bikeshare", incomplete,
-                        model_name="bike-demand-capital", model_version="2",
+                        model_name="bike-demand-capital", model_version="2", client=self.registry,
                     )
 
     def test_failed_gate_and_diagnostic_permission_do_not_bypass_capital_checks(self):
@@ -52,7 +61,7 @@ class DeploymentGateTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "not eligible for deployment"):
                     require_deployment_eligible(
                         "capital-bikeshare", tags,
-                        model_name="bike-demand-capital", model_version="2",
+                        model_name="bike-demand-capital", model_version="2", client=self.registry,
                     )
 
     def test_wrong_model_version_or_modified_decision_reason_is_rejected(self):
@@ -65,7 +74,7 @@ class DeploymentGateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "not eligible for deployment"):
             require_deployment_eligible(
                 "capital-bikeshare", tags,
-                model_name="bike-demand-capital", model_version="2",
+                model_name="bike-demand-capital", model_version="2", client=self.registry,
             )
 
     def test_existing_uci_deployment_policy_remains_unchanged(self):
