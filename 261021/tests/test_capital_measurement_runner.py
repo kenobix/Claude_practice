@@ -13,6 +13,7 @@ import pandas as pd
 from bike_mlops import capital_measurement_runner as runner
 from bike_mlops import capital_operational_ledger as ledger
 from bike_mlops import operational_benchmark as benchmark
+from bike_mlops.capital_request_journal import request_schedule
 import test_capital_operational_ledger as ledger_tests
 
 
@@ -59,11 +60,11 @@ class MeasurementRunnerTests(unittest.TestCase):
     def measure(self, *, request_observer, attempt_id, **kwargs):
         self.events.append("measure")
         ids = []
-        for index in range(1050):
-            payload = {"request_id": f"capital-op:{attempt_id}:{index}", "target_hour": "2024-01-01 00:00:00"}
+        for payload in request_schedule(attempt_id, self.plan):
             response = {"data_version_sha256": "b" * 64}
             request_observer.before_request(payload)
             request_observer.after_response(payload, response)
+            request_observer.request_result(payload, http_status=200, latency_ms=1.0, error=None)
             ids.append(payload["request_id"])
         identity = self.plan["identity"]
         return {"benchmark_id": attempt_id, "completed": True, "measurements": [],
@@ -179,7 +180,7 @@ class MeasurementRunnerTests(unittest.TestCase):
 
     def test_interrupt_preserves_pending_request_and_failed_attempt(self):
         def stop(*, request_observer, attempt_id, **_):
-            request_observer.before_request({"request_id": f"capital-op:{attempt_id}:warmup:0000", "target_hour": "2024-01-01 00:00:00"})
+            request_observer.before_request(request_schedule(attempt_id, self.plan)[0])
             raise KeyboardInterrupt
         self.run.side_effect = stop
         with self.assertRaises(KeyboardInterrupt):
@@ -194,10 +195,10 @@ class MeasurementRunnerTests(unittest.TestCase):
 
     def test_returned_incomplete_report_includes_verified_and_pending_ids(self):
         def partial(*, request_observer, attempt_id, **_):
-            first = {"request_id": f"capital-op:{attempt_id}:warmup:0000", "target_hour": "2024-01-01 00:00:00"}
-            second = {"request_id": f"capital-op:{attempt_id}:warmup:0001", "target_hour": "2024-01-01 01:00:00"}
+            first, second = request_schedule(attempt_id, self.plan)[:2]
             request_observer.before_request(first)
             request_observer.after_response(first, {"data_version_sha256": "b" * 64})
+            request_observer.request_result(first, http_status=200, latency_ms=1.0, error=None)
             request_observer.before_request(second)
             return {"completed": False, "measurements": [], "operational_gate": {"measurement_status": "failed"}}
         self.run.side_effect = partial

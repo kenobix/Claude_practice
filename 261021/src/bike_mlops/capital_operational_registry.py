@@ -211,6 +211,7 @@ def record_completed_operational_evidence(candidate_id: str, attempt_id: str) ->
             issue = recovery._report_error(report, attempt, candidate_id, plan, linked=True)
             if issue:
                 raise ValueError("Ledger-linked report does not match the attempt: " + issue)
+            recovery.verify_completed_journal(attempt, candidate_id, plan, report)
             numeric = recheck_measurement_records(plan, report, attempt_id=attempt_id,
                                                   plan_file_sha256=attempt["plan_file_sha256"])
             if numeric.get("numeric_status") != report["operational_gate"].get("measurement_status"):

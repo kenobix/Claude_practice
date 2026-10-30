@@ -2193,3 +2193,63 @@ gh api repos/kenobix/Claude_practice/actions/artifacts/12944562497/zip
 ```
 
 最大50秒のgh run watchを区切って使用した。exit 124はwatchだけの期限で、CI停止/試験timeoutではない。最終successとartifact本文を別途確認した。証拠JSON・計画へCI結果を反映し、製品コードを変えない記録用commitとして保存する。
+
+## 2026-10-30 T03: 中断journal・測定policy・隔離障害試験
+
+開始時点は`71cc7e7`（origin/mainと一致）。共通AGENTS、plan §11.6、README、runbook、直近T04ログ、運用plan/attempt/observer/runner/再計算/未確定DB照会のコードとテストを確認した。前の依頼は現状確認のみだったが、今回はユーザーからT03実装の指示を受けて再開した。無関係な260701/charts・logs、260905の画像には手を加えていない。
+
+### 調査・判断・変更
+
+従来は最初の`requests_started_at_utc`だけが永続化され、要求別のpending/応答はメモリ上だった。SIGKILL後に失敗reportがないと要求IDを復元できない。また、応答後のsource検証例外で、例外時の再計時が検証時間までHTTP latencyへ含めることを確認した。
+
+`capital-request-journal-v1`をoperational planのpolicyへ追加した。schema 2の外形は維持し、内部のpolicy ID/bodyとplan SHAで版を識別する。旧policyは読取照合のみ許可し、新しいattempt開始前には拒否する。旧planを上書きして新条件だったと扱わない。
+
+- 新規JSONLに固定1,050要求の入力とUUID、candidate、plan/content/file SHAを保存。headerと新規directory entryをfsync後、要求別sendingをwrite/fsyncしてHTTPを呼ぶ。応答/source検証後の結果とHTTP時間もwrite/fsyncしてから次へ進む。失敗後は同じjournal/要求を再使用しない。
+- イベント順序とSHA鎖、最大8MiB、通常ファイル/末尾symlink拒否、読取中の変更検知。途中の末尾行はtorn_tail、完全行の破損・順序不正はinvalid。修復・自動採用・再送はしない。署名や管理者認証の保証ではない。
+- HTTP時間を呼出し終了時に固定。ループ全体時間とjournal write/fsync時間を別記し、全体時間の新しい合格基準は作らない。HTTPXの10秒timeoutは接続/読取/書込/pool待ちごとの値であり、全要求を厳密な10秒deadlineで打ち切る設定ではない。
+- main threadのSIGTERMを中断へ変換し、可能なら失敗reportを保存。SIGKILL時は台帳startedやreportなしを許容し、journalから結果未確定のIDを調べる。結果記録中の割り込みでも、既知のHTTP時間へjournal時間を加算しない。
+- 読取inspectionとpending auditを拡張。failed/interrupted/ロック解放済みstartedでreportがなくてもjournalから一つの未確定要求をSELECTできる。DB不在を未送信と断定しない。旧失敗report形式の照会も回帰確認した。
+- 新policyのlocal再計算、MLflow証拠tag記録、bundle公開前に、journalの1,050応答確定・SHA・要求別時間とreportを照合する。欠落/途中行を公開前に拒否。運用gateと配信許可は変更しない。
+- CIへ独立した使い捨てPostgreSQLのHTTP timeout/接続喪失試験とlog保存を追加。監視保存の既存scriptの人工pending fixtureも新journalへ更新した。
+
+[中断手順](docs/measurement-interruption.md)を追加しREADME/runbook/用語集から案内した。計画書はT03の到達点、T16のjournal原本archive、次のT05/T07/T08/T17と実候補依存を更新した。
+
+### コマンド・結果・つまずき
+
+通常のコード探索は`rg --files`/`rg -n`、`git status --short`、`git diff`、`sed`/`cat`で行った。探索で存在しないstorage.pyやfixture globを指定したrgはexit 2となり、実際のdb.py/既存fixtureへ訂正した。1回、repo rootからproject内相対logへredirectし、親path不在でコマンド開始前に失敗した。以降は261021をworkdirに指定した。別のtailも261021を重複指定して訂正した。製品障害として数えない。
+
+最初のCapital部分suiteは120秒でexit 124。途中で旧fixtureのjournal欠落、journal書込失敗testが先に台帳fsyncを失敗させていたこと、未知結果の再送拒否例外の期待型違いが見つかった。fixturesを現行の固定要求・journalへ揃え、旧reportの回帰testは明示的に歴史的planを用意した。最初のsuiteは未完了で成功扱いにしない。FastAPI TestClient/実HTTPを含むsuiteはlocal socketを許す実行権限で以後実行した。
+
+261021から実行した主要コマンド（各logは新規作成、`set -o noclobber`。ログ名の71cc7e7は開始時commitで、変更中コードの厳密なSHAは[証拠JSON](docs/reviews/20261030-t03-checks.json)に記録）:
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 120 .venv/bin/python -u -m unittest discover -s tests -p 'test_capital*' -v
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 240 .venv/bin/python -u -m unittest discover -s tests -v
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 360 .venv/bin/python -u -m unittest discover -s tests -v
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 90 .venv/bin/python -u -m unittest discover -s tests -p test_capital_request_journal.py -v
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 180 .venv/bin/python -u scripts/test_capital_request_interruption_postgres.py
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 180 .venv/bin/python -u scripts/test_monitor_persistence_postgres.py
+.venv/bin/python -m compileall -q src tests scripts
+.venv/bin/python -m pip check
+.venv/bin/python scripts/operational_attempt_ledger.py review-retry --help
+git diff --check
+```
+
+`docker version --format '{{.Server.Version}}'`は29.9.2。postgres:17.6-bookwormの既存imageを確認し、pullせずランダム名/label/loopback動的portの使い捨てcontainerだけで試験した。DB roleは試験用の非superuser owner。資源/credentialをログへdumpせず、終了時にはcontainerのID/name/labelを照合して削除した。
+
+| log（data/reports/20261030-t03/） | 実測結果 |
+|---|---|
+| 71cc7e7-capital-first-v1.log | 部分suite未完了、exit 124。上述のfixture/期待値不一致を含む |
+| 71cc7e7-full-v2.log | 全262件成功、120.783秒。公開前journal検証の追加前 |
+| 71cc7e7-full-final-v3.log | 全264件成功、122.421秒。最後の「結果記録中の割り込み」の計時1行修正前 |
+| 71cc7e7-journal-timing-final-v4.log | **最終コードのjournal/計時8件成功、6.180秒**。HTTPが2ms、検証/記録を含むループ902msという制御時計で混入を拒否 |
+| 71cc7e7-postgres-http-v1.log / -final-v2.log | 6項目成功、cleanup_complete。実HTTP 1要求、DB非commit時点の不在→timeout後のcommit→版等の一致を観測。監査接続断とsnapshot接続断で失敗扱い |
+| 71cc7e7-monitor-postgres-v1.log | 既存監視保存5項目成功、使い捨てcontainer削除。旧行維持・独立run・途中insert rollback・marker不在・遅延commit照会 |
+
+SIGTERM/SIGKILL試験は実際の別processからlocal HTTP serverへ要求が到着し、応答前で止めて確認した。SIGTERMはinterrupted、SIGKILLはstartedを保持し、どちらもfsync済みsendingから未知のIDを読める。理由付き再開で別UUIDを作り、古いjournalを保持することも確認した。旧fixtureを同じ式で再計算して合格させただけの試験ではない。
+
+compileall/pip check/diff check成功。YAML parser、workflow内11 Bash blockの`bash -n`、変更Markdown等の相対リンク51件を確認した。actionlintは未インストールのため未実施。既知のMLflow/SQLAlchemy noload warningは残る。8テスト最終修正後の全suiteはpush後CIで別途確認する。確認前に全264件が最終コードで成功したとは書かない。
+
+### 完了範囲と残る検証
+
+今回のHTTP/PostgreSQL fixtureは人工予測行を保存する試験serverであり、学習済みFastAPIモデルやCaddyの配信切替ではない。未使用実Capital candidateのfit/validation/final/運用測定、実配信承認、UCI版3のDB/schema/container/配信変更は行っていない。実Caddyや配信途中停止はT07/T17、実候補の計測はT12、実MLflow採否はT13で扱う。T03のjournal原本はlocal保全で、既存remote 11報告書bundleにはdescriptorだけが含まれる。再計算可能なCI archiveへ原本を保存するT16は未完了。原本のremote読込まで実証したとは説明しない。

@@ -6,6 +6,7 @@ from contextlib import nullcontext
 from unittest.mock import Mock, patch
 
 from bike_mlops import capital_operational_ledger as ledger
+from bike_mlops import capital_operational_plan as plans
 from bike_mlops import capital_operational_recovery as recovery
 from bike_mlops.capital_pending_audit import inspect_pending_audit
 import test_capital_operational_ledger as ledger_tests
@@ -31,6 +32,20 @@ class PendingAuditTests(unittest.TestCase):
                         "pending_request_status": "outcome_unknown_may_have_been_sent"}}
             path.write_text(json.dumps(report))
             lease.finish(status="failed", report_path=path, failure_code="request_failed")
+        # Emulate a historical plan and linked report without per-request journal.
+        self.fixture.plan["policy"].pop("request_journal")
+        self.fixture.plan["plan_sha256"] = plans._digest(self.fixture.plan)
+        self.fixture.plan_path.write_text(json.dumps(self.fixture.plan))
+        state = json.loads(self.fixture.ledger_path.read_text())
+        import hashlib
+        attempt = state["records"][0]["attempts"][0]
+        attempt["plan_sha256"] = self.fixture.plan["plan_sha256"]
+        attempt["plan_file_sha256"] = hashlib.sha256(self.fixture.plan_path.read_bytes()).hexdigest()
+        report["operational_plan_sha256"] = attempt["plan_sha256"]
+        report["operational_plan_file_sha256"] = attempt["plan_file_sha256"]
+        path.write_text(json.dumps(report))
+        attempt["report"]["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        self.fixture.ledger_path.write_text(json.dumps(state))
         self.path = path
         self.db = Mock()
         self.db.url = "postgresql://bike_app:unused@127.0.0.1:55434/bikeops"

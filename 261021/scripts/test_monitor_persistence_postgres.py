@@ -138,6 +138,13 @@ def main() -> None:
         try:
             with fixture.attempt() as lease:
                 lease.mark_requests_started()
+                from bike_mlops.capital_request_journal import RequestJournal
+                journal = RequestJournal(fixture.report_dir / f"operational-{lease.attempt_id}.requests.jsonl", lease, fixture.plan)
+                try:
+                    journal.sending(journal.schedule[0])
+                    journal.outcome(journal.schedule[0], http_status=None, latency_ms=10.0, error="synthetic_timeout")
+                finally:
+                    journal.close()
                 pending_id = f"capital-op:{lease.attempt_id}:warmup:0000"
                 report_path = fixture.report_dir / f"operational-{lease.attempt_id}-failure.json"
                 failure = {"operational_attempt_id": lease.attempt_id, "operational_plan_sha256": lease.plan_sha256,

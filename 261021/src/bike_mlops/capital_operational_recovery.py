@@ -13,6 +13,7 @@ from pathlib import Path
 
 from bike_mlops import capital_operational_ledger as ledger
 from bike_mlops.config import PROJECT_ROOT
+from bike_mlops.capital_request_journal import inspect_request_journal
 
 _REPORT_PATTERN = re.compile(r"^operational-([0-9a-f-]{36})(-failure)?\.json$")
 
@@ -47,13 +48,43 @@ def _canonical_attempt(value: object) -> bool:
 
 def _plan_check(attempt: dict, candidate_id: str) -> tuple[dict | None, str]:
     try:
-        plan, _, file_hash = ledger._read_plan(PROJECT_ROOT / attempt["plan_path"])
+        plan, _, file_hash = ledger._read_plan(PROJECT_ROOT / attempt["plan_path"], allow_legacy=True)
         if (plan["identity"]["candidate_id"] != candidate_id or plan["plan_sha256"] != attempt["plan_sha256"]
                 or file_hash != attempt["plan_file_sha256"]):
             return None, "changed_or_mismatched"
     except (KeyError, OSError, TypeError, ValueError):
         return None, "unreadable_or_invalid"
     return plan, "matched"
+
+
+def inspect_attempt_journal(attempt: dict, candidate_id: str, plan: dict | None) -> dict:
+    if plan is None:
+        return {"status": "plan_not_matched"}
+    if "request_journal" not in plan["policy"]:
+        return {"status": "legacy_not_required", "interpretation": "no_durable_request_evidence"}
+    path = PROJECT_ROOT / "data/reports/capital-bikeshare" / f"operational-{attempt['attempt_id']}.requests.jsonl"
+    try:
+        return inspect_request_journal(path, attempt_id=attempt["attempt_id"], candidate_id=candidate_id,
+                                       plan=plan, plan_file_sha256=attempt["plan_file_sha256"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return {"status": "invalid", "interpretation": "no_request_outcome_can_be_inferred"}
+
+
+def verify_completed_journal(attempt: dict, candidate_id: str, plan: dict, report: dict) -> None:
+    """Bind local report publication/recheck to all durable, verified request times."""
+    if "request_journal" not in plan["policy"]:
+        return  # Historical numeric inspection is allowed; new execution rejects old plans.
+    journal = inspect_attempt_journal(attempt, candidate_id, plan)
+    descriptor = report.get("request_journal")
+    rows = report.get("measurements")
+    if (journal["status"] != "readable" or journal["counts"].get("response_verified") != 1050
+            or not isinstance(descriptor, dict)
+            or descriptor.get("file_name") != f"operational-{attempt['attempt_id']}.requests.jsonl"
+            or descriptor.get("sha256") != journal.get("sha256")
+            or not isinstance(rows, list) or len(rows) != 1050
+            or any(not isinstance(row, dict)
+                   or journal["verified_latencies_ms"].get(row.get("request_id")) != row.get("latency_ms") for row in rows)):
+        raise ValueError("Durable request journal is incomplete or differs from the report")
 
 
 def _read_report(path: Path) -> tuple[dict | None, str | None, str | None]:
@@ -160,12 +191,14 @@ def inspect_operational_reports(candidate_id: str, *, ledger_path: Path = ledger
                 if not _canonical_attempt(attempt_id):
                     raise ValueError("Ledger contains a noncanonical attempt ID")
                 plan, plan_status = _plan_check(attempt, candidate_id)
+                journal = inspect_attempt_journal(attempt, candidate_id, plan)
                 names = [f"operational-{attempt_id}.json", f"operational-{attempt_id}-failure.json"]
                 examined.update(names)
                 item = {"attempt_id": attempt_id, "status": attempt["status"], "plan_status": plan_status,
                         "requests_started": bool(attempt.get("requests_started_at_utc")),
                         "partial_evidence_missing": attempt.get("partial_evidence_missing"),
                         "linked_report": {"status": "not_recorded"}, "orphans": []}
+                item["request_journal"] = journal
                 descriptor = attempt.get("report")
                 linked_name = None
                 if descriptor is not None:
@@ -189,6 +222,13 @@ def inspect_operational_reports(candidate_id: str, *, ledger_path: Path = ledger
                                     issue = issue or "plan_not_matched"
                                 item["linked_report"] = {"status": "invalid" if issue else "matched",
                                                          "reason": issue, "sha256": digest, "path": relative}
+                                if (issue is None and plan is not None and "request_journal" in plan["policy"]
+                                        and (attempt.get("requests_started_at_utc") or journal["status"] != "missing")):
+                                    expected_name = f"operational-{attempt_id}.requests.jsonl"
+                                    descriptor = body.get("request_journal")
+                                    if (not isinstance(descriptor, dict) or descriptor.get("file_name") != expected_name
+                                            or descriptor.get("sha256") != journal.get("sha256")):
+                                        item["linked_report"].update(status="invalid", reason="journal_binding_mismatch")
                                 item["linked_report"]["candidate_identity_source"] = (
                                     "report_and_plan" if isinstance(body.get("model_identity"), dict)
                                     else "ledger_and_plan") if plan is not None else "unverified"
@@ -209,6 +249,13 @@ def inspect_operational_reports(candidate_id: str, *, ledger_path: Path = ledger
                                           and item["linked_report"]["status"] == "not_recorded")
                                       or item["linked_report"]["status"] in {"missing", "invalid"}
                                       or bool(item["orphans"]) or plan_status != "matched")
+                if (journal["status"] not in {"readable", "legacy_not_required"}
+                        and not (journal["status"] == "missing" and not attempt.get("requests_started_at_utc")
+                                 and attempt["status"] == "failed")):
+                    item["unresolved"] = True
+                if (attempt["status"] == "completed" and journal["status"] == "readable"
+                        and journal["counts"].get("response_verified") != 1050):
+                    item["unresolved"] = True
                 item["evidence_state"] = (
                     "unfinished" if attempt["status"] in {"started", "interrupted"}
                     else "incomplete_or_corrupt" if item["linked_report"]["status"] != "matched" or plan_status != "matched"

@@ -46,6 +46,7 @@ def publish_deployment_evidence(candidate_id: str, attempt_id: str, final_path: 
                 raise ValueError("Ledger-linked operational report differs")
             if recovery._report_error(report, attempt, candidate_id, plan, linked=True):
                 raise ValueError("Operational report does not match its attempt")
+            recovery.verify_completed_journal(attempt, candidate_id, plan, report)
             selection_path = PROJECT_ROOT / "data/candidates" / candidate_id / "candidate-report.json"
             verified = verify_candidate_for_staging(selection_path, final_path)
             final_path = verified["final_report_path"]

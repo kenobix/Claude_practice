@@ -13,6 +13,8 @@ from urllib.parse import urlsplit
 
 import pandas as pd
 
+from bike_mlops.capital_request_journal import JOURNAL_POLICY
+
 from bike_mlops.capital_staging import _registration_tags, validate_staging_model_tags
 from bike_mlops.config import LABEL_DELAY_HOURS, PROJECT_ROOT
 from bike_mlops.model import directory_sha256
@@ -34,6 +36,7 @@ PLAN_POLICY = {
     "request_id": "unique_benchmark_uuid_phase_index",
     "as_of": "equal_to_target_hour",
     "accuracy_scoring": False,
+    "request_journal": dict(JOURNAL_POLICY),
 }
 
 
@@ -145,15 +148,18 @@ def build_operational_plan(*, evidence: dict, window: dict, registered, artifact
     return plan
 
 
-def validate_operational_plan(plan: object) -> dict:
+def validate_operational_plan(plan: object, *, allow_legacy: bool = False) -> dict:
     """Validate integrity and fixed policy; actual candidate/DB must be rechecked before use."""
     if (not isinstance(plan, dict) or type(plan.get("schema_version")) is not int
             or plan.get("schema_version") != 2 or plan.get("kind") != "capital-operational-plan"):
         raise ValueError("Unsupported operational plan")
     if plan.get("plan_sha256") != _digest(plan):
         raise ValueError("Operational plan SHA-256 mismatch")
+    expected_policy = PLAN_POLICY
+    if allow_legacy and isinstance(plan.get("policy"), dict) and "request_journal" not in plan["policy"]:
+        expected_policy = {key: value for key, value in PLAN_POLICY.items() if key != "request_journal"}
     if (json.dumps(plan.get("policy"), sort_keys=True, separators=(",", ":"))
-            != json.dumps(PLAN_POLICY, sort_keys=True, separators=(",", ":"))
+            != json.dumps(expected_policy, sort_keys=True, separators=(",", ":"))
             or plan.get("deployment_permission") != "blocked"):
         raise ValueError("Operational plan policy or deployment permission differs from the fixed conditions")
     _staging_url(plan.get("api_url", ""))

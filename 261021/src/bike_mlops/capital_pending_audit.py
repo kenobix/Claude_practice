@@ -28,27 +28,40 @@ def inspect_pending_audit(candidate_id: str, attempt_id: str, database, *, ledge
             if record is None:
                 raise ValueError("Candidate has no operational attempt record")
             attempt = next((item for item in record["attempts"] if item["attempt_id"] == attempt_id), None)
-            if attempt is None or attempt.get("status") != "failed":
-                raise ValueError("A failed ledger-linked measurement is required")
+            if attempt is None or attempt.get("status") not in {"failed", "interrupted", "started"}:
+                raise ValueError("A stopped measurement attempt is required")
             plan, plan_status = recovery._plan_check(attempt, candidate_id)
             if plan is None or plan_status != "matched":
                 raise ValueError("Frozen operational plan does not match the ledger")
-            report_path = f"data/reports/capital-bikeshare/operational-{attempt_id}-failure.json"
-            descriptor = attempt.get("report")
-            if not isinstance(descriptor, dict) or descriptor.get("path") != report_path:
-                raise ValueError("Ledger does not link the canonical failure report")
-            report, digest, error = recovery._read_report(recovery.PROJECT_ROOT / report_path)
-            if error or digest != descriptor.get("sha256"):
-                raise ValueError("Ledger-linked failure report is missing, invalid or has a different SHA-256")
-            issue = recovery._report_error(report, attempt, candidate_id, plan, linked=True)
-            if issue:
-                raise ValueError(f"Ledger-linked failure report identity is invalid: {issue}")
-            partial = report.get("partial_evidence")
-            if not isinstance(partial, dict) or partial.get("pending_request_status") != "outcome_unknown_may_have_been_sent":
-                raise ValueError("Failure report has no ambiguous pending request")
-            request_id = partial.get("pending_request_id")
-            if not isinstance(request_id, str):
-                raise ValueError("Pending request ID is missing")
+            digest = None
+            journal_sha = None
+            if "request_journal" in plan["policy"]:
+                journal = recovery.inspect_attempt_journal(attempt, candidate_id, plan)
+                if journal["status"] not in {"readable", "torn_tail"}:
+                    raise ValueError("Request journal is missing or invalid")
+                unknown = [key for key, value in journal["requests"].items()
+                           if value == "outcome_unknown_may_have_been_sent"]
+                if len(unknown) != 1:
+                    raise ValueError("Journal has no single ambiguous pending request")
+                request_id = unknown[0]
+                journal_sha = journal["sha256"]
+            else:
+                report_path = f"data/reports/capital-bikeshare/operational-{attempt_id}-failure.json"
+                descriptor = attempt.get("report")
+                if not isinstance(descriptor, dict) or descriptor.get("path") != report_path:
+                    raise ValueError("Ledger does not link the canonical failure report")
+                report, digest, error = recovery._read_report(recovery.PROJECT_ROOT / report_path)
+                if error or digest != descriptor.get("sha256"):
+                    raise ValueError("Ledger-linked failure report is missing, invalid or has a different SHA-256")
+                issue = recovery._report_error(report, attempt, candidate_id, plan, linked=True)
+                if issue:
+                    raise ValueError(f"Ledger-linked failure report identity is invalid: {issue}")
+                partial = report.get("partial_evidence")
+                if not isinstance(partial, dict) or partial.get("pending_request_status") != "outcome_unknown_may_have_been_sent":
+                    raise ValueError("Failure report has no ambiguous pending request")
+                request_id = partial.get("pending_request_id")
+                if not isinstance(request_id, str):
+                    raise ValueError("Pending request ID is missing")
             match = re.fullmatch(rf"capital-op:{re.escape(attempt_id)}:(warmup|measured):([0-9]{{4}})", request_id)
             if not match or int(match.group(2)) >= plan["policy"]["warmup_requests" if match.group(1) == "warmup" else "measured_requests"]:
                 raise ValueError("Pending request ID is outside the frozen workload")
@@ -71,7 +84,7 @@ def inspect_pending_audit(candidate_id: str, attempt_id: str, database, *, ledge
                             "data_profile_id": identity["data_profile_id"], "target_contract_id": identity["target_contract_id"]}
                 observed = "identity_matches_unverified" if all(row.get(k) == v for k, v in expected.items()) else "identity_mismatch"
             return {"candidate_id": candidate_id, "attempt_id": attempt_id, "request_id": request_id,
-                    "report_sha256": digest, "observed_at_utc": datetime.now(timezone.utc).isoformat(),
+                    "report_sha256": digest, "request_journal_sha256": journal_sha, "observed_at_utc": datetime.now(timezone.utc).isoformat(),
                     "audit_observation": observed, "later_commit_possible": not bool(rows),
                     "decision": "inspection_only_no_retry_or_approval",
                     "limitations": ["A missing row may appear later; a matching row is not full input or prediction verification."]}

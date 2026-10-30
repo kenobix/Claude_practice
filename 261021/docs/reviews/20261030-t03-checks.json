@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "task": "T03",
+  "created_at_utc": "2026-10-30T03:47:06.990331+00:00",
+  "base_commit": "71cc7e7fa53a281a278a0568c06d204b603a3e76",
+  "policy_id": "capital-request-journal-v1",
+  "source_sha256": {
+    ".github/workflows/bike-mlops-contracts.yml": "29a568c21a41ef70b21aedb7f57b702cb8ac83479307c6f821063606b4a13216",
+    "261021/scripts/test_monitor_persistence_postgres.py": "298c67267b90b1ed8676e57ec383ee860c3a490dfa86f119697edf32627938fe",
+    "261021/src/bike_mlops/capital_benchmark_observer.py": "6e8dcae9a19591a4160b0479be1f2a8668991e084462621487a3c1d355f8c827",
+    "261021/src/bike_mlops/capital_deployment_evidence_publisher.py": "ab9b5613ccf7a38161798cda5a67f8dcf3109e62c94d5e07421a6fb88cb32396",
+    "261021/src/bike_mlops/capital_measurement_recheck.py": "5b491d592ac76adc6c32931f46276acc2972a389980f428659341e4f61a1071d",
+    "261021/src/bike_mlops/capital_measurement_runner.py": "db97b3d1b4eec1491ecac662feb085fcaa09e3dfcd90465510e760aaa6881925",
+    "261021/src/bike_mlops/capital_operational_ledger.py": "02d7d23cb5445d21bf447b0611e6d92685e0b3613e0034832eac87509969dbb0",
+    "261021/src/bike_mlops/capital_operational_plan.py": "f65c5695a2715f3a189b18570ad14abe1f802f223cd24cf506849a440647649c",
+    "261021/src/bike_mlops/capital_operational_recovery.py": "c6cbafc568cc8f9eafe337d9827432c0b89a1f89f4689dad59793f626044fe23",
+    "261021/src/bike_mlops/capital_operational_registry.py": "4fc7e399bf9340920391d88d121ef09cf2bd9f87ce658698b72644985ebaf150",
+    "261021/src/bike_mlops/capital_pending_audit.py": "988d312ed1a3b502177edfe8ce0b1f66d2398b03a040faffc806969e1e08c237",
+    "261021/src/bike_mlops/operational_benchmark.py": "0cb4e838eb023922c816cb6afc456efd54072cd3f77c90d24b8ad5fbe598ddcb",
+    "261021/tests/test_capital_deployment_evidence_publisher.py": "c1de50d5bb69df41fd079ebfd49f8e5d95f8ab971aa8315d77ccf403d1274ee4",
+    "261021/tests/test_capital_measurement_recheck.py": "1ba966e614e6bd760c7fdd40e3d385e0cd7353cea6a0c42888c7ff98fc4d5b94",
+    "261021/tests/test_capital_measurement_runner.py": "16c3cb6d0d19af843c6e8233050cc2bfd559e9011f3764761b393de182b83854",
+    "261021/tests/test_capital_operational_recovery.py": "4843d0d154bd2c26013d123ffb875c24e5b9fc445fae0d6501ffe546ed13d47a",
+    "261021/tests/test_capital_pending_audit.py": "b884e50a32ba94aea733be470f6112b22d992bfb433a70307f9d0545651ec6d7",
+    "261021/src/bike_mlops/capital_request_journal.py": "f8d203ad7ddeb296b677e77c57e28164ad76fe2951def6d4cde60eaacd5bd18f",
+    "261021/tests/test_capital_request_journal.py": "29664a40f50c5e66a49ec4805296308a32219baf6894f4f05bb5f2c93409c575",
+    "261021/scripts/test_capital_request_interruption_postgres.py": "fb4c6c2aeceea823c6357b8ff585850bb690a41820c9768e2f22aa02c6dda26e"
+  },
+  "logs": [
+    {
+      "path": "261021/data/reports/20261030-t03/71cc7e7-capital-first-v1.log",
+      "sha256": "c664beaf62f63ef6ac954c2a372da960e460c28036bed0c89d0569e1f4533113",
+      "bytes": 24998,
+      "suite_summaries": [],
+      "passed_suite": null,
+      "cleanup_complete": false,
+      "integration_status": "incomplete_suite_timeout_exit_124"
+    },
+    {
+      "path": "261021/data/reports/20261030-t03/71cc7e7-full-final-v3.log",
+      "sha256": "a78602e8ee6d2edc0833479d6df1284ec1ad45e2fb6a3df87a65ef866f880827",
+      "bytes": 50367,
+      "suite_summaries": [
+        [
+          "264",
+          "122.421"
+        ]
+      ],
+      "passed_suite": true,
+      "cleanup_complete": false
+    },
+    {
+      "path": "261021/data/reports/20261030-t03/71cc7e7-full-v2.log",
+      "sha256": "691f2f280ede11862a06a371c947b1c71c9975418ba58a54d544ca7a7e903f70",
+      "bytes": 49978,
+      "suite_summaries": [
+        [
+          "262",
+          "120.783"
+        ]
+      ],
+      "passed_suite": true,
+      "cleanup_complete": false
+    },
+    {
+      "path": "261021/data/reports/20261030-t03/71cc7e7-journal-timing-final-v4.log",
+      "sha256": "fb9fe06aa07ed4dbf3e3e2c14ed83c527ed62b2eafa50cfb2a616efb6e2060d7",
+      "bytes": 1682,
+      "suite_summaries": [
+        [
+          "8",
+          "6.180"
+        ]
+      ],
+      "passed_suite": true,
+      "cleanup_complete": false
+    },
+    {
+      "path": "261021/data/reports/20261030-t03/71cc7e7-monitor-postgres-v1.log",
+      "sha256": "8d5f8fdc9d453fbb706b8e1fd526a6bb35c5d8ebf058033591b7e2dfe4e5ddc9",
+      "bytes": 376,
+      "suite_summaries": [],
+      "passed_suite": null,
+      "cleanup_complete": true,
+      "integration_status": "passed"
+    },
+    {
+      "path": "261021/data/reports/20261030-t03/71cc7e7-postgres-http-final-v2.log",
+      "sha256": "efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb",
+      "bytes": 459,
+      "suite_summaries": [],
+      "passed_suite": null,
+      "cleanup_complete": true,
+      "integration_status": "passed"
+    },
+    {
+      "path": "261021/data/reports/20261030-t03/71cc7e7-postgres-http-v1.log",
+      "sha256": "efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb",
+      "bytes": 459,
+      "suite_summaries": [],
+      "passed_suite": null,
+      "cleanup_complete": true,
+      "integration_status": "passed"
+    }
+  ],
+  "checks": {
+    "local_full_before_last_timing_line": "264 tests, 122.421s, passed",
+    "final_timing_and_signal_tests": "8 tests, 6.180s, passed",
+    "real_http_postgres": "ReadTimeout, delayed commit, read-only observation, audit/snapshot connection loss, cleanup passed",
+    "configuration": "YAML parsed; 11 workflow bash blocks bash -n; 51 relative links checked; compileall/pip check/diff check passed",
+    "actionlint": "unavailable; not executed"
+  },
+  "limitations": [
+    "HTTP PostgreSQL fixture records synthetic predictions; not trained API/model or Caddy",
+    "No real Capital fit/evaluation/approval or UCI runtime/database/container changes",
+    "Local writer/recheck/publication verifies journal; existing remote 11-report bundle contains descriptor, not journal raw bytes",
+    "SIGKILL cannot emit a final failure report; started/unknown states are retained",
+    "No new operational overall-elapsed threshold; HTTPX timeout is per connect/read/write/pool, not a total deadline"
+  ],
+  "ci": {
+    "status": "pending_after_push"
+  }
+}

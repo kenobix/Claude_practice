@@ -48,10 +48,10 @@ def _project_file(path: Path, directory: str) -> tuple[Path, str]:
     return resolved, resolved.relative_to(root).as_posix()
 
 
-def _read_plan(path: Path) -> tuple[dict, str, str]:
+def _read_plan(path: Path, *, allow_legacy: bool = False) -> tuple[dict, str, str]:
     resolved, relative = _project_file(path, "data/evaluations/capital-bikeshare/operational-plans")
     plan, file_sha = _read_json_bytes(resolved, "operational plan")
-    validate_operational_plan(plan)
+    validate_operational_plan(plan, allow_legacy=allow_legacy)
     return plan, relative, file_sha
 
 

@@ -6,6 +6,8 @@
 
 専門用語は[初学者向け用語集](docs/glossary.md)、出典・targetの切替と隔離方法は[データプロファイル](docs/data-profiles.md)を参照してください。
 
+Capitalの運用測定を停止した場合は[中断・タイムアウトの確認手順](docs/measurement-interruption.md)を使います。要求ごとの永続記録から送信意図と応答確認を調べ、DBにまだ見えない要求を未送信と断定しません。
+
 2026-10-28の[初回差分監査](docs/reviews/20261028-review.md)では、UCIの保存済み予測・誤差・PSIを照合し、当時の旧Capital実験は最終評価で再学習したため同一artifactの証明にならないと確認しました。その後、同一artifactを評価する候補bundleと消費台帳、隔離計測を合成データで実装しました。旧実験の結果を後から新しい合格証拠へ変更していません。
 
 2026-10-30の[最新checkpoint差分監査](docs/reviews/20261030-checkpoint-review.md)では、前回監査以降の28コミットと最新221 tests/Docker/PostgreSQL CIを確認しました。同監査のP0に対し、報告書本体を束ねて照合する[配信証拠bundle](docs/capital-deployment-evidence.md)と決定schema 2を実装し、全241 testsが成功しました。監視・復旧等の実証がない候補はblockedを保ちます。実Capital候補の承認・通常配信は未実施です。優先度・難易度とSol/GPT-6 Lunaの担当推奨は[計画書11.6](../261014/plan_mlops.md#remaining-work-20261030)を参照してください。

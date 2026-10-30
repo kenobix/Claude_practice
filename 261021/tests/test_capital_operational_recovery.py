@@ -8,6 +8,7 @@ from unittest.mock import patch
 from bike_mlops import capital_operational_ledger as ledger
 from bike_mlops import capital_operational_recovery as recovery
 import test_capital_operational_ledger as ledger_tests
+from bike_mlops.capital_request_journal import RequestJournal
 
 
 class OperationalRecoveryInspectionTests(unittest.TestCase):
@@ -28,6 +29,15 @@ class OperationalRecoveryInspectionTests(unittest.TestCase):
         body = json.loads(original.read_text())
         if not failure:
             body["operational_gate"]["status"] = "not_evaluated"
+        if not failure:
+            journal = RequestJournal(self.fixture.report_dir / f"operational-{lease.attempt_id}.requests.jsonl", lease, self.fixture.plan)
+            try:
+                for payload in journal.schedule:
+                    journal.sending(payload)
+                    journal.outcome(payload, http_status=200, latency_ms=1.0, error=None)
+                body["request_journal"] = journal.descriptor()
+            finally:
+                journal.close()
         destination = self.fixture.report_dir / f"operational-{lease.attempt_id}{'-failure' if failure else ''}.json"
         destination.write_text(json.dumps(body))
         original.unlink()

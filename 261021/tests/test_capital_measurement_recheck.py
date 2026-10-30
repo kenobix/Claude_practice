@@ -13,6 +13,7 @@ from bike_mlops import operational_benchmark as benchmark
 from bike_mlops import capital_operational_recovery as recovery
 from bike_mlops import capital_operational_ledger as ledger
 import test_capital_operational_ledger as ledger_tests
+from bike_mlops.capital_request_journal import RequestJournal
 
 
 class MeasurementRecheckTests(unittest.TestCase):
@@ -125,6 +126,14 @@ class MeasurementRecheckTests(unittest.TestCase):
                 row["request_id"] = row["request_id"].replace(self.attempt_id, lease.attempt_id)
             report["operational_gate"]["observed"]["request_id_sha256"] = hashlib.sha256(
                 "\n".join(row["request_id"] for row in report["measurements"]).encode()).hexdigest()
+            journal = RequestJournal(self.fixture.report_dir / f"operational-{lease.attempt_id}.requests.jsonl", lease, self.plan)
+            try:
+                for payload, row in zip(journal.schedule, report["measurements"], strict=True):
+                    journal.sending(payload)
+                    journal.outcome(payload, http_status=200, latency_ms=row["latency_ms"], error=None)
+                report["request_journal"] = journal.descriptor()
+            finally:
+                journal.close()
             path = self.fixture.report_dir / f"operational-{lease.attempt_id}.json"
             path.write_text(json.dumps(report))
             lease.finish(status="completed", report_path=path)

@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from tests.capital_deployment_fixture import fixture
+from bike_mlops.capital_request_journal import RequestJournal
 from test_capital_deployment_decisions import FakeRegistry
 from bike_mlops import capital_deployment_evidence as evidence
 from bike_mlops.capital_deployment_decisions import record_operational_review, record_deployment_approval
@@ -67,6 +68,17 @@ class DeploymentEvidencePublisherTests(unittest.TestCase):
             ids_sha = hashlib.sha256("\n".join(row["request_id"] for row in report["measurements"]).encode()).hexdigest()
             report["operational_gate"]["observed"]["request_id_sha256"] = ids_sha
             report["audit"]["request_id_sha256"] = ids_sha
+            self.journal_path = self.final_path.parent / f"operational-{attempt.attempt_id}.requests.jsonl"
+            journal = RequestJournal(self.journal_path, attempt, plan)
+            try:
+                # Fixture preparation does not test disk durability; dedicated interruption tests do.
+                with patch("bike_mlops.capital_request_journal.os.fsync"):
+                    for payload, row in zip(journal.schedule, report["measurements"], strict=True):
+                        journal.sending(payload)
+                        journal.outcome(payload, http_status=200, latency_ms=row["latency_ms"], error=None)
+                report["request_journal"] = journal.descriptor()
+            finally:
+                journal.close()
             self.report_path = self.final_path.parent / f"operational-{attempt.attempt_id}.json"
             self.report_path.write_bytes(evidence.canonical_bytes(report))
             attempt.finish(status="completed", report_path=self.report_path)
@@ -103,6 +115,18 @@ class DeploymentEvidencePublisherTests(unittest.TestCase):
         record_deployment_approval(self.client, "2", "synthetic-approver", "fixture")
         require_deployment_eligible("capital-bikeshare", self.client.tags,
             model_name=evidence.MODEL, model_version="2", client=self.client)
+
+    def test_missing_or_torn_journal_is_rejected_before_upload(self):
+        original = self.journal_path.read_bytes()
+        for content in (None, original + b'{"event":'):
+            with self.subTest(missing=content is None):
+                if content is None: self.journal_path.unlink()
+                else: self.journal_path.write_bytes(content)
+                with patch.object(self.client, "log_artifact") as upload:
+                    with self.assertRaisesRegex(ValueError, "journal"):
+                        self.publish()
+                    upload.assert_not_called()
+                self.assertEqual(self.client.tags["deployment_permission"], "blocked")
 
     def test_changed_operational_report_is_rejected_before_upload(self):
         self.report_path.write_bytes(self.report_path.read_bytes()+b" ")

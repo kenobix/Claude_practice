@@ -394,8 +394,10 @@ def run_capital_operational_benchmark(
     error_counts = {"warmup": 0, "measured": 0}
     total = warmup_count + measured_count
     interrupted = False
+    interruption_requested = False
     execution_error = None
     pending = None
+    loop_started = time.perf_counter()
 
     def record_measurement(
         phase: str,
@@ -451,9 +453,13 @@ def run_capital_operational_benchmark(
             pending = (phase, phase_index, request_id, target_text, began)
             status_code = None
             response = None
+            latency_ms = None
             try:
-                status_code, response = request_fn(f"{base_url}/predict", payload)
-                latency_ms = (time.perf_counter() - began) * 1000.0
+                try:
+                    status_code, response = request_fn(f"{base_url}/predict", payload)
+                finally:
+                    # Freeze transport time before response/source checks or durable I/O.
+                    latency_ms = (time.perf_counter() - began) * 1000.0
                 error = _prediction_is_valid(
                     status_code,
                     response,
@@ -467,15 +473,17 @@ def run_capital_operational_benchmark(
                 if error is None and request_observer is not None:
                     request_observer.after_response(payload, response)
             except KeyboardInterrupt:
-                latency_ms = (time.perf_counter() - began) * 1000.0
                 error = "KeyboardInterrupt: request interrupted; benchmark is incomplete"
                 interrupted = True
+                interruption_requested = True
             except Exception as exception:  # Preserve every failed request; never retry.
-                latency_ms = (time.perf_counter() - began) * 1000.0
                 # A guard or client exception may contain connection details; the
                 # integrated measurement report records its type, not secrets.
                 error = (type(exception).__name__ if request_observer is not None
                          else f"{type(exception).__name__}: {exception}")
+            if request_observer is not None and hasattr(request_observer, "request_result"):
+                # A failed journal write propagates: do not issue the next HTTP call.
+                request_observer.request_result(payload, http_status=status_code, latency_ms=latency_ms, error=error)
             record_measurement(
                 phase, phase_index, request_id, target_text, status_code, latency_ms, response, error
             )
@@ -486,6 +494,7 @@ def run_capital_operational_benchmark(
                 break
     except KeyboardInterrupt:
         interrupted = True
+        interruption_requested = True
         if pending is not None:
             phase, phase_index, request_id, target_text, began = pending
             record_measurement(
@@ -494,13 +503,14 @@ def run_capital_operational_benchmark(
                 request_id,
                 target_text,
                 None,
-                (time.perf_counter() - began) * 1000.0,
+                latency_ms if latency_ms is not None else (time.perf_counter() - began) * 1000.0,
                 None,
                 "KeyboardInterrupt: request interrupted; benchmark is incomplete",
             )
     finally:
         if request_client is not None:
             request_client.close()
+    loop_elapsed_ms = (time.perf_counter() - loop_started) * 1000.0
 
     gate = assess_operational_measurement(
         warmup_requests=sum(item["phase"] == "warmup" for item in measurements),
@@ -527,6 +537,7 @@ def run_capital_operational_benchmark(
         resource_context = resource_fn()
     except KeyboardInterrupt:
         interrupted = True
+        interruption_requested = True
         gate["status"] = "failed"
         gate["checks"]["completed"] = False
         resource_context = {"status": "interrupted", "detail": "Resource capture interrupted"}
@@ -563,6 +574,11 @@ def run_capital_operational_benchmark(
         },
         "completed": not interrupted,
         "execution_error": execution_error,
+        "interruption_requested": interruption_requested,
+        "timing": {"request_loop_elapsed_ms": loop_elapsed_ms,
+                   "http_latency_scope": "request_callable_only_including_transport_json_decode",
+                   "loop_scope": "all_requests_including_observer_and_journal_excluding_resource_capture",
+                   "overall_elapsed_gate": "not_defined"},
         "operational_gate": gate,
         "measurements": measurements,
         "deployment_permission": {

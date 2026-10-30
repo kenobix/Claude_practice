@@ -73,6 +73,16 @@ jobs:
           set -o pipefail
           timeout --signal=TERM 300 python scripts/test_capital_snapshot_postgres.py 2>&1 \
             | tee data/reports/snapshot-postgres-ci.log
+      - name: Run disposable request interruption PostgreSQL test
+        if: >-
+          ${{ !cancelled() && steps.install-lock.outcome == 'success' &&
+          steps.install-project.outcome == 'success' && steps.pip-check.outcome == 'success' }}
+        env:
+          MLFLOW_DISABLE_AGENT_HINT: "1"
+        run: |
+          set -o pipefail
+          timeout --signal=TERM --kill-after=10 180 python scripts/test_capital_request_interruption_postgres.py 2>&1 \
+            | tee data/reports/request-interruption-postgres-ci.log
       - name: Upload synthetic system test log
         if: always()
         uses: actions/upload-artifact@v4
@@ -81,5 +91,6 @@ jobs:
           path: |
             261021/data/reports/synthetic-system-ci.log
             261021/data/reports/snapshot-postgres-ci.log
+            261021/data/reports/request-interruption-postgres-ci.log
           if-no-files-found: ignore
           retention-days: 14

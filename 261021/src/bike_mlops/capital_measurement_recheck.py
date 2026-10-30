@@ -18,7 +18,7 @@ from bike_mlops.capital_operational_plan import validate_operational_plan
 
 def recheck_measurement_records(plan: dict, report: dict, *, attempt_id: str, plan_file_sha256: str) -> dict:
     """Check exact workload/order and recompute the p95 from saved request rows."""
-    validate_operational_plan(plan)
+    validate_operational_plan(plan, allow_legacy=True)
     try:
         if str(uuid.UUID(attempt_id)) != attempt_id:
             raise ValueError
@@ -132,6 +132,7 @@ def recheck_linked_measurement(candidate_id: str, attempt_id: str, *, ledger_pat
             issue = recovery._report_error(report, attempt, candidate_id, plan, linked=True)
             if issue:
                 raise ValueError(f"Ledger-linked measurement report identity or outcome is invalid: {issue}")
+            recovery.verify_completed_journal(attempt, candidate_id, plan, report)
             result = recheck_measurement_records(plan, report, attempt_id=attempt_id,
                                                   plan_file_sha256=attempt["plan_file_sha256"])
             return {**result, "candidate_id": candidate_id, "attempt_id": attempt_id,

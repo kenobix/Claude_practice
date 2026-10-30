@@ -284,6 +284,8 @@ docker compose -f compose.yaml -f compose.capital.yaml -f compose.capital-stagin
 
 ### 手動の昇格
 
+Capital stagingの測定がtimeout・SIGTERM・SIGKILLで止まった場合は、再実行の前に[中断時のjournal・DB照合手順](measurement-interruption.md)を確認します。reportなしのstarted/interrupted attemptも要求別journalで調べられます。UCIのdeploy recoverとは別の手順です。
+
 新しい学習版を作り、validationゲート結果をMLflowで確認したあと、承認理由を付けて昇格します。
 
 ```bash

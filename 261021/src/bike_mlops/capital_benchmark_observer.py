@@ -12,7 +12,7 @@ from bike_mlops.operational_benchmark import MEASURED_REQUESTS, WARMUP_REQUESTS
 
 
 class CapitalBenchmarkObserver:
-    def __init__(self, attempt, snapshot, sources, *, pinned_identity: dict):
+    def __init__(self, attempt, snapshot, sources, *, pinned_identity: dict, journal=None):
         self.attempt = attempt
         self.snapshot = snapshot
         self.sources = sources
@@ -21,6 +21,7 @@ class CapitalBenchmarkObserver:
         self._ids: set[str] = set()
         self._pending = None
         self._marked = False
+        self.journal = journal
 
     def before_request(self, payload: dict) -> None:
         self.snapshot.assert_held()
@@ -32,6 +33,8 @@ class CapitalBenchmarkObserver:
             self.attempt.mark_requests_started()
             self._marked = True
         self.snapshot.assert_held()
+        if self.journal is not None:
+            self.journal.sending(payload)
         self._ids.add(request_id)
         self._pending = deepcopy(payload)
 
@@ -42,6 +45,11 @@ class CapitalBenchmarkObserver:
         self.sources.validate_response(payload["target_hour"], response)
         self.exchanges.append((deepcopy(payload), deepcopy(response)))
         self._pending = None
+
+    def request_result(self, payload: dict, *, http_status, latency_ms, error) -> None:
+        if self.journal is not None:
+            self.journal.outcome(payload, http_status=http_status, latency_ms=latency_ms,
+                                 error=None if error is None else "request_not_verified")
 
     def verify_audits(self) -> dict:
         self.snapshot.assert_held()
