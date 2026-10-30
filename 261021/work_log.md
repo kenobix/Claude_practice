@@ -2390,3 +2390,44 @@ gh api repos/kenobix/Claude_practice/actions/artifacts/12954508874/zip
 watchは50秒の監視期限で一度exit 124となった。CI試験のtimeoutではなく、後のwatchとrun/job metadata・artifact本文でsuccessを確定した。T05の合成受入とreviewは完了。次はT06状態表のSol設計、T03/T13の一過性失敗の原因追跡、既存T07/T08/T17等を優先度に沿って進める。実候補監視・T02実証producerはT11/T12やT06等の条件が揃ってから行う。今回の追加commitは計画/受入仕様/参照文書/証拠JSON/このログの記録のみで、検証済みsourceの変更はない。
 
 記録用commit前に、最終source 8ファイルとCI対象commitの一致、local/CI保存ファイル13件のSHA/bytes、ZIP内3件のSHA、資料の相対リンク47件、JSONと`git diff --check`を再確認して一致した。差分はT05記録の5ファイルだけ。ソース変更がないため全suiteを追加で繰り返さず、記録用commitをpushする。
+
+## 2026-10-30 T06 Sol設計・保存挙動probe
+
+### 選んだ次工程と開始状態
+
+開始commitは`f9e228dd427d4853a4146356b0c2de07e71682d9`。mainはorigin/mainと一致し、追跡差分はなかった。無関係な未追跡3パス（`260701/charts/`、`260701/logs/`、`260905/sets/bookkeeping-2kyu/images/assekiritono-flow.png`）は保持した。計画11.6、前回T05のlog/証拠、既存monitor保存実装とPostgreSQL script、CLI/DB接続処理、runbookを読み、T05の正常保存受入から続くT06の状態設計を進めた。T03/T13の一過性失敗の原因追跡はP1/D3/Solとして残し、根拠のない再試験や時刻/timeout緩和はしていない。
+
+### 固定した契約とLunaへの分割
+
+[monitor-reconciliation.md](docs/monitor-reconciliation.md)にpolicy `monitor-run-reconciliation-v1`、予定CLI `monitor-inspect --csv PATH --run-id UUID`、API/JSON、statusとexit、状態の優先順、23の将来受入caseを固定した。marker不在時はDB全件一致でもunconfirmed、未観測行は未送信と断定しない。CSV/JSON/markerの元bytes/hash/run identity、全窓のDB値、latest windowを比較し、読取前後のファイル交換/marker新規出現はchanged_during_inspectionにする。profile metadataは対象runのSELECT前に照合し、旧形式や対応外形式を自動補正しない。
+
+既存CLIの`_database()`はinitializeを呼び、既存Database.connectもmkdir/DB作成を行えるため照合には使わない。SQLiteの既存ファイルをmode=ro/query_only/read transactionで開き、PostgreSQLはrepeatable-read/read-only transactionを使う仕様にした。DB/report/markerの修復、再送、registry、採点は行わない。monitor_windowsにはモデル版/candidate/artifact列がないので、照合一致をモデル真正性や配信許可の証拠にはしない。`immutable=1`の説明はSQLite公式URI/WAL仕様を読み、単にWALを無視するという説明ではなく、lock/変更検出を省く不変DBの仮定が稼働中DBに合わないと整理した。
+
+T06aをP1/D2/Luna（ファイル検査・SQLite・CLI・合成test、Sol review待ちまで）、T06bをP1/D3/Sol（PostgreSQL snapshot/REAL/SQL NaN/遅延commit統合と全体review）に分割した。T06aではPostgreSQL URLは接続せずunsupported_input/exit 2にする。[Luna依頼書](docs/t06-luna-handoff.md)へ編集可能path、対象外、受入case、testコマンド、log、Solへ戻す条件を記録した。Luna実装はまだ行っていない。依頼書に載せた未実装testを実行済みにもしていない。
+
+### storage probeの実行と結果
+
+新しいopt-in script `scripts/test_monitor_reconciliation_storage.py`を追加した。既存のlocal Unix-socket Docker daemon・localにあるimageだけを使い、人工データの一時SQLiteと専用label/random loopback portの使い捨てPostgreSQLを作る。任意の環境DB URLや既存containerを使わず、所有labelを照合してから当該containerだけをstop/removeする。認証情報は実行中に乱数生成しstdout/stderrへ出さない。UPDATEはread-only拒否を確認する使い捨てfixture内だけで、将来の照合処理で更新SQLを送る仕様ではない。
+
+| log（data/reports/20261030-t06/） | 結果 |
+|---|---|
+| `f9e228d-storage-probe-v1.log` | exit 0、人工SQLite/PostgreSQLの保存型・欠落値・書込拒否・非変更・cleanup成功。SQLiteの拒否error codeも明示する小修正前。 |
+| `f9e228d-storage-probe-final-v2.log` | 最終scriptでexit 0、同じ検査に加えてSQLiteのSQLITE_READONLYを確認。cleanup_complete。 |
+| `f9e228d-probe-no-opt-in-v1.log` | 想定どおりexit 2、明示flagなしではprobeを開始しない。失敗ではない。 |
+
+同じDataFrameから保存した未評価MAE/RMSEはSQLiteでSQL NULL、PostgreSQLでSQL NaNだった。coverage 1/3はSQLiteで`0.3333333333333333`、PostgreSQL REALで`0.33333334`。PostgreSQLのlabel_coverage/mae/rmseは3列ともreal、各値をbinary32へ量子化した表現が一致し、JSON text内のpsi小数はbinary64を維持していた。素のbinary64完全一致では正常保存も不一致になることを確認したため、型別比較と「CSV空欄に対応するときだけSQL NaNを欠落として扱う」契約を固定した。0や有限値に対するDB NaN/NULLを同じ欠落として通さない。
+
+SQLiteのmode=ro/query_onlyとPostgreSQLのread-only transactionはいずれもUPDATEを拒否した。SQL行とSQLite report bytesは前後一致、存在しないSQLite DBとdirectoryは新設されず、所有PostgreSQL containerも削除された。これは保存挙動と読取制御のprobeであり、T06コマンドやS01〜S23の受入完了ではない。実Capital/HTTP監視・既存UCIの配信/DBを変更していない。
+
+主要コマンド（261021から、logは新規名へteeしpipefailでexitを保持）:
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 180 .venv/bin/python scripts/test_monitor_reconciliation_storage.py --run-disposable
+.venv/bin/python scripts/test_monitor_reconciliation_storage.py
+.venv/bin/python scripts/test_monitor_reconciliation_storage.py --help
+.venv/bin/python -m compileall -q scripts/test_monitor_reconciliation_storage.py
+```
+
+help/compileallはexit 0。`docker image inspect postgres:17.6-bookworm --format '{{.Id}}'`で既存image ID `sha256:f3bd19c606e442c3d7bdfa8002e03fe260a1023351e0ea4598032022b68dd6e3`を確認し、pullは行っていない。source/log/hashと実施/未実施範囲は[設計証拠JSON](docs/reviews/20261030-t06-design.json)へ保存した。production codeは変えていないため全suiteのlocal再実行は省き、このprobeと静的確認を設計の確認単位にする。共通運用に従い確認後に設計commitをpushし、CIの成否は実装受入と区別して追記する。
+
+設計commit前にsource 4ファイルのSHA、契約/依頼書2ファイルとlocal log 3件のSHA/bytes、相対リンク59件、23 case IDの連番、JSONを照合した。新しいscriptの全差分、local-only/所有label/cleanup、認証情報非出力、既存producer/CLIを変えていないことを確認した。新規8ファイル分の作業単位（既存4ファイルの更新と4ファイル追加）だけをstageし、無関係な未追跡3パスは含めない。

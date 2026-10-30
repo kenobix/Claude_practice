@@ -329,6 +329,8 @@ Capital stagingの測定がtimeout・SIGTERM・SIGKILLで止まった場合は�
 
 監視は実行ごとにIDを作り、既定のCSV/JSON名とDB窓IDを分けます。`--output`で既存ファイルを指定した場合は上書きせず停止します。正常にDBへ保存できた実行には、CSV・JSONのハッシュと実行IDを含む`*.complete.json`を追加します。ファイルとDBは別々に保存するため、途中停止して完了ファイルがない場合はDB保存の成否を決めつけず、JSONに記載された`database_window_id_prefix`で`monitor_windows.window_id`を調べてください。過去の記録を自動更新・削除しません。
 
+T06の[読取照合契約](monitor-reconciliation.md)はSolで設計済みです。`monitor-inspect`はまだ未実装なので、現時点で実行できるコマンドとして扱わないでください。今後はSQLite版T06aをLunaで実装し、PostgreSQL版T06bと全体reviewをSolで行います。使い捨てDBでは、監視のREAL列の丸めと、未評価誤差がSQLiteのNULL/PostgreSQLのNaNになる差を確認しました。この確認は照合コマンド自体の完成や実監視の復旧を意味しません。markerの再作成や既存DB/reportの修正は行わず原本を保持します。
+
 Capital監視は[学習参照とPSI v2](training-monitor-reference.md)の手順を使います。`--psi-version psi-v2-constant-bins`と、同じ登録候補の学習参照artifactが必要です。UCIは従来の呼出しとPSIを維持します。
 
 CSVとDBに窓ごとの予測数、到着ラベル数、到着率、MAE/RMSE、固定ビンPSIを保存します。ラベル到着前は誤差を0扱いせず分母から外します。PSIと誤差悪化は別々に読み、通知は調査開始にだけ使います。

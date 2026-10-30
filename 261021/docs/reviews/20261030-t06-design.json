@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-30T05:55:32.927737+00:00",
+  "base_commit": "f9e228dd427d4853a4146356b0c2de07e71682d9",
+  "task": "T06 Sol design and storage assumption verification",
+  "policy_id": "monitor-run-reconciliation-v1",
+  "design_status": "frozen",
+  "inspector_implementation_status": "not_implemented",
+  "phases": {
+    "T06a": {
+      "owner": "Luna implementation, Sol review",
+      "backend": "SQLite",
+      "difficulty": "D2",
+      "status": "ready_for_implementation"
+    },
+    "T06b": {
+      "owner": "Sol",
+      "backend": "PostgreSQL and full integration",
+      "difficulty": "D3",
+      "status": "pending_T06a"
+    }
+  },
+  "acceptance_case_ids": [
+    "S01",
+    "S02",
+    "S03",
+    "S04",
+    "S05",
+    "S06",
+    "S07",
+    "S08",
+    "S09",
+    "S10",
+    "S11",
+    "S12",
+    "S13",
+    "S14",
+    "S15",
+    "S16",
+    "S17",
+    "S18",
+    "S19",
+    "S20",
+    "S21",
+    "S22",
+    "S23"
+  ],
+  "acceptance_cases_executed": false,
+  "storage_probe": {
+    "status": "passed",
+    "scope": "T06 storage assumptions only, synthetic data",
+    "sqlite": {
+      "numeric_storage": "binary64",
+      "blank_mae_database_value": null,
+      "coverage": 0.3333333333333333,
+      "write_rejected": true,
+      "missing_database_not_created": true,
+      "logical_rows_and_reports_unchanged": true
+    },
+    "postgres": {
+      "image_id": "sha256:f3bd19c606e442c3d7bdfa8002e03fe260a1023351e0ea4598032022b68dd6e3",
+      "column_types": [
+        {
+          "column_name": "label_coverage",
+          "data_type": "real"
+        },
+        {
+          "column_name": "mae",
+          "data_type": "real"
+        },
+        {
+          "column_name": "rmse",
+          "data_type": "real"
+        }
+      ],
+      "numeric_storage": "binary32",
+      "blank_mae_database_value": "SQL_NaN",
+      "source_coverage": 0.3333333333333333,
+      "database_coverage": 0.33333334,
+      "binary32_quantization_matches": true,
+      "json_numbers_preserve_binary64": true,
+      "write_rejected": true,
+      "logical_rows_unchanged": true,
+      "cleanup_complete": true
+    }
+  },
+  "probe_checks": [
+    "SQLite mode=ro/query_only rejects UPDATE with SQLITE_READONLY",
+    "missing SQLite database/directory not created",
+    "SQLite SQL NULL versus PostgreSQL SQL NaN from the same DataFrame blank",
+    "PostgreSQL REAL binary32 value normalization, JSON text binary64 preservation",
+    "PostgreSQL repeatable-read/read-only transaction rejects UPDATE",
+    "logical rows unchanged after rejected writes",
+    "SQLite report bytes unchanged by the read probe",
+    "owned container stopped and removed"
+  ],
+  "source_files": {
+    "261021/scripts/test_monitor_reconciliation_storage.py": "95b173cca456d0a30a36f47d0d118820e7918efa8c00728fd029d4549d53a0d7",
+    "261021/scripts/test_monitor_persistence_postgres.py": "298c67267b90b1ed8676e57ec383ee860c3a490dfa86f119697edf32627938fe",
+    "261021/src/bike_mlops/db.py": "0be31f1560243b0201447c4f5caca63438eee42ab7358b7e901edae7f8f83536",
+    "261021/src/bike_mlops/monitor_persistence.py": "5344ca87c732c0c6c1807e7b021205990d8a3b7fb8086adf3db576e3a17c150e"
+  },
+  "frozen_design_files": [
+    {
+      "path": "261021/docs/monitor-reconciliation.md",
+      "sha256": "a570898d4288fe53dc5be2f0d561fde5e5eb7f0ea7a38f647938b48a74c2c17e",
+      "bytes": 20243
+    },
+    {
+      "path": "261021/docs/t06-luna-handoff.md",
+      "sha256": "6376b4102074eb1df9d2d0b09f73533e1dfd1c0569f00eec358e3dc69e411133",
+      "bytes": 6064
+    }
+  ],
+  "logs": [
+    {
+      "path": "261021/data/reports/20261030-t06/f9e228d-probe-no-opt-in-v1.log",
+      "sha256": "86f502f7415bf14cfdbade95d2b9b717a9e4954c95f57d98438d2b2d656eda47",
+      "bytes": 168,
+      "exit_code": 2,
+      "interpretation": "expected explicit-opt-in rejection"
+    },
+    {
+      "path": "261021/data/reports/20261030-t06/f9e228d-storage-probe-final-v2.log",
+      "sha256": "da386e7db089e6b952b91b7bcaf35e9811e381437a9520c892a3fc0c878ce703",
+      "bytes": 1044,
+      "exit_code": 0,
+      "interpretation": "storage assumptions passed"
+    },
+    {
+      "path": "261021/data/reports/20261030-t06/f9e228d-storage-probe-v1.log",
+      "sha256": "da386e7db089e6b952b91b7bcaf35e9811e381437a9520c892a3fc0c878ce703",
+      "bytes": 1044,
+      "exit_code": 0,
+      "interpretation": "storage assumptions passed"
+    }
+  ],
+  "additional_checks": {
+    "compileall": "passed",
+    "help": "exit 0",
+    "no_opt_in": "expected exit 2"
+  },
+  "primary_references": [
+    "https://www.sqlite.org/uri.html#uriimmutable",
+    "https://www.sqlite.org/wal.html#read_only_databases"
+  ],
+  "not_verified": [
+    "T06 inspector/CLI implementation",
+    "S01-S23 inspector acceptance",
+    "PostgreSQL inspector snapshot and delayed commit integration",
+    "legacy/partial/corrupt run classification by a production command",
+    "real Capital monitoring or deployment readiness"
+  ],
+  "live_runtime_changed": false,
+  "ci": {
+    "status": "pending"
+  }
+}
