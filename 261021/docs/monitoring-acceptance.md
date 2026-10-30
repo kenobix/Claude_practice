@@ -57,4 +57,4 @@ validation MAE未設定のcandidateも、出典・hash・保存済み予測の�
 
 これらは閾値式を複製する単体testではなく、登録済み参照の取得、CLIの時刻・ID照合、window scoring、CSV/JSON/SQLite保存を通す合成シナリオである。ラベル停止と遅延の2caseだけはCLIが採点へ渡す1月18日の24ラベルのavailability timestampを意図的にずらして作り、通常caseは本物の+3時間処理を通す。既存予測のlag出典となる過去のラベルは遅らせず、特徴量の利用可能性と矛盾させない。これは実ラベルfeedの障害注入ではない。重複はsource loaderの契約どおり拒否する。sourceを変えたcaseでも元の学習行hash・学習特徴量hashは変わらないことを確認し、後の分布をtraining referenceへ混入させない。
 
-2026-10-30のSol review後、対象26件は13.348秒、全277件は127.327秒でlocal成功。[証拠JSON](reviews/20261030-t05-checks.json)と[作業ログ](../work_log.md)に全試行を記録した。既存T03のSIGTERM待ちとT13相当の時刻検証の一度ずつの失敗は原因未特定として残す。合成結果を実データの品質・配信可否・運用SLOの証明へ転用しない。
+2026-10-30のSol review後、対象26件は13.348秒、全277件は127.327秒でlocal成功。[CI 41005083367](https://github.com/kenobix/Claude_practice/actions/runs/41005083367)でも全277件35.217秒、隔離Docker/両PostgreSQL/cleanup成功。[証拠JSON](reviews/20261030-t05-checks.json)と[作業ログ](../work_log.md)に全試行を記録した。既存T03のSIGTERM待ちとT13相当の時刻検証の一度ずつの失敗は原因未特定として残す。合成結果を実データの品質・配信可否・運用SLOの証明へ転用しない。

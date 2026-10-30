@@ -2359,3 +2359,34 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 90 .venv/bin/p
 最終全suite（`2d6de34-full-final-v4.log`）は全277件127.327秒で成功した。既存T03/T13の2件の非決定的な失敗はT05修正に混ぜず、原因を特定するP1/D3/Solの残課題として計画書へ残す。待ち時間・時刻検証の緩和や失敗ログの削除はしていない。T05の合成受入は完了とし、post-push CIはこの後の記録へ追記する。実Capital fit/評価・実registry/HTTP監視・既存UCIの配信変更は行っていない。
 
 commit前に変更資料の相対リンク47件、最終source 8ファイルのSHA、local log/JSON 9件のSHAとbytes、`git diff --check`を照合し成功した。差分全体を読み、T05の7ファイルだけを明示stageする。GitHub連携のrun一覧取得はPR起点に限られるため、push CI追跡は接続確認済みの`gh`を使う。
+
+T05の7ファイルを`2365d8ea575f8c4d4d3272fdf98179fe8f6cac98`（Add reviewed CLI acceptance coverage for Capital monitoring）としてcommitし、`origin/main`へpushした。push後の追跡差分はなく、無関係な未追跡3パスは保持している。最終sourceとCI証拠の結合を確認してから記録用commitを追加する。
+
+### T05最終CI・artifact照合
+
+コードcommit `2365d8ea575f8c4d4d3272fdf98179fe8f6cac98`の[CI 41005083367](https://github.com/kenobix/Claude_practice/actions/runs/41005083367)はtests/synthetic-systemの両jobと全stepがsuccess。CI unit job `123898047266`のraw logから**全277 testsが35.217秒で成功**、T05の10シナリオ+2境界の12 test methodが全てokであることを確認した。pip check/compileallも成功した。[Pages 41005082804](https://github.com/kenobix/Claude_practice/actions/runs/41005082804)もsuccess。新しいテスト・CIで、先の2件の失敗の原因まで解消したとは扱わない。
+
+run/job metadataとraw unit logを`data/reports/20261030-t05/`へ保存した。raw unit logは`2365d8e-ci-unit-job-123898047266.log`、121,032 bytes、SHA `5b1228e95f35cc18315c03538d4649dbe04a533daec869c6a43887ead53ec03e`。表示用にANSIを除いて件数を検索したが、raw fileは変更していない。証拠JSONのsource 8ファイルはCI対象commitのGit blobと現在のファイルの両方でSHA一致を確認した。
+
+artifact `12954508874`を`2365d8e-ci-artifact-12954508874.zip`へ取得した。2,281 bytes、SHA `0aca6e638a4b61cfd82bd224a320127b0f53b7278ceb3339252546021d6f9cdf`でGitHub digestと一致、ZIP integrityも成功。本文は次の結果を示していた。
+
+- snapshot PostgreSQLは9項目成功、container停止・削除完了。request interruption PostgreSQLは実HTTP ReadTimeout・未commit不在・遅延commit・照会の非変更・監査/観測接続断の6項目成功、cleanup_complete。
+- synthetic-systemはcandidate `29973bb1b9869691757e0688692e706f90eeb698c46b23b06463e5fa6fc54dcc`、人工版1、744観測、offline/API差0、同一ID再送と異入力409、通常/diagnostic runtime拒否を確認。attempt `ccdf9685-06e9-456d-b92c-5d667ccade6f`は1,050要求/監査行、p95 `33.86647399997855 ms`、numeric recheck matched、証拠記録・競合拒否・冪等再記録を通過。operational gateはnot_evaluated、配信blockedを維持し、cleanup_complete。人工データの既存system経路の回帰であり、T05の実Capital/HTTP監視や実候補の性能測定ではない。
+- ZIP内SHA: `synthetic-system-ci.log` = `0d4d7be489a2c99c58d4e8ab3e92cc1759c925917d31533a97db511df906cded`、`snapshot-postgres-ci.log` = `88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9`、`request-interruption-postgres-ci.log` = `efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb`。
+
+追加の主要コマンド（repo root、実施済み証拠の記録。再取得時には新しい保存名を使う）:
+
+```bash
+git commit -m "Add reviewed CLI acceptance coverage for Capital monitoring"
+git push origin main
+gh run list --repo kenobix/Claude_practice --branch main --commit 2365d8ea575f8c4d4d3272fdf98179fe8f6cac98 --limit 5 --json databaseId,headSha,status,conclusion,workflowName,url
+timeout --signal=TERM 50 gh run watch 41005083367 --repo kenobix/Claude_practice --exit-status --interval 10
+gh run view 41005083367 --repo kenobix/Claude_practice --json headSha,status,conclusion,jobs,url
+gh api --allow-escape-sequences repos/kenobix/Claude_practice/actions/jobs/123898047266/logs
+gh api repos/kenobix/Claude_practice/actions/runs/41005083367/artifacts
+gh api repos/kenobix/Claude_practice/actions/artifacts/12954508874/zip
+```
+
+watchは50秒の監視期限で一度exit 124となった。CI試験のtimeoutではなく、後のwatchとrun/job metadata・artifact本文でsuccessを確定した。T05の合成受入とreviewは完了。次はT06状態表のSol設計、T03/T13の一過性失敗の原因追跡、既存T07/T08/T17等を優先度に沿って進める。実候補監視・T02実証producerはT11/T12やT06等の条件が揃ってから行う。今回の追加commitは計画/受入仕様/参照文書/証拠JSON/このログの記録のみで、検証済みsourceの変更はない。
+
+記録用commit前に、最終source 8ファイルとCI対象commitの一致、local/CI保存ファイル13件のSHA/bytes、ZIP内3件のSHA、資料の相対リンク47件、JSONと`git diff --check`を再確認して一致した。差分はT05記録の5ファイルだけ。ソース変更がないため全suiteを追加で繰り返さず、記録用commitをpushする。

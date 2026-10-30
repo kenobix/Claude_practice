@@ -158,7 +158,88 @@
   ],
   "live_runtime_changed": false,
   "ci": {
-    "status": "pending"
+    "verified_at_utc": "2026-10-30T04:59:58.357133+00:00",
+    "head_sha": "2365d8ea575f8c4d4d3272fdf98179fe8f6cac98",
+    "run_id": 41005083367,
+    "url": "https://github.com/kenobix/Claude_practice/actions/runs/41005083367",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "synthetic-system",
+        "databaseId": 123898046780,
+        "conclusion": "success"
+      },
+      {
+        "name": "tests",
+        "databaseId": 123898047266,
+        "conclusion": "success"
+      }
+    ],
+    "unit_tests": 277,
+    "unit_seconds": 35.217,
+    "T05_scenarios_and_boundaries_passed": 12,
+    "unit_log": {
+      "path": "261021/data/reports/20261030-t05/2365d8e-ci-unit-job-123898047266.log",
+      "sha256": "5b1228e95f35cc18315c03538d4649dbe04a533daec869c6a43887ead53ec03e",
+      "bytes": 121032
+    },
+    "run_metadata": {
+      "path": "261021/data/reports/20261030-t05/2365d8e-ci-run.json",
+      "sha256": "89da2f2054ea28dc5d6a271cb2f12baca788971975f83c1c3a54687cfe1e6490",
+      "bytes": 4888
+    },
+    "artifact_metadata": {
+      "path": "261021/data/reports/20261030-t05/2365d8e-ci-artifacts.json",
+      "sha256": "e13ff9caa8c7bc95afeedbfa47205f75b8d0027aea94e11f0b62adf936ae2b1c",
+      "bytes": 738
+    },
+    "artifact_id": 12954508874,
+    "artifact": {
+      "path": "261021/data/reports/20261030-t05/2365d8e-ci-artifact-12954508874.zip",
+      "sha256": "0aca6e638a4b61cfd82bd224a320127b0f53b7278ceb3339252546021d6f9cdf",
+      "bytes": 2281
+    },
+    "artifact_digest_matches_github": true,
+    "zip_integrity": "passed",
+    "artifact_members": {
+      "snapshot-postgres-ci.log": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9",
+      "request-interruption-postgres-ci.log": "efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb",
+      "synthetic-system-ci.log": "0d4d7be489a2c99c58d4e8ab3e92cc1759c925917d31533a97db511df906cded"
+    },
+    "synthetic_summary": {
+      "status": "synthetic_system_passed",
+      "data": "synthetic_only",
+      "candidate_id": "29973bb1b9869691757e0688692e706f90eeb698c46b23b06463e5fa6fc54dcc",
+      "model_version": "1",
+      "candidate_registration": "blocked_and_idempotent",
+      "staging_rows_seeded_and_verified": 744,
+      "api_ready": "ready",
+      "offline_api_parity_absolute_delta": 0.0,
+      "api_idempotent_retry": "passed",
+      "api_changed_input_conflict": 409,
+      "api_audit_rows": 1,
+      "runtime_init_rejections": [
+        "normal",
+        "diagnostic"
+      ],
+      "measurement_attempt": "ccdf9685-06e9-456d-b92c-5d667ccade6f",
+      "requests": 1050,
+      "audited_rows": 1050,
+      "measurement_status": "passed",
+      "p95_ms": 33.86647399997855,
+      "numeric_recheck": "matched",
+      "exact_version_evidence_tags": "recorded_and_idempotent",
+      "conflicting_evidence_rejected_without_unblocking": true,
+      "operational_gate": "not_evaluated",
+      "deployment_permission": "blocked",
+      "resource_context": "captured_before_and_after"
+    },
+    "cleanup_complete": true,
+    "postgres_snapshot_checks": 9,
+    "postgres_interruption_checks": 6,
+    "pages_run_id": 41005082804,
+    "pages_conclusion": "success"
   },
   "static_checks": {
     "local_links": 47,

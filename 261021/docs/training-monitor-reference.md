@@ -88,4 +88,4 @@ Capital用DB接続を事前に設定する。`scripts/bikectl`のprofile別port�
 
 T05では、時点ごとの期待窓・母数・警告・検知時刻を先に固定し、分布のみ/誤差のみ/両方、ラベル遅延/停止/重複、欠測増加をCLIまで通す。今回の部分ケースだけで、T02のmonitoring 6項目すべてをpassedにしない。T06のDB/file読取照合、実候補とHTTP MLflowでの監視、実証producerは未完了。
 
-T05の具体的な受入期待値とSol reviewの判断は[Capital監視の合成受入基準](monitoring-acceptance.md)を参照。fake registryと一時SQLiteを通る10ケースと2境界を追加し、対象26件13.348秒、全277件127.327秒がlocalで成功した。保存したCSV/JSON/markerとDB全窓の値・hashも照合した。[全試行の証拠](reviews/20261030-t05-checks.json)には既存T03/T13の一度ずつの失敗も残し、原因を残課題として扱う。これはCLIの合成経路の受入であり、実MLflow/Capital候補の監視証拠ではない。
+T05の具体的な受入期待値とSol reviewの判断は[Capital監視の合成受入基準](monitoring-acceptance.md)を参照。fake registryと一時SQLiteを通る10ケースと2境界を追加し、対象26件13.348秒、全277件127.327秒がlocalで成功した。保存したCSV/JSON/markerとDB全窓の値・hashも照合した。[CI 41005083367](https://github.com/kenobix/Claude_practice/actions/runs/41005083367)でも全277件35.217秒と隔離Docker/両PostgreSQL/cleanupが成功した。[全試行の証拠](reviews/20261030-t05-checks.json)には既存T03/T13の一度ずつの失敗も残し、原因を残課題として扱う。これはCLIの合成経路の受入であり、実MLflow/Capital候補の監視証拠ではない。
