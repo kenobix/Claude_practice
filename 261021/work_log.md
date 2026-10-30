@@ -2447,3 +2447,81 @@ CI追跡では`timeout --signal=TERM 50 gh run watch 41011570113 --repo kenobix/
 今回の節目はT06設計と保存挙動の確認。次は[Luna依頼書](docs/t06-luna-handoff.md)に従ってT06aを実装し、Solへreviewを戻す。T06b、T03/T13追加追跡、実候補/監視証拠等は未完了のまま。最後に証拠JSONとこのログだけを記録用commitへ含め、固定契約/probe/production codeを変更せずpushする。
 
 記録用commit前に、source 4ファイル、契約/依頼書とlocal/CI保存ファイル計10件のSHA/bytes、ZIP内3件のSHA、資料と今回T06ログ節の相対リンク63件、JSON、diff checkを再確認して一致した。固定文書/probe/production codeに追加差分はなく、証拠JSONとwork_logの2ファイルだけを記録用commitへ含める。
+
+#### T06a 実装と合成受入（2026-10-30）
+
+開始点はSol設計記録後の12debff2f4572529fcbfb8bb527720b2dc8a21c7。開始時tracked worktreeはcleanで、無関係な未追跡3 path（260701/charts/、260701/logs/、260905/sets/bookkeeping-2kyu/images/assekiritono-flow.png）は保持した。固定policy monitor-run-reconciliation-v1、仕様、Luna handoffを読んでから許可範囲内だけを編集した。
+
+新規src/bike_mlops/monitor_inspection.pyに限定SQLite read-only inspectorを追加し、cli.pyには独立したmonitor-inspect --csv PATH --run-id UUID command/handlerだけを追加した。mode=ro、query_only、明示read transactionを使い、既存Database.initialize()/connect()およびCLI _database()は呼ばない。CSV/JSON/markerはsymlink/FIFOを拒否して上限付きで読み、固定pathのhashとdevice/inode/size/mtimeをDB照会の前後に比較する。UUID/prefixによる対象行照会、profile確認、CSV/report/marker/最新窓/DB全窓照合を行い、不一致表示は50件・各値512文字に制限した。CSV dictはast.literal_eval、JSONは既存strict_jsonで検査する。PostgreSQL URLは接続せずunsupported_input/2。再送・採点・修復・marker生成・DB/report更新・MLflow操作は追加していない。monitor_persistence.py、db.py、schema、依存、workflow、実DB/reportには変更なし。
+
+新規tests/test_monitor_inspection.pyは最終33 test methodsで、complete match、marker不在とDB全件/0件、CSV-only/JSON-only、database-only/not-observed、markerに必要fileなし、identity/hash不一致、DB欠落/余分/値/時刻違い、profile/target違い時に対象run SELECTなし、duplicate/非有限/legacy CSV、重複JSON key、metadataなし、DB不在でpath不作成、読取中変更、symlink/FIFO/上限/未知列、別UUID/legacy行保全、SQL NULLと空欄、read-only書込拒否、呼出式非実行/秘密文字列非表示、PostgreSQL未接続、CLI終了値/既存monitor parserを確認した。SQL traceもSELECT/PRAGMA/BEGIN/ROLLBACKだけであることを確認した。合成fixtureはTemporaryDirectory内、DB作成はsetup時だけ既存writerを使用。正常ケースでinspection前後のreport bytesとDB rowsが不変であることも確認した。
+
+##### 実行コマンドと結果
+
+各testの全stdout/stderrと終了値をdata/reports/20261030-t06a/に保存し、失敗と修正版のlogを上書きせず保持した。
+
+成功した最終targetコマンドは次のとおり。ログはtee data/reports/20261030-t06a/t06a-review-final-v6.logへ同時保存し、PIPESTATUS[0]を終了値として記録した。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 120 \
+  .venv/bin/python -m unittest discover -s tests -p test_monitor_inspection.py -v
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 90 \
+  .venv/bin/python -m unittest discover -s tests -p test_monitor_persistence.py -v
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 90 \
+  .venv/bin/python -m unittest discover -s tests -p test_monitoring_window.py -v
+MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 120 \
+  .venv/bin/python -m unittest discover -s tests -p test_training_monitor_reference.py -v
+.venv/bin/python -m compileall -q src tests
+git diff --check
+```
+
+| ログ | コマンド/内容 | 結果 | SHA-256 |
+|---|---|---|---|
+| t06a-target-v1.log | MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 120 .venv/bin/python -m unittest discover -s tests -p test_monitor_inspection.py -v | 20件中4失敗。markerなし・DB 0件の期待値、markerあり部分fileの期待値test、DB不在のURL条件の誤りを発見 | e212f74884bccefcf5364a17865829c7da558c080b69ef507212a4a32c33afbf |
+| t06a-target-v2.log | 同じtarget test | 20件成功。状態優先順を修正 | 39b1d348b7e8c50364cf889083260a896c4b25ddc511543387928d129539e24c |
+| t06a-target-v3.log | 同じtarget test | 25件成功。identity、file race、NULL等を追加 | b6e9a87d22d457f296c05ad4275de13116e4d46e46c83743f435a61980d6dbcc |
+| t06a-target-final.log | 最終コードのtarget test | 25件成功、exit 0 | 1caf08d9f914b36c7ae29c15c5ac35bde63d512865be3444ec0d952a3f4fd80f |
+| t06a-review-final-v2.log | model binding/CLI exit 2/file-only latest比較を含む最終target test | 26件成功、exit 0 | 証拠JSONを参照 |
+| t06a-review-final-v3.log | S04/S07/S09/S10/S11/S15/S16とSQL traceを追加したtarget test | 33件中1失敗。unknown columns testでUUID列を消したため仕様どおりunsupportedでなくlegacy_unverifiableとなった。期待入力をUUID列ありの未知列へ修正 | cb4e69fa813b9b4702c36138559f5980a6ffc8f87577a992063e90da6ed7b6f8 |
+| t06a-review-final-v4.log | 修正後target test | 33件成功、exit 0 | 証拠JSONを参照 |
+| t06a-review-final-v5.log | model binding/DB observed profile/file hash checkを含む最終コードの再検証 | 33件成功、exit 0 | 2c334a5287efe040aa336a0efabbfbb399f81c9f3a3d0d87cbab40c2711de9bd |
+| t06a-review-final-v6.log | 文書のcoverage caveatとDB observed profileを含む最終コード | 33件成功、exit 0 | 068d5543b31b6ec817930bda765cced7a816a535ae21ec19a2c8292c683cdffa |
+| t06a-monitor-persistence.log | test_monitor_persistence.py | 7件成功、exit 0 | e150d2db9e65427322aa40b866e36d10ab4527d538d49e986da70e1052080376 |
+| t06a-monitoring-window.log | test_monitoring_window.py | 6件成功、exit 0 | c001f6ef93c7daaf2f42a3ddd909bb950e3785bfeae29ee50158b3a92546fbdf |
+| t06a-training-monitor-reference.log | test_training_monitor_reference.py | 26件成功、exit 0 | 97303c90196b63d13368f131bc1a94c73555d2106bacaa63efad571a44d0e1fc |
+| t06a-compileall.log | .venv/bin/python -m compileall -q src tests | 成功、exit 0 | de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab |
+| t06a-diff-check.log | git diff --check | 成功、exit 0 | de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab |
+| t06a-review-compileall-v4.log / t06a-review-diff-check-v4.log | 最終変更後compileallとdiff check | 両方成功、exit 0 | 両方de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab |
+| t06a-review-compileall-v5.log / t06a-review-diff-check-v5.log | 最終変更後compileallとdiff check | 両方成功、exit 0 | 両方de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab |
+| t06a-review-diff-check-final.log | 作業ログ追記後のgit diff --check | 成功、exit 0 | de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab |
+| t06a-evidence-summary-check.log | 検証JSONのtest/log/未実施範囲を再読込 | 成功、exit 0 | ac1828e33c803c30e4ec1af676e407acad2ffee116fd369c93a4d4524f16719f |
+| t06a-diff-check-last.log | 最終作業ログ更新後のgit diff --check | 成功、exit 0 | 証拠JSONを参照 |
+
+計画したSQLite/CLIの合成受入は進めたが、test数は仕様case数と同じ意味ではない。PostgreSQL S18/S19/S21・実DB接続、全suite、CIは未実施。前回の保存型probeは設計根拠であり、今回実装のPostgreSQL対応根拠としていない。実Capital/HTTP監視と配信判定も行っていない。T06全体は未完了で、状態はT06a実装済み・Sol review待ち。
+
+docs/monitor-reconciliation.mdは仕様本文を変えず、実装状況と使い方だけを追記した。README/runbook/261014/plan_mlops.mdのT06状態も更新。差分はSol reviewまで未commit/pushとする。検証JSONはdocs/reviews/20261030-t06a-checks.json。
+
+証拠JSONを最後に要約する読み取り専用確認scriptは、最初に記録項目名をpathと誤認してKeyErrorで終了した（JSON内容や実装試験の失敗ではない）。項目名logへ合わせて再実行し、test件数、失敗を保持した2ログ、未実施範囲を確認した。成功ログはt06a-evidence-summary-check.log。
+
+### T06a Sol review・修正と受入（2026-10-30）
+
+基点12debff2f4572529fcbfb8bb527720b2dc8a21c7の未commit差分9ファイルをレビューした。AGENTS.md、Luna handoff、固定契約、writer/DB/CLI、33 tests、初回失敗logと検証JSONを照合した。無関係な未追跡3 pathは保持した。編集範囲はT06aのままで、既存writer/schema/DB初期化/T03/T13/依存/workflowと実DB/reportを変更していない。
+
+| 指摘 | 影響と修正 |
+|---|---|
+| P1: period末尾の全時計を確認していない | end_exclusiveを1時間延ばしてもmatchedになった。期間の時間数とCSV行数・全時計を照合した。 |
+| P1: boolと数値の同値比較 | DB JSONのfalseと欠測率0、latest_windowのfalseとMAE 0がmatchedになった。型検査と再帰比較でboolを数値から区別した。 |
+| P1: 最後の再読取中のinode交換 | 同内容・同mtimeの別inodeを最後のopen直前へ置いてもmatchedになった。lstat/openのfstat/再読取後lstatを元identityと比較し、changed descriptorへ記録した。 |
+| P2: 判定の優先順 | legacy形式がDB profile違い・DB不在を隠し、latest不一致よりDB不在が先になった。独立したfile検査とDB metadata/access検査を集め、固定優先順で結果を選ぶ。profileを同一read transaction内で先に検証し、partial/legacyの場合は対象行を読まずに診断する。 |
+| P2: サイズ/形式/数値型 | field上限超過をinvalid、window_hours欠落をinvalidにしていた。固定仕様どおりunsupportedへ修正。SQLite数値列の宣言型、最新窓の不正型、marker schema/statusも検査する。 |
+| P2: 証拠記録 | 初回20件4失敗のlogをexit nullなのにsuccessfulと記述していた。raw logを保存したままterminal結果と埋込exitの有無を区別して訂正。失敗したreview-final-v3のhashが成功した26件の別logを指していたため、上表を実hash cb4e69...へ訂正。monitoring-window hashの転記も訂正した。 |
+
+修正前に10件の再現testを追加し、43件中9失敗を実測した（12debff-reproductions-before-fix.log、exit 1）。修正後43件は成功。続いて全フィールド差分・binary64の1 ULP差・型不明schema・同一SQLite snapshot・table読取拒否/模擬ロック・差分上限・Capital追加列・CLI exit 0/1/2等を確認し51件成功。mode=ro/query_only/read transactionを実行する接続へtest経路でUPDATEを試し、SQLITE_READONLYで拒否された。通常のinspection SQL traceはSELECT/PRAGMA/BEGIN/ROLLBACKのみ。各inspection helperは前後のreport inode/size/mtime/hashと既存DBの全table logical rowsを照合し、外部変更を意図的に注入するtestだけはその境界を明示した。
+
+最後にmarker新規出現・複数UUID・marker型/schemaの3件を追加し、最終54件が12.946秒で成功（12debff-target-final-v3.log、exit 0）。全suiteはproduction codeが同じ51件target時点で328件142.924秒、exit 0（12debff-full-suite-v1.log）。既存monitor persistence 7件、monitoring window 6件、training monitor reference 26件も含む。最後に追加した3件は最終targetで確認し、同じproduction codeで全suiteを再実行はしない。post-push CIでは331件を期待する。既知T03/T13の非決定的失敗は今回は再発しなかったが、原因未特定の残課題を解消済みにしていない。
+
+コマンドは261021から実行した。targetはMLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 120（最終拡張後は150）.venv/bin/python -m unittest discover -s tests -p test_monitor_inspection.py -v、fullは同env・timeout 300・-pなしのdiscover -s tests -v。fullはFastAPI/ローカルHTTPを含むため既知sandbox待機を避け、socket許可付き環境で実行した。全stdout/stderrをpipefailとteeでdata/reports/20261030-t06a-sol/の新規logへ保存し、PIPESTATUS[0]を末尾へ追記した。compileall -q src tests scriptsとpip checkもexit 0。pipのcache権限警告は出たがNo broken requirements foundであり依存変更はしていない。
+
+Luna引継ぎ検証JSONの原本は12debff-luna-evidence-before-review.jsonへ退避してhashを保存した。Lunaのtarget-v1/v2/v3 raw logには終了値が埋め込まれていなかった（terminalには表示）。rawを変更せず、根拠を区別して検証JSONを修正する。全log/source SHA・実施/未実施・case対応はdocs/reviews/20261030-t06a-checks.jsonへ更新する。PostgreSQLのS18/S19/S21・PG版S20、OSの実権限/実busy timeoutの組合せ、実Capital/HTTP監視・T02証拠producerは未実施である。SQLite成功や既存CIのPG試験をそれらへ転用しない。T06aをSol reviewで承認し、対象9ファイルだけcommit/pushした後にCIの結果を追記する。
+
+commit前に検証JSONのsource 8件・log/退避証拠37件のSHA/bytes、相対リンク60件、target 54件とsuite 328件の原文、全変更ファイルの末尾改行/空白、git diff --checkを照合し成功した（12debff-precommit-validation-v1.log、exit 0）。T06aの修正後実装はlocalで承認できるため、対象9ファイルを明示stageし差分全体とgit statusを確認してcommit/pushする。CIはその実装commitに結んで別途記録し、T06bを完了にしない。

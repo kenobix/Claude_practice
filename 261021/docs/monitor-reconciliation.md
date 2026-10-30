@@ -1,6 +1,6 @@
 # 監視保存の読取照合契約（T06）
 
-policy IDは `monitor-run-reconciliation-v1`。2026-10-30にSolで状態・比較・読取境界を固定した。**照合コマンドはまだ未実装**であり、今回完了したのは設計と使い捨てSQLite/PostgreSQLでの保存挙動の確認である。[設計証拠](reviews/20261030-t06-design.json)を参照。
+policy IDは `monitor-run-reconciliation-v1`。2026-10-30にSolで状態・比較・読取境界を固定した。SQLite版T06aは実装し、Sol reviewで修正・受入を進めた。PostgreSQL版T06bは未実装である。設計時点の保存挙動確認は[設計証拠](reviews/20261030-t06-design.json)を参照。
 
 ## 目的と担当範囲
 
@@ -12,10 +12,10 @@ policy IDは `monitor-run-reconciliation-v1`。2026-10-30にSolで状態・比�
 
 ## 入力と出力
 
-実装予定のCLIは既存 `monitor` と並ぶ新しいコマンドとする。既存 `monitor` の引数構造は変えない。
+SQLite版CLIは既存 `monitor` と並ぶ新しいコマンドとする。既存 `monitor` の引数構造は変えない。
 
 ```bash
-# 未実装。T06aの実装後に、一時SQLite等の検証済み対象へ使う形式。
+# SQLite版。原本を保全した検証対象へ使う形式。
 DATABASE_URL='sqlite:////absolute/path/ops.db' \
   mlops-bikectl monitor-inspect --csv /absolute/path/monitor.csv \
   --run-id '3ae0909d-7ae1-4a09-a756-96a7ed582edf'
@@ -145,3 +145,23 @@ validなCLI呼出しでは、次のstatus/exitを固定する。missing marker�
 | S23 | T06aにPostgreSQL URLを渡す | 接続せずunsupported/2。接続/initializeへの呼出しをmockで拒否。 |
 
 全caseで入力CSV/JSON/marker bytes、既存DB logical rows、旧runを前後比較する。read-only setupを検証するためのUPDATEはテストfixtureの別経路に限定する。T06aはS18/S19/S21の実PostgreSQL受入を未実施として記録し、T06完了にしない。合成受入やstorage probeを実Capitalの監視証拠へ転用しない。
+
+## 実装履歴と検証範囲（2026-10-30）
+
+Luna実装時点ではT06aのSQLite読取照合部品と`monitor-inspect --csv PATH --run-id UUID` CLIを追加した。対象受入test 33件、既存monitor persistence 7件、monitoring window 6件、training monitor reference 26件、compileall、diff checkは成功。実行ログ・hashと初回失敗は[作業ログのT06a節](../work_log.md#t06a-実装と合成受入-2026-10-30)および`data/reports/20261030-t06a/`に記録した。
+
+Luna引継ぎ時点は**T06a実装済み・Sol review待ち**であり、T06全体は未完了。S01–S17/S20/S22/S23の主要な状態・安全境界を合成fixtureで確認したが、各case表の下位条件をすべて独立に試したわけではない。これは実Capitalの監視結果ではない。PostgreSQLは接続しておらず、S18/S19/S21、T06b、全suite、CIは未実施。Sol review後にPostgreSQL snapshot・binary32・SQL NaN・遅延commit受入を行う。
+
+使い捨ての手動fixtureに対してだけ、次の形式で実行する。実runを調査するときも原本を保全し、read-only結果だけで再送・修復・採用を決めない。
+
+```bash
+DATABASE_URL='sqlite:////absolute/path/ops.db' \
+  mlops-bikectl monitor-inspect --csv /absolute/path/monitor.csv \
+  --run-id '3ae0909d-7ae1-4a09-a756-96a7ed582edf'
+```
+
+### Sol review後のSQLite受入
+
+Sol reviewでは期間末尾の未確認窓、JSON boolと数値の同値扱い、旧形式とDB障害の優先順、最終再読取中のinode交換、field上限の分類、欠落window_hoursの分類を修正した。固定した状態表・数値ルールを変えず、ファイル判定・DB profile/接続・行比較を順に検査し、最後にファイルsnapshotを再確認する。SQLiteの未知の数値列型はunsupported、DB JSONのbool/非有限/文字列は数値へ変換しない。
+
+対象54 testsではUCI形式とCapital追加列、read-only接続へのUPDATE拒否、metadata/行の同一SQLite snapshot、他run/旧行とreportの非変更、CLI exit 0/1/2、許可・ロック失敗の秘匿、差分50件/値512文字上限も確認した。実行・失敗・修正と全suite/CIの最終成否は[検証記録](reviews/20261030-t06a-checks.json)と[作業ログ](../work_log.md)を参照する。PostgreSQL接続、REAL量子化、SQL NaN、遅延commitはT06bの残件であり、SQLiteや既存CIのPostgreSQL試験成功をT06bの受入へ転用しない。

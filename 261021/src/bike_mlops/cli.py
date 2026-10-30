@@ -40,6 +40,20 @@ from bike_mlops.monitor_persistence import persist_monitor_run
 from bike_mlops.monitoring_window import resolve_monitor_window
 
 
+def command_monitor_inspect(args) -> None:
+    from bike_mlops.monitor_inspection import inspect_monitor_run
+
+    result = inspect_monitor_run(
+        args.csv,
+        args.run_id,
+        database_url=os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL),
+        data_profile_id=DATA_PROFILE_ID,
+        target_contract_id=TARGET_CONTRACT_ID,
+    )
+    _print(result)
+    raise SystemExit(result["exit_code"])
+
+
 def _print(value) -> None:
     print(json.dumps(value, ensure_ascii=False, indent=2, default=str))
 
@@ -934,6 +948,13 @@ def build_parser() -> argparse.ArgumentParser:
     monitor.add_argument("--minimum-labels", type=int, default=24)
     monitor.add_argument("--output", type=Path)
     monitor.set_defaults(func=command_monitor)
+
+    inspect = subparsers.add_parser(
+        "monitor-inspect", help="Read-only reconciliation of one persisted monitor run"
+    )
+    inspect.add_argument("--csv", type=Path, required=True)
+    inspect.add_argument("--run-id", required=True)
+    inspect.set_defaults(func=command_monitor_inspect)
     return parser
 
 

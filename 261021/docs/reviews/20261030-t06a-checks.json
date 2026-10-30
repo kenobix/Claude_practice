@@ -1,0 +1,711 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-30T10:08:46.335873+00:00",
+  "base_commit": "12debff2f4572529fcbfb8bb527720b2dc8a21c7",
+  "task": "T06a SQLite inspector and CLI, Sol reviewed and repaired",
+  "policy_id": "monitor-run-reconciliation-v1",
+  "status": "sol_review_approved_ci_pending",
+  "implementation": {
+    "public_function": "bike_mlops.monitor_inspection.inspect_monitor_run",
+    "cli": "mlops-bikectl monitor-inspect --csv PATH --run-id UUID",
+    "database_scope": "SQLite mode=ro, query_only, read transaction; PostgreSQL URL rejected before connect",
+    "database_writes": false,
+    "reports_or_markers_written": false,
+    "database_initialize_or_database_connect_used_by_inspector": false,
+    "automatic_retry_repair_or_promotion": false,
+    "model_binding": "report_only"
+  },
+  "acceptance_tests": {
+    "latest_run": "data/reports/20261030-t06a-sol/12debff-target-final-v3.log",
+    "test_count": 54,
+    "conclusion": "passed",
+    "coverage_note": "Synthetic cases cover the listed SQLite behaviors; not every sub-variant in S01-S23 is independently exercised.",
+    "cases_with_tests": [
+      "S01",
+      "S02",
+      "S03",
+      "S04",
+      "S05",
+      "S06",
+      "S07",
+      "S08",
+      "S09",
+      "S10",
+      "S11",
+      "S12",
+      "S13",
+      "S14",
+      "S15",
+      "S16",
+      "S17",
+      "S20",
+      "S22",
+      "S23"
+    ],
+    "not_exercised_here": [
+      "PostgreSQL S18/S19/S21 and PG S20 are T06b, not implemented.",
+      "S13 table permission denial uses a real SQLite authorizer; lock/timeout failure uses an injected OperationalError. OS filesystem permission and real busy-timeout combinations are not separately exercised.",
+      "No synthetic result is evidence of real Capital/HTTP monitoring or deployment readiness."
+    ],
+    "known_coverage_gaps": [
+      "PostgreSQL S18/S19/S21 and PG S20 are T06b, not implemented.",
+      "S13 table permission denial uses a real SQLite authorizer; lock/timeout failure uses an injected OperationalError. OS filesystem permission and real busy-timeout combinations are not separately exercised.",
+      "No synthetic result is evidence of real Capital/HTTP monitoring or deployment readiness."
+    ]
+  },
+  "regressions": {
+    "monitor_persistence": {
+      "count": 7,
+      "status": "passed",
+      "log": "data/reports/20261030-t06a-sol/12debff-full-suite-v1.log"
+    },
+    "monitoring_window": {
+      "count": 6,
+      "status": "passed",
+      "log": "data/reports/20261030-t06a-sol/12debff-full-suite-v1.log"
+    },
+    "training_monitor_reference": {
+      "count": 26,
+      "status": "passed",
+      "log": "data/reports/20261030-t06a-sol/12debff-full-suite-v1.log"
+    },
+    "compileall": "passed",
+    "git_diff_check": "passed",
+    "full_suite": "passed 328, same production code; last 3 new tests passed in final target",
+    "CI": "pending_push",
+    "PostgreSQL_integration": "T06b_not_run",
+    "pip_check": "passed"
+  },
+  "initial_failures_retained": [
+    {
+      "log": "data/reports/20261030-t06a/t06a-target-v1.log",
+      "failed_tests": 4,
+      "resolution": "Corrected missing-marker DB=0 classification; corrected test setup expectations for marker-required files; corrected missing-DB test URL."
+    },
+    {
+      "log": "data/reports/20261030-t06a/t06a-review-final-v3.log",
+      "failed_tests": 1,
+      "resolution": "Unknown-format fixture now preserves monitor_run_id; no UUID is correctly classified legacy_unverifiable."
+    }
+  ],
+  "logs": [
+    {
+      "path": "data/reports/20261030-t06a/t06a-compileall.log",
+      "bytes": 21,
+      "sha256": "de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-diff-check-last.log",
+      "bytes": 21,
+      "sha256": "de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-diff-check.log",
+      "bytes": 21,
+      "sha256": "de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-evidence-summary-check.log",
+      "bytes": 932,
+      "sha256": "ac1828e33c803c30e4ec1af676e407acad2ffee116fd369c93a4d4524f16719f",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-monitor-persistence.log",
+      "bytes": 1373,
+      "sha256": "e150d2db9e65427322aa40b866e36d10ab4527d538d49e986da70e1052080376",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": 7,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-monitoring-window.log",
+      "bytes": 1165,
+      "sha256": "c001f6ef93c7daaf2f42a3ddd909bb950e3785bfeae29ee50158b3a92546fbdf",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": 6,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-compileall-v2.log",
+      "bytes": 21,
+      "sha256": "de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-compileall-v3.log",
+      "bytes": 21,
+      "sha256": "de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-compileall-v4.log",
+      "bytes": 21,
+      "sha256": "de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-compileall-v5.log",
+      "bytes": 21,
+      "sha256": "de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-diff-check-final.log",
+      "bytes": 21,
+      "sha256": "de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-diff-check-v2.log",
+      "bytes": 21,
+      "sha256": "de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-diff-check-v3.log",
+      "bytes": 21,
+      "sha256": "de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-diff-check-v4.log",
+      "bytes": 21,
+      "sha256": "de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-diff-check-v5.log",
+      "bytes": 21,
+      "sha256": "de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-final-compileall.log",
+      "bytes": 21,
+      "sha256": "de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-final-diff-check.log",
+      "bytes": 21,
+      "sha256": "de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-final-target-v1.log",
+      "bytes": 4427,
+      "sha256": "7be145776700af91994ee30008a0d2c876b3c758b8b727f969fed4cb0ac2b0bf",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": 26,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-final-v2.log",
+      "bytes": 4427,
+      "sha256": "ed1cb61d199a8e562b028d13faa355ebd7a6724affe195add5a96d717f2188e0",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": 26,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-final-v3.log",
+      "bytes": 6172,
+      "sha256": "cb4e69fa813b9b4702c36138559f5980a6ffc8f87577a992063e90da6ed7b6f8",
+      "exit_code": 1,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": 33,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "failed attempt retained"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-final-v4.log",
+      "bytes": 5474,
+      "sha256": "10dcc501623cf64eb1293a0232d84d74b6b92f30596cd6320ed7296bf34690cb",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": 33,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-final-v5.log",
+      "bytes": 5473,
+      "sha256": "2c334a5287efe040aa336a0efabbfbb399f81c9f3a3d0d87cbab40c2711de9bd",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": 33,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-review-final-v6.log",
+      "bytes": 5473,
+      "sha256": "068d5543b31b6ec817930bda765cced7a816a535ae21ec19a2c8292c683cdffa",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": 33,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-target-final.log",
+      "bytes": 4244,
+      "sha256": "1caf08d9f914b36c7ae29c15c5ac35bde63d512865be3444ec0d952a3f4fd80f",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": 25,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-target-v1.log",
+      "bytes": 6701,
+      "sha256": "e212f74884bccefcf5364a17865829c7da558c080b69ef507212a4a32c33afbf",
+      "exit_code": 1,
+      "exit_code_embedded_in_raw_log": false,
+      "test_count": 20,
+      "exit_code_source": "implementation turn terminal result; absent from raw log",
+      "interpretation": "failed attempt retained"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-target-v2.log",
+      "bytes": 3399,
+      "sha256": "39b1d348b7e8c50364cf889083260a896c4b25ddc511543387928d129539e24c",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": false,
+      "test_count": 20,
+      "exit_code_source": "implementation turn terminal result; absent from raw log",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-target-v3.log",
+      "bytes": 4223,
+      "sha256": "b6e9a87d22d457f296c05ad4275de13116e4d46e46c83743f435a61980d6dbcc",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": false,
+      "test_count": 25,
+      "exit_code_source": "implementation turn terminal result; absent from raw log",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a/t06a-training-monitor-reference.log",
+      "bytes": 5879,
+      "sha256": "97303c90196b63d13368f131bc1a94c73555d2106bacaa63efad571a44d0e1fc",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": 26,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a-sol/12debff-compileall-final.log",
+      "bytes": 21,
+      "sha256": "de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a-sol/12debff-compileall.log",
+      "bytes": 21,
+      "sha256": "de202ac1f3b10dd4b8293bd9eb716faebca7cf68e7b1753219c134eae2592eab",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a-sol/12debff-full-suite-v1.log",
+      "bytes": 61547,
+      "sha256": "6ced7ba1e4bc7e3c39ce3ea7d4d12dfbfb63ce7eb5442b64d55cb7e6dbe9e8d3",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": 328,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a-sol/12debff-pip-check.log",
+      "bytes": 317,
+      "sha256": "7e9d050a90069867518e92cd9c297efe3a0fea41f93ef9cc3bae5c890893a3f1",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a-sol/12debff-reproductions-before-fix.log",
+      "bytes": 13230,
+      "sha256": "9fc3048133abb69d99c1f22202f3cb43a534ecdaec2b7dc9ab9c512433e93d79",
+      "exit_code": 1,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": 43,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "failed attempt retained"
+    },
+    {
+      "path": "data/reports/20261030-t06a-sol/12debff-target-after-fix-v1.log",
+      "bytes": 7169,
+      "sha256": "21e7c41ee30d8200e6573581ec08e665d4dd7e6ab81ac34dfcb305d2e5f2e336",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": 43,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a-sol/12debff-target-final-v2.log",
+      "bytes": 8492,
+      "sha256": "85f9613ee041b32d4d9cf80ad9c97b8dad07b0861d8a64bacda0c6f4a608d4db",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": 51,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a-sol/12debff-target-final-v3.log",
+      "bytes": 8974,
+      "sha256": "7ce597919df12412a9b1c02169766a68e2dc525872cb000ce85a07c468ba5033",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": 54,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    },
+    {
+      "path": "data/reports/20261030-t06a-sol/12debff-precommit-validation-v1.log",
+      "bytes": 119,
+      "sha256": "dd1d4ceff2953e1da5177de35920d4ebc0bc27b348a33036ac7ae6321327bf0b",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    }
+  ],
+  "source_files": {
+    "src/bike_mlops/monitor_inspection.py": {
+      "bytes": 35121,
+      "sha256": "72fd944a7e7cf359c2e7773b0e7666c8cea632b86bbafc02e612a5d716de078c"
+    },
+    "src/bike_mlops/cli.py": {
+      "bytes": 47241,
+      "sha256": "7ba839357238b849c1e73a820febb681a5fcbc351a04596ec1941edf77af9713"
+    },
+    "tests/test_monitor_inspection.py": {
+      "bytes": 38817,
+      "sha256": "31f1fa3d44b01efce2c98cd97fa1554eb2662ad72d6e40e88407c736aaad9827"
+    },
+    "README.md": {
+      "bytes": 12549,
+      "sha256": "ff5fb77f061569f4341fa7c3c28b6ccc9c9f8603892e623f9dc2067b5c98891c"
+    },
+    "docs/runbook.md": {
+      "bytes": 32814,
+      "sha256": "d1c56fe9bb0d6a1dcf295704c4b6652d2863703a757f4bc4eebd6ded246fe65c"
+    },
+    "docs/monitor-reconciliation.md": {
+      "bytes": 22696,
+      "sha256": "8ceb785eb7e4151c29ba46ce9a36a7fc79df37581944c9f73d5f4f43b4015fcb"
+    },
+    "work_log.md": {
+      "bytes": 288940,
+      "sha256": "de61466bb3760ba683aa59d73750c48ca87582bb7cf11f41f91b34c3b0746a28"
+    },
+    "../261014/plan_mlops.md": {
+      "bytes": 79856,
+      "sha256": "e51bd386495b878c8250837ca39277bd7ec2a4fb90afe3d4bd2c8036261da1d2"
+    }
+  },
+  "not_verified": [
+    "T06b PostgreSQL inspector and S18/S19/S21/PG S20",
+    "post-push CI (pending)",
+    "real Capital/HTTP monitoring and T02 producer",
+    "S13 OS filesystem permission/real busy-timeout combinations"
+  ],
+  "git": {
+    "base_commit": "12debff2f4572529fcbfb8bb527720b2dc8a21c7",
+    "implementation_commit": null,
+    "push_status": "pending",
+    "unrelated_untracked_paths_preserved": [
+      "260701/charts/",
+      "260701/logs/",
+      "260905/sets/bookkeeping-2kyu/images/assekiritono-flow.png"
+    ]
+  },
+  "luna_handoff": {
+    "evidence_snapshot": {
+      "path": "data/reports/20261030-t06a-sol/12debff-luna-evidence-before-review.json",
+      "bytes": 13185,
+      "sha256": "2691c27bbb21efcd07879c81340442cafc78e85787c1acd825ae78474f8de42f"
+    },
+    "test_count": 33,
+    "status_at_handoff": "implementation_tests_passed_review_pending",
+    "source_files": {
+      "src/bike_mlops/monitor_inspection.py": {
+        "bytes": 29159,
+        "sha256": "cfb23842c3c302303eff5f8e656a783f629f42514cd2b0bdf01d244270f37684"
+      },
+      "src/bike_mlops/cli.py": {
+        "bytes": 47241,
+        "sha256": "7ba839357238b849c1e73a820febb681a5fcbc351a04596ec1941edf77af9713"
+      },
+      "tests/test_monitor_inspection.py": {
+        "bytes": 20752,
+        "sha256": "bff2c3f2549cfd1ae55e4cda9bba9edc924de5e2db392f9a73ea6f517efd63f7"
+      },
+      "README.md": {
+        "bytes": 12500,
+        "sha256": "141ca4a6d16965aed797e0a49c04480fe4e00a04a65b9df0b70cb246b2919b15"
+      },
+      "docs/runbook.md": {
+        "bytes": 32732,
+        "sha256": "ab59399ebcafe3b9901b1c5f17824bef542a33c92cf61bf4ae3b74d9cbeba238"
+      },
+      "docs/monitor-reconciliation.md": {
+        "bytes": 21563,
+        "sha256": "b7b39c0da5beac3e37cf3caa6544ee8a4c5e7ac61835e756766463b895f5e1f3"
+      },
+      "work_log.md": {
+        "bytes": 283506,
+        "sha256": "99bb5a3194986354351ea422550398b434eb759ea7dab9203dac6e4cf44b3f6e"
+      },
+      "../261014/plan_mlops.md": {
+        "bytes": 79620,
+        "sha256": "8cf50bdddedc1e868759cc4230265644ce6cf0d7006d4e744ff76e5dfe826676"
+      }
+    }
+  },
+  "sol_review": {
+    "reviewer_model": "GPT-6.1 Sol",
+    "status": "approved_after_fixes",
+    "findings": [
+      {
+        "severity": "P1",
+        "issue": "Incomplete period clock grid could match",
+        "resolution": "Compare period duration, row count, ordered clocks and starts."
+      },
+      {
+        "severity": "P1",
+        "issue": "bool equalled numeric zero/one in DB JSON and latest window",
+        "resolution": "Typed finite validation and recursive comparison, with exact binary64 equality."
+      },
+      {
+        "severity": "P1",
+        "issue": "Replacement inside final file reread could be missed",
+        "resolution": "Compare initial lstat, opened fstat, post-read fstat and final lstat identities/hash; report changed file state."
+      },
+      {
+        "severity": "P2",
+        "issue": "Legacy and database/file failure precedence diverged from fixed policy",
+        "resolution": "Collect independent file/metadata/access results, defer row comparison, recheck every completed snapshot on errors."
+      },
+      {
+        "severity": "P2",
+        "issue": "Field limit, missing window_hours and schema types misclassified",
+        "resolution": "Unsupported format/limits/types stay exit 2; malformed values exit 1; metadata before row SELECT."
+      },
+      {
+        "severity": "P2",
+        "issue": "Evidence failed log mislabelled success and work_log hashes transcribed incorrectly",
+        "resolution": "Preserve original evidence and raw logs, distinguish terminal-only exit from embedded exit, correct hash references."
+      }
+    ],
+    "reproductions": {
+      "log": "data/reports/20261030-t06a-sol/12debff-reproductions-before-fix.log",
+      "tests": 43,
+      "failures": 9,
+      "exit_code": 1
+    },
+    "target_after_fixes": {
+      "log": "data/reports/20261030-t06a-sol/12debff-target-after-fix-v1.log",
+      "tests": 43,
+      "exit_code": 0
+    },
+    "target_final": {
+      "log": "data/reports/20261030-t06a-sol/12debff-target-final-v3.log",
+      "tests": 54,
+      "seconds": 12.946,
+      "exit_code": 0
+    },
+    "full_suite": {
+      "log": "data/reports/20261030-t06a-sol/12debff-full-suite-v1.log",
+      "tests": 328,
+      "seconds": 142.924,
+      "exit_code": 0,
+      "production_code_matches_final": true,
+      "final_three_additional_tests_verified_in_target": true
+    },
+    "read_only_verified": [
+      "mode=ro URI, query_only and explicit read transaction",
+      "UPDATE on actual inspector connection rejected with SQLITE_READONLY",
+      "SQL trace contains only SELECT/PRAGMA/BEGIN/ROLLBACK",
+      "profile and monitor rows share a SQLite WAL snapshot",
+      "per-call report metadata/hash and fixture logical rows preserved except explicitly injected external races"
+    ],
+    "test_methods": [
+      "test_review_period_requires_every_clock_through_end_exclusive",
+      "test_review_database_json_boolean_is_not_numeric_zero",
+      "test_review_latest_boolean_is_invalid_even_when_equal_to_zero",
+      "test_review_missing_window_hours_is_unsupported",
+      "test_review_legacy_file_does_not_hide_database_profile_mismatch",
+      "test_review_legacy_file_does_not_hide_database_unavailability",
+      "test_review_latest_mismatch_precedes_database_unavailability",
+      "test_review_replacement_during_last_reread_is_detected",
+      "test_review_field_over_limit_is_unsupported",
+      "test_review_secret_in_database_exception_is_not_printed",
+      "test_review_marker_appearing_after_database_read_is_changed",
+      "test_review_csv_multiple_run_ids_are_mismatch",
+      "test_review_marker_types_status_and_unknown_schema",
+      "test_review_all_database_comparison_fields_reject_changes",
+      "test_review_unknown_numeric_schema_is_unsupported",
+      "test_review_table_read_denied_and_locked_errors_are_unavailable",
+      "test_review_monitor_rows_and_profile_share_a_sqlite_snapshot",
+      "test_review_row_limit_uses_one_extra_row_for_detection",
+      "test_review_capital_extended_columns_and_nested_types",
+      "test_review_bad_uuid_and_extension_return_json",
+      "test_review_differences_are_counted_and_bounded",
+      "test_s01_complete_matching_run_is_matched_and_read_only",
+      "test_s02_and_s03_missing_marker_remain_unconfirmed",
+      "test_files_only_still_checks_csv_latest_window_against_summary",
+      "test_s03_full_database_without_marker_is_not_matched",
+      "test_s04_partial_files_are_unconfirmed_without_database_claim",
+      "test_s04_summary_only_is_unconfirmed",
+      "test_s05_and_s06_no_files_classify_database_only_or_not_observed",
+      "test_s07_marker_with_missing_required_file_is_mismatch",
+      "test_s07_marker_with_missing_summary_is_mismatch",
+      "test_s08_hash_tampering_is_mismatch",
+      "test_s08_changed_summary_identity_is_mismatch",
+      "test_s09_missing_database_window_is_mismatch",
+      "test_s09_extra_window_and_changed_values_are_mismatch",
+      "test_s09_database_timestamp_change_is_mismatch",
+      "test_s10_profile_mismatch_is_rejected_before_target_select",
+      "test_s10_target_contract_mismatch_is_rejected",
+      "test_s11_duplicate_window_timestamp_is_invalid",
+      "test_s11_nonfinite_metric_and_legacy_csv_are_not_accepted",
+      "test_s11_duplicate_json_key_is_invalid",
+      "test_s12_missing_metadata_is_legacy_unverifiable_without_migration",
+      "test_s12_old_json_without_run_id_is_legacy_unverifiable",
+      "test_s13_unavailable_database_does_not_create_path_or_leak_details",
+      "test_s14_file_race_is_changed_during_inspection",
+      "test_s14_real_file_change_after_database_read_is_detected",
+      "test_s15_symlink_and_fifo_are_rejected_without_waiting",
+      "test_s15_unknown_columns_and_oversize_file_are_unsupported",
+      "test_s16_other_runs_are_preserved_and_not_selected",
+      "test_s16_legacy_row_is_preserved_and_not_selected",
+      "test_s17_blank_metrics_match_sql_null_and_zero_does_not",
+      "test_s20_sqlite_connection_is_read_only",
+      "test_s22_call_expression_in_dict_is_never_evaluated_and_secret_not_exposed",
+      "test_s23_postgresql_is_rejected_without_connecting",
+      "test_cli_prints_json_and_uses_documented_exit_code"
+    ],
+    "commands": [
+      "MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 120 .venv/bin/python -m unittest discover -s tests -p test_monitor_inspection.py -v",
+      "MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 150 .venv/bin/python -m unittest discover -s tests -p test_monitor_inspection.py -v",
+      "MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 300 .venv/bin/python -m unittest discover -s tests -v",
+      ".venv/bin/python -m compileall -q src tests scripts",
+      ".venv/bin/python -m pip check",
+      "git diff --check"
+    ],
+    "T03_T13_previous_intermittent_failures": "not reproduced; root causes remain open",
+    "ci": {
+      "status": "pending_push"
+    },
+    "precommit_validation": {
+      "path": "data/reports/20261030-t06a-sol/12debff-precommit-validation-v1.log",
+      "bytes": 119,
+      "sha256": "dd1d4ceff2953e1da5177de35920d4ebc0bc27b348a33036ac7ae6321327bf0b",
+      "exit_code": 0,
+      "exit_code_embedded_in_raw_log": true,
+      "test_count": null,
+      "exit_code_source": "embedded_terminal_code",
+      "interpretation": "passed"
+    }
+  },
+  "luna_handoff_git": {
+    "commit_created": false,
+    "push_performed": false,
+    "unrelated_untracked_paths_preserved": [
+      "260701/charts/",
+      "260701/logs/",
+      "260905/sets/bookkeeping-2kyu/images/assekiritono-flow.png"
+    ]
+  }
+}
