@@ -2161,3 +2161,35 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 240 .venv/bin/
 T04の実装/合成検証を記録し、次のSol優先をT03（中断journal/測定policy）へ更新した。T05は固定した参照/警告仕様で、分布のみ・誤差のみ・両方・ラベル遅延/停止/重複・欠測増加の期待窓/母数/検知時刻を決めてCLI受入を進められる。T06のDB/file未確定照合、実候補/HTTP監視、復旧/復元/metadata実証は残る。10月原本とT10条件が揃わない間は実fitを先行しない。
 
 最終確認では7 Markdownの相対リンク65件、11コード/テストと5 logのSHA、証拠JSONを照合し不一致0件。結果は`data/reports/20261030-t04/b843825-document-checks-v1.json`。`git diff --check`も成功。HTML renderは未実施で、push後のPages CIを確認する。変更ファイルを確認し、無関係な260701/charts・logsと260905の画像はstageしない。
+
+### T04実装commitとGitHub CI
+
+対象20ファイルを明示stageし、`df292db6dc86517ee137b0eb2a697fbc1704201c`（Freeze Capital training references and connect PSI v2 monitoring）としてcommit、origin/mainへpushした。無関係な未追跡ファイルは含めていない。
+
+GitHub [run 40980116840](https://github.com/kenobix/Claude_practice/actions/runs/40980116840)はtests・synthetic-systemともsuccess。CIでも全255 testsが15.876秒で成功し、pip check/compileallも成功。新しいprotocol/候補保存/参照のrun artifact保存を通る合成Docker経路と、使い捨てPostgreSQL snapshot-lock試験の回帰を確認した。Pages build/deploy [40980115504](https://github.com/kenobix/Claude_practice/actions/runs/40980115504)もsuccess。
+
+artifactを取得してZIP integrityとGitHub digestを照合し、本文を確認した。合成candidate `06518c4867990df2a693866acc04099df35ca910e3a6eed4fb1a9b53d2c47477`、版1、744観測、offline/API差0、同一ID再送成功/異入力409、normal/diagnostic runtime init拒否、1,050要求/監査行、p95 `32.915778000017326 ms`、numeric recheck matched、競合証拠拒否と冪等再記録、cleanup_completeを確認。正式運用gateはnot_evaluated、配信はblocked。これは人工fixtureの既存運用経路の回帰確認で、全T05ケースや実Capital精度/監視/承認を実証するものではない。
+
+- artifact ID `12944562497`、1,841 bytes。ZIP SHA `be1ff6fe039e9ec6c85c0b5e805e6394d99e09d25c39cedc231fcebcf82f1d5b`（GitHub digestと一致）。
+- synthetic-system-ci.logのSHA `2300ab795b094e4e16465bb12f08a07428b06a8fb357b158081bbec20e735e3b`。
+- snapshot-postgres-ci.logのSHA `88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9`、本文passedとcontainer削除を確認。
+- 保存ZIP: `data/reports/20261030-t04/df292db-ci-artifact-12944562497.zip`。
+- unit job raw log: 同directoryの`df292db-ci-unit-job-123817793403.log`、SHA `506bde9a32f189e2d9801d222bff4cc343fa1c72a747fca3a9d47ed512ecbee1`。
+
+追加コマンド（repo root。取得時はset -o noclobberで新規ファイルへリダイレクトし、raw ANSIやZIPは端末へ表示していない）:
+
+```bash
+git status --short
+git diff --cached --check
+git diff --cached --stat
+git commit -m "Freeze Capital training references and connect PSI v2 monitoring"
+git push origin main
+gh run list --branch main --limit 4 --json databaseId,headSha,status,conclusion,workflowName,url
+gh run view 40980116840 --json headSha,status,conclusion,jobs,url
+gh run view 40980115504 --json status,conclusion,url
+gh api --allow-escape-sequences repos/kenobix/Claude_practice/actions/jobs/123817793403/logs
+gh api repos/kenobix/Claude_practice/actions/runs/40980116840/artifacts
+gh api repos/kenobix/Claude_practice/actions/artifacts/12944562497/zip
+```
+
+最大50秒のgh run watchを区切って使用した。exit 124はwatchだけの期限で、CI停止/試験timeoutではない。最終successとartifact本文を別途確認した。証拠JSON・計画へCI結果を反映し、製品コードを変えない記録用commitとして保存する。

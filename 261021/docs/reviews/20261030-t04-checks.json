@@ -91,5 +91,57 @@
     "T06 DB/file reconciliation",
     "T02 real readiness evidence producer"
   ],
-  "live_runtime_changed": false
+  "live_runtime_changed": false,
+  "ci": {
+    "verified_at_utc": "2026-10-30T00:37:22.462038+00:00",
+    "head_sha": "df292db6dc86517ee137b0eb2a697fbc1704201c",
+    "run_id": 40980116840,
+    "conclusion": "success",
+    "unit_tests": 255,
+    "unit_seconds": 15.876,
+    "unit_log": {
+      "path": "261021/data/reports/20261030-t04/df292db-ci-unit-job-123817793403.log",
+      "sha256": "506bde9a32f189e2d9801d222bff4cc343fa1c72a747fca3a9d47ed512ecbee1"
+    },
+    "artifact_id": 12944562497,
+    "artifact_path": "261021/data/reports/20261030-t04/df292db-ci-artifact-12944562497.zip",
+    "artifact_bytes": 1841,
+    "artifact_zip_sha256": "be1ff6fe039e9ec6c85c0b5e805e6394d99e09d25c39cedc231fcebcf82f1d5b",
+    "artifact_members": {
+      "synthetic-system-ci.log": "2300ab795b094e4e16465bb12f08a07428b06a8fb357b158081bbec20e735e3b",
+      "snapshot-postgres-ci.log": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9"
+    },
+    "synthetic_summary": {
+      "status": "synthetic_system_passed",
+      "data": "synthetic_only",
+      "candidate_id": "06518c4867990df2a693866acc04099df35ca910e3a6eed4fb1a9b53d2c47477",
+      "model_version": "1",
+      "candidate_registration": "blocked_and_idempotent",
+      "staging_rows_seeded_and_verified": 744,
+      "api_ready": "ready",
+      "offline_api_parity_absolute_delta": 0.0,
+      "api_idempotent_retry": "passed",
+      "api_changed_input_conflict": 409,
+      "api_audit_rows": 1,
+      "runtime_init_rejections": [
+        "normal",
+        "diagnostic"
+      ],
+      "measurement_attempt": "09eaed5b-811b-4aee-a0e1-a30b9fd2010c",
+      "requests": 1050,
+      "audited_rows": 1050,
+      "measurement_status": "passed",
+      "p95_ms": 32.915778000017326,
+      "numeric_recheck": "matched",
+      "exact_version_evidence_tags": "recorded_and_idempotent",
+      "conflicting_evidence_rejected_without_unblocking": true,
+      "operational_gate": "not_evaluated",
+      "deployment_permission": "blocked",
+      "resource_context": "captured_before_and_after"
+    },
+    "cleanup_complete": true,
+    "postgres_snapshot_test": "passed",
+    "pages_run_id": 40980115504,
+    "pages_conclusion": "success"
+  }
 }
