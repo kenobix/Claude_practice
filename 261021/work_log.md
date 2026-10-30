@@ -2545,3 +2545,42 @@ artifact metadataはGitHub connectorからdf4c3b9-ci-artifacts-from-connector.js
 T06aは修正後のSol review・local受入・実装commit CIまで完了。次は別taskのT06bをSolで進める。OS実権限/実busy timeoutのSQLite補足はP2/D2として計画へ残した。実Capital/HTTP監視とT02 producer、T03/T13原因追跡も残る。今回の追加commitは計画、照合文書、検証JSON、このログの4ファイルだけを対象にし、production source/test/CLIを変えない。実装commitのCI成功を記録するcommitであり、記録commit自身のCI完了を観測したとは記載しない。
 
 記録commit前にcurrent source/document 8件、実装commit Git blob 8件、raw証拠45件、ZIP内3 member、相対リンク60件を再照合し、全331件のCI原文・全job/step成功・cleanupを確認した。検証logはdf4c3b9-final-evidence-check.log（exit 0）。差分は上記4記録ファイルのみで、production/test/CLIの追加差分はない。記録用commitもorigin/mainへpushし、この作業をT06aの完了節目とする。
+
+## T06b PostgreSQL読取照合（2026-10-30、Sol）
+
+基点584ff07（T06aのreview/CI記録）から、AGENTS、plan §11.6、照合契約、T06a handoff/source/testsと既存PG保存probeを確認した。開始時のtracked差分はなく、未追跡の260701/charts、260701/logs、260905の画像は対象外として保持した。T06bだけを実装し、次taskは依頼文の作成までとした。
+
+### 実装とreview判断
+
+同じinspect_monitor_run/monitor-inspectへpostgresql://とpostgres://を追加した。psycopgへconnect_timeout=5と固定options（default_transaction_read_only=on、statement_timeout=5000、lock_timeout=1000）を指定し、BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLYを明示する。current_schema/catalog/metadata/対象UUID行を同じsnapshotからSELECTし、rollback/closeする。table権限を持たないとinformation_schemaが列を隠すため、形式はpg_catalogから読み、実SELECT権限失敗はdatabase_unavailableへ分類した。識別子はquote、UUID prefix/limitはparameterとする。schema/初期化/既存writerは変更しない。
+
+REALはCSV元のbinary64からbinary32へ量子化して比較し、DOUBLE PRECISIONとJSON textのPSI/欠測率はbinary64の厳密比較を保った。型情報、最大3列の丸め前/丸め後/観測値の例をJSONに残す。SQL NaNはCSV空欄（latestならJSON null）の場合だけ欠落として数え、有限値との不一致ではSQL_NaNと表示する。0やInfinityを欠落にせず、boolと数値も混同しない。markerなしは全DB行一致でもunconfirmedであり、再送・採用を許可しない。
+
+最終reviewで、接続喪失時のrollback/close失敗が元の秘匿済みquery診断をinspection_errorで隠す経路を見つけ、cleanupをbest effortにした。unitの接続/rollback/close三重失敗と、専用PG backendの実切断でdatabase_unavailableと秘密非表示を確認した。schema変換や実DB更新は行っていない。URI optionsを固定設定で上書きする点、接続timeoutはDNS/複数hostを含む全体deadlineでない点を手順へ明記した。PostgreSQL/psycopg公式仕様のリンクを照合文書へ残した。
+
+### 実行・失敗・修正
+
+全コマンドは261021から実行し、data/reports/20261030-t06bへ新規保存した。テストはMLFLOW_DISABLE_AGENT_HINT=1、timeout --signal=TERM --kill-after=10、pipefail、teeを使い、PIPESTATUS[0]をEXIT_CODEとして末尾へ保存した。認証情報やDSNはlogへ出していない。
+
+| log | command / result |
+|---|---|
+| target-v1.log | timeout 150 .venv/bin/python -m unittest discover -s tests -p 'test_monitor_inspection*.py' -v。54件13.304秒、exit 0。新unitファイルの作成先をcwdに対して二重に261021と指定して失敗したため、まだ既存54件だけだった。terminal観測をsession-observations.jsonへ区別して記録。 |
+| target-v2.log | 同command。PG unit5件追加後、59件15.165秒、exit 0。 |
+| postgres-v1.log | timeout 180 .venv/bin/python scripts/test_monitor_inspection_postgres.py --run-disposable。21件20.393秒、1失敗、exit 1、cleanup成功。試験側が前runのSQL履歴を現在UUIDと比較していた。inspectごとにtraceを分けて修正した。期待statusやSQL条件を緩和していない。 |
+| postgres-v2.log | 同command。実SIGKILL・metadata snapshot・DB JSON負例を追加し24件22.563秒、exit 0、cleanup成功。 |
+| full-suite-v1.log | timeout 300 .venv/bin/python -m unittest discover -s tests -v。336件143.300秒、exit 0。ローカルHTTPのためsocket許可付きで実行。最終cleanup診断修正/新unit1件追加より前のsourceを読み込んだrunであり、最終source全体のlocal suite成功へ読み替えない。T03/T13の既知失敗はこのrunでは再発せず、原因解消とは扱わない。 |
+| target-final.log | 最終cleanup診断修正後、60件17.869秒、exit 0。SQLiteの54件も含む。 |
+| postgres-final.log | 最終script/sourceで25件27.049秒、exit 0。非superuserの専用app ownerで全件を行い、所有container削除を確認。 |
+| static-final.log | YAML parse、workflow全run blockのbash -n、変更Python AST、compileall -q src tests scripts、pip check、git diff --checkがexit 0。pip cache権限warningはあるが依存破損なし。 |
+
+sandboxからDockerはpermission deniedとなったため、承認された許可付きコマンドで専用containerのみを実行した。imageは既存postgres:17.6-bookworm、ID f3bd19c606e442c3d7bdfa8002e03fe260a1023351e0ea4598032022b68dd6e3、pullなし。ランダムloopback port・ランダム認証値・所有label/64桁IDを使用し、全試行でcleanupを確認した。最後のdocker ps -a --filter label=bike.monitor.inspection.test --format '{{.ID}}'も空だった。gh auth statusはsandboxネットワーク下で無効と表示されたが許可付きでは成功し、認証設定は変更しなかった。terminal観測だけの準備失敗をraw test logの内容と混同しない。
+
+### 受入範囲と残件
+
+PG受入25件はREALの1/3と非整数誤差/各列1 ULP差、DOUBLE PRECISION厳密値、JSON精度/不正値、NULL/NaN/Infinity/0、unknown schema、profile不一致で対象SELECTなし、legacy/他UUID/旧行保全、件数/余分/欠落/値差、CLI exit 0/1/2、実table権限拒否・lock1秒/statement5秒timeout・実接続切断を検査した。schema SELECT後に別接続をcommitするfixtureで、そのinspectionでは未観測、次回はdatabase_without_markerへ変わることを確認した。metadataの変更も同snapshotでは見えず次回に拒否した。
+
+writer例外でrollbackするcaseとcommit後marker失敗caseに加え、専用子processを最初のINSERT直後・DB commit後marker前で実SIGKILLした。前者はDB全体が元のまま/files_only、後者は2行追加/旧行保全/database_without_marker。通常inspectionのSQLはSELECT/BEGIN/ROLLBACKだけ、SQL parameterは対象UUID+100001上限。UPDATE拒否はテストhookだけで実際のinspector接続に送った。各通常caseは前後の全table logical rowsとreport inode/size/mtime/hashを照合し、外部commit/marker出現を注入するcaseでは別に原本の不変部分を照合した。
+
+ネットワーク接続timeout満了自体は未注入（固定引数はunit、実接続失敗/切断はPG受入）。SQLiteのOS実権限/実busy timeout補足、実Capital候補/HTTP monitor、T02の実証producerは未実施である。合成受入を実監視・運用合格・配信許可へ転用しない。T03/T13の非決定的失敗の追加追跡も残す。
+
+workflowにはT06b専用PG受入stepとlog artifactを追加した。T15の既存monitor persistence PG script接続は今回行っていない。README/runbook/照合文書/計画へ到達点と制限を反映し、次の独立作業としてP1/D3/SolのT08依頼をdocs/t08-sol-handoff.mdへ作成した。新旧monitor型や既存UCIを今回移行しない点を明示した。検証JSONに全試行logのSHA/bytes、final source SHA、受入対応を記録してから対象pathだけをcommit/pushし、そのcommitのCIを別途観測する。

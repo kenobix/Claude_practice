@@ -329,7 +329,7 @@ Capital stagingの測定がtimeout・SIGTERM・SIGKILLで止まった場合は�
 
 監視は実行ごとにIDを作り、既定のCSV/JSON名とDB窓IDを分けます。`--output`で既存ファイルを指定した場合は上書きせず停止します。正常にDBへ保存できた実行には、CSV・JSONのハッシュと実行IDを含む`*.complete.json`を追加します。ファイルとDBは別々に保存するため、途中停止して完了ファイルがない場合はDB保存の成否を決めつけず、JSONに記載された`database_window_id_prefix`で`monitor_windows.window_id`を調べてください。過去の記録を自動更新・削除しません。
 
-T06の[読取照合契約](monitor-reconciliation.md)に沿い、SQLite版の読取専用照合コマンドを追加しました。Sol reviewの受入は使い捨ての合成fixtureで行っています。
+T06の[読取照合契約](monitor-reconciliation.md)に沿い、SQLite/PostgreSQLの読取専用照合コマンドを追加しました。受入は使い捨ての合成fixtureで行っています。
 
 ```bash
 DATABASE_URL='sqlite:////absolute/path/ops.db' \
@@ -339,7 +339,16 @@ DATABASE_URL='sqlite:////absolute/path/ops.db' \
 
 実行結果はJSONで、`matched`は終了値0、確定した不一致は1、未確定/未対応/DB照会不能は2です。終了値2は未送信を意味しません。特にmarkerがない場合、DB行が0件でもlater commitの可能性を残します。コマンドはCSV・JSON・marker・DBを変更せず、再送・修復・marker生成もしません。JSON内のモデル版はreport記載値としてのみ扱い、MLflow登録版の真正性は証明しません。
 
-このT06a実装はSQLiteのみです。PostgreSQL URLは接続せずunsupported_input/2を返します。Sol reviewでSQLiteの比較・優先順・変更検知を修正しました。全suite/CIの成否は検証記録を参照してください。PostgreSQL snapshot版T06bは未完了です。使い捨てDBの保存型probeや合成受入を、実Capital監視・配信の証拠へ流用しないでください。既存DB/reportの修正やmarker再作成を行わず原本を保持してください。
+PostgreSQL版T06bも同じコマンドで使用できます。対象profileの設定を読み込んだ同じシェルで、既存の`DATABASE_URL`を設定して実行します。値はチャットやGitへ貼らないでください。CSV/UUIDは調査対象の実値へ置き換えます。
+
+```bash
+# DATABASE_URLには確認対象のPostgreSQL URLが設定済みであること。
+# .envをVS Codeで開いただけではシェルへ設定されません。
+mlops-bikectl monitor-inspect --csv /absolute/path/monitor.csv \
+  --run-id '3ae0909d-7ae1-4a09-a756-96a7ed582edf'
+```
+
+PostgreSQLは同一REPEATABLE READ READ ONLYで型・profile・対象行を読みます。接続timeout 5秒、statement timeout 5秒、lock timeout 1秒を固定し、schema/DBを新規作成しません。REALの丸めとSQL NaNは[数値照合ルール](monitor-reconciliation.md#数値と欠落値の固定ルール)に従います。設定されたURIのoptionsは安全な固定値で上書きされ、schemaはその接続のcurrent_schema()を使います。接続不能・権限拒否・timeoutはdatabase_unavailable/2であり、必要行がないと確定したわけではありません。最終unit/PG受入/CI結果は[T06b検証記録](reviews/20261030-t06b-checks.json)を参照してください。使い捨てDBの保存型probeや合成受入を、実Capital監視・配信の証拠へ流用しないでください。既存DB/reportの修正やmarker再作成を行わず原本を保持してください。
 
 Capital監視は[学習参照とPSI v2](training-monitor-reference.md)の手順を使います。`--psi-version psi-v2-constant-bins`と、同じ登録候補の学習参照artifactが必要です。UCIは従来の呼出しとPSIを維持します。
 

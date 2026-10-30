@@ -678,13 +678,13 @@ class MonitorInspectionTests(unittest.TestCase):
         self.assertNotIn("hidden", json.dumps(result))
         self.assertFalse(sentinel.exists())
 
-    def test_s23_postgresql_is_rejected_without_connecting(self):
+    def test_postgresql_failure_is_redacted_without_using_database_initializer(self):
         with patch("bike_mlops.monitor_inspection.sqlite3.connect", side_effect=AssertionError("connected")), \
-             patch("psycopg.connect", side_effect=AssertionError("PostgreSQL connected")), \
+             patch("psycopg.connect", side_effect=OSError("postgresql://user:secret@host/db")), \
              patch.object(Database, "initialize", side_effect=AssertionError("initialize called")), \
              patch.object(Database, "connect", side_effect=AssertionError("connect called")):
             result = self.inspect(db_url="postgresql://user:secret@host/db")
-        self.assertEqual((result["status"], result["exit_code"]), ("unsupported_input", 2))
+        self.assertEqual((result["status"], result["exit_code"]), ("database_unavailable", 2))
         self.assertNotIn("secret", json.dumps(result))
 
     def test_cli_prints_json_and_uses_documented_exit_code(self):

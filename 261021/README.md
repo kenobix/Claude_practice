@@ -18,7 +18,7 @@ Capitalの運用測定を停止した場合は[中断・タイムアウトの確
 - `configs/`: 時系列分割と特徴量契約。
 - `configs/data-profiles/`と`compose.capital.yaml`: UCIとCapital Bikeshareのデータ/targetを別DB・別Compose projectへ分離する設定。実Capital modelと参照artifactは未生成のため、移行実験専用です。参照の保存・検証仕様は[学習参照とPSI v2](docs/training-monitor-reference.md)を参照してください。
 - `tests/`: 時刻リーク、欠損時間、入力重複、ストレージの回帰試験。
-- `docs/`: データ・アーキテクチャ・運用判断。Capital監視の合成受入シナリオと期待時刻は[監視受入基準](docs/monitoring-acceptance.md)に記録しています。保存未確定時の[読取照合契約](docs/monitor-reconciliation.md)に沿うSQLite版`monitor-inspect`をT06aで実装しました。SQLite版はSol reviewで修正・受入を行い、PostgreSQL版T06bが残っています。
+- `docs/`: データ・アーキテクチャ・運用判断。Capital監視の合成受入シナリオと期待時刻は[監視受入基準](docs/monitoring-acceptance.md)に記録しています。保存未確定時の[読取照合契約](docs/monitor-reconciliation.md)に沿う`monitor-inspect`のSQLite版T06aとPostgreSQL版T06bを実装しました。読取専用snapshot・型別比較・中断/遅延commitの[検証記録](docs/reviews/20261030-t06b-checks.json)と[操作手順](docs/runbook.md)を参照してください。
 - `compose.yaml`: MLflow、PostgreSQL、FastAPIの青緑2枠、Caddyを使うローカル運用構成。
 - `data/`: 原本、DB、モデル成果物はGit対象外。証拠として必要な公開可能な集計レポートだけを個別に保存します。
 

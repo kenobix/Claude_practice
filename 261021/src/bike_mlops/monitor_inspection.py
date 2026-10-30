@@ -1,4 +1,4 @@
-"""Read-only reconciliation of one monitor run (T06a: SQLite only)."""
+"""Read-only reconciliation of one monitor run in SQLite or PostgreSQL."""
 from __future__ import annotations
 
 import ast
@@ -10,6 +10,7 @@ import os
 import re
 import sqlite3
 import stat
+import struct
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -290,6 +291,8 @@ def _sqlite_path(url):
 
 
 def _database_rows(url, run_id, expected_profile, expected_target, out, *, read_rows=True):
+    if url.startswith(("postgresql://", "postgres://")):
+        return _postgres_rows(url, run_id, expected_profile, expected_target, out, read_rows=read_rows)
     if not url.startswith("sqlite:///"):
         raise InspectionFailure("unsupported_input", "unsupported_database_backend", 2, priority=4)
     path = _sqlite_path(url)
@@ -370,7 +373,103 @@ def _database_rows(url, run_id, expected_profile, expected_target, out, *, read_
                 connection.close()
 
 
+def _postgres_rows(url, run_id, expected_profile, expected_target, out, *, read_rows=True):
+    import psycopg
+    from psycopg import sql
+    from psycopg.rows import dict_row
+
+    out["database"]["backend"] = "postgresql"
+    connection = None
+    try:
+        # Keyword options override URI options; even the first SELECT is bounded.
+        connection = psycopg.connect(
+            url, autocommit=True, row_factory=dict_row, connect_timeout=5,
+            options="-c default_transaction_read_only=on -c statement_timeout=5000 -c lock_timeout=1000",
+        )
+        connection.execute("BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+        out["database"]["snapshot"] = "postgresql_repeatable_read_only"
+        schema = connection.execute("SELECT current_schema() AS name").fetchone()["name"]
+        # Catalog SELECTs expose schema even without table SELECT privileges,
+        # unlike information_schema's permission-filtered columns view.
+        catalog = connection.execute(
+            "SELECT c.relname,a.attname,t.typname,tn.nspname AS type_schema "
+            "FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace "
+            "JOIN pg_catalog.pg_attribute a ON a.attrelid=c.oid "
+            "JOIN pg_catalog.pg_type t ON t.oid=a.atttypid "
+            "JOIN pg_catalog.pg_namespace tn ON tn.oid=t.typnamespace "
+            "WHERE n.nspname=%s AND c.relname IN ('data_profile_metadata','monitor_windows') "
+            "AND c.relkind IN ('r','p') AND a.attnum>0 AND NOT a.attisdropped", (schema,),
+        ).fetchall()
+        columns = {table: {row["attname"]: row["typname"] if row["type_schema"] == "pg_catalog" else None
+                           for row in catalog if row["relname"] == table}
+                   for table in ("data_profile_metadata", "monitor_windows")}
+        metadata_columns = columns["data_profile_metadata"]
+        if not metadata_columns:
+            out["database"]["profile_status"] = "missing_metadata"
+            out["checks"]["database_profile"] = "unsupported"
+            raise InspectionFailure("legacy_unverifiable", "missing_profile_metadata", 2)
+        if not {"singleton", "data_profile_id", "target_contract_id"} <= metadata_columns.keys():
+            raise InspectionFailure("unsupported_input", "metadata_schema_unsupported", 2)
+        metadata = connection.execute(sql.SQL(
+            "SELECT data_profile_id,target_contract_id FROM {}.data_profile_metadata WHERE singleton=1"
+        ).format(sql.Identifier(schema))).fetchone()
+        if metadata is None:
+            out["database"]["profile_status"] = "missing_metadata"
+            out["checks"]["database_profile"] = "unsupported"
+            raise InspectionFailure("legacy_unverifiable", "missing_profile_metadata", 2)
+        if (metadata["data_profile_id"] != expected_profile
+                or metadata["target_contract_id"] != expected_target):
+            out["database"]["profile_status"] = "mismatch"
+            out["checks"]["database_profile"] = "failed"
+            raise InspectionFailure("database_profile_mismatch", "database_profile_mismatch", 1)
+        out["database"]["profile_status"] = "matched"
+        out["checks"]["database_profile"] = "passed"
+        monitor = columns["monitor_windows"]
+        if not monitor:
+            raise InspectionFailure("unsupported_input", "monitor_table_missing", 2)
+        required = {"window_id", "replay_id", "window_end", "prediction_count", "scored_count",
+                    *METRICS, "psi_json", "missing_json"}
+        if not required <= monitor.keys():
+            raise InspectionFailure("unsupported_input", "monitor_schema_unsupported", 2)
+        if any(monitor[key] not in {"float4", "float8"} for key in METRICS):
+            raise InspectionFailure("unsupported_input", "monitor_numeric_type_unsupported", 2)
+        out["database"]["numeric_storage"] = {
+            key: "binary32" if monitor[key] == "float4" else "binary64" for key in METRICS}
+        if not read_rows:
+            return None
+        rows = connection.execute(sql.SQL(
+            "SELECT window_id,replay_id,window_end,prediction_count,scored_count,label_coverage,mae,rmse,"
+            "psi_json,missing_json FROM {}.monitor_windows "
+            "WHERE window_id LIKE %s ORDER BY window_id LIMIT %s"
+        ).format(sql.Identifier(schema)), (f"monitor:{run_id}:%", MAX_ROWS + 1)).fetchall()
+        if len(rows) > MAX_ROWS:
+            raise InspectionFailure("unsupported_input", "database_row_limit_exceeded", 2)
+        out["database"].update(row_count=len(rows), missing_representations={
+            "sql_null": sum(row[key] is None for row in rows for key in METRICS),
+            # Count NaN only when it is actually accepted as missing below.
+            "sql_nan_missing": 0,
+        })
+        return rows
+    except InspectionFailure:
+        raise
+    except Exception as error:
+        raise InspectionFailure("database_unavailable", f"postgresql_query_failed_{type(error).__name__}", 2) from None
+    finally:
+        if connection is not None:
+            try:
+                connection.rollback()
+            except Exception:
+                # A lost connection must not mask the redacted query failure.
+                pass
+            try:
+                connection.close()
+            except Exception:
+                pass
+
+
 def _show(value):
+    if isinstance(value, float) and math.isnan(value):
+        return "SQL_NaN"
     text = repr(value)
     return text if len(text) <= 512 else text[:509] + "..."
 
@@ -419,10 +518,28 @@ def _compare(csv_rows, db_rows, summary, out):
                 _add_difference(out, end, key, want, got)
         for key in METRICS:
             got = right.get(key)
-            equal = got is None if left[key] is None else (
-                type(got) in (int, float) and math.isfinite(got) and float(left[key]) == float(got))
+            want = left[key]
+            pg_nan = (out["database"]["backend"] == "postgresql" and
+                      type(got) is float and math.isnan(got))
+            equal = got is None or pg_nan if want is None else (
+                type(got) in (int, float) and math.isfinite(got) and want == got)
+            if want is None and pg_nan:
+                out["database"]["missing_representations"]["sql_nan_missing"] += 1
+            elif want is not None and type(got) in (int, float) and math.isfinite(got) and (
+                    out["database"]["numeric_storage"].get(key) == "binary32"):
+                try:
+                    source = want
+                    want = struct.unpack("!f", struct.pack("!f", want))[0]
+                    equal = math.isfinite(want) and struct.pack("!f", want) == struct.pack("!f", got)
+                    if math.isfinite(want):
+                        out["database"].setdefault("binary32_examples", {}).setdefault(key, {
+                            "window_end": end, "source_binary64": source,
+                            "expected_binary32": want, "observed": got,
+                        })
+                except (OverflowError, struct.error):
+                    equal = False
             if not equal:
-                _add_difference(out, end, key, left[key], got)
+                _add_difference(out, end, key, want, got)
         for key, dbkey in (("psi", "psi_json"), ("feature_missing_rates", "missing_json")):
             try:
                 got = strict_json(right[dbkey])
@@ -586,7 +703,9 @@ def inspect_monitor_run(csv_path: Path, run_id: str, *, database_url: str,
     """Return one finite diagnostic JSON object; never initialize or mutate storage."""
     path = Path(csv_path)
     out = _base(str(run_id), path, data_profile_id, target_contract_id)
-    out["database"]["backend"] = "sqlite" if database_url.startswith("sqlite:") else "unsupported"
+    out["database"]["backend"] = ("sqlite" if database_url.startswith("sqlite:") else
+                                   "postgresql" if database_url.startswith(("postgresql://", "postgres://"))
+                                   else "unsupported")
     paths = {name: Path(value["path"]) for name, value in out["files"].items()}
     contents, identities, failures = {}, {}, []
     snapshot_complete = False

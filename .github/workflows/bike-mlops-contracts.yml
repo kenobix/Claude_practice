@@ -83,6 +83,17 @@ jobs:
           set -o pipefail
           timeout --signal=TERM --kill-after=10 180 python scripts/test_capital_request_interruption_postgres.py 2>&1 \
             | tee data/reports/request-interruption-postgres-ci.log
+      - name: Run disposable PostgreSQL monitor reconciliation test
+        if: >-
+          ${{ !cancelled() && steps.install-lock.outcome == 'success' &&
+          steps.install-project.outcome == 'success' && steps.pip-check.outcome == 'success' }}
+        env:
+          MLFLOW_DISABLE_AGENT_HINT: "1"
+        run: |
+          set -o pipefail
+          mkdir -p data/reports
+          timeout --signal=TERM --kill-after=10 180 python scripts/test_monitor_inspection_postgres.py --run-disposable 2>&1 \
+            | tee data/reports/monitor-inspection-postgres-ci.log
       - name: Upload synthetic system test log
         if: always()
         uses: actions/upload-artifact@v4
@@ -92,5 +103,6 @@ jobs:
             261021/data/reports/synthetic-system-ci.log
             261021/data/reports/snapshot-postgres-ci.log
             261021/data/reports/request-interruption-postgres-ci.log
+            261021/data/reports/monitor-inspection-postgres-ci.log
           if-no-files-found: ignore
           retention-days: 14

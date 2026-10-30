@@ -1,18 +1,18 @@
 # 監視保存の読取照合契約（T06）
 
-policy IDは `monitor-run-reconciliation-v1`。2026-10-30にSolで状態・比較・読取境界を固定した。SQLite版T06aは実装し、Sol reviewで修正・SQLite受入を完了した。PostgreSQL版T06bは未実装である。設計時点の保存挙動確認は[設計証拠](reviews/20261030-t06-design.json)を参照。
+policy IDは `monitor-run-reconciliation-v1`。2026-10-30にSolで状態・比較・読取境界を固定した。SQLite版T06aに続き、PostgreSQL版T06bを実装し、使い捨てPostgreSQLで読取照合を検証した。最終の検証・CI状態は末尾と[検証記録](reviews/20261030-t06b-checks.json)を参照。設計時点の保存挙動確認は[設計証拠](reviews/20261030-t06-design.json)を参照。
 
 ## 目的と担当範囲
 
 既存monitorはCSV、JSON、DB transaction、complete markerの順に保存する。ファイルとDBを一度にcommitできないため、marker不在だけではDBの成否を決められない。T06は観測したファイルとDB行を照合し、操作メモをstdoutのJSONへ出す。採点・再送・修復・marker再作成・DB更新・registry操作はしない。
 
-- **T06a / P1 / D2 / Luna実装→Sol review**: ファイル検査、状態判定、SQLite読取、CLI、合成受入。PostgreSQL URLは接続せず `unsupported_input` とする。
+- **T06a / P1 / D2 / Luna実装→Sol review**: ファイル検査、状態判定、SQLite読取、CLI、合成受入。T06aの受入時点ではPostgreSQL URLを接続せず `unsupported_input` とした。T06bで対応を追加した。
 - **T06b / P1 / D3 / Sol**: PostgreSQLの読取専用snapshot、型別比較、使い捨てPostgreSQLでの中断・遅延commit受入と全体review。T06aの後に進める。
 - T06全体の完了には両方が必要。保存の一致は監視品質の合格や実候補の配信許可を意味しない。T02の実証producerと、実候補/HTTP MLflow監視は別課題である。
 
 ## 入力と出力
 
-SQLite版CLIは既存 `monitor` と並ぶ新しいコマンドとする。既存 `monitor` の引数構造は変えない。
+照合CLIは既存 `monitor` と並ぶ新しいコマンドとする。既存 `monitor` の引数構造は変えない。
 
 ```bash
 # SQLite版。原本を保全した検証対象へ使う形式。
@@ -53,7 +53,7 @@ JSONは有限値またはnullだけを使う。SQL NaNを表示する場合は�
 
 SQLiteは既存の通常ファイルを `Path.as_uri()` と `mode=ro` で開く。入力の文字列をURI queryとして流さない。`PRAGMA query_only=ON` と `BEGIN` を使い、同一read transactionでmetadata/行を取得する。存在しないDB・directoryを作らず、`:memory:`も対象外。`Database.connect()`、`Database.initialize()`、CLIの `_database()` は呼ばない（既存実装はmkdir/CREATE/ALTERを行い得る）。`immutable=1`はlockと変更検出を省き、他processからもDBが変わらないと仮定するため、稼働中DBには使わない。SQLite自身のWAL/SHM・read lock動作を、logical rowの変更とは混同しない。[URI公式仕様](https://www.sqlite.org/uri.html#uriimmutable)と[WAL読取条件](https://www.sqlite.org/wal.html#read_only_databases)を根拠にする。受入はSQL行とreport bytesの非変更を検査する。
 
-T06bのPostgreSQLはlocal/設定済み接続先のDBを `BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY` で読み、接続timeout 5秒、statement timeout 5秒、lock timeout 1秒を適用する。SELECTとtransaction/session制御だけを使い、schema/table/列の確認もSELECTにする。型の確認とmetadata/行を同じsnapshotで読む。T06aではこの接続をまだ実装しない。
+T06bのPostgreSQLはlocal/設定済み接続先のDBを `BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY` で読み、接続timeout 5秒、statement timeout 5秒、lock timeout 1秒を適用する。SELECTとtransaction/session制御だけを使い、schema/table/列の確認もSELECTにする。型の確認とmetadata/行を同じsnapshotで読む。T06bでこの接続を実装した。URIの接続timeout/optionsより固定の接続5秒・statement 5秒・lock 1秒とdefault_transaction_read_onlyを優先する。接続timeoutはlibpqの接続試行ごとの設定で、複数hostやDNSも含めた処理全体の厳密な5秒deadlineではない。schemaはその接続のcurrent_schema()を使い、識別子をquoteする。型はpg_catalogのSELECTで調べ、profile確認前に対象runの行をSELECTしない。tableのSELECT権限がない場合も、catalogから形式を確認した後にdatabase_unavailableへ分類する。
 
 DBの `data_profile_metadata(singleton=1)` がactive profile/targetと違う場合は `database_profile_mismatch`。metadataのない旧DBは `legacy_unverifiable`、monitor table/必須列のない形式は `unsupported_input`。いずれもinitializeで補わない。接続/SELECT権限/timeoutの失敗は `database_unavailable` として秘匿した診断codeを返す。
 
@@ -96,7 +96,7 @@ validなCLI呼出しでは、次のstatus/exitを固定する。missing marker�
 | database_unavailable | 2 | DB未取得/不在/接続・権限・timeoutのため照会不能。 |
 | changed_during_inspection | 2 | ファイルが読取中に変わり、安定した照合にならない。 |
 | legacy_unverifiable | 2 | UUID/DB metadataを持たない旧記録。保全して自動結合しない。 |
-| unsupported_input | 2 | 対応外形式・サイズ・列型。T06aのPostgreSQLもこれ。 |
+| unsupported_input | 2 | 対応外形式・サイズ・列型。T06a時点のPostgreSQL拒否もこの状態だった。 |
 | inspection_error | 2 | 想定外の内部失敗。例外classのみを出し、message/DSNを漏らさない。 |
 
 ファイル読取前の危険なpathは即invalid、size上限等は即unsupportedでよい。その他の安定性再確認後の優先順は、changed→ファイルの破損/不正値→ファイルidentity/hash不一致/markerありでの必要ファイル欠落→DB profile違い→DB照会不能/未対応backend→legacy/形式非対応→DB行の不一致→下表の一致/未確定。複数の失敗はchecksに残す。ファイルだけで不一致を確定できればDBを読まず返してよいが、読取済みファイルの変化は再確認する。markerがあって必要ファイル、または照会できたDBの必要行がない場合はmismatchである。
@@ -167,3 +167,24 @@ Sol reviewでは期間末尾の未確認窓、JSON boolと数値の同値扱い�
 対象54 testsではUCI形式とCapital追加列、read-only接続へのUPDATE拒否、metadata/行の同一SQLite snapshot、他run/旧行とreportの非変更、CLI exit 0/1/2、許可・ロック失敗の秘匿、差分50件/値512文字上限も確認した。実行・失敗・修正と全suite/CIの最終成否は[検証記録](reviews/20261030-t06a-checks.json)と[作業ログ](../work_log.md)を参照する。PostgreSQL接続、REAL量子化、SQL NaN、遅延commitはT06bの残件であり、SQLiteや既存CIのPostgreSQL試験成功をT06bの受入へ転用しない。
 
 実装commit df4c3b9の[CI 41038726909](https://github.com/kenobix/Claude_practice/actions/runs/41038726909)は全331 tests、既存の隔離Docker/PG試験とcleanupまで成功した。これはSQLite版T06aと既存機能の回帰確認である。T06bのPG inspectorは未実装のままで、S13のOS実権限/実busy timeoutの組合せも追加確認として残る。
+
+
+## T06b PostgreSQLの実装と受入（2026-10-30）
+
+`postgresql://`と`postgres://`を同じ公開入口/CLIで受け付ける。DB初期化や既存writer/schemaの変更は行わない。明示的なREPEATABLE READ READ ONLYを開始し、current_schema、catalog、metadata、UUIDで限定したmonitor行を同じsnapshotから取得してrollback/closeする。接続を失った後のcleanup失敗で元の秘匿済み診断を隠さない。[PostgreSQLの分離レベル](https://www.postgresql.org/docs/17/transaction-iso.html)・[READ ONLY](https://www.postgresql.org/docs/17/sql-set-transaction.html)・[psycopg接続引数](https://www.psycopg.org/psycopg3/docs/api/connections.html)に沿う。
+
+REALは列ごとにbinary32へ量子化し、DOUBLE PRECISIONとJSON text内の数値はbinary64のまま比較する。`database.binary32_examples`に各列の最初の有限値についてCSV元値・量子化後期待値・観測値を最大3例表示し、差分にも量子化後期待値を記録する。SQL NaNはCSV空欄（latestならJSON null）の場合だけ欠落として数え、有限値との不一致では`SQL_NaN`という文字列を表示する。
+
+最終対象unit 60件、使い捨てPG受入25件を実行する。PG受入はS18/S19/S20/S21に加え、profile確認前の対象行SELECT拒否、未知型、1 ULP差、JSON精度/不正型、SQL NULL、同一snapshotのmetadata、権限・lock/statement timeout・実接続喪失、他run保全、CLI exit 0/1/2、marker出現、writer例外・commit前後の実SIGKILLを含む。全窓未観測から別接続がcommitしても同一inspectionでは未観測、次回ではDB全行一致/markerなしとしてunconfirmedになる。受入中も原本修復や自動再送は行わない。
+
+S23はT06a時点のbackend拒否を記録した歴史的caseであり、T06b以降はPGの接続と照合が期待動作になる。旧T06a検証JSON/logは書き換えない。新検証JSON/logに変更後の結果・初回失敗と修正を記録する。OS実権限/実busy timeoutというSQLite補足と、実Capital候補/HTTP monitor・T02証拠producerは引き続き別の残課題である。使い捨て合成受入の成功を実監視・配信の証拠へ転用しない。
+
+再現コマンド（既存local imageとDockerを使い、専用containerを作成・削除する）:
+
+```bash
+cd 261021
+MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m unittest discover -s tests -p 'test_monitor_inspection*.py' -v
+MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python scripts/test_monitor_inspection_postgres.py --run-disposable
+```
+
+CIにT06b専用stepを追加し、`monitor-inspection-postgres-ci.log`を既存artifactへ保存する。実行済みの件数・終了値・cleanup・source/log SHA・post-push CIは[検証記録](reviews/20261030-t06b-checks.json)と[作業ログ](../work_log.md)へ記録する。ネットワーク上の実接続timeout満了は未注入で、接続5秒の指定はunitで検査し、実接続失敗・切断と実statement/lock timeoutはPG受入で確認する。

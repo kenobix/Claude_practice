@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-30T14:03:46.978719+00:00",
+  "base_commit": "584ff07",
+  "task": "T06b PostgreSQL read-only monitor reconciliation",
+  "policy_id": "monitor-run-reconciliation-v1",
+  "status": "local_acceptance_passed_ci_pending",
+  "scope": "synthetic_only",
+  "automatic_repair": false,
+  "automatic_promotion": false,
+  "real_capital_evidence": false,
+  "local_results": {
+    "target_final": {
+      "tests": 60,
+      "exit_code": 0
+    },
+    "postgres_final": {
+      "tests": 25,
+      "exit_code": 0,
+      "cleanup_complete": true
+    },
+    "full_suite_v1": {
+      "tests": 336,
+      "exit_code": 0,
+      "source_phase": "before final cleanup diagnostic guard and one extra unit test; final code covered by final target/PG and pending CI"
+    },
+    "static_checks": "passed"
+  },
+  "case_coverage": {
+    "S18": "REAL each metric / 1 ULP; double precision; JSON exactness",
+    "S19": "SQL NaN only for missing incl latest null, NULL, finite vs NaN and Infinity mismatches",
+    "S20": "UPDATE rejected on actual reader connection; settings inspected by test hook",
+    "S21": "metadata and row reads from same repeatable-read snapshot; other transaction commits between schema and metadata/rows; next call sees it",
+    "S10": "profile mismatch refuses run SELECT",
+    "S13": "real connection failure, termination, table permission, statement and lock timeouts; connect_timeout arg unit only",
+    "S14": "marker appears during database snapshot",
+    "S16": "unrelated/legacy logical rows preserved",
+    "CLI": "real subprocess PostgreSQL exit 0/1/2 with finite JSON and no DSN",
+    "interruption": "writer exception and actual SIGKILL before commit / after commit before marker",
+    "SQLite": "54 prior cases retained; historical S23 PostgreSQL rejection superseded by support; old evidence preserved"
+  },
+  "failures_and_limits": [
+    "postgres-v1 failed one trace assertion mixing two run IDs; isolated per inspection, no production mismatch rules relaxed",
+    "target-v1 contains only prior 54 tests after wrong creation path; transcribed terminal note identifies limitation",
+    "Network connect timeout expiration not injected; argument fixed to five seconds and checked in unit",
+    "SQLite actual OS permission/busy timeout supplement remains",
+    "Real candidate/HTTP monitoring and T02 evidence producer remain",
+    "Known T03/T13 nondeterministic failures not reproduced here and not resolved"
+  ],
+  "sources": [
+    {
+      "path": "261021/src/bike_mlops/monitor_inspection.py",
+      "bytes": 41977,
+      "sha256": "dbfe021d2f27ec2c0dc5a8bce3115732bad12f6a858529725f818d003b8bf483"
+    },
+    {
+      "path": "261021/tests/test_monitor_inspection.py",
+      "bytes": 38845,
+      "sha256": "71f437bff1ad3eda6011f36ac6429c7fd7d471c42a7c230ee4e9f861b5291a0b"
+    },
+    {
+      "path": "261021/tests/test_monitor_inspection_postgres.py",
+      "bytes": 5413,
+      "sha256": "880ac12272b6d14448e65ecb08853fbcb2fe4c8dc3fc47b2362bd05e28592552"
+    },
+    {
+      "path": "261021/scripts/test_monitor_inspection_postgres.py",
+      "bytes": 31085,
+      "sha256": "f8dde6e54a8b83cf1a40f43dc331d951645052427fe3aa6f06f6e86fd2fa887a"
+    },
+    {
+      "path": ".github/workflows/bike-mlops-contracts.yml",
+      "bytes": 3988,
+      "sha256": "6770e736e11aaeb2c3c6b00c3a625876c57d1a95ee5bef049eb6169113869e2a"
+    }
+  ],
+  "logs": [
+    {
+      "path": "261021/data/reports/20261030-t06b/full-suite-v1.log",
+      "bytes": 62908,
+      "sha256": "9561a15ef252063947df9f0d21e4c74b4af4803d0460ff81ab78f4d87ce16873",
+      "exit_code": 0,
+      "test_count": 336,
+      "elapsed_seconds": 143.3
+    },
+    {
+      "path": "261021/data/reports/20261030-t06b/postgres-final.log",
+      "bytes": 3946,
+      "sha256": "bcd489cb73a567a19698e2f27b637ab63ada791b9ee09a901ee3483cc6f0c701",
+      "exit_code": 0,
+      "test_count": 25,
+      "elapsed_seconds": 27.049
+    },
+    {
+      "path": "261021/data/reports/20261030-t06b/postgres-v1.log",
+      "bytes": 4628,
+      "sha256": "d233289a98ba2b4c984befd2cd3f2ebbdf82f448ed3ef1d89ad39a6f69812ec4",
+      "exit_code": 1,
+      "test_count": 21,
+      "elapsed_seconds": 20.393
+    },
+    {
+      "path": "261021/data/reports/20261030-t06b/postgres-v2.log",
+      "bytes": 3781,
+      "sha256": "ae5b32fed0174f8a55506d2728816cf596633d04c2838c6dd5d262813fc2f0c9",
+      "exit_code": 0,
+      "test_count": 24,
+      "elapsed_seconds": 22.563
+    },
+    {
+      "path": "261021/data/reports/20261030-t06b/session-observations.json",
+      "bytes": 825,
+      "sha256": "05f12cf4a21074f3163703e3481e302d41129f23f25a147378e8329f1906d02d"
+    },
+    {
+      "path": "261021/data/reports/20261030-t06b/static-final.log",
+      "bytes": 395,
+      "sha256": "ae461e184b147547bb1a26f91d5ace87e0c414a4c15101ca5c7956558efabb1c",
+      "exit_code": 0
+    },
+    {
+      "path": "261021/data/reports/20261030-t06b/target-final.log",
+      "bytes": 10037,
+      "sha256": "d925c1c8b76f2fa6725d9f59b25e5f6b7844b2e89db76d0c22ba84acb884956d",
+      "exit_code": 0,
+      "test_count": 60,
+      "elapsed_seconds": 17.869
+    },
+    {
+      "path": "261021/data/reports/20261030-t06b/target-v1.log",
+      "bytes": 9005,
+      "sha256": "198d286b8d4cb1c423eeeb588a628bc0c622c1a0e3d000abb2a4fc89948c7ba3",
+      "exit_code": 0,
+      "test_count": 54,
+      "elapsed_seconds": 13.304
+    },
+    {
+      "path": "261021/data/reports/20261030-t06b/target-v2.log",
+      "bytes": 9853,
+      "sha256": "ce36d669184f23d9ecfc49f627b70b564c34aac45e7dcb33ff01b51a3185439d",
+      "exit_code": 0,
+      "test_count": 59,
+      "elapsed_seconds": 15.165
+    }
+  ],
+  "ci": {
+    "status": "pending_implementation_commit"
+  }
+}
