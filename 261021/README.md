@@ -6,6 +6,8 @@
 
 専門用語は[初学者向け用語集](docs/glossary.md)、出典・targetの切替と隔離方法は[データプロファイル](docs/data-profiles.md)を参照してください。
 
+旧PostgreSQL予測列の移行前は[T08の検証と復元](docs/prediction-precision-migration.md)を参照してください。保存値を保持してもAPIの十進表示が変わる場合があります。
+
 Capitalの運用測定を停止した場合は[中断・タイムアウトの確認手順](docs/measurement-interruption.md)を使います。要求ごとの永続記録から送信意図と応答確認を調べ、DBにまだ見えない要求を未送信と断定しません。
 
 2026-10-28の[初回差分監査](docs/reviews/20261028-review.md)では、UCIの保存済み予測・誤差・PSIを照合し、当時の旧Capital実験は最終評価で再学習したため同一artifactの証明にならないと確認しました。その後、同一artifactを評価する候補bundleと消費台帳、隔離計測を合成データで実装しました。旧実験の結果を後から新しい合格証拠へ変更していません。

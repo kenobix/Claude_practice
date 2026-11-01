@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "task": "T08 legacy PostgreSQL prediction precision migration and restore",
+  "base_commit": "c38ee00",
+  "session_date_local": "2026-11-01",
+  "execution_host_recorded_at_utc": "2026-11-01T02:00:36.926930+00:00",
+  "status": "local_passed_ci_pending",
+  "scope": "synthetic_only",
+  "production_code_changed": false,
+  "real_database_migration_performed": false,
+  "local_result": {
+    "task": "T08",
+    "scope": "synthetic_only",
+    "status": "passed",
+    "tests_run": 9,
+    "failures": 0,
+    "errors": 0,
+    "observations": {
+      "api_retry": {
+        "same_binary32_stored_value": true,
+        "stable_after_migration": true,
+        "exact_historical_decimal_json_preservation": false,
+        "decimal_display_changes": [
+          {
+            "request_id": "legacy-request-000",
+            "before_text_decoded": 0.33333334,
+            "after_exact_binary32": 0.3333333432674408
+          },
+          {
+            "request_id": "legacy-request-001",
+            "before_text_decoded": 415.72473,
+            "after_exact_binary32": 415.7247314453125
+          },
+          {
+            "request_id": "legacy-request-002",
+            "before_text_decoded": 15.189926,
+            "after_exact_binary32": 15.189926147460938
+          }
+        ],
+        "changed_input_status": 409,
+        "model_reload_required": false
+      },
+      "backup_restore": [
+        {
+          "phase": "before",
+          "bytes": 8251,
+          "sha256": "48c040fde7dbfa155e3c8468e89e1d1e57eca552e4c60d5094ce877ed5ae9bcb",
+          "schema_rows_metadata_and_api_match": true,
+          "restore_target": "second_owned_instance_and_volume"
+        },
+        {
+          "phase": "after",
+          "bytes": 8309,
+          "sha256": "d8de74f1755b95d7679aec88f0463f5c254e491a659f52f9bb74c481abe64659",
+          "schema_rows_metadata_and_api_match": true,
+          "restore_target": "second_owned_instance_and_volume"
+        }
+      ],
+      "exception_and_connection_loss": "passed",
+      "new_binary64_and_conflict": "passed",
+      "parallel_initialize": "passed",
+      "profile_rejection_rollback": "passed",
+      "sigkill_before_after_commit": "passed",
+      "storage_metadata_repeat_initialize": "passed",
+      "old_unmarked_uci_columns": "passed"
+    },
+    "image_id": "sha256:f3bd19c606e442c3d7bdfa8002e03fe260a1023351e0ea4598032022b68dd6e3",
+    "separate_source_and_restore_volumes": true,
+    "cleanup_complete": true,
+    "real_database_migration_performed": false,
+    "deployment_permission": "not_evaluated"
+  },
+  "regression": {
+    "storage_tests": 8,
+    "api_tests": 5,
+    "exit_code": 0
+  },
+  "important_limit": "The same stored binary32 value is retained, but historical decimal JSON prediction values can differ after REAL to DOUBLE PRECISION. Exact historical JSON equality is not guaranteed.",
+  "sources": [
+    {
+      "path": "261021/scripts/test_prediction_migration_postgres.py",
+      "bytes": 20656,
+      "sha256": "d52ebfb6e823e90ae19445c727d7de59ced0c76c1e507ede14901dcafe4cd635"
+    },
+    {
+      "path": "261021/src/bike_mlops/db.py",
+      "bytes": 19196,
+      "sha256": "0be31f1560243b0201447c4f5caca63438eee42ab7358b7e901edae7f8f83536"
+    },
+    {
+      "path": "261021/src/bike_mlops/api.py",
+      "bytes": 14087,
+      "sha256": "7a5593ccc8fdb036d29cc1935198f4159a5ec09cd02eab092ddb25d03066f64f"
+    },
+    {
+      "path": ".github/workflows/bike-mlops-contracts.yml",
+      "bytes": 4840,
+      "sha256": "eededb1152ddddff525f830122aa5e5353efedba1a846c80bf29b8631d4f670f"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "261021/data/reports/20261101-t08/api-regression.log",
+      "bytes": 952,
+      "sha256": "4e1b84d2ed7cb0873c8fb3f71cb9c951ed07025248d041f3a449a80149918b90",
+      "exit_code": 0,
+      "tests": 5,
+      "elapsed_seconds": 0.896
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/attempt-final/after.dump",
+      "bytes": 8309,
+      "sha256": "41d97d99d69e5a5be223330eaddba03c72b31855d4bf2b103a74253b18b20f2c"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/attempt-final/before.dump",
+      "bytes": 8251,
+      "sha256": "45b29db46059d8895f2068e361bf62048dff0bbc5272810b952dad2de3e8b679"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/attempt-final/summary.json",
+      "bytes": 2042,
+      "sha256": "aafdf64b4e328ed7cf1a70ffe76c0c8e2e21c2b8022bbf8744704f26c69b8709"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/attempt-reviewed/after.dump",
+      "bytes": 8309,
+      "sha256": "d8de74f1755b95d7679aec88f0463f5c254e491a659f52f9bb74c481abe64659"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/attempt-reviewed/before.dump",
+      "bytes": 8251,
+      "sha256": "48c040fde7dbfa155e3c8468e89e1d1e57eca552e4c60d5094ce877ed5ae9bcb"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/attempt-reviewed/summary.json",
+      "bytes": 2042,
+      "sha256": "6636ec51121cdaeeac4f7416a62c289bfc9bf54ca5ec6746047b531dc0003ff5"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/attempt-v1/after.dump",
+      "bytes": 8309,
+      "sha256": "2d0fbf18546b7fe19e92b10c519063da8ed2e4662b7f3aaf4f26ed8ce51a8d98"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/attempt-v1/before.dump",
+      "bytes": 8251,
+      "sha256": "64e808c51b1879590d78773f808634eb23e7f0a8464d698098b63b5abf9f16df"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/attempt-v1/summary.json",
+      "bytes": 2042,
+      "sha256": "a07e2579e7bf88ec45de37a5db11b2d2da95d8d584dd9fd198e33de94a98a000"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/session-observations.json",
+      "bytes": 472,
+      "sha256": "180a68fcf600a98b84c1cf9cb76dfefb5cc4c1bbe8bba93fc15a8b3629b36721"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/static-final.log",
+      "bytes": 374,
+      "sha256": "cdde7f250c77f4c3a4b7e791873ca3f14c15139be207822029b860231175cc00",
+      "exit_code": 0
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/storage-regression.log",
+      "bytes": 1233,
+      "sha256": "e44bf8e2b05c9b0e44eff03c2b57c6917b42fbab322f61689422ab4c85ddf9f9",
+      "exit_code": 0,
+      "tests": 8,
+      "elapsed_seconds": 0.475
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/target-final.log",
+      "bytes": 2992,
+      "sha256": "8d80ec32a4aaef6edd9bcfeb3dee9ff96e860c4a58af2d03309a62caad2712cc",
+      "exit_code": 0,
+      "tests": 9,
+      "elapsed_seconds": 7.331
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/target-reviewed.log",
+      "bytes": 2992,
+      "sha256": "b0676fe959b434e773b6888ec8eb05e1daf36185040c7fcf307228eecede7067",
+      "exit_code": 0,
+      "tests": 9,
+      "elapsed_seconds": 7.429
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/target-v1.log",
+      "bytes": 2992,
+      "sha256": "f9f234fa3fca380978f296534ca2742319c45cd77a9001407ee8deb02dd14636",
+      "exit_code": 0,
+      "tests": 9,
+      "elapsed_seconds": 7.619
+    }
+  ],
+  "ci": {
+    "status": "pending_implementation_commit"
+  },
+  "remaining": [
+    "Actual UCI migration not performed; historical JSON equality requires separate response-policy design if needed",
+    "T07/T17 recovery and artifact/DB paired restore remain",
+    "T03/T13 nondeterministic failure causes remain",
+    "T02 real evidence producer and actual Capital candidate approval remain",
+    "T15 existing monitor persistence PostgreSQL CI connection remains; fixed Luna handoff available"
+  ]
+}

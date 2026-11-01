@@ -2592,3 +2592,30 @@ workflowにはT06b専用PG受入stepとlog artifactを追加した。T15の既�
 CIの最終sourceは全337件39.970秒、T06b PG受入25件14.461秒で成功。全job/step成功・既存system/PG試験・cleanupも確認した。artifact 12985105031のZIPは3,379 bytes、SHA 9d82e8d210629000ef6e10531d4edd817d228fd3522a4fc706f8986fe1ab1d9cでGitHub digestと一致し、ZIP integrityと4 memberのbytes/SHAを164ac53-artifact-validation.jsonへ記録。synthetic-systemは1,050要求/監査行・p95 35.44038ms・numeric matchedでblocked/not_evaluatedを維持している。これを実候補の運用合格にはしない。
 
 検証JSON/照合文書/計画/このログの4ファイルへ実装commit CIを追記し、T06a/bの実装・合成受入を完了にする。記録commit自体のCIを先取りして成功にしない。次は計画の独立P1/D3で、既存UCIへの新コード適用前に必要なT08へ進める。既知T03/T13の不安定性・T07/T17・T02 producerと実Capital/HTTP監視は残件のまま。
+
+## T08 旧REAL予測列の移行・復元検証（2026-11-01、Sol）
+
+T06bの記録commit c38ee00を基点に、plan §11.6とt08-sol-handoffを確認し、次の独立P1/D3を実施した。`db.py`の既存initializeにはadvisory lockと同transaction内のREAL→DOUBLE PRECISION移行が既にあるため、production source/API/schema定義は変更しない。追加は専用受入script、CI接続、制約/手順/証拠/次依頼の記録である。
+
+専用scriptは初期化前にSCHEMAの予測列だけREALにした合成旧DBを作る。4数値（1/3、415.72473、15.189926280821982、0）、全tableの旧行、model/artifact/profile/feature metadataを置き、型/値/列null/defaultを比較する。旧値はSQLでdoubleへcastして読み、REAL textをPythonへ変換した近似値を正確な保存binary32と誤認しない。移行後の新行のbinary64、保存済みID/入力hash/元版の保持、異入力拒否を確認した。
+
+APIはproduction routerを専用FastAPI/TestClientへ載せ、lifespanを動かさず旧DBが比較前に自動移行しないようにした。モデル未読込・現在版99でも同一IDが元保存版7を返し、変更入力409となる。ここで**旧REALの十進API値と移行後の値が完全一致しない**ことを実測した。415.72473→415.7247314453125、0.33333334→0.3333333432674408、15.189926→15.189926147460938だが、各々のbinary32表現は同じで、旧保存値を広い型へそのまま移している。モデル改善や丸め前精度の復元ではない。過去JSON完全一致を保証せず、必要な利用者には別の応答policy設計が要ると文書/計画へ明記した。旧行の再丸め・新schema・過去logの書換えはしていない。
+
+ALTER実行後に例外/実backend切断を注入し、型変更・行のtransaction rollbackを確認した。reviewでALTER後まで到達したflagと例外型も検査するようにした。別子processをALTER後commit前とcommit後に実SIGKILLし、前者は旧schema、後者は移行済みで全旧行/metadataを保持し、再initializeが一貫することを確認。別接続2 initializerの並行実行、profile拒否による先行ALTERのrollback、旧candidate/profile列とmetadata不足のUCI補完も試した。
+
+backup/restoreは二つの専用container・別anonymous volumeで行った。移行前/後のpg_dump --format=custom --no-owner --no-aclを新規before.dump/after.dumpへ保存し、第二DBでpg_restore --single-transaction --exit-on-error後の型/全行/metadata/API再送を照合。旧backupはrestoreだけではREALのままであり、明示initializeで移行する。新行binary64も復元後に一致した。dumpは合成tableだけで認証値を含めず、bytesは試行ごとに変わり得るため各SHAを個別記録する。Dockerはlocal Unix socket、既存imageのみ、ランダムloopback port・非superuser app owner・専用label/IDと別volumeを使用。終了後のcontainer/volume残存も検査した。
+
+実行は261021から、MLFLOW_DISABLE_AGENT_HINT=1、pipefail/tee、PIPESTATUS[0]のEXIT_CODEを記録して行った。data/reports/20261101-t08/以下に全試行を保持する。準備時にcwdへ二重の261021 pathでscript作成が失敗し、その時点のcompileもファイル不在となった。absolute apply_patchで作成し、誤って作った空のnested directoryだけをrmdirした。terminal観測はsession-observations.jsonへraw test logと分けて保存。test失敗を成功logへ上書きしていない。
+
+| log | command / result |
+|---|---|
+| target-v1.log | timeout --signal=TERM --kill-after=10 180 .venv/bin/python scripts/test_prediction_migration_postgres.py --run-disposable --evidence-dir data/reports/20261101-t08/attempt-v1。9件7.619秒、exit 0。 |
+| target-final.log | 表記整形・cleanup残存確認追加後、同commandのevidence-dirをattempt-finalへ変更。9件7.331秒、exit 0。 |
+| target-reviewed.log | ALTER到達flag/例外型検査追加後、attempt-reviewedへ変更。最終9件7.429秒、exit 0。 |
+| storage-regression.log | timeout 120 .venv/bin/python -m unittest discover -s tests -p test_storage.py -v。8件0.475秒、exit 0。 |
+| api-regression.log | timeout 90 .venv/bin/python -m unittest discover -s tests -p test_api.py -v。5件0.896秒、exit 0。 |
+| static-final.log | Python AST、YAML parse、workflow全run blockのbash -n、compileall、pip check、git diff --check成功。pip cache権限warningのみ。 |
+
+9受入・13回帰はすべて成功しcleanupも確認した。production codeは不変なので全unit suiteを根拠なくlocal反復せず、337件と既存systemをpost-push CIで確認する。CIはT08専用stepを追加しlog/summary/2合成dumpだけを既存artifactへ保存する。T16のoperational journal archiveやT15の既存monitor persistence PG接続を完了にしない。
+
+source/log/dump hashと観測summaryはdocs/reviews/20261101-t08-checks.jsonに記録した。利用者環境の日付は2026-11-01、実行基盤のUTC時計はmanifestのexecution_host_recorded_at_utc/raw logにそのまま残して区別した。次のSol P1はT03/T13の不安定性原因追跡とT07/T17の配信・復旧・metadata整合。Lunaへは固定したT15だけを渡せるようdocs/t15-luna-handoff.mdを作成したが、実委譲はしていない。実UCI移行・実Capital候補/監視・T02 producer・実採否は未実施のままである。
