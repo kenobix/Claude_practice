@@ -2627,3 +2627,31 @@ source/log/dump hashと観測summaryはdocs/reviews/20261101-t08-checks.jsonに�
 raw unit log、最終metadata、artifact 13066970139のraw ZIPをdata/reports/20261101-t08/20abdab-*へ保存した。ZIPは10,905 bytes、SHA f8b4d540112d6c7d3f6106efed6221893cbd1a953999635fac40ce0411550af6でGitHub digestと一致。ZIP integrityと8 memberのbytes/SHA、t08-ci/summary.jsonの9件成功/非実DB/cleanupとbefore.dump/after.dump各hashを検算し、20abdab-artifact-validation.jsonへ記録した。ソース/restore双方の別volumeとcleanupを最終CIでも確認し、過去十進JSON完全一致falseという制約をsummaryにも保持した。
 
 T08の合成移行・再送・中断・復元検証を完了とし、計画のR08該当checkbox/作業表も更新した。残るSolのP1はT03/T13の非決定的失敗原因、T07/T17配信復旧/metadata整合、T02 producer/実監視等。Lunaには固定済みT15（P2/D2）のCI接続依頼を渡せる。新データ/独立protocolを要するT09→T10→T11→T12、実採否T13とT16等も引き続き未完了で、全計画を完了にしていない。今回の記録commitは計画・T08文書・検証JSON・このログの4ファイルのみで、実装commit CIの成功を記録する。記録commit自体のCI成功を先取りしない。
+
+## T15 — monitor persistence PostgreSQL試験のCI接続（Luna実装、Sol review待ち）
+
+基点`03d1bce7528ee3c5c2e96f878e6f0aeec2bd94b4`から、`docs/t15-luna-handoff.md`、plan §11.6、既存workflowと`test_monitor_persistence_postgres.py`を確認した。開始時のtracked差分はなく、無関係な未追跡の`260701/charts/`、`260701/logs/`、`260905/sets/bookkeeping-2kyu/images/assekiritono-flow.png`は変更していない。編集は指定範囲のworkflow、README、plan、work log、新規検証JSONに限定し、既存script/source/schema/writer/lockは変更していない。
+
+workflowの`synthetic-system` jobへ、lock/project installと`pip check`がすべて成功し、jobがcancelされていない場合に動く独立stepを追加した。`MLFLOW_DISABLE_AGENT_HINT=1`、`set -o pipefail`、`timeout --signal=TERM --kill-after=10 300`を使い、既存scriptの失敗を隠さず`data/reports/monitor-persistence-postgres-ci.log`へteeする。artifact allowlistにはこのログだけを追加した。READMEは当該stepが使い捨て合成DBであり実監視/配信証拠ではないことを説明する。plan上のT15はCI接続実装済み・Sol review待ち・push後CI未確認に更新した。
+
+実行試行と結果（コマンド出力、終了値、SHA-256は[`T15検証JSON`](docs/reviews/20261101-t15-checks.json)と`data/reports/20261101-t15/`に保存。各logはstdout/stderrを結合して記録）:
+
+- 通常sandboxの`docker version`はDocker socket permission deniedでexit 1（`docker-sandbox-check.log`）。許可された使い捨てDB検証のため権限付き実行に切り替え、Docker接続とcleanupを確認した。
+- `MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 300 python scripts/test_monitor_persistence_postgres.py`は`python`がPATH上にないため開始できずexit 127。`postgres-attempt-1.log`へ記録した。
+- 同じ受入scriptを`MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 300 .venv/bin/python scripts/test_monitor_persistence_postgres.py`で実行しexit 0。使い捨てローカルPostgreSQL/非superuser DBで旧行不変、独立run二回、unique衝突時の先行INSERT rollback、失敗reportにcompletion markerがないこと、pending照会の前後と遅延commitを確認。所有確認後に専用containerを削除した。実UCI/Capital DBやregistryは未使用。
+- `.venv/bin/python -m unittest discover -s tests -p 'test_monitor_persistence.py' -v`: 7 tests passed、exit 0。
+- PyYAMLでworkflow YAMLをparseし、2 jobs/14 run blocksを列挙。全run blockへ`bash -n`を適用し成功、exit 0。
+- GitHub Actions実行/ artifact downloadは未実施。review後のcommit/pushが許可されるまでCI結果を推定しない。
+
+現時点は**Sol review待ち**。Solは未commit差分・検証JSON・log/hash・workflowの実行条件とartifact pathを確認し、問題がなければ対象ファイルだけをcommit/pushする。その後、新CIで本stepの結果・artifact収録・cleanupを確認してT15を完了に更新する。合成試験は実Capital監視、実候補承認、配信許可を示さない。
+
+
+## T15 — Sol review（実装commitのCI確認待ち）
+
+基点03d1bceと未commit全差分、引継ぎ、既存script、Lunaの5試行logと5 sourceのbytes/SHAを照合した。計10件すべて一致し、scriptは基点とbyte単位で同一。source/schema/writer/lock変更はなく、実DB/registryを操作していない。workflowの`!cancelled()`は既定のsuccess条件を上書きするため、先行試験が失敗してもinstall/pip-checkの成功時は独立stepを実行する。cancel時と前提install失敗時は実行しない。env・timeout・pipefail・continue-on-error不使用・artifact追加log 1本を承認し、実装修正を要する指摘はなかった。
+
+追加検証は`data/reports/20261101-t15/sol-review-20261101/review-validation.log`へstdout/stderr/exit付きで保存した。PyYAML/14 run blockのbash -n、7件のmonitor persistence unit再実行（0.389秒）、git diff --checkは成功。実workflowのrun blockを一時directoryのfake Pythonで実行し、コマンド失敗23がtee後も23になること、timeoutだけ0.1秒に短縮したfixtureでは124になることを確認した。これはshell伝播の検査で、DBの強制終了cleanupを証明する試験ではない。元のlocal PostgreSQL受入は同一script/log/hash確認済みのため再実行せず、実装commitのCIで再検証する。
+
+T15検証JSONのsource_filesはLuna review前snapshotとして保持し、Sol reviewの結果/log/hashを追記した。無関係な未追跡3 pathは含めず、T15対象5ファイルのみをcommit/pushする。CIのnew step成功・artifact ZIP内log・専用container cleanupを確認するまでT15は未完了。
+
+通常sandboxでの最初のgit addは`.git/index.lock: Read-only file system`によりexit 128で、stage/commitには至らなかった。`sol-review-20261101/git-stage-sandbox-failure.log`に記録し、ユーザーが許可したcommit/pushを権限付きで実行する。

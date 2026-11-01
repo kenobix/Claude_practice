@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "task": "T15 existing monitor persistence PostgreSQL test CI connection",
+  "session_date_local": "2026-11-01",
+  "base_commit": "03d1bce7528ee3c5c2e96f878e6f0aeec2bd94b4",
+  "status": "sol_review_approved_ci_pending",
+  "scope": "synthetic_only",
+  "production_source_schema_writer_changed": false,
+  "real_uci_capital_database_or_registry_used": false,
+  "ci_run": "pending_implementation_commit_push",
+  "workflow_contract": {
+    "job": "synthetic-system",
+    "condition": "not cancelled and dependency lock install, project install, and pip check all succeeded",
+    "environment": {
+      "MLFLOW_DISABLE_AGENT_HINT": "1"
+    },
+    "timeout": "timeout --signal=TERM --kill-after=10 300",
+    "pipefail": true,
+    "failure_hidden": false,
+    "log_path": "261021/data/reports/monitor-persistence-postgres-ci.log",
+    "artifact_name": "bike-mlops-docker-integration-logs",
+    "artifact_added_path_only": "261021/data/reports/monitor-persistence-postgres-ci.log"
+  },
+  "acceptance": {
+    "legacy_row_unchanged": true,
+    "two_independent_monitor_runs": true,
+    "duplicate_unique_conflict_rolls_back_transaction": true,
+    "failed_run_has_no_completion_marker": true,
+    "pending_request_checked_before_and_after_delayed_commit": true,
+    "disposable_container_cleanup_complete": true,
+    "target_unit_tests": {
+      "count": 7,
+      "exit_code": 0
+    },
+    "workflow_yaml_parse": "passed",
+    "workflow_run_blocks_bash_n": {
+      "count": 14,
+      "exit_code": 0
+    },
+    "git_diff_check": "passed",
+    "default_sandbox_docker_socket": "permission_denied_exit_1",
+    "authorized_local_docker_test": "passed"
+  },
+  "attempts": [
+    {
+      "log": "261021/data/reports/20261101-t15/docker-sandbox-check.log",
+      "exit_code": 1,
+      "result": "default_sandbox_docker_socket_permission_denied",
+      "sha256": "58448f8cc6e6786fdc343ef5515d7a1b4edb17811c34100596317364c9d84b73"
+    },
+    {
+      "log": "261021/data/reports/20261101-t15/postgres-attempt-1.log",
+      "exit_code": 127,
+      "result": "failed_to_start_python_executable_not_on_PATH",
+      "sha256": "fd815f642a98305936bf489f90cef22f3e24dfb5c2e5508ac509e416039f9973"
+    },
+    {
+      "log": "261021/data/reports/20261101-t15/postgres-attempt-2.log",
+      "exit_code": 0,
+      "result": "passed_using_existing_project_venv",
+      "sha256": "dd7e9927bdcec0db8e136a1cc7971322c012c4836a86c70c31bdb7cc11e3c7fb"
+    },
+    {
+      "log": "261021/data/reports/20261101-t15/target-regression.log",
+      "exit_code": 0,
+      "result": "7_tests_passed",
+      "sha256": "30fec062b6824e595c8406b1253a9c7b6a05bf98696cff9cbcfeba42f0c60982"
+    },
+    {
+      "log": "261021/data/reports/20261101-t15/yaml-shell-validation.log",
+      "exit_code": 0,
+      "result": "workflow_yaml_and_14_shell_blocks_passed",
+      "sha256": "fa5833845c7cec18ab4dfc33d53efba468861751dfdd3439e56c655abec0aebb"
+    }
+  ],
+  "evidence_logs": [
+    {
+      "path": "261021/data/reports/20261101-t15/docker-sandbox-check.log",
+      "bytes": 326,
+      "sha256": "58448f8cc6e6786fdc343ef5515d7a1b4edb17811c34100596317364c9d84b73"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/postgres-attempt-1.log",
+      "bytes": 85,
+      "sha256": "fd815f642a98305936bf489f90cef22f3e24dfb5c2e5508ac509e416039f9973"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/postgres-attempt-2.log",
+      "bytes": 388,
+      "sha256": "dd7e9927bdcec0db8e136a1cc7971322c012c4836a86c70c31bdb7cc11e3c7fb"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/target-regression.log",
+      "bytes": 1364,
+      "sha256": "30fec062b6824e595c8406b1253a9c7b6a05bf98696cff9cbcfeba42f0c60982"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/yaml-shell-validation.log",
+      "bytes": 79,
+      "sha256": "fa5833845c7cec18ab4dfc33d53efba468861751dfdd3439e56c655abec0aebb"
+    }
+  ],
+  "source_files": [
+    {
+      "path": ".github/workflows/bike-mlops-contracts.yml",
+      "bytes": 5462,
+      "sha256": "08c0ae04a20697a86a4d00260e9a03a1c2fd58a72b990a794bdd989acc051406"
+    },
+    {
+      "path": "261014/plan_mlops.md",
+      "bytes": 81180,
+      "sha256": "11b8d90fc23b0c6f25940045aa77938065471af9cdd78d8afceb9e0a432936d8"
+    },
+    {
+      "path": "261021/README.md",
+      "bytes": 13211,
+      "sha256": "27a3dce0bbd3ec19435fe7a6baa0e96a02b7c630ca9c49db557e8a731751deb0"
+    },
+    {
+      "path": "261021/work_log.md",
+      "bytes": 312661,
+      "sha256": "07f4ae80873fe8ad432882f229ab0652e843f832c69378c7f0fa640b701afe85"
+    },
+    {
+      "path": "261021/scripts/test_monitor_persistence_postgres.py",
+      "bytes": 11879,
+      "sha256": "298c67267b90b1ed8676e57ec383ee860c3a490dfa86f119697edf32627938fe"
+    }
+  ],
+  "limitations": [
+    "GitHub Actions run and artifact download have not yet been observed; verify after Sol review and authorized commit/push.",
+    "Synthetic PostgreSQL acceptance is not real Capital monitoring, candidate approval, or deployment evidence."
+  ],
+  "source_files_snapshot": "Luna pre-review working tree; these historical hashes are intentionally retained after Sol documentation updates.",
+  "sol_review": {
+    "reviewed_at_utc": "2026-11-01T02:22:20.224054+00:00",
+    "verdict": "approved",
+    "blocking_findings": [],
+    "existing_script_unchanged_from_base": true,
+    "production_source_schema_writer_lock_changes": false,
+    "workflow_condition": "!cancelled() explicitly overrides default success() so earlier test failure does not suppress this independent step when install and pip-check succeeded; cancelled or failed prerequisites suppress it.",
+    "validation": {
+      "luna_source_and_log_hashes_verified": 10,
+      "workflow_yaml_parse": "passed",
+      "bash_run_blocks": 14,
+      "actual_workflow_pipeline_command_failure_exit": 23,
+      "actual_workflow_pipeline_timeout_exit": 124,
+      "pipeline_fixture": "fake Python command in temporary directory; only the timeout duration shortened to 0.1 sec for timeout fixture",
+      "monitor_persistence_unit_tests": 7,
+      "monitor_persistence_unit_seconds": 0.389,
+      "git_diff_check": "passed"
+    },
+    "log": {
+      "path": "261021/data/reports/20261101-t15/sol-review-20261101/review-validation.log",
+      "bytes": 2477,
+      "sha256": "71e4ab597ecb6a906f14cef55b01a3c1d62bdb961bfa3ca73d27ca1736d1faf9"
+    },
+    "ci_acceptance_pending": [
+      "implementation commit synthetic-system job/new step success",
+      "artifact ZIP/digest and monitor-persistence-postgres-ci.log content verification",
+      "dedicated PostgreSQL test container cleanup message",
+      "existing unit job and system regression conclusions"
+    ],
+    "git_stage_sandbox_attempt": {
+      "exit_code": 128,
+      "reason": "sandbox .git read-only; retry with authorized escalation",
+      "log": "261021/data/reports/20261101-t15/sol-review-20261101/git-stage-sandbox-failure.log",
+      "sha256": "8c2cc1a4efab19e6400bdd1a73c95ec2577c25a10db1ed0d63ea2c94dc4bf093"
+    }
+  }
+}

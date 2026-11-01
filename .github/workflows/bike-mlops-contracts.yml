@@ -106,6 +106,17 @@ jobs:
           timeout --signal=TERM --kill-after=10 180 python scripts/test_prediction_migration_postgres.py \
             --run-disposable --evidence-dir data/reports/t08-ci 2>&1 \
             | tee data/reports/prediction-migration-postgres-ci.log
+      - name: Run disposable PostgreSQL monitor persistence test
+        if: >-
+          ${{ !cancelled() && steps.install-lock.outcome == 'success' &&
+          steps.install-project.outcome == 'success' && steps.pip-check.outcome == 'success' }}
+        env:
+          MLFLOW_DISABLE_AGENT_HINT: "1"
+        run: |
+          set -o pipefail
+          mkdir -p data/reports
+          timeout --signal=TERM --kill-after=10 300 python scripts/test_monitor_persistence_postgres.py 2>&1 \
+            | tee data/reports/monitor-persistence-postgres-ci.log
       - name: Upload synthetic system test log
         if: always()
         uses: actions/upload-artifact@v4
@@ -117,6 +128,7 @@ jobs:
             261021/data/reports/request-interruption-postgres-ci.log
             261021/data/reports/monitor-inspection-postgres-ci.log
             261021/data/reports/prediction-migration-postgres-ci.log
+            261021/data/reports/monitor-persistence-postgres-ci.log
             261021/data/reports/t08-ci/summary.json
             261021/data/reports/t08-ci/before.dump
             261021/data/reports/t08-ci/after.dump
