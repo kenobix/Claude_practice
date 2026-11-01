@@ -2793,3 +2793,25 @@ source/test/CI未変更なので全340件suiteやDocker/PG受入は繰り返さ�
 修復案は、外側実体の限定採取→host精度/同期責任確認→許可された保守での調整者一本化の試験→tick/offset/進行率/再開後の再検証とし、各影響/切戻しを調査文書に分けて記載。今回は実施しない。Windows/全WSLの時計・timeout・認証/証跡への影響があり、timesyncd停止だけや単発tick変更を解決条件にしない。歴史的T03の原因、T13 HTTP障害、T07/T17、実Capital評価/採否は残す。全suite/Docker/PG/実配信を根拠なく再実行せず、合成診断を実運用証拠へ流用しない。
 
 最終`final-record-validation-v1`はexit0。110原本のbytes/SHA、基点Git snapshot4件、23 attemptのmetadata/log hash、診断Python AST、sh -n、実Windows parserで.ps1と文書3 block、相対リンク、秘密情報pattern、git diff --checkと既存source/tests/scripts/workflow不変を確認した。前回135原本の再照合はevidence-analysis-v2で成功済み。検証自身のlog/metadata/resultを加え、今回の証拠JSONは24 attempt・113原本を記録する。管理者でのend-to-endは未実施、policyで.ps1がguard前に拒否されたことも明記した。公開summaryのfieldを確認し、rawのstat/address/設定やnative出力はignored reportsのままとした。対象9ファイルだけを差分/status確認後にcommit/pushし、新しいCI成功は主張しない。
+
+## P1/D3 — chronyd補正量と管理者採取の前提確認（2026-11-01）
+
+基点2181bfe453bf9c87ec9374a5d74013bcdddb86b0。AGENTS・plan §11.6・指定4資料と前回証拠を読み、tracked差分なし/無関係な未追跡3pathを確認した。指定入力5fileのGit snapshotとhashを新規ignored `data/reports/20261101-chrony-control/`へ保存。管理者採取directoryはなく、チャットでもユーザーから「まだ採取していない」と回答を得た。Windows tokenも非管理者なので自動昇格やdebug-shell拒否の反復はしない。[結果と修復案](docs/chrony-control-analysis.md)、[管理者採取手順](docs/clock-owner-admin-read.md)、[新規証拠JSON](docs/reviews/20261101-chrony-control-checks.json)を参照。
+
+各コマンドは261021から`.venv/bin/python data/reports/20261101-chrony-control/run-attempt.py LABEL LIMIT COMMAND...`で実行した。runnerは既存版を別保存先へ複製し、argv/UTC/MONOTONIC/deadline/exit/stdout/stderr/bytes/SHAを新規pathへ保存した。実験用Pythonはこのreports directoryに保存する。OS時計・同期設定・実DB・registry・配信は変更していない。
+
+| attempt / command（reports内の相対名） | 結果・警告・限界 |
+|---|---|
+| admin-inventory-v1 / inventory-admin.py | 指定reports配下のclock-owner-admin-* directoryは0件。範囲外にある可能性をユーザーへ確認し、未採取と回答を得た。 |
+| current-state-v1 / read-current.py | Windows非管理者、Ubuntu/docker-desktopは既にRunning。Ubuntu MainPID214/exe hash/開始tick/nsが前回と一致。system側の可視chronyd4.1/hash、PHC0 tracking/sources/sourcestatsを限定読取。query exit0。PowerShell module準備progressはstderrに保持。可視binaryを稼働exeと確定しない。 |
+| primary-sources-v1 / fetch-sources.py | upstreamchrony4.1のLinux/generic/timex/local/reference/client/config等とWSL2.6.3 init、計12原本を取得しhash保存。web表示のgithub cache miss等は探索記録へ残し、取得成功したraw原本を根拠とした。 |
+| setter-tracking-overlap-v1 / collect-overlap.py | 現BTF hash一致をguardして専用traceを40 MONOTONIC秒、clock6802sample/明示tracking21query。timesyncdをlocal214→global496/親233/開始時刻で再対応付け、前後identity一致。同PIDの−4.197671651秒ADJ_SETOFFSET成功、chronyd213のtick11000/freq0成功10回を確認。query全件にcwd引継ぎwarningがあり、無警告成功とはしない。全原本を保持。 |
+| upstream-arithmetic-v1 / check-control-math.py | upstreamの関数を抽出し、timex書込をメモリstubへ置いたCをcc -std=c11 -Wall -Wextra -Werror -O0でcompile。driver8ケースとclamp1条件が成功。実時計syscallなし。負/正限界、hysteresis、tick/freqの逆算を確認。稼働daemon内部の計算を実行した証拠ではない。 |
+| clean-tracking-query-v1 / read-clean-query.py | --cd /明示の同じchronyc読取を別attemptで実施しexit0/stderr空。21回のwarning付きログは上書きしない。 |
+| evidence-analysis-v1 / analyze-control.py | 前回113原本hash、現在/前回のtimesyncd同一性、補正要求と実時計変化、syscall成功、loss0/専用probe回収/既存制御hash不変、tracking21件を照合。exit0。 |
+
+今回の進行比MONOTONIC/RAWは1.100000036だが、Windows QPC bracketは再採取しておらず絶対秒や旧p95の補正に使わない。trackingの基準Frequencyは−23906.641ppm、System time補正は1.857597709〜2.478570938秒。sys_linuxでtick11000/freq0は−100000ppmに相当し、generic driverが基準とslewを合わせて制限する上流経路と整合する。既定slew上限を仮定する計算例では制限前−109232.194416667→制限後−100000となる。実設定/base_freq/corr_freq/制限前総量は未読で、飽和の内部理由や稼働binary一致を確定扱いにしない。
+
+必要な管理者読取は既存手順を維持し、保存directoryの伝達→identity/config照合→不足するPHC fd/UDP所有/includeの限定追加読取という順序を明確化。修復案・影響・切戻しは新規文書で分け、OS保守変更は今回実行しない。T03歴史的停止、T13 HTTP部分書込/応答喪失、T07/T17、実Capital候補の証拠は残す。source/tests/scripts/workflow/lockに変更がないため全suite/Docker/PGを再実行せず、今回の読取・上流計算・証拠/文書検証を行う。新CIや時計資格/実運用合格を先取りしない。
+
+証拠生成準備のshellでcwdへ261021を重ね、build-record.py/validate-records.pyの作成とbuilder起動がexit2で失敗した。preparation-build-v1.log/jsonへ端末出力と制限を保存し、runner開始前なので開始UTC/経過を捏造していない。repo rootを明示して作成先を修正した。最終final-record-validation-v1では、原本/入力Git snapshot/attempt log/public fileのhash、Python AST、相対リンク、git diff --check、既存source/tests/scripts/workflow/config不変、専用trace回収/loss0、メモリstub binaryに時計操作API参照がないことを照合しexit0。検証前59原本・入力Git snapshot5件・既存7 attempt・公開5fileのhashと相対リンク84件を確認した。検証自身のlog/metadata/resultを加え、証拠JSONはrunner8 attemptと準備失敗1件・原本62件を記録する。終了値と件数をvalidationへ保存し、対象6fileの全差分とstatusを確認してcommit/pushする。CI確認は今回の完了条件へ追加しておらず、成功も主張しない。

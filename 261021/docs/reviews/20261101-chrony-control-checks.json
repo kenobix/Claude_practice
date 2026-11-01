@@ -1,0 +1,1160 @@
+{
+  "schema_version": 1,
+  "task": "P1/D3 chronyd ownership follow-up and control arithmetic",
+  "base_commit": "2181bfe453bf9c87ec9374a5d74013bcdddb86b0",
+  "status": "ADMINISTRATOR_INVENTORY_NOT_COLLECTED_RUNTIME_OWNER_AND_CONTROL_CAUSE_PENDING",
+  "scope": {
+    "OS_clock_service_changes": false,
+    "actual_DB_registry_deployment_changes": false,
+    "production_source_tests_workflow_lock_changes": false,
+    "temporary_private_tracing_created_and_removed": true,
+    "full_suite_Docker_PostgreSQL_repeated": false,
+    "new_CI_result_claimed": false
+  },
+  "base_inputs": [
+    {
+      "path": "261014/plan_mlops.md",
+      "snapshot": "261021/data/reports/20261101-chrony-control/base-plan_mlops.md",
+      "bytes": 89327,
+      "sha256": "85029d89c35239f133c759f6dbc97e5b4c9e84b2de67b9d80b4ff065c1a8dd3b"
+    },
+    {
+      "path": "261021/work_log.md",
+      "snapshot": "261021/data/reports/20261101-chrony-control/base-work_log.md",
+      "bytes": 345941,
+      "sha256": "83a94bec6f999a965ec0feab80a8d70be6bd20df84b3dcff3808dcb1ff166847"
+    },
+    {
+      "path": "261021/docs/clock-process-ownership.md",
+      "snapshot": "261021/data/reports/20261101-chrony-control/base-clock-process-ownership.md",
+      "bytes": 10744,
+      "sha256": "870ac91a7197726847054d1fe1149a57d4f94276697b3ccaafbb51c35ac28872"
+    },
+    {
+      "path": "261021/docs/clock-owner-admin-read.md",
+      "snapshot": "261021/data/reports/20261101-chrony-control/base-clock-owner-admin-read.md",
+      "bytes": 6079,
+      "sha256": "bc3f3eb763053229dbc5530b5e942929f6ef566d4b0a98e0ea3c8701060f2ef7"
+    },
+    {
+      "path": "261021/docs/reviews/20261101-clock-owner-checks.json",
+      "snapshot": "261021/data/reports/20261101-chrony-control/base-20261101-clock-owner-checks.json",
+      "bytes": 66775,
+      "sha256": "276ed042506c6b424f66bb7900253e7ef93050916a94202a40a56e407da928f3"
+    }
+  ],
+  "administrator_input": {
+    "expected_directory_prefix": "261021/data/reports/clock-owner-admin-",
+    "matching_directories": 0,
+    "user_answer": "まだ採取していない",
+    "current_Windows_token_administrator": false,
+    "debug_shell_retry": false,
+    "next_read_instructions": "261021/docs/clock-owner-admin-read.md"
+  },
+  "analysis": {
+    "previous_raw_hashes_verified": 113,
+    "admin_logs_found": false,
+    "user_confirmed_admin_not_collected": true,
+    "timesyncd_identity": {
+      "mapped": {
+        "local_pid": 214,
+        "global_pid": 496,
+        "global_parent_pid": 233,
+        "task_start_ns": 15059948976
+      },
+      "stable_identity": {
+        "local_pid": 214,
+        "exe": "/usr/lib/systemd/systemd-timesyncd",
+        "exe_sha256": "cbf92a41ffb29efd75daebf8a1a1dd4d0c078d2f3c50f0fc7e9e35715eefb7cd",
+        "cmdline": [
+          "/usr/lib/systemd/systemd-timesyncd",
+          ""
+        ],
+        "cgroup": "0::/system.slice/systemd-timesyncd.service\n",
+        "namespaces": {
+          "pid": "pid:[4026532219]",
+          "mnt": "mnt:[4026532222]",
+          "time": "time:[4026531834]",
+          "user": "user:[4026531837]"
+        },
+        "start_ticks": "1505"
+      }
+    },
+    "trace": {
+      "clock_samples": 6802,
+      "trace_entries": 76,
+      "changes": [
+        {
+          "before_monotonic_ns": 111653168829914,
+          "after_monotonic_ns": 111653174634065,
+          "after_utc": "2026-11-01T09:35:22.149661+00:00",
+          "realtime_delta_ns": 1483471420,
+          "offset_change_ns": 1477667269,
+          "setter": {
+            "comm": "initd",
+            "global_tid": 12582,
+            "monotonic_ns": 111653173385000,
+            "event": "do_settimeofday64 <-do_sys_settimeofday64"
+          }
+        },
+        {
+          "before_monotonic_ns": 111653451600041,
+          "after_monotonic_ns": 111653456991204,
+          "after_utc": "2026-11-01T09:35:18.234342+00:00",
+          "realtime_delta_ns": -4192280432,
+          "offset_change_ns": -4197671595,
+          "setter": {
+            "comm": "systemd-timesyn",
+            "global_tid": 496,
+            "monotonic_ns": 111653453720000,
+            "event": "timekeeping_inject_offset <-do_adjtimex"
+          }
+        }
+      ],
+      "timex_requests": [
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111642547026000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111642547060000,
+          "modes": 16386,
+          "tick": 11000,
+          "freq": 0,
+          "syscall_exit": 0,
+          "nearest_read_index": 1,
+          "read_base_frequency_ppm": -23906.641,
+          "read_is_not_internal_state_or_authenticated_pid": true
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111642547071000,
+          "modes": 16386,
+          "tick": 11000,
+          "freq": 0,
+          "syscall_exit": 0,
+          "nearest_read_index": 1,
+          "read_base_frequency_ppm": -23906.641,
+          "read_is_not_internal_state_or_authenticated_pid": true
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111642547085000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111650610092000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111650610118000,
+          "modes": 16386,
+          "tick": 11000,
+          "freq": 0,
+          "syscall_exit": 0,
+          "nearest_read_index": 6,
+          "read_base_frequency_ppm": -23906.641,
+          "read_is_not_internal_state_or_authenticated_pid": true
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111650610125000,
+          "modes": 16386,
+          "tick": 11000,
+          "freq": 0,
+          "syscall_exit": 0,
+          "nearest_read_index": 6,
+          "read_base_frequency_ppm": -23906.641,
+          "read_is_not_internal_state_or_authenticated_pid": true
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111650610138000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "systemd-timesyn",
+          "global_tid": 496,
+          "monotonic_ns": 111653453707000,
+          "modes": 8476,
+          "requested_offset_ns": -4197671651,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111662866830000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111662866865000,
+          "modes": 16386,
+          "tick": 11000,
+          "freq": 0,
+          "syscall_exit": 0,
+          "nearest_read_index": 12,
+          "read_base_frequency_ppm": -23906.641,
+          "read_is_not_internal_state_or_authenticated_pid": true
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111662866875000,
+          "modes": 16386,
+          "tick": 11000,
+          "freq": 0,
+          "syscall_exit": 0,
+          "nearest_read_index": 12,
+          "read_base_frequency_ppm": -23906.641,
+          "read_is_not_internal_state_or_authenticated_pid": true
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111662866890000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111670914749000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111670914776000,
+          "modes": 16386,
+          "tick": 11000,
+          "freq": 0,
+          "syscall_exit": 0,
+          "nearest_read_index": 16,
+          "read_base_frequency_ppm": -23906.641,
+          "read_is_not_internal_state_or_authenticated_pid": true
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111670914783000,
+          "modes": 16386,
+          "tick": 11000,
+          "freq": 0,
+          "syscall_exit": 0,
+          "nearest_read_index": 16,
+          "read_base_frequency_ppm": -23906.641,
+          "read_is_not_internal_state_or_authenticated_pid": true
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111670914795000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111678997366000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111678997404000,
+          "modes": 16386,
+          "tick": 11000,
+          "freq": 0,
+          "syscall_exit": 0,
+          "nearest_read_index": 20,
+          "read_base_frequency_ppm": -23906.641,
+          "read_is_not_internal_state_or_authenticated_pid": true
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111678997416000,
+          "modes": 16386,
+          "tick": 11000,
+          "freq": 0,
+          "syscall_exit": 0,
+          "nearest_read_index": 20,
+          "read_base_frequency_ppm": -23906.641,
+          "read_is_not_internal_state_or_authenticated_pid": true
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 111678997433000,
+          "modes": 28,
+          "syscall_exit": 0
+        }
+      ],
+      "hv_set_host_time_calls": 0,
+      "buffers_lost_events": 0,
+      "cleanup_complete": true,
+      "global_controls_unchanged": true
+    },
+    "tracking": {
+      "sample_count": 21,
+      "source": "PHC0",
+      "base_frequency_ppm_range": [
+        -23906.641,
+        -23906.641
+      ],
+      "system_time_correction_seconds_range": [
+        1.857597709,
+        2.478570938
+      ],
+      "samples_with_cwd_warning": 21,
+      "paired_tick_requests": 10,
+      "rows": [
+        {
+          "index": 0,
+          "before_monotonic_ns": 111639409408230,
+          "after_monotonic_ns": 111639711038502,
+          "current_correction_seconds": 2.116921425,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -74014.859,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 1,
+          "before_monotonic_ns": 111641413799941,
+          "after_monotonic_ns": 111641696417193,
+          "current_correction_seconds": 1.977242708,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -74014.859,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 2,
+          "before_monotonic_ns": 111643397160117,
+          "after_monotonic_ns": 111643773537722,
+          "current_correction_seconds": 2.478570938,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -74317.703,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 3,
+          "before_monotonic_ns": 111645474186051,
+          "after_monotonic_ns": 111645753201364,
+          "current_correction_seconds": 2.338165045,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -74317.703,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 4,
+          "before_monotonic_ns": 111647454096733,
+          "after_monotonic_ns": 111647729951891,
+          "current_correction_seconds": 2.200900793,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -74317.703,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 5,
+          "before_monotonic_ns": 111649431059214,
+          "after_monotonic_ns": 111649740955122,
+          "current_correction_seconds": 2.064319611,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -74317.703,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 6,
+          "before_monotonic_ns": 111651441433717,
+          "after_monotonic_ns": 111651719255541,
+          "current_correction_seconds": 2.351999044,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -73860.891,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 7,
+          "before_monotonic_ns": 111653420908500,
+          "after_monotonic_ns": 111653704404086,
+          "current_correction_seconds": 2.402208805,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -73860.891,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 8,
+          "before_monotonic_ns": 111655408797752,
+          "after_monotonic_ns": 111655659408512,
+          "current_correction_seconds": 2.266405582,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -73860.891,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 9,
+          "before_monotonic_ns": 111657360726775,
+          "after_monotonic_ns": 111657637676328,
+          "current_correction_seconds": 2.130486965,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -73860.891,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 10,
+          "before_monotonic_ns": 111659338161733,
+          "after_monotonic_ns": 111659617936921,
+          "current_correction_seconds": 1.993051767,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -73860.891,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 11,
+          "before_monotonic_ns": 111661318621707,
+          "after_monotonic_ns": 111661579702296,
+          "current_correction_seconds": 1.857597709,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -73860.891,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 12,
+          "before_monotonic_ns": 111663281548390,
+          "after_monotonic_ns": 111663555454512,
+          "current_correction_seconds": 2.378611803,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -73868.328,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 13,
+          "before_monotonic_ns": 111665256626643,
+          "after_monotonic_ns": 111665607070687,
+          "current_correction_seconds": 2.235731125,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -73868.328,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 14,
+          "before_monotonic_ns": 111667307976012,
+          "after_monotonic_ns": 111667585162453,
+          "current_correction_seconds": 2.100326777,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -73868.328,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 15,
+          "before_monotonic_ns": 111669285918348,
+          "after_monotonic_ns": 111669551635450,
+          "current_correction_seconds": 1.96367538,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -73868.328,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 16,
+          "before_monotonic_ns": 111671253616396,
+          "after_monotonic_ns": 111671535946485,
+          "current_correction_seconds": 2.389893293,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -73901.266,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 17,
+          "before_monotonic_ns": 111673238633456,
+          "after_monotonic_ns": 111673496230631,
+          "current_correction_seconds": 2.253656864,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -73901.266,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 18,
+          "before_monotonic_ns": 111675198787902,
+          "after_monotonic_ns": 111675468494871,
+          "current_correction_seconds": 2.117407799,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -73901.266,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 19,
+          "before_monotonic_ns": 111677169061600,
+          "after_monotonic_ns": 111677414205981,
+          "current_correction_seconds": 1.982825041,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -73901.266,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        },
+        {
+          "index": 20,
+          "before_monotonic_ns": 111679114827306,
+          "after_monotonic_ns": 111679379909270,
+          "current_correction_seconds": 2.401636362,
+          "base_frequency_ppm": -23906.641,
+          "residual_frequency_ppm": -73917.43,
+          "leap_status": "Normal",
+          "cwd_translation_warning": true
+        }
+      ]
+    },
+    "monotonic_raw_elapsed_ratio": 1.100000036234502,
+    "limitations": [
+      "UDP tracking replies not authenticated to kernel TID213",
+      "No runtime binary/config/base_freq/corr_freq/offset_register read",
+      "Configured maxslewrate not established",
+      "Arithmetic is upstream4.1, not proof of runtime implementation",
+      "cwd translation warnings retained; explicit --cd / queried separately",
+      "No historical root cause or OS repair completion claim"
+    ]
+  },
+  "arithmetic": {
+    "upstream_version": "chrony4.1; runtime binary equivalence unverified",
+    "driver_inverse_formula": "100*(10000-tick)-freq/65536",
+    "observed_tick_freq_inverse_ppm": -100000,
+    "range_limit_ppm": 100000,
+    "memory_only_driver_cases": 8,
+    "additional_clamp_condition": 1,
+    "hysteresis_requires_tick_and_freq_pair": true,
+    "conditional_example": {
+      "base_ppm": -23906.641,
+      "correction_fraction": -0.08333333333333333,
+      "before_limit_ppm": -109232.19441666667,
+      "after_limit_ppm": -100000,
+      "runtime_inputs_read": false
+    },
+    "tracking_frequency_is_not_slew_inclusive_driver_total": true,
+    "no_clock_syscall_in_harness": true
+  },
+  "source_files": [
+    {
+      "url": "https://raw.githubusercontent.com/mlichvar/chrony/4.1/sys_generic.c",
+      "path": "261021/data/reports/20261101-chrony-control/sources/sys_generic.c",
+      "bytes": 12526,
+      "sha256": "a122d64d51255be952e11cadf7a0b8d7580d02c2f0017c6b6dfd1c6772743447"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mlichvar/chrony/4.1/sys_timex.c",
+      "path": "261021/data/reports/20261101-chrony-control/sources/sys_timex.c",
+      "bytes": 7091,
+      "sha256": "c1dc0a08b3995b0e0e68d4715735495aaaa80f1632d4921a9831a2e23f4e5d6c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mlichvar/chrony/4.1/local.c",
+      "path": "261021/data/reports/20261101-chrony-control/sources/local.c",
+      "bytes": 19630,
+      "sha256": "37971b8c92540c9ffffe66c45a0b974a2ed0a79315643b2375f4022614b200ba"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mlichvar/chrony/4.1/ntp_core.c",
+      "path": "261021/data/reports/20261101-chrony-control/sources/ntp_core.c",
+      "bytes": 91947,
+      "sha256": "3ffd161f27354a588331e983417b7a620748c9e1dcd5ace996cb0a8033094235"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mlichvar/chrony/4.1/reference.c",
+      "path": "261021/data/reports/20261101-chrony-control/sources/reference.c",
+      "bytes": 38037,
+      "sha256": "8f98b09a799742d7993656026e02f6775cf030950ea3c65d3469d6b80f4b8f1f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mlichvar/chrony/4.1/conf.c",
+      "path": "261021/data/reports/20261101-chrony-control/sources/conf.c",
+      "bytes": 67134,
+      "sha256": "e1a3ed29b7b4d7684a0efe3e829daa8bc8747fc075c2b05d7a52c65a93dc7ef5"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mlichvar/chrony/4.1/util.c",
+      "path": "261021/data/reports/20261101-chrony-control/sources/util.c",
+      "bytes": 32933,
+      "sha256": "9144d173954004b1671eafb116fec28a8b2722aa50cd6d8297e9ee1ff83b7c11"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mlichvar/chrony/4.1/client.c",
+      "path": "261021/data/reports/20261101-chrony-control/sources/client.c",
+      "bytes": 103629,
+      "sha256": "655aeb81922997fb2b150601a43508e52068fbabca1dfb7a682f33f08396a780"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mlichvar/chrony/4.1/sys_linux.c",
+      "path": "261021/data/reports/20261101-chrony-control/sources/sys_linux.c",
+      "bytes": 28312,
+      "sha256": "16f9e109376d56b67255838fb0fde3fddb6d5b437edc7e71d2db62dc661b8ce9"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mlichvar/chrony/4.1/doc/chronyc.adoc",
+      "path": "261021/data/reports/20261101-chrony-control/sources/doc/chronyc.adoc",
+      "bytes": 59688,
+      "sha256": "9ec95ae1dfe1928c6ff7b77cedb4e81289e71a98cb7235f54fc93166a2e03c4d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mlichvar/chrony/4.1/doc/chrony.conf.adoc",
+      "path": "261021/data/reports/20261101-chrony-control/sources/doc/chrony.conf.adoc",
+      "bytes": 131286,
+      "sha256": "8122a817e12fc9f39cff170bc902624fc13c78c628aeebe2cbc5cf709f9a9c9d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/microsoft/WSL/2.6.3/src/linux/init/main.cpp",
+      "path": "261021/data/reports/20261101-chrony-control/sources/wsl-init-main.cpp",
+      "bytes": 118684,
+      "sha256": "3668797cdf1664b35e18fce836113539799d3d0c7171fcf2b1f0c0e4ba7008e5"
+    }
+  ],
+  "attempts": [
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-chrony-control/inventory-admin.py"
+      ],
+      "started_at_utc": "2026-11-01T09:33:08.374638+00:00",
+      "ended_at_utc": "2026-11-01T09:33:08.496336+00:00",
+      "elapsed_monotonic_seconds": 0.121695296,
+      "timeout_seconds": 30.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-chrony-control/admin-inventory-v1.log",
+      "bytes": 257,
+      "sha256": "4f2360f2b99a1b13622ddf328e167f012d382b3c4c99dfdbcf7f13d7581cb1a4"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-chrony-control/read-current.py"
+      ],
+      "started_at_utc": "2026-11-01T09:33:45.282907+00:00",
+      "ended_at_utc": "2026-11-01T09:33:46.962456+00:00",
+      "elapsed_monotonic_seconds": 1.67954864,
+      "timeout_seconds": 65.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-chrony-control/current-state-v1.log",
+      "bytes": 5242,
+      "sha256": "6628cbbe74b38415b0de40844227e285d3d929d906d0c96d95fc180b38970529"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-chrony-control/fetch-sources.py"
+      ],
+      "started_at_utc": "2026-11-01T09:33:57.804398+00:00",
+      "ended_at_utc": "2026-11-01T09:34:06.408687+00:00",
+      "elapsed_monotonic_seconds": 7.144054432,
+      "timeout_seconds": 190.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-chrony-control/primary-sources-v1.log",
+      "bytes": 3814,
+      "sha256": "9eb77ab8ef8131a82c17937f1f575bc6504b14f41f30de403290b46c4f00a1ee"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-chrony-control/collect-overlap.py"
+      ],
+      "started_at_utc": "2026-11-01T09:35:06.700821+00:00",
+      "ended_at_utc": "2026-11-01T09:35:45.903267+00:00",
+      "elapsed_monotonic_seconds": 41.922459141,
+      "timeout_seconds": 95.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-chrony-control/setter-tracking-overlap-v1.log",
+      "bytes": 1551,
+      "sha256": "00d68db92209a6e07a21b9bfb5459be36ad0b3531dbf8fa48bc30ca02a31ca92"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-chrony-control/check-control-math.py"
+      ],
+      "started_at_utc": "2026-11-01T09:35:54.176792+00:00",
+      "ended_at_utc": "2026-11-01T09:35:54.497153+00:00",
+      "elapsed_monotonic_seconds": 0.320356867,
+      "timeout_seconds": 30.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-chrony-control/upstream-arithmetic-v1.log",
+      "bytes": 1911,
+      "sha256": "ae4f2f8d73a2ca803d017f8e3db45e42d00c940b81c05a781bea33408fa699be"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-chrony-control/read-clean-query.py"
+      ],
+      "started_at_utc": "2026-11-01T09:38:13.394627+00:00",
+      "ended_at_utc": "2026-11-01T09:38:13.926949+00:00",
+      "elapsed_monotonic_seconds": 0.532323019,
+      "timeout_seconds": 35.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-chrony-control/clean-tracking-query-v1.log",
+      "bytes": 410,
+      "sha256": "07444e6ecf3b5ee18c9a2f431d36d9b8f45873f28ef1fc49fa3eb5ce23185f50"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-chrony-control/analyze-control.py"
+      ],
+      "started_at_utc": "2026-11-01T09:38:14.224045+00:00",
+      "ended_at_utc": "2026-11-01T09:38:14.458616+00:00",
+      "elapsed_monotonic_seconds": 0.234557851,
+      "timeout_seconds": 30.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-chrony-control/evidence-analysis-v1.log",
+      "bytes": 1846,
+      "sha256": "45e7bc4138e4823827c459ba89bd7ab8d32c76b03c58846a0c251f80a0641ef3"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-chrony-control/validate-records.py"
+      ],
+      "started_at_utc": "2026-11-01T09:42:52.630551+00:00",
+      "ended_at_utc": "2026-11-01T09:42:52.904850+00:00",
+      "elapsed_monotonic_seconds": 0.274534246,
+      "timeout_seconds": 35.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-chrony-control/final-record-validation-v1.log",
+      "bytes": 873,
+      "sha256": "aca5669565a4ff8bd91502fb4f15e04f6f92a733a628366b5a25f7124d1c4d31"
+    }
+  ],
+  "preparation_failure": {
+    "kind": "preparation_failure_captured_from_exec_command",
+    "cwd": "/home/kenshin/work/claude_practice/261021",
+    "command_summary": "Create build-record.py and validate-records.py with duplicated 261021/ prefix, then .venv/bin/python data/reports/20261101-chrony-control/build-record.py",
+    "exit_code": 2,
+    "started_at_utc": null,
+    "elapsed_monotonic_seconds": null,
+    "timestamp_limit": "runner not started; no start time invented",
+    "recorded_at_utc": "2026-11-01T09:42:22.427403+00:00",
+    "log": "261021/data/reports/20261101-chrony-control/preparation-build-v1.log",
+    "bytes": 385,
+    "sha256": "649c8b41bb949dd4b4b461e165cda480de7ac880703a69758bc98f4bf61f0125"
+  },
+  "warnings_and_limits": [
+    "UDP tracking replies not authenticated to kernel TID213",
+    "No runtime binary/config/base_freq/corr_freq/offset_register read",
+    "Configured maxslewrate not established",
+    "Arithmetic is upstream4.1, not proof of runtime implementation",
+    "cwd translation warnings retained; explicit --cd / queried separately",
+    "No historical root cause or OS repair completion claim",
+    "21 overlap tracking queries returned valid CSV/exit0 but cwd translation warning; separate --cd / query stderr empty.",
+    "PowerShell module preparation progress retained in current-state stderr.",
+    "Web render cache misses retained as discovery notes; selected raw sources all fetched.",
+    "Record generator preparation used wrong cwd prefix, exit2 preserved; no start time invented.",
+    "No new natural T03 hang observation claimed; existing runtime tests unchanged and not repeated.",
+    "Raw stat/native output and mode-unselected timex fields stay ignored."
+  ],
+  "remaining": [
+    "Administrator inventory: runtime exe/hash, parent/start, namespace, effective generated configuration",
+    "Map PHC descriptor and UDP socket to same daemon; handle includes and PID/boot changes",
+    "Read internal correction state or use separately authorized bounded maintenance comparison before claiming persistent saturation cause",
+    "Host external UTC accuracy, prospective clock qualification, original T03/T13 cause",
+    "T07/T17, T13 HTTP fault recovery, actual Capital producer/evaluation/adoption remain separate tasks"
+  ],
+  "validation": {
+    "status": "passed",
+    "pre_validation_raw_hashes_checked": 59,
+    "base_Git_snapshots_checked": 5,
+    "attempts_checked_before_this_attempt": 7,
+    "public_files_hashed": 5,
+    "relative_links_checked": 84,
+    "Python_AST": "passed",
+    "git_diff_check": "passed",
+    "existing_source_tests_scripts_workflow_configs_unchanged": true,
+    "upstream_arithmetic_memory_only_cases": 9,
+    "trace_cleanup_and_no_loss": "passed",
+    "previous_113_raw_hashes": "passed in evidence-analysis-v1",
+    "focused_secret_pattern_scan": "passed; not proof of absence",
+    "full_suite_CI_Docker_PostgreSQL": "not rerun; production files unchanged",
+    "administrator_route": "not executed; user confirms no inventory",
+    "runtime_chronyd_identity_and_internal_cause": "unresolved"
+  },
+  "evidence_files": [
+    {
+      "path": "261021/data/reports/20261101-chrony-control/admin-inventory-v1.json",
+      "bytes": 505,
+      "sha256": "80d18c02640318d9bbb54cec6e7189a167d5c59c8f1d2c166223bae7a5b093df"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/admin-inventory-v1.log",
+      "bytes": 257,
+      "sha256": "4f2360f2b99a1b13622ddf328e167f012d382b3c4c99dfdbcf7f13d7581cb1a4"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/analysis.json",
+      "bytes": 15300,
+      "sha256": "95525d257c3be0f3d050943bef0cc7e434518161101f51427d7cf75263ed8fcd"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/analyze-control.py",
+      "bytes": 5090,
+      "sha256": "532455b567f7e908c5f6e986fe312d413fd20dc7c1b7b4217239907bc1f6fbee"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/base-20261101-clock-owner-checks.json",
+      "bytes": 66775,
+      "sha256": "276ed042506c6b424f66bb7900253e7ef93050916a94202a40a56e407da928f3"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/base-clock-owner-admin-read.md",
+      "bytes": 6079,
+      "sha256": "bc3f3eb763053229dbc5530b5e942929f6ef566d4b0a98e0ea3c8701060f2ef7"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/base-clock-process-ownership.md",
+      "bytes": 10744,
+      "sha256": "870ac91a7197726847054d1fe1149a57d4f94276697b3ccaafbb51c35ac28872"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/base-inputs.json",
+      "bytes": 1250,
+      "sha256": "ba353c23002619e2451dcc79de81a2b46e2351a5442278960aa4d39a3ce652b6"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/base-plan_mlops.md",
+      "bytes": 89327,
+      "sha256": "85029d89c35239f133c759f6dbc97e5b4c9e84b2de67b9d80b4ff065c1a8dd3b"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/base-work_log.md",
+      "bytes": 345941,
+      "sha256": "83a94bec6f999a965ec0feab80a8d70be6bd20df84b3dcff3808dcb1ff166847"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/build-record.py",
+      "bytes": 4331,
+      "sha256": "793b2407474553f8cc1ceba3e405b28ec7b295d33c2606acf03714c84cd713af"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/check-control-math.py",
+      "bytes": 2686,
+      "sha256": "56a9ee6490ca7285de801f1d3207795eed8829212158a0ce21ec89129cee42a8"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/clean-tracking-query-v1.json",
+      "bytes": 511,
+      "sha256": "9e2a9baa3eb7581aad6fa38d92754b226c073a114774b3351e1ffafd44e414a0"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/clean-tracking-query-v1.log",
+      "bytes": 410,
+      "sha256": "07444e6ecf3b5ee18c9a2f431d36d9b8f45873f28ef1fc49fa3eb5ce23185f50"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/collect-overlap.py",
+      "bytes": 1807,
+      "sha256": "d406874dd1ad95b439ac90e8543026937a3495c1c14a00c32e92c9a0c5bc174b"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/current-state-v1.json",
+      "bytes": 500,
+      "sha256": "8393a5a2e7c9b8836868dbf00ccf310dd7e5a6232f067f2545bad594d581f1f4"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/current-state-v1.log",
+      "bytes": 5242,
+      "sha256": "6628cbbe74b38415b0de40844227e285d3d929d906d0c96d95fc180b38970529"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/evidence-analysis-v1.json",
+      "bytes": 508,
+      "sha256": "9250f1fd760ce68aaac2b449605a3cbac1e1f4f772719cd9d32f7d2b536e8e33"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/evidence-analysis-v1.log",
+      "bytes": 1846,
+      "sha256": "45e7bc4138e4823827c459ba89bd7ab8d32c76b03c58846a0c251f80a0641ef3"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/exploration-notes.txt",
+      "bytes": 387,
+      "sha256": "439e7c9be616272f5e9ddee13627cfac2a0f1b7668b14eeb5889770ec036f97a"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/fetch-sources.py",
+      "bytes": 902,
+      "sha256": "d13001f6fb7808d941678e6f7bff1b58332b2ad9e16045bcb1e605c1d1bb4745"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/final-record-validation-v1.json",
+      "bytes": 514,
+      "sha256": "3743651760a087f9ba62ea7b9b111f91769b4fb1c8c2bea4980c27a34225eafe"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/final-record-validation-v1.log",
+      "bytes": 873,
+      "sha256": "aca5669565a4ff8bd91502fb4f15e04f6f92a733a628366b5a25f7124d1c4d31"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/inventory-admin.py",
+      "bytes": 502,
+      "sha256": "f309a6ebaff07001e847bee6178d8b23de0d42b5922eaae6f94c216130e3a2f2"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/overlap-v1/trace/buffer-stats.json",
+      "bytes": 1267,
+      "sha256": "afaf4c16a7dd1233c5076c3bb7e43cf1f2adb1f8fbcd3a837270cb8d33eb7319"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/overlap-v1/trace/clocks.jsonl",
+      "bytes": 952280,
+      "sha256": "d3866c903edcd9cccc9d8915db09f73aac9be22542088e6766e041cbbe4394eb"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/overlap-v1/trace/identities.json",
+      "bytes": 2698,
+      "sha256": "b337b252fcb687c0e2ee9260dbe42208673ae2daa11134a3c13bf4bd57c485b4"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/overlap-v1/trace/identity-after.json",
+      "bytes": 2350,
+      "sha256": "9be97a5ad5478bc452bcec47955f9b47256e2f49d66a215ef7498cfc8e235f81"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/overlap-v1/trace/instance-config.json",
+      "bytes": 245,
+      "sha256": "e3154b5e9029a70d5a99f55e34f5732b6b83661ea427b6c7d1c760cd68dda462"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/overlap-v1/trace/summary.json",
+      "bytes": 1426,
+      "sha256": "7e647cb8bc4d9ba396b5f584bd3e38f8bef8e471959bbd82ca48faebcaafab87"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/overlap-v1/trace/trace.txt",
+      "bytes": 9951,
+      "sha256": "7fc5f9121ed5a76d95f1cb0de4e9907d371fbb0504ffa162d4b3f37b3c3924f0"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/overlap-v1/trace-process.log",
+      "bytes": 1348,
+      "sha256": "ed8e646d227ced652cc4dd89482aa925873c0793fd98ea16091f9112049e9946"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/overlap-v1/tracking-samples.jsonl",
+      "bytes": 9593,
+      "sha256": "26c6878b00c6a63b9c686af7a98e6e7db6725fb6520a5cf6fbd36c1af535d565"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/preparation-build-v1.json",
+      "bytes": 677,
+      "sha256": "7dbc8a463d0cd2e6e8564c04df874e6de54f6256767ebe774ed07d9a012ac6a5"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/preparation-build-v1.log",
+      "bytes": 385,
+      "sha256": "649c8b41bb949dd4b4b461e165cda480de7ac880703a69758bc98f4bf61f0125"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/primary-sources-v1.json",
+      "bytes": 505,
+      "sha256": "0f97b5c989c07497405cafbf496e97e84b11bb58969951c9487eca196531359f"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/primary-sources-v1.log",
+      "bytes": 3814,
+      "sha256": "9eb77ab8ef8131a82c17937f1f575bc6504b14f41f30de403290b46c4f00a1ee"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/read-clean-query.py",
+      "bytes": 615,
+      "sha256": "250c47f2bfa0a057194da97bd7013b36746e3ff91e6f179647112ab23371ecdd"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/read-current.py",
+      "bytes": 2419,
+      "sha256": "c506f54a8c62612d4599d23bec4a8211507ad89ea283ffb254e086646e3f54e6"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/run-attempt.py",
+      "bytes": 1671,
+      "sha256": "9c01469aa8591692bd21cc03575526816e1a4fefb8d3892a8d233a2906d7bcd0"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/setter-tracking-overlap-v1.json",
+      "bytes": 515,
+      "sha256": "7f35f11ab244c312e0ccaedd4ab253e9c5e9ea49c2a13e1020a7c381cc74b3c0"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/setter-tracking-overlap-v1.log",
+      "bytes": 1551,
+      "sha256": "00d68db92209a6e07a21b9bfb5459be36ad0b3531dbf8fa48bc30ca02a31ca92"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/sources/client.c",
+      "bytes": 103629,
+      "sha256": "655aeb81922997fb2b150601a43508e52068fbabca1dfb7a682f33f08396a780"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/sources/conf.c",
+      "bytes": 67134,
+      "sha256": "e1a3ed29b7b4d7684a0efe3e829daa8bc8747fc075c2b05d7a52c65a93dc7ef5"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/sources/doc/chrony.conf.adoc",
+      "bytes": 131286,
+      "sha256": "8122a817e12fc9f39cff170bc902624fc13c78c628aeebe2cbc5cf709f9a9c9d"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/sources/doc/chronyc.adoc",
+      "bytes": 59688,
+      "sha256": "9ec95ae1dfe1928c6ff7b77cedb4e81289e71a98cb7235f54fc93166a2e03c4d"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/sources/local.c",
+      "bytes": 19630,
+      "sha256": "37971b8c92540c9ffffe66c45a0b974a2ed0a79315643b2375f4022614b200ba"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/sources/ntp_core.c",
+      "bytes": 91947,
+      "sha256": "3ffd161f27354a588331e983417b7a620748c9e1dcd5ace996cb0a8033094235"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/sources/reference.c",
+      "bytes": 38037,
+      "sha256": "8f98b09a799742d7993656026e02f6775cf030950ea3c65d3469d6b80f4b8f1f"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/sources/sys_generic.c",
+      "bytes": 12526,
+      "sha256": "a122d64d51255be952e11cadf7a0b8d7580d02c2f0017c6b6dfd1c6772743447"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/sources/sys_linux.c",
+      "bytes": 28312,
+      "sha256": "16f9e109376d56b67255838fb0fde3fddb6d5b437edc7e71d2db62dc661b8ce9"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/sources/sys_timex.c",
+      "bytes": 7091,
+      "sha256": "c1dc0a08b3995b0e0e68d4715735495aaaa80f1632d4921a9831a2e23f4e5d6c"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/sources/util.c",
+      "bytes": 32933,
+      "sha256": "9144d173954004b1671eafb116fec28a8b2722aa50cd6d8297e9ee1ff83b7c11"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/sources/wsl-init-main.cpp",
+      "bytes": 118684,
+      "sha256": "3668797cdf1664b35e18fce836113539799d3d0c7171fcf2b1f0c0e4ba7008e5"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/trace-current.py",
+      "bytes": 5810,
+      "sha256": "30f1a9bff9b2ed887a91c0ed00cab0c4f94c3102d0460e309c8768a24f5212ae"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/upstream-arithmetic",
+      "bytes": 16472,
+      "sha256": "03c7d256bec623259c851837711c335d44364a0a63280ef0d36d346b2305c0dd"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/upstream-arithmetic-v1.json",
+      "bytes": 513,
+      "sha256": "938947fdb53a410bf761da593c0701f3e3498724ac90c03dad77bbb3dbddc63e"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/upstream-arithmetic-v1.log",
+      "bytes": 1911,
+      "sha256": "ae4f2f8d73a2ca803d017f8e3db45e42d00c940b81c05a781bea33408fa699be"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/upstream-arithmetic.c",
+      "bytes": 3122,
+      "sha256": "f9f9c7545ac3a3d3cae8fce273bde0745416a0d2f802069a8ab24f9628da04a2"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/user-answer.json",
+      "bytes": 228,
+      "sha256": "9e883b305d6c45d5a786a0ae5b30cf271d52654639af8adec23b03759b21cd93"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/validate-records.py",
+      "bytes": 3348,
+      "sha256": "28e33d652d10fde0b419bebe625373c28adf15e0bc0663a8808db3562eb87ff3"
+    },
+    {
+      "path": "261021/data/reports/20261101-chrony-control/validation-result.json",
+      "bytes": 757,
+      "sha256": "27f908ad345d496ead3351d4f595e86600b0c0fbb5e1d5b777d5a219c8801bf2"
+    }
+  ],
+  "reviewed_public_files": [
+    {
+      "path": "261014/plan_mlops.md",
+      "bytes": 90842,
+      "sha256": "60d8c803da76e575e19b2c9cf11c6d68b9e75a59f29885cb2df0f5b9aa5632f9"
+    },
+    {
+      "path": "261021/work_log.md",
+      "bytes": 351624,
+      "sha256": "3c0db3cdd5b79b323f611bf0c35f206b3512f2a0c26c6e3e0034665f67752cc6"
+    },
+    {
+      "path": "261021/docs/clock-process-ownership.md",
+      "bytes": 11031,
+      "sha256": "bc8d5459117ed158db6fc9055995d6b2d6fbdeee04db2060a846fa9e2aca964f"
+    },
+    {
+      "path": "261021/docs/clock-owner-admin-read.md",
+      "bytes": 7172,
+      "sha256": "d63f665436beeca6f86236664111079ea19bb343ceaf5387d925b6b6665d5311"
+    },
+    {
+      "path": "261021/docs/chrony-control-analysis.md",
+      "bytes": 9983,
+      "sha256": "b308b7e18ce5a24e6fd43f35b02340d5bcfb5679882145d07dad5ce0445c1584"
+    }
+  ]
+}

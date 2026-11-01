@@ -3,6 +3,7 @@
 [現在の調査結果](clock-process-ownership.md)の続き。**時計設定を変更する手順ではない。**
 現チャットのWindows tokenは非管理者で、`wsl --debug-shell`の起動を拒否された。
 Ubuntu rootやCodexのsandbox許可はWindows管理者tokenとは異なる。
+基点2181bfeからの[追加確認](chrony-control-analysis.md)でも保存先に管理者ログはなく、ユーザーも未採取と回答した。以下の採取が次の依存作業である。チャット側で読取可能な範囲の調査は実施済みで、この管理者tokenをチャットから代行取得できていない。
 
 ## 採取する情報と実施条件
 
@@ -67,3 +68,11 @@ readerはchronyd/systemd-timesynだけを候補として列挙し、exe/hash/arg
 
 rawは端末path・UID・argv等を含むためignored reportsへ保持する。Gitへ原本を追加せず、公開用summaryとSHAだけをreview後に残す。
 実DB・registry・配信は採取対象に含めない。実行file/起動者/生成設定の照合後に、Solが修復案・影響・切戻しと、必要な別のOS変更許可を整理する。
+
+## 採取後に照合する項目
+
+表示された`clock-owner-admin-<GUID>`のWSLパスをチャットへ伝える。raw全文の貼付けは不要。
+このreaderはPHCの装置一覧を読むが、daemonの開いたPHC fdやUDP socketの所有まで検証するものではない。
+Solは開始/終了のidentity、exe/hash、親/namespace、選択configを先に確認し、fd/socket・config include・管理unit等の不足があれば、そのprocessだけの追加読取を設計する。
+別bootやPID再利用、identity変化があれば旧setter traceへ結び付けない。
+`INVENTORY_COMPLETE`でもtickの内部変数や修復完了を証明しないため、[追加調査の未確定事項](chrony-control-analysis.md)を残す。

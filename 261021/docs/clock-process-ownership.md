@@ -3,6 +3,7 @@
 基点は`0477e8ccb0d9ebb1b7eb6a51befc8435f279ec57`。
 [前回の呼出元調査](clock-origin-investigation.md)と[今回の証拠JSON](reviews/20261101-clock-owner-checks.json)を参照する。
 **Ubuntu timesyncdの管理元は特定した。chronydの稼働実体への最終照合と環境修復は未完了。**
+続く基点2181bfeからの[補正量・tick計算の調査](chrony-control-analysis.md)では、現在のsetterとtrackingを重ね、上流計算で補正限界との一致を確認した。管理者ログは未採取で、稼働実体と内部理由の確定は引き続き未了。
 OS時計・同期設定・実DB・registry・配信は変更していない。一時的な診断probeだけを追加して回収した。
 
 ## 確認できたこと

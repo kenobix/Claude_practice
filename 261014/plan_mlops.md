@@ -439,7 +439,7 @@ T05の全suite再検証で、既存T03のSIGTERM子process終了待ち10秒のti
 
 | 追加残件 | 優先度 / 難易度 / 担当 | 完了条件・依存 |
 |---|---|---|
-| 時計調整processの管理元 | **P1 / D3 / Sol・一部確認済み** | Ubuntu timesyncdはlocal 214→kernel 496を読取照会/kprobeで照合し、exe/hash/親/cgroup/unit/vendor WSL drop-in/ntp.ubuntu.comを確認。chronydはkernel 213のtick=11000継続と明示loopback queryのPHC0応答、WSL 2.6.3 initの組込起動設計まで確認。**稼働chronydのexe/親/namespace/生成configと11000の内部理由は未確定**。Windows管理者向けの限定reader/保存手順を用意。現tokenは非管理者、debug shellと.ps1直接実行は権限/policy拒否。PIDを再採取し、同名commや可視package既定configだけで所属を確定しない。原本は公開しない。 |
+| 時計調整processの管理元 | **P1 / D3 / Sol・一部確認済み** | Ubuntu timesyncdはlocal 214→kernel 496を読取照会/kprobeで照合し、exe/hash/親/cgroup/unit/vendor WSL drop-in/ntp.ubuntu.comを確認。chronydはkernel 213のtick=11000継続と明示loopback queryのPHC0応答、WSL 2.6.3 initの組込起動設計まで確認。**稼働chronydのexe/親/namespace/生成configと11000の内部理由は未確定**。基点2181bfe後も管理者ログは未採取（ユーザー確認済み）。同時trackingと40秒trace、upstream4.1計算検証でtick11000/freq0がdriver補正限界−100000ppmと一致することを確認したが、内部状態/設定の確定ではない。限定reader/保存手順の実施→実体照合→必要時のPHC fd/UDP所有・include設定等の限定追加読取へ進む。PIDを再採取し、同名commや可視package既定configだけで所属を確定しない。原本は公開しない。 |
 | 環境修復の具体化と時計資格 | **P1 / D3 / Sol** | 所有者特定後、host/guest同期責任、tick制御、Windows W32Time、影響範囲/切戻しを具体案にする。OS変更は今回未許可のため実行しない。service停止だけ、tick一回変更だけで解決にしない。承認された保守後にbracket採取/setter/再開後の観測と厳密future拒否を再検証する。T12等の実運用時間測定は時計資格確認後の新規attemptで行い、過去のp95等を現在比で割り戻さない。精度指標と経過時間を混同しない。 |
 | T03の自然停止の原因 | **P1 / D3 / Sol** | 今回journal 9件成功、通常SIGTERM全phase/exit 130。未再発で完了にせず、再発時にphase/stack/実秒に対するMONOTONICの進行率を照合する。現在の進行率だけで歴史的10秒timeoutの原因を断定しない。 |
 
@@ -449,6 +449,8 @@ T05の全suite再検証で、既存T03のSIGTERM子process終了待ち10秒のti
 
 T03 journal 9件11.120 test秒とdecision 9件1.711 test秒が成功。自然停止は未再発で、元原因は未解決。timesyncd対応付けの初回は変動するstatus全体を比較して失敗し、差がcontext switch回数だけと確認して安定identityへ修正した別attemptを保存。readerの初回glob無効化、system環境のawk不在、analysis準備のcwd失敗、Windows管理者/policy拒否も保持した。修正版shell readerはUbuntu rootでtimesyncd 1件/chronyd 0件を返しexit42（不完全）、非rootは77。PowerShellは実parser成功、管理者経路のend-to-endは未確認。全suite/PG/実配信は再実行せず、時計資格と実Capitalの合格を先取りしない。OS設定変更・future緩和/clamp/自動retryは未実施。次は外側processの限定採取→生成元と実体照合→影響/切戻し付き保守案をSolが判断する。
 
+
+**2026-11-01・基点2181bfeからのchronyd追加調査:** [数値の意味・仮説・修復案/影響/切戻し](../261021/docs/chrony-control-analysis.md)、[証拠JSON](../261021/docs/reviews/20261101-chrony-control-checks.json)。管理者採取はまだ行われていないため、稼働exe/hash・親/namespace/生成設定の直接照合を完了にしない。現在のtimesyncd identityを再照合し−4.197671651秒の補正成功、chronyd213のtick11000/freq0成功10回、PHC0 tracking21応答を同じ観測期間で保存した。upstream4.1の総量は基準周波数+slew補正であり、tracking Frequencyと同値ではない。メモリstubだけのC検証9条件は成功し、driver限界との一致と条件付きの飽和経路を説明できたが、実base_freq/corr_freq/設定・制限前総量は未読。cwd引継ぎwarning付きの21queryも保存し、--cd /を指定した別queryはstderrなしで成功。前回113原本hash一致、専用probe回収/global制御hash不変/lost0を確認。OS修復・future緩和・実DB/registry/配信変更は行っていない。既存source/test/CI未変更で全suiteを再実行せず、T03歴史的停止・T13 HTTP障害・T07/T17・実候補の証拠作成は残す。
 
 Lunaへの依頼には、T番号、対象commit、編集してよいファイル、入力/出力、成功・拒否ケース、検証コマンド、記録先を渡す。新しい閾値・評価期間・配信状態遷移・DB移行・依存lockの変更が必要と分かったら、その判断をSolへ戻す。これは担当作業の境界であり、通常の可逆な編集や既存手順の実行について新しい承認待ちを追加するものではない。
 
