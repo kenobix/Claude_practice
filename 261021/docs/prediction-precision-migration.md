@@ -45,3 +45,5 @@ MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python scripts/test_prediction_migration_p
 出力先は新規directoryを指定します。既存directoryを再利用すると停止し、前回のbackup/summaryを上書きしません。試験は専用labelとランダムloopback portの2 containerを作り、非superuserのapp ownerで試験します。終了時は所有ID/labelを照合して専用container/volumeを削除し、残存も検査します。途中失敗のlogとsummaryを成功結果へ置き換えません。SIGKILLをharness全体へ送る場合やDocker自体の障害ではfinallyが動かない可能性があり、cleanup成功出力の有無と専用labelを確認してください。
 
 T08は合成旧schemaの受入です。既存UCIを停止・backup・移行・復元した結果や、T07のartifactを含む復旧、T17の配信metadata一致、実Capital監視/承認の証拠を示すものではありません。
+
+実装commit `20abdab`の[CI 41263492531](https://github.com/kenobix/Claude_practice/actions/runs/41263492531)は全337 tests（40.391秒）、T08のPG受入9 tests（2.549秒）、既存system/PG/T06b照合25件とcleanupが成功した。artifact ZIPと8 memberのhash、移行前/後dumpのsummary hashも一致した。これは合成fixtureの検証結果であり、実DB移行を実行した結果ではない。

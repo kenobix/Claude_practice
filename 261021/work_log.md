@@ -2619,3 +2619,11 @@ backup/restoreは二つの専用container・別anonymous volumeで行った。�
 9受入・13回帰はすべて成功しcleanupも確認した。production codeは不変なので全unit suiteを根拠なくlocal反復せず、337件と既存systemをpost-push CIで確認する。CIはT08専用stepを追加しlog/summary/2合成dumpだけを既存artifactへ保存する。T16のoperational journal archiveやT15の既存monitor persistence PG接続を完了にしない。
 
 source/log/dump hashと観測summaryはdocs/reviews/20261101-t08-checks.jsonに記録した。利用者環境の日付は2026-11-01、実行基盤のUTC時計はmanifestのexecution_host_recorded_at_utc/raw logにそのまま残して区別した。次のSol P1はT03/T13の不安定性原因追跡とT07/T17の配信・復旧・metadata整合。Lunaへは固定したT15だけを渡せるようdocs/t15-luna-handoff.mdを作成したが、実委譲はしていない。実UCI移行・実Capital候補/監視・T02 producer・実採否は未実施のままである。
+
+### T08 実装commitとpost-push CIの完了
+
+対象10ファイルを20abdabd72ea098e52883d0ef8921f7f337047dfとしてcommit/pushした。実装sourceと既存db.py/api.pyのGit blob SHAが検証JSONと一致することも確認した。production source/testに164ac53以降の追加差分はない。[CI 41263492531](https://github.com/kenobix/Claude_practice/actions/runs/41263492531)は全337件40.391秒、T06b PG25件、T08 PG9件2.549秒、既存system/両PGとcleanupまで全job/stepがsuccess。GitHub connectorのjob/step/artifact metadataとghの完全headShaを照合した。45秒のgh run watchはexit 124だったが、これはwatch期限でありCI本体のtimeoutではない。ci-watch-v1.logと進行中metadataも保持した。
+
+raw unit log、最終metadata、artifact 13066970139のraw ZIPをdata/reports/20261101-t08/20abdab-*へ保存した。ZIPは10,905 bytes、SHA f8b4d540112d6c7d3f6106efed6221893cbd1a953999635fac40ce0411550af6でGitHub digestと一致。ZIP integrityと8 memberのbytes/SHA、t08-ci/summary.jsonの9件成功/非実DB/cleanupとbefore.dump/after.dump各hashを検算し、20abdab-artifact-validation.jsonへ記録した。ソース/restore双方の別volumeとcleanupを最終CIでも確認し、過去十進JSON完全一致falseという制約をsummaryにも保持した。
+
+T08の合成移行・再送・中断・復元検証を完了とし、計画のR08該当checkbox/作業表も更新した。残るSolのP1はT03/T13の非決定的失敗原因、T07/T17配信復旧/metadata整合、T02 producer/実監視等。Lunaには固定済みT15（P2/D2）のCI接続依頼を渡せる。新データ/独立protocolを要するT09→T10→T11→T12、実採否T13とT16等も引き続き未完了で、全計画を完了にしていない。今回の記録commitは計画・T08文書・検証JSON・このログの4ファイルのみで、実装commit CIの成功を記録する。記録commit自体のCI成功を先取りしない。

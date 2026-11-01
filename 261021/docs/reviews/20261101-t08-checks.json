@@ -4,7 +4,7 @@
   "base_commit": "c38ee00",
   "session_date_local": "2026-11-01",
   "execution_host_recorded_at_utc": "2026-11-01T02:00:36.926930+00:00",
-  "status": "local_passed_ci_pending",
+  "status": "local_and_implementation_ci_passed",
   "scope": "synthetic_only",
   "production_code_changed": false,
   "real_database_migration_performed": false,
@@ -194,10 +194,169 @@
       "exit_code": 0,
       "tests": 9,
       "elapsed_seconds": 7.619
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/20abdab-artifact-validation.json",
+      "bytes": 3947,
+      "sha256": "974030b745f485572110b3fe2f5a8c96b34de3c9d9d67cc8ab46ec723b2bc706"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/20abdab-ci-artifact.zip",
+      "bytes": 10905,
+      "sha256": "f8b4d540112d6c7d3f6106efed6221893cbd1a953999635fac40ce0411550af6"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/20abdab-ci-artifacts.json",
+      "bytes": 1021,
+      "sha256": "57839147574bd13ab840851fefdc42372ac29e4ada1888808adefe8700cad7de"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/20abdab-ci-final.json",
+      "bytes": 5279,
+      "sha256": "5382c1c55b98d064909dd3a77ace8edf6ed4c07773d5e9bb6603eca5abfc86dc"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/20abdab-ci-jobs.json",
+      "bytes": 5325,
+      "sha256": "ee77688d867397df0c544773c48ef8db88827ecc4f1545b36ea30ca72a98c762"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/20abdab-ci-progress-v1.json",
+      "bytes": 5049,
+      "sha256": "ff153a983e03f7008a11fc474c82d1088e8cf39589d59efa2aae3258b685d935"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/20abdab-ci-unit.log",
+      "bytes": 132699,
+      "sha256": "096011df6a9da76236177dc79f108edaa7851c220f496b8af14eee1c1b0c3d73"
+    },
+    {
+      "path": "261021/data/reports/20261101-t08/ci-watch-v1.log",
+      "bytes": 3835,
+      "sha256": "5c5428e031b8e5a9d8bb41df7199a239f89136c1b0442b395a85cadb20a1c755",
+      "watch_exit_code": 124,
+      "meaning": "watch deadline, not CI test failure"
     }
   ],
   "ci": {
-    "status": "pending_implementation_commit"
+    "status": "passed",
+    "commit": "20abdabd72ea098e52883d0ef8921f7f337047df",
+    "run_id": 41263492531,
+    "url": "https://github.com/kenobix/Claude_practice/actions/runs/41263492531",
+    "zip_sha256": "f8b4d540112d6c7d3f6106efed6221893cbd1a953999635fac40ce0411550af6",
+    "zip_bytes": 10905,
+    "unit_summary": [
+      "Ran 337 tests in 40.391s"
+    ],
+    "t08_pg_summary": [
+      "Ran 9 tests in 2.549s"
+    ],
+    "all_jobs_steps_success": true,
+    "cleanup_complete": true,
+    "members": [
+      {
+        "name": "synthetic-system-ci.log",
+        "bytes": 5368,
+        "sha256": "8b95b960a060e7ff22ee6cdef192a3e239f69d172d4555f8171d551bf09099fb"
+      },
+      {
+        "name": "snapshot-postgres-ci.log",
+        "bytes": 560,
+        "sha256": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9"
+      },
+      {
+        "name": "request-interruption-postgres-ci.log",
+        "bytes": 459,
+        "sha256": "efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb"
+      },
+      {
+        "name": "monitor-inspection-postgres-ci.log",
+        "bytes": 3933,
+        "sha256": "309d4bc97d987841ae34c65a0867ac6ea12d14fb3f9358c4af5e1fe5bfc01853"
+      },
+      {
+        "name": "prediction-migration-postgres-ci.log",
+        "bytes": 2979,
+        "sha256": "4c734a23d4b7a7c9977ea9cf8ff4ae61895f9e570d4c1ba6016a09214584a0b9"
+      },
+      {
+        "name": "t08-ci/before.dump",
+        "bytes": 8251,
+        "sha256": "b16f2ebc3a27f915a6c1cc82317ef4cad8b4060c97a4cdabf42ac7380127a82e"
+      },
+      {
+        "name": "t08-ci/summary.json",
+        "bytes": 2042,
+        "sha256": "3f9b3fab3606357f303cf24e0c94bfe687fec4b7584f59e3bc78673ca8dca1b9"
+      },
+      {
+        "name": "t08-ci/after.dump",
+        "bytes": 8309,
+        "sha256": "8d172f6a7bd578e7f284ced9f5aaf19702c276d0c893e92262e897f91b97ebcd"
+      }
+    ],
+    "summary": {
+      "task": "T08",
+      "scope": "synthetic_only",
+      "status": "passed",
+      "tests_run": 9,
+      "failures": 0,
+      "errors": 0,
+      "observations": {
+        "api_retry": {
+          "same_binary32_stored_value": true,
+          "stable_after_migration": true,
+          "exact_historical_decimal_json_preservation": false,
+          "decimal_display_changes": [
+            {
+              "request_id": "legacy-request-000",
+              "before_text_decoded": 0.33333334,
+              "after_exact_binary32": 0.3333333432674408
+            },
+            {
+              "request_id": "legacy-request-001",
+              "before_text_decoded": 415.72473,
+              "after_exact_binary32": 415.7247314453125
+            },
+            {
+              "request_id": "legacy-request-002",
+              "before_text_decoded": 15.189926,
+              "after_exact_binary32": 15.189926147460938
+            }
+          ],
+          "changed_input_status": 409,
+          "model_reload_required": false
+        },
+        "backup_restore": [
+          {
+            "phase": "before",
+            "bytes": 8251,
+            "sha256": "b16f2ebc3a27f915a6c1cc82317ef4cad8b4060c97a4cdabf42ac7380127a82e",
+            "schema_rows_metadata_and_api_match": true,
+            "restore_target": "second_owned_instance_and_volume"
+          },
+          {
+            "phase": "after",
+            "bytes": 8309,
+            "sha256": "8d172f6a7bd578e7f284ced9f5aaf19702c276d0c893e92262e897f91b97ebcd",
+            "schema_rows_metadata_and_api_match": true,
+            "restore_target": "second_owned_instance_and_volume"
+          }
+        ],
+        "exception_and_connection_loss": "passed",
+        "new_binary64_and_conflict": "passed",
+        "parallel_initialize": "passed",
+        "profile_rejection_rollback": "passed",
+        "sigkill_before_after_commit": "passed",
+        "storage_metadata_repeat_initialize": "passed",
+        "old_unmarked_uci_columns": "passed"
+      },
+      "image_id": "sha256:567d5d704a3e5a4864393b623a0d50eb1b5a4ad134cdac7cf19555cb2d8ffe9e",
+      "separate_source_and_restore_volumes": true,
+      "cleanup_complete": true,
+      "real_database_migration_performed": false,
+      "deployment_permission": "not_evaluated"
+    }
   },
   "remaining": [
     "Actual UCI migration not performed; historical JSON equality requires separate response-policy design if needed",
