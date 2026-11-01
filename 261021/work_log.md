@@ -2655,3 +2655,16 @@ workflowの`synthetic-system` jobへ、lock/project installと`pip check`がす�
 T15検証JSONのsource_filesはLuna review前snapshotとして保持し、Sol reviewの結果/log/hashを追記した。無関係な未追跡3 pathは含めず、T15対象5ファイルのみをcommit/pushする。CIのnew step成功・artifact ZIP内log・専用container cleanupを確認するまでT15は未完了。
 
 通常sandboxでの最初のgit addは`.git/index.lock: Read-only file system`によりexit 128で、stage/commitには至らなかった。`sol-review-20261101/git-stage-sandbox-failure.log`に記録し、ユーザーが許可したcommit/pushを権限付きで実行する。
+
+
+## T15 — 実装commitのCI・artifact・cleanup確認完了
+
+レビュー後、指定5ファイルを`5cc5a89733cda41f2c5712ef37ce6447fd28ff2f`へcommitし、origin/mainへpushした。開始時の無関係な未追跡3 pathは含まれていない。GitHub連携のcommit-run一覧はPR起動のみに限定されるため、push起動の検索とhead SHA/最終時刻の取得には`gh run list --repo kenobix/Claude_practice --commit 5cc5a89733cda41f2c5712ef37ce6447fd28ff2f --limit 10 --json databaseId,workflowName,status,conclusion,headSha,url,createdAt`と`gh run view 41264954179 --repo kenobix/Claude_practice --json headSha,status,conclusion,jobs,url,startedAt,updatedAt`を使った。jobs/artifacts/raw job log/ZIP取得はGitHub連携を使用した。認証情報・一時download URLは証拠ファイルに残していない。
+
+[CI 41264954179](https://github.com/kenobix/Claude_practice/actions/runs/41264954179)は該当head SHAでcompleted/success。unit job全337件40.792秒、compileall、合成Docker・snapshot PG・中断PG・照合PG・移行PG・新monitor persistence PGのすべてが成功した。新stepはUTC 02:27:07〜02:27:10でsuccess、artifact uploadもsuccess。監視コマンド`timeout --signal=TERM --kill-after=5 50 gh run watch 41264954179 --repo kenobix/Claude_practice --exit-status --interval 15`の2回はexit 124だが、50秒のwatch期限でありCIの失敗ではない。各watchの全出力/終了値を別logへ保存し、最後のmetadataとartifact本文で成功を確定した。
+
+artifact `bike-mlops-docker-integration-logs`（ID 13067122187）のraw ZIPを`sol-review-20261101/5cc5a89-artifact.zip`へ保存した。11,309 bytes、SHA-256 `62f54b9fe77919e759b4e00ac82cd1704daa92784ca0868d2c5d097c86369804`でGitHub digestと一致。ZIP integrity成功、既存8 member＋今回の`monitor-persistence-postgres-ci.log`だけの計9 memberがallowlistと完全一致し、各bytes/SHAを検算した。新logには旧行不変・独立run二回・unique衝突時全transaction rollback・失敗reportのmarker欠落・pending request遅延commit前後の5検査成功と`Disposable test container stopped and removed`が記録され、raw system jobの各行とも一致した。既存scriptはdocker rm成功後にこの文言を出すため、当該専用containerの削除成功を確認した。これをtimeout/SIGKILL時のあらゆるcleanup保証へ広げていない。
+
+新規保存した最終run/jobs/artifacts metadata、unit/system raw log、ZIPと`5cc5a89-artifact-validation.json`のbytes/SHAはT15証拠JSONへ追記した。原本はignored `data/reports/20261101-t15/sol-review-20261101/`へ保持する。GitHub artifactの保持は14日である。unitのSQLAlchemy noload、artifact actionのNode.js 20（24へ強制実行）・punycode/url.parse非推奨警告を確認し、別途P2/D2の保守として計画へ残した。警告を理由にlock/actionを全面更新していない。
+
+T15はSol reviewと実装commit CI/ZIP/cleanupまで完了。実Capital監視・承認・配信を実行したとは扱わない。次のSol担当P1/D3は既知T03/T13の非決定的失敗原因追跡、続いてT07/T17等。今回の追加commitはREADME/計画/証拠JSON/このログの記録4ファイルだけで、実装commitの観測成功を記録する。記録commit自身のCI結果はこのsnapshotに先取りしない。

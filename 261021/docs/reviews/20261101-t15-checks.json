@@ -3,11 +3,42 @@
   "task": "T15 existing monitor persistence PostgreSQL test CI connection",
   "session_date_local": "2026-11-01",
   "base_commit": "03d1bce7528ee3c5c2e96f878e6f0aeec2bd94b4",
-  "status": "sol_review_approved_ci_pending",
+  "status": "completed_sol_review_and_implementation_ci_verified",
   "scope": "synthetic_only",
   "production_source_schema_writer_changed": false,
   "real_uci_capital_database_or_registry_used": false,
-  "ci_run": "pending_implementation_commit_push",
+  "ci_run": {
+    "id": 41264954179,
+    "url": "https://github.com/kenobix/Claude_practice/actions/runs/41264954179",
+    "head_sha": "5cc5a89733cda41f2c5712ef37ce6447fd28ff2f",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 124725711018,
+        "name": "synthetic-system",
+        "conclusion": "success"
+      },
+      {
+        "id": 124725711244,
+        "name": "tests",
+        "conclusion": "success"
+      }
+    ],
+    "new_step": {
+      "completedAt": "2026-11-01T02:27:10Z",
+      "conclusion": "success",
+      "name": "Run disposable PostgreSQL monitor persistence test",
+      "number": 12,
+      "startedAt": "2026-11-01T02:27:07Z",
+      "status": "completed"
+    },
+    "unit_tests": 337,
+    "unit_seconds": 40.792,
+    "compileall": "passed",
+    "existing_system_and_postgresql_steps": "passed",
+    "synthetic_only": true
+  },
   "workflow_contract": {
     "job": "synthetic-system",
     "condition": "not cancelled and dependency lock install, project install, and pip check all succeeded",
@@ -128,8 +159,10 @@
     }
   ],
   "limitations": [
-    "GitHub Actions run and artifact download have not yet been observed; verify after Sol review and authorized commit/push.",
-    "Synthetic PostgreSQL acceptance is not real Capital monitoring, candidate approval, or deployment evidence."
+    "Synthetic PostgreSQL acceptance is not real Capital monitoring, candidate approval, or deployment evidence.",
+    "The GitHub artifact expires after 14 days; the exact verified ZIP and raw job logs are retained locally under ignored data/reports.",
+    "Existing action/dependency deprecation warnings are recorded for separate maintenance; no lock/action upgrades were made.",
+    "CI results belong to implementation commit 5cc5a89733cda41f2c5712ef37ce6447fd28ff2f; the follow-up documentation commit CI is not claimed by this snapshot."
   ],
   "source_files_snapshot": "Luna pre-review working tree; these historical hashes are intentionally retained after Sol documentation updates.",
   "sol_review": {
@@ -155,17 +188,210 @@
       "bytes": 2477,
       "sha256": "71e4ab597ecb6a906f14cef55b01a3c1d62bdb961bfa3ca73d27ca1736d1faf9"
     },
-    "ci_acceptance_pending": [
-      "implementation commit synthetic-system job/new step success",
-      "artifact ZIP/digest and monitor-persistence-postgres-ci.log content verification",
-      "dedicated PostgreSQL test container cleanup message",
-      "existing unit job and system regression conclusions"
-    ],
     "git_stage_sandbox_attempt": {
       "exit_code": 128,
       "reason": "sandbox .git read-only; retry with authorized escalation",
       "log": "261021/data/reports/20261101-t15/sol-review-20261101/git-stage-sandbox-failure.log",
       "sha256": "8c2cc1a4efab19e6400bdd1a73c95ec2577c25a10db1ed0d63ea2c94dc4bf093"
+    },
+    "ci_acceptance_verified": [
+      "implementation commit synthetic-system job/new step success",
+      "artifact ZIP/digest and monitor-persistence-postgres-ci.log content verification",
+      "dedicated PostgreSQL test container cleanup message",
+      "existing unit job and system regression conclusions"
+    ],
+    "ci_verified_at_utc": "2026-11-01T02:29:24.105301+00:00",
+    "warnings": [
+      {
+        "source": "MLflow SQLAlchemy store in existing unit test",
+        "warning": "SADeprecationWarning: noload loader strategy",
+        "blocking": false
+      },
+      {
+        "source": "actions/upload-artifact@v4",
+        "warning": "Node.js 20 target forced to run on Node.js 24; punycode and url.parse deprecation warnings",
+        "blocking": false
+      }
+    ]
+  },
+  "implementation_commit": "5cc5a89733cda41f2c5712ef37ce6447fd28ff2f",
+  "ci_artifact": {
+    "id": 13067122187,
+    "name": "bike-mlops-docker-integration-logs",
+    "size_in_bytes": 11309,
+    "url": "https://api.github.com/repos/kenobix/Claude_practice/actions/artifacts/13067122187",
+    "archive_download_url": "https://api.github.com/repos/kenobix/Claude_practice/actions/artifacts/13067122187/zip",
+    "expired": false,
+    "created_at": "2026-11-01T02:27:11Z",
+    "expires_at": "2026-11-15T02:27:10Z",
+    "updated_at": "2026-11-01T02:27:11Z",
+    "digest": "sha256:62f54b9fe77919e759b4e00ac82cd1704daa92784ca0868d2c5d097c86369804",
+    "workflow_run": {
+      "id": 41264954179,
+      "repository_id": 1197425837,
+      "head_repository_id": 1197425837,
+      "head_branch": "main",
+      "head_sha": "5cc5a89733cda41f2c5712ef37ce6447fd28ff2f"
+    },
+    "validation": {
+      "implementation_commit": "5cc5a89733cda41f2c5712ef37ce6447fd28ff2f",
+      "ci_run_id": 41264954179,
+      "artifact_id": 13067122187,
+      "zip_bytes": 11309,
+      "zip_sha256": "62f54b9fe77919e759b4e00ac82cd1704daa92784ca0868d2c5d097c86369804",
+      "github_digest_matches": true,
+      "zip_integrity": "passed",
+      "member_allowlist_exact_match": true,
+      "members": [
+        {
+          "path": "synthetic-system-ci.log",
+          "bytes": 5367,
+          "sha256": "e67ecf970f400aab99d88b5f0ed8ce9a89ec385d2287dcc537912623dcfff30e"
+        },
+        {
+          "path": "monitor-inspection-postgres-ci.log",
+          "bytes": 3933,
+          "sha256": "2b0a4758a6e26b77529763c24fcc67aba3221a6c9f9a5e4c66d8edef968849b3"
+        },
+        {
+          "path": "snapshot-postgres-ci.log",
+          "bytes": 560,
+          "sha256": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9"
+        },
+        {
+          "path": "request-interruption-postgres-ci.log",
+          "bytes": 459,
+          "sha256": "efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb"
+        },
+        {
+          "path": "prediction-migration-postgres-ci.log",
+          "bytes": 2979,
+          "sha256": "1c824629d4a98d966c2eeb537dc4ac1289094107b6700eba742fcbea3683df48"
+        },
+        {
+          "path": "monitor-persistence-postgres-ci.log",
+          "bytes": 376,
+          "sha256": "8d5f8fdc9d453fbb706b8e1fd526a6bb35c5d8ebf058033591b7e2dfe4e5ddc9"
+        },
+        {
+          "path": "t08-ci/summary.json",
+          "bytes": 2042,
+          "sha256": "46d49ac44f872f97771a699e15f02d53d9f34f20e709685f6f8228726e9deddf"
+        },
+        {
+          "path": "t08-ci/before.dump",
+          "bytes": 8251,
+          "sha256": "4a79629a4a182e5b24fd3f1449588ebda18a04628d27a7cfed4cc55d718c2a33"
+        },
+        {
+          "path": "t08-ci/after.dump",
+          "bytes": 8309,
+          "sha256": "cc16e09f0cadc87d2da94b4d6e4e16b74ee47bc887ea42c261b89ae3063be5c7"
+        }
+      ],
+      "monitor_persistence": {
+        "status": "passed",
+        "database": "disposable PostgreSQL, non-superuser app owner",
+        "checks": [
+          "legacy row unchanged",
+          "two independent monitor runs",
+          "second-row unique conflict rolls back first insert",
+          "failed report has no completion marker",
+          "pending request before and after delayed commit"
+        ]
+      },
+      "container_cleanup_message_observed": true,
+      "monitor_log_lines_match_raw_job_log": true,
+      "unit_tests": 337,
+      "unit_seconds": 40.792,
+      "synthetic_only": true
     }
-  }
+  },
+  "followups": [
+    {
+      "priority": "P2",
+      "difficulty": "D2",
+      "owner": "Sol review",
+      "task": "Review artifact action update independently with runtime compatibility and artifact ZIP/allowlist verification; no broad dependency lock upgrade on warnings alone."
+    }
+  ],
+  "ci_evidence_files": [
+    {
+      "path": "261021/data/reports/20261101-t15/sol-review-20261101/5cc5a89-artifact-validation.json",
+      "bytes": 2355,
+      "sha256": "566db682f23fa2e485d8bf404eeab7c2c6996ae2ebc1c4fcfd029547825934db"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/sol-review-20261101/5cc5a89-artifact.zip",
+      "bytes": 11309,
+      "sha256": "62f54b9fe77919e759b4e00ac82cd1704daa92784ca0868d2c5d097c86369804"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/sol-review-20261101/5cc5a89-artifacts-final.json",
+      "bytes": 842,
+      "sha256": "f11dd33ce96896b67c730ad6a88b8345a54cacda2cc4e8a42246a63357141596"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/sol-review-20261101/5cc5a89-jobs-final.json",
+      "bytes": 5016,
+      "sha256": "b4e9c5f7743a67522601f1bf61444eb2983024df690fc1439985d081e3ecd245"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/sol-review-20261101/5cc5a89-jobs-progress-1.json",
+      "bytes": 4593,
+      "sha256": "631f2cad0acfd356a1b41461f6201b659c099611afcdadec59c94b42b6e94dd6"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/sol-review-20261101/5cc5a89-run-final.json",
+      "bytes": 5539,
+      "sha256": "c690db9feafc85c6505aaed3299b3559e09210d210993b53f718665732b24313"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/sol-review-20261101/5cc5a89-run-progress-2.json",
+      "bytes": 5300,
+      "sha256": "e52a5413bf0988879d947db695fbf322d029a76c5876651a88caf2d3ace0b490"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/sol-review-20261101/5cc5a89-system-job.log",
+      "bytes": 85179,
+      "sha256": "df896e32dec2907d33ad989dd4c105a2a9a65554ce68262414c7d7b4c7b2353a"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/sol-review-20261101/5cc5a89-unit-job.log",
+      "bytes": 132613,
+      "sha256": "8ba8730beae21bc36a208879f489e944e843e268af45c1abfcc6f262227398d6"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/sol-review-20261101/ci-watch-attempt-1.log",
+      "bytes": 4000,
+      "sha256": "775ce3ab7922f0e32a8dbbfa63f87bcf8ddb2a39cb9e7ad6f7bf0fdacc925224"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/sol-review-20261101/ci-watch-attempt-2.log",
+      "bytes": 4131,
+      "sha256": "9990a113b8e72fea5518bbbf4b63545aa762fe2887cc4cf7e712ad386a680a0b"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/sol-review-20261101/git-stage-sandbox-failure.log",
+      "bytes": 279,
+      "sha256": "8c2cc1a4efab19e6400bdd1a73c95ec2577c25a10db1ed0d63ea2c94dc4bf093"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/sol-review-20261101/review-validation.log",
+      "bytes": 2477,
+      "sha256": "71e4ab597ecb6a906f14cef55b01a3c1d62bdb961bfa3ca73d27ca1736d1faf9"
+    }
+  ],
+  "ci_watch_attempts": [
+    {
+      "path": "261021/data/reports/20261101-t15/sol-review-20261101/ci-watch-attempt-1.log",
+      "exit_code": 124,
+      "meaning": "50-second local watch deadline, not a CI test timeout"
+    },
+    {
+      "path": "261021/data/reports/20261101-t15/sol-review-20261101/ci-watch-attempt-2.log",
+      "exit_code": 124,
+      "meaning": "50-second local watch deadline, not a CI test timeout"
+    }
+  ]
 }
