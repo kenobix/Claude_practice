@@ -372,6 +372,8 @@ PSIの参照期間、直近7日間の誤差を日付・休日・天候で調べ�
 
 ## 障害時
 
+promote/recoverの状態・承認者/理由・中断地点の扱いは[配信復旧の契約と隔離受入](deployment-recovery.md)を参照してください。未完了が複数ある場合や旧metadataを復元できない場合は自動確定しません。補償未確認はrecovery_requiredのままです。履歴の旧版は、実artifactを読めることを確認するまでrollback許可を意味しません。
+
 T03のSIGTERM終了待ちやT13の未来時刻拒否が再発した場合は、[中断・時計診断](interruption-clock-diagnostics.md)に従ってphase/stackと実際の比較UTCを保存します。今回の環境ではUTC逆行を観測しており、拒否条件を緩めて承認を通さないでください。
 
 2026-11-01の[変更元の追加調査](clock-origin-investigation.md)では、timesyncd相当の負方向offset注入とchronydによるtick書込をkernel traceで確認し、MONOTONICもWindows QPCより約10%速い区間を観測しました。単調増加だけで正しい秒数を保証しないため、実候補の運用測定前に時計の資格を確認します。既存の数値を現在の比で補正せず、時計設定・同期service・Docker停止を無断で変更しないでください。現在の呼出元と歴史的T03停止の原因未特定を区別します。

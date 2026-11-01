@@ -10,6 +10,7 @@ import time
 import urllib.error
 import urllib.request
 import uuid
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 
@@ -585,6 +586,88 @@ def _write_atomic(path: Path, content: str) -> None:
     os.replace(temporary, path)
 
 
+@contextmanager
+def _deployment_lock():
+    """Promotion and recovery serialize through the same runtime-local lock."""
+    import fcntl
+
+    RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+    with (RUNTIME_DIR / "deployment.lock").open("a+") as lock_file:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        yield
+
+
+def _validate_runtime_state(state: dict) -> None:
+    if state.get("active_slot") not in {"blue", "green"}:
+        raise RuntimeError("Runtime state has an invalid active slot")
+    if not str(state.get("active_version", "")).isdigit() or int(state["active_version"]) <= 0:
+        raise RuntimeError("Runtime state requires a positive model version")
+    if not _version_matches_active_profile(state):
+        raise RuntimeError("Runtime state belongs to a different data profile/target contract")
+
+
+def _require_live_deployment(actual: dict, version: str, registered) -> None:
+    if not _version_matches_active_profile(actual):
+        raise RuntimeError("Proxy serves a different data profile/target contract")
+    if actual.get("candidate_id") is not None or actual.get("deployment_permission") == "blocked":
+        raise RuntimeError("Proxy reports a blocked staging candidate")
+    expected = {
+        "model_name": MODEL_NAME,
+        "model_version": str(version),
+        "artifact_sha256": registered.tags.get("artifact_sha256"),
+        "quality_gate_status": registered.tags.get("quality_gate"),
+        "feature_contract_version": FEATURE_CONTRACT_VERSION,
+    }
+    if not expected["artifact_sha256"] or expected["quality_gate_status"] not in {"passed", "failed"}:
+        raise RuntimeError("Registered runtime model lacks artifact/gate identity")
+    for key, value in expected.items():
+        if actual.get(key) != value:
+            raise RuntimeError(f"Proxy {key} does not match the registered deployment")
+
+
+def _live_identity(payload: dict) -> dict:
+    return {key: payload.get(key) for key in (
+        "model_name", "model_version", "artifact_sha256", "quality_gate_status",
+        "feature_contract_version", "data_profile_id", "target_contract_id",
+    )}
+
+
+def _require_ready_deployment(url: str, version: str, registered) -> None:
+    ready = _url_json(f"{url}/ready", timeout=5)
+    if not _version_matches_active_profile(ready):
+        raise RuntimeError("Ready response belongs to a different data profile/target contract")
+    for key, expected in {"status": "ready", "model_name": MODEL_NAME,
+                          "model_version": version, "quality_gate_status": registered.tags["quality_gate"]}.items():
+        if ready.get(key) != expected:
+            raise RuntimeError(f"Ready {key} does not match the deployment")
+
+
+def _checked_registered_deployment(version: str):
+    client = _model_registry_client()
+    registered = client.get_model_version(MODEL_NAME, int(version))
+    _assert_registered_model_profile(registered)
+    if registered.status != "READY" or str(registered.version) != version or registered.name != MODEL_NAME:
+        raise RuntimeError("Registered deployment identity is not READY or does not match")
+    require_deployment_eligible(
+        DATA_PROFILE_ID, registered.tags, model_name=registered.name,
+        model_version=str(registered.version), client=client,
+    )
+    return registered
+
+
+def _candidate_runtime_state(state: dict, row: dict, quality_gate: str) -> dict:
+    updated = dict(state)
+    updated.update(
+        active_slot=row["to_slot"], active_version=str(row["to_version"]),
+        deployment_mode="approved" if quality_gate == "passed" else "diagnostic",
+        last_deployment_id=row["deployment_id"], approver=row["approver"], reason=row["reason"],
+        updated_at=datetime.now().astimezone().isoformat(),
+    )
+    history = [str(row["from_version"]), *state.get("previous_versions", [])]
+    updated["previous_versions"] = list(dict.fromkeys(history))[:10]
+    return updated
+
+
 def _wait_ready(url: str, version: str, quality_gate: str, timeout_seconds: int = 90) -> dict:
     until = time.monotonic() + timeout_seconds
     last_error = None
@@ -656,16 +739,12 @@ def _deployment_probe(url: str, version: str, deployment_id: str, frame: pd.Data
 
 
 def _promote(version: str, approver: str, reason: str, rollback: bool, diagnostic: bool) -> dict:
-    RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
-    lock_path = RUNTIME_DIR / "deployment.lock"
-    with lock_path.open("a+") as lock_file:
-        import fcntl
-
-        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    with _deployment_lock():
         state_path = RUNTIME_DIR / "deployment-state.json"
         if not state_path.exists():
             raise RuntimeError("Run 'mlops-bikectl runtime init --version N' before deployment")
         state = _read_json(state_path)
+        _validate_runtime_state(state)
         old_slot = state["active_slot"]
         old_version = str(state["active_version"])
         old_state_contents = state_path.read_text(encoding="utf-8")
@@ -685,6 +764,8 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
         client = _model_registry_client()
         model_version = client.get_model_version(MODEL_NAME, int(version))
         _assert_registered_model_profile(model_version)
+        if model_version.name != MODEL_NAME or str(model_version.version) != version:
+            raise ValueError("Registered model identity differs from the requested deployment")
         if model_version.status != "READY":
             raise ValueError(f"Model version {version} is not READY in MLflow")
         if not model_version.tags.get("artifact_sha256"):
@@ -700,6 +781,14 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
         if quality_gate != "passed" and rollback and not diagnostic:
             # A manual rollback to a previously active diagnostic version remains diagnostic.
             diagnostic = True
+        if rollback:
+            # History is retained even if an old artifact can no longer load.
+            # Refuse it before writing env/state or starting a candidate container.
+            from bike_mlops.model import load_registered_model
+
+            _model, rollback_hash, rollback_gate = load_registered_model(MODEL_NAME, version)
+            if (rollback_hash != model_version.tags["artifact_sha256"] or rollback_gate != quality_gate):
+                raise ValueError("Rollback target artifact/gate differs from the registered history")
         new_slot = "green" if old_slot == "blue" else "blue"
         service = f"api-{new_slot}"
         port_key = "api_green" if new_slot == "green" else "api_blue"
@@ -708,22 +797,37 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
         new_caddyfile = f":8080 {{\n  reverse_proxy api-{new_slot}:8000\n}}\n"
         deployment_id = str(uuid.uuid4())
         database = _database()
+        with database.session() as connection:
+            pending = database.execute(connection, "SELECT deployment_id FROM deployments WHERE status='in_progress'").fetchall()
+        if pending:
+            raise RuntimeError("An incomplete deployment exists; run deploy recover before promotion")
         if not DEFAULT_DATASET.exists():
             raise FileNotFoundError(
                 f"Prepare and audit the active profile CSV before model promotion: {DEFAULT_DATASET}"
             )
         _, replay_data_hash, replay_frame = _seed_observations(database, DEFAULT_DATASET)
         now = datetime.now().astimezone().isoformat()
+        recovery_context = {
+            "schema_version": 2, "previous_state": state,
+            "previous_identity": _live_identity(live_before),
+            "candidate_identity": {
+                "model_name": MODEL_NAME, "model_version": version,
+                "artifact_sha256": model_version.tags["artifact_sha256"],
+                "quality_gate_status": quality_gate, "feature_contract_version": FEATURE_CONTRACT_VERSION,
+                "data_profile_id": DATA_PROFILE_ID, "target_contract_id": TARGET_CONTRACT_ID,
+            },
+        }
         with database.transaction(immediate=database.sqlite) as connection:
             database.execute(
                 connection,
                 "INSERT INTO deployments(deployment_id,status,phase,data_profile_id,target_contract_id,"
-                "from_slot,to_slot,from_version,to_version,approver,reason,error,created_at,updated_at) "
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "from_slot,to_slot,from_version,to_version,approver,reason,error,probe_json,created_at,updated_at) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
                     deployment_id, "in_progress", "prepared", DATA_PROFILE_ID, TARGET_CONTRACT_ID,
                     old_slot, new_slot, old_version,
-                    version, approver, reason, None, now, now,
+                    version, approver, reason, None,
+                    json.dumps({"recovery_context": recovery_context}, allow_nan=False), now, now,
                 ),
             )
         (RUNTIME_DIR / f"{new_slot}.env").write_text(f"MODEL_VERSION={version}\n", encoding="utf-8")
@@ -731,23 +835,18 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
             _compose("up", "-d", "--build", "--no-deps", service)
             candidate = _wait_ready(f"http://127.0.0.1:{host_port}", version, quality_gate)
             probe = _deployment_probe(f"http://127.0.0.1:{host_port}", version, deployment_id, replay_frame)
+            probe["recovery_context"] = recovery_context
             _deployment_row(database, deployment_id, "candidate_ready", probe=probe)
             _write_atomic(RUNTIME_DIR / "Caddyfile", new_caddyfile)
             _compose("exec", "-T", "caddy", "caddy", "validate", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
             _compose("exec", "-T", "caddy", "caddy", "reload", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
             _deployment_row(database, deployment_id, "proxy_switched")
             active = _url_json(f"{_proxy_url()}/version", timeout=5)
-            if str(active.get("model_version")) != version:
-                raise RuntimeError(f"Proxy verification returned model version {active.get('model_version')}")
-            if not _version_matches_active_profile(active):
-                raise RuntimeError("Proxy switched to a different data profile/target contract")
-            state["active_slot"] = new_slot
-            state["active_version"] = version
-            state["deployment_mode"] = "approved" if quality_gate == "passed" else "diagnostic"
-            state.setdefault("previous_versions", []).insert(0, old_version)
-            state["previous_versions"] = list(dict.fromkeys(state["previous_versions"]))[:10]
-            state["last_deployment_id"] = deployment_id
-            state["updated_at"] = datetime.now().astimezone().isoformat()
+            _require_live_deployment(active, version, model_version)
+            state = _candidate_runtime_state(state, {
+                "to_slot": new_slot, "to_version": version, "from_version": old_version,
+                "deployment_id": deployment_id, "approver": approver, "reason": reason,
+            }, quality_gate)
             _write_atomic(state_path, json.dumps(state, indent=2) + "\n")
             _deployment_row(database, deployment_id, "completed", "completed")
             return {
@@ -768,10 +867,20 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
         except Exception as error:
             try:
                 _write_atomic(RUNTIME_DIR / "Caddyfile", old_caddyfile)
-                _compose("exec", "-T", "caddy", "caddy", "reload", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile", check=False)
+                _compose("exec", "-T", "caddy", "caddy", "validate", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
+                _compose("exec", "-T", "caddy", "caddy", "reload", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
+                restored = _url_json(f"{_proxy_url()}/version", timeout=5)
+                old_registered = _checked_registered_deployment(old_version)
+                _require_live_deployment(restored, old_version, old_registered)
+                if _live_identity(restored) != recovery_context["previous_identity"]:
+                    raise RuntimeError("Previous runtime identity changed during compensation")
+                _require_ready_deployment(_proxy_url(), old_version, old_registered)
                 _write_atomic(state_path, old_state_contents)
-            finally:
-                _deployment_row(database, deployment_id, "failed", "failed", str(error))
+            except Exception:
+                _deployment_row(database, deployment_id, "recovery_required", "in_progress",
+                                "Compensation could not be verified; run deploy recover")
+                raise RuntimeError("Deployment and compensation are unresolved; run deploy recover") from error
+            _deployment_row(database, deployment_id, "failed", "failed", str(error))
             raise
 
 
@@ -780,70 +889,92 @@ def command_deploy_promote(args) -> None:
     _print(_promote(str(args.version), approver, args.reason, args.rollback, args.diagnostic))
 
 
-def command_deploy_recover(args) -> None:
+def _recover_deployment() -> dict:
     state_path = RUNTIME_DIR / "deployment-state.json"
     state = _read_json(state_path)
-    if DATA_PROFILE_ID != "uci-bike-sharing" and (
-        state.get("data_profile_id") != DATA_PROFILE_ID
-        or state.get("target_contract_id") != TARGET_CONTRACT_ID
-    ):
-        raise RuntimeError("Runtime state belongs to a different data profile/target contract")
+    _validate_runtime_state(state)
     database = _database()
     with database.session() as connection:
         rows = database.execute(
-            connection,
-            "SELECT * FROM deployments WHERE status='in_progress' ORDER BY created_at DESC",
+            connection, "SELECT * FROM deployments WHERE status='in_progress'",
         ).fetchall()
+    if len(rows) > 1:
+        # UTC can regress. Never choose a pending operation by wall-clock order.
+        raise RuntimeError("Multiple incomplete deployments require manual reconciliation")
     if not rows:
-        _print({"status": "no_incomplete_deployments", "active_version": state["active_version"]})
-        return
-    row = dict(rows[0])
-    actual = _url_json(f"{_proxy_url()}/version", timeout=5)
-    if not _version_matches_active_profile(actual):
-        raise RuntimeError("Proxy serves a different data profile/target contract; recovery stopped")
-    actual_version = str(actual.get("model_version"))
-    if actual_version == str(row["to_version"]):
-        _write_atomic(
-            RUNTIME_DIR / "Caddyfile",
-            f":8080 {{\n  reverse_proxy api-{row['to_slot']}:8000\n}}\n",
-        )
-        _compose("exec", "-T", "caddy", "caddy", "validate", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
-        _compose("exec", "-T", "caddy", "caddy", "reload", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
         actual = _url_json(f"{_proxy_url()}/version", timeout=5)
-        if str(actual.get("model_version")) != str(row["to_version"]):
-            raise RuntimeError("Proxy version changed during recovery; stopped without finalizing")
-        state["active_slot"] = row["to_slot"]
-        state["active_version"] = str(row["to_version"])
-        state["deployment_mode"] = "approved" if actual.get("quality_gate_status") == "passed" else "diagnostic"
-        state.setdefault("previous_versions", []).insert(0, str(row["from_version"]))
-        state["previous_versions"] = list(dict.fromkeys(state["previous_versions"]))[:10]
-        state["last_deployment_id"] = row["deployment_id"]
+        registered = _checked_registered_deployment(str(state["active_version"]))
+        _require_live_deployment(actual, str(state["active_version"]), registered)
+        return {"status": "no_incomplete_deployments", "active_version": state["active_version"],
+                "proxy_version": actual}
+    row = dict(rows[0])
+    if row["data_profile_id"] != DATA_PROFILE_ID or row["target_contract_id"] != TARGET_CONTRACT_ID:
+        raise RuntimeError("Deployment journal belongs to a different data profile/target contract")
+    if (row["from_slot"] not in {"blue", "green"} or row["to_slot"] not in {"blue", "green"}
+            or row["from_slot"] == row["to_slot"]):
+        raise RuntimeError("Deployment journal has invalid slot identities")
+    for key in ("from_version", "to_version"):
+        if not str(row[key]).isdigit() or int(row[key]) <= 0:
+            raise RuntimeError("Deployment journal requires positive versions")
+    if str(row["from_version"]) == str(row["to_version"]) or not row["approver"].strip() or not row["reason"].strip():
+        raise RuntimeError("Deployment journal lacks a distinct version or approval metadata")
+    expected_slots = {str(row["from_version"]): row["from_slot"], str(row["to_version"]): row["to_slot"]}
+    if expected_slots.get(str(state["active_version"])) != state["active_slot"]:
+        raise RuntimeError("Runtime state is unrelated to the incomplete deployment")
+    previous = None
+    context = None
+    if row.get("probe_json"):
+        probe = json.loads(row["probe_json"])
+        context = probe.get("recovery_context")
+        if context is not None:
+            if not isinstance(context, dict) or context.get("schema_version") not in {1, 2}:
+                raise RuntimeError("Unsupported deployment recovery context")
+            previous = context.get("previous_state")
+            if not isinstance(previous, dict):
+                raise RuntimeError("Deployment recovery context has no previous state")
+            _validate_runtime_state(previous)
+            if previous["active_slot"] != row["from_slot"] or str(previous["active_version"]) != str(row["from_version"]):
+                raise RuntimeError("Previous state does not match the deployment journal")
+    actual = _url_json(f"{_proxy_url()}/version", timeout=5)
+    actual_version = str(actual.get("model_version"))
+    if actual_version not in expected_slots:
+        raise RuntimeError(f"Proxy serves unrecognized version {actual_version}; stopped for manual recovery")
+    registered = _checked_registered_deployment(actual_version)
+    _require_live_deployment(actual, actual_version, registered)
+    expected_identity = None
+    if context is not None and context["schema_version"] == 2:
+        key = "candidate_identity" if actual_version == str(row["to_version"]) else "previous_identity"
+        expected_identity = context.get(key)
+        if not isinstance(expected_identity, dict) or _live_identity(actual) != expected_identity:
+            raise RuntimeError("Proxy identity differs from the prepared deployment")
+    if actual_version == str(row["from_version"]) and previous is None and str(state["active_version"]) != actual_version:
+        raise RuntimeError("Previous approval metadata unavailable; cannot restore state safely")
+    slot = expected_slots[actual_version]
+    _write_atomic(RUNTIME_DIR / "Caddyfile", f":8080 {{\n  reverse_proxy api-{slot}:8000\n}}\n")
+    _compose("exec", "-T", "caddy", "caddy", "validate", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
+    _compose("exec", "-T", "caddy", "caddy", "reload", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
+    actual = _url_json(f"{_proxy_url()}/version", timeout=5)
+    _require_live_deployment(actual, actual_version, registered)
+    if expected_identity is not None and _live_identity(actual) != expected_identity:
+        raise RuntimeError("Proxy identity changed from the prepared deployment during recovery")
+    _require_ready_deployment(_proxy_url(), actual_version, registered)
+    if actual_version == str(row["to_version"]):
+        state = _candidate_runtime_state(previous or state, row, registered.tags["quality_gate"])
         _write_atomic(state_path, json.dumps(state, indent=2) + "\n")
         _deployment_row(database, row["deployment_id"], "completed_after_restart", "completed")
         resolution = "proxy is on candidate; deployment journal and runtime state finalized"
-    elif actual_version == str(row["from_version"]):
-        _write_atomic(
-            RUNTIME_DIR / "Caddyfile",
-            f":8080 {{\n  reverse_proxy api-{row['from_slot']}:8000\n}}\n",
-        )
-        _compose("exec", "-T", "caddy", "caddy", "validate", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
-        _compose("exec", "-T", "caddy", "caddy", "reload", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
-        actual = _url_json(f"{_proxy_url()}/version", timeout=5)
-        if str(actual.get("model_version")) != str(row["from_version"]):
-            raise RuntimeError("Old version could not be re-established at the proxy")
-        _deployment_row(
-            database,
-            row["deployment_id"],
-            "retry_candidate",
-            "failed",
-            "Interrupted before proxy switch; old version is still active, safe to retry manually.",
-        )
-        resolution = "old version remains active; candidate deployment can be retried"
     else:
-        raise RuntimeError(
-            f"Proxy serves unrecognized version {actual_version}; stopped for manual recovery"
-        )
-    _print({"deployment_id": row["deployment_id"], "resolution": resolution, "proxy_version": actual})
+        if previous is not None:
+            _write_atomic(state_path, json.dumps(previous, indent=2) + "\n")
+        _deployment_row(database, row["deployment_id"], "retry_candidate", "failed",
+                        "Interrupted before proxy switch; old version is still active, safe to retry manually.")
+        resolution = "old version remains active; candidate deployment can be retried"
+    return {"deployment_id": row["deployment_id"], "resolution": resolution, "proxy_version": actual}
+
+
+def command_deploy_recover(args) -> None:
+    with _deployment_lock():
+        _print(_recover_deployment())
 
 
 def build_parser() -> argparse.ArgumentParser:

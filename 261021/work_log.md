@@ -2828,3 +2828,34 @@ session-read-v1/v2はWindows tokenとwsl.exeのPID/作成時刻/CommandLine可�
 公開記録は[管理者ログ照合](docs/clock-admin-log-review.md)と[証拠JSON](docs/reviews/20261101-admin-owner-checks.json)。rawのterminal escape/ASLR詳細はignoredのままにする。相対リンク、文書内shのsh -n、元ログ/manifest hash、git diff --check、既存source/test/script不変を確認して、この記録単位だけcommit/pushする。続いてT07/T17へ着手し、時計資格と実Capital合格は先取りしない。
 
 record-checks-v1はexit0。元ログ不変、前回62原本hash、文書sh構文、相対リンク、既存source/test/scripts/workflow不変を確認した。Windows session v2は可視性を含めて記録し、現在の不在から過去の待機原因を断定しない。
+
+
+## T07a/T17a — 配信復旧と承認metadataの隔離受入（2026-11-01、基点444acc9）
+
+管理者ログ照合を444acc9としてcommit/push後、plan §11.6、runbook、cli.py、db/API、既存harnessを確認。recoverの承認者/理由未反映、補償失敗でもfailed確定、共通lockなし、UTC順で複数未完了一件を選ぶ問題を確認した。schemaを変えずprobe_jsonにschema2 recovery context（旧state/旧・候補の固定identity）を保存し、通常完了とrecoverで同じmetadataへ結ぶ。Capitalの既存gateをrecoverにも適用。利用不可rollbackは履歴を残して起動/台帳書込前に拒否する。実DB・実registry・既存配信への適用はしていない。
+
+全試行は新規ignored data/reports/20261101-t07-t17。run-attempt.pyがargv/UTC/MONOTONIC/exit/timeout/log/hashを新pathで保存。以下のPython scriptはこのdirectory内、コマンドは261021から実行した。試行ごとのsource snapshotは途中から追加し、初期試行のsource hashを新sourceの値で補わない。
+
+| attempt/command | 結果・失敗・修正 |
+|---|---|
+| recovery-unit-v1/v2/v3 / unittest test_deployment_recovery.py | 17件→21件→最終24件成功。共通lock/metadata/legacy/Capital拒否/補償/準備後artifact差替え等。v3は1.006 unittest秒。 |
+| docker-preflight-v1 / docker-preflight.py | local context・既存container一覧・3 cached imageを読取成功。実container/DB操作なし。 |
+| unit-suite-v1 / 全unittest・通常sandbox | 最初のTestClient開始待ちで300 MONOTONIC秒timeout124。成功にしない。 |
+| api-sanity-host-v1 / api-sanity.py | 同じ最初のAPI1件をfaulthandler付きhostで実行して成功。 |
+| api-sanity-sandbox-v1 / 同上・通常sandbox | 25秒timeout124、12秒時点stackはAnyIO portal開始待ち/selector。環境差は確認したが根本サブシステム未特定。T03過去停止と同一視しない。 |
+| unit-suite-host-v1 / 全unittest・host | 中間source全361件成功、163.678 unittest秒。後の最終sourceの全成功へ流用しない。 |
+| deployment-system-v1 / test_deployment_recovery_system.py | cached UCI imageのtzdata不在でAPI起動失敗、exit1。専用resource残存0/既存container ID一致。ログでModuleNotFoundErrorを確認。 |
+| deployment-system-v2/v3/v4/v5/v6 / 同上 --run-disposable --evidence-dir 各新path | v2は実Caddy/API/PGと3地点SIGKILL成功。v3はAPI停止/failed gate/別volume復元を追加し成功。v4は最終production sourceのschema2 identity固定、v5はHTTP/復元table/checkpoint原本、v6はworker/workspace/接続先の安全境界を追加して全受入成功。全専用resource cleanup/既存container ID一致。既存imageへinstallせずhost lock一致tzdata2026.5を一時copy。 |
+| unit-suite-host-v2 / 最終production source全unittest・host | 364件中既存一時SQLite承認1エラー、177.630 unittest秒。review UTC10:24:01.367182 > 比較10:23:57.197071、future差4170111µs。全suite成功にしない。 |
+| natural-recurrence-analysis-v1 / analyze-natural-recurrence.py | UTC自然再発・正方向MONOTONIC・対象4source基点不変・T03通常SIGTERM exit130を照合、exit0。失敗直後registry tag snapshotはtemp DB teardown前に採れておらず、直接観測と書込前のコード経路を区別。 |
+| fixture-safety-unit-v1/v2 / unittest test_deployment_recovery_system.py | v1は単独import時のbare module patchでエラー。package/CLI両経路へ修正しv2の5件成功。実Docker接続なしで境界拒否を確認。 |
+| compile-final-v1 / compileall src tests scripts | その時点で成功。後の記録/安全性追加後も最終AST/compile照合を実施。 |
+| t09-official-head-v1 / check-source-availability.py | 公式202609=200/202610=404。server Date等も保存。原本取得/fit/評価窓変更なし。 |
+
+最終system-v6は同ID4並行で1保存行、異入力409、専用PG制約で保存503/追加なし、2→3切替後も元2の応答、破損JSONモデル/ready拒否で入口2維持、3地点のworker実SIGKILL(-9)からrecover、承認者/理由/操作ID一致、API停止検知/再開、failed gate拒否、5table/モデル資料の対応snapshotを第二volumeへ復元して別APIが元2を返すことを確認した。HTTP返却JSON、checkpoint、最終state、復元前後table、dump/model bytes/logを保存。modelとregistryは明示したdoubleで実Capital/MLflow/skops証拠ではない。T17b段階/経過/timeout/API metadata表示と既存state診断、T07のCapital producer・実MLflow/skops/登録版復元・現Dockerfile build/CI接続は残る。
+
+source準備でcwdへ261021を重ねたfile作成失敗とcompileallのCan't list（このexit0を成功にしない）、READMEの不正contextでapply_patch失敗、読取path誤りもpreparation-errors.logへ保存した。v4起動の一回は自動承認review側Bad Requestで未実行、同じ操作を通常の承認reviewへ再提出して成功し、bypassしていない。初回stdout/後続stderrや失敗を上書きせず保持した。fullsuiteのfuture拒否は新CLIの試験より前の既存publisherで発生し、条件緩和/clamp/自動retry・OS同期変更は行わない。T13自然SQLite再発の新しい証拠として残し、HTTP障害/時計資格/最終採否と区別する。
+
+最終source snapshotを相対pathごとに別fileへ保存した。v6直前snapshotのbasenameがscript/testで衝突しtestが残った問題も記録し、scriptは実行直前の表示SHA3091c447…と実行後不変のsourceを照合した。上書きされたsnapshotを元の原本だとは呼ばない。最終system-evidence-analysisは全6試行の専用cleanup、v6のHTTP同一応答・409/503・復元table/dump/model hash・checkpoint/台帳/state一致を再計算した。全suiteの時計失敗は残し、確認済みのT07a/T17a単位を対象pathのみcommit/pushしてCIを確認する。
+
+final-validation-v1はexit0。検証前199原本・公開9fileのhash、相対リンク121件、最終source snapshot、AST/compileall/diff、DB/API/厳密future/lock/workflow/compose不変を確認。検証自身のlog/meta/result込みの証拠JSONは202原本・22 runner試行を保持する（準備失敗と未実行reviewは別記録）。対象24+5件および最終隔離受入成功と、全364件の既存時計エラーを分けて記録する。
