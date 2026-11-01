@@ -435,6 +435,16 @@ T05の全suite再検証で、既存T03のSIGTERM子process終了待ち10秒のti
 
 時計の独立2万sampleでは逆行0回だったが、試験と並行した10万sampleではCLOCK_REALTIMEが4回逆行（約2.956/2.927/3.873/2.921秒）、他3時計の逆行は0回だった。実時計をmockしないFakeRegistry probeでは2回、承認関数のレビュー時刻検証がfutureで拒否され、比較UTCと正のmonotonic経過・tag不変/blockedを保存した。2回目は3.029889秒のUTC差と元ログと同じ判定行のtracebackを保存した。現在環境の発生機序は確認できたが、過去失敗時の時刻値とUTCを動かした同期機構は不明。NTP/同期flagはyes、timesyncdはrunning、clocksourceはtscであり、flagだけで時計の安定性を判断しない。UTCの先行1µsも拒否し、clamp/待機/自動retryは導入しない。timesyncdの読取ログにtimeout/再接続と時刻逆順、poll 32秒を観測したが、CLOCK_REALTIMEを変更した主体は断定していない。同期機構の切り分けと当該実行環境の観測保全はP1/D3/Solとして残す。今回の診断追加をT13のHTTP障害検証・実採否全体の完了にしない。
 
+**2026-11-01・基点b5dbdfdからの変更元追跡:** [詳細/未実施の設定案](../261021/docs/clock-origin-investigation.md)、[全試行・hash](../261021/docs/reviews/20261101-clock-origin-checks.json)。Windows/WSLの同時読取、NTP更新との照合、専用kernel traceを追加した。負方向5区間は`systemd-timesyn`（global TID 496）の`clock_adjtime→timekeeping_inject_offset`と一致し、うち2回は要求−4.473373174/−3.128148078秒と成功戻り値を直接採取。`initd`の5回は前進、`hv_set_host_time`は同じ観測区間で0回だった。別途`chronyd`（global TID 213）がADJ_TICK/FREQUENCYを16回成功させ、うち14回tick=11000/freq=0を指定した。bracket付きWindows QPC比はMONOTONICが1.099918〜1.100057、RAWが0.999926〜1.000052。同期flagや単調増加を正常な秒数の保証としない。Windows W32TimeはStoppedで、現在区間の時計変更イベントは検索一致なし。現在の直接呼出元は絞れたが、commと外側PIDの実行file/管理主体の照合、11000再指定の理由、過去失敗との同一性は未解決。Windows管理者debug shellは起動を拒否され、OS設定/実DB/registry/配信は変更していない。
+
+| 追加残件 | 優先度 / 難易度 / 担当 | 完了条件・依存 |
+|---|---|---|
+| 時計調整processの管理元 | **P1 / D3 / Sol** | Windows管理者での限定読取等によりglobal PID/実行file/親/namespace/clock sourceとchronydのtick再指定理由を特定する。PIDは再確認し、同名commや他人のissueだけで所属を確定しない。原本の秘密情報は公開しない。 |
+| 環境修復の具体化と時計資格 | **P1 / D3 / Sol** | 所有者特定後、host/guest同期責任、tick制御、Windows W32Time、影響範囲/切戻しを具体案にする。OS変更は今回未許可のため実行しない。service停止だけ、tick一回変更だけで解決にしない。承認された保守後にbracket採取/setter/再開後の観測と厳密future拒否を再検証する。T12等の実運用時間測定は時計資格確認後の新規attemptで行い、過去のp95等を現在比で割り戻さない。精度指標と経過時間を混同しない。 |
+| T03の自然停止の原因 | **P1 / D3 / Sol** | 今回journal 9件成功、通常SIGTERM全phase/exit 130。未再発で完了にせず、再発時にphase/stack/実秒に対するMONOTONICの進行率を照合する。現在の進行率だけで歴史的10秒timeoutの原因を断定しない。 |
+
+既存decision 9件/publisher 6件も成功。今回はproduction source/test/workflow/lockを変更せず、対象回帰24件と証拠照合を行った。全suite/新規CI成功はこの節目で先取りしない。T13のHTTP部分書込/応答喪失/実採否、T07/T17等の残件は維持する。一時trace/probeは削除し既存制御の前後hash一致を確認した。全試行と取得失敗を保存し、設定の自動変更やfuture拒否の緩和は行っていない。
+
 
 Lunaへの依頼には、T番号、対象commit、編集してよいファイル、入力/出力、成功・拒否ケース、検証コマンド、記録先を渡す。新しい閾値・評価期間・配信状態遷移・DB移行・依存lockの変更が必要と分かったら、その判断をSolへ戻す。これは担当作業の境界であり、通常の可逆な編集や既存手順の実行について新しい承認待ちを追加するものではない。
 

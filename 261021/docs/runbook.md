@@ -374,6 +374,8 @@ PSIの参照期間、直近7日間の誤差を日付・休日・天候で調べ�
 
 T03のSIGTERM終了待ちやT13の未来時刻拒否が再発した場合は、[中断・時計診断](interruption-clock-diagnostics.md)に従ってphase/stackと実際の比較UTCを保存します。今回の環境ではUTC逆行を観測しており、拒否条件を緩めて承認を通さないでください。
 
+2026-11-01の[変更元の追加調査](clock-origin-investigation.md)では、timesyncd相当の負方向offset注入とchronydによるtick書込をkernel traceで確認し、MONOTONICもWindows QPCより約10%速い区間を観測しました。単調増加だけで正しい秒数を保証しないため、実候補の運用測定前に時計の資格を確認します。既存の数値を現在の比で補正せず、時計設定・同期service・Docker停止を無断で変更しないでください。現在の呼出元と歴史的T03停止の原因未特定を区別します。
+
 - `/ready`失敗: `/version`とAPIログ、MLflow登録版の状態、PostgreSQL状態を確認。`Invalid Host header`の場合はCompose内部のMLflow名を`mlflow --allowed-hosts`へ限定追加し、MLflow/APIを再作成する。候補を入口へ手動で向ける前にreadyを通す。
 - 予測記録失敗: 成功応答は返らない。DB障害を直し、同じリクエストID・入力で再送する。
 - 候補起動・検証失敗: 入口は旧版のまま。候補のエラーを調査してから再試行。

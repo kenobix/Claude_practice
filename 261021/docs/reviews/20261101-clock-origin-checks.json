@@ -1,0 +1,2049 @@
+{
+  "schema_version": 1,
+  "task": "P1/D3 UTC adjustment caller investigation",
+  "base_commit": "b5dbdfd2df16da8325b9a422fd2c2729f5991689",
+  "status": "current_backward_setter_and_tick_writer_observed_outer_PID_ownership_and_remediation_pending",
+  "scope": {
+    "actual_DB_registry_deployment_changed": false,
+    "OS_clock_or_service_settings_changed_by_task": false,
+    "production_source_tests_workflow_lock_changed": false,
+    "temporary_trace_probes_used_and_cleaned": true,
+    "clock_mocked_or_future_refusal_relaxed": false
+  },
+  "base_inputs": [
+    {
+      "path": "261014/plan_mlops.md",
+      "commit": "b5dbdfd2df16da8325b9a422fd2c2729f5991689",
+      "bytes": 84131,
+      "sha256": "13c4967436b535b3aa2e5d54515b569e40e340c5fa24ca6554a15efeabe87468"
+    },
+    {
+      "path": "261021/work_log.md",
+      "commit": "b5dbdfd2df16da8325b9a422fd2c2729f5991689",
+      "bytes": 327118,
+      "sha256": "ad7c10e522326da2ac1d6729eb7c49aa58176fcdfc476a172e4c99b58f7a6ae0"
+    },
+    {
+      "path": "261021/docs/interruption-clock-diagnostics.md",
+      "commit": "b5dbdfd2df16da8325b9a422fd2c2729f5991689",
+      "bytes": 6531,
+      "sha256": "1491b17c1cd1b9a05bebf1ffb041aac824a5cab68264c3aa0c3d56b6d4002bd9"
+    },
+    {
+      "path": "261021/docs/reviews/20261101-t03-t13-diagnostics.json",
+      "commit": "b5dbdfd2df16da8325b9a422fd2c2729f5991689",
+      "bytes": 72721,
+      "sha256": "2bb3b7ea8970df2f6655ad4c658c66fb7f8acb89e4a4246a15e0438a0af1b109"
+    }
+  ],
+  "findings": {
+    "direct_backward_caller": {
+      "comm": "systemd-timesyn",
+      "kernel_global_tid": 496,
+      "path": "clock_adjtime -> do_adjtimex -> timekeeping_inject_offset",
+      "observed_backward_intervals": 5,
+      "kernel_requested_offsets_ns": [
+        -4473373174,
+        -3128148078
+      ],
+      "corresponding_sample_offset_changes_ns": [
+        -4473371796,
+        -3128148530
+      ],
+      "return_values": [
+        0,
+        0
+      ],
+      "scope": "current traced intervals; not retrospective proof of previous failures"
+    },
+    "tick_writer": {
+      "comm": "chronyd",
+      "kernel_global_tid": 213,
+      "modes": 16386,
+      "selected_flags": [
+        "ADJ_TICK",
+        "ADJ_FREQUENCY"
+      ],
+      "successful_requests": 16,
+      "tick_11000_freq_0_requests": 14,
+      "other_tick_requests": [
+        10441,
+        10614
+      ],
+      "owner_executable_and_reason": "not_identified_due_to_outer_PID_namespace_boundary"
+    },
+    "initd": {
+      "successful_settimeofday": 5,
+      "observed_direction": "forward_only_in_these_two_traces",
+      "running_docker_desktop_contains_executable": "/initd",
+      "exact_global_TID_executable_mapping": "unverified",
+      "not_attributed_as_current_direct_backward_setter": true
+    },
+    "hyperv_hv_set_host_time_calls": 0,
+    "windows": {
+      "W32Time": "Stopped/Manual",
+      "vmictimesync": "Stopped/Manual",
+      "NtpClient_Enabled": 1,
+      "configured_NtpServer": "time.windows.com,0x9",
+      "w32tm_query_error": "0x80070426 service not started",
+      "current_Kernel_General_1_query": "no_matching_events_since_2026-11-01T02:40Z",
+      "UTC_accuracy_against_external_source": "not_established",
+      "debug_shell": "requires_Windows_administrator_not_started"
+    },
+    "T03": {
+      "natural_recurrence": false,
+      "historical_cause": "unidentified",
+      "normal_wait_deadline_seconds": 10,
+      "trace": [
+        {
+          "signal_to_child_exit_monotonic_ns": 15918451,
+          "phases": [
+            "child_started",
+            "handler_installed",
+            "ledger_write_enter",
+            "ledger_write_returned",
+            "ledger_write_enter",
+            "ledger_write_returned",
+            "send_intent_persisted",
+            "http_send_enter",
+            "signal_received",
+            "signal_handler_raised",
+            "http_client_exit_enter",
+            "http_client_exit_returned",
+            "ledger_interrupt_enter",
+            "ledger_write_enter",
+            "ledger_write_returned",
+            "ledger_interrupt_returned",
+            "child_interrupt_unwound",
+            "child_exit"
+          ],
+          "file": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGTERM-b874fa5b030847559ba5fe3d398bedb7/child.jsonl"
+        }
+      ]
+    }
+  },
+  "observations": {
+    "base_commit": "b5dbdfd2df16da8325b9a422fd2c2729f5991689",
+    "previous_raw_evidence_hashes_verified": 139,
+    "paired": {
+      "linux_samples": 15359,
+      "windows_samples": 1400,
+      "ntp_status_samples": 646,
+      "linux_realtime_backwards": 6,
+      "linux_other_clock_backwards": {
+        "monotonic_ns": 0,
+        "raw_ns": 0,
+        "boottime_ns": 0
+      },
+      "windows_utc_backwards": 0,
+      "windows_qpc_backwards": 0,
+      "backwards_and_NTP_updates": [
+        {
+          "before_monotonic_ns": 105921987126087,
+          "after_monotonic_ns": 105921997818226,
+          "after_utc": "2026-11-01T03:42:23.090216+00:00",
+          "realtime_delta_ns": -3096868594,
+          "offset_change_ns": -3107560733,
+          "next_ntp_packet_count": 5761,
+          "ntp_status_observed_after_ns": 79101676
+        },
+        {
+          "before_monotonic_ns": 105952032830876,
+          "after_monotonic_ns": 105952043443353,
+          "after_utc": "2026-11-01T03:42:50.428400+00:00",
+          "realtime_delta_ns": -3077324923,
+          "offset_change_ns": -3087937400,
+          "next_ntp_packet_count": 5762,
+          "ntp_status_observed_after_ns": 128998697
+        },
+        {
+          "before_monotonic_ns": 105982505377638,
+          "after_monotonic_ns": 105982515991051,
+          "after_utc": "2026-11-01T03:43:17.891864+00:00",
+          "realtime_delta_ns": -3358107971,
+          "offset_change_ns": -3368721384,
+          "next_ntp_packet_count": 5763,
+          "ntp_status_observed_after_ns": 141000768
+        },
+        {
+          "before_monotonic_ns": 106012050993430,
+          "after_monotonic_ns": 106012061633141,
+          "after_utc": "2026-11-01T03:43:44.994625+00:00",
+          "realtime_delta_ns": -3073667926,
+          "offset_change_ns": -3084307637,
+          "next_ntp_packet_count": 5764,
+          "ntp_status_observed_after_ns": 156782194
+        },
+        {
+          "before_monotonic_ns": 106041995457441,
+          "after_monotonic_ns": 106042005869013,
+          "after_utc": "2026-11-01T03:44:12.183721+00:00",
+          "realtime_delta_ns": -3101116108,
+          "offset_change_ns": -3111527680,
+          "next_ntp_packet_count": 5765,
+          "ntp_status_observed_after_ns": 40310555
+        },
+        {
+          "before_monotonic_ns": 106071997187327,
+          "after_monotonic_ns": 106072008133565,
+          "after_utc": "2026-11-01T03:44:39.462885+00:00",
+          "realtime_delta_ns": -3096081448,
+          "offset_change_ns": -3107027686,
+          "next_ntp_packet_count": 5766,
+          "ntp_status_observed_after_ns": 199175842
+        }
+      ],
+      "ntp_packet_updates": [
+        {
+          "packet_count": 5760,
+          "before_monotonic_ns": 105911088722882,
+          "after_monotonic_ns": 105911111601005,
+          "ntp_message": "NTPMessage={ Leap=0, Version=4, Mode=4, Stratum=2, Precision=-25, RootDelay=6.500ms, RootDispersion=289us, Reference=1D586304, OriginateTimestamp=Sun 2026-11-01 12:41:58 JST, ReceiveTimestamp=Sun 2026-11-01 12:41:55 JST, TransmitTimestamp=Sun 2026-11-01 12:41:55 JST, DestinationTimestamp=Sun 2026-11-01 12:41:58 JST, Ignored=no, PacketCount=5760, Jitter=15.922ms }"
+        },
+        {
+          "packet_count": 5761,
+          "before_monotonic_ns": 105922062414417,
+          "after_monotonic_ns": 105922076919902,
+          "ntp_message": "NTPMessage={ Leap=0, Version=4, Mode=4, Stratum=2, Precision=-25, RootDelay=6.500ms, RootDispersion=320us, Reference=1D586304, OriginateTimestamp=Sun 2026-11-01 12:42:25 JST, ReceiveTimestamp=Sun 2026-11-01 12:42:22 JST, TransmitTimestamp=Sun 2026-11-01 12:42:22 JST, DestinationTimestamp=Sun 2026-11-01 12:42:26 JST, Ignored=no, PacketCount=5761, Jitter=17.083ms }"
+        },
+        {
+          "packet_count": 5762,
+          "before_monotonic_ns": 105952160579096,
+          "after_monotonic_ns": 105952172442050,
+          "ntp_message": "NTPMessage={ Leap=0, Version=4, Mode=4, Stratum=2, Precision=-25, RootDelay=6.500ms, RootDispersion=350us, Reference=1D586304, OriginateTimestamp=Sun 2026-11-01 12:42:53 JST, ReceiveTimestamp=Sun 2026-11-01 12:42:50 JST, TransmitTimestamp=Sun 2026-11-01 12:42:50 JST, DestinationTimestamp=Sun 2026-11-01 12:42:53 JST, Ignored=no, PacketCount=5762, Jitter=17.047ms }"
+        },
+        {
+          "packet_count": 5763,
+          "before_monotonic_ns": 105982641604081,
+          "after_monotonic_ns": 105982656991819,
+          "ntp_message": "NTPMessage={ Leap=0, Version=4, Mode=4, Stratum=2, Precision=-25, RootDelay=6.500ms, RootDispersion=381us, Reference=1D586304, OriginateTimestamp=Sun 2026-11-01 12:43:20 JST, ReceiveTimestamp=Sun 2026-11-01 12:43:17 JST, TransmitTimestamp=Sun 2026-11-01 12:43:17 JST, DestinationTimestamp=Sun 2026-11-01 12:43:21 JST, Ignored=no, PacketCount=5763, Jitter=107.332ms }"
+        },
+        {
+          "packet_count": 5764,
+          "before_monotonic_ns": 106012204746582,
+          "after_monotonic_ns": 106012218415335,
+          "ntp_message": "NTPMessage={ Leap=0, Version=4, Mode=4, Stratum=2, Precision=-25, RootDelay=6.500ms, RootDispersion=274us, Reference=1D586304, OriginateTimestamp=Sun 2026-11-01 12:43:47 JST, ReceiveTimestamp=Sun 2026-11-01 12:43:44 JST, TransmitTimestamp=Sun 2026-11-01 12:43:44 JST, DestinationTimestamp=Sun 2026-11-01 12:43:48 JST, Ignored=no, PacketCount=5764, Jitter=100.854ms }"
+        },
+        {
+          "packet_count": 5765,
+          "before_monotonic_ns": 106042031888404,
+          "after_monotonic_ns": 106042046179568,
+          "ntp_message": "NTPMessage={ Leap=0, Version=4, Mode=4, Stratum=2, Precision=-25, RootDelay=6.500ms, RootDispersion=305us, Reference=1D586304, OriginateTimestamp=Sun 2026-11-01 12:44:15 JST, ReceiveTimestamp=Sun 2026-11-01 12:44:12 JST, TransmitTimestamp=Sun 2026-11-01 12:44:12 JST, DestinationTimestamp=Sun 2026-11-01 12:44:15 JST, Ignored=no, PacketCount=5765, Jitter=99.781ms }"
+        },
+        {
+          "packet_count": 5766,
+          "before_monotonic_ns": 106072193043196,
+          "after_monotonic_ns": 106072207309407,
+          "ntp_message": "NTPMessage={ Leap=0, Version=4, Mode=4, Stratum=2, Precision=-25, RootDelay=6.500ms, RootDispersion=335us, Reference=1D586304, OriginateTimestamp=Sun 2026-11-01 12:44:42 JST, ReceiveTimestamp=Sun 2026-11-01 12:44:39 JST, TransmitTimestamp=Sun 2026-11-01 12:44:39 JST, DestinationTimestamp=Sun 2026-11-01 12:44:42 JST, Ignored=no, PacketCount=5766, Jitter=100.311ms }"
+        }
+      ]
+    },
+    "bracketed": {
+      "samples": 81,
+      "warmup_excluded": 1,
+      "windows_QPC_elapsed_seconds_interval": [
+        36.3632111,
+        36.3634027
+      ],
+      "rates": {
+        "monotonic_ns": {
+          "elapsed_seconds_interval": [
+            39.996767536,
+            40.001604267
+          ],
+          "relative_to_windows_qpc_interval": [
+            1.0999181750392133,
+            1.1000569822338928
+          ]
+        },
+        "raw_ns": {
+          "elapsed_seconds_interval": [
+            36.360694071,
+            36.365098204
+          ],
+          "relative_to_windows_qpc_interval": [
+            0.9999255122238601,
+            1.0000518959669102
+          ]
+        }
+      }
+    },
+    "traces": {
+      "setter-v1": {
+        "clock_samples": 12778,
+        "trace_entries": 82,
+        "changes": [
+          {
+            "before_monotonic_ns": 106101729177637,
+            "after_monotonic_ns": 106101734537449,
+            "after_utc": "2026-11-01T03:45:09.567612+00:00",
+            "realtime_delta_ns": 383676904,
+            "offset_change_ns": 378317092,
+            "setter": {
+              "comm": "initd",
+              "global_tid": 12614,
+              "monotonic_ns": 106101733657000,
+              "event": "do_settimeofday64 <-do_sys_settimeofday64"
+            }
+          },
+          {
+            "before_monotonic_ns": 106102020719462,
+            "after_monotonic_ns": 106102026257215,
+            "after_utc": "2026-11-01T03:45:06.733255+00:00",
+            "realtime_delta_ns": -3120541759,
+            "offset_change_ns": -3126079512,
+            "setter": {
+              "comm": "systemd-timesyn",
+              "global_tid": 496,
+              "monotonic_ns": 106102021518000,
+              "event": "timekeeping_inject_offset <-do_adjtimex"
+            }
+          },
+          {
+            "before_monotonic_ns": 106131735786516,
+            "after_monotonic_ns": 106131741340470,
+            "after_utc": "2026-11-01T03:45:36.845891+00:00",
+            "realtime_delta_ns": 403146006,
+            "offset_change_ns": 397592052,
+            "setter": {
+              "comm": "initd",
+              "global_tid": 12571,
+              "monotonic_ns": 106131741265000,
+              "event": "do_settimeofday64 <-do_sys_settimeofday64"
+            }
+          },
+          {
+            "before_monotonic_ns": 106132031390407,
+            "after_monotonic_ns": 106132036826201,
+            "after_utc": "2026-11-01T03:45:34.031972+00:00",
+            "realtime_delta_ns": -3103990117,
+            "offset_change_ns": -3109425911,
+            "setter": {
+              "comm": "systemd-timesyn",
+              "global_tid": 496,
+              "monotonic_ns": 106132034513000,
+              "event": "timekeeping_inject_offset <-do_adjtimex"
+            }
+          },
+          {
+            "before_monotonic_ns": 106161743662461,
+            "after_monotonic_ns": 106161748974520,
+            "after_utc": "2026-11-01T03:46:04.126211+00:00",
+            "realtime_delta_ns": 387388812,
+            "offset_change_ns": 382076753,
+            "setter": {
+              "comm": "initd",
+              "global_tid": 12582,
+              "monotonic_ns": 106161746098000,
+              "event": "do_settimeofday64 <-do_sys_settimeofday64"
+            }
+          },
+          {
+            "before_monotonic_ns": 106162035290527,
+            "after_monotonic_ns": 106162040691978,
+            "after_utc": "2026-11-01T03:46:01.299433+00:00",
+            "realtime_delta_ns": -3113088334,
+            "offset_change_ns": -3118489785,
+            "setter": {
+              "comm": "systemd-timesyn",
+              "global_tid": 496,
+              "monotonic_ns": 106162037398000,
+              "event": "timekeeping_inject_offset <-do_adjtimex"
+            }
+          }
+        ],
+        "timex_requests": [],
+        "hv_set_host_time_calls": 0,
+        "buffers_lost_events": 0,
+        "cleanup_complete": true,
+        "global_controls_unchanged": true
+      },
+      "setter-v4": {
+        "clock_samples": 12676,
+        "trace_entries": 112,
+        "changes": [
+          {
+            "before_monotonic_ns": 106551822609685,
+            "after_monotonic_ns": 106551828302590,
+            "after_utc": "2026-11-01T03:51:58.743524+00:00",
+            "realtime_delta_ns": 407418240,
+            "offset_change_ns": 401725335,
+            "setter": {
+              "comm": "initd",
+              "global_tid": 68226,
+              "monotonic_ns": 106551827179000,
+              "event": "do_settimeofday64 <-do_sys_settimeofday64"
+            }
+          },
+          {
+            "before_monotonic_ns": 106567428485513,
+            "after_monotonic_ns": 106567433992848,
+            "after_utc": "2026-11-01T03:52:09.875850+00:00",
+            "realtime_delta_ns": -4467864461,
+            "offset_change_ns": -4473371796,
+            "setter": {
+              "comm": "systemd-timesyn",
+              "global_tid": 496,
+              "monotonic_ns": 106567428632000,
+              "event": "timekeeping_inject_offset <-do_adjtimex"
+            }
+          },
+          {
+            "before_monotonic_ns": 106581828161874,
+            "after_monotonic_ns": 106581833651784,
+            "after_utc": "2026-11-01T03:52:26.021564+00:00",
+            "realtime_delta_ns": 1751548536,
+            "offset_change_ns": 1746058626,
+            "setter": {
+              "comm": "initd",
+              "global_tid": 12627,
+              "monotonic_ns": 106581833325000,
+              "event": "do_settimeofday64 <-do_sys_settimeofday64"
+            }
+          },
+          {
+            "before_monotonic_ns": 106582138204776,
+            "after_monotonic_ns": 106582143827471,
+            "after_utc": "2026-11-01T03:52:23.203581+00:00",
+            "realtime_delta_ns": -3122525835,
+            "offset_change_ns": -3128148530,
+            "setter": {
+              "comm": "systemd-timesyn",
+              "global_tid": 496,
+              "monotonic_ns": 106582138515000,
+              "event": "timekeeping_inject_offset <-do_adjtimex"
+            }
+          }
+        ],
+        "timex_requests": [
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106533074940000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106533074977000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106533074984000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106533074998000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106541140586000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106541140628000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106541140636000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106541140650000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106549191004000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106549191056000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106549191070000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106549191095000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106557248155000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106557248258000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106557248275000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106557248299000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106565282920000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106565282960000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106565282974000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106565282995000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "systemd-timesyn",
+            "global_tid": 496,
+            "monotonic_ns": 106567428619000,
+            "modes": 8476,
+            "requested_offset_ns": -4473373174,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106577819546000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106577819586000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106577819597000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106577819618000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "systemd-timesyn",
+            "global_tid": 496,
+            "monotonic_ns": 106582138502000,
+            "modes": 8476,
+            "requested_offset_ns": -3128148078,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106589002773000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106589002820000,
+            "modes": 16386,
+            "tick": 10441,
+            "freq": -1915190,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106589002833000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106589002853000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106597048493000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106597048515000,
+            "modes": 16386,
+            "tick": 10614,
+            "freq": 958283,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106597048522000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 106597048533000,
+            "modes": 28,
+            "syscall_exit": 0
+          }
+        ],
+        "hv_set_host_time_calls": 0,
+        "buffers_lost_events": 0,
+        "cleanup_complete": true,
+        "global_controls_unchanged": true
+      }
+    },
+    "normal_T03_sigterm": [
+      {
+        "signal_to_child_exit_monotonic_ns": 15918451,
+        "phases": [
+          "child_started",
+          "handler_installed",
+          "ledger_write_enter",
+          "ledger_write_returned",
+          "ledger_write_enter",
+          "ledger_write_returned",
+          "send_intent_persisted",
+          "http_send_enter",
+          "signal_received",
+          "signal_handler_raised",
+          "http_client_exit_enter",
+          "http_client_exit_returned",
+          "ledger_interrupt_enter",
+          "ledger_write_enter",
+          "ledger_write_returned",
+          "ledger_interrupt_returned",
+          "child_interrupt_unwound",
+          "child_exit"
+        ],
+        "file": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGTERM-b874fa5b030847559ba5fe3d398bedb7/child.jsonl"
+      }
+    ],
+    "production_code_and_tests_changed": false,
+    "limits": [
+      "Current caller observation is not proof of the historical failure clocks.",
+      "Kernel trace IDs are in an outer PID namespace; process ownership not established by same comm alone.",
+      "No OS clock/service/DB/registry/deployment changes. Temporary trace controls were added/removed and verified.",
+      "Clock-sensitive past operational timings cannot be qualified or rescaled from these present-day observations."
+    ]
+  },
+  "attempts": [
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/bracketed-host-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/bracket-windows.py",
+        "data/reports/20261101-clock-origin/bracketed-v1"
+      ],
+      "started_at_utc": "2026-11-01T03:46:29.662538+00:00",
+      "ended_at_utc": "2026-11-01T03:47:08.451679+00:00",
+      "elapsed_monotonic_seconds": 41.536266484,
+      "timeout_seconds": 65.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/bracketed-host-v1.log",
+      "bytes": 281,
+      "sha256": "43970a84f7b45e522925162472331ba760eaeb75e38e9fda879970aa12f5cc87"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/debug-clock-process-read-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/read-debug-clock-processes.py"
+      ],
+      "started_at_utc": "2026-11-01T03:53:39.211281+00:00",
+      "ended_at_utc": "2026-11-01T03:53:39.432620+00:00",
+      "elapsed_monotonic_seconds": 0.221343631,
+      "timeout_seconds": 20.0,
+      "timed_out": false,
+      "exit_code": 1,
+      "log": "261021/data/reports/20261101-clock-origin/debug-clock-process-read-v1.log",
+      "bytes": 1707,
+      "sha256": "99d540f10b79a31ee0966ce38d965f8866ed9af96b2d075d684ed78375e370a9"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/debug-clock-process-read-v2.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/read-debug-clock-processes-v2.py"
+      ],
+      "started_at_utc": "2026-11-01T03:54:11.232418+00:00",
+      "ended_at_utc": "2026-11-01T03:54:11.452865+00:00",
+      "elapsed_monotonic_seconds": 0.220473572,
+      "timeout_seconds": 20.0,
+      "timed_out": false,
+      "exit_code": 1,
+      "log": "261021/data/reports/20261101-clock-origin/debug-clock-process-read-v2.log",
+      "bytes": 1658,
+      "sha256": "e6a8be26aea32e61d9b64bc4faa2ed63c2e354842e410a1ec9e34334e25633b3"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/decisions-regression-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_capital_deployment_decisions.py",
+        "-v"
+      ],
+      "started_at_utc": "2026-11-01T03:45:35.949691+00:00",
+      "ended_at_utc": "2026-11-01T03:45:38.542846+00:00",
+      "elapsed_monotonic_seconds": 5.304992346,
+      "timeout_seconds": 100.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/decisions-regression-v1.log",
+      "bytes": 2087,
+      "sha256": "43a8e44e948a2b0890792ce44f45b9a61ae4320bbbdd9dd3f09d5a8252277518"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/docker-clock-process-read-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/read-docker-identity.py"
+      ],
+      "started_at_utc": "2026-11-01T03:46:30.276758+00:00",
+      "ended_at_utc": "2026-11-01T03:46:30.799936+00:00",
+      "elapsed_monotonic_seconds": 0.523185806,
+      "timeout_seconds": 35.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/docker-clock-process-read-v1.log",
+      "bytes": 3661,
+      "sha256": "2c83e48f6d4a6a6dc31d8daf9b6d3f4d90b6b23270695a29f52d19f4dff6c77e"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/docker-clock-process-read-v2.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/read-docker-identity-v2.py"
+      ],
+      "started_at_utc": "2026-11-01T03:47:13.481827+00:00",
+      "ended_at_utc": "2026-11-01T03:47:14.003785+00:00",
+      "elapsed_monotonic_seconds": 0.521962921,
+      "timeout_seconds": 35.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/docker-clock-process-read-v2.log",
+      "bytes": 1188,
+      "sha256": "5367ab89e6bc648ff3b3b1d1869ebe28c7aa63f4e3ce34abd8b390d236c53989"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/evidence-analysis-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/analyze-observations.py"
+      ],
+      "started_at_utc": "2026-11-01T03:54:55.850549+00:00",
+      "ended_at_utc": "2026-11-01T03:54:56.442657+00:00",
+      "elapsed_monotonic_seconds": 0.592091769,
+      "timeout_seconds": 30.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/evidence-analysis-v1.log",
+      "bytes": 769,
+      "sha256": "50625f529a1036a65bc5a32235b36edd75e806ebe4f2be828272d53ec445ea7b"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/global-clock-process-read-v1.json",
+      "command": [
+        "/mnt/c/Windows/System32/wsl.exe",
+        "-d",
+        "Ubuntu",
+        "-u",
+        "root",
+        "--",
+        "/usr/bin/python3",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261101-clock-origin/read-global-clock-processes.py"
+      ],
+      "started_at_utc": "2026-11-01T03:48:35.697214+00:00",
+      "ended_at_utc": "2026-11-01T03:48:36.231088+00:00",
+      "elapsed_monotonic_seconds": 0.533860539,
+      "timeout_seconds": 35.0,
+      "timed_out": false,
+      "exit_code": 1,
+      "log": "261021/data/reports/20261101-clock-origin/global-clock-process-read-v1.log",
+      "bytes": 761,
+      "sha256": "ec39621453c024db93eeb25c79156bdd81998150c62e01d7f5f830676db1159b"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/journal-regression-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_capital_request_journal.py",
+        "-v"
+      ],
+      "started_at_utc": "2026-11-01T03:42:49.314143+00:00",
+      "ended_at_utc": "2026-11-01T03:43:00.686782+00:00",
+      "elapsed_monotonic_seconds": 14.080071858,
+      "timeout_seconds": 100.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/journal-regression-v1.log",
+      "bytes": 2051,
+      "sha256": "db366e4f9942ca88b182dba7134ac79451e4e9cdfd0e70f2a82f1427d9a39da7"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/paired-clock-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/collect-paired.py",
+        "data/reports/20261101-clock-origin/paired-v1"
+      ],
+      "started_at_utc": "2026-11-01T03:42:14.873308+00:00",
+      "ended_at_utc": "2026-11-01T03:44:50.675562+00:00",
+      "elapsed_monotonic_seconds": 172.197086918,
+      "timeout_seconds": 190.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/paired-clock-v1.log",
+      "bytes": 346,
+      "sha256": "d81b492a1343b217eed6144bf0e7ca853000fcc6b329e90583efaf0f4655f91c"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/primary-sources-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/fetch-primary-sources.py",
+        "data/reports/20261101-clock-origin/primary-sources-v1"
+      ],
+      "started_at_utc": "2026-11-01T03:52:04.528614+00:00",
+      "ended_at_utc": "2026-11-01T03:52:12.580284+00:00",
+      "elapsed_monotonic_seconds": 8.051664958,
+      "timeout_seconds": 115.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/primary-sources-v1.log",
+      "bytes": 2476,
+      "sha256": "9c22b5e0946ed05773c3b4d8e524917801a922efb0a0beefe4a4623eb67dda43"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/publisher-regression-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_capital_deployment_evidence_publisher.py",
+        "-v"
+      ],
+      "started_at_utc": "2026-11-01T03:45:34.909308+00:00",
+      "ended_at_utc": "2026-11-01T03:45:48.101201+00:00",
+      "elapsed_monotonic_seconds": 15.903719729,
+      "timeout_seconds": 100.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/publisher-regression-v1.log",
+      "bytes": 2126,
+      "sha256": "5670b04a76f3f9198a0f50e2733e7a45a8a3952d89e96c970be89e96ef932a3e"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/root-read-capability-v1.json",
+      "command": [
+        "/mnt/c/Windows/System32/wsl.exe",
+        "-d",
+        "Ubuntu",
+        "-u",
+        "root",
+        "--",
+        "/usr/bin/python3",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261101-clock-origin/read-privileged.py"
+      ],
+      "started_at_utc": "2026-11-01T03:44:03.482013+00:00",
+      "ended_at_utc": "2026-11-01T03:44:04.214049+00:00",
+      "elapsed_monotonic_seconds": 0.732030108,
+      "timeout_seconds": 25.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/root-read-capability-v1.log",
+      "bytes": 1949,
+      "sha256": "2ced9eb45b7834eb2b94c15ca508264be93c836377e5116809c32840ed9c18dd"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/setter-trace-v1.json",
+      "command": [
+        "/mnt/c/Windows/System32/wsl.exe",
+        "-d",
+        "Ubuntu",
+        "-u",
+        "root",
+        "--",
+        "/usr/bin/python3",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261101-clock-origin/trace-clock-setters.py",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261101-clock-origin/setter-v1"
+      ],
+      "started_at_utc": "2026-11-01T03:45:05.888409+00:00",
+      "ended_at_utc": "2026-11-01T03:46:13.644884+00:00",
+      "elapsed_monotonic_seconds": 75.952552417,
+      "timeout_seconds": 110.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/setter-trace-v1.log",
+      "bytes": 1478,
+      "sha256": "ae3cea3ea8bad6a4ba0c3c75d8bae74237d00b08328abea7de748731b1a7a6ea"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/setter-trace-v2.json",
+      "command": [
+        "/mnt/c/Windows/System32/wsl.exe",
+        "-d",
+        "Ubuntu",
+        "-u",
+        "root",
+        "--",
+        "/usr/bin/python3",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261101-clock-origin/trace-clock-setters-v2.py",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261101-clock-origin/setter-v2"
+      ],
+      "started_at_utc": "2026-11-01T03:50:58.152233+00:00",
+      "ended_at_utc": "2026-11-01T03:50:58.474862+00:00",
+      "elapsed_monotonic_seconds": 0.322637944,
+      "timeout_seconds": 110.0,
+      "timed_out": false,
+      "exit_code": 2,
+      "log": "261021/data/reports/20261101-clock-origin/setter-trace-v2.log",
+      "bytes": 533,
+      "sha256": "1b298d12fa8bea9bcfef38302254352a258ad60b93f6f4789b3870f1a5bf444d"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/setter-trace-v3.json",
+      "command": [
+        "/mnt/c/Windows/System32/wsl.exe",
+        "-d",
+        "Ubuntu",
+        "-u",
+        "root",
+        "--",
+        "/usr/bin/python3",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261101-clock-origin/trace-clock-setters-v2.py",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261101-clock-origin/setter-v3"
+      ],
+      "started_at_utc": "2026-11-01T03:51:11.938630+00:00",
+      "ended_at_utc": "2026-11-01T03:51:12.474317+00:00",
+      "elapsed_monotonic_seconds": 0.535727386,
+      "timeout_seconds": 110.0,
+      "timed_out": false,
+      "exit_code": 1,
+      "log": "261021/data/reports/20261101-clock-origin/setter-trace-v3.log",
+      "bytes": 2284,
+      "sha256": "512e9d2970a90ce78f990f869e81493aafe141cf23bb99689fb403e7b244e400"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/setter-trace-v4.json",
+      "command": [
+        "/mnt/c/Windows/System32/wsl.exe",
+        "-d",
+        "Ubuntu",
+        "-u",
+        "root",
+        "--",
+        "/usr/bin/python3",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261101-clock-origin/trace-clock-setters-v3.py",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261101-clock-origin/setter-v4"
+      ],
+      "started_at_utc": "2026-11-01T03:51:32.148283+00:00",
+      "ended_at_utc": "2026-11-01T03:52:42.594375+00:00",
+      "elapsed_monotonic_seconds": 75.899839048,
+      "timeout_seconds": 110.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/setter-trace-v4.log",
+      "bytes": 1681,
+      "sha256": "6a86012a807a79ea63f87766b7ec762c31c201cbc2e3bff57aa0a36f522f10c9"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/timex-build-v1.json",
+      "command": [
+        "cc",
+        "-O2",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "data/reports/20261101-clock-origin/read-timex.c",
+        "-o",
+        "data/reports/20261101-clock-origin/read-timex"
+      ],
+      "started_at_utc": "2026-11-01T03:42:01.389971+00:00",
+      "ended_at_utc": "2026-11-01T03:42:01.831226+00:00",
+      "elapsed_monotonic_seconds": 0.44117336,
+      "timeout_seconds": 20.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/timex-build-v1.log",
+      "bytes": 220,
+      "sha256": "751908d79a6383af24e6c9b1c6f385cf87f493b34386ef2b492b0069f8835a8a"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/timex-offset-build-v1.json",
+      "command": [
+        "cc",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "data/reports/20261101-clock-origin/timex-offsets.c",
+        "-o",
+        "data/reports/20261101-clock-origin/timex-offsets"
+      ],
+      "started_at_utc": "2026-11-01T03:50:53.368297+00:00",
+      "ended_at_utc": "2026-11-01T03:50:53.537509+00:00",
+      "elapsed_monotonic_seconds": 0.169206767,
+      "timeout_seconds": 20.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/timex-offset-build-v1.log",
+      "bytes": 219,
+      "sha256": "105e1675818a83666c629191bbc3da19fb9f89d526b9f99c4256c17b7dd67dcf"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/timex-offset-read-v1.json",
+      "command": [
+        "data/reports/20261101-clock-origin/timex-offsets"
+      ],
+      "started_at_utc": "2026-11-01T03:50:53.604212+00:00",
+      "ended_at_utc": "2026-11-01T03:50:53.609162+00:00",
+      "elapsed_monotonic_seconds": 0.00492655,
+      "timeout_seconds": 10.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/timex-offset-read-v1.log",
+      "bytes": 210,
+      "sha256": "d980626ab3969f8e1e591dc7ab0799b39e3d8d6eb662e778d76a8a1977bb0ddb"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/timex-sample-v1.json",
+      "command": [
+        "data/reports/20261101-clock-origin/read-timex"
+      ],
+      "started_at_utc": "2026-11-01T03:42:10.503101+00:00",
+      "ended_at_utc": "2026-11-01T03:44:19.012781+00:00",
+      "elapsed_monotonic_seconds": 142.181413205,
+      "timeout_seconds": 180.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/timex-sample-v1.log",
+      "bytes": 316729,
+      "sha256": "9ec500da39bc66f2f38577e8cb6524f259e833f5beab05b077419f67b3ac4037"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/windows-state-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/read-windows.py"
+      ],
+      "started_at_utc": "2026-11-01T03:40:34.386818+00:00",
+      "ended_at_utc": "2026-11-01T03:40:34.504925+00:00",
+      "elapsed_monotonic_seconds": 0.118102995,
+      "timeout_seconds": 55.0,
+      "timed_out": false,
+      "exit_code": 1,
+      "log": "261021/data/reports/20261101-clock-origin/windows-state-v1.log",
+      "bytes": 2336,
+      "sha256": "6ed6468a065a8254df025937675c07f59dafc5581b9cb199224d264322337e8a"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/windows-state-v2.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/read-windows.py"
+      ],
+      "started_at_utc": "2026-11-01T03:40:57.014153+00:00",
+      "ended_at_utc": "2026-11-01T03:41:00.780543+00:00",
+      "elapsed_monotonic_seconds": 3.766378178,
+      "timeout_seconds": 55.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/windows-state-v2.log",
+      "bytes": 114127,
+      "sha256": "d41e11a5209b8c7bc260ef37fa83882cbb4dc9ddeca6aa06d97bac49f3d5caf2"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/windows-state-v3.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/read-windows-more.py"
+      ],
+      "started_at_utc": "2026-11-01T03:45:01.743532+00:00",
+      "ended_at_utc": "2026-11-01T03:45:03.991609+00:00",
+      "elapsed_monotonic_seconds": 2.248086614,
+      "timeout_seconds": 50.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/windows-state-v3.log",
+      "bytes": 5059,
+      "sha256": "053bf02dc76b18e19596b89a90258c4d122d799810393939208f824bfbb684e6"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/wsl-extra-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/read-extra.py"
+      ],
+      "started_at_utc": "2026-11-01T03:42:15.058265+00:00",
+      "ended_at_utc": "2026-11-01T03:42:15.330479+00:00",
+      "elapsed_monotonic_seconds": 0.27221151,
+      "timeout_seconds": 60.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/wsl-extra-v1.log",
+      "bytes": 4384,
+      "sha256": "a75a747e4a48dd7c5ac7ac6d5bf2748676bd75360ef0f96b7ce8359f1484f028"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/wsl-state-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/read-wsl.py"
+      ],
+      "started_at_utc": "2026-11-01T03:40:34.343960+00:00",
+      "ended_at_utc": "2026-11-01T03:40:34.666943+00:00",
+      "elapsed_monotonic_seconds": 0.322990901,
+      "timeout_seconds": 60.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/wsl-state-v1.log",
+      "bytes": 139332,
+      "sha256": "3e2684ad69a495bfa8d4ba11a7d7808e5c067e19ea17f91151d4f0d93249b113"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/wsl-state-v2.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/read-wsl.py"
+      ],
+      "started_at_utc": "2026-11-01T03:40:59.115443+00:00",
+      "ended_at_utc": "2026-11-01T03:40:59.534663+00:00",
+      "elapsed_monotonic_seconds": 0.419221216,
+      "timeout_seconds": 60.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/wsl-state-v2.log",
+      "bytes": 140808,
+      "sha256": "a6b533b401b0d18d850b63c4fb39e4110d340868b0cbf10fa4cef88d87f52bab"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/wsl-system-clock-process-read-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/read-system-distro.py"
+      ],
+      "started_at_utc": "2026-11-01T03:49:25.410911+00:00",
+      "ended_at_utc": "2026-11-01T03:49:25.786269+00:00",
+      "elapsed_monotonic_seconds": 0.37535723,
+      "timeout_seconds": 30.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/wsl-system-clock-process-read-v1.log",
+      "bytes": 1213,
+      "sha256": "ff096ed626c8f9fd9ce60130dc7bc1801937b7d2d766efb188ed91f4b68d1d29"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/wsl-system-clock-process-read-v2.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/read-system-distro-v2.py"
+      ],
+      "started_at_utc": "2026-11-01T03:49:57.924999+00:00",
+      "ended_at_utc": "2026-11-01T03:49:58.303726+00:00",
+      "elapsed_monotonic_seconds": 0.378735121,
+      "timeout_seconds": 30.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/wsl-system-clock-process-read-v2.log",
+      "bytes": 1315,
+      "sha256": "99c7c7309e4dee787a01dee9264e13f36b8b76ba41bb2afffb0aa0bc3e35d04c"
+    },
+    {
+      "metadata": "261021/data/reports/20261101-clock-origin/final-record-validation-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-origin/verify-records.py"
+      ],
+      "started_at_utc": "2026-11-01T04:00:27.764175+00:00",
+      "ended_at_utc": "2026-11-01T04:00:28.043671+00:00",
+      "elapsed_monotonic_seconds": 0.279491275,
+      "timeout_seconds": 30.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-origin/final-record-validation-v1.log",
+      "bytes": 520,
+      "sha256": "454713a819189cfd80b30df28ff1fe5f18f0ee01dbeac06deb0f4bf8f63dc985"
+    }
+  ],
+  "attempt_interpretation": {
+    "wrapper_zero_is_not_all_subqueries_success": true,
+    "windows-state-v1": "failed vsock sandbox denial; v2 elevated read succeeded with native w32tm query failures retained",
+    "wsl-state-v1": "wrapper 0 but four DBus subqueries denied; v2 read succeeded except proc/1 ns link permission",
+    "docker-clock-process-read-v1": "wrapper 0 but shell expansion caused failed process reads; rejected as identity evidence; v2 stdin-script succeeded",
+    "global-clock-process-read-v1": "exit 1 before any planned private proc mount; parent namespace not available",
+    "wsl-system-clock-process-read-v1": "wslg user; incomplete exe/ns reads; root v2 still cannot map outer kernel PID",
+    "setter-trace-v2": "exit 2 missing script following recorded cwd preparation failure; no trace started",
+    "setter-trace-v3": "exit 1 Python append-open seek EINVAL; private instance cleaned/global hashes unchanged",
+    "setter-trace-v4": "success with seek-free append; all private probes removed",
+    "debug-clock-process-read-v1": "exit 1; Windows administrator requirement initially decoded incorrectly",
+    "debug-clock-process-read-v2": "exit 1; correct UTF16 decode saved explicit administrator requirement"
+  },
+  "validation": {
+    "prior_raw_files_sha_verified": 139,
+    "target_tests": [
+      {
+        "pattern": "test_capital_request_journal.py",
+        "tests": 9,
+        "seconds": 11.442,
+        "exit": 0
+      },
+      {
+        "pattern": "test_capital_deployment_decisions.py",
+        "tests": 9,
+        "seconds": 1.39,
+        "exit": 0
+      },
+      {
+        "pattern": "test_capital_deployment_evidence_publisher.py",
+        "tests": 6,
+        "seconds": 10.946,
+        "exit": 0
+      }
+    ],
+    "full_suite_and_docker_postgresql": "not_repeated_no_production_or_test_change",
+    "new_CI_result": "not_claimed",
+    "final_record_validation": {
+      "log": "261021/data/reports/20261101-clock-origin/final-record-validation-v1.log",
+      "exit_code": 0,
+      "manifest_before_final_check": 132,
+      "base_snapshots": 4,
+      "attempt_records_before_final_check": 29,
+      "relative_links": 81,
+      "diagnostic_AST": "passed",
+      "source_tests_workflow_unchanged": true,
+      "previous_evidence_preserved_except_appended_followup": true
+    }
+  },
+  "remaining": [
+    {
+      "priority": "P1",
+      "difficulty": "D3",
+      "owner": "Sol",
+      "task": "Map outer kernel PIDs to executable/parent/namespace/config and explain repeated chronyd ADJ_TICK=11000; Windows admin debug-shell read currently unavailable."
+    },
+    {
+      "priority": "P1",
+      "difficulty": "D3",
+      "owner": "Sol",
+      "task": "Prepare explicit maintenance/remediation and rollback proposal after ownership confirmation; clock qualification required before new operational timing; OS changes not authorized by this task."
+    },
+    {
+      "priority": "P1",
+      "difficulty": "D3",
+      "owner": "Sol",
+      "task": "Keep historical T03 stop phase and historical T13 attribution unresolved; inspect new phase/stack if natural failure recurs."
+    },
+    {
+      "priority": "P1",
+      "difficulty": "D3",
+      "owner": "Sol",
+      "task": "T13 HTTP partial-write/lost-response/conflict, T07/T17 and real Capital acceptance remain separate."
+    }
+  ],
+  "limitations": [
+    "Process comm is mutable; names alone are not executable or authenticated ownership.",
+    "The bracketed rate is bounded to this finite interval and does not calibrate past operational metrics.",
+    "RAW agrees with Windows QPC in the bounded probe; neither establishes absolute UTC accuracy.",
+    "Mode-unselected timex fields are intentionally not interpreted or published in this summary.",
+    "Transient instrumentation affects scheduling; no loss observed in selected trace buffers is not universal tracing coverage.",
+    "Raw logs include local process details and unselected kernel argument fields; retain under ignored reports and redact before any external sharing.",
+    "Initial file-discovery and exploratory reads were terminal observations; experimental attempts have durable stdout/stderr/exit/hash records.",
+    "No settings or clock remediation performed; future refusal/clamp/retry policy unchanged."
+  ],
+  "evidence_files": [
+    {
+      "path": "261021/data/reports/20261101-clock-origin/analysis-v1.json",
+      "bytes": 20358,
+      "sha256": "99a207588692d3179c415045f7ce58b71a8ba19459c9feddaebc765cb27794fb"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/analyze-observations.py",
+      "bytes": 7183,
+      "sha256": "c111c611ce00a095181fd695cdf1fe8c32031ce7d110c7c0a1a0235fa2f06b53"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/bracket-windows.py",
+      "bytes": 1825,
+      "sha256": "d16ffc7282c4d27a3507b7b8b381be4dda4bd046ed15217c9b6e3a77a374559e"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/bracketed-host-v1.json",
+      "bytes": 556,
+      "sha256": "5f4b4e656605d9d18f5b599accf5778b41d99f16816db88047680c7bd7539198"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/bracketed-host-v1.log",
+      "bytes": 281,
+      "sha256": "43970a84f7b45e522925162472331ba760eaeb75e38e9fda879970aa12f5cc87"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/bracketed-v1/pairs.jsonl",
+      "bytes": 33271,
+      "sha256": "0ff979b74423bf019952942dbe0c10ffd9104e49860c2eecbd1d63e9f2c6a1b1"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/bracketed-v1/query.ps1",
+      "bytes": 411,
+      "sha256": "d12db39fefdcfeb8ab55e70f80ff2c0df47dbe500acb12ec25aa6df12589847c"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/bracketed-v1/stderr.txt",
+      "bytes": 432,
+      "sha256": "87e1686bfc5aa86e7d51030d17161b4dd054313a2e742555623fcf367e0fabd0"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/collect-paired.py",
+      "bytes": 2725,
+      "sha256": "cc8fb0ceb3ab606f8d7491006a76a141ce3b4e4a5a7431942f7fbef71bc4152f"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/debug-clock-process-read-v1.json",
+      "bytes": 522,
+      "sha256": "7e30e55038cab77a74a47ab8baaf660cf6b76b96090bde6239bd10ce1f3d5857"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/debug-clock-process-read-v1.log",
+      "bytes": 1707,
+      "sha256": "99d540f10b79a31ee0966ce38d965f8866ed9af96b2d075d684ed78375e370a9"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/debug-clock-process-read-v2.json",
+      "bytes": 525,
+      "sha256": "482ee9a01effac033aa102ccaf12cba4022567c4c61d3a70fe06542174f57ddb"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/debug-clock-process-read-v2.log",
+      "bytes": 1658,
+      "sha256": "e6a8be26aea32e61d9b64bc4faa2ed63c2e354842e410a1ec9e34334e25633b3"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/decisions-regression-v1-traces/test_regressed_review_validation_clock_blocks_approval_without_tag_writes-cfd0dc00f409405daf54e1a96676dc16/decision.jsonl",
+      "bytes": 13107,
+      "sha256": "538ddf3a216794a45182edabfbe313e7242fa5e43df1822fac8e05750c01e9ef"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/decisions-regression-v1-traces/test_utc_boundary_is_strict_and_rejection_retains_exact_clock_values-7f70377f96e24f87b518e5b22ce553c0/decision.jsonl",
+      "bytes": 1647,
+      "sha256": "698960965d77b1b600825f720859ab4fd88f6a596a2e47ec66486f4b48934ebf"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/decisions-regression-v1.json",
+      "bytes": 576,
+      "sha256": "8d27af53c710bb4bac96db1059d9d626d81b45feeb664a00a3b207c8f0853056"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/decisions-regression-v1.log",
+      "bytes": 2087,
+      "sha256": "43a8e44e948a2b0890792ce44f45b9a61ae4320bbbdd9dd3f09d5a8252277518"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/docker-clock-process-read-v1.json",
+      "bytes": 517,
+      "sha256": "1939c0d386bc70c46b07d1a71fc489bd7854695b6058cddcd46cd379f7d9f433"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/docker-clock-process-read-v1.log",
+      "bytes": 3661,
+      "sha256": "2c83e48f6d4a6a6dc31d8daf9b6d3f4d90b6b23270695a29f52d19f4dff6c77e"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/docker-clock-process-read-v2.json",
+      "bytes": 520,
+      "sha256": "7905de629592d0da20a713b669a25cdffc58bbac580e51460b543fe5d8053c45"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/docker-clock-process-read-v2.log",
+      "bytes": 1188,
+      "sha256": "5367ab89e6bc648ff3b3b1d1869ebe28c7aa63f4e3ce34abd8b390d236c53989"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/evidence-analysis-v1.json",
+      "bytes": 508,
+      "sha256": "768375468a17db2e51fb3d0ff2267b9518f586f4e15a9176e28f269232fa8eb0"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/evidence-analysis-v1.log",
+      "bytes": 769,
+      "sha256": "50625f529a1036a65bc5a32235b36edd75e806ebe4f2be828272d53ec445ea7b"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/fetch-primary-sources.py",
+      "bytes": 1211,
+      "sha256": "fce337f797639a2964bd7e896405c9a8f0dd02ceb310f0507d0b169a666d91c3"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/final-record-validation-v1.json",
+      "bytes": 508,
+      "sha256": "6b90304ee6f1f082c692dd0169aa2c41f5ee34d2bccbeaf29b9cb1e631a8e593"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/final-record-validation-v1.log",
+      "bytes": 520,
+      "sha256": "454713a819189cfd80b30df28ff1fe5f18f0ee01dbeac06deb0f4bf8f63dc985"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/global-clock-process-read-v1.json",
+      "bytes": 660,
+      "sha256": "9f97c2d7a683cbb67bac81aba6e9dd95a5bcaf905603caa5f74fe88b3767a76d"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/global-clock-process-read-v1.log",
+      "bytes": 761,
+      "sha256": "ec39621453c024db93eeb25c79156bdd81998150c62e01d7f5f830676db1159b"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGKILL-c96afdb61d4b42c28cc307edbd596cde/child-stacks.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGKILL-c96afdb61d4b42c28cc307edbd596cde/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGKILL-c96afdb61d4b42c28cc307edbd596cde/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGKILL-c96afdb61d4b42c28cc307edbd596cde/child.jsonl",
+      "bytes": 1128,
+      "sha256": "7b25cb7f133f70c6bfcf12634516d9577c96189b1cd2eb50b3786e96bef7681f"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGKILL-c96afdb61d4b42c28cc307edbd596cde/parent.jsonl",
+      "bytes": 936,
+      "sha256": "5c3385da8057303c4add131752838668ff9427c1a31660f717250a0a6da636ad"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGTERM-b874fa5b030847559ba5fe3d398bedb7/child-stacks.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGTERM-b874fa5b030847559ba5fe3d398bedb7/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGTERM-b874fa5b030847559ba5fe3d398bedb7/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGTERM-b874fa5b030847559ba5fe3d398bedb7/child.jsonl",
+      "bytes": 2497,
+      "sha256": "00a813188622884d279b0caaafe9b725aa7e120f511e008ead714d9d31695f98"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGTERM-b874fa5b030847559ba5fe3d398bedb7/parent.jsonl",
+      "bytes": 943,
+      "sha256": "f7b3cb1aa0bbad85f9dc10974b45c6a6244cb19caeeeabad4a28a5e683ff3368"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGTERM-c34205943d5549e693473135657de088/child-stacks.txt",
+      "bytes": 594,
+      "sha256": "c8b39001f4793d59818338369c0906a4be5690f43e8db7b54255634f9dabb06f"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGTERM-c34205943d5549e693473135657de088/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGTERM-c34205943d5549e693473135657de088/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGTERM-c34205943d5549e693473135657de088/child.jsonl",
+      "bytes": 1950,
+      "sha256": "91ab467a4d5c8b125a1539a6f07b9c9dd213bdad73832e059f73d96223e10c54"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1-traces/signal-SIGTERM-c34205943d5549e693473135657de088/parent.jsonl",
+      "bytes": 1085,
+      "sha256": "bb3c7f3ee21921ffa17a163f87a5aac5593a5272cc6483785b488149200f9e45"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1.json",
+      "bytes": 570,
+      "sha256": "9027f20a723aa5794c66e76c868997b67eaa8617647e33c342b9ddcf982bd7e5"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/journal-regression-v1.log",
+      "bytes": 2051,
+      "sha256": "db366e4f9942ca88b182dba7134ac79451e4e9cdfd0e70f2a82f1427d9a39da7"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/paired-clock-v1.json",
+      "bytes": 552,
+      "sha256": "7a65a419a177442aba57dcd70491bcf7daa4759dc043eab2681a20b6c39a5aa9"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/paired-clock-v1.log",
+      "bytes": 346,
+      "sha256": "d81b492a1343b217eed6144bf0e7ca853000fcc6b329e90583efaf0f4655f91c"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/paired-v1/linux-clocks.jsonl",
+      "bytes": 2641748,
+      "sha256": "5fa59795ef8c963dbf508977f87ba0fb8fd15b05d84ba97cb84e99db2af63f32"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/paired-v1/paired.jsonl",
+      "bytes": 451090,
+      "sha256": "59eaed89b01aa963abdc9275902d1c56edc528324a9ad874c16bbece30588370"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/paired-v1/timesync.jsonl",
+      "bytes": 514481,
+      "sha256": "523d8f7bb0a1e9a0f0898a4ca116011930f50747138e1be5397821f2c9af9626"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/paired-v1/windows-query.ps1",
+      "bytes": 461,
+      "sha256": "237b80deaa6d5816ab68f19a94696fdb0ff7ceb02a512190046d9dd5ba260929"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/paired-v1/windows-stderr.txt",
+      "bytes": 432,
+      "sha256": "87e1686bfc5aa86e7d51030d17161b4dd054313a2e742555623fcf367e0fabd0"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/preparation-failure-v2.txt",
+      "bytes": 389,
+      "sha256": "9e4fdb59cb15b2d334ed16aa57f3fed5cb2a046d7625ba66257addeeeb4b2114"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/primary-sources-v1/adjtimex-manual.html",
+      "bytes": 25805,
+      "sha256": "c7cb6f66db1e325365c5069c9478ebb1b6f17a302ba34052aa22233c8dfb6e4b"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/primary-sources-v1/kernel-hv-util.c",
+      "bytes": 21082,
+      "sha256": "7ac990109e40d1abc5ff5d899d25ee1fe9c27dfc848cc6d986fb21960a932ddb"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/primary-sources-v1/kernel-jiffies.h",
+      "bytes": 20137,
+      "sha256": "28aec3ed7fe547441c419412f08a7f13ef96e1599e0a3776465d8aa2bf3d0acd"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/primary-sources-v1/kernel-ntp.c",
+      "bytes": 28976,
+      "sha256": "ca1221824be89ee4e171f1694b54c2b77b3c1146589bcdb75e93dbd6c3ab2a7a"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/primary-sources-v1/kernel-timekeeping.c",
+      "bytes": 72851,
+      "sha256": "d56f6561a288a4e8d87162e81038f82008f0168adbd3d6714b02e154f5074e08"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/primary-sources-v1/kernel-timex.h",
+      "bytes": 7884,
+      "sha256": "bb95ba42ac8169c0ddbb4192dac37210cfa883b0200b6db00eabb33a35f6c7ec"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/primary-sources-v1/systemd255-timesyncd-manager.c",
+      "bytes": 46283,
+      "sha256": "df6fa2af5ae11bee664e8c1bcea7093d24520883713ef9a309c6dc3405d8217b"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/primary-sources-v1/ubuntu-wsl-time-sync.html",
+      "bytes": 40363,
+      "sha256": "14d53d8880bb38c02da5d472833aa7885789e3f9cc694060447761dca3d03f77"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/primary-sources-v1.json",
+      "bytes": 570,
+      "sha256": "ff8cf3a666e2967afbf7bf0f8fa2d2560ed512abcf6258568ff18105b887a48b"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/primary-sources-v1.log",
+      "bytes": 2476,
+      "sha256": "9c22b5e0946ed05773c3b4d8e524917801a922efb0a0beefe4a4623eb67dda43"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/publisher-regression-v1-traces/test_report_artifact_review_approval_and_tamper_rejection_in_temporary_sqlite_registry-078dc7042aa24e1ab1e3f155333399f6/decision.jsonl",
+      "bytes": 20369,
+      "sha256": "7873ad3fbabf89f84c5562f3c20c93eed92c976308daf506828452adf24f5be6"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/publisher-regression-v1.json",
+      "bytes": 586,
+      "sha256": "3dbc2021774a4dd8167b46faf2c7f1fdbeb91da46391f28c58398f251413f6bc"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/publisher-regression-v1.log",
+      "bytes": 2126,
+      "sha256": "5670b04a76f3f9198a0f50e2733e7a45a8a3952d89e96c970be89e96ef932a3e"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/read-debug-clock-processes-v2.py",
+      "bytes": 1610,
+      "sha256": "81bac45fa5f5bd820d4b6e8d8c46e2c9f700b0061e858be694032032e4871c52"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/read-debug-clock-processes.py",
+      "bytes": 1553,
+      "sha256": "c6f57768b9c0e0f0536d88ab814c850c7a76eabd7c84ff46483d03906a124678"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/read-docker-identity-v2.py",
+      "bytes": 1292,
+      "sha256": "8443062363a9f9744f80b610b684b78441f09d1ac0026c6d2e58d7589baa2392"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/read-docker-identity.py",
+      "bytes": 1227,
+      "sha256": "b39867c05951bd03b3a641bbbe6c5d88273b4ef937c40aa60bb9f93c56160979"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/read-extra.py",
+      "bytes": 956,
+      "sha256": "73e7379880e90c4acb851300b35e4416556663001e2b2b8ec4106fbbc2cee6c1"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/read-global-clock-processes.py",
+      "bytes": 2426,
+      "sha256": "bc1edf0b53abd532c4957ebded08a137308a611f6c28796e65cc869b330c1ffd"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/read-privileged.py",
+      "bytes": 1382,
+      "sha256": "5a5f7cd8a81024f5bdc5e6b2bd0146bb04a4200e2106ecda5c15b1045818fe71"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/read-system-distro-v2.py",
+      "bytes": 1190,
+      "sha256": "a65b98029529d5340f9bcda24a1431fa2164aa9849e900b95e106aebf8f4c5c7"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/read-system-distro.py",
+      "bytes": 1146,
+      "sha256": "942cb2650f57bf16d4afa0fe7423ca11f63769cc98719fa3dbce565be241eae4"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/read-timex",
+      "bytes": 16304,
+      "sha256": "39b5b5613e5f6dab98eda9cf1721fc50f9d94de16404467191a361c53306a25a"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/read-timex.c",
+      "bytes": 978,
+      "sha256": "76e02b3eedd1b6a98976a19796c008b1cf0b7832c5e7beddb415a24b72739267"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/read-windows-more.py",
+      "bytes": 2528,
+      "sha256": "fa4f8f6ee0ec18d39a5fa7cdcea6e9c4d417885c969ba0394ad4d232c1ea7bba"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/read-windows.py",
+      "bytes": 2614,
+      "sha256": "2d9f80deede9b3aaf76dc5fd403e75fcb478fad72d7c52d6b10bdac47eb187cd"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/read-wsl.py",
+      "bytes": 1413,
+      "sha256": "d31a525832d3f2e28a9778c4ac228ab06f1f8ba563b2cf4e4c2dbcdf1d7f6022"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/root-read-capability-v1.json",
+      "bytes": 644,
+      "sha256": "c68cd3b506aed6fda8e78814744171d0acffe202999c276f97039925ea8d7728"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/root-read-capability-v1.log",
+      "bytes": 1949,
+      "sha256": "2ced9eb45b7834eb2b94c15ca508264be93c836377e5116809c32840ed9c18dd"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/run-attempt.py",
+      "bytes": 1669,
+      "sha256": "85bf64fa0c729a67b70ff7497c77e1c6ffffc050988f041dc2fdc68e4c9bcc5f"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/session-initial-observations.txt",
+      "bytes": 535,
+      "sha256": "542016b3fe9f366c2d1fb91ab1a5c1ea8fda8bc033f79e1bd4e66a95064863e4"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-trace-v1.json",
+      "bytes": 736,
+      "sha256": "480178529c271e7535e83df30c2e0a0d5b5cc53f47d4419828610866c66b8e4c"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-trace-v1.log",
+      "bytes": 1478,
+      "sha256": "ae3cea3ea8bad6a4ba0c3c75d8bae74237d00b08328abea7de748731b1a7a6ea"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-trace-v2.json",
+      "bytes": 737,
+      "sha256": "b2c8d9881390ba1f67ea1b1cded4d5a324dad928c00d0ef7033a797e987fa54f"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-trace-v2.log",
+      "bytes": 533,
+      "sha256": "1b298d12fa8bea9bcfef38302254352a258ad60b93f6f4789b3870f1a5bf444d"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-trace-v3.json",
+      "bytes": 738,
+      "sha256": "960136f9f8e6b70bd22bc943ec6d90bd100d6983a3bcef562931d6863a08cd52"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-trace-v3.log",
+      "bytes": 2284,
+      "sha256": "512e9d2970a90ce78f990f869e81493aafe141cf23bb99689fb403e7b244e400"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-trace-v4.json",
+      "bytes": 739,
+      "sha256": "93b57b8d97818afe89bcdc6401e7416a11979e85544fab3756ce7c812c470547"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-trace-v4.log",
+      "bytes": 1681,
+      "sha256": "6a86012a807a79ea63f87766b7ec762c31c201cbc2e3bff57aa0a36f522f10c9"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-v1/buffer-stats.json",
+      "bytes": 1275,
+      "sha256": "1cd9375b4c6f4a44a03c9c9fefbd9ea1c186ebe49f596582019953bff2c40455"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-v1/clocks.jsonl",
+      "bytes": 1788913,
+      "sha256": "405a92f7bc3c5d5e7ab80a28a51f53d45882008df46b75be59fc2825497891e1"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-v1/instance-config.json",
+      "bytes": 245,
+      "sha256": "e3154b5e9029a70d5a99f55e34f5732b6b83661ea427b6c7d1c760cd68dda462"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-v1/summary.json",
+      "bytes": 1190,
+      "sha256": "f36e4423bfb7d179a3d42bb5ac3918cb2021c923f7fe4bff89c2b443b9779839"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-v1/trace.txt",
+      "bytes": 7960,
+      "sha256": "fd08aafd57c7b9025c5bb187a75b118a3e31e1a18814b835bd92c9741d9d4dc3"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-v3/buffer-stats.json",
+      "bytes": 1251,
+      "sha256": "9b74339ef1a37a2588fe672d3f3790905216a8b4a96fd1f491ba1c05c4dbfe9a"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-v3/summary.json",
+      "bytes": 1449,
+      "sha256": "a73b236a9c382757760c62236840a6f2aefd545ae9b801999b33fe59e8efb0eb"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-v3/trace.txt",
+      "bytes": 515,
+      "sha256": "f94ca6af0299c8976743d225ce5450e145e0e93091842ff74659455e19879be8"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-v4/buffer-stats.json",
+      "bytes": 1269,
+      "sha256": "09c139b85eb4f1e561a15dad4e801122b4dc56047bcc4ee23989da517f305406"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-v4/clocks.jsonl",
+      "bytes": 1774640,
+      "sha256": "2f4ab923d7b532cf81ac61befdc4f8a2727e8ffb1bd63e235ad282805a58b9e2"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-v4/instance-config.json",
+      "bytes": 245,
+      "sha256": "e3154b5e9029a70d5a99f55e34f5732b6b83661ea427b6c7d1c760cd68dda462"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-v4/summary.json",
+      "bytes": 1400,
+      "sha256": "ffca7f713eb92fb8dcbc79f71f2409d55d2030b268eee619bfbe7ba776b52d61"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/setter-v4/trace.txt",
+      "bytes": 14375,
+      "sha256": "4f18f459ef24b86debbf0424c7170649e9291549772ab00a71d1004d60d65fd3"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/timex-build-v1.json",
+      "bytes": 593,
+      "sha256": "59feaa00fc2f5e5b6ec2b7caf5e9590f3cf879e538934c97ce623eb0d005e9c9"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/timex-build-v1.log",
+      "bytes": 220,
+      "sha256": "751908d79a6383af24e6c9b1c6f385cf87f493b34386ef2b492b0069f8835a8a"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/timex-offset-build-v1.json",
+      "bytes": 596,
+      "sha256": "ec4fb9531cf7624cc077bd7379414dd3a8ef1d81a28d246bc8a360772cb1109e"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/timex-offset-build-v1.log",
+      "bytes": 219,
+      "sha256": "105e1675818a83666c629191bbc3da19fb9f89d526b9f99c4256c17b7dd67dcf"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/timex-offset-read-v1.json",
+      "bytes": 473,
+      "sha256": "55c06e6af5cc257c3d024ccd47a232fe0cca5b9af0055f908e58e9f019f86e98"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/timex-offset-read-v1.log",
+      "bytes": 210,
+      "sha256": "d980626ab3969f8e1e591dc7ab0799b39e3d8d6eb662e778d76a8a1977bb0ddb"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/timex-offsets",
+      "bytes": 15968,
+      "sha256": "45899c117164e759c0b244c4d00ba4ee912fac444ad3b528d4e4691e15e60026"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/timex-offsets.c",
+      "bytes": 467,
+      "sha256": "f7772780bd97f616688d22a602108a1481c887c5a98c458cb9854dc76db31ce8"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/timex-sample-v1.json",
+      "bytes": 472,
+      "sha256": "b3e3cfbafb0965d807a620c6ef0d7f779360b45edcfa0dd8f060bd05ad546ebc"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/timex-sample-v1.log",
+      "bytes": 316729,
+      "sha256": "9ec500da39bc66f2f38577e8cb6524f259e833f5beab05b077419f67b3ac4037"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/trace-clock-setters-v2.py",
+      "bytes": 3844,
+      "sha256": "3325ae991711733939c92ce13a6d488fabe24c75306586bc09cbf3d3c4c145e4"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/trace-clock-setters-v3.py",
+      "bytes": 3936,
+      "sha256": "1d773fb4e4be462f7f1a471ad93c29873a2952dddd1556aac3e19d9b3ef5391a"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/trace-clock-setters.py",
+      "bytes": 2979,
+      "sha256": "2929e2a72fcc2e4e3032d7d091e9b04e1910371ee62cd20eb68b75cb04eccc94"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/verify-records.py",
+      "bytes": 3264,
+      "sha256": "47b44050cc34cf515cf58457b98f44fe08367003a58e1e0a8a328f9832ccf8c2"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/windows-state-v1.json",
+      "bytes": 497,
+      "sha256": "bdf0ce64370b39e948874430d23dfc7e2575b45ecee9007b478d7a5b705d8be8"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/windows-state-v1.log",
+      "bytes": 2336,
+      "sha256": "6ed6468a065a8254df025937675c07f59dafc5581b9cb199224d264322337e8a"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/windows-state-v2.json",
+      "bytes": 499,
+      "sha256": "7e0d6d437099df8a04f1cc51a3808f5d6c49389fc2a47ab2e7d335b2097a3cc9"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/windows-state-v2.log",
+      "bytes": 114127,
+      "sha256": "d41e11a5209b8c7bc260ef37fa83882cbb4dc9ddeca6aa06d97bac49f3d5caf2"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/windows-state-v3.json",
+      "bytes": 502,
+      "sha256": "a001b09d31a03ec7242e38194ecf33e574491ee8de68dfedbb5b074f0e5b1b08"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/windows-state-v3.log",
+      "bytes": 5059,
+      "sha256": "053bf02dc76b18e19596b89a90258c4d122d799810393939208f824bfbb684e6"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/wsl-extra-v1.json",
+      "bytes": 490,
+      "sha256": "015a295bf8c803f0a632ae5d49797778dd565bcf0a230f7adbe2b2bdbfecb233"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/wsl-extra-v1.log",
+      "bytes": 4384,
+      "sha256": "a75a747e4a48dd7c5ac7ac6d5bf2748676bd75360ef0f96b7ce8359f1484f028"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/wsl-state-v1.json",
+      "bytes": 491,
+      "sha256": "7ce998d77e2f92b4553b6463c2f76617cbc050fa3e26ba3bb22a89e6bfca1789"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/wsl-state-v1.log",
+      "bytes": 139332,
+      "sha256": "3e2684ad69a495bfa8d4ba11a7d7808e5c067e19ea17f91151d4f0d93249b113"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/wsl-state-v2.json",
+      "bytes": 491,
+      "sha256": "7b8259fb88d20d08b508795daafdb683597081b830fd54261a1afb1e2dc6ccdb"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/wsl-state-v2.log",
+      "bytes": 140808,
+      "sha256": "a6b533b401b0d18d850b63c4fb39e4110d340868b0cbf10fa4cef88d87f52bab"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/wsl-system-clock-process-read-v1.json",
+      "bytes": 518,
+      "sha256": "9bceaa8a295cf336c06257ce52fd7aa3dc17e922cdc1b0ff82438166aca12071"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/wsl-system-clock-process-read-v1.log",
+      "bytes": 1213,
+      "sha256": "ff096ed626c8f9fd9ce60130dc7bc1801937b7d2d766efb188ed91f4b68d1d29"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/wsl-system-clock-process-read-v2.json",
+      "bytes": 522,
+      "sha256": "b1464f325b12b980d0e87c819c88b9ecfbfb7ecafcdfb43bcf5fef9968497f88"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-origin/wsl-system-clock-process-read-v2.log",
+      "bytes": 1315,
+      "sha256": "99c7c7309e4dee787a01dee9264e13f36b8b76ba41bb2afffb0aa0bc3e35d04c"
+    }
+  ]
+}

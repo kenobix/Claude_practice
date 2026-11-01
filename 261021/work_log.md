@@ -2714,3 +2714,49 @@ artifact 13068077631のraw ZIP（11,322 bytes、SHA-256 `9a4459a00045e0b8b4ab49d
 追加の読取clock-service-log-read-v2では、timesyncd journalにNTP timeoutと接続先の切替、wall timestampの逆順を確認した。同期先はntp.ubuntu.com、poll 32秒だったが、サンプル時刻でどの主体が時計を変更したかまでは特定できない。読み取りのみで、OS同期設定・時計・実DBは変更していない。追加試行/source/summaryも保存し、全22試行のlog/exit/hashを追跡した。
 
 診断手順のtag不変/blockedという結論は、今回再現した書込前のレビュー時刻検証の拒否に限定した。tag書込中/書込後の時計変化は未注入であり、T13の部分書込・復旧検証として残す。CI成功でT03の歴史的停止原因やUTC変更元を解消済みにせず、P1/D3/Solの残課題を維持する。今回の記録commitは計画・診断手順・証拠JSON・このログの4ファイルだけで、実装commitのCIを記録する。記録commit自体のCI成功は先取りしない。
+
+## P1/D3 UTC逆行の変更元追跡（2026-11-01、Sol）
+
+基点b5dbdfd2df16da8325b9a422fd2c2729f5991689。AGENTS、plan §11.6、先行診断文書/証拠JSON/原本logを確認した。tracked差分なし、無関係な未追跡3 pathは保持。前回raw証拠139件のbytes/SHAを再検算して一致した。実DB・registry・配信・OS時計設定/同期service設定を変更していない。production source/tests/workflow/lockも変更しない。
+
+全実験attemptをignored `data/reports/20261101-clock-origin/`へ新規保存した。`run-attempt.py`は前回runnerを別保存先へ複製し、完全argv/stdout/stderr/終了値/timeout/開始終了UTC/MONOTONIC経過/hashを保存する。初期のファイル探索等はterminal観測で、実験の29 attemptを恒久logにした。詳細は[調査文書](docs/clock-origin-investigation.md)、[検証JSON](docs/reviews/20261101-clock-origin-checks.json)。同じUTCが戻るため試行/イベントの順序にはMONOTONICと新規pathを使った。
+
+### 実行とつまずき
+
+以下のPython/runnerコマンドは261021から実行し、報告書保存先のscript名は`data/reports/20261101-clock-origin/`に対する相対名。個々の完全argvとsubquery失敗は証拠JSONとraw logにある。OSやWindows interopを読むコマンドだけ許可付きで実行し、通常sandboxの拒否も保存した。
+
+| 試行 | コマンド・結果 |
+|---|---|
+| wsl-state-v1/v2 | `read-wsl.py`からtimedatectl/systemctl/journalctl/clocksource/nsを限定読取。v1はwrapper exit 0でもDBus 4 queryがOperation not permitted。許可付きv2で読めたがproc/1 ns linkの権限拒否は残した。NTP/synchronized=yes、timesyncd running、server ntp.ubuntu.com、poll 32秒、tscだった。 |
+| windows-state-v1/v2/v3 | `read-windows.py`のv1はvsock拒否でexit 1。v2はPowerShellで時計/service/eventを読取。W32Time/vmictimesyncはStopped/Manual、`w32tm /query`は0x80070426。native出力の文字化けを成功とせず、v3 `read-windows-more.py`でUTF-8/UTF-16を分けて再取得。NTP設定はEnabled=1/Type=NTP/time.windows.com,0x9。現区間のKernel-General ID 1は検索一致なし。古いイベントを今回の原因にしなかった。 |
+| paired-clock-v1 | `collect-paired.py .../paired-v1`、期限190秒、exit 0。Windows 1400組、Linux 15359 sample、NTP 646回。WSL逆行6回とpacket更新を照合。Windows UTC/QPC逆行0だが外部UTC精度の保証にはしない。 |
+| timex-build/sample-v1 | `cc -O2 -Wall -Wextra -Werror read-timex.c -o read-timex`、`read-timex`。全1400回modes=0の読取だけ。tick=11000、freq=0、状態0/5を観測。NTP flag=yesでもtick進行率は正常とは限らないと判断。 |
+| bracketed-host-v1 | `bracket-windows.py .../bracketed-v1`、期限65秒、exit 0。81往復中初回serialization暖機だけを除き、host取得を囲む幅を残した。Windows QPC比MONOTONICは1.099918〜1.100057、RAWは0.999926〜1.000052。stream輸送遅延がある最初のcollectorの端点差を精密な比の根拠にしなかった。 |
+| wsl-extra/root-read-capability-v1 | kernel cmdline、implicit=Y、CONFIG_HZ=250、trace機能、限定process情報を読取。`sudo -n`はpassword required。Ubuntu root経由は可能だったので、時計を書かない専用traceへ進んだ。 |
+| setter-trace-v1 | `wsl.exe -d Ubuntu -u root -- /usr/bin/python3 .../trace-clock-setters.py .../setter-v1`、期限110秒、75 MONOTONIC秒を採取、exit 0。initdの前進3回、その約0.29秒後にsystemd-timesynの逆行3回。kernel関数/syscall成功/実clockの差変化を対応付けた。Hyper-V setter呼出し0。 |
+| docker-clock-process-read-v1/v2 | Runningを検査後に既存docker-desktopでprocess identity読取。v1はWSL.exeのshell引数展開で`/comm`読取エラーとなり、exit 0でも不採用。v2で固定scriptをstdinに渡し、`/initd`と共有time namespaceを確認した。global TIDとの正確な対応は得られていない。停止/起動やDockerコマンドによる配信操作はしていない。 |
+| global-clock-process-read-v1 | 外側PID名前空間の限定読取を試みたがNS_GET_PARENTで遡れずexit 1。予定したprivate proc mount作成より前に停止し、mountは実施されていない。 |
+| wsl-system-clock-process-read-v1/v2 | `wsl --system`は初回wslg userでexe/ns読取が不足。root指定の次回でもouter global PIDの対応には届かず。読めたtimesyncdのpathだけでkernel PIDとの完全同一性を断定しない。 |
+| timex-offset-build/read-v1 | kernel UAPIの`struct __kernel_timex`のoffsetをCで確認。size208、modes0/offset8/freq16/status40/time72/tick88、ADJ_TICK16384。clock設定呼出しはしない。 |
+| setter-trace-v2/v3/v4 | 最初のscript準備はcwdに261021を重ねてFileNotFoundError。続くv2実行はscript不在でexit 2、trace未開始。修正後v3はPython append-openのseekでEINVAL/exit 1。切詰めずseek-free appendへ直したv4は75秒/exit 0。2つの一時kprobeで実引数を採取し、chronydのADJ_TICK書込とsystemd-timesynの負offsetを直接確認。v3/v4とも専用制御の回収/global hash不変を確認した。 |
+| debug-clock-process-read-v1/v2 | 初期PID namespace調査用のWSL debug shellはWindows管理者起動を要求し拒否された。v1のUTF-16誤decodeを残しv2で正しい拒否文を保存。両exit 1。UAC昇格、Windows設定変更はしない。 |
+| primary-sources-v1 | 公式の該当WSL kernel tag、systemd v255、Ubuntu WSL説明、adjtimex manual計8原本を保存しhash化。一般論と今回の実clock観測を区別した。upstream sourceをUbuntu package全patchと同一とは保証しない。 |
+| evidence-analysis-v1 | `analyze-observations.py`、exit 0。先行139 raw hash、NTP更新、bracket上下限、setterと全10差変化区間、各syscall exit、lost events 0、cleanup、T03 phaseをassertした。 |
+
+### 分かった機序と未解決
+
+負方向の直接の呼出元は今回の2 trace区間ではsystemd-timesyn（global TID 496）。引数採取ではmodes8476/ADJ_SETOFFSETで−4.473373174秒と−3.128148078秒を要求し、各return 0。sample差との違いは1.378µs/0.452µsだった。先行の単なるNTP packet更新との相関から、kernel呼出しと引数/実変化の対応へ根拠を進めた。µs表示と逐次clock読取なのでns精度の同時測定とは説明しない。
+
+chronyd（global TID 213）はmodes16386/ADJ_TICK|ADJ_FREQUENCYを16回成功させ、14回tick11000/freq0、残り10441/10614を指定した直後にも11000へ戻す要求をした。USER_HZ=100なら通常基準は10000で、観測した約10%の進行率差に整合する。CONFIG_HZ250を使って4000と計算しない。modesが選択していないtimex fieldには未初期化値があり得るので、その値から異常設定や破損を推定せず、公開JSONでは選択fieldだけを残した。
+
+initdの5回は全て前進で、負方向の直接原因とはしない。RunningのDocker内に/initdはあるがglobal TIDからexeへの照合が未完了のため、Dockerを犯人と確定しない。hv_set_host_timeは観測区間で0回だった。Windows W32Time停止/現イベント一致なし/1400sample逆行0も、Windows UTCの絶対精度や過去全期間の無変更を証明しない。tick指定の実行file/親/namespace/設定者と11000の理由がP1/D3/Solの残件であり、現在の限定caller特定を歴史的T13失敗と同一原因とは断定しない。
+
+一時traceはUUID専用instanceとイベントgroupを使い、他のtraceを切詰めずfinallyで削除。各CPU overrun/commit overrun/dropped events 0、既存制御とkprobe_eventsの前後hash一致を確認した。OS時計設定は書いていないが、一時的な観測制御の追加/削除は行ったと明示する。rawにはprocess詳細や選択外の引数値があるためignored reports内に保持し、外部へそのまま公開しない。
+
+### 回帰と次の条件
+
+同じrunner/MLFLOW_DISABLE_AGENT_HINT=1/使い捨てfixtureで、journal 9件11.442秒、decision 9件1.390秒、publisher 6件10.946秒が全てexit 0。通常SIGTERMの全phase/exit130を確認し、signal受信→child_exit記録15.918451 MONOTONIC msだった。人工台帳停止は期待された注入で、自然停止は再発していない。元10秒を延長せず、今回の進行率から歴史的T03の原因を決めない。過去に時計資格を採取していない運用p95等は現在比で割り戻さず、新規実候補の運用測定前に時計を資格確認する。予測MAE/RMSEと時間の問題を混同しない。
+
+source/test/CI未変更なので全340件suiteやDocker/PG受入は繰り返さず、今回の24対象回帰と証拠/文書検証を行う。新しいCI成功はこの記録で先取りしない。設定案は調査文書へ具体化したが、所有者特定→host/guest責任とtick制御→影響/切戻し→承認済み保守→bracket/setter/再開後観測が必要。service停止だけや一度のtick変更を解決扱いにせず、実OS変更は今回の許可範囲外として実施していない。future拒否の緩和/clamp/自動retryも追加していない。T03の歴史的停止、T13 HTTP部分書込/応答喪失、T07/T17、実Capitalの証拠producer/採否は別途残る。対象7ファイルだけを確認してcommit/pushする。
+
+最終`final-record-validation-v1`はexit 0。新証拠manifestの132原本、基点Git snapshot4件、29 attemptの終了値/hash、診断PythonのAST、旧証拠JSONが追補以外で不変なこと、全対象文書の相対リンク、秘密情報pattern、git diff --checkを確認した。この最終検証自身のlog/metadata/scriptも加え、証拠JSONには合計30 attemptと135 raw fileのbytes/SHAを保存した。pattern検査だけで秘密が皆無と証明したとはせず、公開JSONのfieldを確認し、rawのprocess詳細や未選択fieldは含めていない。

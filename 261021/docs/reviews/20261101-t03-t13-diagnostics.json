@@ -1773,5 +1773,12 @@
   ],
   "implementation_commit": "8869ee1609625375c28c24d5935646bb51cc64da",
   "ci_verified_at_utc": "2026-11-01T03:19:26.703573+00:00",
-  "real_database_registry_deployment_or_host_clock_changed_by_task": false
+  "real_database_registry_deployment_or_host_clock_changed_by_task": false,
+  "followup_clock_origin": {
+    "base_commit": "b5dbdfd2df16da8325b9a422fd2c2729f5991689",
+    "report": "261021/docs/clock-origin-investigation.md",
+    "evidence": "261021/docs/reviews/20261101-clock-origin-checks.json",
+    "status": "current_backward_setter_and_tick_writer_observed_outer_PID_owner_and_remediation_pending",
+    "historical_findings_above_preserved": true
+  }
 }
