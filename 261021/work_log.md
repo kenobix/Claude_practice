@@ -2815,3 +2815,16 @@ source/test/CI未変更なので全340件suiteやDocker/PG受入は繰り返さ�
 必要な管理者読取は既存手順を維持し、保存directoryの伝達→identity/config照合→不足するPHC fd/UDP所有/includeの限定追加読取という順序を明確化。修復案・影響・切戻しは新規文書で分け、OS保守変更は今回実行しない。T03歴史的停止、T13 HTTP部分書込/応答喪失、T07/T17、実Capital候補の証拠は残す。source/tests/scripts/workflow/lockに変更がないため全suite/Docker/PGを再実行せず、今回の読取・上流計算・証拠/文書検証を行う。新CIや時計資格/実運用合格を先取りしない。
 
 証拠生成準備のshellでcwdへ261021を重ね、build-record.py/validate-records.pyの作成とbuilder起動がexit2で失敗した。preparation-build-v1.log/jsonへ端末出力と制限を保存し、runner開始前なので開始UTC/経過を捏造していない。repo rootを明示して作成先を修正した。最終final-record-validation-v1では、原本/入力Git snapshot/attempt log/public fileのhash、Python AST、相対リンク、git diff --check、既存source/tests/scripts/workflow/config不変、専用trace回収/loss0、メモリstub binaryに時計操作API参照がないことを照合しexit0。検証前59原本・入力Git snapshot5件・既存7 attempt・公開5fileのhashと相対リンク84件を確認した。検証自身のlog/metadata/resultを加え、証拠JSONはrunner8 attemptと準備失敗1件・原本62件を記録する。終了値と件数をvalidationへ保存し、対象6fileの全差分とstatusを確認してcommit/pushする。CI確認は今回の完了条件へ追加しておらず、成功も主張しない。
+
+
+## 管理者採取ログの照合と案内修正（2026-11-01、基点f70cb37）
+
+ユーザー添付PowerShell記録とignored reportsのclock-owner-admin-053cb32639e54e04aea39f299e82711d/debug-shell.logを確認した。13213bytes/SHA a68a04b6f289252e638ede8d753bb8b0d6dde676b3556df7ad5a1ee33d6d823c。元fileは変更せず、新規data/reports/20261101-admin-owner-reviewへcopy/hash保存。collection.json/hashes.jsonは存在せず、native終了値やQPCは不明のままにした。添付は管理者Trueと.ps1のexecution policy拒否、対話入力を示す。>>だけで構文不備と断定せず、rawの実完了行とshell echoを分けた。旧pipeline方式で外側metadata保存まで保証できていなかった案内の不足を認め、追加採取はLinux debug shellで直接file保存する手順へ修正した。新方式は構文確認のみで、管理者end-to-end成功とは記録しない。基本inventoryのやり直しは不要。
+
+全実験は同directoryのrun-attempt.pyでargv/UTC/MONOTONIC/exit/deadline/log/hashを記録する。admin-analysis-v1はexit0、前回62原本hash一致、同boot、chronyd213の開始tick319/実exe/hash/親1 /init/初期ns、timesyncd496の既知identityを照合。WSL2.6.3のStartTimeSyncAgentの文字列を復元し、実process root内configの全bytes hash 9315d50044034745ade10c260359b463eb77a61af9330f818f68ed16253f8528と一致した。保存drift−23906.640630/skew603.665835も前回tracking表示と整合する。初期nsでの実体は確認したが、reparent前の直接launcher、PHC fd/socket所有、制限前制御量は未読。tick限界の一致だけで内部原因を確定しない。
+
+session-read-v1/v2はWindows tokenとwsl.exeのPID/作成時刻/CommandLine可視性を限定読取。v1のfilterでは昇格processの引数が不可視なら見落とすので、v2で全wsl.exeの可視性を確認した。OS/同期設定・実DB/registry/配信の操作はしていない。初期探索で存在しないdeployment.py/compose_system_test.sh等を読もうとして失敗した点と、web文書rendererの取得不可も探索記録へ保存した。推定したfile名を実装の証拠にせず、rg一覧で正しいcli.py/harnessへ戻った。
+
+公開記録は[管理者ログ照合](docs/clock-admin-log-review.md)と[証拠JSON](docs/reviews/20261101-admin-owner-checks.json)。rawのterminal escape/ASLR詳細はignoredのままにする。相対リンク、文書内shのsh -n、元ログ/manifest hash、git diff --check、既存source/test/script不変を確認して、この記録単位だけcommit/pushする。続いてT07/T17へ着手し、時計資格と実Capital合格は先取りしない。
+
+record-checks-v1はexit0。元ログ不変、前回62原本hash、文書sh構文、相対リンク、既存source/test/scripts/workflow不変を確認した。Windows session v2は可視性を含めて記録し、現在の不在から過去の待機原因を断定しない。

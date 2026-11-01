@@ -21,42 +21,58 @@ Get-ExecutionPolicy -List
 最初がTrueで、UbuntuがRunning一覧にあることを確認する。
 readerは[read_clock_process_ownership.sh](../scripts/read_clock_process_ownership.sh)、ログ採取用は[collect_clock_owner_admin.ps1](../scripts/collect_clock_owner_admin.ps1)。内容を確認してから使う。
 
-scriptfile実行が端末policyで許可される場合のコマンド:
+## 今回の結果と入力待ち
+
+[管理者ログの照合結果](clock-admin-log-review.md)で、readerの両process採取完了を確認した。今回の基本inventoryの再実行は不要。
+旧`.ps1`と対話pipelineはdebug shellの終了/後続metadata保存まで未検証だった。今回collection.jsonがないため採取全体の正常終了とは記録しない。
+`>>`だけで未実行とは判断しない。実行中の旧採取pipelineが残っている場合、readerの実完了行を確認してからCtrl+Cでその採取クライアントを中断できる。WSL shutdownやDocker停止は不要。
+
+## 今後追加採取が必要な場合
+
+`.ps1`のpolicyを変更せず、管理者PowerShellで次の**1行だけ**実行する。
 
 ```powershell
-& '\\wsl.localhost\Ubuntu\home\kenshin\work\claude_practice\261021\scripts\collect_clock_owner_admin.ps1'
+wsl.exe --debug-shell
 ```
 
-今回の環境ではこの`.ps1`直接実行が**policyで拒否された**。その結果を保存しており、成功と記録していない。
-policyを変えず、端末の運用規則上対話コマンドの実施が許される場合は、次の限定した採取コマンドを管理者PowerShellへ貼り付ける。
-端末policyの判断が必要なら端末管理者に渡す。`Set-ExecutionPolicy`、`-ExecutionPolicy Bypass`、UAC自動昇格は手順へ追加していない。
-[Microsoftの説明](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-5.1)にあるとおり、policyのscopeや対話入力とscriptfile実行は区別する。
+`root@... #`が出たら、以下は**PowerShellではなく、そのLinux debug shell**に貼り付ける。
+最後にEnterを押す。初期namespaceから、既に稼働しているUbuntuのrootを通じてreaderを読む。新しいdistroは起動しない。
+PID固定ではなく、reader fileが存在するrootを探索する。見つからなければ停止し、勝手に別pathへ保存しない。
 
-```powershell
-if (-not $taskPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw 'Administrator token required' }
-$taskRunning = (& wsl.exe --list --running --quiet | Out-String).Replace([string][char]0, '')
-if ($LASTEXITCODE -ne 0 -or -not ($taskRunning -split '\s+' -contains 'Ubuntu')) { throw 'Ubuntu must already be running' }
-$taskRepo = '\\wsl.localhost\Ubuntu\home\kenshin\work\claude_practice'
-$taskReader = Join-Path $taskRepo '261021\scripts\read_clock_process_ownership.sh'
-$taskText = [IO.File]::ReadAllText($taskReader)
-$taskDir = Join-Path $taskRepo ('261021\data\reports\clock-owner-admin-' + [Guid]::NewGuid().ToString('N'))
-New-Item -ItemType Directory -Path $taskDir | Out-Null
-$OutputEncoding = [Text.UTF8Encoding]::new($false)
-$taskStart = [DateTime]::UtcNow.ToString('o')
-$taskQpc = [Diagnostics.Stopwatch]::GetTimestamp()
-$taskText | & wsl.exe --debug-shell 2>&1 | Out-File -FilePath (Join-Path $taskDir 'debug-shell.log') -Encoding utf8
-$taskExit = $LASTEXITCODE
-[ordered]@{start_utc=$taskStart;end_utc=[DateTime]::UtcNow.ToString('o');qpc_start=$taskQpc;qpc_end=[Diagnostics.Stopwatch]::GetTimestamp();qpc_frequency=[Diagnostics.Stopwatch]::Frequency;native_exit=$taskExit;command='read_clock_process_ownership.sh -> wsl.exe --debug-shell';status='unreviewed'} | ConvertTo-Json | Out-File (Join-Path $taskDir 'collection.json') -Encoding utf8
-Get-FileHash -Algorithm SHA256 -LiteralPath $taskReader,(Join-Path $taskDir 'debug-shell.log'),(Join-Path $taskDir 'collection.json') | Select-Object Path,Hash | ConvertTo-Json | Out-File (Join-Path $taskDir 'hashes.json') -Encoding utf8
-$taskDir
+```sh
+(
+    task_repo=
+    for task_root in /proc/[0-9]*/root; do
+        task_candidate="$task_root/home/kenshin/work/claude_practice/261021"
+        if [ -r "$task_candidate/scripts/read_clock_process_ownership.sh" ]; then
+            task_repo=$task_candidate
+            break
+        fi
+    done
+    if [ -z "$task_repo" ]; then printf 'Ubuntu reader path not found\n'; exit 42; fi
+    task_run="clock-owner-admin-$(cat /proc/sys/kernel/random/uuid)"
+    task_dir="$task_repo/data/reports/$task_run"
+    umask 022
+    mkdir -m 755 "$task_dir" || exit 1
+    cat /proc/uptime > "$task_dir/uptime-before.txt"
+    sh "$task_repo/scripts/read_clock_process_ownership.sh" > "$task_dir/inventory.log" 2>&1
+    task_code=$?
+    printf 'reader_exit_code=%s\n' "$task_code" > "$task_dir/reader-exit.txt"
+    cat /proc/uptime > "$task_dir/uptime-after.txt"
+    sha256sum "$task_repo/scripts/read_clock_process_ownership.sh" "$task_dir"/*.txt "$task_dir/inventory.log" > "$task_dir/hashes.sha256"
+    printf 'WSL保存先: /home/kenshin/work/claude_practice/261021/data/reports/%s\nreader_exit_code=%s\n' "$task_run" "$task_code"
+)
 ```
 
-この管理者/対話経路は現在の権限でend-to-end実行できていない。native stderrがPowerShell errorになる場合や中断時は、ログと例外を保持し、正常採取と見なさない。
-90秒程度たっても結果が返らない場合はCtrl+Cで採取クライアントを中断し、その事実と残ったlogを保存する。再試行は別directoryで行い、速い/成功した結果だけを残さない。自動timeoutを検証済みのcollectorではない。
+この新しい管理者経路はshell構文を確認した案内で、初期namespaceでのend-to-end再採取は未実施。
+fileを直接保存するため、外側native clientの終了を採取完了の代わりにしない。
+出力後はLinux promptへ戻る。`exit`でdebug shellを抜ける。consoleが戻らなければ採取fileを保持してCtrl+Cでクライアントを中断し、その事実を残す。
+reader_exitと実完了行・identityをSolが確認するまでは未review扱い。
+OS/実行policy変更、UAC自動昇格、service操作は含めない。
 
 ## 出力の読み方と範囲
 
-保存先はWSLから`261021/data/reports/clock-owner-admin-<GUID>/`として読める。チャットへdirectory名を伝えれば、fileから照合を続けられる。UTF-8 BOMを含む出力は`utf-8-sig`で読む。
+保存先はWSLから`261021/data/reports/clock-owner-admin-<GUID>/`として読める。チャットへdirectory名を伝えれば、fileから照合を続けられる。旧PowerShell出力のUTF-8 BOMは`utf-8-sig`で読む。新方式はinventory.log/reader-exit.txt/hashes.sha256を使い、Windows側のcollection.jsonは作らない。
 
 readerはchronyd/systemd-timesynだけを候補として列挙し、exe/hash/argv/親/namespace/cgroup/開始tickと、process root内のchrony設定の限定directiveを読む。
 設定のinclude/confdirやargvの`-fFILE`形式など、未追跡の指定があれば手動照合を追加する。認証key・環境変数・全processのargvを一括出力しない。

@@ -1,5 +1,7 @@
 # 時計調整プロセスの管理元照合（2026-11-01）
 
+最新の[管理者ログ照合](clock-admin-log-review.md)でchronyd実exe・初期namespace・親と生成configの一致を確認した。以下は管理者採取前の記録として保持する。
+
 基点は`0477e8ccb0d9ebb1b7eb6a51befc8435f279ec57`。
 [前回の呼出元調査](clock-origin-investigation.md)と[今回の証拠JSON](reviews/20261101-clock-owner-checks.json)を参照する。
 **Ubuntu timesyncdの管理元は特定した。chronydの稼働実体への最終照合と環境修復は未完了。**

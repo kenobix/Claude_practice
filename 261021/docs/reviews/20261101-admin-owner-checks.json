@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "base_commit": "f70cb37380ba4846451cf662807f208033b7a35c",
+  "task": "administrator inventory review",
+  "status": "runtime_identity_and_WSL_generated_configuration_matched_control_cause_and_transport_completion_unresolved",
+  "analysis": {
+    "base_commit": "f70cb37380ba4846451cf662807f208033b7a35c",
+    "raw_log_sha256": "a68a04b6f289252e638ede8d753bb8b0d6dde676b3556df7ad5a1ee33d6d823c",
+    "boot_same_as_previous_trace": true,
+    "runtime_identity": {
+      "chronyd": {
+        "pid": 213,
+        "start_ticks": "319",
+        "exe": "/usr/sbin/chronyd",
+        "exe_sha256": "bf39d010dfc6177cd864d96ddd0cb32eb796704e8c68fe8bd65088d20d2e64b8",
+        "parent_pid": 1,
+        "parent_exe": "/init",
+        "parent_exe_sha256": "f84f9ae9116b972fce6723f920fb8fb1dedff2aeb0baa40ed7c5d2b9f4b73311",
+        "namespaces": {
+          "pid": "pid:[4026531836]",
+          "pid_for_children": "pid:[4026531836]",
+          "mnt": "mnt:[4026531841]",
+          "time": "time:[4026531834]",
+          "user": "user:[4026531837]"
+        },
+        "argv": [
+          "/sbin/chronyd"
+        ],
+        "identity_start_stable_within_inventory": true,
+        "configuration_path": "/etc/chrony.conf",
+        "configuration_sha256": "9315d50044034745ade10c260359b463eb77a61af9330f818f68ed16253f8528",
+        "selected_directives": [
+          "driftfile /var/lib/chrony/drift",
+          "makestep 1.0 3",
+          "rtcsync",
+          "leapsectz right/UTC",
+          "logdir /var/log/chrony",
+          "refclock PHC /dev/ptp0 poll 3 dpoll -2 offset 0"
+        ],
+        "drift_file_fields": [
+          -23906.64063,
+          603.665835
+        ]
+      },
+      "systemd-timesyn": {
+        "pid": 496,
+        "start_ticks": "1505",
+        "exe": "/usr/lib/systemd/systemd-timesyncd",
+        "exe_sha256": "cbf92a41ffb29efd75daebf8a1a1dd4d0c078d2f3c50f0fc7e9e35715eefb7cd",
+        "parent_pid": 233,
+        "parent_exe": "/usr/lib/systemd/systemd",
+        "parent_exe_sha256": "b472aadf808bef87c0eb203056a77cb64bd268b71b756306013a53de68a94173",
+        "namespaces": {
+          "pid": "pid:[4026532219]",
+          "pid_for_children": "pid:[4026532219]",
+          "mnt": "mnt:[4026532222]",
+          "time": "time:[4026531834]",
+          "user": "user:[4026531837]"
+        },
+        "argv": [
+          "/usr/lib/systemd/systemd-timesyncd"
+        ],
+        "identity_start_stable_within_inventory": true
+      }
+    },
+    "executed_inventory_marker": true,
+    "outer_collection_metadata_missing": true,
+    "native_exit_unknown": true,
+    "WSL_source_generated_config_byte_hash_matches_process_root_file": true,
+    "prior_raw_hashes_verified": 62,
+    "ownership_conclusion": "Runtime chronyd is in WSL initial PID/mount namespace, parent mini_init /init, cgroup root; configuration bytes match WSL StartTimeSyncAgent. Historical exec launcher before daemon reparent is not directly traced.",
+    "remaining": [
+      "Opened PHC fd and UDP inode ownership uncollected",
+      "Runtime control variables and original T03 cause remain unresolved",
+      "PowerShell continuation prompt alone does not prove syntax incomplete",
+      "Reader completed, but native console/outer metadata completion not established"
+    ]
+  },
+  "validation": {
+    "status": "passed",
+    "relative_links_checked": 92,
+    "manual_sh_syntax": "passed; initial-namespace execution not tested",
+    "original_log_unchanged": true,
+    "previous_62_raw_hashes": "passed in admin-analysis-v1",
+    "existing_source_tests_scripts_workflow_unchanged": true,
+    "session_read": {
+      "query_exit": 0,
+      "wsl_clients": 16,
+      "unreadable_commandline": 0,
+      "visible_debug_shell_clients": 0
+    }
+  },
+  "attempts": [
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-admin-owner-review/analyze-admin.py"
+      ],
+      "started_at_utc": "2026-11-01T09:57:10.028584+00:00",
+      "ended_at_utc": "2026-11-01T09:57:10.248794+00:00",
+      "elapsed_monotonic_seconds": 0.220215045,
+      "timeout_seconds": 35.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-admin-owner-review/admin-analysis-v1.log",
+      "bytes": 3021,
+      "sha256": "ca07d8979ff8c1e507b06bd14d66bdc29ad290478926cd7741c13a3738c379ed"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-admin-owner-review/read-session.py"
+      ],
+      "started_at_utc": "2026-11-01T09:57:54.268455+00:00",
+      "ended_at_utc": "2026-11-01T09:57:56.209961+00:00",
+      "elapsed_monotonic_seconds": 1.941471972,
+      "timeout_seconds": 30.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-admin-owner-review/session-read-v1.log",
+      "bytes": 294,
+      "sha256": "1348b519092b6da04901aac7e74b94cb5d46504c7b756bac25479d87def30be8"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-admin-owner-review/read-session-v2.py"
+      ],
+      "started_at_utc": "2026-11-01T09:58:58.951552+00:00",
+      "ended_at_utc": "2026-11-01T09:59:00.284162+00:00",
+      "elapsed_monotonic_seconds": 1.33263578,
+      "timeout_seconds": 30.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-admin-owner-review/session-read-v2.log",
+      "bytes": 5615,
+      "sha256": "40b45fa51c2602761a7db1437d59d73561fb05c4337f2c20e93c15de11079363"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-admin-owner-review/check-records.py"
+      ],
+      "started_at_utc": "2026-11-01T10:00:23.042761+00:00",
+      "ended_at_utc": "2026-11-01T10:00:23.210991+00:00",
+      "elapsed_monotonic_seconds": 0.168217077,
+      "timeout_seconds": 35.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-admin-owner-review/record-checks-v1.log",
+      "bytes": 536,
+      "sha256": "e439dd50172bbb31f70911375c9c93286c34142dbb12996d28a619edd4f8583f"
+    }
+  ],
+  "limits": [
+    "Original collection.json/hashes.json/QPC/native exit unavailable; not reconstructed",
+    "No direct historical exec launcher trace",
+    "PHC fd and UDP inode ownership uncollected",
+    "The new manual debug-shell procedure has syntax validation only",
+    "No OS clock/service changes, no actual DB/registry/deployment changes",
+    "Full suite not repeated for documentation-only milestone"
+  ],
+  "evidence_files": [
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/admin-analysis-v1.json",
+      "bytes": 511,
+      "sha256": "752e19328594296594601e9899d9c5db96d2b423329b57f46839fb4db432bc6a"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/admin-analysis-v1.log",
+      "bytes": 3021,
+      "sha256": "ca07d8979ff8c1e507b06bd14d66bdc29ad290478926cd7741c13a3738c379ed"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/analysis.json",
+      "bytes": 2870,
+      "sha256": "4b73a09fb755fa5c83f18dfaf1e3d3d3e93ca0d6d438fb9c53789255a9bf1818"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/analyze-admin.py",
+      "bytes": 4765,
+      "sha256": "f6053edd365e8ed4ebc5e4bf9cbf442ca937c1051ee89b665e5418f287bcea10"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/check-records.py",
+      "bytes": 2237,
+      "sha256": "7729b62b0821fa779097cb31566ba36fa8eec8a399c7eb9239b98a2ed30f95b7"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/debug-shell-decoded.txt",
+      "bytes": 10052,
+      "sha256": "979ada76b8216399e90d5bdc7d29b505b7d0dd806ddd44571f9d81ad6a5aba0b"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/debug-shell-original.log",
+      "bytes": 13213,
+      "sha256": "a68a04b6f289252e638ede8d753bb8b0d6dde676b3556df7ad5a1ee33d6d823c"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/exploration-notes.txt",
+      "bytes": 462,
+      "sha256": "fe9910889efdfd13d86104f0ae1bfa8e4f6ca9ebd2a13e482d22f1693f92c2ca"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/input-record.json",
+      "bytes": 473,
+      "sha256": "916840e6506ea1bad5102cd326b09d0e18bf2947d967c2481c8383e61552f173"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/manual-read.sh",
+      "bytes": 1119,
+      "sha256": "f6e2132f93da7c9b2efa979f25b06bf7271c9eae23118097171514e5e4b98a3f"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/read-session-v2.py",
+      "bytes": 1062,
+      "sha256": "f6f0d3d36c36cdd8286e59e7855bc28ec6bb4ec4b45e53a90c57b46fafe8cc10"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/read-session.py",
+      "bytes": 937,
+      "sha256": "6e495d0796a567981824c97a50a47dd9842a00c0a4276447bb5f044cbec5a4f0"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/record-checks-v1.json",
+      "bytes": 509,
+      "sha256": "d3945e37ace3578bbea85258cc7c1de903bcbc56fbd2a0f286664ff4e0b91b85"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/record-checks-v1.log",
+      "bytes": 536,
+      "sha256": "e439dd50172bbb31f70911375c9c93286c34142dbb12996d28a619edd4f8583f"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/run-attempt.py",
+      "bytes": 1675,
+      "sha256": "b1df306259079b2fcd34c844aa393fbba67b842b66a382446b8a6c5fd11755fc"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/session-read-v1.json",
+      "bytes": 507,
+      "sha256": "e989bc7556b407d2d2804dc546d224ef2d22aa9ea7b1422532cf995883fd2998"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/session-read-v1.log",
+      "bytes": 294,
+      "sha256": "1348b519092b6da04901aac7e74b94cb5d46504c7b756bac25479d87def30be8"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/session-read-v2.json",
+      "bytes": 510,
+      "sha256": "d12cd79771a531a58a4a8cc5ce3e32f67542b0cc95a5e6d04dbe0c4c18b95554"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/session-read-v2.log",
+      "bytes": 5615,
+      "sha256": "40b45fa51c2602761a7db1437d59d73561fb05c4337f2c20e93c15de11079363"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/user-powershell.txt",
+      "bytes": 7174,
+      "sha256": "99568eeebf714566cbdcfe1b3dc5d668157dc5b54059686f9f1e745686618a07"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/validation.json",
+      "bytes": 421,
+      "sha256": "8c55fca591157aec48886c43b44113f43f96c9ab4959ccfe446379afb0fd7cfb"
+    },
+    {
+      "path": "261021/data/reports/20261101-admin-owner-review/wsl-generated-reference.conf",
+      "bytes": 146,
+      "sha256": "9315d50044034745ade10c260359b463eb77a61af9330f818f68ed16253f8528"
+    }
+  ],
+  "reviewed_public_files": [
+    {
+      "path": "261014/plan_mlops.md",
+      "bytes": 92166,
+      "sha256": "53f8a67da09fcf78e3e468d27fae010fdbfed74819bfa8793dbf3f5a3913e44d"
+    },
+    {
+      "path": "261021/work_log.md",
+      "bytes": 354626,
+      "sha256": "da1d9cec9559b7497f71b57bf46a57d680cf1f0926b703814502382318de6b38"
+    },
+    {
+      "path": "261021/docs/clock-process-ownership.md",
+      "bytes": 11234,
+      "sha256": "17ab893899a6bbef195c0e8be4fa75605d905bc5eab58387e3eb32f72448fad7"
+    },
+    {
+      "path": "261021/docs/chrony-control-analysis.md",
+      "bytes": 10211,
+      "sha256": "c0ff602e8070cac57410693131fdbbeb3061d13eb01d0b296411e9498267ca8e"
+    },
+    {
+      "path": "261021/docs/clock-owner-admin-read.md",
+      "bytes": 7133,
+      "sha256": "21122eea8a94c5d8e92e8dccd9123b18d36534f88444806711837d5b5a678bf6"
+    },
+    {
+      "path": "261021/docs/clock-admin-log-review.md",
+      "bytes": 4986,
+      "sha256": "d7ca70fb825c6edefdc414cb6439b933057c40efe8cd5de4669c359191c025cc"
+    }
+  ]
+}
