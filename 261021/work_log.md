@@ -2703,3 +2703,14 @@ T13のproduction変更はutc_timeの未来拒否に例外noteを付けるだけ�
 現在環境では独立10万sampleのCLOCK_REALTIMEが約2.956/2.927/3.873/2.921秒戻った。単調時計は進んでいた。mockしないFakeRegistry probeでも二度、通常のrecord_deployment_approval→review時刻のutc_timeで拒否された。2回目はレビュー03:07:08.773964 UTCに対し比較03:07:05.744075 UTC、差3.029889秒。これは現在の実行環境の発生機序の確認であり、値のない過去SQLite失敗との同一原因を断定していない。時計を動かしたWindows/WSL/同期機構の特定も未了。NTP同期flagはyesだったが逆行を観測しており、flagだけで安定と判定しない。
 
 診断I/Oはタイミングへ影響するので、成功だけで原因解消としない。T03の歴史的停止原因、UTC変更機構の切り分けはP1/D3/Solとして残す。T13のHTTP部分書込/応答喪失/実採否、T07/T17等は引き続き未完了。診断/運用手順・計画・新規証拠JSONを更新し、この節目を対象pathだけcommit/pushする。post-push CIは未確認で、成功を先取りしない。
+
+
+### T03/T13 診断commitのCI・artifact確認
+
+対象13ファイルを`8869ee1609625375c28c24d5935646bb51cc64da`へcommitし、origin/mainへpushした。無関係な未追跡3 pathは含めていない。短いSHAを指定した最初のgh run listは空だったため、完全なhead SHAで検索し直し、[CI 41268250834](https://github.com/kenobix/Claude_practice/actions/runs/41268250834)を特定した。最終run metadataのhead SHAとsuccess、GitHub連携jobs/steps/raw logsを照合した。全340件44.901秒、compileall、合成Docker・全5 PostgreSQL stepが成功した。50秒のgh run watchを2回に区切ったexit 124は監視期限で、CI失敗ではない。watch stdout/stderr/終了値とunit/system raw logを8869ee1-ciへ保存した。
+
+artifact 13068077631のraw ZIP（11,322 bytes、SHA-256 `9a4459a00045e0b8b4ab49dc615e3ea4fe0b49fa70150578eb0c07f5c5a82a52`）はGitHub digestと一致。CRCとallowlist 9 memberを照合し、全logに専用containerのcleanup記録があること、systemのblocked/numeric recheck、T08の非実DB/cleanupを確認した。各memberとraw metadata/log/ZIPのbytes/SHAを新規証拠JSONへ追加した。原本はignored reports内に保全し、一時download URLを記録していない。
+
+追加の読取clock-service-log-read-v2では、timesyncd journalにNTP timeoutと接続先の切替、wall timestampの逆順を確認した。同期先はntp.ubuntu.com、poll 32秒だったが、サンプル時刻でどの主体が時計を変更したかまでは特定できない。読み取りのみで、OS同期設定・時計・実DBは変更していない。追加試行/source/summaryも保存し、全22試行のlog/exit/hashを追跡した。
+
+診断手順のtag不変/blockedという結論は、今回再現した書込前のレビュー時刻検証の拒否に限定した。tag書込中/書込後の時計変化は未注入であり、T13の部分書込・復旧検証として残す。CI成功でT03の歴史的停止原因やUTC変更元を解消済みにせず、P1/D3/Solの残課題を維持する。今回の記録commitは計画・診断手順・証拠JSON・このログの4ファイルだけで、実装commitのCIを記録する。記録commit自体のCI成功は先取りしない。

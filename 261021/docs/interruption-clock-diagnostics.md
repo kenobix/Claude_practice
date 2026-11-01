@@ -20,7 +20,8 @@ OSの読取では`NTP=yes`、`NTPSynchronized=yes`、timesyncdはrunning、clock
 
 `utc_time`の未来拒否に、入力UTC、実際の比較UTC、先行microseconds、拒否時monotonic_nsを例外noteとして追加した。
 未来拒否条件、UTC必須条件、承認の時刻順序、tag書込み順序は維持する。
-人工的に1µs先行させた場合も拒否し、UTC同値は通す。時計が戻った場合の承認はtagを変更せずblockedを維持する。
+人工的に1µs先行させた場合も拒否し、UTC同値は通す。今回再現した承認前のレビュー時刻検証の拒否では、tagを変更せずblockedを維持した。
+書込途中/最後のtag書込後の時計変化は今回注入しておらず、T13の部分書込・復旧検証へ残す。
 時計を丸める、現在時刻まで待つ、自動retryする、といった処理は追加していない。
 
 T03の使い捨て子processは、signal受信/handler例外、HTTP client終了、台帳書込前後、process終了をUTC/monotonic/PID付きで記録する。
@@ -72,5 +73,7 @@ probeの`observed_natural_future_rejection`は「時計をmockせず未来拒否
 3. 独立した評価・実承認・運用測定の前に、当該実行環境でUTCと単調時計を記録する。未来拒否を緩和して実候補をeligibleにしない。
 4. T13のHTTP部分書込み/応答喪失/競合decisionと実採否、T07/T17の配信復旧は引き続き別作業。
 
-local全suiteは340件成功。最後の制御時計fixtureの固定後は対象decision 9件を再検証し、最終source全体は実装commitのCIで確認する。
+local全suiteは340件成功。最後の制御時計fixtureの固定後は対象decision 9件を再検証した。
+実装`8869ee1`の[CI 41268250834](https://github.com/kenobix/Claude_practice/actions/runs/41268250834)でも全340件44.901秒、compileall、全system/PG試験・cleanupが成功した。
+artifact 13068077631の11,322 bytesのZIPとGitHub digest、9 memberを照合し、専用container群のcleanupも確認した。
 実Capital候補の精度・監視・配信の証拠には流用しない。

@@ -4,8 +4,7 @@
   "session_date_local": "2026-11-01",
   "recorded_at_utc": "2026-11-01T03:11:24.544308+00:00",
   "base_commit": "cfd7ef71367963417d8110511bad3a1e26f4df9d",
-  "status": "local_diagnostics_verified_ci_pending_historical_t03_unresolved",
-  "real_database_registry_deployment_or_host_clock_changed": false,
+  "status": "diagnostic_milestone_ci_verified_T03_historical_cause_and_clock_adjuster_unresolved",
   "historical_evidence": {
     "t05_json": {
       "path": "261021/docs/reviews/20261030-t05-checks.json",
@@ -110,7 +109,8 @@
       ],
       "original_sqlite_failure_same_cause": "plausible_but_not_established_original_clock_values_missing",
       "source_change": "exact future-error values and monotonic time added as exception notes; no acceptance rule relaxed",
-      "approval_tags_after_clock_failure": "unchanged; permission blocked"
+      "approval_tags_after_clock_failure": "Observed review-time validation failures occur before approval tag writes: unchanged and blocked. Clock changes during/after tag writing were not injected.",
+      "clock_observation_method": "datetime observers delegate to real datetime.now; no fabricated clock values in natural probes"
     },
     "clock_samples": {
       "independent_20000": {
@@ -240,7 +240,21 @@
         ]
       },
       "synchronization_mechanism_causing_regressions": "not_identified",
-      "read_only_os_observation": "NTP=yes, NTPSynchronized=yes, timesyncd active/running, clocksource=tsc"
+      "read_only_os_observation": "NTP=yes, NTPSynchronized=yes, timesyncd active/running, clocksource=tsc",
+      "read_only_timesync_log_observation": {
+        "scope": "read_only_current_environment",
+        "journal_query_exit_code": 0,
+        "journal_observations": [
+          "timesyncd timeout and contacted-server events; journal wall timestamps also appear out of order"
+        ],
+        "timesync_properties": [
+          "ServerName=ntp.ubuntu.com",
+          "PollIntervalUSec=32s",
+          "Frequency=-580338"
+        ],
+        "setting_changed": false,
+        "limitation": "Does not identify which component called clock-set/adjustment at each sampled reversal."
+      }
     }
   },
   "validation": {
@@ -252,7 +266,8 @@
       "count": 340,
       "seconds": 161.771,
       "exit_code": 0,
-      "limitation": "Full suite preceded final test-only review-clock freezing and probe traceback output; final decision target and compileall rechecked, final source suite delegated to post-push CI."
+      "limitation": "Local full suite preceded final test-only review-clock freezing and probe traceback output; final decision target and compileall passed, and final source was separately verified by implementation commit CI.",
+      "final_source_confirmation": "Implementation commit CI verified all 340 tests in 44.901 seconds, plus compileall and system/PG cleanup."
     },
     "future_boundary": "equal accepted, one microsecond and one day ahead rejected",
     "clock_regression_counterfactual": "review comparison one microsecond behind blocks approval with no tag writes",
@@ -830,10 +845,30 @@
           "bytes": 510,
           "sha256": "16b803a78d2638e06557c3bc2c17288b03dd47e8ff4e35759f12d4f01d76657d"
         }
+      },
+      {
+        "command": [
+          ".venv/bin/python",
+          "/tmp/bike-clock-service-log-read.py"
+        ],
+        "started_at_utc": "2026-11-01T03:13:25.596151+00:00",
+        "ended_at_utc": "2026-11-01T03:13:25.762341+00:00",
+        "elapsed_monotonic_seconds": 0.16618812,
+        "timeout_seconds": 40.0,
+        "timed_out": false,
+        "exit_code": 0,
+        "log": "261021/data/reports/20261101-t03-t13/clock-service-log-read-v2.log",
+        "bytes": 1443,
+        "sha256": "bdd0719fb50a4842c370093fb5583a3a84fa20930520ec34b42e9baec86cbbcf",
+        "metadata": {
+          "path": "261021/data/reports/20261101-t03-t13/clock-service-log-read-v2.json",
+          "bytes": 485,
+          "sha256": "d82d9133083b32bfa4baaa97613b6f52acb8e84715e4e155298e178ba28dff10"
+        }
       }
     ]
   },
-  "source_snapshot": "reviewed local implementation and documents before implementation commit; later CI record updates will not rewrite these historical hashes",
+  "source_snapshot": "Source_files are the exact implementation commit 8869ee1609625375c28c24d5935646bb51cc64da, verified via git show; follow-up documentation edits do not rewrite historical hashes.",
   "source_files": [
     {
       "path": "261021/src/bike_mlops/capital_deployment_evidence.py",
@@ -898,6 +933,56 @@
   ],
   "evidence_files": [
     {
+      "path": "261021/data/reports/20261101-t03-t13/8869ee1-ci/artifact-validation.json",
+      "bytes": 1971,
+      "sha256": "5121bfaf523e4e485b9839c7e4ab253f8e4b09fdac567f72cc5c321b8941a8ac"
+    },
+    {
+      "path": "261021/data/reports/20261101-t03-t13/8869ee1-ci/artifact.zip",
+      "bytes": 11322,
+      "sha256": "9a4459a00045e0b8b4ab49dc615e3ea4fe0b49fa70150578eb0c07f5c5a82a52"
+    },
+    {
+      "path": "261021/data/reports/20261101-t03-t13/8869ee1-ci/artifacts-final.json",
+      "bytes": 842,
+      "sha256": "336e2a2f1afca4d2ad10981c5688bfa63514f0938bfb4d79b418b2e3fc786dbd"
+    },
+    {
+      "path": "261021/data/reports/20261101-t03-t13/8869ee1-ci/jobs-final.json",
+      "bytes": 5016,
+      "sha256": "1ca0eaa08deeaa0470e5ccae47ad49e864025996bcaed31271fd628044b38d54"
+    },
+    {
+      "path": "261021/data/reports/20261101-t03-t13/8869ee1-ci/jobs-progress.json",
+      "bytes": 4808,
+      "sha256": "18b5c69e42dc50de13befcaf82f56c021f0ac075e30dd24094e69f21deb82fb0"
+    },
+    {
+      "path": "261021/data/reports/20261101-t03-t13/8869ee1-ci/run-final.json",
+      "bytes": 5539,
+      "sha256": "3e89054c907bd78f7e5aee7955b9d72258b15517a09cf382cca01297312eefe3"
+    },
+    {
+      "path": "261021/data/reports/20261101-t03-t13/8869ee1-ci/system-job.log",
+      "bytes": 85106,
+      "sha256": "0bbc3988439aa599455ecbf769789033adfa80f6912a496628d374fc73295b9e"
+    },
+    {
+      "path": "261021/data/reports/20261101-t03-t13/8869ee1-ci/unit-job.log",
+      "bytes": 133411,
+      "sha256": "28c8ee879c26f8e461db352f0fc41cb5e96804155d95af6dd017a7dbb8e54520"
+    },
+    {
+      "path": "261021/data/reports/20261101-t03-t13/8869ee1-ci/watch-v1.log",
+      "bytes": 4052,
+      "sha256": "249861fc2a9ee3dbf11e0b1e10b4b8b8c2da3fc447961dec7052a963230b88ce"
+    },
+    {
+      "path": "261021/data/reports/20261101-t03-t13/8869ee1-ci/watch-v2.log",
+      "bytes": 4131,
+      "sha256": "48475c0049c45b69daf4151b4784d351691ca3e666046b0c4fa547c6877987d1"
+    },
+    {
       "path": "261021/data/reports/20261101-t03-t13/baseline-journal-v1.json",
       "bytes": 561,
       "sha256": "4cf5f1dcc19be45807117fc12c84d7696784ec373a0f1c7be8acdd47a73306fb"
@@ -956,6 +1041,26 @@
       "path": "261021/data/reports/20261101-t03-t13/clock-sample-v1.log",
       "bytes": 510,
       "sha256": "43548b251f30ef2a60f7ef898f0a813e45a685f0f1e1e640898feadecd26eedc"
+    },
+    {
+      "path": "261021/data/reports/20261101-t03-t13/clock-service-log-read-v2.json",
+      "bytes": 485,
+      "sha256": "d82d9133083b32bfa4baaa97613b6f52acb8e84715e4e155298e178ba28dff10"
+    },
+    {
+      "path": "261021/data/reports/20261101-t03-t13/clock-service-log-read-v2.log",
+      "bytes": 1443,
+      "sha256": "bdd0719fb50a4842c370093fb5583a3a84fa20930520ec34b42e9baec86cbbcf"
+    },
+    {
+      "path": "261021/data/reports/20261101-t03-t13/clock-service-log-read.py",
+      "bytes": 546,
+      "sha256": "b8720f7d56f1c94b58239d9d280b020ee88a16b4dd173202d2a065b20bb1565c"
+    },
+    {
+      "path": "261021/data/reports/20261101-t03-t13/clock-service-log-summary.json",
+      "bytes": 466,
+      "sha256": "c890a6187a3493f61b3e6f3636228c94b031411bf8f7ab1991031b37482b411b"
     },
     {
       "path": "261021/data/reports/20261101-t03-t13/clock-service-read-v1.json",
@@ -1523,7 +1628,121 @@
       "sha256": "667e221dc692d8f18a6781f9807becd61e0338e89035fd9a64881e219eaba717"
     }
   ],
-  "ci": "pending_implementation_commit",
+  "ci": {
+    "id": 41268250834,
+    "url": "https://github.com/kenobix/Claude_practice/actions/runs/41268250834",
+    "head_sha": "8869ee1609625375c28c24d5935646bb51cc64da",
+    "status": "completed",
+    "conclusion": "success",
+    "unit_tests": 340,
+    "unit_seconds": 44.901,
+    "jobs": [
+      {
+        "id": 124735473595,
+        "name": "tests",
+        "conclusion": "success"
+      },
+      {
+        "id": 124735473785,
+        "name": "synthetic-system",
+        "conclusion": "success"
+      }
+    ],
+    "all_system_postgresql_steps_and_cleanup": "passed",
+    "artifact": {
+      "id": 13068077631,
+      "name": "bike-mlops-docker-integration-logs",
+      "size_in_bytes": 11322,
+      "url": "https://api.github.com/repos/kenobix/Claude_practice/actions/artifacts/13068077631",
+      "archive_download_url": "https://api.github.com/repos/kenobix/Claude_practice/actions/artifacts/13068077631/zip",
+      "expired": false,
+      "created_at": "2026-11-01T03:17:11Z",
+      "expires_at": "2026-11-15T03:17:11Z",
+      "updated_at": "2026-11-01T03:17:11Z",
+      "digest": "sha256:9a4459a00045e0b8b4ab49dc615e3ea4fe0b49fa70150578eb0c07f5c5a82a52",
+      "workflow_run": {
+        "id": 41268250834,
+        "repository_id": 1197425837,
+        "head_repository_id": 1197425837,
+        "head_branch": "main",
+        "head_sha": "8869ee1609625375c28c24d5935646bb51cc64da"
+      }
+    },
+    "artifact_validation": {
+      "implementation_commit": "8869ee1609625375c28c24d5935646bb51cc64da",
+      "ci_run": 41268250834,
+      "artifact_id": 13068077631,
+      "zip_bytes": 11322,
+      "zip_sha256": "9a4459a00045e0b8b4ab49dc615e3ea4fe0b49fa70150578eb0c07f5c5a82a52",
+      "github_digest_matches": true,
+      "zip_integrity": "passed",
+      "member_allowlist_exact_match": true,
+      "members": [
+        {
+          "path": "synthetic-system-ci.log",
+          "bytes": 5372,
+          "sha256": "f39a3e5291a5a3d1fa7fb16eb27849dde17cb1e1a83e5a2c8d2de9f46a33d3fb"
+        },
+        {
+          "path": "request-interruption-postgres-ci.log",
+          "bytes": 459,
+          "sha256": "efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb"
+        },
+        {
+          "path": "snapshot-postgres-ci.log",
+          "bytes": 560,
+          "sha256": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9"
+        },
+        {
+          "path": "monitor-inspection-postgres-ci.log",
+          "bytes": 3933,
+          "sha256": "62030c793348b96cb162f6c3e0cb9e5352e990ff8f267d2b9ae64a65463e926b"
+        },
+        {
+          "path": "prediction-migration-postgres-ci.log",
+          "bytes": 2979,
+          "sha256": "bc598d1b7c20cbb443961a59531c5f5460a1249926087a9c7f87ceadeb8193c0"
+        },
+        {
+          "path": "monitor-persistence-postgres-ci.log",
+          "bytes": 376,
+          "sha256": "8d5f8fdc9d453fbb706b8e1fd526a6bb35c5d8ebf058033591b7e2dfe4e5ddc9"
+        },
+        {
+          "path": "t08-ci/summary.json",
+          "bytes": 2042,
+          "sha256": "1583810ae4e6d166c8309ef9edc7243d73bbc845e5b07c14ac9d758b1ead7d73"
+        },
+        {
+          "path": "t08-ci/before.dump",
+          "bytes": 8251,
+          "sha256": "a7b57f2dc57046349404be522e77ba29412ebede7fb4dc5fe75d9696726a4d61"
+        },
+        {
+          "path": "t08-ci/after.dump",
+          "bytes": 8309,
+          "sha256": "28c7754af138a9583986e46bf8c284608759ae3b9b9bd0f4f6c1cfb60b83cbb7"
+        }
+      ],
+      "unit_tests": 340,
+      "unit_seconds": 44.901,
+      "system_and_postgresql_cleanup_observed": true,
+      "synthetic_only": true,
+      "deployment_permission": "blocked"
+    },
+    "watch_deadline_exits": [
+      {
+        "path": "261021/data/reports/20261101-t03-t13/8869ee1-ci/watch-v1.log",
+        "exit_code": 124,
+        "meaning": "local 50-second watch deadline, not CI failure"
+      },
+      {
+        "path": "261021/data/reports/20261101-t03-t13/8869ee1-ci/watch-v2.log",
+        "exit_code": 124,
+        "meaning": "local 50-second watch deadline, not CI failure"
+      }
+    ]
+  },
   "remaining": [
     {
       "priority": "P1",
@@ -1549,6 +1768,10 @@
     "Diagnostic I/O changes timing; successful bounded repetitions do not establish historical cause resolution.",
     "Clock observations and command timestamps refer to current execution environment; no inference of Windows clock configuration.",
     "Synthetic results are not actual Capital monitoring, model accuracy, operational acceptance, approval, or deployment evidence.",
-    "Raw traces, clock samples and attempt logs remain local under ignored data/reports; SHA/bytes and summaries are versioned."
-  ]
+    "Raw traces, clock samples and attempt logs remain local under ignored data/reports; SHA/bytes and summaries are versioned.",
+    "Clock-regression refusal before approval writes is verified; changes during/after tag writes remain part of unfinished T13 partial-write/recovery work."
+  ],
+  "implementation_commit": "8869ee1609625375c28c24d5935646bb51cc64da",
+  "ci_verified_at_utc": "2026-11-01T03:19:26.703573+00:00",
+  "real_database_registry_deployment_or_host_clock_changed_by_task": false
 }
