@@ -188,3 +188,5 @@ MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python scripts/test_monitor_inspection_pos
 ```
 
 CIにT06b専用stepを追加し、`monitor-inspection-postgres-ci.log`を既存artifactへ保存する。実行済みの件数・終了値・cleanup・source/log SHA・post-push CIは[検証記録](reviews/20261030-t06b-checks.json)と[作業ログ](../work_log.md)へ記録する。ネットワーク上の実接続timeout満了は未注入で、接続5秒の指定はunitで検査し、実接続失敗・切断と実statement/lock timeoutはPG受入で確認する。
+
+T06b実装commit `164ac53`の[CI 41068758500](https://github.com/kenobix/Claude_practice/actions/runs/41068758500)は全337 tests（39.970秒）、T06b専用PG25 tests（14.461秒）、既存system/PG試験とcleanupまで成功した。artifact ZIPのSHA-256と4 memberの内容・hashも検算済み。2026-11-01に観測し、[検証記録](reviews/20261030-t06b-checks.json)へ追記した。

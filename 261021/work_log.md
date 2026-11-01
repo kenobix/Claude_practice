@@ -2584,3 +2584,11 @@ writer例外でrollbackするcaseとcommit後marker失敗caseに加え、専用�
 ネットワーク接続timeout満了自体は未注入（固定引数はunit、実接続失敗/切断はPG受入）。SQLiteのOS実権限/実busy timeout補足、実Capital候補/HTTP monitor、T02の実証producerは未実施である。合成受入を実監視・運用合格・配信許可へ転用しない。T03/T13の非決定的失敗の追加追跡も残す。
 
 workflowにはT06b専用PG受入stepとlog artifactを追加した。T15の既存monitor persistence PG script接続は今回行っていない。README/runbook/照合文書/計画へ到達点と制限を反映し、次の独立作業としてP1/D3/SolのT08依頼をdocs/t08-sol-handoff.mdへ作成した。新旧monitor型や既存UCIを今回移行しない点を明示した。検証JSONに全試行logのSHA/bytes、final source SHA、受入対応を記録してから対象pathだけをcommit/pushし、そのcommitのCIを別途観測する。
+
+### T06bの中断後再開とCI確定（2026-11-01）
+
+再開時HEADとorigin/mainはともに164ac53990e6f4dab2e8b37d528c678ed9e09374で、前回のpushは完了していた。tracked差分なし、無関係な未追跡3 pathだけだった。gh run listの完全headShaで[CI 41068758500](https://github.com/kenobix/Claude_practice/actions/runs/41068758500)とPages 41068758077のsuccessを確認した。GitHub connectorでjob/stepとartifact metadataを取得し、ghでraw unit log/ZIPをdata/reports/20261030-t06b/164ac53-*へ保存した。connectorはpush run発見用listingがないため、その部分はghで確認した。
+
+CIの最終sourceは全337件39.970秒、T06b PG受入25件14.461秒で成功。全job/step成功・既存system/PG試験・cleanupも確認した。artifact 12985105031のZIPは3,379 bytes、SHA 9d82e8d210629000ef6e10531d4edd817d228fd3522a4fc706f8986fe1ab1d9cでGitHub digestと一致し、ZIP integrityと4 memberのbytes/SHAを164ac53-artifact-validation.jsonへ記録。synthetic-systemは1,050要求/監査行・p95 35.44038ms・numeric matchedでblocked/not_evaluatedを維持している。これを実候補の運用合格にはしない。
+
+検証JSON/照合文書/計画/このログの4ファイルへ実装commit CIを追記し、T06a/bの実装・合成受入を完了にする。記録commit自体のCIを先取りして成功にしない。次は計画の独立P1/D3で、既存UCIへの新コード適用前に必要なT08へ進める。既知T03/T13の不安定性・T07/T17・T02 producerと実Capital/HTTP監視は残件のまま。

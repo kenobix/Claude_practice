@@ -4,7 +4,7 @@
   "base_commit": "584ff07",
   "task": "T06b PostgreSQL read-only monitor reconciliation",
   "policy_id": "monitor-run-reconciliation-v1",
-  "status": "local_acceptance_passed_ci_pending",
+  "status": "implementation_local_and_ci_passed",
   "scope": "synthetic_only",
   "automatic_repair": false,
   "automatic_promotion": false,
@@ -141,9 +141,70 @@
       "exit_code": 0,
       "test_count": 59,
       "elapsed_seconds": 15.165
+    },
+    {
+      "path": "261021/data/reports/20261030-t06b/164ac53-artifact-validation.json",
+      "bytes": 941,
+      "sha256": "88dd1c10f044a4ca253338c5d833f85c7ebf208f118d5332eac7afa9e3d7cc64"
+    },
+    {
+      "path": "261021/data/reports/20261030-t06b/164ac53-ci-artifact.zip",
+      "bytes": 3379,
+      "sha256": "9d82e8d210629000ef6e10531d4edd817d228fd3522a4fc706f8986fe1ab1d9c"
+    },
+    {
+      "path": "261021/data/reports/20261030-t06b/164ac53-ci-artifacts.json",
+      "bytes": 1020,
+      "sha256": "63310a4b7688b922b20703343cd8389cd34643728da9acb25b0f4fe3bc68c3ef"
+    },
+    {
+      "path": "261021/data/reports/20261030-t06b/164ac53-ci-final.json",
+      "bytes": 5081,
+      "sha256": "73f7eb71c07e8a30bce0cfeb6af9259df1d6079112a077b164357c7cabdc18da"
+    },
+    {
+      "path": "261021/data/reports/20261030-t06b/164ac53-ci-jobs.json",
+      "bytes": 5121,
+      "sha256": "2221d10f1cff7e6b148533831827d1c662fef28404a3c0554ab5fd5fcb9e421d"
+    },
+    {
+      "path": "261021/data/reports/20261030-t06b/164ac53-ci-unit.log",
+      "bytes": 132777,
+      "sha256": "e481ac31b36d2e47a9bbfa92c1e1009c667a789f73f5cc929f967856ba0e84eb"
     }
   ],
   "ci": {
-    "status": "pending_implementation_commit"
+    "status": "passed",
+    "commit": "164ac53990e6f4dab2e8b37d528c678ed9e09374",
+    "run_id": 41068758500,
+    "unit_summary": [
+      "Ran 337 tests in 39.970s"
+    ],
+    "zip_sha256": "9d82e8d210629000ef6e10531d4edd817d228fd3522a4fc706f8986fe1ab1d9c",
+    "zip_bytes": 3379,
+    "members": [
+      {
+        "name": "synthetic-system-ci.log",
+        "bytes": 5369,
+        "sha256": "afe446fcbeba0f38f099777ba6df1b3818fb9b190f4160b05f6c3766c8ddcdd1"
+      },
+      {
+        "name": "snapshot-postgres-ci.log",
+        "bytes": 560,
+        "sha256": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9"
+      },
+      {
+        "name": "request-interruption-postgres-ci.log",
+        "bytes": 459,
+        "sha256": "efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb"
+      },
+      {
+        "name": "monitor-inspection-postgres-ci.log",
+        "bytes": 3933,
+        "sha256": "4f515dbc76b752141c08903a7de5122f1b02b2a3c0d5931aecbf02f9322b1ac4"
+      }
+    ],
+    "url": "https://github.com/kenobix/Claude_practice/actions/runs/41068758500",
+    "all_jobs_and_steps_passed": true
   }
 }
