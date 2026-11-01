@@ -115,6 +115,8 @@ MLFLOW_REGISTRY_URI=http://127.0.0.1:5001 \
 
 ## 配信前の再確認と今回の試験
 
+2026-11-01追記: 後続の[T13a HTTP障害受入](capital-decision-http.md)で、一時MLflow RESTの部分書込、最終gate/permission後の応答喪失、読戻しと同一retry、競合拒否を確認した。以下の241件とHTTP未実施という記述は当初checkpointの記録。実候補の最終採否とHTTP artifact取得の実証は依然別作業である。
+
 review、approve、通常loader、runtime init、deploy promoteでbundle本文を取得してSHA/content照合する。取得前後で登録版、run、証拠/決定タグの変更がないことも確認する。Capitalのtracking/registry URIは同じ先へ固定し、環境の別registryへ流れるのを防ぐ。承認後のreport/plan SHA変更、負/NaN/Infinity p95、本文破損、証拠不足、旧schemaを拒否する。読み込んだAPIプロセス内で毎要求bundleを再取得する仕組みではない。
 
 今回、全241 testsが成功した。mock registryによる負例と、一時SQLite registry・file artifact storeを使った実MLflow clientの保存/取得/review/approve/保存元artifact破損拒否を含む。一時SQLite試験はHTTP serverの障害やネットワーク切断を再現しない。T13のHTTP経由部分書込・応答喪失、T07のCaddy復旧、実candidateの運用測定・承認は未完了。コマンド、途中の試験失敗と修正、証拠logのSHAは[作業ログ](../work_log.md)へ記録する。

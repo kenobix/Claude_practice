@@ -2859,3 +2859,33 @@ source準備でcwdへ261021を重ねたfile作成失敗とcompileallのCan't lis
 最終source snapshotを相対pathごとに別fileへ保存した。v6直前snapshotのbasenameがscript/testで衝突しtestが残った問題も記録し、scriptは実行直前の表示SHA3091c447…と実行後不変のsourceを照合した。上書きされたsnapshotを元の原本だとは呼ばない。最終system-evidence-analysisは全6試行の専用cleanup、v6のHTTP同一応答・409/503・復元table/dump/model hash・checkpoint/台帳/state一致を再計算した。全suiteの時計失敗は残し、確認済みのT07a/T17a単位を対象pathのみcommit/pushしてCIを確認する。
 
 final-validation-v1はexit0。検証前199原本・公開9fileのhash、相対リンク121件、最終source snapshot、AST/compileall/diff、DB/API/厳密future/lock/workflow/compose不変を確認。検証自身のlog/meta/result込みの証拠JSONは202原本・22 runner試行を保持する（準備失敗と未実行reviewは別記録）。対象24+5件および最終隔離受入成功と、全364件の既存時計エラーを分けて記録する。
+
+
+## T13a — 使い捨てMLflow HTTP障害受入とT07 CI追跡（2026-11-01、基点f341e94）
+
+管理者読取は基本inventoryが実完了していたため繰り返さず、OS設定・実DB/registry/配信を変更しないまま独立作業を続行。新規ignored data/reports/20261101-t13-httpへrun-attempt.pyと全試行/UTC/MONOTONIC/argv/exit/deadline/log/hashを保存。添付ログ確認のcommit444acc9、T07a/T17aのcommitf341e94に続く単位。既存source/schema/writer/gate/時計/lock/依存を変更していない。
+
+| attempt / コマンド（261021から） | 結果・限界 |
+|---|---|
+| implementation-ci-query-v1 / ci-query.py | full SHAでf341e94のpush run41298859518を特定。short SHA検索で0件だったことをCI不存在と断定しなかった。 |
+| HTTP試験 v1 / .venv/bin/python scripts/test_capital_decision_http.py --run-disposable --evidence-dir data/reports/20261101-t13-http/system-v1 | exit1、存在しないmodeling moduleのimport。正しいdeployment_gatesへ修正。server/proxy停止は記録したがworkspace flagはTemporaryDirectory終了前のfalseのまま。原記録を残し、後続照合で現在path不在を確認。 |
+| HTTP試験 v2 / 同上 system-v2 | exit1、実RESTはrun artifact領域外sourceをINVALID_PARAMETER_VALUEで拒否。runのfile artifact URIを解析し一時root内を確認してsourceを配置。server保護を緩めず、DB直接試験との差を記録。失敗時workspace回収の最終状態保存も修正。 |
+| HTTP試験 v3/v4 / 同上 system-v3/system-v4 | exit0。v3はreview部分/approval最終応答喪失/競合、v4はreview最終応答喪失とapproval部分書込も追加し5ケース成功。 |
+| fixture-guard-unit-v1/v2 / unittest discover -s tests -p test_capital_decision_http.py -v | 6件→TERM終了条件を加えた7件成功。opt-in、任意URL拒否、出力上書き拒否、PID/start変更、非所有listener、成功を失敗扱いしないこと等。 |
+| decision-regression-v1 / unittest discover -s tests -p 'test_capital_deployment*.py' -v | 既存決定/証拠/publisher30件、14.567 unittest秒で成功。直前全suiteの自然UTC失敗を取り消したり、時計が直った証拠にしたりしない。 |
+| implementation-ci-artifact-v1 / ci-artifact-download.py | connectorでf341e94のjobs/log/artifactを読取。ZIPのfile参照を得た後、同artifactをgh apiで取得しdigest/9 member/hashとmonitor-persistence logを照合。公開記録に一時download URLや認証情報を含めない。 |
+| http-interruption-v1 / run-interruption.py | 所有listenerの準備後、自己起動fixtureへ実SIGTERM。child143、server/proxy/group/temp回収を確認。歴史的T03の自然停止を解決した試験ではない。 |
+| HTTP試験 v5/v6 / 同上 system-v5/system-v6 | TERM cleanup付きv5、bundle原本保存/cleanup log出力付き最終v6がexit0。v6は32.67399983 MONOTONIC秒（時計資格や運用性能とは無関係）。全5ケースと4回各1件の障害注入、明示retry/競合でtag不変、group残存0。 |
+| workflow-validation-v1 / validate-workflow.py | 重複keyを拒否するYAML parse、全15 run blockのbash -n、既存14 block不変、新stepの同じif/env/pipefail/180 TERM kill-after10、stub終了0/23の伝播、artifact追加はlog1本だけを確認。AST/compileall/diff、既存source/lock等不変も確認。 |
+
+新fixtureは任意endpointを受けず、新規一時SQLite/file artifacts/lockと自分のloopback MLflow/proxyだけを使用。/procのserver identity/start ticks/子process group/socket inodeを照合してから書込。MLFLOW_*を除去してprivate tracking/registryへ固定、自動HTTP retry0。review/approvalの部分tagはblocked、最終gate/permissionのcommit後応答喪失はclient未確定として保存し読戻し後に判断。同じ要求は同じhash/時刻、別理由は上書き拒否、同時writerは一時lockで拒否した。final permission保存済みなら通信エラーでもDBはeligibleになり得ることを実RESTで確認した。
+
+全証拠はsynthetic_only。事前固定の歴史的時刻2026-11-01T00:00:00Zを合成tag入力に用い、validatorや実時刻生成をpatchしない。実Capitalの人間の承認、時計修復、HTTP artifact取得、実学習済みモデルの運用証拠ではない。原本bundle/tag/HTTP log/cases/server/cleanup/hashを保持し、実registryへ移さない。
+
+f341e94の[CI41298859518](https://github.com/kenobix/Claude_practice/actions/runs/41298859518)は2 jobsの全step成功。全369 tests/44.681秒、既存合成Docker・PostgreSQL各試験・cleanup成功。既存artifact13079968956のZIP SHA87ac2b1524f8c58db74295a264ce465476caefcc578de5c2b54c2fd1ef5d4cec/9 memberを確認。1050要求・監査1050、p95=33.469804999981534msは既存CIの合成計測でblocked/not_evaluated。新T07復旧harnessの実Caddy試験はこのCIに接続しておらず、local v6と区別する。要求別原本はartifactに含まれず、再計算可能保存はT16へ残す。新T13 stepのCIはこの実装commit後に別途確認する。
+
+探索時に誤ったcwdの.github読取、存在しないmodule候補のrg、psutil追加import、short SHA queryを試した失敗/限界をpreflight-notesへ記録。module名はrg --filesで確認しなおした。中間patchでupload blockを重複した点は即時diff確認で発見し、実行/push前に修正、最終validatorはduplicate key拒否で確認した。仮説/探索を実装確認へ代用しない。
+
+T16は4原本(plan/report/ledger/journal)+manifestの基本allowlist、別processで1050ID/1000 measured/p95/journalを再計算、秘密情報/余分member/外部root/途中変更拒否、export失敗時にもcleanupを残す仕様を[依頼書](docs/t16-luna-handoff.md)へ固定した。実装・CIは未実施。可能な限り多くの実装/負例/文書をLunaへ切り出せるが、review前commit/pushは保留とした。
+
+最終evidence-analysis-v1は全6試行のcleanup/現時点のtemp不在、最終4障害の各1送信、5ケース、保存tag同一性、bundle SHA、TERM143/回収、f341 CI/artifactを再計算しexit0。final-validation-v1はdocs/deployment-recovery.md末尾の余分な空行をgit diff --checkが検出してexit1。末尾を修正し、原失敗を上書きせず次attemptでhash/link/source/公開範囲を再確認する。

@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "implementation_commit": "f341e9405c53d90177b752a06ea5ad6880d8c75c",
+  "scope": "T07a/T17a implementation unit regressions plus existing synthetic system jobs, not the new standalone recovery harness",
+  "status": "passed",
+  "workflow_url": "https://github.com/kenobix/Claude_practice/actions/runs/41298859518",
+  "observations": {
+    "run_id": 41298859518,
+    "unit_tests": 369,
+    "unit_seconds": 44.681,
+    "jobs": "all_success",
+    "artifact": {
+      "artifact_id": 13079968956,
+      "sha256": "87ac2b1524f8c58db74295a264ce465476caefcc578de5c2b54c2fd1ef5d4cec",
+      "zip_members": {
+        "synthetic-system-ci.log": {
+          "bytes": 5368,
+          "sha256": "0d33f991c2eb3c1118b95d6f69bd60be6769118bb603c0ebbf4b321fb3229092"
+        },
+        "snapshot-postgres-ci.log": {
+          "bytes": 560,
+          "sha256": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9"
+        },
+        "request-interruption-postgres-ci.log": {
+          "bytes": 459,
+          "sha256": "efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb"
+        },
+        "monitor-inspection-postgres-ci.log": {
+          "bytes": 3933,
+          "sha256": "accf76b54bdb73bdee6ca574a6c37437cef6735479c2920b9a822b280c38bec2"
+        },
+        "prediction-migration-postgres-ci.log": {
+          "bytes": 2979,
+          "sha256": "1102dfef5258b121b055626ee99f3af718e8390ad1cfd2408adcadf03dc2e7e6"
+        },
+        "monitor-persistence-postgres-ci.log": {
+          "bytes": 376,
+          "sha256": "8d5f8fdc9d453fbb706b8e1fd526a6bb35c5d8ebf058033591b7e2dfe4e5ddc9"
+        },
+        "t08-ci/summary.json": {
+          "bytes": 2042,
+          "sha256": "90f0a89f0f2341996aff6aaa89c44f8fd8d8d921ca7dc75352a4c36a2df5b66d"
+        },
+        "t08-ci/before.dump": {
+          "bytes": 8251,
+          "sha256": "0340e4a87d30393988ec245656aebbc2b4ceb8b8ecc67f3b698ccbc253c1c3af"
+        },
+        "t08-ci/after.dump": {
+          "bytes": 8309,
+          "sha256": "f3902df75911e67a93b7594306a319bc5f15c20bf3f350df87358cf2f0ba38e8"
+        }
+      },
+      "scope": "existing CI log artifact only; no latency/journal bundle"
+    }
+  },
+  "local_UTC_failure_retracted": false,
+  "new_T07_recovery_harness_in_CI": false,
+  "T16_raw_latency_archive_complete": false,
+  "access": "GitHub connector jobs/logs/artifact metadata; gh fallback to resolve push runs and local ZIP bytes",
+  "evidence": [
+    {
+      "path": "261021/data/reports/20261101-t13-http/f341e94-runs.json",
+      "bytes": 24780,
+      "sha256": "646fded2bac23ff972a4c409aaf1abc4099bed3a49493a8c25872efb1ce40418"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http/t07ci-jobs.json",
+      "bytes": 5521,
+      "sha256": "96cb2dd3124d5f6946c553a8edd495b30f28589e6d9c9a15540202f9760dc2f0"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http/t07ci-unit.log",
+      "bytes": 139125,
+      "sha256": "f90d4c5d23a318e49aa627e942c26796619c04c81ab553f32774c084c87938ca"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http/t07ci-system.log",
+      "bytes": 85015,
+      "sha256": "43de8815fe530e29f9ff1ff0cb483afd236195127331a9a905c0db220a710b71"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http/t07ci-artifacts.json",
+      "bytes": 1021,
+      "sha256": "a6ce9b55b025bef65fbb4a655f50bc912d2962e8ccae3c448c7d983baae584fa"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http/ci-artifact-analysis.json",
+      "bytes": 1535,
+      "sha256": "ac7ec2d5062ae2b8f498da1c7a1a2c03e72ddbad5d952e34f65c8c5c4b5c7a5d"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http/t07-t17-ci-f341e94.zip",
+      "bytes": 11316,
+      "sha256": "87ac2b1524f8c58db74295a264ce465476caefcc578de5c2b54c2fd1ef5d4cec"
+    }
+  ]
+}

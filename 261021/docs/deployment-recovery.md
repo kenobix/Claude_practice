@@ -81,3 +81,7 @@ T07全体も、Capital契約の配信証拠producer、実MLflow/skopsと登録�
 review生成から拒否までMONOTONICは389118413ns進み、review UTCは比較UTCより4170111µs先だった。今回変更していないdecision/evidence/test/diagnosticのhashも照合した。
 全体成功とは記載せず、同じ理由でgreenになるまで再実行しない。新たな安全性5件はこの364件の後に追加し、単独成功を確認した（localで全369件通過とは主張しない）。
 T13の厳密拒否は維持し、OS修復や時計資格をこの受入の成功で代替しない。CI確認は別途記録する。
+
+## 2026-11-01 CI追跡
+
+実装f341e94の[CI検証索引](reviews/20261101-t07-t17-ci-checks.json)で、全369件と既存合成system/PostgreSQL/cleanup成功・artifact hashを確認した。本書の新復旧harnessの実Caddy受入自体はlocal実行で、CI接続は残る。local全suiteの既存UTC拒否も取り消さない。

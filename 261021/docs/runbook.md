@@ -372,6 +372,8 @@ PSIの参照期間、直近7日間の誤差を日付・休日・天候で調べ�
 
 ## 障害時
 
+Capitalのreview/approveでHTTPが失敗した場合、書込が一部または全部完了している可能性がある。先に登録版・証拠・決定tagを読み戻し、同じ版/入力/担当者/理由を照合する。理由や時刻を変えて上書きしない。挙動と使い捨て再現コマンドは[T13a HTTP障害試験](capital-decision-http.md)を参照。現環境のUTC逆行とは別の検証である。
+
 promote/recoverの状態・承認者/理由・中断地点の扱いは[配信復旧の契約と隔離受入](deployment-recovery.md)を参照してください。未完了が複数ある場合や旧metadataを復元できない場合は自動確定しません。補償未確認はrecovery_requiredのままです。履歴の旧版は、実artifactを読めることを確認するまでrollback許可を意味しません。
 
 T03のSIGTERM終了待ちやT13の未来時刻拒否が再発した場合は、[中断・時計診断](interruption-clock-diagnostics.md)に従ってphase/stackと実際の比較UTCを保存します。今回の環境ではUTC逆行を観測しており、拒否条件を緩めて承認を通さないでください。
