@@ -11,6 +11,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from failure_diagnostics import FailureTrace, trace_directory
+
 from bike_mlops.capital_request_journal import RequestJournal, inspect_request_journal
 from bike_mlops import capital_operational_recovery as recovery
 from bike_mlops import capital_operational_plan as plans
@@ -158,71 +160,125 @@ class RequestJournalTests(unittest.TestCase):
         self.assertFalse(report["completed"])
         self.assertTrue(report["interruption_requested"])
 
-    def test_sigterm_and_sigkill_leave_durable_intent_and_block_automatic_retry(self):
-        # Kill while a real local HTTP handler has received the request but has not replied.
+    def _signal_case(self, sig, *, stalled_ledger=False):
         import threading
         from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+        directory = trace_directory(self.fixture.root, "signal-" + sig.name)
+        trace = FailureTrace(directory, "parent")
         received, release = threading.Event(), threading.Event()
+
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, *_): pass
             def do_POST(self):
                 self.rfile.read(int(self.headers["Content-Length"]))
+                trace.emit("http_request_received")
                 received.set()
                 release.wait(20)
-                self.send_response(200)
-                self.end_headers()
+                try:
+                    self.send_response(200)
+                    self.end_headers()
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
+
         server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         server.daemon_threads = True
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
-        self.addCleanup(server.server_close)
-        self.addCleanup(server.shutdown)
-        self.addCleanup(release.set)
-        code = r'''
-import json, sys, time
-from pathlib import Path
-from unittest.mock import patch
-from bike_mlops import capital_operational_ledger as ledger
-from bike_mlops.capital_request_journal import RequestJournal
-from bike_mlops.capital_measurement_runner import _termination_as_interrupt
-root = Path(sys.argv[1])
-with patch.object(ledger, "PROJECT_ROOT", root), _termination_as_interrupt():
-    with ledger.measurement_attempt(root / sys.argv[2], ledger_path=root / "child-ledger.json", lock_dir=root / "child-locks") as attempt:
-        plan = json.loads((root / sys.argv[2]).read_text())
-        journal = RequestJournal(root / (attempt.attempt_id + ".jsonl"), attempt, plan)
-        attempt.mark_requests_started()
-        journal.sending(journal.schedule[0])
-        print(attempt.attempt_id, flush=True)
-        import httpx
-        with httpx.Client(timeout=30, trust_env=False) as client:
-            client.post(sys.argv[3], json=journal.schedule[0])
-'''
+        ledger_path = self.fixture.root / ("child-ledger-" + sig.name + ".json")
+        code = Path(__file__).with_name("request_interruption_child.py")
+        process = None
+        failed = True
+        try:
+            trace.emit("child_launch")
+            process = subprocess.Popen([sys.executable, str(code), str(self.fixture.root),
+                self.fixture.plan_path.relative_to(self.fixture.root).as_posix(), str(ledger_path),
+                f"http://127.0.0.1:{server.server_port}/predict", str(directory),
+                "stall_ledger" if stalled_ledger else "normal"], stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE, text=True)
+            self.assertTrue(select.select([process.stdout], [], [], 15)[0], "child did not reach send intent")
+            attempt_id = process.stdout.readline().strip()
+            self.assertTrue(attempt_id, process.stderr.read() if process.poll() is not None else "child stopped")
+            self.assertTrue(received.wait(10), "request did not reach HTTP server")
+            trace.emit("parent_signal_send", signal=int(sig))
+            process.send_signal(sig)
+            if stalled_ledger:
+                with self.assertRaises(subprocess.TimeoutExpired):
+                    process.communicate(timeout=1)
+                trace.emit("expected_wait_timeout", deadline_seconds=1)
+                process.kill()
+            else:
+                # Keep the original ten-second acceptance deadline.
+                try:
+                    process.communicate(timeout=10)
+                except subprocess.TimeoutExpired:
+                    trace.emit("unexpected_wait_timeout", deadline_seconds=10)
+                    raise
+            process.communicate(timeout=10)
+            trace.emit("child_wait_returned", returncode=process.returncode)
+            self.assertEqual(process.returncode, -signal.SIGKILL if sig == signal.SIGKILL or stalled_ledger else 130)
+            state = json.loads(ledger_path.read_text())["records"][0]
+            self.assertEqual(state["status"], "interrupted" if sig == signal.SIGTERM and not stalled_ledger else "started")
+            attempt = state["attempts"][0]
+            view = inspect_request_journal(self.fixture.root / (attempt_id + ".jsonl"),
+                attempt_id=attempt_id, candidate_id=self.fixture.candidate, plan=self.plan,
+                plan_file_sha256=attempt["plan_file_sha256"])
+            self.assertEqual(view["counts"]["outcome_unknown_may_have_been_sent"], 1)
+            # A lost result cannot authorize an automatic retry, even when SIGTERM was received.
+            from bike_mlops import capital_operational_ledger as ledger
+            with self.assertRaisesRegex(ValueError, "already has an operational attempt"):
+                with ledger.measurement_attempt(self.fixture.plan_path, ledger_path=ledger_path,
+                                                lock_dir=self.fixture.root / "child-locks"):
+                    pass
+            rows = [json.loads(line) for line in (directory / "child.jsonl").read_text().splitlines()]
+            phases = [row["phase"] for row in rows]
+            if sig == signal.SIGTERM:
+                self.assertIn("signal_received", phases)
+                self.assertIn("signal_handler_raised", phases)
+                self.assertIn("ledger_interrupt_enter", phases)
+                if stalled_ledger:
+                    self.assertNotIn("ledger_interrupt_returned", phases)
+                    stacks = (directory / "child-stacks.txt").read_text()
+                    self.assertIn("interrupt", stacks)
+                    self.assertIn("request_interruption_child.py", stacks)
+                else:
+                    self.assertIn("ledger_interrupt_returned", phases)
+                    self.assertIn("child_exit", phases)
+                    self.assertLess(phases.index("signal_received"), phases.index("ledger_interrupt_enter"))
+                    self.assertLess(phases.index("ledger_interrupt_enter"), phases.index("ledger_interrupt_returned"))
+            else:
+                self.assertNotIn("signal_received", phases)
+                self.assertNotIn("child_exit", phases)
+            trace.emit("state_and_journal_verified", state=state["status"])
+            failed = False
+        finally:
+            if process is not None:
+                if process.poll() is None:
+                    trace.emit("cleanup_force_kill")
+                    process.kill()
+                stdout, stderr = process.communicate(timeout=10)
+                (directory / "child-stdout.txt").write_text(stdout)
+                (directory / "child-stderr.txt").write_text(stderr)
+                trace.emit("cleanup_child_reaped", returncode=process.returncode)
+            release.set()
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+            trace.emit("server_cleanup_complete")
+            trace.publish(failed)
+            if failed:
+                for name in ("child.jsonl", "child-stacks.txt", "child-stderr.txt"):
+                    path = directory / name
+                    if path.exists():
+                        print("TEST_DIAGNOSTICS " + name + "\n" + path.read_text(), file=sys.stderr)
+
+    def test_sigterm_and_sigkill_leave_durable_intent_and_block_automatic_retry(self):
         for sig in (signal.SIGTERM, signal.SIGKILL):
             with self.subTest(signal=sig):
-                received.clear()
-                ledger_path = self.fixture.root / "child-ledger.json"
-                ledger_path.unlink(missing_ok=True)
-                process = subprocess.Popen([sys.executable, "-c", code, str(self.fixture.root),
-                    self.fixture.plan_path.relative_to(self.fixture.root).as_posix(),
-                    f"http://127.0.0.1:{server.server_port}/predict"], stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE, text=True)
-                try:
-                    self.assertTrue(select.select([process.stdout], [], [], 15)[0], "child did not reach send intent")
-                    attempt_id = process.stdout.readline().strip()
-                    self.assertTrue(attempt_id, process.stderr.read() if process.poll() is not None else "child stopped")
-                    self.assertTrue(received.wait(10), "request did not reach HTTP server")
-                    process.send_signal(sig)
-                    process.communicate(timeout=10)
-                    state = json.loads(ledger_path.read_text())["records"][0]
-                    self.assertEqual(state["status"], "interrupted" if sig == signal.SIGTERM else "started")
-                    attempt = state["attempts"][0]
-                    view = inspect_request_journal(self.fixture.root / (attempt_id + ".jsonl"),
-                        attempt_id=attempt_id, candidate_id=self.fixture.candidate, plan=self.plan,
-                        plan_file_sha256=attempt["plan_file_sha256"])
-                    self.assertEqual(view["counts"]["outcome_unknown_may_have_been_sent"], 1)
-                finally:
-                    if process.poll() is None: process.kill()
-                    process.communicate(timeout=10)
+                self._signal_case(sig)
+
+    def test_stalled_interrupt_write_is_diagnosable_and_remains_unknown(self):
+        # Reproduce the timeout symptom deliberately; this is not the historical cause.
+        self._signal_case(signal.SIGTERM, stalled_ledger=True)
 
 
 if __name__ == "__main__":

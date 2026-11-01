@@ -14,6 +14,7 @@ import tempfile
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from time import monotonic_ns
 
 from bike_mlops.evaluation_protocol import (
     BOOTSTRAP_QUALITY_GATE_POLICY, BOOTSTRAP_QUALITY_GATE_POLICY_SHA256,
@@ -119,8 +120,14 @@ def utc_time(value: str) -> datetime:
         raise ValueError("Evidence needs an explicit UTC timestamp") from error
     if parsed.utcoffset() is None or parsed.utcoffset().total_seconds() != 0:
         raise ValueError("Evidence needs an explicit UTC timestamp")
-    if parsed > datetime.now(timezone.utc):
-        raise ValueError("Evidence timestamp must not be in the future")
+    observed = datetime.now(timezone.utc)
+    if parsed > observed:
+        delta = parsed - observed
+        ahead_us = (delta.days * 86400 + delta.seconds) * 1000000 + delta.microseconds
+        error = ValueError("Evidence timestamp must not be in the future")
+        error.add_note(f"timestamp_utc={parsed.isoformat()} observed_at_utc={observed.isoformat()} "
+                       f"ahead_microseconds={ahead_us} monotonic_ns={monotonic_ns()}")
+        raise error
     return parsed
 
 

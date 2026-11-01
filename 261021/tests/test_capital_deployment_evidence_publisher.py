@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from failure_diagnostics import diagnose_decision_test
 
 from tests.capital_deployment_fixture import fixture
 from bike_mlops.capital_request_journal import RequestJournal
@@ -161,6 +162,7 @@ class DeploymentEvidencePublisherTests(unittest.TestCase):
 
 
 class IsolatedMlflowDeploymentEvidenceTests(unittest.TestCase):
+    @diagnose_decision_test
     def test_report_artifact_review_approval_and_tamper_rejection_in_temporary_sqlite_registry(self):
         from mlflow.tracking import MlflowClient
         from bike_mlops import capital_operational_registry as registry

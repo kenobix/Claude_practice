@@ -4,7 +4,9 @@ import unittest
 from types import SimpleNamespace
 from pathlib import Path
 import tempfile
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
+from failure_diagnostics import diagnose_decision_test
 from tests.capital_deployment_fixture import fixture
 
 from bike_mlops.capital_deployment_decisions import (
@@ -66,6 +68,76 @@ class CapitalDeploymentDecisionTests(unittest.TestCase):
         change.start()
         self.addCleanup(change.stop)
         self.client = eligible_registry()
+
+    @diagnose_decision_test
+    def test_utc_boundary_is_strict_and_rejection_retains_exact_clock_values(self):
+        from bike_mlops import capital_deployment_evidence as evidence
+        fixed = datetime(2026, 11, 1, tzinfo=timezone.utc)
+
+        class FixedClock(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return fixed
+
+        with patch.object(evidence, "datetime", FixedClock):
+            self.assertEqual(evidence.utc_time(fixed.isoformat()), fixed)
+            for delta in (timedelta(microseconds=1), timedelta(days=1)):
+                future = fixed + delta
+                with self.assertRaisesRegex(ValueError, "must not be in the future") as caught:
+                    evidence.utc_time(future.isoformat())
+                note = " ".join(caught.exception.__notes__)
+                self.assertIn("timestamp_utc=" + future.isoformat(), note)
+                self.assertIn("observed_at_utc=" + fixed.isoformat(), note)
+                self.assertIn("ahead_microseconds=" + str(delta // timedelta(microseconds=1)), note)
+                self.assertRegex(note, r"monotonic_ns=\d+")
+
+    @diagnose_decision_test
+    def test_regressed_review_validation_clock_blocks_approval_without_tag_writes(self):
+        from bike_mlops import capital_deployment_decisions as decisions
+        from bike_mlops import capital_deployment_evidence as evidence
+        review = datetime(2026, 11, 1, 0, 0, 1, tzinfo=timezone.utc)
+
+        class ReviewClock(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return review
+
+        with patch.object(decisions, "datetime", ReviewClock), patch.object(evidence, "datetime", ReviewClock):
+            record_operational_review(self.client, "2", "reviewer-a", "passed", "synthetic clock test")
+        before = dict(self.client.tags)
+        review_text = before["capital_operational_review_at_utc"]
+        self.assertEqual(datetime.fromisoformat(review_text), review)
+        later = review + timedelta(seconds=1)
+        original_check = decisions.utc_time
+
+        class LaterClock(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return later
+
+        class RegressedClock(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return review - timedelta(microseconds=1)
+
+        def check(value):
+            if value == review_text:
+                with patch.object(evidence, "datetime", RegressedClock):
+                    return original_check(value)
+            return original_check(value)
+
+        with (patch.object(decisions, "datetime", LaterClock),
+              patch.object(evidence, "datetime", LaterClock), patch.object(decisions, "utc_time", check)):
+            with self.assertRaisesRegex(ValueError, "must not be in the future") as caught:
+                record_deployment_approval(self.client, "2", "approver-b", "synthetic clock test")
+            self.assertIn("ahead_microseconds=1 ", " ".join(caught.exception.__notes__))
+        self.assertEqual(self.client.tags, before)
+        self.assertEqual(self.client.tags["deployment_permission"], "blocked")
+        # A separate explicit attempt at a stable time succeeds; no clamp, sleep or implicit retry.
+        with patch.object(decisions, "datetime", LaterClock), patch.object(evidence, "datetime", LaterClock):
+            result = record_deployment_approval(self.client, "2", "approver-b", "synthetic clock test")
+        self.assertEqual(result["deployment_permission"], "eligible")
+        self.assertEqual(self.client.tags["capital_operational_review_at_utc"], review_text)
 
     def test_review_and_separate_approval_bind_exact_version_and_evidence(self):
         reviewed = record_operational_review(self.client, "2", "reviewer-a", "passed", "all fixed checks reviewed")

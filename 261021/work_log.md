@@ -2668,3 +2668,38 @@ artifact `bike-mlops-docker-integration-logs`（ID 13067122187）のraw ZIPを`s
 新規保存した最終run/jobs/artifacts metadata、unit/system raw log、ZIPと`5cc5a89-artifact-validation.json`のbytes/SHAはT15証拠JSONへ追記した。原本はignored `data/reports/20261101-t15/sol-review-20261101/`へ保持する。GitHub artifactの保持は14日である。unitのSQLAlchemy noload、artifact actionのNode.js 20（24へ強制実行）・punycode/url.parse非推奨警告を確認し、別途P2/D2の保守として計画へ残した。警告を理由にlock/actionを全面更新していない。
 
 T15はSol reviewと実装commit CI/ZIP/cleanupまで完了。実Capital監視・承認・配信を実行したとは扱わない。次のSol担当P1/D3は既知T03/T13の非決定的失敗原因追跡、続いてT07/T17等。今回の追加commitはREADME/計画/証拠JSON/このログの記録4ファイルだけで、実装commitの観測成功を記録する。記録commit自身のCI結果はこのsnapshotに先取りしない。
+
+
+## T03/T13 — 一過性失敗の診断・自然時計逆行の再現（2026-11-01）
+
+基点cfd7ef71367963417d8110511bad3a1e26f4df9dでtracked差分なしを確認し、AGENTS.md、plan §11.6、T05証拠JSON、元のfull-socket-v2/full-final-v3と単独診断logを照合した。原logのSHA/bytesはT05記録と一致。無関係な未追跡3 pathは保持した。今回、実DB・実registry・配信・OS時計設定は変更していない。
+
+元T03はHTTP到着後のprocess.communicate(timeout=10)で失敗したが、signal受信・handler・HTTP cleanup・台帳fsync・interpreter終了のどこで止まったかは不明。元T13はcapital_deployment_decisions.pyの承認時レビュー時刻のutc_timeでfuture拒否されたが、比較UTCは未記録。どちらも過去logだけで原因を確定できないと判断した。
+
+全試行は新規`data/reports/20261101-t03-t13/`へ保存した。runnerは起動UTC/終了UTC/monotonic経過・完全なargv・stdout/stderr・exit/timeout・bytes/SHAを記録し、診断出力先を試行別に設定した。MLFLOW_DISABLE_AGENT_HINT=1、対象は各100秒、全suiteは300秒で打ち切る。ローカルHTTPを含む試験はsocket許可付き、時計sampler/probeは通常sandboxで実行した。自然反復・全suite・10万clock sampleは独立processで並行実行し、負荷があったことも記録する。CPU/API性能の比較値として扱わない。runnerとOS読取probeの実行sourceもreports内へ保存する。
+
+| 試行label | コマンドの主要部分（261021から実行） | 結果 |
+|---|---|---|
+| baseline-journal-v1 | .venv/bin/python -m unittest discover -s tests -p test_capital_request_journal.py -v | 基点8件/6.323秒、exit 0。元停止は再発せず |
+| baseline-publisher-v1 | 同上 -p test_capital_deployment_evidence_publisher.py -k report_artifact_review -v | 基点1件/7.802秒、exit 0。UTC開始終了差8.838730秒に対しmonotonic経過11.549290秒の差を観測。この時点で逆行を断定しなかった |
+| clock-sample-v1 | scripts/diagnose_runtime_clocks.py --output .../clock-sample-v1-observations --samples 20000 --interval 0.001 | 逆行0回。短い観測の限界として保持 |
+| journal-diagnostic-v1 | discover -p test_capital_request_journal.py -v | 9件/10.854秒、exit 0。通常signalと人工台帳停止を検証 |
+| decision-diagnostic-v1 | discover -p test_capital_deployment_decisions.py -v | 9件/1.506秒、exit 0。厳密UTC境界とclock逆行拒否/tag不変を確認 |
+| publisher-diagnostic-v1 | discover -p test_capital_deployment_evidence_publisher.py -v | 6件/9.229秒、exit 0。使い捨てSQLite登録/承認/破損拒否を確認 |
+| journal-natural-v2/v3/v4 | discover -p test_capital_request_journal.py -k sigterm_and_sigkill -v | 独立3回、各exit 0。通常の10秒deadlineは維持 |
+| publisher-natural-v2/v3/v4 | discover -p test_capital_deployment_evidence_publisher.py -k report_artifact_review -v | 独立3回、各exit 0。実時計の比較traceを保存 |
+| full-suite-v1 | discover -s tests -v | 全340件161.771秒、exit 0。runner経過167.343965秒。通常の元2件は成功 |
+| clock-sample-under-tests-v2 | clock sampler --samples 100000 --interval 0.001 | CLOCK_REALTIMEの逆行4回。他3時計は0回。sample原本/summaryを保存 |
+| natural-clock-decision-probe-v1 | tests/probe_decision_clock.py --output .../natural-clock-decision-probe-v1-observations --samples 160 --interval 0.2 | 4反復目にmockしないUTC逆行で元と同じレビュー時刻future拒否。差2.667438秒、tag不変/blocked、diagnostic command自体はexit 0 |
+| natural-clock-decision-probe-v2 | 同probe、別新規path | stackの追加採取のための2回目。1反復目に自然拒否、差3.029889秒、元と同じ承認判定行。tag不変/blocked、exit 0 |
+| decision-diagnostic-final-v2 | discover -p test_capital_deployment_decisions.py -v | 9件、exit 0。制御clock試験のreview生成も固定時刻へ変更し、この新規試験自身の自然clock依存を除いた |
+| static-checks-v1 / pip-check-v1 | compileall -q src tests scripts / pip check | いずれもexit 0。最終fixture固定後は対象9件、最終source全体はCIで確認する |
+| clock-service-read-v1 | timedatectl show -p NTPSynchronized -p NTP、systemctl show systemd-timesyncd -p ActiveState -p SubState、clocksource sysfs読取 | 読取はいずれも成功。NTP/synchronized=yes、timesyncd active/running、tsc。設定変更はしていない |
+
+T03は試験専用child/helperへ診断を追加した。signal受信とhandler例外、HTTP client終了、台帳書込前後、process終了をUTC/monotonic/PID付きで保存する。5秒watchdogはstackを書くだけで元の10秒を延長しない。通常SIGTERMはexit 130、SIGKILLは-9を要求する。journalの未知IDを確認し、同候補の自動再開が拒否されることも実際に試す。人工台帳停止だけは1秒timeoutを期待し、0.25秒stackから停止箇所を確認してkill/reapする。phase/stackの採取成功を過去停止の原因解明へ格上げしない。子processとHTTP serverは各caseで回収する。
+
+T13のproduction変更はutc_timeの未来拒否に例外noteを付けるだけで、比較条件やUTC契約は変えていない。入力UTC・実際の比較UTC・先行microseconds・拒否時monotonicを残す。制御試験ではUTC同値を受理し、1µsと1日先行を拒否する。承認処理のreview検証clockだけ1µs戻したときはtag不変/blockedを確認する。時計のclamp・睡眠・自動retryは追加していない。
+
+現在環境では独立10万sampleのCLOCK_REALTIMEが約2.956/2.927/3.873/2.921秒戻った。単調時計は進んでいた。mockしないFakeRegistry probeでも二度、通常のrecord_deployment_approval→review時刻のutc_timeで拒否された。2回目はレビュー03:07:08.773964 UTCに対し比較03:07:05.744075 UTC、差3.029889秒。これは現在の実行環境の発生機序の確認であり、値のない過去SQLite失敗との同一原因を断定していない。時計を動かしたWindows/WSL/同期機構の特定も未了。NTP同期flagはyesだったが逆行を観測しており、flagだけで安定と判定しない。
+
+診断I/Oはタイミングへ影響するので、成功だけで原因解消としない。T03の歴史的停止原因、UTC変更機構の切り分けはP1/D3/Solとして残す。T13のHTTP部分書込/応答喪失/実採否、T07/T17等は引き続き未完了。診断/運用手順・計画・新規証拠JSONを更新し、この節目を対象pathだけcommit/pushする。post-push CIは未確認で、成功を先取りしない。
