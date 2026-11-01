@@ -34,3 +34,7 @@ http.jsonlにforward/注入/HTTP status、各地点のtag JSON、cases.jsonに�
 初回はimport先誤り、二回目はRESTがrun外のモデルsourceを拒否した。正しい既存moduleとrun内artifactへ修正し、serverの保護を緩めなかった。v3/v4の成功後、TERM cleanupを追加し原本保存/CI logを整えた最終v6と実TERM中断試験が成功した。新guard 7件、既存決定/証拠30件が成功。新scriptはCIにも接続し、失敗終了値をpipefail/timeout経由で保持する。CI実績は対象commitとrunを別記録し、local結果で代用しない。
 
 残りは実候補のproducer証拠、時計資格、監視/配信/復元の同一artifactへの結合を揃えたT13b最終採否である。T13aが通っても実registryのeligible化や現配信変更は行わない。
+
+## 実装commitのCI確認
+
+f1cc9ffの[CI41300378098](https://github.com/kenobix/Claude_practice/actions/runs/41300378098)で全376 tests、既存system/PG、新HTTP stepが成功。artifact内のcapital-decision-http-ci.log、5ケースとcleanup、ZIP/全member SHAを[CI検証索引](reviews/20261101-t13-http-ci-checks.json)で確認した。元のlocal索引は実装review時点の記録として維持する。合成時刻入力・file artifact・未学習sourceという限界も変わらない。T13aの範囲は完了し、T13b実候補の最終採否は残る。

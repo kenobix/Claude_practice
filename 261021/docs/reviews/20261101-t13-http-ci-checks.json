@@ -1,0 +1,369 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "implementation_commit": "f1cc9ff47f0946a49fb3e2cf09329b26a5ca5e39",
+  "workflow_url": "https://github.com/kenobix/Claude_practice/actions/runs/41300378098",
+  "scope": "T13a synthetic REST decision recovery CI; not real Capital adoption or clock qualification",
+  "observations": {
+    "status": "passed",
+    "implementation_commit": "f1cc9ff47f0946a49fb3e2cf09329b26a5ca5e39",
+    "run_id": 41300378098,
+    "jobs": "all_success",
+    "unit_tests": 376,
+    "unit_seconds": 51.768,
+    "new_HTTP_step": "success",
+    "HTTP_cases": {
+      "synthetic_only": true,
+      "decision_time_input": "2026-11-01T00:00:00+00:00",
+      "artifact_transport": "temporary local file, not HTTP",
+      "cases": {
+        "partial_review": {
+          "failure": {
+            "error_type": "MlflowException",
+            "message": "API request to http://127.0.0.1:33465/api/2.0/mlflow/model-versions/set-tag failed with exception HTTPConnectionPool(host='127.0.0.1', port=33465): Max retries exceeded with url: /api/2.0/mlflow/model-versions/set-tag (Caused by ResponseError('too many 502 error responses'))"
+          },
+          "loader_rejection": {
+            "error_type": "ValueError",
+            "message": "Capital model is not eligible for deployment; missing or non-passed gate tags: operational_gate_status, deployment_permission"
+          },
+          "recovery": {
+            "status": "review_recorded",
+            "model_version": "2",
+            "decision": "passed",
+            "operational_gate_status": "passed",
+            "deployment_permission": "blocked",
+            "review_sha256": "d07ee1db6583593b1a376a21b2bb826a8d681e6d9c2c5fd2a652d354bd77b494"
+          },
+          "injected_requests": 1
+        },
+        "lost_review_response": {
+          "failure": {
+            "error_type": "MlflowException",
+            "message": "API request to http://127.0.0.1:33465/api/2.0/mlflow/model-versions/set-tag failed with exception HTTPConnectionPool(host='127.0.0.1', port=33465): Max retries exceeded with url: /api/2.0/mlflow/model-versions/set-tag (Caused by ProtocolError('Connection aborted.', RemoteDisconnected('Remote end closed connection without response')))"
+          },
+          "recovery": {
+            "status": "review_recorded",
+            "model_version": "2",
+            "decision": "passed",
+            "operational_gate_status": "passed",
+            "deployment_permission": "blocked",
+            "review_sha256": "d07ee1db6583593b1a376a21b2bb826a8d681e6d9c2c5fd2a652d354bd77b494"
+          },
+          "readback": "passed_but_blocked",
+          "injected_requests": 1
+        },
+        "partial_approval": {
+          "failure": {
+            "error_type": "MlflowException",
+            "message": "API request to http://127.0.0.1:33465/api/2.0/mlflow/model-versions/set-tag failed with exception HTTPConnectionPool(host='127.0.0.1', port=33465): Max retries exceeded with url: /api/2.0/mlflow/model-versions/set-tag (Caused by ResponseError('too many 502 error responses'))"
+          },
+          "loader_rejection": {
+            "error_type": "ValueError",
+            "message": "Capital model is not eligible for deployment; missing or non-passed gate tags: deployment_permission"
+          },
+          "injected_requests": 1
+        },
+        "lost_approval_response": {
+          "failure": {
+            "error_type": "MlflowException",
+            "message": "API request to http://127.0.0.1:33465/api/2.0/mlflow/model-versions/set-tag failed with exception HTTPConnectionPool(host='127.0.0.1', port=33465): Max retries exceeded with url: /api/2.0/mlflow/model-versions/set-tag (Caused by ProtocolError('Connection aborted.', RemoteDisconnected('Remote end closed connection without response')))"
+          },
+          "client_outcome": "unknown_until_readback",
+          "readback": "eligible_and_coherent",
+          "recovery": {
+            "status": "deployment_approved",
+            "model_version": "2",
+            "operational_gate_status": "passed",
+            "deployment_permission": "eligible",
+            "approval_sha256": "1e4879b67fd44d849f8b56178f17bd64a478d1328fc09a40518d81c6444f2fbd"
+          },
+          "injected_requests": 1
+        },
+        "conflicting_decisions": {
+          "sequential": {
+            "error_type": "ValueError",
+            "message": "Refusing to overwrite a different decision tag: capital_deployment_approval_reason"
+          },
+          "concurrent": {
+            "error_type": "RuntimeError",
+            "message": "Another operational evidence recorder holds this model-version lock"
+          },
+          "metadata_unchanged": true
+        }
+      },
+      "status": "passed"
+    },
+    "HTTP_cleanup": {
+      "status": "cleanup_observed",
+      "server_stopped": true,
+      "proxy_stopped": true,
+      "temporary_workspace_removed": true,
+      "server_returncode": 0,
+      "server_group_remaining": []
+    },
+    "existing_system_PG_cleanup": "observed in completed job logs",
+    "artifact": {
+      "id": 13080624977,
+      "zip_sha256": "0d9dce8eae65f263c2349011ca5594e9b21fc830a7776b582c4ac376c5988f5a",
+      "members": {
+        "synthetic-system-ci.log": {
+          "bytes": 5369,
+          "sha256": "3d27629ee3c82c39e6c3981b201bfc22838cc137a4443992a6c2ef9cf893e3f8"
+        },
+        "snapshot-postgres-ci.log": {
+          "bytes": 560,
+          "sha256": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9"
+        },
+        "request-interruption-postgres-ci.log": {
+          "bytes": 459,
+          "sha256": "efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb"
+        },
+        "monitor-inspection-postgres-ci.log": {
+          "bytes": 3933,
+          "sha256": "a3a6b743dfadde4ab5e2b540239870299f7a632c2049a1afbc17ea3997de9dea"
+        },
+        "prediction-migration-postgres-ci.log": {
+          "bytes": 2979,
+          "sha256": "9a205a811fac491ea465eb13f08844b65a3e6b0f8cb20cc3b98076de15c41397"
+        },
+        "monitor-persistence-postgres-ci.log": {
+          "bytes": 376,
+          "sha256": "8d5f8fdc9d453fbb706b8e1fd526a6bb35c5d8ebf058033591b7e2dfe4e5ddc9"
+        },
+        "capital-decision-http-ci.log": {
+          "bytes": 3855,
+          "sha256": "0dd317062e92b222de6cbf84ddf15dd08ee0bfe9e6de9e786ac34eefa43de207"
+        },
+        "t08-ci/summary.json": {
+          "bytes": 2042,
+          "sha256": "36e41ace6bf44f70315836b698a7162e68e5e77d61cfa07e8ad186c75e4f84db"
+        },
+        "t08-ci/before.dump": {
+          "bytes": 8251,
+          "sha256": "4c34c132cbafa78fad615d7d138face2b865c86bded210695676f6989b3d6bd3"
+        },
+        "t08-ci/after.dump": {
+          "bytes": 8309,
+          "sha256": "e13f8042502662694018a198a713401e3593cd49c21031a86abaa3eadca15620"
+        }
+      }
+    },
+    "limits": [
+      "synthetic-only, fixed historical timestamp input; no clock qualification",
+      "local file artifacts and untrained model source",
+      "new T07 recovery harness not connected to CI",
+      "no T16 per-request original archive or independent p95 recompute yet"
+    ]
+  },
+  "preceding_local_review_record": {
+    "implementation_commit": "f1cc9ff47f0946a49fb3e2cf09329b26a5ca5e39",
+    "path": "261021/docs/reviews/20261101-t13-http-checks.json",
+    "bytes": 51189,
+    "sha256": "927654ec83ff16f2dd5f1bbbda0dfeea659d4e00710781eacb704d3591cb1a58"
+  },
+  "attempts": [
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-t13-http-ci/download-and-check.py"
+      ],
+      "started_at_utc": "2026-11-01T11:12:47.300332+00:00",
+      "ended_at_utc": "2026-11-01T11:12:49.799106+00:00",
+      "elapsed_monotonic_seconds": 2.498775292,
+      "timeout_seconds": 45.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-t13-http-ci/artifact-check-v1.log",
+      "bytes": 5599,
+      "sha256": "0aa9a174890729e15b93e12ed278b759f535c17aa23fc5e78e330ddec5c782d6"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-t13-http-ci/query.py"
+      ],
+      "started_at_utc": "2026-11-01T11:07:12.903232+00:00",
+      "ended_at_utc": "2026-11-01T11:07:13.951369+00:00",
+      "elapsed_monotonic_seconds": 1.048136075,
+      "timeout_seconds": 45.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-t13-http-ci/query-v1.log",
+      "bytes": 626,
+      "sha256": "993370f0d63758357bf39e408c31b252149bf395bb2640ee9383d6b0c387a576"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-t13-http-ci/validate-record.py"
+      ],
+      "started_at_utc": "2026-11-01T11:13:53.844558+00:00",
+      "ended_at_utc": "2026-11-01T11:13:53.964783+00:00",
+      "elapsed_monotonic_seconds": 0.12022351,
+      "timeout_seconds": 45.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-t13-http-ci/record-validation-v1.log",
+      "bytes": 386,
+      "sha256": "c106f6649a8c7f5cc486cf4fa25d104e4eda11ed9e731e2926fb8eb99906031d"
+    }
+  ],
+  "validation": {
+    "status": "passed",
+    "raw_hashes_before_self": 22,
+    "reviewed_public_hashes": 3,
+    "links": 86,
+    "source_workflow_tests_dependencies_unchanged_since_implementation": true,
+    "focused_secret_scan": "passed, not guarantee",
+    "diff_check": "passed"
+  },
+  "limits": [
+    "first intermediate connector jobs poll remained in tool transcript only; saved polls are not all polls",
+    "latest recording commit CI not included in implementation run",
+    "earlier natural local UTC refusal remains evidence; no clock repair or condition relaxation"
+  ],
+  "evidence_files": [
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/analysis.json",
+      "bytes": 6538,
+      "sha256": "8cdfe363bcbbb4b4fa2312fa5c2ce58441e76e29cd1f455cf89e7ab71669f311"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/artifact-check-v1.json",
+      "bytes": 502,
+      "sha256": "63513479f9ab806675340d3db3807a887a25458ed381b25f4435c150465933e8"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/artifact-check-v1.log",
+      "bytes": 5599,
+      "sha256": "0aa9a174890729e15b93e12ed278b759f535c17aa23fc5e78e330ddec5c782d6"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/artifact.zip",
+      "bytes": 12544,
+      "sha256": "0d9dce8eae65f263c2349011ca5594e9b21fc830a7776b582c4ac376c5988f5a"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/artifacts-final.json",
+      "bytes": 1021,
+      "sha256": "ff4d318884c9eb26f19be1d49b40d02784172f8ce1029d7637cc4a353c047768"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/build-record.py",
+      "bytes": 1750,
+      "sha256": "9d8d7fb71a8a32136dc54a8e1d75d59c4d539b10cb92359903ee9b116343da00"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/download-and-check.py",
+      "bytes": 3473,
+      "sha256": "bc0f8a6ef36b66b361c837a2723b8d95fd2ae7b16253f51c673de1c43b5ebe9c"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/http-ci.log",
+      "bytes": 3855,
+      "sha256": "0dd317062e92b222de6cbf84ddf15dd08ee0bfe9e6de9e786ac34eefa43de207"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/jobs-final.json",
+      "bytes": 5713,
+      "sha256": "e659217d4968443e0f7d70bdf26c06f0c9d52e69f07ab413bead12f809e6ebe8"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/jobs-v2.json",
+      "bytes": 5301,
+      "sha256": "40da1a15048f4baa40c2e769f536858b5880f0192de28f4c7e165e06ab2a37a7"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/jobs-v3.json",
+      "bytes": 5486,
+      "sha256": "09bac9d03a3dfbf19fecf09eab3b0526fb4509580b3a53b8a0892d7d39cda518"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/jobs-v4.json",
+      "bytes": 5486,
+      "sha256": "09bac9d03a3dfbf19fecf09eab3b0526fb4509580b3a53b8a0892d7d39cda518"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/jobs-v5.json",
+      "bytes": 5507,
+      "sha256": "516443103807957893965fa24bbb99eb8b6e74daa04448b84d5eaaeaa8dc0447"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/jobs-v6.json",
+      "bytes": 5713,
+      "sha256": "e659217d4968443e0f7d70bdf26c06f0c9d52e69f07ab413bead12f809e6ebe8"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/query-v1.json",
+      "bytes": 479,
+      "sha256": "19db2be4206d686968bc038a2424faa53d9b450b8990e01e95083cc155b4bbc5"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/query-v1.log",
+      "bytes": 626,
+      "sha256": "993370f0d63758357bf39e408c31b252149bf395bb2640ee9383d6b0c387a576"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/query.py",
+      "bytes": 519,
+      "sha256": "bfaff26fe04d7ef9390c8a92428067993841cb072e4cc20eb89b2397cf379a14"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/record-validation-v1.json",
+      "bytes": 500,
+      "sha256": "f7c297ca8b345b55c0ae031252abfbc1d2742f4f43961ac802a6ca174df62b2b"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/record-validation-v1.log",
+      "bytes": 386,
+      "sha256": "c106f6649a8c7f5cc486cf4fa25d104e4eda11ed9e731e2926fb8eb99906031d"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/run-attempt.py",
+      "bytes": 1668,
+      "sha256": "c6a24166df29029f628e390bbfe4b1214e03015e89689816f4719e958c86981d"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/runs-v1.json",
+      "bytes": 24739,
+      "sha256": "15e8eb8d3a6de18da665ccf34c34631073b79ece5c3b5a3d05d27ba369787732"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/system.log",
+      "bytes": 90440,
+      "sha256": "534c9da11bcdd52990fafd7a439f6bd5677565430f725393a9f7660e5878d842"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/unit.log",
+      "bytes": 140902,
+      "sha256": "4600f9d07ba0200650b4d14c36c81cd5c3e436c1212b68005b9e90840ed5066b"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/validate-record.py",
+      "bytes": 1572,
+      "sha256": "f100ad55ede30d293064d4b2ccb08611f5626a1b895a5c9c4fd154a12455a31c"
+    },
+    {
+      "path": "261021/data/reports/20261101-t13-http-ci/validation-result.json",
+      "bytes": 256,
+      "sha256": "050982ea42482c561552016458ff0bab2a5bc4489acf82d0e62c380fb73ba4f2"
+    }
+  ],
+  "reviewed_public_files_at_CI_recording": [
+    {
+      "path": "261014/plan_mlops.md",
+      "bytes": 97706,
+      "sha256": "92ba01b5f831ecfbfb7e6a966e631e802d4a222d0960b0db1f9251b3d856abb0"
+    },
+    {
+      "path": "261021/work_log.md",
+      "bytes": 370405,
+      "sha256": "460ba4e72b666c2133fa1936fdd2c3ce25ae1a90d8293e2eb379deb01fe17aac"
+    },
+    {
+      "path": "261021/docs/capital-decision-http.md",
+      "bytes": 5328,
+      "sha256": "149e07200dcefb3f9ad2d550dca030b6c1474179f0c427a9495314f78a10d7d4"
+    }
+  ]
+}

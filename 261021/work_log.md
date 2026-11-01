@@ -2889,3 +2889,16 @@ f341e94の[CI41298859518](https://github.com/kenobix/Claude_practice/actions/run
 T16は4原本(plan/report/ledger/journal)+manifestの基本allowlist、別processで1050ID/1000 measured/p95/journalを再計算、秘密情報/余分member/外部root/途中変更拒否、export失敗時にもcleanupを残す仕様を[依頼書](docs/t16-luna-handoff.md)へ固定した。実装・CIは未実施。可能な限り多くの実装/負例/文書をLunaへ切り出せるが、review前commit/pushは保留とした。
 
 最終evidence-analysis-v1は全6試行のcleanup/現時点のtemp不在、最終4障害の各1送信、5ケース、保存tag同一性、bundle SHA、TERM143/回収、f341 CI/artifactを再計算しexit0。final-validation-v1はdocs/deployment-recovery.md末尾の余分な空行をgit diff --checkが検出してexit1。末尾を修正し、原失敗を上書きせず次attemptでhash/link/source/公開範囲を再確認する。
+
+
+## T13a実装CIのartifact照合完了（2026-11-01、実装f1cc9ff）
+
+最終local final-validation-v2はexit0、検証前133原本/公開12file/hash/相対リンク135/最終source/AST/diffを確認。validator自身のlog/meta/resultとstage失敗メモを含む公開索引は136原本/16 runner試行。通常sandboxのgit addは.git/index.lock read-onlyで失敗し未stage、許可済みGit操作をescalationで13対象pathだけstageした。全差分124865bytes/SHA16c8c452de01a42fa34851d95a7bf0e4586b9fe0469586b154ffcd8c13622701、status/全13path/原本hash/公開範囲を照合してf1cc9ffをcommit/push。無関係な未追跡3pathは含めていない。
+
+以降は新規ignored data/reports/20261101-t13-http-ciへ分離。query-v1はfull SHAで[CI41300378098](https://github.com/kenobix/Claude_practice/actions/runs/41300378098)を特定しexit0。connectorのjobs読取は途中状態と完了を別JSONへ保存、unit/system logとartifact metadataを保存。最初の途中jobs読取1回はtool transcriptのみで、保存分を全poll原本とは呼ばない。run-attempt.pyでqueryとartifact検算のargv/UTC/MONOTONIC/exit/log/hashを記録した。
+
+全376 tests/51.768秒、compile、既存合成Docker/各PostgreSQL/新HTTP step/artifact/cleanupが全成功。artifact-check-v1はgh apiでartifact13080624977のZIP bytesを取得しexit0（2.498775292 MONOTONIC秒、計測性能ではない）。GitHub digest0d9dce8eae65f263c2349011ca5594e9b21fc830a7776b582c4ac376c5988f5aと一致、重複なし10 member/全SHAを確認。capital-decision-http-ci.logの5合成ケース、review/approvalの各部分・最終応答喪失の注入各1件、同じretry、理由競合拒否、client未確定から読戻しでcoherent eligible、server/proxy/temp=true/group残存0を検算した。実Capital承認や時計資格へ転用しない。
+
+公開[CI索引](docs/reviews/20261101-t13-http-ci-checks.json)を追加し、計画書/HTTP仕様へ結果を追記。元のf1cc9ff local索引は当該commit時点のCI pendingという履歴として保ち、後から原本hashや成功件数を書き換えない。code/workflow/tests/依存/実DB/registry/配信/OSはこの追跡段階で変更せず、記録のみのcommitを別単位でpushする。後続記録commit自身のCI成功を先取りしない。
+
+残件は、T16の4原本+manifest archive/別process再計算（Luna固定依頼書あり）、T07実MLflow/skops登録版とDBの対応復元・新復旧harnessのbuild/CI、T17b段階/timeout/未確定状態/API metadataと旧state読取診断、PHC fd/UDP所有/chronyd制限前内部量/時計資格、T13b実採否、T09公開待ち→T10のfit前固定→T11/T12。T03歴史的自然停止は未特定のまま。全記録を確認済み範囲と未実施範囲に分けて引き継ぐ。
