@@ -2760,3 +2760,36 @@ initdの5回は全て前進で、負方向の直接原因とはしない。Runni
 source/test/CI未変更なので全340件suiteやDocker/PG受入は繰り返さず、今回の24対象回帰と証拠/文書検証を行う。新しいCI成功はこの記録で先取りしない。設定案は調査文書へ具体化したが、所有者特定→host/guest責任とtick制御→影響/切戻し→承認済み保守→bracket/setter/再開後観測が必要。service停止だけや一度のtick変更を解決扱いにせず、実OS変更は今回の許可範囲外として実施していない。future拒否の緩和/clamp/自動retryも追加していない。T03の歴史的停止、T13 HTTP部分書込/応答喪失、T07/T17、実Capitalの証拠producer/採否は別途残る。対象7ファイルだけを確認してcommit/pushする。
 
 最終`final-record-validation-v1`はexit 0。新証拠manifestの132原本、基点Git snapshot4件、29 attemptの終了値/hash、診断PythonのAST、旧証拠JSONが追補以外で不変なこと、全対象文書の相対リンク、秘密情報pattern、git diff --checkを確認した。この最終検証自身のlog/metadata/scriptも加え、証拠JSONには合計30 attemptと135 raw fileのbytes/SHAを保存した。pattern検査だけで秘密が皆無と証明したとはせず、公開JSONのfieldを確認し、rawのprocess詳細や未選択fieldは含めていない。
+
+## P1/D3 — 時計調整processの管理元照合（2026-11-01、基点0477e8c）
+
+指定4資料とplan §11.6を再読し、HEADが0477e8ccb0d9ebb1b7eb6a51befc8435f279ec57、tracked差分なしを確認した。無関係な未追跡3 pathは保持した。今回の[調査結果](docs/clock-process-ownership.md)、[Windows管理者向け限定読取](docs/clock-owner-admin-read.md)、[証拠JSON](docs/reviews/20261101-clock-owner-checks.json)を追加。OS時計/同期設定・実DB・registry・配信は変更していない。production source/tests/CI/lockも未変更。
+
+全試行は新規ignored `data/reports/20261101-clock-owner/`。前回runnerを保存先だけ変えて使用し、argv、開始/終了UTC、monotonic経過、期限/timeout、stdout/stderr、exit、bytes/SHAを新規pathへ保存した。UTC表示順だけで順序を推定しない。通常sandboxのprocはCodex側namespaceなので、実WSL読取は許可付きの同じユーザーから、稼働一覧を確認した上で既存Ubuntu/system/docker-desktopへ限定した。Windows管理者へ自動昇格していない。
+
+| attempt / コマンド概要 | 結果と解釈 |
+|---|---|
+| current-host-v1 / id、ps、boot_id、wsl --list --running --quiet | 読取成功。同じbootでUbuntu timesyncd local214が稼働。sandbox内PIDと混同しない。 |
+| namespace-identity-v1/v2 / read-identities.py、修正版v2でUbuntu/SYSTEM/docker-desktopの限定proc読取 | v1はsystem側にawkがなく親とmount読取が一部失敗。外wrapper0を全query成功としない。sedへ置換したv2ではstderrなしでexe/親/ns/cgroupを採取。chronydはこれらの可視procに不在。 |
+| namespace-config-v1 / read-configs.py | Ubuntu MainPID214、active/running/enabled、unitとvendor WSL drop-in、ExecStartとexe/cgroup一致。実NTP source185.125.190.56/ntp.ubuntu.com、fallback選択、poll32秒、offset−3.164061秒。systemはsystemd未起動でsystemctl/timedatectl失敗。chronyc既定queryはPHC0応答だが接続経路はまだ不明だった。 |
+| system-detail-v1 / read-system-detail.py SYSTEM | 可視package chronyd/chronyc4.1とfile hash、ptp0/hypervを確認。明示Unix socket queryはfile不在で失敗、内exit1。初期wrapper0は保存し後続wrapperで終了値を伝播。可視/etc/chrony.confはtime.windows.comで、応答PHC0と異なるため稼働設定と断定しない。認証key内容は読まない。 |
+| system-network-v1 / read-system-network.py SYSTEM | chronyc -h127.0.0.1 -p323 -n tracking/sources成功。#*PHC0、UDP inode3582、Hyper-V PTP装置を確認。共有loopback応答だけでkernel213のexeが認証されたとは説明しない。 |
+| btf-layout-v1 / btf-layout.py | live BTFを公式UAPI形式で解析しtask pid/tgid/親/開始/comm offsetを確認。layout/hashを保存。kernelが違う環境へ固定offsetを使わない。 |
+| owner-map-trace-v1 / wsl.exe -d Ubuntu -u root -- python3 trace-owner-map.py .../owner-map-v1 | 45 MONOTONIC秒の専用trace。sched_getscheduler(local214)→security_task_getschedulerのtask_pid496、task親233を制御したmarker間で照合。負補正−3.187017440秒、chronyd tick11000/freq0成功10回。終了前のstatus全体比較がcontext-switch回数の変化で失敗しexit1。rawとcleanup成功/hash不変を保持。process置換ではないことを後で比較。 |
+| owner-map-trace-v2 / 同上trace-owner-map-v2.py .../owner-map-v2 | 35 MONOTONIC秒、exit0。開始tick/exe/hash/argv/cgroup/nsの安定fieldで比較。local214→kernel496を対照self query付きで確認し、同じPIDが−3.197128772秒のADJ_SETOFFSETを成功。chronyd213のtick11000/freq0は8回成功。identity probeは制御照会後にdisableし、passive時計観測へ移行。両traceとも専用probe/instance回収、global制御前後hash一致、lost events0。 |
+| windows-status-v1/v2 / read-windows.py、v2でexecution policyも読取 | token非管理者、W32Time/vmictimesync Stopped/Manual。選択区間のKernel-General時計変更eventは一致なし。v2の5scopeは全てUndefined。event不在やservice状態だけでhost絶対精度を保証しない。 |
+| debug-shell-access-v1 / debug-shell-check.py | Windows管理者起動を要求してexit1。時刻設定、UAC、service再起動は実施せず。 |
+| primary-sources-v1 / fetch-sources.py | WSL2.6.3 init、該当kernel sched/BTF、chrony4.1のLinux実装/manual等6原本をhash保存。WSL initがPHC用configを生成してchronydを起動する設計を確認。稼働PID213の実体の代替証明にはしない。探索時の候補time.cppは404で根拠に使っていない。 |
+| reader-nonroot-v1 / sh scripts/read_clock_process_ownership.sh | root不足77、期待した拒否。 |
+| reader-ubuntu-root-v1/v2 / wsl.exe -d Ubuntu -u root -- sh .../read_clock_process_ownership.sh | v1はset -fで/proc globも無効にしたため0件/exit42。失敗sourceも保存し、-fを除いたv2はtimesyncd1件/chronyd0件/読取error0の正しい不完全42。exe/親/名前空間/開始tickを実際に読めたことを確認した。初回空列挙を不在の根拠へ使わない。 |
+| powershell-parse-v1 / PowerShell実AST parser | .ps1構文error0。管理者採取成功を意味しない。 |
+| admin-collector-guard-v1 / powershell.exe -NoProfile -NonInteractive -File .../collect_clock_owner_admin.ps1 | policyでfile実行自体が拒否されexit1。guard到達を確認した試験ではない。native CP932原本を保持し、正しいdecodeも別fileへ保存。policy変更/Bypassはせず、管理者向け文書には許可された対話読取とログ保存の手順を用意。管理者経路のend-to-end未検証を明示。 |
+| journal-regression-v1 / MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m unittest discover -s tests -p test_capital_request_journal.py -v | 使い捨てfixture9件/11.120 test秒、exit0。通常SIGTERMは全phase/exit130、受信→child_exit記録15,417,693 MONOTONIC ns。校正済み実秒ではない。自然10秒停止未再発、人工停止caseを自然再発と数えない。 |
+| decision-regression-v1 / 同上test_capital_deployment_decisions.py | 厳密future境界/clock逆行fixtureを含む9件/1.711 test秒、exit0。clamp/緩和/自動retryなし。実registryは未使用。 |
+| evidence-analysis-v1/v2 / analyze-owner.py | v1は準備時にcwdへ261021を重ねてscript作成失敗、その欠落実行exit2を保存。作成場所を直した別attempt v2はexit0。前回135原本hash、両trace/実時計変化/成功syscall、local-global対応、identity安定、v1のstatus差がcontext switchだけ、通常T03phaseと18件成功をassert。 |
+
+直接の逆行setterの管理元はUbuntu systemd-timesyncd.serviceと確定した。一方、chronydはWSL組込initの設計/PHC0応答と整合するが、稼働exe/親/生成configの直接照合は残る。chronyはtickを補正量から計算するため、11000という設定行を探して見つからなかっただけで原因不明と結論しないが、内部制御の理由を今回確定したとも言わない。system distroのpackage既定configを誤って修正しないよう手順へ明記した。
+
+修復案は、外側実体の限定採取→host精度/同期責任確認→許可された保守での調整者一本化の試験→tick/offset/進行率/再開後の再検証とし、各影響/切戻しを調査文書に分けて記載。今回は実施しない。Windows/全WSLの時計・timeout・認証/証跡への影響があり、timesyncd停止だけや単発tick変更を解決条件にしない。歴史的T03の原因、T13 HTTP障害、T07/T17、実Capital評価/採否は残す。全suite/Docker/PG/実配信を根拠なく再実行せず、合成診断を実運用証拠へ流用しない。
+
+最終`final-record-validation-v1`はexit0。110原本のbytes/SHA、基点Git snapshot4件、23 attemptのmetadata/log hash、診断Python AST、sh -n、実Windows parserで.ps1と文書3 block、相対リンク、秘密情報pattern、git diff --checkと既存source/tests/scripts/workflow不変を確認した。前回135原本の再照合はevidence-analysis-v2で成功済み。検証自身のlog/metadata/resultを加え、今回の証拠JSONは24 attempt・113原本を記録する。管理者でのend-to-endは未実施、policyで.ps1がguard前に拒否されたことも明記した。公開summaryのfieldを確認し、rawのstat/address/設定やnative出力はignored reportsのままとした。対象9ファイルだけを差分/status確認後にcommit/pushし、新しいCI成功は主張しない。

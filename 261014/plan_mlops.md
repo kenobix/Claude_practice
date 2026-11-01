@@ -439,11 +439,15 @@ T05の全suite再検証で、既存T03のSIGTERM子process終了待ち10秒のti
 
 | 追加残件 | 優先度 / 難易度 / 担当 | 完了条件・依存 |
 |---|---|---|
-| 時計調整processの管理元 | **P1 / D3 / Sol** | Windows管理者での限定読取等によりglobal PID/実行file/親/namespace/clock sourceとchronydのtick再指定理由を特定する。PIDは再確認し、同名commや他人のissueだけで所属を確定しない。原本の秘密情報は公開しない。 |
+| 時計調整processの管理元 | **P1 / D3 / Sol・一部確認済み** | Ubuntu timesyncdはlocal 214→kernel 496を読取照会/kprobeで照合し、exe/hash/親/cgroup/unit/vendor WSL drop-in/ntp.ubuntu.comを確認。chronydはkernel 213のtick=11000継続と明示loopback queryのPHC0応答、WSL 2.6.3 initの組込起動設計まで確認。**稼働chronydのexe/親/namespace/生成configと11000の内部理由は未確定**。Windows管理者向けの限定reader/保存手順を用意。現tokenは非管理者、debug shellと.ps1直接実行は権限/policy拒否。PIDを再採取し、同名commや可視package既定configだけで所属を確定しない。原本は公開しない。 |
 | 環境修復の具体化と時計資格 | **P1 / D3 / Sol** | 所有者特定後、host/guest同期責任、tick制御、Windows W32Time、影響範囲/切戻しを具体案にする。OS変更は今回未許可のため実行しない。service停止だけ、tick一回変更だけで解決にしない。承認された保守後にbracket採取/setter/再開後の観測と厳密future拒否を再検証する。T12等の実運用時間測定は時計資格確認後の新規attemptで行い、過去のp95等を現在比で割り戻さない。精度指標と経過時間を混同しない。 |
 | T03の自然停止の原因 | **P1 / D3 / Sol** | 今回journal 9件成功、通常SIGTERM全phase/exit 130。未再発で完了にせず、再発時にphase/stack/実秒に対するMONOTONICの進行率を照合する。現在の進行率だけで歴史的10秒timeoutの原因を断定しない。 |
 
 既存decision 9件/publisher 6件も成功。今回はproduction source/test/workflow/lockを変更せず、対象回帰24件と証拠照合を行った。全suite/新規CI成功はこの節目で先取りしない。T13のHTTP部分書込/応答喪失/実採否、T07/T17等の残件は維持する。一時trace/probeは削除し既存制御の前後hash一致を確認した。全試行と取得失敗を保存し、設定の自動変更やfuture拒否の緩和は行っていない。
+
+**2026-11-01・基点0477e8cからの管理元照合:** [結果/原因と未確定事項/未実施の修復案](../261021/docs/clock-process-ownership.md)、[管理者向け限定読取](../261021/docs/clock-owner-admin-read.md)、[全試行/hash](../261021/docs/reviews/20261101-clock-owner-checks.json)。当該bootのBTFを読み、読取専用sched_getschedulerの対象taskを専用probeで対応付けた。Ubuntu timesyncd local 214がkernel 496であることをexe/開始tick等の前後一致と合わせて確認し、同区間で−3.197128772秒の補正要求成功を観測。chronyd 213は同区間で8回tick11000/freq0を成功させた。WSL init公式sourceのPHC用生成configと、system distroで見えるtime.windows.comのpackage既定fileを混同しない。現在のPHC0応答を稼働exeの認証ともしない。
+
+T03 journal 9件11.120 test秒とdecision 9件1.711 test秒が成功。自然停止は未再発で、元原因は未解決。timesyncd対応付けの初回は変動するstatus全体を比較して失敗し、差がcontext switch回数だけと確認して安定identityへ修正した別attemptを保存。readerの初回glob無効化、system環境のawk不在、analysis準備のcwd失敗、Windows管理者/policy拒否も保持した。修正版shell readerはUbuntu rootでtimesyncd 1件/chronyd 0件を返しexit42（不完全）、非rootは77。PowerShellは実parser成功、管理者経路のend-to-endは未確認。全suite/PG/実配信は再実行せず、時計資格と実Capitalの合格を先取りしない。OS設定変更・future緩和/clamp/自動retryは未実施。次は外側processの限定採取→生成元と実体照合→影響/切戻し付き保守案をSolが判断する。
 
 
 Lunaへの依頼には、T番号、対象commit、編集してよいファイル、入力/出力、成功・拒否ケース、検証コマンド、記録先を渡す。新しい閾値・評価期間・配信状態遷移・DB移行・依存lockの変更が必要と分かったら、その判断をSolへ戻す。これは担当作業の境界であり、通常の可逆な編集や既存手順の実行について新しい承認待ちを追加するものではない。

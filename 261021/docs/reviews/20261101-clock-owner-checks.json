@@ -1,0 +1,1783 @@
+{
+  "schema_version": 1,
+  "task": "P1/D3 clock adjustment process ownership",
+  "base_commit": "0477e8ccb0d9ebb1b7eb6a51befc8435f279ec57",
+  "status": "Ubuntu_timesyncd_identity_and_manager_confirmed_chronyd_runtime_identity_pending_administrator_read",
+  "scope": {
+    "OS_clock_service_execution_policy_changed": false,
+    "actual_DB_registry_deployment_changed": false,
+    "production_source_existing_tests_workflow_lock_changed": false,
+    "new_read_only_collection_helpers": true,
+    "private_trace_probes_used_and_cleaned": true,
+    "future_relaxation_clamp_auto_retry_added": false
+  },
+  "base_inputs": [
+    {
+      "path": "261014/plan_mlops.md",
+      "commit": "0477e8ccb0d9ebb1b7eb6a51befc8435f279ec57",
+      "bytes": 87190,
+      "sha256": "ee47f80a1a7db03259cd601bcb25cf7b77ddd70ce846169feb79b02464d1f427"
+    },
+    {
+      "path": "261021/work_log.md",
+      "commit": "0477e8ccb0d9ebb1b7eb6a51befc8435f279ec57",
+      "bytes": 337250,
+      "sha256": "e5de8b5cbd7eb9e12a02205c3a61dde88a0de85c9767a05c09d6e6cad9571e8a"
+    },
+    {
+      "path": "261021/docs/clock-origin-investigation.md",
+      "commit": "0477e8ccb0d9ebb1b7eb6a51befc8435f279ec57",
+      "bytes": 13521,
+      "sha256": "cffcbc00e7a127602cc419f61a7c8525e3f4dce3167012fb7b35fc25344738b4"
+    },
+    {
+      "path": "261021/docs/reviews/20261101-clock-origin-checks.json",
+      "commit": "0477e8ccb0d9ebb1b7eb6a51befc8435f279ec57",
+      "bytes": 80505,
+      "sha256": "6606a9d73f418e214bdd7ff634035da20b8c8005f3556f420b5e8866afd1e310"
+    }
+  ],
+  "findings": {
+    "timesyncd": {
+      "identity": {
+        "mapped": {
+          "self": {
+            "local_pid": 30273,
+            "global_pid": 68930,
+            "global_tgid": 68930,
+            "comm": "python3",
+            "global_parent_pid": 68929,
+            "task_start_ns": 107842242647602
+          },
+          "timesyncd": {
+            "local_pid": 214,
+            "global_pid": 496,
+            "global_tgid": 496,
+            "comm": "systemd-timesyn",
+            "global_parent_pid": 233,
+            "task_start_ns": 15059948976
+          }
+        },
+        "stable_identity": {
+          "local_pid": 214,
+          "exe": "/usr/lib/systemd/systemd-timesyncd",
+          "exe_sha256": "cbf92a41ffb29efd75daebf8a1a1dd4d0c078d2f3c50f0fc7e9e35715eefb7cd",
+          "cmdline": [
+            "/usr/lib/systemd/systemd-timesyncd",
+            ""
+          ],
+          "cgroup": "0::/system.slice/systemd-timesyncd.service\n",
+          "namespaces": {
+            "pid": "pid:[4026532219]",
+            "mnt": "mnt:[4026532222]",
+            "time": "time:[4026531834]",
+            "user": "user:[4026531837]"
+          },
+          "start_ticks": "1505"
+        }
+      },
+      "manager": "Ubuntu systemd-timesyncd.service",
+      "parent_executable": "/usr/lib/systemd/systemd",
+      "unit": "/usr/lib/systemd/system/systemd-timesyncd.service",
+      "WSL_vendor_dropin": "/usr/lib/systemd/system/systemd-timesyncd.service.d/wsl.conf",
+      "active": "active/running",
+      "unit_file_state": "enabled",
+      "selected_ntp_server": "ntp.ubuntu.com",
+      "selected_ntp_ipv4": "185.125.190.56",
+      "selected_source": "fallback",
+      "observed_offset_seconds": -3.164061,
+      "poll_seconds": 32
+    },
+    "chronyd": {
+      "current_kernel_tid": 213,
+      "selected_tick_requests": "analysis.traces; successful mode-selected fields only",
+      "runtime_executable_parent_namespace_generated_config": "NOT_READ; outer PID namespace unavailable",
+      "visible_system_package_version": "4.1 (not proven equal to running binary)",
+      "read_only_response_endpoint": "127.0.0.1:323",
+      "selected_response_source": "PHC0",
+      "UDP_inode": 3582,
+      "explicit_unix_socket_query": "FAILED: path absent in system mount",
+      "visible_system_etc_chrony_conf": "server time.windows.com; NOT proven active config",
+      "WSL_2_6_3_source": "StartTimeSyncAgent generates PHC configuration and launches /sbin/chronyd; architectural evidence, not runtime executable identification",
+      "tick_11000_reason": "Runtime feedback/control reason unconfirmed; upstream 4.1 computes tick from frequency, not necessarily a literal config setting"
+    },
+    "PTP": {
+      "clock_name": "hyperv",
+      "device": "/dev/ptp0",
+      "alias": "/dev/ptp_hyperv",
+      "dev": "247:0",
+      "running_daemon_device_fd": "unread"
+    },
+    "Windows": {
+      "administrator_token": false,
+      "debug_shell_access": "denied_admin_required",
+      "W32Time": "Stopped/Manual",
+      "vmictimesync": "Stopped/Manual",
+      "execution_policy_scopes": "all five Undefined",
+      "direct_ps1_file_execution": "denied_before_guard; no policy bypass attempted",
+      "Kernel_General_event_query": "no matching event in selected interval; not proof of no adjustments or absolute UTC accuracy"
+    }
+  },
+  "analysis": {
+    "previous_evidence_hashes_verified": 135,
+    "identity": {
+      "first_failure_differences": [
+        [
+          "voluntary_ctxt_switches:\t12557",
+          "voluntary_ctxt_switches:\t12559"
+        ]
+      ],
+      "owner-map-v1": {
+        "mapped": {
+          "self": {
+            "local_pid": 30124,
+            "global_pid": 68429,
+            "global_tgid": 68429,
+            "comm": "python3",
+            "global_parent_pid": 68428,
+            "task_start_ns": 107756508267189
+          },
+          "timesyncd": {
+            "local_pid": 214,
+            "global_pid": 496,
+            "global_tgid": 496,
+            "comm": "systemd-timesyn",
+            "global_parent_pid": 233,
+            "task_start_ns": 15059948976
+          }
+        },
+        "stable_identity": {
+          "local_pid": 214,
+          "exe": "/usr/lib/systemd/systemd-timesyncd",
+          "exe_sha256": "cbf92a41ffb29efd75daebf8a1a1dd4d0c078d2f3c50f0fc7e9e35715eefb7cd",
+          "cmdline": [
+            "/usr/lib/systemd/systemd-timesyncd",
+            ""
+          ],
+          "cgroup": "0::/system.slice/systemd-timesyncd.service\n",
+          "namespaces": {
+            "pid": "pid:[4026532219]",
+            "mnt": "mnt:[4026532222]",
+            "time": "time:[4026531834]",
+            "user": "user:[4026531837]"
+          },
+          "start_ticks": "1505"
+        }
+      },
+      "owner-map-v2": {
+        "mapped": {
+          "self": {
+            "local_pid": 30273,
+            "global_pid": 68930,
+            "global_tgid": 68930,
+            "comm": "python3",
+            "global_parent_pid": 68929,
+            "task_start_ns": 107842242647602
+          },
+          "timesyncd": {
+            "local_pid": 214,
+            "global_pid": 496,
+            "global_tgid": 496,
+            "comm": "systemd-timesyn",
+            "global_parent_pid": 233,
+            "task_start_ns": 15059948976
+          }
+        },
+        "stable_identity": {
+          "local_pid": 214,
+          "exe": "/usr/lib/systemd/systemd-timesyncd",
+          "exe_sha256": "cbf92a41ffb29efd75daebf8a1a1dd4d0c078d2f3c50f0fc7e9e35715eefb7cd",
+          "cmdline": [
+            "/usr/lib/systemd/systemd-timesyncd",
+            ""
+          ],
+          "cgroup": "0::/system.slice/systemd-timesyncd.service\n",
+          "namespaces": {
+            "pid": "pid:[4026532219]",
+            "mnt": "mnt:[4026532222]",
+            "time": "time:[4026531834]",
+            "user": "user:[4026531837]"
+          },
+          "start_ticks": "1505"
+        }
+      }
+    },
+    "traces": {
+      "owner-map-v1": {
+        "clock_samples": 7583,
+        "trace_entries": 223,
+        "changes": [
+          {
+            "before_monotonic_ns": 107782091895976,
+            "after_monotonic_ns": 107782097677517,
+            "after_utc": "2026-11-01T04:10:37.170452+00:00",
+            "realtime_delta_ns": 466578656,
+            "offset_change_ns": 460797115,
+            "setter": {
+              "comm": "initd",
+              "global_tid": 12614,
+              "monotonic_ns": 107782096557000,
+              "event": "do_settimeofday64 <-do_sys_settimeofday64"
+            }
+          },
+          {
+            "before_monotonic_ns": 107782408714557,
+            "after_monotonic_ns": 107782414285755,
+            "after_utc": "2026-11-01T04:10:34.300033+00:00",
+            "realtime_delta_ns": -3181445713,
+            "offset_change_ns": -3187016911,
+            "setter": {
+              "comm": "systemd-timesyn",
+              "global_tid": 496,
+              "monotonic_ns": 107782411501000,
+              "event": "timekeeping_inject_offset <-do_adjtimex"
+            }
+          }
+        ],
+        "timex_requests": [
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107758387871000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107758387901000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107758387908000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107758387922000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107766458828000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107766458880000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107766458895000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107766458917000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107774570391000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107774570432000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107774570446000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107774570468000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "systemd-timesyn",
+            "global_tid": 496,
+            "monotonic_ns": 107782411487000,
+            "modes": 8476,
+            "requested_offset_ns": -3187017440,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107785860606000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107785860657000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107785860665000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107785860679000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107793940577000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107793940605000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107793940614000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107793940629000,
+            "modes": 28,
+            "syscall_exit": 0
+          }
+        ],
+        "hv_set_host_time_calls": 0,
+        "buffers_lost_events": 0,
+        "cleanup_complete": true,
+        "global_controls_unchanged": true,
+        "tick_11000_requests": 10,
+        "negative_offsets_ns": [
+          -3187017440
+        ]
+      },
+      "owner-map-v2": {
+        "clock_samples": 5890,
+        "trace_entries": 64,
+        "changes": [
+          {
+            "before_monotonic_ns": 107872110817406,
+            "after_monotonic_ns": 107872116151621,
+            "after_utc": "2026-11-01T04:11:59.005303+00:00",
+            "realtime_delta_ns": 475953693,
+            "offset_change_ns": 470619478,
+            "setter": {
+              "comm": "initd",
+              "global_tid": 68226,
+              "monotonic_ns": 107872111557000,
+              "event": "do_settimeofday64 <-do_sys_settimeofday64"
+            }
+          },
+          {
+            "before_monotonic_ns": 107872408626506,
+            "after_monotonic_ns": 107872413994289,
+            "after_utc": "2026-11-01T04:11:56.106020+00:00",
+            "realtime_delta_ns": -3191759865,
+            "offset_change_ns": -3197127648,
+            "setter": {
+              "comm": "systemd-timesyn",
+              "global_tid": 496,
+              "monotonic_ns": 107872409375000,
+              "event": "timekeeping_inject_offset <-do_adjtimex"
+            }
+          }
+        ],
+        "timex_requests": [
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107848890221000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107848890248000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107848890254000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107848890268000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107856945549000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107856945585000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107856945597000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107856945618000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107865006939000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107865006979000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107865006993000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107865007016000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "systemd-timesyn",
+            "global_tid": 496,
+            "monotonic_ns": 107872409356000,
+            "modes": 8476,
+            "requested_offset_ns": -3197128772,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107876281504000,
+            "modes": 28,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107876281530000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107876281537000,
+            "modes": 16386,
+            "tick": 11000,
+            "freq": 0,
+            "syscall_exit": 0
+          },
+          {
+            "comm": "chronyd",
+            "global_tid": 213,
+            "monotonic_ns": 107876281550000,
+            "modes": 28,
+            "syscall_exit": 0
+          }
+        ],
+        "hv_set_host_time_calls": 0,
+        "buffers_lost_events": 0,
+        "cleanup_complete": true,
+        "global_controls_unchanged": true,
+        "tick_11000_requests": 8,
+        "negative_offsets_ns": [
+          -3197128772
+        ]
+      }
+    },
+    "T03_normal": [
+      {
+        "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1-traces/signal-SIGTERM-4f018f04c37a41afa8f18392d4fd0b12/child.jsonl",
+        "phases": [
+          "child_started",
+          "handler_installed",
+          "ledger_write_enter",
+          "ledger_write_returned",
+          "ledger_write_enter",
+          "ledger_write_returned",
+          "send_intent_persisted",
+          "http_send_enter",
+          "signal_received",
+          "signal_handler_raised",
+          "http_client_exit_enter",
+          "http_client_exit_returned",
+          "ledger_interrupt_enter",
+          "ledger_write_enter",
+          "ledger_write_returned",
+          "ledger_interrupt_returned",
+          "child_interrupt_unwound",
+          "child_exit"
+        ],
+        "signal_to_exit_monotonic_ns": 15417693
+      }
+    ],
+    "regression_tests": 18,
+    "note": "current mapping does not retrospectively identify old failures; no clock qualification or ownership proof for chronyd executable"
+  },
+  "attempts": [
+    {
+      "label": "admin-collector-guard-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/admin-collector-guard-v1.json",
+      "command": [
+        "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe",
+        "-NoProfile",
+        "-NonInteractive",
+        "-File",
+        "\\\\wsl.localhost\\Ubuntu\\home\\kenshin\\work\\claude_practice\\261021\\scripts\\collect_clock_owner_admin.ps1"
+      ],
+      "started_at_utc": "2026-11-01T04:13:53.080419+00:00",
+      "ended_at_utc": "2026-11-01T04:13:54.039170+00:00",
+      "elapsed_monotonic_seconds": 0.958757525,
+      "timeout_seconds": 25.0,
+      "timed_out": false,
+      "exit_code": 1,
+      "log": "261021/data/reports/20261101-clock-owner/admin-collector-guard-v1.log",
+      "bytes": 752,
+      "sha256": "8eac637d38fb470cbbc4ff700c3c91b2adb6dee8b98128754c2e0f44124f7f23"
+    },
+    {
+      "label": "btf-layout-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/btf-layout-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-owner/btf-layout.py"
+      ],
+      "started_at_utc": "2026-11-01T04:09:33.941218+00:00",
+      "ended_at_utc": "2026-11-01T04:09:34.578229+00:00",
+      "elapsed_monotonic_seconds": 0.637008135,
+      "timeout_seconds": 15.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/btf-layout-v1.log",
+      "bytes": 35653,
+      "sha256": "15130b0860abe801c02d802b50ef1f7541e279682ebce116d739c47046357445"
+    },
+    {
+      "label": "current-host-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/current-host-v1.json",
+      "command": [
+        "/bin/bash",
+        "-c",
+        "id; ps -eo pid,ppid,comm | rg \"chrony|timesyn|init\"; head -3 /proc/self/sched; cat /proc/sys/kernel/random/boot_id; /mnt/c/Windows/System32/wsl.exe --list --running --quiet"
+      ],
+      "started_at_utc": "2026-11-01T04:06:12.646258+00:00",
+      "ended_at_utc": "2026-11-01T04:06:12.865373+00:00",
+      "elapsed_monotonic_seconds": 0.219117854,
+      "timeout_seconds": 25.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/current-host-v1.log",
+      "bytes": 726,
+      "sha256": "ba2aeeb04fcd1b4598dd47190a6ba22b6bc010765f9f7ccdd46ffb5160c4c6e5"
+    },
+    {
+      "label": "debug-shell-access-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/debug-shell-access-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-owner/debug-shell-check.py"
+      ],
+      "started_at_utc": "2026-11-01T04:11:32.754914+00:00",
+      "ended_at_utc": "2026-11-01T04:11:32.973012+00:00",
+      "elapsed_monotonic_seconds": 0.218008177,
+      "timeout_seconds": 20.0,
+      "timed_out": false,
+      "exit_code": 1,
+      "log": "261021/data/reports/20261101-clock-owner/debug-shell-access-v1.log",
+      "bytes": 1632,
+      "sha256": "c8a70394a7254412ccbc7d5b8895af62302e08557d370957aa312019cce24f09"
+    },
+    {
+      "label": "decision-regression-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/decision-regression-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_capital_deployment_decisions.py",
+        "-v"
+      ],
+      "started_at_utc": "2026-11-01T04:14:28.113186+00:00",
+      "ended_at_utc": "2026-11-01T04:14:32.989538+00:00",
+      "elapsed_monotonic_seconds": 4.876342779,
+      "timeout_seconds": 100.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/decision-regression-v1.log",
+      "bytes": 2087,
+      "sha256": "3ee627eb6fe0cac3213b214f9c5fcc71e503c89b4f6ebb800563b967535d7207"
+    },
+    {
+      "label": "evidence-analysis-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/evidence-analysis-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-owner/analyze-owner.py"
+      ],
+      "started_at_utc": "2026-11-01T04:15:44.638392+00:00",
+      "ended_at_utc": "2026-11-01T04:15:44.674604+00:00",
+      "elapsed_monotonic_seconds": 0.036199013,
+      "timeout_seconds": 30.0,
+      "timed_out": false,
+      "exit_code": 2,
+      "log": "261021/data/reports/20261101-clock-owner/evidence-analysis-v1.log",
+      "bytes": 310,
+      "sha256": "ba02f66def419c3983a121c84b48962671bfb5bd9be4b725d807c3fac39b4c4f"
+    },
+    {
+      "label": "evidence-analysis-v2",
+      "metadata": "261021/data/reports/20261101-clock-owner/evidence-analysis-v2.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-owner/analyze-owner.py"
+      ],
+      "started_at_utc": "2026-11-01T04:16:01.976132+00:00",
+      "ended_at_utc": "2026-11-01T04:16:02.246221+00:00",
+      "elapsed_monotonic_seconds": 0.270084937,
+      "timeout_seconds": 30.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/evidence-analysis-v2.log",
+      "bytes": 1843,
+      "sha256": "ea1d4824c13f096bd88d242cb3be56bf51d45915c2ec082cdcb7f1c6b272c237"
+    },
+    {
+      "label": "final-record-validation-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/final-record-validation-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-owner/verify-records.py"
+      ],
+      "started_at_utc": "2026-11-01T04:21:57.142076+00:00",
+      "ended_at_utc": "2026-11-01T04:21:57.565646+00:00",
+      "elapsed_monotonic_seconds": 0.423564064,
+      "timeout_seconds": 40.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/final-record-validation-v1.log",
+      "bytes": 942,
+      "sha256": "5ae860503a049d36599640a31e756f475e3671b0ba5640c66c65ac9d8b062cbf"
+    },
+    {
+      "label": "journal-regression-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/journal-regression-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_capital_request_journal.py",
+        "-v"
+      ],
+      "started_at_utc": "2026-11-01T04:14:31.838344+00:00",
+      "ended_at_utc": "2026-11-01T04:14:43.629620+00:00",
+      "elapsed_monotonic_seconds": 14.568288542,
+      "timeout_seconds": 100.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/journal-regression-v1.log",
+      "bytes": 2051,
+      "sha256": "f847c3dbf3f975352a6ffde275edbabff780e699de79841e9063aeb85652f36b"
+    },
+    {
+      "label": "namespace-config-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/namespace-config-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-owner/read-configs.py",
+        "Ubuntu",
+        "SYSTEM",
+        "docker-desktop"
+      ],
+      "started_at_utc": "2026-11-01T04:07:39.814285+00:00",
+      "ended_at_utc": "2026-11-01T04:07:41.202366+00:00",
+      "elapsed_monotonic_seconds": 1.388075849,
+      "timeout_seconds": 65.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/namespace-config-v1.log",
+      "bytes": 14715,
+      "sha256": "802d2fcb75dac17e24c404296e9e0a0faa435db962bc3b0d578df0edc06979db"
+    },
+    {
+      "label": "namespace-identity-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/namespace-identity-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-owner/read-identities.py",
+        "Ubuntu",
+        "SYSTEM",
+        "docker-desktop"
+      ],
+      "started_at_utc": "2026-11-01T04:06:48.682970+00:00",
+      "ended_at_utc": "2026-11-01T04:06:51.790720+00:00",
+      "elapsed_monotonic_seconds": 3.107746228,
+      "timeout_seconds": 65.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/namespace-identity-v1.log",
+      "bytes": 22303,
+      "sha256": "8c7533fa4143f9a22d17c78ce2825edf94ca05c0a067d172b1ff6fbb07111306"
+    },
+    {
+      "label": "namespace-identity-v2",
+      "metadata": "261021/data/reports/20261101-clock-owner/namespace-identity-v2.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-owner/read-identities-v2.py",
+        "Ubuntu",
+        "SYSTEM",
+        "docker-desktop"
+      ],
+      "started_at_utc": "2026-11-01T04:09:03.042053+00:00",
+      "ended_at_utc": "2026-11-01T04:09:05.431812+00:00",
+      "elapsed_monotonic_seconds": 2.389760362,
+      "timeout_seconds": 65.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/namespace-identity-v2.log",
+      "bytes": 22619,
+      "sha256": "ff55ad8cf2a62591b2953eb4ec991ddb2eff50cd912c74731cd05bd4add0e27c"
+    },
+    {
+      "label": "owner-map-trace-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/owner-map-trace-v1.json",
+      "command": [
+        "/mnt/c/Windows/System32/wsl.exe",
+        "-d",
+        "Ubuntu",
+        "-u",
+        "root",
+        "--",
+        "/usr/bin/python3",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261101-clock-owner/trace-owner-map.py",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261101-clock-owner/owner-map-v1"
+      ],
+      "started_at_utc": "2026-11-01T04:10:10.964043+00:00",
+      "ended_at_utc": "2026-11-01T04:10:54.350774+00:00",
+      "elapsed_monotonic_seconds": 46.112953917,
+      "timeout_seconds": 85.0,
+      "timed_out": false,
+      "exit_code": 1,
+      "log": "261021/data/reports/20261101-clock-owner/owner-map-trace-v1.log",
+      "bytes": 2047,
+      "sha256": "bf5e9cb9906c71787de8ec720a8358b02fcbd93e89918ecf526ad70255f78c62"
+    },
+    {
+      "label": "owner-map-trace-v2",
+      "metadata": "261021/data/reports/20261101-clock-owner/owner-map-trace-v2.json",
+      "command": [
+        "/mnt/c/Windows/System32/wsl.exe",
+        "-d",
+        "Ubuntu",
+        "-u",
+        "root",
+        "--",
+        "/usr/bin/python3",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261101-clock-owner/trace-owner-map-v2.py",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261101-clock-owner/owner-map-v2"
+      ],
+      "started_at_utc": "2026-11-01T04:11:31.239079+00:00",
+      "ended_at_utc": "2026-11-01T04:12:01.640027+00:00",
+      "elapsed_monotonic_seconds": 35.855231396,
+      "timeout_seconds": 75.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/owner-map-trace-v2.log",
+      "bytes": 1702,
+      "sha256": "5464bbe8b22a5723f2e689d7c46eb5bb4f2e180dd8e7f5562ed66213910ce699"
+    },
+    {
+      "label": "powershell-doc-parse-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/powershell-doc-parse-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-owner/parse-doc-powershell.py"
+      ],
+      "started_at_utc": "2026-11-01T04:21:03.297566+00:00",
+      "ended_at_utc": "2026-11-01T04:21:04.760320+00:00",
+      "elapsed_monotonic_seconds": 0.962110755,
+      "timeout_seconds": 30.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/powershell-doc-parse-v1.log",
+      "bytes": 1500,
+      "sha256": "b4d7c3dd6b1f4d7b42a539b6c860b25d3306d2007b3588742a34b1272ac5631d"
+    },
+    {
+      "label": "powershell-parse-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/powershell-parse-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-owner/parse-powershell.py"
+      ],
+      "started_at_utc": "2026-11-01T04:13:48.169708+00:00",
+      "ended_at_utc": "2026-11-01T04:13:49.155874+00:00",
+      "elapsed_monotonic_seconds": 0.986173999,
+      "timeout_seconds": 30.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/powershell-parse-v1.log",
+      "bytes": 1216,
+      "sha256": "f4b637ac1c35ce3ffe6f62e48c05b3b5f64ef9a5ab826d609c95521eecc50625"
+    },
+    {
+      "label": "primary-sources-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/primary-sources-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-owner/fetch-sources.py"
+      ],
+      "started_at_utc": "2026-11-01T04:10:44.092485+00:00",
+      "ended_at_utc": "2026-11-01T04:10:48.255612+00:00",
+      "elapsed_monotonic_seconds": 4.163137443,
+      "timeout_seconds": 110.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/primary-sources-v1.log",
+      "bytes": 1575,
+      "sha256": "880d816ca03502bf59cd8f55371a4c04136efeafe1b72b2582315cb4b27c550b"
+    },
+    {
+      "label": "reader-nonroot-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/reader-nonroot-v1.json",
+      "command": [
+        "sh",
+        "scripts/read_clock_process_ownership.sh"
+      ],
+      "started_at_utc": "2026-11-01T04:13:48.126951+00:00",
+      "ended_at_utc": "2026-11-01T04:13:48.137999+00:00",
+      "elapsed_monotonic_seconds": 0.01104285,
+      "timeout_seconds": 10.0,
+      "timed_out": false,
+      "exit_code": 77,
+      "log": "261021/data/reports/20261101-clock-owner/reader-nonroot-v1.log",
+      "bytes": 162,
+      "sha256": "466d79e125258426a0d98332e039fe8f24134927a0986ea165de16a85478cb82"
+    },
+    {
+      "label": "reader-ubuntu-root-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/reader-ubuntu-root-v1.json",
+      "command": [
+        "/mnt/c/Windows/System32/wsl.exe",
+        "-d",
+        "Ubuntu",
+        "-u",
+        "root",
+        "--",
+        "/bin/sh",
+        "/home/kenshin/work/claude_practice/261021/scripts/read_clock_process_ownership.sh"
+      ],
+      "started_at_utc": "2026-11-01T04:13:48.515496+00:00",
+      "ended_at_utc": "2026-11-01T04:13:48.840670+00:00",
+      "elapsed_monotonic_seconds": 0.325172916,
+      "timeout_seconds": 25.0,
+      "timed_out": false,
+      "exit_code": 42,
+      "log": "261021/data/reports/20261101-clock-owner/reader-ubuntu-root-v1.log",
+      "bytes": 787,
+      "sha256": "02b6d121b14c16f1186dda5b4638aab9616e7e58e6445af0657911b222c2fdd7"
+    },
+    {
+      "label": "reader-ubuntu-root-v2",
+      "metadata": "261021/data/reports/20261101-clock-owner/reader-ubuntu-root-v2.json",
+      "command": [
+        "/mnt/c/Windows/System32/wsl.exe",
+        "-d",
+        "Ubuntu",
+        "-u",
+        "root",
+        "--",
+        "/bin/sh",
+        "/home/kenshin/work/claude_practice/261021/scripts/read_clock_process_ownership.sh"
+      ],
+      "started_at_utc": "2026-11-01T04:14:32.049539+00:00",
+      "ended_at_utc": "2026-11-01T04:14:32.526532+00:00",
+      "elapsed_monotonic_seconds": 0.476983006,
+      "timeout_seconds": 25.0,
+      "timed_out": false,
+      "exit_code": 42,
+      "log": "261021/data/reports/20261101-clock-owner/reader-ubuntu-root-v2.log",
+      "bytes": 2231,
+      "sha256": "3d0d913e17c24bb49e201a244999c5f379122f47b1faafa6800535fadda52d41"
+    },
+    {
+      "label": "system-detail-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/system-detail-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-owner/read-system-detail.py",
+        "SYSTEM"
+      ],
+      "started_at_utc": "2026-11-01T04:08:20.733932+00:00",
+      "ended_at_utc": "2026-11-01T04:08:21.305325+00:00",
+      "elapsed_monotonic_seconds": 0.571394878,
+      "timeout_seconds": 30.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/system-detail-v1.log",
+      "bytes": 3339,
+      "sha256": "cafcb4b5e915851528dac37057f4b1b61548e0fa99826c9d94e9a40fcd8901d5"
+    },
+    {
+      "label": "system-network-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/system-network-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-owner/read-system-network.py",
+        "SYSTEM"
+      ],
+      "started_at_utc": "2026-11-01T04:09:08.507978+00:00",
+      "ended_at_utc": "2026-11-01T04:09:08.979905+00:00",
+      "elapsed_monotonic_seconds": 0.471928167,
+      "timeout_seconds": 30.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/system-network-v1.log",
+      "bytes": 2469,
+      "sha256": "65df138464704a601a33dda87826305bbf1dafdead78360f62d8413a4a030e9a"
+    },
+    {
+      "label": "windows-status-v1",
+      "metadata": "261021/data/reports/20261101-clock-owner/windows-status-v1.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-owner/read-windows.py"
+      ],
+      "started_at_utc": "2026-11-01T04:10:44.981186+00:00",
+      "ended_at_utc": "2026-11-01T04:10:47.158107+00:00",
+      "elapsed_monotonic_seconds": 2.176919043,
+      "timeout_seconds": 50.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/windows-status-v1.log",
+      "bytes": 5452,
+      "sha256": "25a614cddd2eb60f50bd6f92e84e675148fd3e785eb13c196dae7e66d4f1f0a7"
+    },
+    {
+      "label": "windows-status-v2",
+      "metadata": "261021/data/reports/20261101-clock-owner/windows-status-v2.json",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261101-clock-owner/read-windows-v2.py"
+      ],
+      "started_at_utc": "2026-11-01T04:14:31.301989+00:00",
+      "ended_at_utc": "2026-11-01T04:14:34.131326+00:00",
+      "elapsed_monotonic_seconds": 2.82933899,
+      "timeout_seconds": 50.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261101-clock-owner/windows-status-v2.log",
+      "bytes": 6253,
+      "sha256": "63002d888d860e9792d611d8befb86a2d3ca18eb12f0cf494e0d9f11954c4eae"
+    }
+  ],
+  "failed_and_incomplete_attempts": {
+    "namespace-identity-v1": "system distro lacks awk; internal reads failed despite wrapper 0; corrected v2",
+    "namespace-config-v1": "system distro has no systemd init; systemctl/timedatectl failed; successful chronyc default did not establish transport",
+    "system-detail-v1": "inner exit 1 and explicit socket failure despite outer wrapper 0; not counted as full success",
+    "owner-map-trace-v1": "exit 1 due status context switch counter; stable fields unchanged; cleanup verified; separate v2 succeeded",
+    "reader-ubuntu-root-v1": "set -f disabled proc glob; zero counts are invalid absence evidence; corrected v2 sees one timesyncd, exit 42",
+    "reader-ubuntu-root-v2": "valid incomplete inventory: chronyd 0, timesyncd 1, errors 0; exit 42",
+    "reader-nonroot-v1": "expected root refusal 77",
+    "debug-shell-access-v1": "exit 1: Windows admin required",
+    "admin-collector-guard-v1": "exit 1: execution policy prevented .ps1 execution; guard was NOT exercised",
+    "evidence-analysis-v1": "exit 2: missing script after cwd preparation failure; separate v2 exit 0"
+  },
+  "validation": {
+    "regression_tests": 18,
+    "journal_tests": 9,
+    "journal_test_seconds_uncalibrated": 11.12,
+    "decision_tests": 9,
+    "decision_test_seconds_uncalibrated": 1.711,
+    "natural_T03_hang_recurred": false,
+    "historical_T03_resolved": false,
+    "previous_raw_hashes_verified": 135,
+    "all_suite_Docker_PG_repeated": false,
+    "new_CI_result_claimed": false,
+    "administrator_collection_end_to_end": "NOT_TESTED; admin unavailable and direct script policy refused",
+    "final_record_checks": {
+      "raw_files_verified_before_this_validation": 110,
+      "base_input_snapshots": 4,
+      "attempts_verified_before_this_validation": 23,
+      "shell_syntax": true,
+      "reader_real_negative_cases": {
+        "nonroot": 77,
+        "Ubuntu_root_incomplete": 42
+      },
+      "actual_windows_powershell_parser": [
+        "ps1",
+        "three_document_blocks"
+      ],
+      "trace_cleanup": true,
+      "production_existing_source_tests_workflow_scripts_unchanged": true,
+      "relative_links": 94,
+      "scoped_secret_pattern_scan": true,
+      "diff_check": true,
+      "limitations": [
+        "Administrator initial PID namespace collection untested",
+        "PowerShell file execution rejected by policy before guard",
+        "Pattern scan is not proof of absence of all secret data",
+        "No full suite or Docker/PG rerun for unchanged production code"
+      ]
+    },
+    "final_record_validation_exit": 0
+  },
+  "remaining": [
+    {
+      "priority": "P1",
+      "difficulty": "D3",
+      "owner": "Sol",
+      "task": "Administrator limited read, map current chronyd exe/hash/parent/ns/generated config/device fd to setter; no fixed historical PID assumption"
+    },
+    {
+      "priority": "P1",
+      "difficulty": "D3",
+      "owner": "Sol",
+      "task": "Explain repeated tick 11000 internal control with runtime identity/config; formulate authorized maintenance plan, impacts and rollback"
+    },
+    {
+      "priority": "P1",
+      "difficulty": "D3",
+      "owner": "Sol",
+      "task": "Prospective clock qualification after separately authorized OS maintenance; do not rescale old operational timings"
+    },
+    {
+      "priority": "P1",
+      "difficulty": "D3",
+      "owner": "Sol",
+      "task": "Historic T03 hang remains unattributed; save phase/stack if it naturally recurs"
+    }
+  ],
+  "limitations": [
+    "Current PID mapping is not retrospective evidence for original T05/T03/T13 failures.",
+    "Visible packaged system config and binaries are not necessarily the outer daemon active config/executable.",
+    "Read-only UDP chrony response does not authenticate PID 213 executable.",
+    "Manual administrator collection instructions syntax checked; real initial PID namespace end-to-end untested.",
+    "Raw process paths/status/addresses/config and native outputs remain ignored; publish only reviewed summaries and hashes.",
+    "Production/evaluation and real Capital state unchanged."
+  ],
+  "evidence_files": [
+    {
+      "path": "261021/data/reports/20261101-clock-owner/admin-collector-guard-v1-decoded-cp932.txt",
+      "bytes": 828,
+      "sha256": "d3f68ceaf64bb8f98fb3868bcda0293cb14b82f634266423b51cf4c7ecdc2564"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/admin-collector-guard-v1.json",
+      "bytes": 663,
+      "sha256": "ae70c29a3fd83272646a3ba8d06b9baf49a5c29b769068609ab9676c640c7f57"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/admin-collector-guard-v1.log",
+      "bytes": 752,
+      "sha256": "8eac637d38fb470cbbc4ff700c3c91b2adb6dee8b98128754c2e0f44124f7f23"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/analysis-v1.json",
+      "bytes": 13626,
+      "sha256": "8f3878d3c777345cc23e617bcc9766a20343e90781ea8eeb8a0cfbf8dba54b1b"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/analyze-owner.py",
+      "bytes": 3941,
+      "sha256": "74725f62420c54885ebd0c44233974561020ad1812a4d53cd88fc14fd84c5515"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/btf-layout-v1.json",
+      "bytes": 491,
+      "sha256": "f95fbfebe4ed1ed3654f2d198819bca11f2bbbdf85b9119c0efbf04f769a557a"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/btf-layout-v1.log",
+      "bytes": 35653,
+      "sha256": "15130b0860abe801c02d802b50ef1f7541e279682ebce116d739c47046357445"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/btf-layout.json",
+      "bytes": 35512,
+      "sha256": "e6cc226b2faa378b0797718ad6f0cb34de29e604983b7a34f32ee7ac13347913"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/btf-layout.py",
+      "bytes": 1073,
+      "sha256": "a95b31ed1d0fdde5226b2f67b970808fccf42535d8f7ebbf89d4bdbb36a5475e"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/build-record.py",
+      "bytes": 7086,
+      "sha256": "4be0229a5a0293963cef37232891cc4814dc4e535d08dd5efccbb8d41b8461bf"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/config-read.sh",
+      "bytes": 1193,
+      "sha256": "68540a03c9ab00f8de34c6963a3a14527d40b3aa6754f230373ee7fbccabf0d4"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/current-host-v1.json",
+      "bytes": 621,
+      "sha256": "047a954e0708026f34595147e4bd84709e9a592d0251c12e8f2d5746e6549808"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/current-host-v1.log",
+      "bytes": 726,
+      "sha256": "ba2aeeb04fcd1b4598dd47190a6ba22b6bc010765f9f7ccdd46ffb5160c4c6e5"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/debug-shell-access-v1.json",
+      "bytes": 505,
+      "sha256": "fb2756f7ec73ebcdf2354f3e8d28643a404d778f150a2b9b6465545255065352"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/debug-shell-access-v1.log",
+      "bytes": 1632,
+      "sha256": "c8a70394a7254412ccbc7d5b8895af62302e08557d370957aa312019cce24f09"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/debug-shell-check.py",
+      "bytes": 1610,
+      "sha256": "81bac45fa5f5bd820d4b6e8d8c46e2c9f700b0061e858be694032032e4871c52"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/decision-regression-v1-traces/test_regressed_review_validation_clock_blocks_approval_without_tag_writes-1cf534082f0146258f5c62484e389c8e/decision.jsonl",
+      "bytes": 12803,
+      "sha256": "8b88a2b79529067b352f13286997262faabeb578a35fb33918510dba4c035c7f"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/decision-regression-v1-traces/test_utc_boundary_is_strict_and_rejection_retains_exact_clock_values-7d0840acdd63449fb1997b59382aba97/decision.jsonl",
+      "bytes": 1615,
+      "sha256": "4b34b017ba8945ac7afc3d36c3adbbe1e80f8a5bce7f96c8e3f00fbbbb74d6e2"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/decision-regression-v1.json",
+      "bytes": 574,
+      "sha256": "2703c558078f12af765f7430368730483d4bc7176e20612ec853e631d0abe7fe"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/decision-regression-v1.log",
+      "bytes": 2087,
+      "sha256": "3ee627eb6fe0cac3213b214f9c5fcc71e503c89b4f6ebb800563b967535d7207"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/evidence-analysis-v1.json",
+      "bytes": 499,
+      "sha256": "2fefbad5cf1f0eb9fbf60803f2b7fd6814aaf4bda2d0e16ee1fef406c2c7b3c8"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/evidence-analysis-v1.log",
+      "bytes": 310,
+      "sha256": "ba02f66def419c3983a121c84b48962671bfb5bd9be4b725d807c3fac39b4c4f"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/evidence-analysis-v2.json",
+      "bytes": 500,
+      "sha256": "59ca79016139676cfa676b638235cae89eca067eebe8e3fbe31581d75593d5d0"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/evidence-analysis-v2.log",
+      "bytes": 1843,
+      "sha256": "ea1d4824c13f096bd88d242cb3be56bf51d45915c2ec082cdcb7f1c6b272c237"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/fetch-sources.py",
+      "bytes": 1151,
+      "sha256": "821e9a9a8db8fd6e0799db526bcd32e04c0eef00433e2fa9d6ccdd5554259a07"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/final-record-validation-v1.json",
+      "bytes": 506,
+      "sha256": "b77a2744e88148badfb06c3e52be3afa9ada25254ac189e9956afb316b1f7aee"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/final-record-validation-v1.log",
+      "bytes": 942,
+      "sha256": "5ae860503a049d36599640a31e756f475e3671b0ba5640c66c65ac9d8b062cbf"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/identity-read.sh",
+      "bytes": 1178,
+      "sha256": "600a8bed1143ca4b4df3fbf46b1bc08adc535edf128acf7b95bfeb4f16a1f9b2"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1-traces/signal-SIGKILL-7ffa90687112451fa03864e95c269b56/child-stacks.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1-traces/signal-SIGKILL-7ffa90687112451fa03864e95c269b56/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1-traces/signal-SIGKILL-7ffa90687112451fa03864e95c269b56/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1-traces/signal-SIGKILL-7ffa90687112451fa03864e95c269b56/child.jsonl",
+      "bytes": 1128,
+      "sha256": "344e2531b3a5db85e6e30ab479b5b47b7f88d9f74e3829cf2a3729fe6f20b32d"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1-traces/signal-SIGKILL-7ffa90687112451fa03864e95c269b56/parent.jsonl",
+      "bytes": 936,
+      "sha256": "d62c71b222151bb132e4e94b3e73b9aacb7ac041861be54f3d5866de76c1dab2"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1-traces/signal-SIGTERM-4f018f04c37a41afa8f18392d4fd0b12/child-stacks.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1-traces/signal-SIGTERM-4f018f04c37a41afa8f18392d4fd0b12/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1-traces/signal-SIGTERM-4f018f04c37a41afa8f18392d4fd0b12/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1-traces/signal-SIGTERM-4f018f04c37a41afa8f18392d4fd0b12/child.jsonl",
+      "bytes": 2497,
+      "sha256": "1dd6f4a5f915e0d414a615dfc1e021da9a123ce791c5803483a8a32c63702cec"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1-traces/signal-SIGTERM-4f018f04c37a41afa8f18392d4fd0b12/parent.jsonl",
+      "bytes": 943,
+      "sha256": "e98c735f04771db0860c79b66f2c0c37edc4b7495f0e5103a34b27879e098eda"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1-traces/signal-SIGTERM-fa94305ee06f4e2e9ee02bb649a96f96/child-stacks.txt",
+      "bytes": 594,
+      "sha256": "77a75750a63d914deacd8f1b140de57503a12023cd79d38a257d5f21ff791ea9"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1-traces/signal-SIGTERM-fa94305ee06f4e2e9ee02bb649a96f96/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1-traces/signal-SIGTERM-fa94305ee06f4e2e9ee02bb649a96f96/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1-traces/signal-SIGTERM-fa94305ee06f4e2e9ee02bb649a96f96/child.jsonl",
+      "bytes": 1950,
+      "sha256": "ee275a904fb9887f83ed7474bc91a79e2afc44847e2e479cc6da798fe4e35505"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1-traces/signal-SIGTERM-fa94305ee06f4e2e9ee02bb649a96f96/parent.jsonl",
+      "bytes": 1085,
+      "sha256": "80641effcdd934457eefc5beba8e093ed3e6e24f2856d9f00be8eff1d61c1c56"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1.json",
+      "bytes": 569,
+      "sha256": "e115d2f48e5929b9cc635c2718890e1b92c06056933bb1345f0f35863bdb8db2"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/journal-regression-v1.log",
+      "bytes": 2051,
+      "sha256": "f847c3dbf3f975352a6ffde275edbabff780e699de79841e9063aeb85652f36b"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/namespace-config-v1.json",
+      "bytes": 549,
+      "sha256": "312cec38a1093ac1addaac459ae985c9a9eb551bab71f9b05558b3772ee09b6c"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/namespace-config-v1.log",
+      "bytes": 14715,
+      "sha256": "802d2fcb75dac17e24c404296e9e0a0faa435db962bc3b0d578df0edc06979db"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/namespace-identity-v1.json",
+      "bytes": 554,
+      "sha256": "e4a630553a827a821d97d86f5eae6604398b802ea1fa6b3d00e849425c1d8180"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/namespace-identity-v1.log",
+      "bytes": 22303,
+      "sha256": "8c7533fa4143f9a22d17c78ce2825edf94ca05c0a067d172b1ff6fbb07111306"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/namespace-identity-v2.json",
+      "bytes": 557,
+      "sha256": "c89e172f30d03fb8685ee9ce0c0fff8298878b2b6cecde3197e2a823520c23c3"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/namespace-identity-v2.log",
+      "bytes": 22619,
+      "sha256": "ff55ad8cf2a62591b2953eb4ec991ddb2eff50cd912c74731cd05bd4add0e27c"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-trace-v1.json",
+      "bytes": 734,
+      "sha256": "7a7ef99c202f543bfb8e331fef619858d881b9b642c688e1a97618646fa1ee95"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-trace-v1.log",
+      "bytes": 2047,
+      "sha256": "bf5e9cb9906c71787de8ec720a8358b02fcbd93e89918ecf526ad70255f78c62"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-trace-v2.json",
+      "bytes": 737,
+      "sha256": "e6dc7a5e9ccafd3c04b90e0de2b249a44f973327f63c59085972428922d18f5b"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-trace-v2.log",
+      "bytes": 1702,
+      "sha256": "5464bbe8b22a5723f2e689d7c46eb5bb4f2e180dd8e7f5562ed66213910ce699"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-v1/buffer-stats.json",
+      "bytes": 1289,
+      "sha256": "15d0978d9524fda1530b23e7dcb00084ad878dacec152439c35b5dabec58403c"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-v1/clocks.jsonl",
+      "bytes": 1061620,
+      "sha256": "fd04b233eb2358b6ace0ceff921877846a576f5019954937deb72827aca3f6d1"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-v1/identities.json",
+      "bytes": 2698,
+      "sha256": "7d341d778b31e92a09c5d0b492ee7f012dc182dde5a7ca15916eca3fe205a8e8"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-v1/identity-after.json",
+      "bytes": 2350,
+      "sha256": "730b7f029d75be4625c3f4ea0bfd0246ee2e4248e8a28f20ad10640b31c3a9d3"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-v1/instance-config.json",
+      "bytes": 245,
+      "sha256": "e3154b5e9029a70d5a99f55e34f5732b6b83661ea427b6c7d1c760cd68dda462"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-v1/summary.json",
+      "bytes": 1466,
+      "sha256": "bd15a1efb60ad6c6b4467ab5bfd4c0b78908419ea7835d9f181c619cc4279eb6"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-v1/trace.txt",
+      "bytes": 38913,
+      "sha256": "a725402f78d9601abb78054bb884de24f7b830766ce9643327a5513f724597d5"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-v2/buffer-stats.json",
+      "bytes": 1270,
+      "sha256": "b9b1633b6175a5cbfd9d4a85aa8de5c8747b9716ffa367983021e65512be00b8"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-v2/clocks.jsonl",
+      "bytes": 824600,
+      "sha256": "62d72d0673906881bbaeac740b87110c162f4f255a2267b698f7d43ecc4cbe78"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-v2/identities.json",
+      "bytes": 2698,
+      "sha256": "1abb7374beb41b3341b12143e6fae4d5b94c6101290da66b0d0c2b6511c83d20"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-v2/identity-after.json",
+      "bytes": 2350,
+      "sha256": "bfa231d87d9c1f7d1e8eeabbc0bcfbf70136fd5c3c79bcfe30cbba6d8837bed7"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-v2/instance-config.json",
+      "bytes": 245,
+      "sha256": "e3154b5e9029a70d5a99f55e34f5732b6b83661ea427b6c7d1c760cd68dda462"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-v2/summary.json",
+      "bytes": 1426,
+      "sha256": "d4e0b570298a1516b7606d616794318f2d042687bcdf9051c76ddb67946a9a73"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/owner-map-v2/trace.txt",
+      "bytes": 8578,
+      "sha256": "37064a567e7e675ce5ffd1ae2bb175ea87682f839b5f4beeb080dbfdc6d51353"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/parse-doc-powershell.py",
+      "bytes": 1086,
+      "sha256": "237d5550bea3aa199d0caf6419448d9c088509213bb2801efdaa9e2d65e89269"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/parse-powershell.py",
+      "bytes": 884,
+      "sha256": "8087060b95ff25fb1cc47bde500b5ee5cf642a9fd5f797341ba1a137c74fe5f9"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/powershell-doc-parse-v1.json",
+      "bytes": 510,
+      "sha256": "2e21544d12a726f03441d73531c56b56253ba8ee76182036c31c15043baefed2"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/powershell-doc-parse-v1.log",
+      "bytes": 1500,
+      "sha256": "b4d7c3dd6b1f4d7b42a539b6c860b25d3306d2007b3588742a34b1272ac5631d"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/powershell-parse-v1.json",
+      "bytes": 502,
+      "sha256": "7172c5bd1936141a947164c7b8e4291f2a11cfff819a8fd835c6ea8c9ebedafd"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/powershell-parse-v1.log",
+      "bytes": 1216,
+      "sha256": "f4b637ac1c35ce3ffe6f62e48c05b3b5f64ef9a5ab826d609c95521eecc50625"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/preparation-failures.txt",
+      "bytes": 712,
+      "sha256": "7f7cbbaee50e432666621770391973e154208d1fc66601c73b8dd209dda45ec6"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/primary-sources-v1.json",
+      "bytes": 499,
+      "sha256": "8b85a8c13f2be742cc8894e2ecd639d406fbabe6ad0873c152805ba7e76e2bcd"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/primary-sources-v1.log",
+      "bytes": 1575,
+      "sha256": "880d816ca03502bf59cd8f55371a4c04136efeafe1b72b2582315cb4b27c550b"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/read-configs.py",
+      "bytes": 929,
+      "sha256": "d43562df799accfb5043993f34501ba55ae0f3cbaeee296bb125ffcd0fde984f"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/read-identities-v2.py",
+      "bytes": 1023,
+      "sha256": "5a19ffd8be6e9f6c5588849813f41b05333a963cbba15d080fe699949ae3857c"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/read-identities.py",
+      "bytes": 931,
+      "sha256": "fae62b89aa981d4448ff435bd9b45765f3f7b20701dcd88a86324b1a07595d3f"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/read-system-detail.py",
+      "bytes": 931,
+      "sha256": "aa4d456051f3cb6da460ed0a7ed30d05dbecae1c214e99ca92be54517532f350"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/read-system-network.py",
+      "bytes": 1024,
+      "sha256": "a1f2d9d9f49cbd378418eb51cc69b4eb9c3bf9ab6166fe2d449ac868cb304d16"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/read-windows-v2.py",
+      "bytes": 2888,
+      "sha256": "e185385f14e78322fc13f35ec2256267daedf2011690c1dd0888d24698d3fb64"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/read-windows.py",
+      "bytes": 2763,
+      "sha256": "2586e9e98c09e3a7a2b3d56f3d658f1dd036a2a16c20f2ced198976cfa374b63"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/read_clock_process_ownership-v1.sh",
+      "bytes": 4978,
+      "sha256": "2f18f07b18265b21c7fead0befd905a19d2fb8f56b4d4bb1d38b01c2824a46ef"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/reader-nonroot-v1.json",
+      "bytes": 471,
+      "sha256": "41554b04f0f81a9a2dec4a08962cf9a49245f54fb8c893f30b3669bd2afd15a6"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/reader-nonroot-v1.log",
+      "bytes": 162,
+      "sha256": "466d79e125258426a0d98332e039fe8f24134927a0986ea165de16a85478cb82"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/reader-ubuntu-root-v1.json",
+      "bytes": 618,
+      "sha256": "528f89b7e1c05af3bd2448c6674fd69972ce76a5e16d949b79a0f22a8cb219c3"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/reader-ubuntu-root-v1.log",
+      "bytes": 787,
+      "sha256": "02b6d121b14c16f1186dda5b4638aab9616e7e58e6445af0657911b222c2fdd7"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/reader-ubuntu-root-v2.json",
+      "bytes": 619,
+      "sha256": "efcf998a16c0867c0abe25303fa27cd4a088a88ddc91bda04969d655f772bb72"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/reader-ubuntu-root-v2.log",
+      "bytes": 2231,
+      "sha256": "3d0d913e17c24bb49e201a244999c5f379122f47b1faafa6800535fadda52d41"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/run-attempt.py",
+      "bytes": 1668,
+      "sha256": "7de0bc5fff137cb45a547c1f03bc65f9cbfd24c39bf395be9701a7ee99e0fc09"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/sources/btf.h",
+      "bytes": 5606,
+      "sha256": "62e3da6eaf7abbc289e3451bbca664872addb0722e538fa69a313b389efccc9d"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/sources/chrony-conf.adoc",
+      "bytes": 131286,
+      "sha256": "8122a817e12fc9f39cff170bc902624fc13c78c628aeebe2cbc5cf709f9a9c9d"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/sources/chrony-linux.c",
+      "bytes": 28312,
+      "sha256": "16f9e109376d56b67255838fb0fde3fddb6d5b437edc7e71d2db62dc661b8ce9"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/sources/chronyd.adoc",
+      "bytes": 9526,
+      "sha256": "879afee1a285c1e84d317459f21e5a20c2b5c548231f40a49b26487b9858b4c2"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/sources/scheduler-core.c",
+      "bytes": 315648,
+      "sha256": "fcb1bf7d0fea6e45d77d5c67884b2a636396eac8fe039ac822a11d62fa7de2d0"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/sources/wsl-init-main.cpp",
+      "bytes": 118684,
+      "sha256": "3668797cdf1664b35e18fce836113539799d3d0c7171fcf2b1f0c0e4ba7008e5"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/system-detail-v1.json",
+      "bytes": 515,
+      "sha256": "32aeeb4dc40b268d85100713de5bb4f6a8e830844e1c78f0c2605f29dcfdf11e"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/system-detail-v1.log",
+      "bytes": 3339,
+      "sha256": "cafcb4b5e915851528dac37057f4b1b61548e0fa99826c9d94e9a40fcd8901d5"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/system-detail.sh",
+      "bytes": 976,
+      "sha256": "1c4c7cffca1db96b34b728005f6a577958ff69b4757feafb1475d03c0e3587e4"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/system-network-v1.json",
+      "bytes": 517,
+      "sha256": "c58e2448df5ea01da8b33c19deceae1904b42c6f3011328443e121987f6c2ebf"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/system-network-v1.log",
+      "bytes": 2469,
+      "sha256": "65df138464704a601a33dda87826305bbf1dafdead78360f62d8413a4a030e9a"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/system-network.sh",
+      "bytes": 473,
+      "sha256": "ebf61cf69b00433b24727181cbf16ae6bd5a68736eb265b34725369d85bd8ffe"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/trace-owner-map-v2.py",
+      "bytes": 5604,
+      "sha256": "b3c8134a3c15e29a6d6ce2bf0bb396bf7c1004309e51cdf8f061cf588ce8d065"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/trace-owner-map.py",
+      "bytes": 5350,
+      "sha256": "192e175c087b0773a58d83c5516265b9d431d20c1526a15d5c5b2f95b11136fe"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/validation-result.json",
+      "bytes": 797,
+      "sha256": "65d2cb80395ddba0fabc0c2be8632eaa3e49eb7c21b3533f16f1fd8775b93c36"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/verify-records.py",
+      "bytes": 3801,
+      "sha256": "b143b9010ea1e470fac215c4c51ce9c19658772cc039ab118efd7b7bfa4ced6d"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/windows-status-v1.json",
+      "bytes": 496,
+      "sha256": "ef8230b94b740a49da62edf70848925b58f5668d6f636870f96e04edf170f787"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/windows-status-v1.log",
+      "bytes": 5452,
+      "sha256": "25a614cddd2eb60f50bd6f92e84e675148fd3e785eb13c196dae7e66d4f1f0a7"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/windows-status-v2.json",
+      "bytes": 498,
+      "sha256": "cd1b6bd782be1022a15748e00e0acc12efc985417b092f741830d45a951edbb1"
+    },
+    {
+      "path": "261021/data/reports/20261101-clock-owner/windows-status-v2.log",
+      "bytes": 6253,
+      "sha256": "63002d888d860e9792d611d8befb86a2d3ca18eb12f0cf494e0d9f11954c4eae"
+    }
+  ],
+  "reviewed_public_files": [
+    {
+      "path": "261014/plan_mlops.md",
+      "bytes": 89327,
+      "sha256": "85029d89c35239f133c759f6dbc97e5b4c9e84b2de67b9d80b4ff065c1a8dd3b"
+    },
+    {
+      "path": "261021/work_log.md",
+      "bytes": 345941,
+      "sha256": "83a94bec6f999a965ec0feab80a8d70be6bd20df84b3dcff3808dcb1ff166847"
+    },
+    {
+      "path": "261021/docs/clock-origin-investigation.md",
+      "bytes": 13817,
+      "sha256": "6a0b8db39ad0d807feef3674e7e28c27ef57fc4b4926cb844ef5d8dd7d9cd7c3"
+    },
+    {
+      "path": "261021/docs/runbook.md",
+      "bytes": 35826,
+      "sha256": "c82760d635bf986b634b8f5e22219523de757b1904874595f5d1824908f8b930"
+    },
+    {
+      "path": "261021/docs/clock-process-ownership.md",
+      "bytes": 10744,
+      "sha256": "870ac91a7197726847054d1fe1149a57d4f94276697b3ccaafbb51c35ac28872"
+    },
+    {
+      "path": "261021/docs/clock-owner-admin-read.md",
+      "bytes": 6079,
+      "sha256": "bc3f3eb763053229dbc5530b5e942929f6ef566d4b0a98e0ea3c8701060f2ef7"
+    },
+    {
+      "path": "261021/scripts/read_clock_process_ownership.sh",
+      "bytes": 4977,
+      "sha256": "6b02780418748f7c0f0c649598f5c6f7e71dfbee457b9454b4f09a649f7baade"
+    },
+    {
+      "path": "261021/scripts/collect_clock_owner_admin.ps1",
+      "bytes": 3215,
+      "sha256": "4db3291fac137a3f59869ca7f0886a964d26a095e1eb22d23a98f60d538d9e1c"
+    }
+  ]
+}

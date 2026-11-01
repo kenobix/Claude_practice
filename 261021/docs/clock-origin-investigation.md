@@ -1,6 +1,7 @@
 # UTC逆行の呼出元の調査（2026-11-01）
 
 基点は`b5dbdfd2df16da8325b9a422fd2c2729f5991689`。
+[後続の管理元照合](clock-process-ownership.md)でUbuntu timesyncdのlocal PIDとkernel PIDの対応・実行file・管理unit・同期元を確認した。以下は当時の調査記録を保持する。chronydの稼働exe/親/生成config照合と環境修復は後続でも未完了。
 [前回の診断](interruption-clock-diagnostics.md)から、時計変更の呼出元を追加調査した。
 [証拠JSON](reviews/20261101-clock-origin-checks.json)に全試行、失敗、原本のbytes/SHA-256を記録する。
 現在環境の機序を絞った節目であり、過去T03/T13の根本原因や環境修復の完了ではない。
