@@ -8,7 +8,30 @@
 | T07a/T17a | `f341e94` / [41298859518](https://github.com/kenobix/Claude_practice/actions/runs/41298859518) | [local受入](reviews/20261101-t07-t17-checks.json)・[CI索引](reviews/20261101-t07-t17-ci-checks.json)。実Caddy切替/SIGKILLと台帳復旧はlocal、既存system/PGはCI | local復旧harnessのmodel/registryはdouble。新harness自体のCI接続は未了 |
 | T13a | `f1cc9ff` / [41300378098](https://github.com/kenobix/Claude_practice/actions/runs/41300378098) | [HTTP障害CI](reviews/20261101-t13-http-ci-checks.json)。部分保存、commit後の応答喪失、同値retry、競合拒否、cleanup | 使い捨て実MLflow HTTPに対する合成決定。実人間の採否ではない |
 | T16 | `2492abc` / [41442578156](https://github.com/kenobix/Claude_practice/actions/runs/41442578156) | [Sol review](reviews/20261102-t16-sol-review.json)・[CI索引](reviews/20261102-t16-ci-checks.json)。4原本/manifest/hash、archive-only別process再計算、cleanup | 1050応答からwarmup50を除く1000件。合成計測で実性能・時計資格・承認を証明しない |
-| T07b/T17b部分 | 基点`69c3a5a`からの今回変更 | [復元契約](deployment-recovery.md)・[CLI診断](deployment-observability.md)。最新の検証索引/CI確定状態は計画と作業log参照 | T07実producer、T17b API metadata/全体timeoutは未完了 |
+| T07b/T17b部分 | `2414b20` / [41462429218](https://github.com/kenobix/Claude_practice/actions/runs/41462429218) | [CI索引](reviews/20261102-t07b-ci-checks.json)・[復元契約](deployment-recovery.md)・[CLI診断](deployment-observability.md)。419件/対応復元/hash/cleanup成功 | T07実producer、T17b API metadata/全体timeoutは未完了 |
+
+## T01〜T17の記録対応
+
+以下は保存済みレビューJSONからの転記で、過去CIを今回再実行・再取得したという意味ではない。
+SHA欄はartifact ZIPの先頭12文字。full SHA・member別SHA・raw logの相対pathは各索引にある。
+同じtaskに複数commitがある場合、表にはその索引で最後にCI確認した実装を載せる。
+
+| task | CI確認済み実装 / run | artifact ZIP SHA先頭 | 正規の索引と残条件 |
+|---|---|---|---|
+| T01/T02 | `29ed879` / [40977087079](https://github.com/kenobix/Claude_practice/actions/runs/40977087079) | `748cd5f0a3ee` | [必須証拠schemaと拒否](reviews/20261030-p0-evidence-checks.json)。実producer証拠は後続依存 |
+| T03 | `24115cf` / [40999776550](https://github.com/kenobix/Claude_practice/actions/runs/40999776550) | `794bed34a655` | [要求journal](reviews/20261030-t03-checks.json)。自然停止の歴史的原因/時計資格は未解決 |
+| T04 | `df292db` / [40980116840](https://github.com/kenobix/Claude_practice/actions/runs/40980116840) | `be1ff6fe039e` | [training reference/PSI](reviews/20261030-t04-checks.json)。実候補の監視は別証拠 |
+| T05 | `2365d8e` / [41005083367](https://github.com/kenobix/Claude_practice/actions/runs/41005083367) | `0aca6e638a4b` | [合成監視10ケースと境界](reviews/20261030-t05-checks.json) |
+| T06a | `df4c3b9` / [41038726909](https://github.com/kenobix/Claude_practice/actions/runs/41038726909) | `c7ab3ac28cea` | [SQLite読取照合](reviews/20261030-t06a-checks.json)の`sol_review.ci`。file権限/busy timeout補足は残る |
+| T06b | `164ac53` / [41068758500](https://github.com/kenobix/Claude_practice/actions/runs/41068758500) | `9d82e8d21062` | [PostgreSQL読取照合](reviews/20261030-t06b-checks.json)。実HTTP監視への接続は後続 |
+| T07/T17 | `f341e94`と今回`2414b20` | 上段参照 | [切替/復旧](deployment-recovery.md)と[診断](deployment-observability.md)。subtaskと実候補の境界を保持 |
+| T08 | `20abdab` / [41263492531](https://github.com/kenobix/Claude_practice/actions/runs/41263492531) | `f8b4d540112d` | [旧schema精度移行/別volume復元](reviews/20261101-t08-checks.json)。既存実DBへは未適用 |
+| T09 | 実装CIではなく原本公開待ち | 対象外 | [計画§11.6](../../261014/plan_mlops.md#remaining-work-20261030)。HEAD成功だけでは原本取得/hash照合完了ではない |
+| T10/T11/T12 | 実候補の独立protocol/一度評価/blocked運用測定は未実施 | 対象外 | [計画§11.6](../../261014/plan_mlops.md#remaining-work-20261030)。合成CIを実精度・実性能へ転用しない |
+| T13a/T13b | `f1cc9ff`のHTTP合成受入 / 実採否は未実施 | 上段の索引参照 | [HTTP CI](reviews/20261101-t13-http-ci-checks.json)。実採否には同一candidateの必須producer証拠が必要 |
+| T14 | この文書・計画・作業log | 対象外 | 文書の整理であり、新しい実験成功を作らない |
+| T15 | `5cc5a89` / [41264954179](https://github.com/kenobix/Claude_practice/actions/runs/41264954179) | `62f54b9fe779` | [monitor persistence CI接続](reviews/20261101-t15-checks.json) |
+| T16 | `2492abc` / [41442578156](https://github.com/kenobix/Claude_practice/actions/runs/41442578156) | `9d105b720202` | [archive3本/別process再計算](reviews/20261102-t16-ci-checks.json)。内側archive SHAと外側ZIP SHAを区別 |
 
 artifactの公開保管は14日で失効し得る。索引のSHAは取得時のbytesを示し、期限切れartifactを再取得できる保証ではない。
 raw logや一時dumpをcommitしたと主張しない。手元の`data/reports/`に残す原本は公開索引の相対path・bytes・SHAで照合する。

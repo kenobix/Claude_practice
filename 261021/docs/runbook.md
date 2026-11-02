@@ -1,7 +1,7 @@
 # 実行・運用手順
 
 配信中の段階表示、Docker timeout時の未確定状態、読取専用の`deploy inspect`は[配信処理の診断](deployment-observability.md)を参照してください。
-合成Capitalの実MLflow/skops/DBを別volumeへ復元する追加試験は[配信復旧](deployment-recovery.md#t07b-合成capitalの実mlflowskopsdb対応復元)を参照してください。現配信を障害対象にしない手順です。
+合成Capitalの実MLflow/skops/DBを別volumeへ復元する追加試験は[配信復旧](deployment-recovery.md)を参照してください。現配信を障害対象にしない手順です。
 
 初学者向けの用語は[用語集](glossary.md)を参照してください。
 データ源を切り替える場合は[データプロファイルとtarget分離](data-profiles.md)を先に確認してください。通常運用は引き続きUCIのCompose projectです。

@@ -112,3 +112,5 @@ T16の[Sol review記録](docs/reviews/20261102-t16-sol-review.json)には、検�
 T07bでは[実MLflow/skops・DBの対応復元](docs/deployment-recovery.md)を合成fixtureへ追加しています。通常CLIの[段階表示・Docker timeout・旧stateの読取診断](docs/deployment-observability.md)も参照してください。APIの承認metadata提示と全体timeoutは残条件で、T17b全体は未完了です。
 
 [証拠の入口と5分の説明手順](docs/evidence-guide.md)に、task・実装commit・CI・索引と、説明できる結果の範囲をまとめています。
+
+2026-11-02、T07bは実装`2414b20`の[CI41462429218](https://github.com/kenobix/Claude_practice/actions/runs/41462429218)で419 tests・実MLflow/skops/対応DBの別3volume復元・破損拒否・archive再計算・cleanupまで成功しました。[CI証拠](docs/reviews/20261102-t07b-ci-checks.json)。T17b残件とT07aのCaddy復旧CIの具体的な受入条件は[Sol向け引継ぎ](docs/t17b-sol-handoff.md)にまとめています。

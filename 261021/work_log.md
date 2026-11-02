@@ -2988,3 +2988,21 @@ T14は[証拠入口と5分説明の初版](docs/evidence-guide.md)を追加し�
 今回のCI変更は既存system stepへ`--verify-paired-restore`を足すだけで、if/env/deadline/pipefailとartifact13 memberのallowlistを維持する。実装commitをpush後、そのcommitのCI/保存log/内側archive hash・別process再計算/両project cleanupと保護container ID不変を確認するまでT07bのCI受入を完了としない。T07a復旧harness自身のCI、実producer、T17b API metadata/全体timeout、時計資格、T09以降の実candidateは残す。
 
 記録整備時、cwdが261021の状態で261021/work_log.mdを指定した修正文がFileNotFoundErrorとなった。別操作の索引生成は成功したが、同shellの最終終了値0を修正文成功と解釈せず、repo rootから正しいpathで修正し直した。raw transcriptのみの編集コマンド失敗で、試験結果は変更していない。
+
+## T07b実装2414b20のCI照合完了とT14対応表（2026-11-02）
+
+19対象pathをstageし、全差分151904bytes/SHA85eb73db8d81f30d4defcf7f6a4be3947a31098a1be6689a80184f953349eb9c、78原本hash、staged/worktree一致、db/model/staging/evidence validator/lock不変、秘密情報とstatusを確認した。実装`2414b2031dd21cdf425761b1cd29d43c7a355f66`をcommit/push。既存無関係の未追跡3pathは含めていない。
+
+以降の原本はignored `data/reports/20261102-t07b-ci/`へ分離し、[CI照合JSON](docs/reviews/20261102-t07b-ci-checks.json)に記録した。push runのfull SHA検索はconnectorがPR起点のみのためgh APIで行い、jobs/log/artifactはGitHub connectorを使用。初回jobs照会はtool transcriptのみ、後続4段階と最終jobsは別fileで保存した。file_uriを文字列と仮定したintrospectionはTypeErrorだったが、objectのdownload_urlを確認して取得した。一時参照URLは0600のfileだけに置き、download成功直後に削除。公開索引へ署名URLを残していない。
+
+run-query-v1/run-query-finalは同じ[CI41462429218](https://github.com/kenobix/Claude_practice/actions/runs/41462429218)の進行中/完了を別log・別元JSONへ保存。最終は両job全step成功、unit419件/54.813秒、compileall、system/全PG/HTTP障害/cleanup成功。artifact-download-v1はartifact13150206991の実ZIP229786bytesを取得し、GitHub digestとSHA4c010bcb5591152645c6004a38d99ffac21d61137fcefb2e3ddfb62b4461f802が一致した。artifact-check-v1はexit0で全13 member/hash、T16内側archive c6ca847386fe751a8d559a6b1ffc2e41e2b90e3eaada4581c22ce5fd82cab66d、4原本hash、archive-only別processと別nearest-rankの1000 measured/p95=31.77884499999095msを再計算した。これは合成保存値の数値で、実候補性能や時計資格を示さない。
+
+同じartifactのsystem logからT07bのregistry65table/audit5table（744観測・1052予測）・column/sequence・8 artifactの対応、別3volume、破損skops拒否、同ID再送/新ID推論、read-only PG旧state/foreign-profile診断を確認。復元先container/network/volume/image残存0とworkspace回収、source projectのcleanup/保護container ID不変も確認し、T07bの合成受入を完了した。T07aのCaddy復旧harness自身のCIや、実candidateの復旧producerとは区別する。
+
+source-HEAD-v1では公式S3へHEADだけを送り、202609=200/25848624bytes、202610=404を2026-11-02の新規logへ保存。download/fit/評価窓変更を行わずT09/T10の待ちを維持した。T14はT01〜T17対応表・5分説明・artifact期限と未実施範囲を整理。evidence-guide-validation-v1はvalidatorがT01をT1として探す誤りでexit1、失敗script/logを残し、ゼロ埋めを修正したv2で保存索引9件のrecord SHA、実装commitのGit内存在、run/artifact SHAの転記と全task/linkを照合した。旧CIの再実行/再取得とは呼ばない。
+
+完了記録scriptの作成でcwdと261021 prefixを重複したためexit2となり書込み前に失敗した。absolute apply_patchと__file__基準rootへ修正し、生成を成功させた。全試行とこの限界を保持する。後続の文書記録commit自身を2414b20のCIで試験したcommitとは記載しない。
+
+T17bは通常CLIのstage/経過/診断log・Docker timeout未確定・旧state読取診断までの部分完了。API操作metadataとregistry/artifact全体deadline、T07a現image/TERM cleanup付き復旧CI、時計資格、T09〜実candidate/producer/採否は残る。具体的な受入条件と禁止境界を[Sol引継ぎ](docs/t17b-sol-handoff.md)へ分け、可能な限り多くの独立taskを進められるようにした。OS/時計・実DB/registry/現配信・future拒否・schema/writerは変更していない。
+
+record-validation-v1はexit0でCI原本38hash・相対link152件・source/workflow/tests/lockが実装2414b20から不変・一時URL回収を確認。validator自身のscript/log/metaを含めた最終CI索引は41原本・8構造化試行になった。最終stageでは再度全descriptorと8対象pathのstaged/worktree一致を確認し、記録単位だけをcommit/pushする。

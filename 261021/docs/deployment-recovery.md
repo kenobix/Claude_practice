@@ -108,3 +108,12 @@ T16のarchive3本のallowlistは増やさない。実装commitのCI確認まで�
 
 合成Capitalで実MLflow/skopsを動かす試験であり、実候補の復旧producer、実承認、時計資格、実環境の災害復旧証拠ではない。
 T07aの実Caddy/SIGKILLによる切替復旧harness自体のCI接続と、実candidateに結合したproducer証拠は引き続き残る。
+
+### T07bの実装CI確認（2026-11-02）
+
+実装`2414b20`の[CI41462429218](https://github.com/kenobix/Claude_practice/actions/runs/41462429218)は419 tests/54.813秒・両job全stepが成功。[照合索引](reviews/20261102-t07b-ci-checks.json)に保存した。
+artifact13150206991の外側ZIP SHAは`4c010bcb5591152645c6004a38d99ffac21d61137fcefb2e3ddfb62b4461f802`、全13 memberのhashを照合した。
+registry65table・audit5table（744観測/1052予測）・column/sequence・8 artifactの対応、別3volume、破損モデル拒否、同ID再送/新ID推論を確認した。
+restoreの残存container/network/volume/imageがすべて0、workspace回収済み、source project cleanupと保護container ID不変も確認できた。
+T16の内側ZIPは`c6ca847386fe751a8d559a6b1ffc2e41e2b90e3eaada4581c22ce5fd82cab66d`で、archiveだけを渡した別processの再計算も一致した。
+T07bの合成対応復元を完了とし、T07a復旧harnessのCIと実producerは別の未完了条件として維持する。
