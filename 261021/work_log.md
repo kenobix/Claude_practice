@@ -2902,3 +2902,41 @@ T16は4原本(plan/report/ledger/journal)+manifestの基本allowlist、別proces
 公開[CI索引](docs/reviews/20261101-t13-http-ci-checks.json)を追加し、計画書/HTTP仕様へ結果を追記。元のf1cc9ff local索引は当該commit時点のCI pendingという履歴として保ち、後から原本hashや成功件数を書き換えない。code/workflow/tests/依存/実DB/registry/配信/OSはこの追跡段階で変更せず、記録のみのcommitを別単位でpushする。後続記録commit自身のCI成功を先取りしない。
 
 残件は、T16の4原本+manifest archive/別process再計算（Luna固定依頼書あり）、T07実MLflow/skops登録版とDBの対応復元・新復旧harnessのbuild/CI、T17b段階/timeout/未確定状態/API metadataと旧state読取診断、PHC fd/UDP所有/chronyd制限前内部量/時計資格、T13b実採否、T09公開待ち→T10のfit前固定→T11/T12。T03歴史的自然停止は未特定のまま。全記録を確認済み範囲と未実施範囲に分けて引き継ぐ。
+
+
+### 2026-11-02 T16 Luna実装（基点23235e3、Sol review待ち）
+
+引継ぎ仕様[docs/t16-luna-handoff.md](docs/t16-luna-handoff.md)どおり、4原本とmanifestだけを含むsynthetic-only ZIP、外側SHA descriptor、archive-only別process再計算、explicit CI artifact allowlistを追加した。新規module `src/bike_mlops/capital_measurement_evidence.py`、target tests、synthetic harness hook、workflow、README/runbook/計画を更新。既存schema/writer/lock/gate/future validation/依存lock/cleanup ownershipは変更しない。実DB/registry/配信/時計設定には触れていない。変更差分はcommit/pushせずSol review待ち。
+
+#### 検証
+
+詳細なコマンド・UTC/MONOTONIC・終了値・log SHA-256はignored `data/reports/20261102-t16-luna/attempts.jsonl`と専用logに保存した。まとめは[docs/reviews/20261102-t16-checks.json](docs/reviews/20261102-t16-checks.json)。data/reportsはgitignore対象であり、実データ/secretをcommitへ追加しない。
+
+| 実行・確認 | 結果 |
+|---|---|
+| `MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m unittest discover -s tests -p test_capital_measurement_evidence.py -v` | 最終10件成功。正常1050行、warmup50除外、latency/report/journal/ledger/hash/attempt照合と、sensitive field・絶対path・外部URI・manifest field allowlist・duplicate/extra/missing/traversal/symlink/torn journal・既存出力・外部workspace拒否、部分出力cleanupを検証。最終log SHA `d158f7d8bcf80d96e30e25cf9a54365da18bd2ec42dc1068370db5cb28bcab5a`。 |
+| `test_capital_measurement_recheck.py`、`test_capital_operational_ledger.py`、`test_capital_request_journal.py`、`test_capital_measurement_runner.py` | 各6/13/9/9件成功。request-journalの初回3失敗はsandboxのloopback bind `EPERM`; loopback権限を付けた同じ9件は成功（log SHA `fd0b0e4e1668963a7474a2848da636264969fb06fee81fc4d599e2bc4e52cf1a`）。 |
+| `MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m unittest discover -s tests -v` | 最終sourceで386件すべて成功、142.055 test秒。log SHA `3605e958ac3a13464894c07615d05c4ed4fa9e1182337d166c8370d1d4bca1f1`。 |
+| `.venv/bin/python -m compileall -q src tests scripts`; workflow YAML parse、全10 run block `bash -n`、`git diff --check` | 成功。初回validatorのPATH不足/json import漏れは修正し、後の実行が成功。 |
+| `timeout --signal=TERM --kill-after=10 1200 .venv/bin/python -u scripts/capital_system_harness.py --run-synthetic-system --evidence-dir data/reports/20261102-t16-local` | 通常sandboxではDocker socket `permission denied`。専用isolated synthetic harnessだけを権限付きで実行し、random Compose projectのsystem検証・resource cleanup成功。1,050 response、0 error、warmup50除外/measured1000、p95 `80.14272799482569 ms`。gateは`not_evaluated`、permissionは`blocked`。最後に`cleanup_complete`。system log SHA `619936ad001c84dbf5cd2560064f16a0465ee1b23a4ed53502cf62f3b051a604`。 |
+| `.venv/bin/python -m bike_mlops.capital_measurement_evidence --verify-archive data/reports/20261102-t16-local/synthetic-measurement-evidence.zip` | PATHのみを渡した別processで成功。同一attempt `12529a99-fafb-4247-ae2f-c5b336b40969`、journal/report 1,050行のID+latency一致、measured1000 p95一致。ZIP SHA `405abe223d6a39d5bd75a23e0eaa53a80abd7cc2df1c2bc01f5cfad0d1fb4aee`。journal SHA `cf5d5cd9023ec895ac95e2485f07365f01061a7450869a33b853e100a24b6dad`、report SHA `3e9eab5abd92b88ada71025bdf1e20ffb68a63edf13c60ddab3b272c351e6244`。 |
+| 同じ隔離system commandを`data/reports/20261102-t16-local-repeat`へ再実行 | Wrapper UTC `2026-11-01T23:50:36.573578Z`〜`2026-11-02T00:02:13.143854Z`、MONOTONIC `120865301625600`〜`121562792418574`、exit0。専用log SHA `c9c7e41b1411c6606866a31ebf8858576dc2ff2f04794d62e5966aae7b1c5f6f`。1,050 response、0 error、measured p95 `86.15174499573186 ms`、gate `not_evaluated`、permission `blocked`、cleanup完了。2回目archive SHA `10482539b24ae7f94176313780b8f4c7a8b9a3b2fae27b7d1b207c6240142315`。archive-only別processでも1,050 journal応答と1,000 measured行を再照合し同じp95。 |
+
+#### 初回失敗と限界
+
+作業中に、誤った相対venv path、`_hash`を誤moduleからimport、ledger reader別名消失による`NameError`を観測した。いずれも修正後のtarget/full-suite成功で解消した。初期test logの一部は次の実行により個別fileへ保存する前に上書きしたため、実hashとtool出力で見えたエラーはreview JSONへ記載し、後から作ったlogを原ログと称していない。workflow checkerにもbash PATH不足とjson import漏れがあり、validator修正後に成功した。Docker daemonは通常sandboxから拒否されたため、所有ラベルを検査する既存harnessを隔離権限実行した。
+
+1回目のsystem harnessは実行toolから直接起動したため、process UTC/MONOTONICは採取できなかった。2回目はwrapperで正確に記録し、別attempt・別archiveとして受入成功した。p95が80.1427msから86.1517msへ変わったが、別々の合成runであり良い値の選択や性能の結論には使わない。CIは未実行。workflowには明示的な3 artifact pathを加えたが、実装commit後のGitHub Actions artifact SHA/member/cleanup確認が必要。従ってT16はSol review待ちであり、task完了とは記録しない。
+
+
+### 2026-11-02 T16 Sol review・修正（基点23235e3）
+
+[Sol review索引](docs/reviews/20261102-t16-sol-review.json)へ、全構造化試行のコマンド/UTC/MONOTONIC/終了値/log hashと診断原本索引を保存。Luna索引と全原本は変更せず、記載済み13 descriptorのhashを再照合した。固定allowlistとbyte-preserving copy、既存recheck/journal/ledgerの再利用を維持した。
+
+reviewでarchive-only検証がledger/journalの秘密情報を検査しないこと、root/途中directory symlinkを受け入れること、manifest descriptorの余分fieldとjournal元pathの照合不足を発見。追加18件時点の修正前試験で4 failuresを再現した。4原本すべてのstrict-JSON/秘密情報検査、全path componentのsymlink拒否とO_NOFOLLOW directory読取、descriptor exact keysとcanonical attempt pathを追加。raw envのdict/listや任意のcontainer風absolute文字列も拒否する。export失敗+部分出力削除失敗、resource cleanup失敗+archive削除失敗を両方残し非0伝播するよう補強した。
+
+負例のhashを上位まで再結合し、journal latency/要求phase等の目的の拒否処理へ到達することを確認。成功exportの4原本byte一致と環境allowlist、失敗/timeout/TERM後のcleanup、cleanup失敗による成功archive削除、複合失敗も検証。専用23件成功。最初の全399件は398成功・新規変更検知テスト1 failure。os.stat注入がsymlink事前確認でも動いて読取前に変更してしまうテスト側の問題で、二回目fstat（読取後）にatomic replacementを行う固定注入へ変更した。production処理の拒否を緩めず、最終専用23件と全399件が成功。全suite log SHA fc449ef01bd7d3160b4763b900f882515908175696bce9e0694a9397b15c206f、target SHA 3057351a642a1b5dcd280492d7b204b61e9fb02a303638c2e5f89c21afc45e2e。
+
+workflow validatorの初回は10 blockという期待件数で失敗したが、実際はsystem側10とunit側5、合計15。全15 blockのbash -nとYAML parse、pipefail後の23/timeout124伝播、既存2 archiveの別process再計算とrecalculation/外側SHA一致、compileall成功。checker初回と修正版を保持した。補助索引生成の初回はcwdに261021を二重指定して起動前exit127、既存helper探索も存在しないartifact-check.py参照でexit2となった（tool transcriptのみ、試験実行ではない）。正しいpathで実行し、これらを成功試行として扱わない。
+
+UTC経過とMONOTONIC経過の不一致も原本に残る。今回の全suite成功は時計資格の回復を示さず、future拒否・OS設定は変更しない。実DB/registry/配信/schema/writer/依存lockも未変更。T16対象のみcommit/pushした実装commitのCI artifact/hash/再計算/cleanup確認が残る。Luna記録の「review待ち」は当時の履歴として保持し、以後の状態はSol索引で追跡する。

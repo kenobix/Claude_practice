@@ -753,6 +753,8 @@ def run_synthetic_system(root: Path, harness: "Harness", synthetic: dict, projec
         "api_audit_rows": audit_result["audit_rows"],
         "runtime_init_rejections": runtime_rejections,
         "measurement_attempt": measurement["attempt_id"],
+        "plan_relative_path": plan_path,
+        "report_relative_path": Path(measurement["report_path"]).resolve().relative_to(root.resolve()).as_posix(),
         "requests": len(report["measurements"]),
         "audited_rows": report["audit"]["verified_rows"],
         "measurement_status": recheck["numeric_status"],
@@ -772,8 +774,12 @@ def main() -> None:
     parser.add_argument("--prepare-synthetic", action="store_true", help="Generate a synthetic evaluated candidate in the temporary workspace")
     parser.add_argument("--run-synthetic-system", action="store_true",
                         help="Run blocked registration, staging seed/API, audited 1,050-request measurement and cleanup using synthetic data")
+    parser.add_argument("--evidence-dir", type=Path,
+                        help="Opt in to archive and independently recalculate this synthetic run under data/reports")
     args = parser.parse_args()
     run_synthetic = args.run_synthetic_system
+    if args.evidence_dir is not None and not run_synthetic:
+        parser.error("--evidence-dir requires --run-synthetic-system")
     prepare_synthetic = args.prepare_synthetic or run_synthetic
     run_infrastructure = args.run_infrastructure or run_synthetic
     project = "bikemlopstest" + secrets.token_hex(8)
@@ -781,6 +787,7 @@ def main() -> None:
     root = Path(tempfile.mkdtemp(prefix="capital-system-harness-"))
     cleanup_required = False
     preserve = False
+    evidence_exported = False
     stage = "prepare_workspace"
     old_handlers = {signum: signal.getsignal(signum) for signum in (signal.SIGINT, signal.SIGTERM)}
 
@@ -792,6 +799,9 @@ def main() -> None:
         signal.signal(signum, interrupt_on_signal)
     try:
         copy_workspace(SOURCE_ROOT, root)
+        if run_synthetic:
+            from bike_mlops.capital_measurement_evidence import _workspace_marker
+            _workspace_marker(root, project, token)
         make_override(root, token)
         write_synthetic_credentials(root)
         harness = Harness(root, project, token)
@@ -831,6 +841,22 @@ def main() -> None:
             stage = "synthetic_system"
             result = run_synthetic_system(root, harness, synthetic, project)
             print(json.dumps(result, ensure_ascii=False), flush=True)
+            if args.evidence_dir is not None:
+                stage = "archive_synthetic_evidence"
+                from bike_mlops.capital_measurement_evidence import export_synthetic_evidence
+                commit = subprocess.run(["git", "-C", str(SOURCE_ROOT), "rev-parse", "HEAD"],
+                                        capture_output=True, text=True, timeout=10, check=True).stdout.strip()
+                dirty = bool(subprocess.run(["git", "-C", str(SOURCE_ROOT), "status", "--porcelain"],
+                                            capture_output=True, text=True, timeout=10, check=True).stdout.strip())
+                evidence_dir = args.evidence_dir if args.evidence_dir.is_absolute() else SOURCE_ROOT / args.evidence_dir
+                evidence = export_synthetic_evidence(
+                    root=root, project=project, token=token, candidate_id=result["candidate_id"],
+                    attempt_id=result["measurement_attempt"], plan_relative=result["plan_relative_path"],
+                    report_path=root / result["report_relative_path"], evidence_dir=evidence_dir,
+                    source_commit=commit, source_dirty=dirty)
+                evidence_exported = True
+                print(json.dumps({"status": "synthetic_evidence_archived_and_recalculated", **evidence},
+                                 ensure_ascii=False), flush=True)
     except HarnessError as error:
         cause = "required_port_unavailable" if str(error).startswith("Required local port ") else "not_determined"
         print(json.dumps({"status": "failed", "stage": stage, "cause": cause,
@@ -848,6 +874,15 @@ def main() -> None:
                     print(json.dumps({"status": "cleanup_complete", "project": project}), flush=True)
                 except BaseException as error:
                     preserve = True
+                    if evidence_exported:
+                        evidence_dir = args.evidence_dir if args.evidence_dir.is_absolute() else SOURCE_ROOT / args.evidence_dir
+                        try:
+                            shutil.rmtree(evidence_dir)
+                        except BaseException as removal_error:
+                            print(f"Evidence removal failed with {type(removal_error).__name__}; "
+                                  "resource cleanup also failed; workspace retained", file=sys.stderr)
+                            raise BaseExceptionGroup("Resource cleanup and evidence removal both failed", [error, removal_error])
+                        print("Synthetic evidence removed because disposable-resource cleanup failed", file=sys.stderr)
                     print(f"Cleanup failed; isolated workspace retained at {root}; project {project}; "
                           f"error type {type(error).__name__}; underlying cause not determined", file=sys.stderr)
                     raise

@@ -2,6 +2,7 @@
 
 初学者向けの用語は[用語集](glossary.md)を参照してください。
 データ源を切り替える場合は[データプロファイルとtarget分離](data-profiles.md)を先に確認してください。通常運用は引き続きUCIのCompose projectです。
+合成Capital測定のZIP保存・別process再計算手順は[T16計測証拠アーカイブ](measurement-evidence-archive.md)を参照してください。これは隔離fixtureの証拠であり、実データの合格・配信承認ではありません。
 
 ## 0. Windows/WSLからプロジェクトを開く
 

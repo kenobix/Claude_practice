@@ -1,0 +1,646 @@
+{
+  "task": "T16 Sol review",
+  "base_commit": "23235e3c1be38d4271794f6df71b3fc830c3ffdf",
+  "review_state": "approved_local_pending_implementation_commit_CI_artifact_and_cleanup",
+  "synthetic_only": true,
+  "findings_fixed": [
+    "Archive-only verification now scans ledger and every strict-JSON journal event for sensitive fields and external/absolute references; export already scanned them.",
+    "Workspace root and intermediate directory symlinks are refused; regular reads walk directories with O_NOFOLLOW and check inode/signature after reading.",
+    "Manifest payload descriptors have exact fields and canonical nonempty relative paths; report/ledger/journal source paths and journal descriptor are bound to the selected attempt.",
+    "Raw environment mappings/lists and arbitrary container-like absolute strings are refused; the inventory exception is limited to the synthetic container record format.",
+    "Export and partial-output cleanup failures retain both exceptions; resource cleanup and archive-removal failures are propagated together.",
+    "Negative tests rebind enclosing hashes so latency/warmup/journal cases reach their intended validators; byte-exact successful export, reduced subprocess environment, timeout/TERM and cleanup paths are covered."
+  ],
+  "validation": {
+    "target_tests": 23,
+    "full_suite_tests": 399,
+    "target_meta": "data/reports/20261102-t16-sol/target-final-v2.json",
+    "full_suite_meta": "data/reports/20261102-t16-sol/full-suite-v2.json",
+    "workflow_run_blocks_bash_n": 15,
+    "historical_block_count_correction": "Luna recorded 10 blocks, the synthetic-system job count; current validation checks all 15 across both jobs.",
+    "pipeline_exit_codes": [
+      23,
+      124
+    ],
+    "prior_archives_rechecked": 2,
+    "scope": "Saved synthetic originals only; no real model/data performance, clock qualification, real DB/registry/deployment approval claim."
+  },
+  "failures_preserved": [
+    "target-before-fixes:18 tests,4 failures reproduced gaps before production fixes.",
+    "local-validation-v1 checker expected 10 workflow blocks; corrected to actual 15. Original checker and failure retained.",
+    "full-suite-v1:399 tests,398 passed and one new test failed. Its os.stat injection could run during symlink preflight before file read. Test now atomically replaces the file at the second fstat, after read; no production change for this test fix.",
+    "Read-only exploration referenced a nonexistent prior artifact-check.py and returned exit2; tool transcript only; no test executed.",
+    "The review-index generation launcher initially used a double project prefix from project cwd and returned exit127 before Python started; tool transcript only; corrected path invocation succeeded."
+  ],
+  "clock_observations": {
+    "elapsed_discrepancies": [
+      {
+        "log": "261021/data/reports/20261102-t16-sol/full-suite-v1.log",
+        "utc_elapsed_seconds": 165.90941,
+        "monotonic_elapsed_seconds": 181.059604951
+      },
+      {
+        "log": "261021/data/reports/20261102-t16-sol/full-suite-v2.log",
+        "utc_elapsed_seconds": 162.793367,
+        "monotonic_elapsed_seconds": 175.645191957
+      },
+      {
+        "log": "261021/data/reports/20261102-t16-sol/target-before-fixes.log",
+        "utc_elapsed_seconds": 10.195988,
+        "monotonic_elapsed_seconds": 12.641331936
+      },
+      {
+        "log": "261021/data/reports/20261102-t16-sol/target-final-v2.log",
+        "utc_elapsed_seconds": 12.421987,
+        "monotonic_elapsed_seconds": 14.875935924
+      }
+    ],
+    "interpretation": "UTC and monotonic elapsed values still differ in this environment; no OS changes, clamp, retry policy or future-rejection relaxation. Passing tests do not qualify this clock."
+  },
+  "source_sha256": {
+    "src/bike_mlops/capital_measurement_evidence.py": "613a5b90fb40c2023644f506ca1c1cb52f8f69da348963a5414dffc92a0fefdc",
+    "tests/test_capital_measurement_evidence.py": "a5006e8f534948f1a32512fd499c89a85a612115419dd273aec725ab63cd65e2",
+    "scripts/capital_system_harness.py": "4891e65b4b9e0140dfeec2252b330e82382a39c91d0c63ac759832701f47c3e3"
+  },
+  "trials": [
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "started_at_utc": "2026-11-02T12:01:48.148093+00:00",
+      "ended_at_utc": "2026-11-02T12:01:48.270514+00:00",
+      "elapsed_monotonic_seconds": 0.12242056,
+      "timeout_seconds": 60.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261102-t16-sol/compile-v1.log",
+      "bytes": 143,
+      "sha256": "4f99f5a18bb722538747c093a90e3becae50cc01de04e680f4da206b447d006b"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "started_at_utc": "2026-11-02T12:08:05.729217+00:00",
+      "ended_at_utc": "2026-11-02T12:08:05.853090+00:00",
+      "elapsed_monotonic_seconds": 0.123854342,
+      "timeout_seconds": 60.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261102-t16-sol/compile-v2.log",
+      "bytes": 143,
+      "sha256": "cb2147387e77fc64fac260e7dda0fb35a7191ed33b0c10b67a19b437af9b4eec"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "started_at_utc": "2026-11-02T12:01:26.270527+00:00",
+      "ended_at_utc": "2026-11-02T12:04:12.179937+00:00",
+      "elapsed_monotonic_seconds": 181.059604951,
+      "timeout_seconds": 300.0,
+      "timed_out": false,
+      "exit_code": 1,
+      "log": "261021/data/reports/20261102-t16-sol/full-suite-v1.log",
+      "bytes": 75563,
+      "sha256": "5222bcc4568f5805d327ffd116a6e450e55c62098b0d9e13aec3b6615d979697"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "started_at_utc": "2026-11-02T12:05:36.714210+00:00",
+      "ended_at_utc": "2026-11-02T12:08:19.507577+00:00",
+      "elapsed_monotonic_seconds": 175.645191957,
+      "timeout_seconds": 300.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261102-t16-sol/full-suite-v2.log",
+      "bytes": 74910,
+      "sha256": "fc449ef01bd7d3160b4763b900f882515908175696bce9e0694a9397b15c206f"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261102-t16-sol/validate-local.py"
+      ],
+      "started_at_utc": "2026-11-02T12:01:47.582278+00:00",
+      "ended_at_utc": "2026-11-02T12:01:47.799447+00:00",
+      "elapsed_monotonic_seconds": 0.217160814,
+      "timeout_seconds": 180.0,
+      "timed_out": false,
+      "exit_code": 1,
+      "log": "261021/data/reports/20261102-t16-sol/local-validation-v1.log",
+      "bytes": 366,
+      "sha256": "f4e1e52980f07b5c5ecd77a87f0f33e4590fd3b4179b8fef6f931db1b8c07074"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261102-t16-sol/validate-local-v2.py"
+      ],
+      "started_at_utc": "2026-11-02T12:02:21.106436+00:00",
+      "ended_at_utc": "2026-11-02T12:02:27.971828+00:00",
+      "elapsed_monotonic_seconds": 6.865391246,
+      "timeout_seconds": 180.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261102-t16-sol/local-validation-v2.log",
+      "bytes": 3610,
+      "sha256": "8946ed99dd0659f5a8df7e3d4251c9b4850b658b5cf8038cb499222a4d705054"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261102-t16-sol/check-original-hashes.py"
+      ],
+      "started_at_utc": "2026-11-02T12:06:56.847760+00:00",
+      "ended_at_utc": "2026-11-02T12:06:57.023422+00:00",
+      "elapsed_monotonic_seconds": 0.17569203,
+      "timeout_seconds": 60.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261102-t16-sol/luna-hash-check-v1.log",
+      "bytes": 2468,
+      "sha256": "ef8908d48698f4fbed70dbfa4a12692e883b9c019a00d8ab2f9a49dfc6c4efaf"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_capital_measurement_evidence.py",
+        "-v"
+      ],
+      "started_at_utc": "2026-11-02T11:59:18.778194+00:00",
+      "ended_at_utc": "2026-11-02T11:59:29.598369+00:00",
+      "elapsed_monotonic_seconds": 10.820172064,
+      "timeout_seconds": 180.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261102-t16-sol/target-after-fixes-v1.log",
+      "bytes": 3910,
+      "sha256": "a35c710e00a3f6fb6aeb4e0c8398c20ecd1bbcae767e0f81945abb20b8c057ac"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_capital_measurement_evidence.py",
+        "-v"
+      ],
+      "started_at_utc": "2026-11-02T12:00:04.438382+00:00",
+      "ended_at_utc": "2026-11-02T12:00:15.542671+00:00",
+      "elapsed_monotonic_seconds": 11.104267295,
+      "timeout_seconds": 180.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261102-t16-sol/target-after-fixes-v2.log",
+      "bytes": 4515,
+      "sha256": "0b40235548e2ccdad8d18613c5a66d70c95925b9a8f7ffc07b3bb4c5ce17feee"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_capital_measurement_evidence.py",
+        "-v"
+      ],
+      "started_at_utc": "2026-11-02T11:58:03.305888+00:00",
+      "ended_at_utc": "2026-11-02T11:58:13.501876+00:00",
+      "elapsed_monotonic_seconds": 12.641331936,
+      "timeout_seconds": 180.0,
+      "timed_out": false,
+      "exit_code": 1,
+      "log": "261021/data/reports/20261102-t16-sol/target-before-fixes.log",
+      "bytes": 6781,
+      "sha256": "b3693989d52b78d35047ea5a94844e3a06c2ab366de50102a94cfc7ccf0ba4a8"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_capital_measurement_evidence.py",
+        "-v"
+      ],
+      "started_at_utc": "2026-11-02T12:00:36.315228+00:00",
+      "ended_at_utc": "2026-11-02T12:00:50.922076+00:00",
+      "elapsed_monotonic_seconds": 14.606840713,
+      "timeout_seconds": 180.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261102-t16-sol/target-final-v1.log",
+      "bytes": 4934,
+      "sha256": "7ed810533bd969e8873877446c347bbefafcf215b0d4412b9a32d2c7f645f416"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_capital_measurement_evidence.py",
+        "-v"
+      ],
+      "started_at_utc": "2026-11-02T12:05:01.445617+00:00",
+      "ended_at_utc": "2026-11-02T12:05:13.867604+00:00",
+      "elapsed_monotonic_seconds": 14.875935924,
+      "timeout_seconds": 180.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261102-t16-sol/target-final-v2.log",
+      "bytes": 4934,
+      "sha256": "3057351a642a1b5dcd280492d7b204b61e9fb02a303638c2e5f89c21afc45e2e"
+    }
+  ],
+  "evidence_files": [
+    {
+      "path": "data/reports/20261102-t16-sol/build-review.py",
+      "bytes": 4467,
+      "sha256": "8f67a3e30fca23ac29f6affb001d92098255d0fd6c9205fd0a1c5b1746af5598"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/check-original-hashes.py",
+      "bytes": 789,
+      "sha256": "1c71e1be0d9ae07c721adafe32c377e2525aaaeb223b67b0029869d38e5c27cb"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/compile-v1.json",
+      "bytes": 503,
+      "sha256": "085e0b72251b3d414a2702edc1da70839efd86e453e192a1359455df8669364e"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/compile-v1.log",
+      "bytes": 143,
+      "sha256": "4f99f5a18bb722538747c093a90e3becae50cc01de04e680f4da206b447d006b"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/compile-v2.json",
+      "bytes": 504,
+      "sha256": "db00172b5afe968caec1080d391574c559e4ad8c8dd131c883a7e800bfaa014a"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/compile-v2.log",
+      "bytes": 143,
+      "sha256": "cb2147387e77fc64fac260e7dda0fb35a7191ed33b0c10b67a19b437af9b4eec"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/signal-SIGKILL-c0058664d16b48e1865b5f0465631bc6/child-stacks.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/signal-SIGKILL-c0058664d16b48e1865b5f0465631bc6/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/signal-SIGKILL-c0058664d16b48e1865b5f0465631bc6/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/signal-SIGKILL-c0058664d16b48e1865b5f0465631bc6/child.jsonl",
+      "bytes": 1128,
+      "sha256": "06262e62bb9722def1699b924ede4b189afba14fb583e1e1889caf51f14d9ba5"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/signal-SIGKILL-c0058664d16b48e1865b5f0465631bc6/parent.jsonl",
+      "bytes": 936,
+      "sha256": "364e53850d5c1d218ba66fd24e1bb18350b3d74bad0b228453ac4efccc51a78a"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/signal-SIGTERM-38449d2ad2474466bf39a0d8cf01a4c7/child-stacks.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/signal-SIGTERM-38449d2ad2474466bf39a0d8cf01a4c7/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/signal-SIGTERM-38449d2ad2474466bf39a0d8cf01a4c7/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/signal-SIGTERM-38449d2ad2474466bf39a0d8cf01a4c7/child.jsonl",
+      "bytes": 2497,
+      "sha256": "791e75b78810a162b35d2797d8a27f36b9f027b7bc441a1aa66afd129799a49f"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/signal-SIGTERM-38449d2ad2474466bf39a0d8cf01a4c7/parent.jsonl",
+      "bytes": 943,
+      "sha256": "b101037f7dca3a2bdb0fe99c65a52a3b1b99fc3bd4d691200b6ddd46b3a5e6b6"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/signal-SIGTERM-a0ff2ed150c24de78d63a3b9f69f6353/child-stacks.txt",
+      "bytes": 594,
+      "sha256": "bf3a3049da235ad72e4ed050da8814c987f0f726a427d6d447dcdee6707fc930"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/signal-SIGTERM-a0ff2ed150c24de78d63a3b9f69f6353/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/signal-SIGTERM-a0ff2ed150c24de78d63a3b9f69f6353/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/signal-SIGTERM-a0ff2ed150c24de78d63a3b9f69f6353/child.jsonl",
+      "bytes": 1950,
+      "sha256": "c3a68a22edf3a4b93fff017777e3246a9c1626a7f61d19d97d50872caa7e5bf8"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/signal-SIGTERM-a0ff2ed150c24de78d63a3b9f69f6353/parent.jsonl",
+      "bytes": 1085,
+      "sha256": "ff3389aaa4356279819f67d5f2be63035f50286f63950926f77aaf517d2c28b0"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/test_regressed_review_validation_clock_blocks_approval_without_tag_writes-2504053214e84d38b50be1b132d02c8f/decision.jsonl",
+      "bytes": 13107,
+      "sha256": "c38e64e466a859a4c3074f06088ec602cabe642850f9d7753e9be0bc51a31c8b"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/test_report_artifact_review_approval_and_tamper_rejection_in_temporary_sqlite_registry-c77aa40cca56438fa2dd4eb8a64ae926/decision.jsonl",
+      "bytes": 20369,
+      "sha256": "60931a1036c35ac8b7f9ec61d6f3e1739b48e341731718aaaedd6c1e4a8a7dae"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1-traces/test_utc_boundary_is_strict_and_rejection_retains_exact_clock_values-2a65da5ed25346e6a0ac12a59bdbdf7a/decision.jsonl",
+      "bytes": 1647,
+      "sha256": "f2126a3bb10c0252dd075069a8f8efedb43d50bf5c2a5e541c43fc8a785df906"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1.json",
+      "bytes": 510,
+      "sha256": "9ab128f3494373dd94c90d29c0a446df51100d2f0739e708ae0be63b79ed60e2"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v1.log",
+      "bytes": 75563,
+      "sha256": "5222bcc4568f5805d327ffd116a6e450e55c62098b0d9e13aec3b6615d979697"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/signal-SIGKILL-d5a919bfc33c4f34adc753bb62f871b2/child-stacks.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/signal-SIGKILL-d5a919bfc33c4f34adc753bb62f871b2/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/signal-SIGKILL-d5a919bfc33c4f34adc753bb62f871b2/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/signal-SIGKILL-d5a919bfc33c4f34adc753bb62f871b2/child.jsonl",
+      "bytes": 1128,
+      "sha256": "d90c9cac67fced0f7d0a11e78430f353f0c79382f2c29c093dba3acaa8d8e1d0"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/signal-SIGKILL-d5a919bfc33c4f34adc753bb62f871b2/parent.jsonl",
+      "bytes": 936,
+      "sha256": "59c1e87d3a79c8d7a798a2f9417a606ad672b30a0e82ba680b9f24ac723671c7"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/signal-SIGTERM-3d6d7746e0434b5089c8bd2db151cc9f/child-stacks.txt",
+      "bytes": 594,
+      "sha256": "fd42e6ee74eb12dc0bce7fad9aeaa4c3f6ff00abcd77d5961fe4d13163ad18b6"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/signal-SIGTERM-3d6d7746e0434b5089c8bd2db151cc9f/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/signal-SIGTERM-3d6d7746e0434b5089c8bd2db151cc9f/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/signal-SIGTERM-3d6d7746e0434b5089c8bd2db151cc9f/child.jsonl",
+      "bytes": 1950,
+      "sha256": "bfd49e28a4bd5db873c339874a3ac4fd7b9bd26248a1549fd3877f609ac21763"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/signal-SIGTERM-3d6d7746e0434b5089c8bd2db151cc9f/parent.jsonl",
+      "bytes": 1085,
+      "sha256": "70973b00ebfa0c3260732bd70688505870ac78009f016763c8195ae519d59ca3"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/signal-SIGTERM-a641283a8f6f41e69f0cd52a77a1858d/child-stacks.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/signal-SIGTERM-a641283a8f6f41e69f0cd52a77a1858d/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/signal-SIGTERM-a641283a8f6f41e69f0cd52a77a1858d/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/signal-SIGTERM-a641283a8f6f41e69f0cd52a77a1858d/child.jsonl",
+      "bytes": 2497,
+      "sha256": "e5ed7c8e14d3a30e40b86c0dcc47d364ee817a053cd5689d872bf343eb8a685b"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/signal-SIGTERM-a641283a8f6f41e69f0cd52a77a1858d/parent.jsonl",
+      "bytes": 943,
+      "sha256": "7194b006973f1278db69f629b80c8e1f7c87c3cccda4001b875635070896b600"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/test_regressed_review_validation_clock_blocks_approval_without_tag_writes-f873cfcd798d4094bcbbd18f128151f3/decision.jsonl",
+      "bytes": 13107,
+      "sha256": "85137b59ecfaa427b13d5359c50f70ab7a7351f7e2c6e890549a0d88bba47d64"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/test_report_artifact_review_approval_and_tamper_rejection_in_temporary_sqlite_registry-836eb688b0ed4568affbbf2b768adbd4/decision.jsonl",
+      "bytes": 20369,
+      "sha256": "cd95a2fe9660ca07518913bd722d94e7227bcef8e050b735569212b6057e172d"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2-traces/test_utc_boundary_is_strict_and_rejection_retains_exact_clock_values-8e7bca8947734290b2aafcc1d634e3b4/decision.jsonl",
+      "bytes": 1647,
+      "sha256": "79d5a5de4f2387ed202673b9b58a3aca789889ec96f5567541c35388e5c7b28f"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2.json",
+      "bytes": 510,
+      "sha256": "d47f3e0909a207a77f1b200fe9187deae93d49bec8899c3dfe583d2125504a29"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/full-suite-v2.log",
+      "bytes": 74910,
+      "sha256": "fc449ef01bd7d3160b4763b900f882515908175696bce9e0694a9397b15c206f"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/local-validation-v1.json",
+      "bytes": 492,
+      "sha256": "2de062e918535617854a7cfb2946ae7c92e915b4a5a12d75b58dc7e4c9c9e9eb"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/local-validation-v1.log",
+      "bytes": 366,
+      "sha256": "f4e1e52980f07b5c5ecd77a87f0f33e4590fd3b4179b8fef6f931db1b8c07074"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/local-validation-v2.json",
+      "bytes": 496,
+      "sha256": "494d3e5912a85de63627fd0a017dbc805a74b8c8f0cb6fb191c8d9e4a73979d5"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/local-validation-v2.log",
+      "bytes": 3610,
+      "sha256": "8946ed99dd0659f5a8df7e3d4251c9b4850b658b5cf8038cb499222a4d705054"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/luna-hash-check-v1.json",
+      "bytes": 497,
+      "sha256": "034f56ebe04c61e45c64ec51bb47283bdba388a189a612427fc6ae3d9381935d"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/luna-hash-check-v1.log",
+      "bytes": 2468,
+      "sha256": "ef8908d48698f4fbed70dbfa4a12692e883b9c019a00d8ab2f9a49dfc6c4efaf"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/run-attempt.py",
+      "bytes": 1664,
+      "sha256": "51c390ee9a61c9667b0abc4b2fc46d2e51cdd23019ee4c8a92dd84d2e822f5e4"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/target-after-fixes-v1.json",
+      "bytes": 570,
+      "sha256": "7a78f34705f403a88542fb5ee264fabd61bffde936df01c84bb0085d5630deb2"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/target-after-fixes-v1.log",
+      "bytes": 3910,
+      "sha256": "a35c710e00a3f6fb6aeb4e0c8398c20ecd1bbcae767e0f81945abb20b8c057ac"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/target-after-fixes-v2.json",
+      "bytes": 570,
+      "sha256": "f989e71a77017d6b5c562957fc7d9088518850fc37eef585c679d9831ffcb346"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/target-after-fixes-v2.log",
+      "bytes": 4515,
+      "sha256": "0b40235548e2ccdad8d18613c5a66d70c95925b9a8f7ffc07b3bb4c5ce17feee"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/target-before-fixes.json",
+      "bytes": 568,
+      "sha256": "4ed64956197205dd9697aea21cebc8b5a0391771d635ac687a09a2ce8952fb68"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/target-before-fixes.log",
+      "bytes": 6781,
+      "sha256": "b3693989d52b78d35047ea5a94844e3a06c2ab366de50102a94cfc7ccf0ba4a8"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/target-final-v1.json",
+      "bytes": 564,
+      "sha256": "7a83ed89f8065d8d65dd45484689cd24894e263c520e5b2486de552658a22667"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/target-final-v1.log",
+      "bytes": 4934,
+      "sha256": "7ed810533bd969e8873877446c347bbefafcf215b0d4412b9a32d2c7f645f416"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/target-final-v2.json",
+      "bytes": 564,
+      "sha256": "869f30876b4b6894e607c263d9894190d197690727255e28f5010acf8d29acec"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/target-final-v2.log",
+      "bytes": 4934,
+      "sha256": "3057351a642a1b5dcd280492d7b204b61e9fb02a303638c2e5f89c21afc45e2e"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/validate-local-v1.py",
+      "bytes": 2085,
+      "sha256": "a856c0c24ea60e470b99d3fbc6c1cbed3d86bed1653723600a969e3da584eeeb"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/validate-local-v2.py",
+      "bytes": 2098,
+      "sha256": "0fd0e9fe7fb2477ebfed83574649510d71450978c858188549158e2312010e52"
+    },
+    {
+      "path": "data/reports/20261102-t16-sol/validate-local.py",
+      "bytes": 2085,
+      "sha256": "a856c0c24ea60e470b99d3fbc6c1cbed3d86bed1653723600a969e3da584eeeb"
+    }
+  ],
+  "remaining": [
+    "Commit/push only reviewed T16 paths.",
+    "Verify implementation commit CI jobs, exact artifact allowlist, outer/inner ZIP hashes, archive-only recalculation and cleanup before T16 completion."
+  ],
+  "unchanged_boundaries": [
+    "OS and clock settings",
+    "real databases and registry",
+    "current serving deployment",
+    "measurement policy and future validation",
+    "schema/writer/dependency locks"
+  ],
+  "original_luna_record": "docs/reviews/20261102-t16-checks.json"
+}

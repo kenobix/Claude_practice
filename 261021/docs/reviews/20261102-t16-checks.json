@@ -1,0 +1,229 @@
+{
+  "task": "T16 synthetic measurement archive and archive-only recalculation",
+  "base_commit": "23235e3c1be38d4271794f6df71b3fc830c3ffdf",
+  "review_state": "waiting_for_Sol_review_no_commit_or_push",
+  "scope": "Synthetic-only evidence. No real database, registry, deployment, OS setting, clock, schema, or writer was modified.",
+  "implementation": {
+    "archive_name": "synthetic-measurement-evidence.zip",
+    "members": [
+      "manifest.json",
+      "payload/plan.json",
+      "payload/report.json",
+      "payload/operational-ledger.json",
+      "payload/request-journal.jsonl"
+    ],
+    "archive_reader": "Separate Python process takes only the archive path, receives a reduced environment, and does not connect to Docker, PostgreSQL, or MLflow.",
+    "numeric_policy": "50 warmup rows excluded; all 1,000 measured rows used; nearest-rank ceil(0.95*n)-1; request IDs and journal/report latency joined by ID.",
+    "preserved_states": {
+      "operational_gate": "not_evaluated",
+      "deployment_permission": "blocked"
+    },
+    "safety": [
+      "Output path must be new and inside 261021/data/reports.",
+      "Source root must be the current-user-owned private harness temp directory and carry a mode-0600 random identity marker.",
+      "Only four exact source originals are copied byte-for-byte; source files are checked before and after copying.",
+      "No extractall; duplicate, extra, missing, symlink, traversal, oversized, compressed, or hash-mismatched ZIP members are rejected.",
+      "Credential-like fields, raw environment/commandline fields, credential URI, non-local URI, and absolute filesystem path are rejected.",
+      "An export or verifier failure removes its newly created output directory; harness cleanup still runs in finally.",
+      "If disposable-resource cleanup fails after export, the archive directory is removed and the failure is propagated."
+    ]
+  },
+  "local_synthetic_run": {
+    "status": "passed",
+    "synthetic_only": true,
+    "candidate_id": "f43d402e05265337278e94bedf67138e98b3b64c3ae8e12d8a9f6fcf7296eeba",
+    "attempt_id": "12529a99-fafb-4247-ae2f-c5b336b40969",
+    "responses": 1050,
+    "measured_responses": 1000,
+    "warmup_responses_excluded": 50,
+    "measured_errors": 0,
+    "p95_ms": 80.14272799482569,
+    "request_id_sha256": "103aa69f45495ffa05d4d36e4859d812437dbf7f7479b413a8142e1b69ab3549",
+    "operational_gate": "not_evaluated",
+    "deployment_permission": "blocked",
+    "cleanup": "cleanup_complete",
+    "log": "data/reports/20261102-t16-luna/synthetic-system.log",
+    "log_sha256": "619936ad001c84dbf5cd2560064f16a0465ee1b23a4ed53502cf62f3b051a604",
+    "timing_capture_limitation": "The first harness run was invoked directly through the execution tool; its process start/end UTC and MONOTONIC were not captured and are not reconstructed. A second independent full run below has wrapper-captured UTC/MONOTONIC, exit and log hash."
+  },
+  "repeat_synthetic_run": {
+    "status": "passed",
+    "synthetic_only": true,
+    "candidate_id": "7ec05f5eed0ef91c161b25c8ff9dabec950d68d5960d63eca3172e2ca2cea167",
+    "attempt_id": "947e8363-bdee-4c7a-80b4-780d0aadef3d",
+    "start_utc": "2026-11-01T23:50:36.573578+00:00",
+    "end_utc": "2026-11-02T00:02:13.143854+00:00",
+    "start_monotonic_ns": 120865301625600,
+    "end_monotonic_ns": 121562792418574,
+    "elapsed_monotonic_ns": 697490792974,
+    "exit_code": 0,
+    "log": "data/reports/20261102-t16-luna/synthetic-system-repeat.log",
+    "log_sha256": "c9c7e41b1411c6606866a31ebf8858576dc2ff2f04794d62e5966aae7b1c5f6f",
+    "responses": 1050,
+    "measured_responses": 1000,
+    "warmup_responses_excluded": 50,
+    "measured_errors": 0,
+    "p95_ms": 86.15174499573186,
+    "request_id_sha256": "ba0a22064d79a6e799ba78d3f5908b2f3ef9f14ec29762770b27becef91ec946",
+    "operational_gate": "not_evaluated",
+    "deployment_permission": "blocked",
+    "cleanup": "cleanup_complete",
+    "archive": {
+      "path": "data/reports/20261102-t16-local-repeat/synthetic-measurement-evidence.zip",
+      "bytes": 1529717,
+      "sha256": "10482539b24ae7f94176313780b8f4c7a8b9a3b2fae27b7d1b207c6240142315",
+      "sha_descriptor_sha256": "97f100f4ffad8a70904254e4b5d71f9f4209b10bc583a9ddd4a4edc70b0c445e",
+      "recalculation_file_sha256": "63cd21744506dcf87586b026974dc260adb61d7974b5c9939d0f2e86d044fc03",
+      "standalone_recheck": {
+        "status": "passed",
+        "archive_argument_only": true,
+        "environment": "PATH only",
+        "exit_code": 0,
+        "log": "data/reports/20261102-t16-luna/repeat-archive-recheck.log",
+        "log_sha256": "c1872efb034a96fad0b17dba8478c390039e0791bb203eb20ca9e091d0fa9a5b"
+      }
+    },
+    "interpretation": "The 80.1427 ms and 86.1517 ms p95 values are separate synthetic attempts. Neither is selected as a preferred run or represented as production performance."
+  },
+  "archive": {
+    "path": "data/reports/20261102-t16-local/synthetic-measurement-evidence.zip",
+    "bytes": 1529688,
+    "sha256": "405abe223d6a39d5bd75a23e0eaa53a80abd7cc2df1c2bc01f5cfad0d1fb4aee",
+    "sha_descriptor_sha256": "a36c2052c7e43d47028b8ffa4c76bb5b6a6687eb57e26034ea9886612806f2b9",
+    "recalculation_file_sha256": "fa9d29f3375328ea695174f12e6b18296b7437f981679d868caaa0200074afa0",
+    "members": {
+      "payload/plan.json": {
+        "bytes": 5149,
+        "sha256": "eb8b1d53e0fc53cb4b6ce730ce6ffaa1b8d9559902c56803ff13ba701353e614"
+      },
+      "payload/report.json": {
+        "bytes": 437644,
+        "sha256": "3e9eab5abd92b88ada71025bdf1e20ffb68a63edf13c60ddab3b272c351e6244"
+      },
+      "payload/operational-ledger.json": {
+        "bytes": 1232,
+        "sha256": "72761b022f56f523a4bc23e86fabc90e2a358cf36f58d4a9039b16947704f426"
+      },
+      "payload/request-journal.jsonl": {
+        "bytes": 1083223,
+        "sha256": "cf5d5cd9023ec895ac95e2485f07365f01061a7450869a33b853e100a24b6dad"
+      }
+    },
+    "standalone_recheck": {
+      "status": "passed",
+      "archive_argument_only": true,
+      "environment": "PATH only",
+      "exit_code": 0,
+      "log": "data/reports/20261102-t16-luna/archive-recheck-postscan.log",
+      "log_sha256": "ef331de34eff1415f6bed7fd1266fff74fa0f6f7a68937ad0752597d51501721",
+      "result": "1,050 journal responses matched report request IDs and latency; 1,000 measured rows recomputed to p95 80.14272799482569 ms."
+    }
+  },
+  "verification": {
+    "target_tests": {
+      "count": 10,
+      "status": "passed_after_manifest_schema_and_secret_field_rejection",
+      "log": "data/reports/20261102-t16-luna/target-tests-manifest-schema.log",
+      "sha256": "d158f7d8bcf80d96e30e25cf9a54365da18bd2ec42dc1068370db5cb28bcab5a"
+    },
+    "full_unit_suite": {
+      "count": 386,
+      "status": "passed_on_final_source",
+      "elapsed_seconds": 146.773,
+      "log": "data/reports/20261102-t16-luna/full-unit-suite-manifest-schema.log",
+      "sha256": "3605e958ac3a13464894c07615d05c4ed4fa9e1182337d166c8370d1d4bca1f1"
+    },
+    "compileall": {
+      "status": "passed",
+      "log": "data/reports/20261102-t16-luna/compileall-last.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "regressions": {
+      "measurement_recheck": {
+        "count": 6,
+        "status": "passed",
+        "log_sha256": "13dd2aa46688e97bbc94724dfc47c96f06531c67424fbcba3ada502089839872"
+      },
+      "operational_ledger": {
+        "count": 13,
+        "status": "passed",
+        "log_sha256": "7780a23743c759643f18d04edc09d8f447fe90ab3eba551d30132142c48469d0"
+      },
+      "request_journal": {
+        "count": 9,
+        "status": "passed_with_loopback_permission",
+        "log_sha256": "fd0b0e4e1668963a7474a2848da636264969fb06fee81fc4d599e2bc4e52cf1a"
+      },
+      "measurement_runner": {
+        "count": 9,
+        "status": "passed",
+        "log_sha256": "fd9babbe00dfcbddb0d78debf5c262bc37561f54b2a85e49198c042d882e3dd6"
+      }
+    },
+    "yaml_parse": "passed",
+    "workflow_shell_blocks_bash_n": 10,
+    "workflow_validation_log": {
+      "path": "data/reports/20261102-t16-luna/workflow-validation-final2.log",
+      "sha256": "1e7e8a23efe5ea2cc0cabf9ae982a575fc3c42c40c7fe5608a34232019a09b43"
+    },
+    "post_manifest_schema_archive_only_rechecks": [
+      {
+        "path": "data/reports/20261102-t16-luna/archive-first-manifest-schema.log",
+        "exit_code": 0,
+        "sha256": "ef331de34eff1415f6bed7fd1266fff74fa0f6f7a68937ad0752597d51501721"
+      },
+      {
+        "path": "data/reports/20261102-t16-luna/archive-repeat-manifest-schema.log",
+        "exit_code": 0,
+        "sha256": "c1872efb034a96fad0b17dba8478c390039e0791bb203eb20ca9e091d0fa9a5b"
+      }
+    ],
+    "workflow_artifact_allowlist": [
+      "261021/data/reports/t16-ci/synthetic-measurement-evidence.zip",
+      "261021/data/reports/t16-ci/archive-sha256.json",
+      "261021/data/reports/t16-ci/recalculation.json"
+    ],
+    "diff_check": "passed"
+  },
+  "failed_attempts_and_debugging": [
+    {
+      "issue": "Initial compile/test launcher used a repository-relative .venv path with the wrong working directory.",
+      "outcome": "Corrected to project-root absolute/relative executable paths. This was invocation-only."
+    },
+    {
+      "issue": "First T16 target test imported _hash from the wrong module.",
+      "outcome": "Import corrected to capital_request_journal; target suite passed. Initial output was shown in the execution transcript and overwritten before it was copied to a unique log."
+    },
+    {
+      "issue": "A later target run exposed a NameError after the ledger reader alias was removed.",
+      "outcome": "Changed to call read_operational_ledger directly; final target suite passed. Initial output hash observed at run time was 6726e8cb599a7855eea2357d688bcad7c4261adf8749934e1ef956b8e725df78; original bytes were not retained separately."
+    },
+    {
+      "issue": "Request journal tests initially failed three loopback socket binds in the sandbox with EPERM.",
+      "outcome": "Reran the same nine tests with loopback permission; all passed."
+    },
+    {
+      "issue": "Workflow validation first omitted /bin from PATH, then its embedded checker omitted the json import.",
+      "outcome": "Corrected the validation checker; YAML parse and all 10 workflow run blocks passed bash -n. These were checker invocation errors, not workflow failures."
+    },
+    {
+      "issue": "Normal sandbox docker version returned permission denied for /var/run/docker.sock.",
+      "outcome": "Ran only the existing random-project synthetic harness in the authorized isolated environment; its run passed and cleanup_complete was logged."
+    },
+    {
+      "issue": "First standalone archive recheck used the wrong resolved venv path.",
+      "outcome": "Corrected to the project's absolute venv path; archive-only process passed with PATH-only environment."
+    }
+  ],
+  "not_done": [
+    "No commit or push: explicitly held for Sol review.",
+    "No GitHub Actions run or CI artifact download/hash/cleanup inspection: requires review and an implementation commit.",
+    "The successful full synthetic harness run log lacks a process-level UTC/MONOTONIC wrapper; stage elapsed values and output hash are available, and this limitation is disclosed rather than reconstructed.",
+    "This archive and its measurements do not constitute real-data/model performance, production SLO, external DB audit, clock qualification, or deployment approval."
+  ],
+  "attempt_log": {
+    "path": "data/reports/20261102-t16-luna/attempts.jsonl",
+    "sha256": "c9ba258a9dab04d426f4cfc9b025b7a4fea27410b66e4f94176d309439fc7196",
+    "ignored_local_runtime_logs": true
+  }
+}

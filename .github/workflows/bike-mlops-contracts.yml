@@ -61,7 +61,8 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p data/reports
-          timeout --signal=TERM 1200 python scripts/capital_system_harness.py --run-synthetic-system 2>&1 \
+          timeout --signal=TERM --kill-after=10 1200 python scripts/capital_system_harness.py \
+            --run-synthetic-system --evidence-dir data/reports/t16-ci 2>&1 \
             | tee data/reports/synthetic-system-ci.log
       - name: Run disposable PostgreSQL snapshot-lock test
         if: >-
@@ -145,5 +146,8 @@ jobs:
             261021/data/reports/t08-ci/summary.json
             261021/data/reports/t08-ci/before.dump
             261021/data/reports/t08-ci/after.dump
+            261021/data/reports/t16-ci/synthetic-measurement-evidence.zip
+            261021/data/reports/t16-ci/archive-sha256.json
+            261021/data/reports/t16-ci/recalculation.json
           if-no-files-found: ignore
           retention-days: 14

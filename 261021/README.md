@@ -26,6 +26,7 @@ Capitalの運用測定を停止した場合は[中断・タイムアウトの確
 - `tests/`: 時刻リーク、欠損時間、入力重複、ストレージの回帰試験。
 - `docs/`: データ・アーキテクチャ・運用判断。Capital監視の合成受入シナリオと期待時刻は[監視受入基準](docs/monitoring-acceptance.md)に記録しています。保存未確定時の[読取照合契約](docs/monitor-reconciliation.md)に沿う`monitor-inspect`のSQLite版T06aとPostgreSQL版T06bを実装しました。読取専用snapshot・型別比較・中断/遅延commitの[検証記録](docs/reviews/20261030-t06b-checks.json)と[操作手順](docs/runbook.md)を参照してください。
 - GitHub Actionsの`synthetic-system` jobは、独立した使い捨てDocker/PostgreSQL検証として、既存のmonitor persistence保存試験も実行します。失敗を隠さずログを`bike-mlops-docker-integration-logs` artifactに含めます。対象は合成DBだけで、実運用監視や配信の証拠ではありません。 T15の[CI・artifact・cleanupの確認結果](docs/reviews/20261101-t15-checks.json)を保存しています。
+- T16では同じ使い捨てsynthetic-system実行の計測plan/report/operational ledger/request journalだけを固定allowlistのZIPへbyte-preservingで保存し、archiveだけを入力とする別Python processでjournalとreportを照合して1,000 measured requestsのp95を再計算します。warmup 50件は除外します。これは合成データの保存値の再計算で、実データ精度・DB監査・時計資格・配信承認の証明ではありません。CI artifactの保存対象と限界は[計測証拠アーカイブ](docs/measurement-evidence-archive.md)を参照してください。
 - `compose.yaml`: MLflow、PostgreSQL、FastAPIの青緑2枠、Caddyを使うローカル運用構成。
 - `data/`: 原本、DB、モデル成果物はGit対象外。証拠として必要な公開可能な集計レポートだけを個別に保存します。
 
@@ -102,5 +103,8 @@ Composeによる運用構成は[実行・運用手順](docs/runbook.md)を参照
 - [x] 2026-10-30、T01とT02の必須証拠schema/拒否処理を実装。承認後の証拠変更・不正p95・本文破損・監視/復旧証拠不足を拒否。一時SQLite MLflowの保存/取得/合成承認を確認。全241 tests成功。実監視/復旧とHTTP障害の検証は残ります。
 
 - [x] 2026-10-30、T04の学習参照・PSI v2を候補保存/MLflow登録/monitor CLIへ接続。学習行・bins・policyをhashで結び、別参照・別版・特徴量変更を拒否。全255 tests成功。実Capital監視と全監視受入は後続課題です。
+- [ ] 2026-11-02、T16のsynthetic-only plan/report/ledger/request journal archiveとarchive-only別processのp95再計算を実装。localの使い捨てsystem runを2回行い、各1,050応答・1,000 measured・0 error・p95 80.1427/86.1517ms、cleanup完了を確認。値は合成runごとの結果で、良い方を選ばない。全386 unit tests成功。Sol review前でcommit/CI未実施のため、T16は未完了です。
 
 詳細な実行記録は[work_log.md](work_log.md)を参照してください。今回のvalidationとout-of-time評価期間はこの候補に使い終えています。今後の候補選択には新しい期間または別の外部データが必要です。データ品質監査で全期間集計を閲覧済みのため、未閲覧のblind holdoutではありません。2012年Q3/Q4は再利用していません。現在の稼働版は3です。
+
+T16の[Sol review記録](docs/reviews/20261102-t16-sol-review.json)には、検査漏れ修正・専用23件/全399件のlocal検証・初回失敗を記録しています。実装commitのCI artifact/cleanup確認まではT16未完了です。
