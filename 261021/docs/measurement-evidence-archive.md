@@ -48,3 +48,7 @@ export時に加え、archiveだけを検証する経路でも台帳とjournal全
 export失敗と部分出力削除の失敗が重なった場合は両方を記録して非0で終了します。resource cleanup失敗時のarchive削除失敗も握り潰しません。これらの検査は固定された合成出力用であり、任意の文章から全種類の秘密値を発見する汎用検出器ではありません。未知の原本を公開してよいと判断する用途には使いません。
 
 Solの検証結果は[review索引](reviews/20261102-t16-sol-review.json)へ記録します。Luna索引は当時の検証記録として保持します。
+
+## 実装commitのCI確認
+
+実装`2492abc`の[CI41442578156](https://github.com/kenobix/Claude_practice/actions/runs/41442578156)で399 testsと両job全stepが成功しました。T16の3ファイルを含むartifactの全13 memberとhashを照合し、ZIPだけを別processへ渡して1050応答・warmup50除外・1000測定件のp95を再計算しました。同じattemptの報告値と一致し、専用project cleanupも確認したため、T16を完了とします。[CI証拠](reviews/20261102-t16-ci-checks.json)に記録しています。上記のlocal/CI pending記述は受入条件・実施順の説明であり、最新の完了状態はこの節です。

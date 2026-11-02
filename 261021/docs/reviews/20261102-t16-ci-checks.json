@@ -1,0 +1,389 @@
+{
+  "task": "T16 CI follow-up",
+  "status": "completed",
+  "synthetic_only": true,
+  "implementation_commit": "2492abcec993dcda3fafdaf4842f0764cf9b493e",
+  "base_commit": "23235e3c1be38d4271794f6df71b3fc830c3ffdf",
+  "workflow": {
+    "run_id": 41442578156,
+    "url": "https://github.com/kenobix/Claude_practice/actions/runs/41442578156",
+    "conclusion": "success",
+    "attempt": 1,
+    "jobs_and_steps": "all_success"
+  },
+  "local_review_record": "docs/reviews/20261102-t16-sol-review.json",
+  "verification": {
+    "status": "passed",
+    "synthetic_only": true,
+    "implementation_commit": "2492abcec993dcda3fafdaf4842f0764cf9b493e",
+    "run_id": 41442578156,
+    "unit_tests": 399,
+    "unit_seconds": 51.854,
+    "jobs_and_steps": "all_success",
+    "artifact": {
+      "id": 13140303925,
+      "outer_sha256": "9d105b7202024a66c0a18f1b46cdef288ce2a74123a41fa46acefc9b3116711e",
+      "members": {
+        "synthetic-system-ci.log": {
+          "bytes": 7237,
+          "sha256": "fd34cf443705048baf2736bbacd3fa242fc847c1c3f9ed01f404d7ddb74d9d36"
+        },
+        "request-interruption-postgres-ci.log": {
+          "bytes": 459,
+          "sha256": "efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb"
+        },
+        "snapshot-postgres-ci.log": {
+          "bytes": 560,
+          "sha256": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9"
+        },
+        "monitor-inspection-postgres-ci.log": {
+          "bytes": 3933,
+          "sha256": "7c4112cb8698cec902f47d5a89be9bcc74d0e8e790422909af5bfe0b3a3c67fa"
+        },
+        "prediction-migration-postgres-ci.log": {
+          "bytes": 2979,
+          "sha256": "39767e744f61b39a7cc5ccfad605741e83cee76ba3c3cfeca3bf0a75338107a3"
+        },
+        "monitor-persistence-postgres-ci.log": {
+          "bytes": 376,
+          "sha256": "8d5f8fdc9d453fbb706b8e1fd526a6bb35c5d8ebf058033591b7e2dfe4e5ddc9"
+        },
+        "capital-decision-http-ci.log": {
+          "bytes": 3855,
+          "sha256": "9363fac5d036ed93b84f677709f9bd5b70f2fb4095b979c9a7905bcc50f9ed6b"
+        },
+        "t08-ci/summary.json": {
+          "bytes": 2042,
+          "sha256": "ca3b347119f1696facb4f5e66ef8f56bfc541175cb246c2193e69571e143cfaf"
+        },
+        "t08-ci/before.dump": {
+          "bytes": 8251,
+          "sha256": "8a696eca42ddcefe2f1a94489bed7a36828c34045d0eebf39a7babf63d9efbbc"
+        },
+        "t08-ci/after.dump": {
+          "bytes": 8309,
+          "sha256": "a7cc50aed09c9461534a679d224cf94869293eadcf1c96d32cb60911f5dc164f"
+        },
+        "t16-ci/synthetic-measurement-evidence.zip": {
+          "bytes": 1530937,
+          "sha256": "b0a3ea70685f2a0334aed0f5f49811add1907520c4a84c8f61fb0260778e4524"
+        },
+        "t16-ci/archive-sha256.json": {
+          "bytes": 154,
+          "sha256": "f6d6079746ca9698408635c34c7019fea3ec5ad28bfc392d36c801389388da1a"
+        },
+        "t16-ci/recalculation.json": {
+          "bytes": 1440,
+          "sha256": "1df302b2e155cc9e245a3c2117c7ef3a17a9d71b0c3b1475760283d406cb0eeb"
+        }
+      }
+    },
+    "source_revision": {
+      "commit": "2492abcec993dcda3fafdaf4842f0764cf9b493e",
+      "dirty": false
+    },
+    "archive_only_recalculation": {
+      "archive_sha256": "b0a3ea70685f2a0334aed0f5f49811add1907520c4a84c8f61fb0260778e4524",
+      "attempt_id": "f83e3f4c-43b9-415f-b04c-20138a0b4a8c",
+      "candidate_id": "c19329b6a03e46d686c56a1c882a1e511302e7249ea3a329544c6d03096731ab",
+      "deployment_permission": "blocked",
+      "journal_verified_responses": 1050,
+      "limitations": [
+        "Synthetic evidence only; does not prove real-data performance, clock qualification, DB audit outside the saved journal, or deployment approval."
+      ],
+      "measured_errors": 0,
+      "measured_requests_recalculated": 1000,
+      "members": {
+        "payload/operational-ledger.json": {
+          "bytes": 1232,
+          "sha256": "ed4eacedd28008a5515e7f3b9315dfa699b5e34e9af341c5f2263262b27f7b40"
+        },
+        "payload/plan.json": {
+          "bytes": 5124,
+          "sha256": "6e7e7623e356f5a1c704ea6354a2a024d25176425b77759aa788835c4e60aaea"
+        },
+        "payload/report.json": {
+          "bytes": 438273,
+          "sha256": "24921385f68185add76899db48cda5052d5879dc7fa79d0649123937ffb33bc4"
+        },
+        "payload/request-journal.jsonl": {
+          "bytes": 1083867,
+          "sha256": "4dd34cfeef993cf5c5a4a070ef8968415aacb7f74c4f32545fc79cbf845a2078"
+        }
+      },
+      "numeric_status": "passed",
+      "operational_gate": "not_evaluated",
+      "p95_ms": 24.62401799999725,
+      "request_id_sha256": "e9a14264b1dbd557afefe65ae32c4b33a760d0dc5397cacf8a9e3691b9e43428",
+      "status": "archive_recalculated",
+      "synthetic_only": true,
+      "warmup_requests_excluded": 50
+    },
+    "independent_nearest_rank_p95_ms": 24.62401799999725,
+    "cleanup": {
+      "system_project": "bikemlopstest6bde43d29ca39e24",
+      "system_cleanup_complete": true,
+      "PG_cleanup_observed_in_completed_job": true
+    },
+    "limitations": [
+      "Saved synthetic values only; no real performance/model approval, clock qualification, or current deployment changes.",
+      "Job logs are connector-decoded text; artifact hashes refer to actual downloaded ZIP bytes."
+    ]
+  },
+  "artifact_download": "GitHub connector downloaded file reference; temporary signed URL was not logged to files or published and was deleted after byte retrieval.",
+  "stage_review": {
+    "paths": 11,
+    "diff_bytes": 131811,
+    "diff_sha256": "91e3ca1b65c6638757a45f0569adb5987e377c53e47f556a560d81216dad0264",
+    "evidence_hashes_verified_before_commit": 66
+  },
+  "clock_observation": {
+    "artifact_fetch_started_at_utc": "2026-11-02T12:17:28.817782+00:00",
+    "artifact_fetch_ended_at_utc": "2026-11-02T12:17:27.436808+00:00",
+    "elapsed_monotonic_seconds": 1.315339699,
+    "interpretation": "End UTC precedes start UTC while monotonic elapsed is positive. This independently observed clock regression remains unresolved; T16 completion makes no clock qualification claim."
+  },
+  "trials": [
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261102-t16-ci/check-artifact.py"
+      ],
+      "started_at_utc": "2026-11-02T12:17:38.254414+00:00",
+      "ended_at_utc": "2026-11-02T12:17:41.497433+00:00",
+      "elapsed_monotonic_seconds": 3.243010433,
+      "timeout_seconds": 120.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261102-t16-ci/artifact-check-v1.log",
+      "bytes": 3987,
+      "sha256": "785d0b248c3ce48b0d9a686485276b9a1a87b53474d4d0ddf27f46a056e77de9"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261102-t16-ci/fetch-artifact.py"
+      ],
+      "started_at_utc": "2026-11-02T12:17:28.817782+00:00",
+      "ended_at_utc": "2026-11-02T12:17:27.436808+00:00",
+      "elapsed_monotonic_seconds": 1.315339699,
+      "timeout_seconds": 90.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261102-t16-ci/artifact-fetch-v1.log",
+      "bytes": 283,
+      "sha256": "2685cc3179d12998d88e276af30e1e052b09fc8e46921daeed0547d646dc5cbc"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261102-t16-ci/query-final.py"
+      ],
+      "started_at_utc": "2026-11-02T12:18:18.177732+00:00",
+      "ended_at_utc": "2026-11-02T12:18:19.361248+00:00",
+      "elapsed_monotonic_seconds": 1.183526514,
+      "timeout_seconds": 60.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261102-t16-ci/query-final-v1.log",
+      "bytes": 384,
+      "sha256": "7cb96abccb38be52ac5328705a3dac42632673b3a2e74f4570df25928052ec4f"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261102-t16-ci/query.py"
+      ],
+      "started_at_utc": "2026-11-02T12:11:27.967040+00:00",
+      "ended_at_utc": "2026-11-02T12:11:31.851875+00:00",
+      "elapsed_monotonic_seconds": 3.884840449,
+      "timeout_seconds": 60.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261102-t16-ci/query-v1.log",
+      "bytes": 375,
+      "sha256": "34470ab5d0a04856fa171bff1e915e3080d701fff4a4d7fa02acff6da3674dfe"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261102-t16-ci/validate-record.py"
+      ],
+      "started_at_utc": "2026-11-02T12:20:54.165466+00:00",
+      "ended_at_utc": "2026-11-02T12:20:54.339069+00:00",
+      "elapsed_monotonic_seconds": 0.173621907,
+      "timeout_seconds": 60.0,
+      "timed_out": false,
+      "exit_code": 0,
+      "log": "261021/data/reports/20261102-t16-ci/record-validation-v1.log",
+      "bytes": 446,
+      "sha256": "2724fa45e125785612d855fd93c56d168e225d8c52126c668b0c8dfffe797414"
+    }
+  ],
+  "evidence_files": [
+    {
+      "path": "data/reports/20261102-t16-ci/analysis.json",
+      "bytes": 4533,
+      "sha256": "3071fdb7b84431bebc2f2f184829922aa139dffdedddf55e1aec960f70a8f6f1"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/archive-only-result.json",
+      "bytes": 1306,
+      "sha256": "65431bd90f5aec1aa84bda5f35095e7231cc54962df5043b9e9e62ec46ee4ee4"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/artifact-check-v1.json",
+      "bytes": 489,
+      "sha256": "652a254086ba8e518930850769bfe8b73382c295ed5eec6cbaa9d07fbfda3be4"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/artifact-check-v1.log",
+      "bytes": 3987,
+      "sha256": "785d0b248c3ce48b0d9a686485276b9a1a87b53474d4d0ddf27f46a056e77de9"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/artifact-fetch-v1.json",
+      "bytes": 487,
+      "sha256": "e310cfe3799df754727fa2a31646a5deb578b17f1731b8347610f0d682ffd4c3"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/artifact-fetch-v1.log",
+      "bytes": 283,
+      "sha256": "2685cc3179d12998d88e276af30e1e052b09fc8e46921daeed0547d646dc5cbc"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/artifact.zip",
+      "bytes": 226375,
+      "sha256": "9d105b7202024a66c0a18f1b46cdef288ce2a74123a41fa46acefc9b3116711e"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/artifacts-final.json",
+      "bytes": 1022,
+      "sha256": "927de66e201860f4964a3a8ed189bc96761f4ad96df8831689bb337af65edfa0"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/build-index.py",
+      "bytes": 2848,
+      "sha256": "104d40f41ed7f8e1429d75195bf2b56153c75e6ce1b8837bd580474a29ba2262"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/check-artifact.py",
+      "bytes": 5640,
+      "sha256": "03e3fb19e0af67af7a6dfeba2f41dd32b96f654fdf9f436dd7e3e5a0cae32d39"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/fetch-artifact.py",
+      "bytes": 581,
+      "sha256": "fac568d7af742759fe4fe6abd7bc2ad1f0c48b3b4eb8a19617540956bd2c6214"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/jobs-final.json",
+      "bytes": 5713,
+      "sha256": "041837a32e9faba27f7d8a8910e7c2d997788a41ddc71ca2c35d98fc437f5ccd"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/jobs-v1.json",
+      "bytes": 5301,
+      "sha256": "bda84d0d350cd123834917a04ff2fc213528ce8f957d731a8229782c8d7ef44b"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/jobs-v2.json",
+      "bytes": 5486,
+      "sha256": "1fd50885a4c92df0c37dabe8ddf2bc76fb968cf1558df2a1b23e7e2e89de9421"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/jobs-v3.json",
+      "bytes": 5486,
+      "sha256": "1fd50885a4c92df0c37dabe8ddf2bc76fb968cf1558df2a1b23e7e2e89de9421"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/jobs-v4.json",
+      "bytes": 5713,
+      "sha256": "041837a32e9faba27f7d8a8910e7c2d997788a41ddc71ca2c35d98fc437f5ccd"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/query-final-v1.json",
+      "bytes": 481,
+      "sha256": "a51f4acc5ba2dd342a02ff658ffbf7a18207701132b7aa61ecebde52d371809b"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/query-final-v1.log",
+      "bytes": 384,
+      "sha256": "7cb96abccb38be52ac5328705a3dac42632673b3a2e74f4570df25928052ec4f"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/query-final.py",
+      "bytes": 602,
+      "sha256": "277c228e1a508f9e1abf097271d66a807ad51e3ac360474a4eaf19f8f3a6032c"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/query-v1.json",
+      "bytes": 469,
+      "sha256": "7235dcd1b981a961ae43f147413a6e9b2d95b8a485981731ebf8248e6c927b28"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/query-v1.log",
+      "bytes": 375,
+      "sha256": "34470ab5d0a04856fa171bff1e915e3080d701fff4a4d7fa02acff6da3674dfe"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/query.py",
+      "bytes": 599,
+      "sha256": "6befa867de4c77c500fbc2e0b57aa9d8fd22c5b2d75457e77e67599ce56067fa"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/run-attempt.py",
+      "bytes": 1663,
+      "sha256": "e9081f5b6e0fa88f301ec8b81de4600f13cc201751a8e435d92f98840f6b124a"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/runs-final.json",
+      "bytes": 12430,
+      "sha256": "fb5d7650b493c8373fbdaef6d72f5faf3085625c557aa0d41e2bc8e5016ef7d7"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/runs-v1.json",
+      "bytes": 12427,
+      "sha256": "cfa7d3b233cf77a73caf343fb915c50107a68d6bf87653898cbc51c6b5082699"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/system.log",
+      "bytes": 92590,
+      "sha256": "a3484524ca6bd39a26a9bd0be1fb218cc0ca0718b8cf02dbf95f3ce933f0ce49"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/unit.log",
+      "bytes": 146402,
+      "sha256": "5c84c2da9e16d8c565d3956f7b7fa833aafc4a5f3ba0c879be6cb2e0fd030e83"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/validate-record.py",
+      "bytes": 1403,
+      "sha256": "2a040108cb347bd18d585fe750ddbf568ac5aede881ab40ff92e6e557af6a8e8"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/record-validation-v1.json",
+      "bytes": 491,
+      "sha256": "47421309e8552f730a6d7d944db4b418cc432ea6ee482fb20bff15e9b4757dc5"
+    },
+    {
+      "path": "data/reports/20261102-t16-ci/record-validation-v1.log",
+      "bytes": 446,
+      "sha256": "2724fa45e125785612d855fd93c56d168e225d8c52126c668b0c8dfffe797414"
+    }
+  ],
+  "remaining_independent_tasks": [
+    "T07 real MLflow/skops model snapshot/restore on disposable infrastructure and recovery harness CI",
+    "T17b product phase/elapsed/timeout/metadata diagnostics",
+    "T03 historic natural interruption and clock ownership/internal-control qualification",
+    "T09 source publication then T10 fit-before freeze and T11/T12/T13b real evidence",
+    "T14 evidence/demo presentation and optional T06a permission/busy-timeout supplement"
+  ],
+  "record_commit_boundary": "This document is a later record-only change. Verified CI belongs to implementation commit 2492abc, not to the subsequent documentation commit.",
+  "record_validation": {
+    "status": "passed",
+    "CI_evidence_files_checked": 27,
+    "code_unchanged_since_implementation": true,
+    "log_sha256": "2724fa45e125785612d855fd93c56d168e225d8c52126c668b0c8dfffe797414"
+  }
+}

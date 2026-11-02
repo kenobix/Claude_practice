@@ -2940,3 +2940,16 @@ reviewでarchive-only検証がledger/journalの秘密情報を検査しないこ
 workflow validatorの初回は10 blockという期待件数で失敗したが、実際はsystem側10とunit側5、合計15。全15 blockのbash -nとYAML parse、pipefail後の23/timeout124伝播、既存2 archiveの別process再計算とrecalculation/外側SHA一致、compileall成功。checker初回と修正版を保持した。補助索引生成の初回はcwdに261021を二重指定して起動前exit127、既存helper探索も存在しないartifact-check.py参照でexit2となった（tool transcriptのみ、試験実行ではない）。正しいpathで実行し、これらを成功試行として扱わない。
 
 UTC経過とMONOTONIC経過の不一致も原本に残る。今回の全suite成功は時計資格の回復を示さず、future拒否・OS設定は変更しない。実DB/registry/配信/schema/writer/依存lockも未変更。T16対象のみcommit/pushした実装commitのCI artifact/hash/再計算/cleanup確認が残る。Luna記録の「review待ち」は当時の履歴として保持し、以後の状態はSol索引で追跡する。
+
+
+### 2026-11-02 T16実装CIのartifact照合完了（実装2492abc）
+
+stage直前に11 pathとindex/working treeのbytes一致、証拠66 fileのSHA、全差分131811bytes/SHA91e3ca1b65c6638757a45f0569adb5987e377c53e47f556a560d81216dad0264、git status/全差分を確認し、2492abcec993dcda3fafdaf4842f0764cf9b493eをcommit/push。無関係な未追跡3pathは含めない。以降はignored data/reports/20261102-t16-ciへ分離。接続toolのcommit run検索がPR専用のためpush検索はgh apiを使用し、CI41442578156をfull SHAで特定した。jobs途中状態はv1〜v4で保存、unit/system jobのdecoded logとartifact metadataはconnectorで取得。最終gh queryはstatus completed/conclusion successを確認した。
+
+CI全399 tests/51.854秒、compile、両job全step成功。connectorのartifact一時file参照からZIP bytesを取得し、参照URLはlogへ残さず取得直後に削除。artifact13140303925は226375bytes、GitHub digest/実ZIP SHA 9d105b7202024a66c0a18f1b46cdef288ce2a74123a41fa46acefc9b3116711eが一致し、既存10 member+T16追加3 memberの固定allowlistを確認。内側ZIPは1530937bytes/SHA b0a3ea70685f2a0334aed0f5f49811add1907520c4a84c8f61fb0260778e4524。source commit=2492abc/dirty=false、manifest+4原本のhash/bytes、外側SHA descriptor・recalculation一致を確認した。
+
+artifact-check-v1はZIPだけをprivate tempの別processへ渡し、PATHのみの環境で再計算exit0。1050 journal応答、50 warmup除外、1000 measured、0 errors、p95 24.62401799999725msが保存result/reportと一致し、別のnearest-rank計算も一致。candidate c19329b6a03e46d686c56a1c882a1e511302e7249ea3a329544c6d03096731ab/attempt f83e3f4c-43b9-415f-b04c-20138a0b4a8cとsystem結果を照合。gate not_evaluated/permission blockedを維持。export後のcleanup_complete、PG停止/回収をcompleted job logで確認。check log SHA785d0b248c3ce48b0d9a686485276b9a1a87b53474d4d0ddf27f46a056e77de9。
+
+取得trialでは開始UTC12:17:28.817782Z→終了12:17:27.436808Z、MONOTONIC+1.315339699秒と逆行を再観測。原本を残し時計資格を回復扱いにしない。T16の合成証拠保存・検算として完了し、実Capital採否・T07/T17b・時計原因・T09以降は残件。[CI索引](docs/reviews/20261102-t16-ci-checks.json)へ全13 artifact member/4原本hash・構造化trial・限界を保存した。後続は記録のみのcommitであり、この実装CIがその記録commitも直接試験したとは記載しない。
+
+記録commit前のrecord-validation-v1もexit0。CI証拠27原本hash、実装commitからのsource不変、新規リンク、4変更docと追加CI索引の範囲、diff check、一時URL削除を確認。検証script/meta/logを含む公開索引は30原本/5構造化trial。記録段階でunit/systemの再実行は行わず、同じ実装commitの成功を参照した。

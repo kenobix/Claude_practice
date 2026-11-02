@@ -103,8 +103,8 @@ Composeによる運用構成は[実行・運用手順](docs/runbook.md)を参照
 - [x] 2026-10-30、T01とT02の必須証拠schema/拒否処理を実装。承認後の証拠変更・不正p95・本文破損・監視/復旧証拠不足を拒否。一時SQLite MLflowの保存/取得/合成承認を確認。全241 tests成功。実監視/復旧とHTTP障害の検証は残ります。
 
 - [x] 2026-10-30、T04の学習参照・PSI v2を候補保存/MLflow登録/monitor CLIへ接続。学習行・bins・policyをhashで結び、別参照・別版・特徴量変更を拒否。全255 tests成功。実Capital監視と全監視受入は後続課題です。
-- [ ] 2026-11-02、T16のsynthetic-only plan/report/ledger/request journal archiveとarchive-only別processのp95再計算を実装。localの使い捨てsystem runを2回行い、各1,050応答・1,000 measured・0 error・p95 80.1427/86.1517ms、cleanup完了を確認。値は合成runごとの結果で、良い方を選ばない。全386 unit tests成功。Sol review前でcommit/CI未実施のため、T16は未完了です。
+- [x] 2026-11-02、T16を完了。Sol reviewで検査漏れ・負例を補強し、実装2492abcのCIで399 testsと全system/PG stepが成功。追加3 artifactのhash、4原本、archive-only別processの1050応答/1000 measured/p95再計算とcleanupを確認しました。[CI証拠](docs/reviews/20261102-t16-ci-checks.json)。合成結果であり、実候補性能・時計資格・配信承認の証拠には使いません。
 
 詳細な実行記録は[work_log.md](work_log.md)を参照してください。今回のvalidationとout-of-time評価期間はこの候補に使い終えています。今後の候補選択には新しい期間または別の外部データが必要です。データ品質監査で全期間集計を閲覧済みのため、未閲覧のblind holdoutではありません。2012年Q3/Q4は再利用していません。現在の稼働版は3です。
 
-T16の[Sol review記録](docs/reviews/20261102-t16-sol-review.json)には、検査漏れ修正・専用23件/全399件のlocal検証・初回失敗を記録しています。実装commitのCI artifact/cleanup確認まではT16未完了です。
+T16の[Sol review記録](docs/reviews/20261102-t16-sol-review.json)には、検査漏れ修正・専用23件/全399件のlocal検証・初回失敗を記録しています。実装2492abcの[CI artifact/cleanup確認](docs/reviews/20261102-t16-ci-checks.json)まで完了しています。
