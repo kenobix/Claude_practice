@@ -1,5 +1,7 @@
 # 配信復旧の状態・承認metadataと隔離受入（T07a/T17a）
 
+2026-11-02追記: 以下のT07a/T17aは当時の境界を保持する。追加した実MLflow/skops対応復元は本書末尾、通常CLIの部分的な段階表示・読取診断は[配信処理の診断](deployment-observability.md)を参照。
+
 基点`444acc9`。[計画§11.6](../../261014/plan_mlops.md)、[証拠JSON](reviews/20261101-t07-t17-checks.json)を参照。
 実DB・実registry・現配信への適用は行っていない。合成UCI契約の試験であり、実Capitalの配信証拠producerには使用しない。
 
@@ -85,3 +87,24 @@ T13の厳密拒否は維持し、OS修復や時計資格をこの受入の成功
 ## 2026-11-01 CI追跡
 
 実装f341e94の[CI検証索引](reviews/20261101-t07-t17-ci-checks.json)で、全369件と既存合成system/PostgreSQL/cleanup成功・artifact hashを確認した。本書の新復旧harnessの実Caddy受入自体はlocal実行で、CI接続は残る。local全suiteの既存UTC拒否も取り消さない。
+
+## T07b: 合成Capitalの実MLflow・skops・DB対応復元
+
+`capital_system_harness.py --run-synthetic-system --verify-paired-restore`で、現Dockerfileからbuildした独自imageを使う。
+既存のblocked candidate登録・API・監査・計測が終わった後、専用APIとMLflowを止め、registry DBと予測監査DBを`pg_dump -Fc`で採取し、MLflow artifact volumeの全通常fileを対応させる。
+専用fixtureには他writerが存在しない。DB内容のcanonical hash・全public table件数・column定義・sequence値を採取前後で比較する。稼働中の一般システムに対する無停止backup手順ではない。
+
+復元先は別UUIDのCompose project、新しい3 volume、別のランダムloopbackポートを使う。
+同一の現Dockerfile image IDを指定して、空のDBへ復元し、MLflowを起動する前にDB全内容・column/sequence・artifact相対path/byte数/hashを比較する。
+MLflowへ登録済みのversion・candidate・report/protocol hash・blocked tagを保持し、staging APIの通常loaderでhash確認後にskopsモデルを読む。
+保存済み要求への再送が同じ版・予測を返すことと、新しいrequest IDでも同じ予測を生成することを別々に確認する。
+復元したskops fileだけを破損させた負例では、通常loaderがSHA不一致で拒否し、保存済み原本へ戻した後にAPIを起動する。
+旧stateのPostgreSQL読取診断も、対応行なし/別profileを合成fixtureで確認する。
+
+artifactは通常fileとdirectoryだけを受け入れる。欠落・余剰・同件数の値変更・symlinkは照合を拒否する。
+sourceとrestore両projectのlabelを確認して回収し、現配信のcontainer ID不変を確認する。
+native dump・artifact原本は一時directoryだけに置き、CIへアップロードしない。CIの既存`synthetic-system-ci.log`へ、相対file hash、table/column/sequenceの照合値、版、拒否結果、別volume/cleanup結果を保存する。
+T16のarchive3本のallowlistは増やさない。実装commitのCI確認までは、この追加部分のCI受入を完了としない。
+
+合成Capitalで実MLflow/skopsを動かす試験であり、実候補の復旧producer、実承認、時計資格、実環境の災害復旧証拠ではない。
+T07aの実Caddy/SIGKILLによる切替復旧harness自体のCI接続と、実candidateに結合したproducer証拠は引き続き残る。

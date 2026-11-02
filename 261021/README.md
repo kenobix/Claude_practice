@@ -108,3 +108,7 @@ Composeによる運用構成は[実行・運用手順](docs/runbook.md)を参照
 詳細な実行記録は[work_log.md](work_log.md)を参照してください。今回のvalidationとout-of-time評価期間はこの候補に使い終えています。今後の候補選択には新しい期間または別の外部データが必要です。データ品質監査で全期間集計を閲覧済みのため、未閲覧のblind holdoutではありません。2012年Q3/Q4は再利用していません。現在の稼働版は3です。
 
 T16の[Sol review記録](docs/reviews/20261102-t16-sol-review.json)には、検査漏れ修正・専用23件/全399件のlocal検証・初回失敗を記録しています。実装2492abcの[CI artifact/cleanup確認](docs/reviews/20261102-t16-ci-checks.json)まで完了しています。
+
+T07bでは[実MLflow/skops・DBの対応復元](docs/deployment-recovery.md)を合成fixtureへ追加しています。通常CLIの[段階表示・Docker timeout・旧stateの読取診断](docs/deployment-observability.md)も参照してください。APIの承認metadata提示と全体timeoutは残条件で、T17b全体は未完了です。
+
+[証拠の入口と5分の説明手順](docs/evidence-guide.md)に、task・実装commit・CI・索引と、説明できる結果の範囲をまとめています。

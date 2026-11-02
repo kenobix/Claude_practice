@@ -274,6 +274,17 @@ class DeploymentRecoveryTests(unittest.TestCase):
         self.assertEqual(self.journal()[0]["status"], "failed")
         self.assertEqual(self.read_state(), self.state)
 
+    def test_docker_timeout_retains_pending_operation_without_claiming_compensation(self):
+        from bike_mlops.deployment_progress import DeploymentTimeout
+        self.live = self.version("2")
+        self.compose.side_effect = DeploymentTimeout("daemon outcome unconfirmed")
+        with self.assertRaises(DeploymentTimeout):
+            cli._promote("3", "operator", "reason", False, False)
+        self.assertEqual((self.journal()[0]["status"], self.journal()[0]["phase"]),
+                         ("in_progress", "recovery_required"))
+        self.assertEqual(self.read_state(), self.state)
+        self.assertEqual(self.compose.call_count, 1)
+
     def test_pending_operation_prevents_new_promotion(self):
         self.pending()
         self.live = self.version("2")

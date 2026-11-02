@@ -35,6 +35,7 @@ from bike_mlops.config import (
 from bike_mlops.data import audit_hourly, download_dataset, load_hourly, sha256_file
 from bike_mlops.db import Database, canonical_time, stable_hash
 from bike_mlops.deployment_gates import require_deployment_eligible
+from bike_mlops.deployment_progress import DeploymentTimeout, deployment_stage
 from bike_mlops.features import FEATURE_COLUMNS, available_observation_frame, feature_frame_for_dataset
 from bike_mlops.monitoring import score_monitor_windows
 from bike_mlops.monitor_persistence import persist_monitor_run
@@ -548,17 +549,25 @@ def _deployment_row(
         )
 
 
-def _compose(*args, check=True):
+def _compose(*args, check=True, operation_id=None):
     command = ["docker", "compose"]
     if DATA_PROFILE_ID == "capital-bikeshare":
         command.extend(
             ["-p", "bike-mlops-capital", "-f", "compose.yaml", "-f", "compose.capital.yaml"]
         )
     command.extend(args)
-    return subprocess.run(
-        command, cwd=PROJECT_ROOT, check=check, text=True,
-        stdout=subprocess.PIPE if check else None, stderr=subprocess.STDOUT if check else None,
-    )
+    build = bool(args and args[0] == "up")
+    with deployment_stage(RUNTIME_DIR, "compose_build_start" if build else "compose_proxy",
+                          operation_id=operation_id):
+        try:
+            return subprocess.run(command, cwd=PROJECT_ROOT, check=check, text=True,
+                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                  timeout=600 if build else 30)
+        except subprocess.TimeoutExpired:
+            # The client timeout cannot cancel/roll back Docker daemon work.
+            raise DeploymentTimeout("Docker wait expired; daemon outcome unconfirmed; run deploy inspect/recover") from None
+        except subprocess.CalledProcessError as error:
+            raise RuntimeError(f"Docker deployment command failed (exit {error.returncode}); native output suppressed") from None
 
 
 def _proxy_url() -> str:
@@ -643,8 +652,9 @@ def _require_ready_deployment(url: str, version: str, registered) -> None:
 
 
 def _checked_registered_deployment(version: str):
-    client = _model_registry_client()
-    registered = client.get_model_version(MODEL_NAME, int(version))
+    with deployment_stage(RUNTIME_DIR, "registry_check"):
+        client = _model_registry_client()
+        registered = client.get_model_version(MODEL_NAME, int(version))
     _assert_registered_model_profile(registered)
     if registered.status != "READY" or str(registered.version) != version or registered.name != MODEL_NAME:
         raise RuntimeError("Registered deployment identity is not READY or does not match")
@@ -761,8 +771,9 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
             raise ValueError("Requested model version is already active")
         if rollback and version not in state.get("previous_versions", []):
             raise ValueError("Rollback target has no recorded history as a previously active model")
-        client = _model_registry_client()
-        model_version = client.get_model_version(MODEL_NAME, int(version))
+        with deployment_stage(RUNTIME_DIR, "registry_check"):
+            client = _model_registry_client()
+            model_version = client.get_model_version(MODEL_NAME, int(version))
         _assert_registered_model_profile(model_version)
         if model_version.name != MODEL_NAME or str(model_version.version) != version:
             raise ValueError("Registered model identity differs from the requested deployment")
@@ -832,9 +843,11 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
             )
         (RUNTIME_DIR / f"{new_slot}.env").write_text(f"MODEL_VERSION={version}\n", encoding="utf-8")
         try:
-            _compose("up", "-d", "--build", "--no-deps", service)
-            candidate = _wait_ready(f"http://127.0.0.1:{host_port}", version, quality_gate)
-            probe = _deployment_probe(f"http://127.0.0.1:{host_port}", version, deployment_id, replay_frame)
+            _compose("up", "-d", "--build", "--no-deps", service, operation_id=deployment_id)
+            with deployment_stage(RUNTIME_DIR, "candidate_ready", operation_id=deployment_id):
+                candidate = _wait_ready(f"http://127.0.0.1:{host_port}", version, quality_gate)
+            with deployment_stage(RUNTIME_DIR, "artifact_load_and_probe", operation_id=deployment_id):
+                probe = _deployment_probe(f"http://127.0.0.1:{host_port}", version, deployment_id, replay_frame)
             probe["recovery_context"] = recovery_context
             _deployment_row(database, deployment_id, "candidate_ready", probe=probe)
             _write_atomic(RUNTIME_DIR / "Caddyfile", new_caddyfile)
@@ -865,6 +878,10 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
                 "rollback": rollback,
             }
         except Exception as error:
+            if isinstance(error, DeploymentTimeout):
+                _deployment_row(database, deployment_id, "recovery_required", "in_progress",
+                                "Docker wait expired; daemon outcome unconfirmed; inspect before recovery")
+                raise
             try:
                 _write_atomic(RUNTIME_DIR / "Caddyfile", old_caddyfile)
                 _compose("exec", "-T", "caddy", "caddy", "validate", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
@@ -974,7 +991,17 @@ def _recover_deployment() -> dict:
 
 def command_deploy_recover(args) -> None:
     with _deployment_lock():
-        _print(_recover_deployment())
+        with deployment_stage(RUNTIME_DIR, "recover"):
+            _print(_recover_deployment())
+
+
+def command_deploy_inspect(args) -> None:
+    from bike_mlops.deployment_inspection import inspect_state
+
+    result = inspect_state(RUNTIME_DIR / "deployment-state.json",
+                           os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL), DATA_PROFILE_ID, TARGET_CONTRACT_ID)
+    _print(result)
+    raise SystemExit(result["exit_code"])
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1054,6 +1081,8 @@ def build_parser() -> argparse.ArgumentParser:
     promote.set_defaults(func=command_deploy_promote)
     recover = deploy_sub.add_parser("recover")
     recover.set_defaults(func=command_deploy_recover)
+    inspect = deploy_sub.add_parser("inspect", help="Read-only diagnosis of runtime state and deployment metadata")
+    inspect.set_defaults(func=command_deploy_inspect)
 
     replay = subparsers.add_parser("replay", help="Send historical hourly requests to a pinned API")
     replay.add_argument("--csv", type=Path, default=DEFAULT_DATASET)

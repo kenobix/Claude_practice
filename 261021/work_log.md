@@ -2953,3 +2953,38 @@ artifact-check-v1はZIPだけをprivate tempの別processへ渡し、PATHのみ�
 取得trialでは開始UTC12:17:28.817782Z→終了12:17:27.436808Z、MONOTONIC+1.315339699秒と逆行を再観測。原本を残し時計資格を回復扱いにしない。T16の合成証拠保存・検算として完了し、実Capital採否・T07/T17b・時計原因・T09以降は残件。[CI索引](docs/reviews/20261102-t16-ci-checks.json)へ全13 artifact member/4原本hash・構造化trial・限界を保存した。後続は記録のみのcommitであり、この実装CIがその記録commitも直接試験したとは記載しない。
 
 記録commit前のrecord-validation-v1もexit0。CI証拠27原本hash、実装commitからのsource不変、新規リンク、4変更docと追加CI索引の範囲、diff check、一時URL削除を確認。検証script/meta/logを含む公開索引は30原本/5構造化trial。記録段階でunit/systemの再実行は行わず、同じ実装commitの成功を参照した。
+
+## 2026-11-02 基点69c3a5aからのT07b・T17b部分・T14初版
+
+作業前に§11.6、deployment-recovery.md、直近T16 Sol/CI索引と現sourceを読取。HEADは指定基点、未追跡3pathは既存無関係として保持した。T07aのlocal実Caddy/PG受入がmodel/registry doubleであること、新復旧harness自体はCI未接続であることを確認し、独立する実MLflow/skopsの対応復元を先行した。
+
+新規ignored `data/reports/20261102-t07-t17/`のrun-attempt.pyにargv・UTC開始/終了・MONOTONIC経過・deadline・終了値・log bytes/SHAを保存。原本の索引は[検証JSON](docs/reviews/20261102-t07b-t17b-checks.json)。OS/時計設定、実DB・実registry・現配信を操作せず、future拒否/schema/writer/依存lockを変更していない。
+
+| 試行・コマンド（261021から） | 結果と解釈 |
+|---|---|
+| preflight / `bash -c 'python3 --version; docker version --format ...; git diff --check'` | shell終了0だが途中Dockerはsocket permission denied。最後のdiffの0をDocker成功と解釈しない。後続のDocker・loopback fixtureは許可されたescalationで実行した |
+| paired-unit-v1 / `unittest discover -s tests -p test_capital_paired_restore.py -v` | 4件成功。file欠落/余剰/改変/symlink、同件数DB内容差を拒否 |
+| paired-regression-v1 / `unittest discover -s tests -p test_capital_system_harness.py -v` | 既存23件成功 |
+| paired-system-v1 / `scripts/capital_system_harness.py --run-synthetic-system --verify-paired-restore --evidence-dir data/reports/20261102-t07-t17/t16-v1` | 現Dockerfile build・既存合成system/T16 archiveは成功。source停止後の同port5001引継ぎ事前確認でEADDRINUSE、exit1。temporary restore/source cleanupを確認。TIME_WAIT等は仮説で変更元を断定しない。restoreを別ランダムloopback portへ変更し、Host検証の許可先もprivate MLflowの実portへ限定 |
+| deployment-target-v1 / `unittest discover -s tests -p 'test_deployment*.py' -v` | 45件成功。通常CLIのstage/timeout/pendingと旧state読取診断を含む |
+| final-unit-v1 / `unittest discover -s tests -v` | 415件成功、244.437 unittest秒。後続補強前のsnapshot |
+| paired-system-v2 / v1と同じflag・出力先`t16-v2` | exit0、466.376349486 MONOTONIC秒。744観測・1052保存予測を含む5監査tableとregistry全table/column/sequenceを別project/3volumeへ復元、8 artifact file/hash一致、破損skopsの通常loader拒否、同ID再送/新ID推論、PostgreSQL旧state/foreign-profile診断、両project cleanup成功。後続のcleanup残存/保護inventory補強前のlocal試行で、実装commit全体の最終system成功とは呼ばない |
+| restore-progress-read-v1 / label限定`docker ps -a ... --format ...` | 使い捨てcontainerの状態だけ読取保存。既存stackを止めなかった |
+| final-target-v2 / deployment関連 | 46件成功。state atomic replacement検知を追加 |
+| validation-v1 / `validate-local.py` | unique-key YAML parse、全15 run blockのbash -n、artifact allowlist不変、既存step変更はsystemのflag1個だけ、pipefail終了0/23/124、AST/compileall/link/diffを確認 |
+| final-unit-v2 / `unittest discover -s tests -v` | 418件成功、166.524 unittest秒。以降の補強はCLIテスト1件と復元harnessのcleanup/残存確認。最終harnessの実受入は実装commit CIで確認し、production判断を緩和しない |
+| final-target-v3 / deployment関連 | 47件成功。`deploy inspect`のJSON/終了値とDB initializer非呼出しを含む |
+| paired-final-unit / paired restore対象 | 6件成功。opt-in/port map拒否、既存project inventoryのfilterを含む |
+| harness-final-unit / 既存harness | 23件成功。最終のcleanup/既存挙動の回帰 |
+
+一時復元ではsourceの専用API/MLflowを停止して二つのDBとartifactを組として採取し、DB内容が採取前後で不変なことを確認。復元先は別UUID projectと3volume、同一の現Dockerfile image ID、別loopback portを使った。DB全行hashだけでなくcolumn/sequenceも比較し、原要求の再送だけではモデル実行を証明できないため新IDでも予測した。破損モデルは通常のSHA検査で拒否し、その後saved bytesへ戻した。raw dump/MLflow artifactは一時workspaceのみで回収し、公開索引には相対file名/hash/件数を残す。これは合成Capitalの実MLflow/skops fixtureで、実candidateの配信producer証拠ではない。
+
+T17b部分では製品CLIにstderr/診断JSONLのstage・UTC・MONOTONIC経過・log参照を追加。Compose build600秒/他30秒のtimeoutはdaemon側の処理取消を保証しないため、台帳をin_progress/recovery_requiredへ残し、自動で補償成功としない。`deploy inspect`はDB initializeやstate修正なしでSQLite mode=ro/query_only、PG repeatable-read read-onlyからprofile確認後にdeployment行を読む。completed対応行との差、legacy、未完了、file変更を説明し、matchedでも承認証拠にしない。API metadata提示とregistry/artifact全体deadlineは未実装として残す。
+
+T14は[証拠入口と5分説明の初版](docs/evidence-guide.md)を追加し、UCI実履歴/合成Capital、予測誤差/API時間、CI対象commit/記録commit、artifact期限/原本hashを区別した。全R/Tの対応表への拡張は次作業。
+
+探索時のroot `.venv/bin/python`不在、存在しないsource/Dockerfile候補の読取、atomic docs patchの対象行不一致はtool transcriptだけの失敗として残し、テスト失敗や実装成功へ混ぜない。修正後に正しいproject venv/pathで実行した。v1/v2のUTC区間差とMONOTONIC経過は一致しておらず、時計を修復したとは扱わない。OS修復・future緩和・clamp・自動retryは行っていない。
+
+今回のCI変更は既存system stepへ`--verify-paired-restore`を足すだけで、if/env/deadline/pipefailとartifact13 memberのallowlistを維持する。実装commitをpush後、そのcommitのCI/保存log/内側archive hash・別process再計算/両project cleanupと保護container ID不変を確認するまでT07bのCI受入を完了としない。T07a復旧harness自身のCI、実producer、T17b API metadata/全体timeout、時計資格、T09以降の実candidateは残す。
+
+記録整備時、cwdが261021の状態で261021/work_log.mdを指定した修正文がFileNotFoundErrorとなった。別操作の索引生成は成功したが、同shellの最終終了値0を修正文成功と解釈せず、repo rootから正しいpathで修正し直した。raw transcriptのみの編集コマンド失敗で、試験結果は変更していない。

@@ -62,7 +62,7 @@ jobs:
           set -o pipefail
           mkdir -p data/reports
           timeout --signal=TERM --kill-after=10 1200 python scripts/capital_system_harness.py \
-            --run-synthetic-system --evidence-dir data/reports/t16-ci 2>&1 \
+            --run-synthetic-system --verify-paired-restore --evidence-dir data/reports/t16-ci 2>&1 \
             | tee data/reports/synthetic-system-ci.log
       - name: Run disposable PostgreSQL snapshot-lock test
         if: >-

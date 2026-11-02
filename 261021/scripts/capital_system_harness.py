@@ -88,6 +88,11 @@ def unique_resource_ids(output: str) -> list[str]:
     return list(dict.fromkeys(line.strip() for line in output.splitlines() if line.strip()))
 
 
+def protected_container_ids() -> list[str]:
+    return sorted(line for line in docker("ps", "-a", "--no-trunc", "--format", "{{.Names}} {{.ID}}").splitlines()
+                  if line.startswith("bike-mlops-"))
+
+
 def parse_docker_image_records(output: str) -> list[dict]:
     records = []
     for line in output.splitlines():
@@ -225,10 +230,13 @@ def make_override(destination: Path, token: str) -> Path:
 
 
 class Harness:
-    def __init__(self, root: Path, project: str, token: str):
+    def __init__(self, root: Path, project: str, token: str, ports=PORTS):
         if not re.fullmatch(r"bikemlopstest[a-f0-9]{16}", project) or not re.fullmatch(r"[a-f0-9]{32}", token):
             raise ValueError("Invalid disposable project identity")
         self.root, self.project, self.token = root, project, token
+        if len(ports) != 4 or len(set(ports)) != 4 or any(type(p) is not int or not 0 < p < 65536 for p in ports):
+            raise ValueError("Invalid disposable port map")
+        self.ports = ports
         self.env = compose_environment()
         self.compose = ["compose", "-p", project, "--project-directory", str(root), "--env-file", str(root / "harness.env"),
                         "-f", str(root / "compose.yaml"), "-f", str(root / "compose.capital.yaml"),
@@ -264,10 +272,11 @@ class Harness:
             raise HarnessError("Disposable project identity already exists; refusing to reuse it")
 
     def verify_ports(self, *, require_staging_api: bool = False) -> None:
-        expected_ports = [("postgres", "5432/tcp", 55433), ("postgres-staging", "5432/tcp", 55434),
-                          ("mlflow", "5000/tcp", 5001)]
+        mlflow, api, postgres, staging = self.ports
+        expected_ports = [("postgres", "5432/tcp", postgres), ("postgres-staging", "5432/tcp", staging),
+                          ("mlflow", "5000/tcp", mlflow)]
         if require_staging_api:
-            expected_ports.append(("api-staging", "8000/tcp", 8110))
+            expected_ports.append(("api-staging", "8000/tcp", api))
         for service, internal, expected in expected_ports:
             ids = docker(*self.compose, "ps", "-q", service, env=self.env).splitlines()
             if len(ids) != 1:
@@ -326,12 +335,12 @@ def write_synthetic_credentials(root: Path) -> None:
             stream.write(f"{name}={password}\n")
 
 
-def wait_ready() -> None:
+def wait_ready(base_url="http://127.0.0.1:5001") -> None:
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
     until = time.monotonic() + 45
     while time.monotonic() < until:
         try:
-            with opener.open("http://127.0.0.1:5001/health", timeout=2) as response:
+            with opener.open(base_url + "/health", timeout=2) as response:
                 if response.status == 200:
                     return
         except (OSError, urllib.error.URLError):
@@ -357,18 +366,18 @@ def read_synthetic_credentials(root: Path) -> str:
     return values["APP_DB_PASSWORD"]
 
 
-def isolated_python_environment(root: Path, project: str, password: str) -> dict:
+def isolated_python_environment(root: Path, project: str, password: str, ports=PORTS) -> dict:
     return {
         "PATH": os.environ.get("PATH", ""),
         "LANG": "C.UTF-8",
         "PYTHONPATH": os.pathsep.join((str(root / "src"), str(root))),
         "PYTHONNOUSERSITE": "1",
         "DATA_PROFILE_ID": "capital-bikeshare",
-        "MLFLOW_TRACKING_URI": "http://127.0.0.1:5001",
-        "MLFLOW_REGISTRY_URI": "http://127.0.0.1:5001",
+        "MLFLOW_TRACKING_URI": f"http://127.0.0.1:{ports[0]}",
+        "MLFLOW_REGISTRY_URI": f"http://127.0.0.1:{ports[0]}",
         "MLFLOW_DISABLE_AGENT_HINT": "1",
         "APP_DB_PASSWORD": password,
-        "DATABASE_URL": f"postgresql://bike_app:{password}@127.0.0.1:55434/bikeops",
+        "DATABASE_URL": f"postgresql://bike_app:{password}@127.0.0.1:{ports[3]}/bikeops",
         "CAPITAL_COMPOSE_PROJECT_NAME": project,
         "CAPITAL_COMPOSE_ENV_FILE": str(root / "harness.env"),
     }
@@ -482,17 +491,18 @@ def request_json(url: str, payload: dict | None = None) -> tuple[int, dict]:
         raise HarnessError(f"Synthetic staging API request failed ({type(error).__name__})") from error
 
 
-def wait_staging_api(candidate_id: str, version: str, artifact_sha256: str) -> tuple[dict, dict]:
+def wait_staging_api(candidate_id: str, version: str, artifact_sha256: str,
+                     base_url="http://127.0.0.1:8110") -> tuple[dict, dict]:
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
     until = time.monotonic() + 90
     while time.monotonic() < until:
         try:
-            with opener.open("http://127.0.0.1:8110/ready", timeout=3) as response:
+            with opener.open(base_url + "/ready", timeout=3) as response:
                 status, ready = response.status, json.loads(response.read())
             if (status == 200 and ready.get("status") == "ready"
                     and ready.get("candidate_id") == candidate_id and str(ready.get("model_version")) == version
                     and ready.get("deployment_permission") == "blocked"):
-                version_status, version_info = request_json("http://127.0.0.1:8110/version")
+                version_status, version_info = request_json(base_url + "/version")
                 if (version_status == 200 and version_info.get("candidate_id") == candidate_id
                         and str(version_info.get("model_version")) == version
                         and version_info.get("artifact_sha256") == artifact_sha256
@@ -776,16 +786,21 @@ def main() -> None:
                         help="Run blocked registration, staging seed/API, audited 1,050-request measurement and cleanup using synthetic data")
     parser.add_argument("--evidence-dir", type=Path,
                         help="Opt in to archive and independently recalculate this synthetic run under data/reports")
+    parser.add_argument("--verify-paired-restore", action="store_true",
+                        help="After synthetic measurement, restore registry/skops/audit to three separate disposable volumes")
     args = parser.parse_args()
     run_synthetic = args.run_synthetic_system
     if args.evidence_dir is not None and not run_synthetic:
         parser.error("--evidence-dir requires --run-synthetic-system")
+    if args.verify_paired_restore and not run_synthetic:
+        parser.error("--verify-paired-restore requires --run-synthetic-system")
     prepare_synthetic = args.prepare_synthetic or run_synthetic
     run_infrastructure = args.run_infrastructure or run_synthetic
     project = "bikemlopstest" + secrets.token_hex(8)
     token = secrets.token_hex(16)
     root = Path(tempfile.mkdtemp(prefix="capital-system-harness-"))
     cleanup_required = False
+    protected_before = None
     preserve = False
     evidence_exported = False
     stage = "prepare_workspace"
@@ -818,6 +833,7 @@ def main() -> None:
         check_local_daemon()
         check_ports_free()
         harness.assert_empty()
+        protected_before = protected_container_ids()
         print(json.dumps({"status": "starting_disposable_infrastructure", "project": project,
                           "workspace": str(root)}), flush=True)
         stage = "compose_config"
@@ -857,6 +873,10 @@ def main() -> None:
                 evidence_exported = True
                 print(json.dumps({"status": "synthetic_evidence_archived_and_recalculated", **evidence},
                                  ensure_ascii=False), flush=True)
+            if args.verify_paired_restore:
+                stage = "paired_registry_skops_audit_restore"
+                from capital_paired_restore import run_paired_restore
+                run_paired_restore(root, harness, result, synthetic, harness_module=sys.modules[__name__])
     except HarnessError as error:
         cause = "required_port_unavailable" if str(error).startswith("Required local port ") else "not_determined"
         print(json.dumps({"status": "failed", "stage": stage, "cause": cause,
@@ -871,6 +891,9 @@ def main() -> None:
             if cleanup_required:
                 try:
                     harness.cleanup()
+                    if protected_before != protected_container_ids():
+                        raise HarnessError("Protected project container identities changed during the fixture")
+                    print(json.dumps({"status": "protected_container_ids_unchanged"}), flush=True)
                     print(json.dumps({"status": "cleanup_complete", "project": project}), flush=True)
                 except BaseException as error:
                     preserve = True
