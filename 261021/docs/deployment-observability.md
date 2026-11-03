@@ -69,3 +69,5 @@ legacy以外の不一致では`/ready`は503、`/version`は診断状態だけ�
 Docker daemonや送信済みHTTPの完了はprocess停止で取消保証できない。固定probe request ID `deploy-probe:<deployment_id>`と台帳・入口・stateを調査し、必要なら手動recoverする。自動retryは行わない。completed commit後の応答喪失でも完了行を未完了へ戻さず、結果はinspectで確認する。失敗時の補償も同じ全体予算内であり、補償時間だけを無制限に延長しない。
 
 この上限はCLI配信操作の上限で、API起動自身のloader時間や予測応答SLOを変更するものではない。合成試験の時間を実Capital性能・時計資格として使わない。受入原本・失敗・未達ケースは[今回の索引](reviews/20261103-t17b-t07a-checks.json)に追記する。
+
+Composeへ必要なDB設定3項目（`APP_DB_PASSWORD`、`MLFLOW_DB_PASSWORD`、`POSTGRES_ADMIN_PASSWORD`）と`APP_DB_HOST_PORT`も子processの明示環境へ渡す。環境変数だけの構成とport上書きを維持し、これらの値をargv/診断logへ表示しない。その他の無関係な環境変数を一括継承しない。

@@ -3054,3 +3054,7 @@ CI実装commitのartifact/hash/normal+TERM cleanup確認はこの時点では未
 ### T17b legacy互換の追加負例
 
 CI待機中に、legacy/contextなしの候補recoverで、previous stateのdeployment_operationまでdict copyされ、新版へ旧操作bindingが残り得ることを確認した。legacy-binding-beforeは新しい1回帰で実際に失敗（旧operation/version2がactive_version3へ持越し）。候補state作成時は古いbindingを外し、schema3の照合済みcallerだけが新bindingを付けるよう変更した。legacyの検証情報を補作せず、旧版側recoverの保存previous stateはそのまま戻す。legacy-binding-afterでrecovery全27件が成功し、失敗/修正後のlog/hashをCI側原本directoryへ残した。最終実装commitのCIを別runで確認する。
+
+### Compose環境変数だけの起動互換
+
+scripts/bikectlとComposeの環境変数契約を照合し、子processの最小環境にAPP_DB_PASSWORD/MLFLOW_DB_PASSWORD/POSTGRES_ADMIN_PASSWORD/APP_DB_HOST_PORTが不足していたことを確認した。.envを持つ通常構成では表面化しないが、環境変数だけの従来構成やport上書きを落としていた。compose-environment-beforeで不足を再現し、4項目だけを明示allowlistへ追加。値をargv/診断へ出さず、無関係な秘密情報は伝播しないことを修正後試験で確認した。全process境界の回帰も実行し、最終のsource commit CIと結合する。OS/時計/実サービス・future拒否は変更しない。

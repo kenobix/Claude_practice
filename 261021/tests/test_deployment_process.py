@@ -213,3 +213,11 @@ with patch.object(cli,'_promote',side_effect=promote): main()
         result=run_operation(dict(mode='promote',version='3',approver='declared',reason='fixture',rollback=False,diagnostic=False),
                              command=[sys.executable,'-c',code],timeout_seconds=15)
         self.assertEqual(result,dict(model_version='3',prediction=1.25))
+
+    def test_compose_configuration_is_forwarded_without_forwarding_unrelated_secrets(self):
+        keys=['APP_DB_PASSWORD','MLFLOW_DB_PASSWORD','POSTGRES_ADMIN_PASSWORD','APP_DB_HOST_PORT']
+        code=f"import json,os; print(json.dumps({{'configuration_present':all(k in os.environ for k in {keys!r}),'unrelated_secret_present':'UNRELATED_SECRET' in os.environ}}))"
+        with patch.dict(os.environ, **dict.fromkeys(keys,'synthetic-only'), UNRELATED_SECRET='excluded'):
+            result=run_operation({'mode':'recover'},command=[sys.executable,'-c',code],timeout_seconds=3)
+        self.assertTrue(result['configuration_present'])
+        self.assertFalse(result['unrelated_secret_present'])
