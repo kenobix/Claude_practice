@@ -327,3 +327,11 @@ class DeploymentRecoveryTests(unittest.TestCase):
                 cli._promote("3", "operator", "test", False, False)
         self.assertEqual(self.journal()[0]["status"], "completed")
         self.assertEqual(self.read_state()["active_version"], "3")
+
+    def test_legacy_candidate_recovery_does_not_inherit_previous_operation_binding(self):
+        self.state['deployment_operation'] = {'deployment_id': 'previous-operation', 'model_version': '2'}
+        self.write_state(self.state)
+        self.pending(context=False)
+        self.recover()
+        self.assertEqual(self.read_state()['active_version'], '3')
+        self.assertNotIn('deployment_operation', self.read_state())

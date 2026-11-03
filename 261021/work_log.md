@@ -3050,3 +3050,7 @@ CI実装commitのartifact/hash/normal+TERM cleanup確認はこの時点では未
 待機中の静的再確認で、新T07a harnessのpreflightがcached caddy:2.10.2-alpineを要求する一方、既存Capital staging試験はCaddyを起動せず、cold CI runnerへ取得するstepがないことを特定した。ローカルにはcached imageがあったためlocal受入では見えなかった。製品source/検査条件は変更せず、CIの新step内だけで固定版Caddyの明示pullを180秒・TERM/KILL・pipefail・同じallowlist logへ追加した。先行runのCI全体を成功/完了とせず、最終workflow commitのrunを再確認する。Docker upstream base imageはCI VMのcacheであり、既存ユーザーstackのapp tagを更新しない。
 
 同じ実装commitのSQLite OS補足scriptも再実行し、実chmod拒否・実lock timeout・全原本不変を確認した。先行索引はlocal snapshotの履歴として保持し、後続CI索引で最終のworkflow commitと原本hashを結ぶ。
+
+### T17b legacy互換の追加負例
+
+CI待機中に、legacy/contextなしの候補recoverで、previous stateのdeployment_operationまでdict copyされ、新版へ旧操作bindingが残り得ることを確認した。legacy-binding-beforeは新しい1回帰で実際に失敗（旧operation/version2がactive_version3へ持越し）。候補state作成時は古いbindingを外し、schema3の照合済みcallerだけが新bindingを付けるよう変更した。legacyの検証情報を補作せず、旧版側recoverの保存previous stateはそのまま戻す。legacy-binding-afterでrecovery全27件が成功し、失敗/修正後のlog/hashをCI側原本directoryへ残した。最終実装commitのCIを別runで確認する。

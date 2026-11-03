@@ -679,6 +679,8 @@ def _checked_registered_deployment(version: str):
 
 def _candidate_runtime_state(state: dict, row: dict, quality_gate: str) -> dict:
     updated = dict(state)
+    # Only a schema3 caller may attach a freshly verified candidate binding.
+    updated.pop("deployment_operation", None)
     updated.update(
         active_slot=row["to_slot"], active_version=str(row["to_version"]),
         deployment_mode="approved" if quality_gate == "passed" else "diagnostic",
