@@ -101,6 +101,10 @@ Solは開始/終了のidentity、exe/hash、親/namespace、選択configを先�
 以下は未採取のPHC fd/UDP inodeだけを補う手順。基本inventoryも同じ新規directoryへ採り、identityを対応付ける。
 旧PIDを固定しない。OS・時計・service・実行policyは変更しない。
 
+現在のreaderはexeの`dev:inode:size`も前後比較する。
+[内部数値採取](chrony-runtime-control.md)の同じboot/dev42/inode4227/SHAと照合するが、別bootならその番号を流用しない。
+当該採取は公開実行fileの読取FDを使ったもので、daemonのPHC/socket fdや開始時刻/親を採取したものではない。
+
 既にUbuntuがRunningの状態で、管理者PowerShellから`wsl.exe --debug-shell`を起動する。
 Linuxのroot promptが出てから、以下を貼り付けてEnterを押す。
 

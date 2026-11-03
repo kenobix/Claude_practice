@@ -3174,3 +3174,50 @@ ZIP重複member警告は意図した負例で、通常upload破損ではない�
 
 completion-validation-v1は成功。主時計・追加clock・local/CI索引の154原本hash、相対リンク、明示anchor3箇所、管理者shell snippet構文とdiffを検証し、実装5a687a7からsource/scripts/tests/workflow/lockが不変であることを確認した。
 記録後に同validatorでCI側の最終30原本を含む全hashを再確認し、今回の文書/証拠だけをstageして全差分/statusを確認する。無関係な未追跡3pathは保持する。
+
+## 2026-11-03・298c6c8以降：完全debug・内部制御数値と上流互換調査
+
+依頼のP1時計/T03/T09と独立P2を確認。追加管理者directoryはなく、ユーザーも「まだ採取していない」と回答した。
+debug-shell拒否を繰り返さず、OS・時計/同期設定・実DB・実registry・現配信・future拒否・schema/writer/lockは変更しない。
+rawは新規`data/reports/20261103-followup-298c6c8/`。runnerはUTC/MONOTONIC、command/cwd、終了値、log bytes/SHAを新規attempt名で保存する。
+最初の探索でrepo rootの`.venv/bin/python -V`は不存在127（projectのvenvは261021内）。tool transcriptの失敗を実環境version取得としない。
+
+| attempt / コマンド | 結果と判断 |
+|---|---|
+| source-head-v1 / `python3 source_head.py` | 公式202609=200/25,848,624 bytes、202610=404（08:02UTC）。取得・fit・窓変更なし |
+| runtime-inventory-v1 / `python3 read-current.py` | 非管理者token、既存Ubuntu/system scope・同boot・timesyncd identityを再読。chronyc読取成功、PowerShell module progressも保存 |
+| package-index-v1 / `python3 fetch-package-index.py` | Microsoft公式yumrepo一覧からMariner2.0のbase/debug公開先を限定。UTCは終了が開始より前、MONOTONICは正方向。表示を補正しない |
+| chrony-list-v1 / `python3 fetch-chrony-list.py` | 4.1のrelease1/2/3 RPMを確認。release3だけを次の照合対象にした |
+| rpm-debug-read-v1 / `python3 read-rpm-debug.py` | 公式binary/debug RPMをdownloadしlibarchiveで通常fileだけ読取。install/実行なし。binary SHAが過去稼働exeと一致、両Build ID一致 |
+| debug-analysis-v1 / `python3 analyze-debug.py` | debuglink CRC32 c87254da一致、完全symbolを取得。同名max_freq/offset_register等を区別する必要を確認 |
+| dwarf-resolve-v1/v2 / `python3 resolve-dwarf*.py` | 初回はsys_generic対象を7と誤数えしてassert失敗。実際の指定6項目へ直し、compile unit/型/住所を照合。初回logを保持 |
+| visible-file-root-v1 / root限定read | Ubuntuの/mnt/wslg/distro pathは不存在。外側exit0でも可視file取得成功とはしない |
+| t03-regression-v1 / `test_capital_request_journal.py` | 9件11.058秒成功。全phase/人工停止stackを保持。自然10秒停止は未再発で、歴史的原因未解決 |
+| uprobe-fixture-v1 | 時計操作を含まないPIE fixtureのみ。tracefs O_CREAT openがEINVAL、専用instance回収/制御hash不変 |
+| uprobe-fixture-v2/v3 | O_CREATなしでeventは採れたが、file-offset方式は既知値を0と読む。data LOAD変換後も同じ。exit0だけで数値検証を成功にしない |
+| live-numeric-v1 | fixture値0のassertで停止。daemon採取前に終了した |
+| uprobe-fixture-v4/v5 | pointer/IP相対対照で1.5→−2.25を照合。return先IPと関数ret命令前を区別し、入口/ret前のIP相対方式だけを採用 |
+| sender-build-v1 / `gcc -static … send-file-fd.c` | 公開chronydをO_RDONLYで開き専用Unix socketへFDを渡す小helperを作成。時計syscall・mount・ptrace・service操作なし |
+| live-numeric-v2 | 固定35MONOTONIC秒、8入口/出口対。一致SHA/dev42/inode4227の限定命令でchronyd213を観測。FD/IPC/probe回収 |
+| source-extraction-v1 | 対応debug RPMのconf/local/sys_genericは上流4.1と全bytes一致。sys_linux差はseccomp clone3/pread64許可追加。実際の差分を保持 |
+| internal-analysis-v1 | 8対の基準/offset/correctionからdriver戻り値を量子化範囲内で再計算。base −73579.259270ppm、max100000ppm、max_corr1/12。11000/飽和は0対 |
+| live-numeric-v3 / extended-analysis-v1 | 別の固定75MONOTONIC秒。16対すべて同じTIDのtimex入力・exit0・内部cache/戻り値・計算と一致。timesyncd負方向3要求も記録。ただし11000/負方向上限は0対で、過去の内部原因へ遡及しない |
+| orm-warning-normal-v1 | DB/network接続を禁止したprocessで通常import成功とnoload警告/mapper特定を確認 |
+| orm-warning-strict-v1 | 検証process内だけのwarning error化で意図したimport拒否exit23。将来版そのものの試験ではなく、製品policyは変更しない |
+| upstream-orm-check-v1 | 最新公開MLflow3.17.2の固定sourceをASTで確認し同じnoload指定。patch版への更新だけで直る根拠なし |
+| publisher-regression-v1 | 使い捨てSQLite publisher6件9.857秒成功。実registryを使わず、strict future拒否も維持 |
+| reader-target-v1 | exe dev/inode/size前後比較を追加し、同bytes・同pathでも別inodeへの変更を不完全42とする。専用17件3.524秒成功 |
+
+全uprobe/kprobeはUUID専用group/instanceを回収しglobal制御・定義hash不変、稼働bufferのlost/overrun/dropped0、実行file前後SHA一致を確認した。
+ただしuprobeは一時命令instrumentationで観測負荷がある。daemonへのsignal・ptrace停止・全memory dump、OS時計/同期設定の書換えはしていない。
+FDはsystem distroでhelperが開いた公開実行fileで、daemonのPHC fdを採取したとは呼ばない。新規namespace起動・Windows UAC昇格・OS package installもない。
+@+方式の0値の根本理由、tick11000区間の内部値、initd実体、PHC/UDP所有・開始/親/namespace、host精度/同期責任/資格は残る。
+
+完全debugの取得・固定24対の内部計算確認は[時計記録](docs/chrony-runtime-control.md)、独立P2は[ORM調査](docs/mlflow-orm-compatibility.md)を正規の入口にした。
+MLflow3.17.2にも同指定があるため、依存lock/SQLAlchemy downgrade/site-packages patch/警告抑制は行わない。外部issueの下書きのみ作成し送信していない。
+次のP2再着手条件を上流loader変更・修正release/削除予定の具体化とし、同じreleaseの確認を繰り返す作業から切り分けた。
+実装commit CIは後続で確認し、今回の局所検証だけで新しいCI成功としない。無関係な未追跡3pathは保持する。
+
+records-validation-v1成功：当時の2索引×171原本hash、相対link、known double fixture、parser/shell/管理者snippet、product source/lock/workflow不変を確認。
+検証ログも含む32attempt/173原本へ索引を再生成して再照合し、対象reader/test/文書/証拠だけの全差分とstatusを確認して節目commit/pushする。
+追加の用語6項目でDWARF/IP相対/読取FD/dev-inode/非飽和/ORMを説明した。新しい実装commitのCI完了前はreaderのCI受入を未完了とする。

@@ -74,6 +74,8 @@ class ClockResourceReaderTests(unittest.TestCase):
         result = self.run_reader()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("START_TICKS=319\n", result.stdout)
+        identity = (self.proc / "213/exe").stat()
+        self.assertIn(f"EXE_FILE_ID={identity.st_dev}:{identity.st_ino}:{identity.st_size}\n", result.stdout)
         self.assertIn("PHC_FD=3 RDEV=1:3\n", result.stdout)
         self.assertIn("UDP_FD=4 TABLE=udp LOCAL_REMOTE_INODE=0100007F:0143 00000000:0000 3582", result.stdout)
         self.assertNotIn("9999", result.stdout)
@@ -182,6 +184,17 @@ exec /usr/bin/sha256sum "$@"
         result = self.run_reader()
         self.assertEqual(result.returncode, 42)
         self.assertIn("FD_BOUND_EXCEEDED", result.stdout)
+
+    def test_same_content_executable_replacement_is_incomplete(self):
+        self.shim("stat", f'''if [ "$3" = '{self.proc}/213/exe' ]; then
+ if [ -f '{self.root}/seen-file-id' ]; then printf '1:999999:19\\n'; exit 0; fi
+ : > '{self.root}/seen-file-id'
+fi
+exec /usr/bin/stat "$@"
+''')
+        result = self.run_reader()
+        self.assertEqual(result.returncode, 42)
+        self.assertIn("IDENTITY_OR_CONFIG_CHANGED_DURING_READ", result.stdout)
 
 
 if __name__ == "__main__":

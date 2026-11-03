@@ -31,3 +31,6 @@ artifact13214080832の233,299 bytes/16member ZIP SHA
 system logにNode20強制移行/punycode/url.parse警告は見られなかった。すべての依存警告がなくなったとは呼ばない。
 合成p95の19.503491msは保存値の検算で、実運用性能・時計資格へ流用しない。
 初期local索引のCI_PENDINGは当時のsnapshotとして保持する。
+
+残るSQLAlchemy noload警告は[発生箇所と最新公開版の調査](mlflow-orm-compatibility.md)を参照。
+調査済みの同じreleaseを繰り返し確認せず、当該loaderの上流変更/修正release時に個別互換試験へ進む。

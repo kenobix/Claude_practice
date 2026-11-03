@@ -43,8 +43,10 @@ for task_proc in "$task_proc_root"/[0-9]*; do
     task_start_before=$(start_ticks "$task_stat_before") || exit 42
     task_exe_before=$(readlink "$task_proc/exe") || exit 42
     task_hash_before=$(sha256sum "$task_proc/exe") || exit 42
+    task_file_before=$(stat -Lc '%d:%i:%s' "$task_proc/exe") || exit 42
     task_ns_before=$(read_namespaces) || exit 42
     printf 'START_TICKS=%s\nEXE=%s\nEXE_HASH=%s\nNAMESPACES\n%s\n' "$task_start_before" "$task_exe_before" "$task_hash_before" "$task_ns_before"
+    printf 'EXE_FILE_ID=%s\n' "$task_file_before"
     sed -n '/^PPid:/p;/^NSpid:/p' "$task_proc/status" || exit 42
 
     # This supplement supports the observed WSL-generated default only. Other
@@ -115,10 +117,11 @@ for task_proc in "$task_proc_root"/[0-9]*; do
     task_start_after=$(start_ticks "$task_stat_after") || exit 42
     task_exe_after=$(readlink "$task_proc/exe") || exit 42
     task_hash_after=$(sha256sum "$task_proc/exe") || exit 42
+    task_file_after=$(stat -Lc '%d:%i:%s' "$task_proc/exe") || exit 42
     task_ns_after=$(read_namespaces) || exit 42
     task_config_after=$(sha256sum "$task_config") || exit 42
     if [ "$task_start_before" != "$task_start_after" ] || [ "$task_exe_before" != "$task_exe_after" ] ||
-       [ "$task_hash_before" != "$task_hash_after" ] || [ "$task_ns_before" != "$task_ns_after" ] ||
+       [ "$task_hash_before" != "$task_hash_after" ] || [ "$task_file_before" != "$task_file_after" ] || [ "$task_ns_before" != "$task_ns_after" ] ||
        [ "$task_config_before" != "$task_config_after" ]; then
         printf 'IDENTITY_OR_CONFIG_CHANGED_DURING_READ\n'; task_failed=1
     fi

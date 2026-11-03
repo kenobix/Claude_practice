@@ -538,11 +538,11 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 | 優先度 | 難易度・担当 | 残課題と次の条件 |
 |---|---|---|
-| P1 | D3・Sol | 時計：追加の同時採取で現在の自然future拒否とtimesyncd496の負方向stepを対応済み。残りは初期namespaceのPHC fd/UDP所有の追加採取、chronydの内部制御値・initdの実行主体、host外部UTC差と同期責任、修復案と時計資格。Windows stripchartの5offsetは約−1.35秒で、hostを無条件に正確とみなさない。T03自然停止の歴史的原因は未確定。詳細は[追加読取](../261021/docs/clock-followup.md)。OS修復は未許可、future拒否/clamp/retryで代替しない |
+| P1 | D3・Sol | 時計：自然future拒否とtimesyncd step、配布build/debug照合、非飽和時の内部計算24組（うち16組はkernel書込/戻り値も）は確認済み。残りはPHC fd/UDP・開始時刻/親/namespaceの管理者採取、tick11000時の内部値・initd管理元、host外部UTC差/同期責任、修復案と時計資格。35/75秒区間では11000未再現で、過去の上限原因は未確定。[内部観測](../261021/docs/chrony-runtime-control.md)。T03歴史的停止も未確定。OS修復未許可、future拒否/clamp/retryで代替しない |
 | P1 | D1・Luna | T09の202610公式原本公開待ち。公開後に既存手順で取得・bytes/hash/構造を照合。HEADだけで取得完了としない |
 | P0（実fit前） | D3・Sol | T10：独立protocol/全原本snapshot/分割/recipe/基準をfit前に固定。10月bufferなしで窓を短縮しない |
 | P1 | D3・Sol | T02実producerおよびT11/T12/T13b：同一の実candidate/artifactに精度・監視・復旧・metadata・運用測定を結合し採否を記録。T09/T10/時計資格等の前提を満たす範囲で順に進める |
-| P2 | D2・Sol review | 残るCI依存警告はMLflow経由SQLAlchemy noloadの将来互換を個別確認。upload-artifact v7.0.2/Node24単独更新は実装5a687a7/CI41598271089の463件・16member ZIP/digest・archive-only再計算・全cleanupまで完了。[CI索引](../261021/docs/reviews/20261103-upload-action-ci-checks.json)。lockを全面更新しない |
+| P2（上流変更時） | D2・Sol review | MLflow noloadの発生箇所/通常import/厳格警告負例と現行publisher6件は確認済み。最新3.17.2にも同指定があり、修正releaseまたはloader変更時に個別再検証。それまではlock変更/警告抑制をしない。[調査と報告下書き](../261021/docs/mlflow-orm-compatibility.md)。upload-artifact保守は前回CI受入済み |
 
 T14の証拠入口・task対応表・操作説明は最新CIへ追記済み。T06a OS補足とT07a CI接続を残件一覧へ再掲しない。旧checkpoint表は当時の記録として保持する。
 
@@ -560,3 +560,9 @@ T09は同日06:02 UTCの公式HEADで202609=200/202610=404。原本取得・fit�
 内側archive4原本hash・暖機50除外/要求1000/p95の別process・独立再計算、T07a正常/TERM・T07b対応復元・PG/HTTP cleanupを確認した。
 Node20強制移行/punycode/url.parse警告は今回system logで見られず、unitのMLflow noload警告は別の残件。
 T14として時計/CIの用語16項目も補足した。後続記録commitをこの実装CIが直接試験したとは呼ばない。
+
+2026-11-03・298c6c8以降：追加管理者ログは未採取とユーザー確認。T09の公式08:02UTC HEADも202610=404（202609=200）。
+時計は[配布debugと内部数値の照合](../261021/docs/reviews/20261103-chrony-runtime-checks.json)を追加した。
+完全debugのBuild ID/CRC、compile unit/型、稼働inodeを照合し、計算とkernel入力が一致する非飽和16組を確認した。tick11000が出るまでの延長/retryはせず未再現を保持する。
+exe dev/inode/sizeの前後比較を追加readerへ接続し、同bytesの別inode置換も拒否する専用17件が成功。実装commit CIは後続記録で確認し、local成功だけで新CI完了にしない。
+T03 journal9件/既存publisher6件成功。MLflow警告は[独立調査](../261021/docs/reviews/20261103-orm-compatibility-checks.json)で上流修正待ちへ整理した。

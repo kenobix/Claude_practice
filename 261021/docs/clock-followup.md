@@ -1,5 +1,8 @@
 # 時計調査の追加読取と残る採取（2026-11-03）
 
+298c6c8以降の[配布build/debugと内部数値の照合](chrony-runtime-control.md)で、完全debugを取得し非飽和時の計算を確認した。
+下記の「内部変数未取得」は当時の状態。新しい観測でもtick11000時の値・管理者PHC/socket採取・修復資格は未了。
+
 基点`dcfdd9c1d1bcc5b17194cc7dbd7c333b9ec19416`。
 [前回の管理者ログ](clock-admin-log-review.md)、[補正量の説明](chrony-control-analysis.md)、
 [今回の試行・hash索引](reviews/20261103-clock-followup-checks.json)を参照する。

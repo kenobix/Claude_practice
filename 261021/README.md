@@ -129,3 +129,6 @@ T07bでは[実MLflow/skops・DBの対応復元](docs/deployment-recovery.md)を�
 CIの独立保守は[artifact action更新](docs/ci-artifact-maintenance.md)を参照。
 実装`5a687a7`の[CI41598271089](https://github.com/kenobix/Claude_practice/actions/runs/41598271089)で463件・隔離system・16member ZIP/digest・再計算・cleanupまで成功した。
 この記録と時計の新しい用語は[用語集](docs/glossary.md)・[証拠入口](docs/evidence-guide.md)から確認できる。
+
+298c6c8以降の[chronyd内部計算の観測](docs/chrony-runtime-control.md)では、対応debugと非飽和時の計算を照合した。
+tick11000時の原因・時計資格は未解決。[MLflow警告の調査](docs/mlflow-orm-compatibility.md)も行い、上流修正待ちと現在の検証結果を区別している。
