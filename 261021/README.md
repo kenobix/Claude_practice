@@ -118,3 +118,10 @@ T07bでは[実MLflow/skops・DBの対応復元](docs/deployment-recovery.md)を�
 2026-11-03更新: 新規配信のAPI・state・台帳の操作ID照合と、CLI promote900秒/recover300秒の全体deadline、未確定時の手順は[配信診断](docs/deployment-observability.md#2026-11-03-t17b-操作の照合とcli全体の待機上限)を参照。最終受入状況は[検証索引](docs/reviews/20261103-t17b-t07a-checks.json)を確認する。
 
 2026-11-03最終確認: 実装`4a4474e`の[CI41559833990](https://github.com/kenobix/Claude_practice/actions/runs/41559833990)で全447件・Caddy normal/TERM・対応復元・artifact16 member/hash/cleanupが成功。[最終CI索引](docs/reviews/20261103-t17b-t07a-ci-checks.json)を確認する。合成受入とSQLite OS補足は完了し、実producer・時計資格・新原本からの採否は計画§11.6の残件に従う。
+
+## 時計診断の追加記録
+
+2026-11-03の[追加読取](docs/clock-followup.md)と[検証索引](docs/reviews/20261103-clock-followup-checks.json)に、
+自然future拒否と現在のtimesyncd stepの同時照合、T03回帰、未採取範囲を記録した。
+初期namespaceのPHC/socket所有の追加採取は[管理者手順](docs/clock-owner-admin-read.md#追加のphcsocket所有採取2026-11-03)を参照。
+時計修復・資格確認・実Capital候補の採否は未完了。

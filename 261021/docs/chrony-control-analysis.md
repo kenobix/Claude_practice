@@ -1,5 +1,8 @@
 # chronydの補正量とtick=11000の追加調査
 
+2026-11-03の[追加読取と同時自然再現](clock-followup.md)で、今回のfuture拒否とtimesyncdのstepを対応した。
+chronydは今回常に11000ではなく、内部変数・PHC/socket本採取は未了。以下の過去区間の数値/限界は当時の記録として保持する。
+
 続く[管理者ログ照合](clock-admin-log-review.md)で稼働exe/hashと生成設定を確認した。以下の未採取という記述は基点からの当時の状態で、内部制御原因の未確定は継続する。
 
 基点: `2181bfe453bf9c87ec9374a5d74013bcdddb86b0`。

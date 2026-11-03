@@ -92,3 +92,45 @@ rawは端末path・UID・argv等を含むためignored reportsへ保持する。
 Solは開始/終了のidentity、exe/hash、親/namespace、選択configを先に確認し、fd/socket・config include・管理unit等の不足があれば、そのprocessだけの追加読取を設計する。
 別bootやPID再利用、identity変化があれば旧setter traceへ結び付けない。
 `INVENTORY_COMPLETE`でもtickの内部変数や修復完了を証明しないため、[追加調査の未確定事項](chrony-control-analysis.md)を残す。
+
+## 追加のPHC/socket所有採取（2026-11-03）
+
+[追加調査](clock-followup.md)でWindows非管理者tokenと、Ubuntuからchronydが見えない境界を再確認した。
+以下は未採取のPHC fd/UDP inodeだけを補う手順。基本inventoryも同じ新規directoryへ採り、identityを対応付ける。
+旧PIDを固定しない。OS・時計・service・実行policyは変更しない。
+
+既にUbuntuがRunningの状態で、管理者PowerShellから`wsl.exe --debug-shell`を起動する。
+Linuxのroot promptが出てから、以下を貼り付けてEnterを押す。
+
+```sh
+(
+    task_repo=
+    for task_root in /proc/[0-9]*/root; do
+        task_candidate="$task_root/home/kenshin/work/claude_practice/261021"
+        if [ -r "$task_candidate/scripts/read_chrony_resources.sh" ]; then
+            task_repo=$task_candidate
+            break
+        fi
+    done
+    if [ -z "$task_repo" ]; then printf 'Ubuntu reader path not found\n'; exit 42; fi
+    task_run="clock-resources-admin-$(cat /proc/sys/kernel/random/uuid)"
+    task_dir="$task_repo/data/reports/$task_run"
+    umask 022
+    mkdir -m 755 "$task_dir" || exit 1
+    cat /proc/uptime > "$task_dir/uptime-before.txt"
+    sh "$task_repo/scripts/read_clock_process_ownership.sh" > "$task_dir/inventory.log" 2>&1
+    task_inventory_code=$?
+    sh "$task_repo/scripts/read_chrony_resources.sh" > "$task_dir/resources.log" 2>&1
+    task_resources_code=$?
+    printf 'inventory_exit=%s\nresources_exit=%s\n' "$task_inventory_code" "$task_resources_code" > "$task_dir/reader-exit.txt"
+    cat /proc/uptime > "$task_dir/uptime-after.txt"
+    sha256sum "$task_repo/scripts/read_clock_process_ownership.sh" "$task_repo/scripts/read_chrony_resources.sh" "$task_dir"/*.txt "$task_dir"/*.log > "$task_dir/hashes.sha256"
+    printf 'WSL保存先: /home/kenshin/work/claude_practice/261021/data/reports/%s\ninventory_exit=%s resources_exit=%s\n' "$task_run" "$task_inventory_code" "$task_resources_code"
+    if [ "$task_inventory_code" -ne 0 ] || [ "$task_resources_code" -ne 0 ]; then exit 42; fi
+)
+```
+
+表示された`clock-resources-admin-…`のdirectory名をチャットへ伝える。raw貼付けは不要。
+初期namespaceでの新手順のend-to-endはまだ未実施で、構文/fixture成功を実採取と呼ばない。
+0以外でもfileを削除せず保存する。終了行とexit/hashをreviewするまでは不完全扱い。
+出力後はLinux promptへ戻り、`exit`でdebug shellを抜けられる。WSL shutdownやDocker再起動は不要。

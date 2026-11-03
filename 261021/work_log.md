@@ -3081,3 +3081,48 @@ T07a normalは実Caddy/API/PGの並行同ID/409、監査失敗503、3地点SIGKI
 完了記録のcompletion-validation-v1はexit0でCI側107原本hash・相対link・最新残課題anchor、最終実装4a4474eからsource/tests/scripts/workflow/lockが不変であることを確認した。connectorの実行中job log取得はNOT_FOUNDだったため失敗JSONを保存し、完了後に再取得した。最終artifact-check-v1はexit0で、16 memberと内側4原本のhash、archive-only別process・独立nearest-rank、T07a normal/TERM・T07b/PGのcleanupを確認。最終保存CPUはAMD EPYC 9V45で、Intel@は固定fixtureで確認したことを区別する。download参照は0600の一時fileだけへ置き、各取得後に削除した。最初のartifact checker旧候補path探索はtool transcriptのみの失敗で、検算成功とは数えない。
 
 最後の直接validator（tool transcript）でも109原本hash・229相対link・source/workflow不変を確認した。最終stageで再度全原本hashと11文書pathだけのstaged/worktree一致・git status/全差分を確認し、記録単位をcommit/pushする。無関係な未追跡3pathは含めない。
+
+## 2026-11-03・dcfdd9c以降：時計の読取切分けとT09再確認
+
+依頼はP1の時計管理元/内部制御理由、T03自然再発時のphase/stack、T09公開状況、独立課題の優先実施。
+計画§11.6、前回CI索引、clock/chrony資料と管理者原本を再確認した。前回のT17b/T07a合成受入は繰り返し未完了へ戻さない。
+実DB・実registry・現配信・OS/service/時計設定・future拒否・schema/writer/lockは変更していない。
+
+新規ignored原本は`data/reports/20261103-clock-followup/`。
+runnerはcommand/cwd、開始終了UTC/MONOTONIC、終了値、log bytes/SHAを新規名へ保存し、既存attemptを上書きしない。
+最初の読取探索とpatch/Git操作はtool transcriptにも残る。connector取得はprocess計測を後付けせず、応答fileを別途hash保存する。
+
+| attempt / コマンドの要点 | 結果・判断 |
+|---|---|
+| current-preflight-v1 / `python3 read-current.py` | sandboxのWindows interop socket拒否、exit1。情報取得成功にしない |
+| official-head-v1 / `python3 source_head.py` | sandbox DNS拒否、exit1。404確認の代わりにしない |
+| current-preflight-v2 / 同読取を許可範囲でsandbox外実行 | Windows非管理者、既存Ubuntu/system distro、同bootとtimesyncd local214のexe/start/namespaceを確認。PowerShell module progress stderrも保持 |
+| official-head-v2 / 公式月次object HEAD | 202609=200/25,848,624 bytes、202610=404。同日06:02UTC。download/fitなし |
+| trace-tracking-v1 / `python3 collect-overlap.py` | 40秒専用traceとchronyc読取。timesyncd496再対応、chronyd213のtick/freq8書込中11000は3件。initd12579とtimesyncd496の負方向step。全buffer lost0、instance/probe削除・global制御hash不変 |
+| windows-bracket-v1 / `python3 bracket-windows.py …` | 81bracket/初回1除外、RAW/QPC比0.999949〜1.000048、MONOTONIC/QPC比1.073665〜1.073769。過去時間の換算・資格証明なし |
+| t03-journal-v1 / `.venv/bin/python -m unittest discover -s tests -p test_capital_request_journal.py -v` | 使い捨てHTTP/一時ledgerの9件11.759秒成功。通常TERMの全phase/exit130、signal→exit15,010,839MONOTONIC ns。自然10秒停止未再発、歴史的原因未解決 |
+| natural-future-v1 / `tests/probe_decision_clock.py --samples 120 --interval 0.2` | FakeRegistry・時計mockなし。68回目のreviewが検証UTCより1.018032秒先で拒否。tag不変/blocked。setter trace終了後なので変更元はこのattemptだけからは特定しない |
+| package-sync-v1 / `python3 read-package.py` | 外側exit0でもrpm不存在127。package照合不成功を明示。timesyncd選択先185.125.190.58と32秒pollは読取成功。journalはNo entriesで、ログが十分あるとはしない |
+| visible-elf-v1 / `python3 copy-visible-elf.py` | 可視binary SHAが過去inventoryと一致。ELF package noteはMariner2.0/chrony4.1/module4.1.0.0、Build ID5bff56…。新しいlive exe読取とは区別。mini-debug展開で関数symbolのみ、必要な内部変数symbolなし |
+| ubuntu-resource-scope-v1 / `wsl.exe -d Ubuntu -u root … sh scripts/read_chrony_resources.sh` | 初期namespaceのchronydが見えずexit42/INCOMPLETE。Ubuntu rootで全体採取できたとしない |
+| resource-reader-target-v1 / 新規reader専用test | 13件中2失敗。`/proc/net/udp`のtimer結合列を独立列と誤数えしinodeを読めなかった。初回logを保持し修正 |
+| resource-reader-target-v2 / 同対象 | inode位置とloopback323限定を修正し14件成功。別portの一致を所有証明へ使わない |
+| resource-reader-target-v3/v4 / 同対象 | uppercase include、config SHA変更、read失敗伝播も確認し、最終16件成功。fixture PHCは/dev/null device照合、本物PHC採取とは別 |
+| decision-regression-v1 / `test_capital_deployment_decisions.py` | 9件1.172秒成功。UTC先行の厳密拒否、tag不変等を維持 |
+| joint-natural-v1 / `python3 joint-natural.py` | trace開始後にFakeRegistry probe。同じ生成/検証区間内のtimesyncd496負方向stepと71回目の自然future拒否（1.235856秒）を照合。要求−1.547393321秒/return0、観測差−1.547393322秒。承認tag不変/blocked。trace cleanup/全buffer確認 |
+| joint-analysis-v1 / `python3 analyze-joint.py` | 独立した過去193原本hash、現在のphase・MONOTONICとsetter区間照合が成功。過去失敗全ての原因へ遡及しない |
+
+採取間にはUTC5,141.169543秒に対しMONOTONIC60.812997405秒という未trace区間もあった。変更元不明のまま記録し、UTCだけで試行順を判断しない。
+今回initdの負方向stepも観測したため、前回区間の「initdは前進」を全期間の性質とみなさない。exe/起動者の追加照合は残す。
+
+追加readerはchronydのみ・既定argv/config/PHC0・同processのloopback UDP323 inodeに限定し、device/socket内容・環境変数・key・無関係fd targetを読まない。
+開始tick/exe SHA/namespace/config SHAとfd linkの前後比較、fd256上限、別argv/include/不足/変更の不完全42、root不足77を実装した。
+Windows tokenが非管理者のため初期namespace本採取は未実施。管理者による新規directoryへのinventory+resources直保存手順を追記した。
+既存admin原本やsettingsは上書きしない。内部状態を推定アドレスで読む/daemonへattachする操作も行っていない。
+
+上流4.1の周波数設定→offset累積の両方がupdate_slewへ入る経路と、同じchronydの短間隔2書込の観測は整合するが、実際の内部base/corr/offsetを確認したとはしない。
+GitHub connectorのraw source取得はproviderのAttributeError、旧Mariner contentsはMoved Permanentlyを返したため、canonical azurelinux/2.0 contentsから取得した。branch仕様と正確な配布buildの同一性は未証明。
+公式upload-artifact v7.0.2のrelease/action/READMEも読取り保存し、時計/データ待ちから独立したP2単独保守を次の単位で扱う。
+
+今回の局所検証は専用16件、既存journal9件、decision9件、Python構文、shell構文/管理者snippet、link/hash/diff確認。product source/lockを変更していないため、この記録単位で全suite/Dockerを繰り返さない。
+最終コマンド・log・hash・限界は[今回索引](docs/reviews/20261103-clock-followup-checks.json)。実Capital採否/時計資格を合格にせず、次は限定管理者採取を待ちながら独立CI保守を進める。

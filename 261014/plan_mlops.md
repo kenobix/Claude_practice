@@ -538,10 +538,19 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 | 優先度 | 難易度・担当 | 残課題と次の条件 |
 |---|---|---|
-| P1 | D3・Sol | 時計の管理元/chronyd内部制御理由の未確定事項を読取で追加切分け。T03自然再発時はphase/stackを対応。OS修復は今回未許可、future拒否/clamp/retryで代替しない |
+| P1 | D3・Sol | 時計：追加の同時採取で現在の自然future拒否とtimesyncd496の負方向stepを対応済み。残りは初期namespaceのPHC fd/UDP所有の追加採取、chronydの内部制御値・initdの実行主体、修復案と時計資格。T03自然停止の歴史的原因は未確定。詳細は[追加読取](../261021/docs/clock-followup.md)。OS修復は未許可、future拒否/clamp/retryで代替しない |
 | P1 | D1・Luna | T09の202610公式原本公開待ち。公開後に既存手順で取得・bytes/hash/構造を照合。HEADだけで取得完了としない |
 | P0（実fit前） | D3・Sol | T10：独立protocol/全原本snapshot/分割/recipe/基準をfit前に固定。10月bufferなしで窓を短縮しない |
 | P1 | D3・Sol | T02実producerおよびT11/T12/T13b：同一の実candidate/artifactに精度・監視・復旧・metadata・運用測定を結合し採否を記録。T09/T10/時計資格等の前提を満たす範囲で順に進める |
 | P2 | D2・Sol review | 既知のCI action/依存経由の非推奨警告の個別保守。今回の受入失敗とは区別し、lockを全面更新しない |
 
 T14の証拠入口・task対応表・操作説明は最新CIへ追記済み。T06a OS補足とT07a CI接続を残件一覧へ再掲しない。旧checkpoint表は当時の記録として保持する。
+
+2026-11-03・基点dcfdd9c以降の追加読取：[時計調査索引](../261021/docs/reviews/20261103-clock-followup-checks.json)。
+同bootのtimesyncd identityを再対応し、専用40秒traceでchronydのtick/freq8指定（11000は3件）、
+initdとtimesyncdの両方の負方向stepを確認。前回区間のinitd前進だけという記録を今回全区間へ一般化しない。
+別のjoint採取でreviewが1.235856秒futureとなる自然拒否とtimesyncdのstepを生成/検証MONOTONIC区間内で照合し、tag不変/blockedを確認した。
+T03 journal9件・decision9件は成功し、自然停止は未再発。PHC/socket補助reader16件はfixture受入済み、Ubuntu rootでの実行は対象が見えず42。
+初期namespace本採取はWindows管理者操作待ちで、[手順](../261021/docs/clock-owner-admin-read.md#追加のphcsocket所有採取2026-11-03)を追加した。
+可視ELFのMariner2.0/4.1 package noteとBuild IDは取得したが、内部変数symbol/実数値は未取得。
+T09は同日06:02 UTCの公式HEADで202609=200/202610=404。原本取得・fit・窓変更・時計資格の完了へ流用しない。

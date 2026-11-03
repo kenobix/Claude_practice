@@ -1,0 +1,1724 @@
+{
+  "schema_version": 1,
+  "base_commit": "dcfdd9c1d1bcc5b17194cc7dbd7c333b9ec19416",
+  "status": "current_timesyncd_natural_future_rejection_correlated_internal_chronyd_and_clock_qualification_pending",
+  "scope": {
+    "OS_clock_service_changes": false,
+    "real_DB_registry_deployment_changes": false,
+    "future_rejection_relaxed": false,
+    "product_source_schema_writer_lock_changes": false,
+    "temporary_trace_cleaned": true,
+    "new_CI_acceptance_claimed": false
+  },
+  "findings": {
+    "status": "read_only_diagnostics_clock_not_qualified",
+    "previous_raw_hashes_checked": 22,
+    "runtime_timesyncd": {
+      "local_pid": 214,
+      "global_pid": 496,
+      "stable_identity": {
+        "local_pid": 214,
+        "exe": "/usr/lib/systemd/systemd-timesyncd",
+        "exe_sha256": "cbf92a41ffb29efd75daebf8a1a1dd4d0c078d2f3c50f0fc7e9e35715eefb7cd",
+        "cmdline": [
+          "/usr/lib/systemd/systemd-timesyncd",
+          ""
+        ],
+        "cgroup": "0::/system.slice/systemd-timesyncd.service\n",
+        "namespaces": {
+          "pid": "pid:[4026532219]",
+          "mnt": "mnt:[4026532222]",
+          "time": "time:[4026531834]",
+          "user": "user:[4026531837]"
+        },
+        "start_ticks": "1505"
+      }
+    },
+    "prior_admin_chronyd": {
+      "pid": 213,
+      "start_ticks": "319",
+      "exe": "/usr/sbin/chronyd",
+      "exe_sha256": "bf39d010dfc6177cd864d96ddd0cb32eb796704e8c68fe8bd65088d20d2e64b8",
+      "parent_pid": 1,
+      "parent_exe": "/init",
+      "parent_exe_sha256": "f84f9ae9116b972fce6723f920fb8fb1dedff2aeb0baa40ed7c5d2b9f4b73311",
+      "namespaces": {
+        "pid": "pid:[4026531836]",
+        "pid_for_children": "pid:[4026531836]",
+        "mnt": "mnt:[4026531841]",
+        "time": "time:[4026531834]",
+        "user": "user:[4026531837]"
+      },
+      "argv": [
+        "/sbin/chronyd"
+      ],
+      "identity_start_stable_within_inventory": true,
+      "configuration_path": "/etc/chrony.conf",
+      "configuration_sha256": "9315d50044034745ade10c260359b463eb77a61af9330f818f68ed16253f8528",
+      "selected_directives": [
+        "driftfile /var/lib/chrony/drift",
+        "makestep 1.0 3",
+        "rtcsync",
+        "leapsectz right/UTC",
+        "logdir /var/log/chrony",
+        "refclock PHC /dev/ptp0 poll 3 dpoll -2 offset 0"
+      ],
+      "drift_file_fields": [
+        -23906.64063,
+        603.665835
+      ]
+    },
+    "current_chronyd_live_exe_read": false,
+    "trace": {
+      "clock_samples": 6992,
+      "trace_entries": 64,
+      "changes": [
+        {
+          "before_monotonic_ns": 147690997533320,
+          "after_monotonic_ns": 147691002937705,
+          "after_utc": "2026-11-03T07:28:21.111580+00:00",
+          "realtime_delta_ns": -621980616,
+          "offset_change_ns": -627385001,
+          "setter": {
+            "comm": "initd",
+            "global_tid": 12579,
+            "monotonic_ns": 147691000754000,
+            "event": "do_settimeofday64 <-do_sys_settimeofday64"
+          }
+        },
+        {
+          "before_monotonic_ns": 147691262570129,
+          "after_monotonic_ns": 147691268407398,
+          "after_utc": "2026-11-03T07:28:20.079731+00:00",
+          "realtime_delta_ns": -1291462437,
+          "offset_change_ns": -1297299706,
+          "setter": {
+            "comm": "systemd-timesyn",
+            "global_tid": 496,
+            "monotonic_ns": 147691265580000,
+            "event": "timekeeping_inject_offset <-do_adjtimex"
+          }
+        }
+      ],
+      "timex_requests": [
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 147671016981000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 147671017004000,
+          "modes": 16386,
+          "tick": 10461,
+          "freq": -312121,
+          "syscall_exit": 0,
+          "driver_correction_ppm": -46095.23741149902
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 147671017013000,
+          "modes": 16386,
+          "tick": 11000,
+          "freq": 0,
+          "syscall_exit": 0,
+          "driver_correction_ppm": -100000.0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 147671017023000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 147679063896000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 147679063925000,
+          "modes": 16386,
+          "tick": 11000,
+          "freq": 0,
+          "syscall_exit": 0,
+          "driver_correction_ppm": -100000.0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 147679063938000,
+          "modes": 16386,
+          "tick": 11000,
+          "freq": 0,
+          "syscall_exit": 0,
+          "driver_correction_ppm": -100000.0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 147679063954000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 147687111173000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 147687111204000,
+          "modes": 16386,
+          "tick": 10920,
+          "freq": -2389690,
+          "syscall_exit": 0,
+          "driver_correction_ppm": -91963.53622436523
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 147687111216000,
+          "modes": 16386,
+          "tick": 10633,
+          "freq": 1544521,
+          "syscall_exit": 0,
+          "driver_correction_ppm": -63323.5675201416
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 147687111230000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "systemd-timesyn",
+          "global_tid": 496,
+          "monotonic_ns": 147691265568000,
+          "modes": 8476,
+          "requested_offset_ns": -1297300100,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 147697071666000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 147697071695000,
+          "modes": 16386,
+          "tick": 10509,
+          "freq": 1100075,
+          "syscall_exit": 0,
+          "driver_correction_ppm": -50916.78581237793
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 147697071709000,
+          "modes": 16386,
+          "tick": 10749,
+          "freq": 980358,
+          "syscall_exit": 0,
+          "driver_correction_ppm": -74914.95907592773
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 147697071727000,
+          "modes": 28,
+          "syscall_exit": 0
+        }
+      ],
+      "hv_set_host_time_calls": 0,
+      "buffers_lost_events": 0,
+      "cleanup_complete": true,
+      "global_controls_unchanged": true
+    },
+    "tracking": [
+      {
+        "index": 0,
+        "before_monotonic_ns": 147660846359614,
+        "after_monotonic_ns": 147661143977830,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": -0.292532235,
+        "leap": "Normal"
+      },
+      {
+        "index": 1,
+        "before_monotonic_ns": 147662845001961,
+        "after_monotonic_ns": 147663114836107,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": -0.275549531,
+        "leap": "Normal"
+      },
+      {
+        "index": 2,
+        "before_monotonic_ns": 147664815661779,
+        "after_monotonic_ns": 147665081966330,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": -0.226602122,
+        "leap": "Normal"
+      },
+      {
+        "index": 3,
+        "before_monotonic_ns": 147666783072499,
+        "after_monotonic_ns": 147667033082772,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": -0.178881839,
+        "leap": "Normal"
+      },
+      {
+        "index": 4,
+        "before_monotonic_ns": 147668733832799,
+        "after_monotonic_ns": 147668988343732,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": -0.130716622,
+        "leap": "Normal"
+      },
+      {
+        "index": 5,
+        "before_monotonic_ns": 147670688703638,
+        "after_monotonic_ns": 147670924080954,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": -0.082592614,
+        "leap": "Normal"
+      },
+      {
+        "index": 6,
+        "before_monotonic_ns": 147672629939718,
+        "after_monotonic_ns": 147672901768840,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": 0.82537663,
+        "leap": "Normal"
+      },
+      {
+        "index": 7,
+        "before_monotonic_ns": 147674604873114,
+        "after_monotonic_ns": 147674873239949,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": 0.732020259,
+        "leap": "Normal"
+      },
+      {
+        "index": 8,
+        "before_monotonic_ns": 147676575498416,
+        "after_monotonic_ns": 147676836034564,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": 0.639615178,
+        "leap": "Normal"
+      },
+      {
+        "index": 9,
+        "before_monotonic_ns": 147678536533969,
+        "after_monotonic_ns": 147678791134815,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": 0.547552645,
+        "leap": "Normal"
+      },
+      {
+        "index": 10,
+        "before_monotonic_ns": 147680491710904,
+        "after_monotonic_ns": 147680760586372,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": 0.653249085,
+        "leap": "Normal"
+      },
+      {
+        "index": 11,
+        "before_monotonic_ns": 147682461765500,
+        "after_monotonic_ns": 147682708437214,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": 0.561389029,
+        "leap": "Normal"
+      },
+      {
+        "index": 12,
+        "before_monotonic_ns": 147684409521458,
+        "after_monotonic_ns": 147684700747492,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": 0.467891127,
+        "leap": "Normal"
+      },
+      {
+        "index": 13,
+        "before_monotonic_ns": 147686402404870,
+        "after_monotonic_ns": 147686694508173,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": 0.374066859,
+        "leap": "Normal"
+      },
+      {
+        "index": 14,
+        "before_monotonic_ns": 147688396351443,
+        "after_monotonic_ns": 147688654190728,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": 0.181052983,
+        "leap": "Normal"
+      },
+      {
+        "index": 15,
+        "before_monotonic_ns": 147690355060552,
+        "after_monotonic_ns": 147690613683751,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": 0.152980104,
+        "leap": "Normal"
+      },
+      {
+        "index": 16,
+        "before_monotonic_ns": 147692314074626,
+        "after_monotonic_ns": 147692575539118,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": 0.152574733,
+        "leap": "Normal"
+      },
+      {
+        "index": 17,
+        "before_monotonic_ns": 147694276285082,
+        "after_monotonic_ns": 147694538835336,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": 0.124510735,
+        "leap": "Normal"
+      },
+      {
+        "index": 18,
+        "before_monotonic_ns": 147696239520387,
+        "after_monotonic_ns": 147696506638006,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": 0.096279882,
+        "leap": "Normal"
+      },
+      {
+        "index": 19,
+        "before_monotonic_ns": 147698207306146,
+        "after_monotonic_ns": 147698475180486,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": 0.287705094,
+        "leap": "Normal"
+      },
+      {
+        "index": 20,
+        "before_monotonic_ns": 147700177076383,
+        "after_monotonic_ns": 147700529865742,
+        "frequency_ppm": -48108.352,
+        "system_time_seconds": 0.238069773,
+        "leap": "Normal"
+      }
+    ],
+    "qpc_ratio_intervals": {
+      "monotonic_ns": [
+        1.0736656510121738,
+        1.0737683825166708
+      ],
+      "raw_ns": [
+        0.9999491791416886,
+        1.0000470577464924
+      ]
+    },
+    "qpc_samples": 81,
+    "qpc_warmup_excluded": 1,
+    "T03_normal_signal": [
+      {
+        "path": "261021/data/reports/20261103-clock-followup/t03-traces/signal-SIGTERM-f99af288920344ba9651124fdd123996/child.jsonl",
+        "phases": [
+          "child_started",
+          "handler_installed",
+          "ledger_write_enter",
+          "ledger_write_returned",
+          "ledger_write_enter",
+          "ledger_write_returned",
+          "send_intent_persisted",
+          "http_send_enter",
+          "signal_received",
+          "signal_handler_raised",
+          "http_client_exit_enter",
+          "http_client_exit_returned",
+          "ledger_interrupt_enter",
+          "ledger_write_enter",
+          "ledger_write_returned",
+          "ledger_interrupt_returned",
+          "child_interrupt_unwound",
+          "child_exit"
+        ],
+        "signal_to_exit_ns": 15010839
+      }
+    ],
+    "T13_natural_rejection": {
+      "status": "observed_natural_future_rejection",
+      "scope": "synthetic_fake_registry_only",
+      "clock_mocked": false,
+      "actual_database_registry_or_deployment_used": false,
+      "samples_attempted": 68,
+      "outcome": {
+        "stage": "approval",
+        "index": 67,
+        "notes": [
+          "timestamp_utc=2026-11-03T07:28:49.112643+00:00 observed_at_utc=2026-11-03T07:28:48.094611+00:00 ahead_microseconds=1018032 monotonic_ns=147721359010924"
+        ],
+        "deployment_permission": "blocked",
+        "approval_tags_unchanged": true
+      },
+      "limitation": "A present-day natural failure does not establish the historical failure's clock readings."
+    },
+    "uncovered_UTC_gap": {
+      "utc_elapsed_seconds": 5141.169543,
+      "monotonic_elapsed_seconds": 60.812997405,
+      "setter_trace_covered_gap": false
+    },
+    "embedded_debug_symbols": {
+      "update_slew": {
+        "value_hex": "000000000001f6b0",
+        "size": 963,
+        "type": "FUNC",
+        "binding": "LOCAL"
+      }
+    },
+    "limits": [
+      "No new initial-namespace admin inventory; old identity not substituted for a new live exe/fd read.",
+      "Tracking is unauthenticated UDP; not an atomic internal-state snapshot.",
+      "Natural future rejection occurred after setter trace ended; exact setter for that rejection is not proven.",
+      "Large UTC gap lacks setter coverage; magnitude does not identify an actor.",
+      "No OS/clock/service/real DB/registry/deployment changes; temporary trace cleaned.",
+      "No historical T03 root cause or timing qualification; no correction/retry/future relaxation.",
+      "Visible ELF hash matches past inventory; symbols alone are not current daemon numeric values."
+    ]
+  },
+  "joint_findings": {
+    "status": "natural_future_rejection_correlated_with_current_timesyncd_step",
+    "previous_distinct_raw_hashes_verified": 193,
+    "review_generation": {
+      "monotonic_ns": 148291761616004,
+      "phase": "generation_clock_now",
+      "pid": 25501,
+      "utc": "2026-11-03T07:37:41.143685+00:00",
+      "value": "2026-11-03T07:37:41.143674+00:00"
+    },
+    "rejection": {
+      "monotonic_ns": 148292073305249,
+      "notes": [
+        "timestamp_utc=2026-11-03T07:37:41.143674+00:00 observed_at_utc=2026-11-03T07:37:39.907818+00:00 ahead_microseconds=1235856 monotonic_ns=148292073289960"
+      ],
+      "phase": "timestamp_validation_rejected",
+      "pid": 25501,
+      "utc": "2026-11-03T07:37:39.907978+00:00",
+      "value": "2026-11-03T07:37:41.143674+00:00"
+    },
+    "generation_to_rejection_monotonic_ns": 311689245,
+    "matching_clock_change": {
+      "before_monotonic_ns": 148291807779192,
+      "after_monotonic_ns": 148291813459896,
+      "after_utc": "2026-11-03T07:37:39.648120+00:00",
+      "realtime_delta_ns": -1541712618,
+      "offset_change_ns": -1547393322,
+      "setter": {
+        "comm": "systemd-timesyn",
+        "global_tid": 496,
+        "monotonic_ns": 148291812718000,
+        "event": "timekeeping_inject_offset <-do_adjtimex"
+      }
+    },
+    "matching_timex": {
+      "comm": "systemd-timesyn",
+      "global_tid": 496,
+      "monotonic_ns": 148291812710000,
+      "modes": 8476,
+      "requested_offset_ns": -1547393321,
+      "syscall_exit": 0
+    },
+    "trace": {
+      "clock_samples": 7073,
+      "trace_entries": 70,
+      "changes": [
+        {
+          "before_monotonic_ns": 148291123012472,
+          "after_monotonic_ns": 148291130757029,
+          "after_utc": "2026-11-03T07:37:40.512813+00:00",
+          "realtime_delta_ns": -762218290,
+          "offset_change_ns": -769962847,
+          "setter": {
+            "comm": "initd",
+            "global_tid": 12579,
+            "monotonic_ns": 148291123453000,
+            "event": "do_settimeofday64 <-do_sys_settimeofday64"
+          }
+        },
+        {
+          "before_monotonic_ns": 148291807779192,
+          "after_monotonic_ns": 148291813459896,
+          "after_utc": "2026-11-03T07:37:39.648120+00:00",
+          "realtime_delta_ns": -1541712618,
+          "offset_change_ns": -1547393322,
+          "setter": {
+            "comm": "systemd-timesyn",
+            "global_tid": 496,
+            "monotonic_ns": 148291812718000,
+            "event": "timekeeping_inject_offset <-do_adjtimex"
+          }
+        }
+      ],
+      "timex_requests": [
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148276636840000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148276636863000,
+          "modes": 16386,
+          "tick": 10486,
+          "freq": -746987,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148276636871000,
+          "modes": 16386,
+          "tick": 10775,
+          "freq": -757862,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148276636880000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148284191806000,
+          "modes": 16386,
+          "tick": 10481,
+          "freq": 547473,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148284678214000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148284678232000,
+          "modes": 16386,
+          "tick": 10481,
+          "freq": 547473,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148284678239000,
+          "modes": 16386,
+          "tick": 10868,
+          "freq": 2926409,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148284678249000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "systemd-timesyn",
+          "global_tid": 496,
+          "monotonic_ns": 148291812710000,
+          "modes": 8476,
+          "requested_offset_ns": -1547393321,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148293454063000,
+          "modes": 16386,
+          "tick": 10481,
+          "freq": 547275,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148295024463000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148295024481000,
+          "modes": 16386,
+          "tick": 10481,
+          "freq": 547275,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148295024488000,
+          "modes": 16386,
+          "tick": 10773,
+          "freq": 1345261,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148295024499000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148303053678000,
+          "modes": 28,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148303053704000,
+          "modes": 16386,
+          "tick": 10483,
+          "freq": -2206234,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148303053713000,
+          "modes": 16386,
+          "tick": 10870,
+          "freq": 1644659,
+          "syscall_exit": 0
+        },
+        {
+          "comm": "chronyd",
+          "global_tid": 213,
+          "monotonic_ns": 148303053726000,
+          "modes": 28,
+          "syscall_exit": 0
+        }
+      ],
+      "hv_set_host_time_calls": 0,
+      "buffers_lost_events": 0,
+      "cleanup_complete": true,
+      "global_controls_unchanged": true
+    },
+    "tag_invariant": {
+      "stage": "approval",
+      "index": 70,
+      "notes": [
+        "timestamp_utc=2026-11-03T07:37:41.143674+00:00 observed_at_utc=2026-11-03T07:37:39.907818+00:00 ahead_microseconds=1235856 monotonic_ns=148292073289960"
+      ],
+      "deployment_permission": "blocked",
+      "approval_tags_unchanged": true
+    },
+    "limitation": "Current natural failure only; historical failure and chronyd internal saturation remain unproven. No settings or real registry changed."
+  },
+  "acceptance": {
+    "diagnostic_reader": 16,
+    "T03_journal": 9,
+    "decision": 9,
+    "full_suite_local_not_repeated": true,
+    "initial_namespace_resource_read": "not_collected",
+    "ubuntu_root_reader_exit": 42,
+    "official_source": {
+      "month_202609": 200,
+      "month_202610": 404,
+      "downloaded": false
+    },
+    "package_command_inner_exit": 127
+  },
+  "attempts": [
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261103-clock-followup/read-current.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-03T06:01:54.631695+00:00",
+      "monotonic_start_ns": 147582153484387,
+      "exit_code": 1,
+      "finished_at_utc": "2026-11-03T06:01:55.002727+00:00",
+      "monotonic_end_ns": 147582524403718,
+      "log": "current-preflight-v1.log",
+      "bytes": 750,
+      "sha256": "09de8192d07b673956b7b871001efc7cb930ac9cfb889a71cfc4c3d3f4fa2f3b"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261103-clock-followup/source_head.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-03T06:01:55.259051+00:00",
+      "monotonic_start_ns": 147582780719453,
+      "exit_code": 1,
+      "finished_at_utc": "2026-11-03T06:01:55.678900+00:00",
+      "monotonic_end_ns": 147583200571860,
+      "log": "official-head-v1.log",
+      "bytes": 2853,
+      "sha256": "1045249f4b7ab76f0e1d4ee6b8638def6fe2b7ebb0aae67ee8c755413e7c798a"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261103-clock-followup/read-current.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-03T06:02:10.542336+00:00",
+      "monotonic_start_ns": 147598064023500,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T06:02:12.286668+00:00",
+      "monotonic_end_ns": 147599808354071,
+      "log": "current-preflight-v2.log",
+      "bytes": 5096,
+      "sha256": "c38d36fb9ed41c9aa8e0b83dac582581a3b66765b024f9ec2ada8f6bf7761c1b"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261103-clock-followup/source_head.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-03T06:02:12.389689+00:00",
+      "monotonic_start_ns": 147601588693879,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T06:02:14.564072+00:00",
+      "monotonic_end_ns": 147603763081724,
+      "log": "official-head-v2.log",
+      "bytes": 389,
+      "sha256": "fd5370e69bd88ae78b060b228df10df693600782d301b5b2b7df8776f4e81ef0"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261103-clock-followup/collect-overlap.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-03T07:27:53.456211+00:00",
+      "monotonic_start_ns": 147660621351476,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T07:28:31.064283+00:00",
+      "monotonic_end_ns": 147702252939898,
+      "log": "trace-tracking-v1.log",
+      "bytes": 1402,
+      "sha256": "f2ad18cf8b7de2834a3bcd1aacb6bb0a438cfd72e111adf2a5c2a5cb1abf4821"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261103-clock-followup/bracket-windows.py",
+        "261021/data/reports/20261103-clock-followup/windows-bracket-v1"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-03T07:27:54.506988+00:00",
+      "monotonic_start_ns": 147663770954811,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T07:28:33.746040+00:00",
+      "monotonic_end_ns": 147704934715232,
+      "log": "windows-bracket-v1.log",
+      "bytes": 83,
+      "sha256": "db34c126b3267cf0109ea9aaa54ce73b623a1a40789218dc6173138ee829cd47"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_capital_request_journal.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "started_at_utc": "2026-11-03T07:27:59.014135+00:00",
+      "monotonic_start_ns": 147668278117356,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T07:28:14.240452+00:00",
+      "monotonic_end_ns": 147683504415328,
+      "log": "t03-journal-v1.log",
+      "bytes": 1869,
+      "sha256": "e782ce2e6e5cf4b6ec417e2f9006eac4d7134f1186ec1ff94abf31202962ff53"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "tests/probe_decision_clock.py",
+        "--output",
+        "data/reports/20261103-clock-followup/natural-future-v1",
+        "--samples",
+        "120",
+        "--interval",
+        "0.2"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "started_at_utc": "2026-11-03T07:28:28.066604+00:00",
+      "monotonic_start_ns": 147699255265379,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T07:28:48.412836+00:00",
+      "monotonic_end_ns": 147721677065856,
+      "log": "natural-future-v1.log",
+      "bytes": 580,
+      "sha256": "87ab055b4204811b843197660bb91bade40962c5d012b19755311ca301278cb5"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261103-clock-followup/read-package.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-03T07:29:32.693094+00:00",
+      "monotonic_start_ns": 147768064291971,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T07:29:33.521161+00:00",
+      "monotonic_end_ns": 147768892361257,
+      "log": "package-sync-v1.log",
+      "bytes": 1258,
+      "sha256": "d7704be15574c478068307e536589c21167a000d86a9618a4f24330248a030d2"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_resource_reader.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "started_at_utc": "2026-11-03T07:31:51.299683+00:00",
+      "monotonic_start_ns": 147916533779935,
+      "exit_code": 1,
+      "finished_at_utc": "2026-11-03T07:31:54.359571+00:00",
+      "monotonic_end_ns": 147919593665617,
+      "log": "resource-reader-target-v1.log",
+      "bytes": 3814,
+      "sha256": "935d8814c6a2f0a5b1cde32218ef71ed593e1b71c6884f7cd59ff9d53f3a3c2c"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261103-clock-followup/copy-visible-elf.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-03T07:32:27.494455+00:00",
+      "monotonic_start_ns": 147954819302108,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T07:32:27.924704+00:00",
+      "monotonic_end_ns": 147955249564261,
+      "log": "visible-elf-v1.log",
+      "bytes": 20790,
+      "sha256": "555b0dda97404bd803d2d974d40a3bf741b563ac498545958a5406869ec9632d"
+    },
+    {
+      "command": [
+        "/mnt/c/Windows/System32/wsl.exe",
+        "-d",
+        "Ubuntu",
+        "-u",
+        "root",
+        "--cd",
+        "/home/kenshin/work/claude_practice/261021",
+        "--exec",
+        "/bin/sh",
+        "scripts/read_chrony_resources.sh"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-03T07:32:30.788796+00:00",
+      "monotonic_start_ns": 147958113645004,
+      "exit_code": 42,
+      "finished_at_utc": "2026-11-03T07:32:31.064179+00:00",
+      "monotonic_end_ns": 147958389035651,
+      "log": "ubuntu-resource-scope-v1.log",
+      "bytes": 205,
+      "sha256": "74458f01f6186a15b3a81cd3e7c2b8092df80b8519436051cfe59cb25917532b"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_resource_reader.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "started_at_utc": "2026-11-03T07:32:56.893459+00:00",
+      "monotonic_start_ns": 147986234256686,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T07:32:59.933469+00:00",
+      "monotonic_end_ns": 147989274286278,
+      "log": "resource-reader-target-v2.log",
+      "bytes": 2189,
+      "sha256": "374d278814193c71449b67833c5018c16de6fec1be70ba2acd9395cc870c33b8"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261103-clock-followup/analyze.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-03T07:34:02.561421+00:00",
+      "monotonic_start_ns": 148058059607973,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T07:34:02.735214+00:00",
+      "monotonic_end_ns": 148058233398192,
+      "log": "analysis-v1.log",
+      "bytes": 2992,
+      "sha256": "aaf229007b31f608d8ba8c2d17013e7b14f1792464a6551a1a2b2675aa34482c"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_resource_reader.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "started_at_utc": "2026-11-03T07:36:26.279058+00:00",
+      "monotonic_start_ns": 148212027881910,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T07:36:29.727605+00:00",
+      "monotonic_end_ns": 148215476433502,
+      "log": "resource-reader-target-v3.log",
+      "bytes": 2507,
+      "sha256": "7bddf6c48d5d80ff920b91a38532e2e521cb9b48aeffc011d44e4a8e59bf3e6f"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_capital_deployment_decisions.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "started_at_utc": "2026-11-03T07:36:27.373868+00:00",
+      "monotonic_start_ns": 148213122682587,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T07:36:31.527118+00:00",
+      "monotonic_end_ns": 148217275941610,
+      "log": "decision-regression-v1.log",
+      "bytes": 1900,
+      "sha256": "6ef305d14778d222a10854ec9b7fabc0ea250eb4cc0961441c54b6039ac2c6ad"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261103-clock-followup/joint-natural.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-03T07:37:18.068748+00:00",
+      "monotonic_start_ns": 148267916741644,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T07:37:57.227110+00:00",
+      "monotonic_end_ns": 148309392487091,
+      "log": "joint-natural-v1.log",
+      "bytes": 2031,
+      "sha256": "4c8be441945e9606b8150a434d4177f814cf3664eea5c91f040e0d1bfd0a248b"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261103-clock-followup/analyze-joint.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-03T07:39:20.280631+00:00",
+      "monotonic_start_ns": 148398621648454,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T07:39:20.603052+00:00",
+      "monotonic_end_ns": 148398944123195,
+      "log": "joint-analysis-v1.log",
+      "bytes": 1905,
+      "sha256": "5c1f714a9b05a1dab5adcfc803d18e0d7998851914c080c49039df0ea908737d"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_resource_reader.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "started_at_utc": "2026-11-03T07:40:46.356599+00:00",
+      "monotonic_start_ns": 148491219021535,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T07:40:49.799500+00:00",
+      "monotonic_end_ns": 148494661926775,
+      "log": "resource-reader-target-v4.log",
+      "bytes": 2507,
+      "sha256": "aa576ef8ad7335c2d401048a3a2ae11b8da6eb7f6a107029a6a0df6b103c3d6d"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "py_compile",
+        "tests/test_clock_resource_reader.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "started_at_utc": "2026-11-03T07:40:47.508838+00:00",
+      "monotonic_start_ns": 148492371258857,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T07:40:47.627802+00:00",
+      "monotonic_end_ns": 148492490218912,
+      "log": "compile-reader-test-v1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261103-clock-followup/validate.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-03T07:41:54.056404+00:00",
+      "monotonic_start_ns": 148565233406035,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-03T07:41:54.177323+00:00",
+      "monotonic_end_ns": 148565354326718,
+      "log": "validation-v1.log",
+      "bytes": 165,
+      "sha256": "d21d3e834aff77ddf6f4953bb67b9b3817d5b8e45809e43ddc44bf4c20806fdd"
+    }
+  ],
+  "source_files": {
+    "261021/scripts/read_chrony_resources.sh": {
+      "bytes": 6943,
+      "sha256": "8da4ad864200d451c1be369a2a0cfacf5efc3e26672ff4fa4143511e99021639"
+    },
+    "261021/tests/test_clock_resource_reader.py": {
+      "bytes": 8591,
+      "sha256": "596aed3c590b94d63f7c6fbbd8f8d4bc1cb5d47b1c86500a681c86ed7cc4372f"
+    }
+  },
+  "evidence_files": [
+    {
+      "path": "261021/data/reports/20261103-clock-followup/analysis-v1.json",
+      "bytes": 482,
+      "sha256": "699ed367d7ac47bdca5bf206d335f2c4f3b58b21dcf6679fa60e23ec677528e3"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/analysis-v1.log",
+      "bytes": 2992,
+      "sha256": "aaf229007b31f608d8ba8c2d17013e7b14f1792464a6551a1a2b2675aa34482c"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/analysis.json",
+      "bytes": 13968,
+      "sha256": "4d464d7f68778cfa8ca37f56590896a568c16bd51d124b179934d9e807fd4210"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/analyze-joint.py",
+      "bytes": 2488,
+      "sha256": "5e2c532fa38544ad17b799aa5f6b0b7b387c9b8d6bcca4819f2cb052fd71e58f"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/analyze.py",
+      "bytes": 6296,
+      "sha256": "71e02d3d46430decd1449d007136688976d2883b0f0381ca46f9168cc0da2013"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/bracket-windows.py",
+      "bytes": 1825,
+      "sha256": "d16ffc7282c4d27a3507b7b8b381be4dda4bd046ed15217c9b6e3a77a374559e"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/build-record.py",
+      "bytes": 2720,
+      "sha256": "95b59ae623e12497cb901371e50a4c0e95abd6457df160295d7d7ee6347a9a72"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/chronyd-mini-debug.elf",
+      "bytes": 37584,
+      "sha256": "5c86b8bb30fd4bc0955daf593e0afdaa9763ed35d9ffe7b9113deda5fa3c8632"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/collect-overlap.py",
+      "bytes": 1818,
+      "sha256": "92da2b610a88893b71a473240ed7bf737f785ad4c17a89dfbe7e487945fa9e14"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/compile-reader-test-v1.json",
+      "bytes": 515,
+      "sha256": "9841568abdd50daa4e996f5823fb7ff5710beb10e9b714aebd64ce144c71089a"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/compile-reader-test-v1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/copy-visible-elf.py",
+      "bytes": 860,
+      "sha256": "de15369e1088057bed98baecec5747e1b94610167b908205343525e83792e6c2"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/current-preflight-v1.json",
+      "bytes": 495,
+      "sha256": "6c77f365e3100c3e69e14973927080bac274b9f69bfd094622d8fff637273f02"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/current-preflight-v1.log",
+      "bytes": 750,
+      "sha256": "09de8192d07b673956b7b871001efc7cb930ac9cfb889a71cfc4c3d3f4fa2f3b"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/current-preflight-v2.json",
+      "bytes": 496,
+      "sha256": "a6e65a7dcc45dc2f32a19d9f43f41f3ff514e75c4bf942f58626c209a055a972"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/current-preflight-v2.log",
+      "bytes": 5096,
+      "sha256": "c38d36fb9ed41c9aa8e0b83dac582581a3b66765b024f9ec2ada8f6bf7761c1b"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/decision-regression-v1.json",
+      "bytes": 576,
+      "sha256": "c8123616c0ff90703e104399b3c659f99f7257a6dd91fa5bf597478b7514b71d"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/decision-regression-v1.log",
+      "bytes": 1900,
+      "sha256": "6ef305d14778d222a10854ec9b7fabc0ea250eb4cc0961441c54b6039ac2c6ad"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/decision-traces/test_regressed_review_validation_clock_blocks_approval_without_tag_writes-d16f12e669fa4fdfbbd7acf8aece05a3/decision.jsonl",
+      "bytes": 12803,
+      "sha256": "c0d50d20a6880e09f0f8abfb0b03c35e0620db1627ca19bef42c6c9b330bab4c"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/decision-traces/test_utc_boundary_is_strict_and_rejection_retains_exact_clock_values-3c4475490fd74b9c86ae4f401c069f40/decision.jsonl",
+      "bytes": 1615,
+      "sha256": "1d8d199f99941892dd2abab38987b5dcc3ad41bff6d1756b777c3057ee4334be"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/git-stage-sandbox-failure.txt",
+      "bytes": 471,
+      "sha256": "5d1eadb668ee99873cdd5c787a828e20bbb40b914c4104ba1f0c11179697f4cc"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-analysis-v1.json",
+      "bytes": 494,
+      "sha256": "d26fd965cb27f54a0af33a13d9edde32fc6578bf23aca5f436227bc66088131e"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-analysis-v1.log",
+      "bytes": 1905,
+      "sha256": "5c1f714a9b05a1dab5adcfc803d18e0d7998851914c080c49039df0ea908737d"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-analysis.json",
+      "bytes": 6637,
+      "sha256": "dfb9cef8f1ceaf05b008da6c729e6532cb8fdf46262950eb4e78f6f942a1111f"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-natural-v1.json",
+      "bytes": 493,
+      "sha256": "a415608a567b9ffcd7d249ab0004b689846394ee0c6f965bad7544b0e7825493"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-natural-v1.log",
+      "bytes": 2031,
+      "sha256": "4c8be441945e9606b8150a434d4177f814cf3664eea5c91f040e0d1bfd0a248b"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-natural.py",
+      "bytes": 1937,
+      "sha256": "2e4c00335ca7422bdf449b67fd8700896a773746727fcf39cd19feb6d82d25de"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-v1/natural/future-rejection-traceback.txt",
+      "bytes": 1421,
+      "sha256": "77dc24d98d9a4642f384a23da8214171d596a822f947ee1131e275fd6228cacd"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-v1/natural/natural-decision.jsonl",
+      "bytes": 396168,
+      "sha256": "f492585a689d5212cd96c1349a971f8864f8b39ff2af5357aadf6733056fb2b0"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-v1/natural/summary.json",
+      "bytes": 632,
+      "sha256": "2190dc969370f9e6b0f655c59bcace5119675e4d081d22c1dd643395e04951f0"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-v1/natural-process.log",
+      "bytes": 580,
+      "sha256": "0de65ce29cb7bcfe2ca7d31871cc5dbd1ba3cfa996bb458a31843422dbfbbe65"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-v1/summary.json",
+      "bytes": 2259,
+      "sha256": "6225b441349f33b51924502ef3de66cc3d00eea3f284dea6d3238727e1844d2e"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-v1/trace/buffer-stats.json",
+      "bytes": 1269,
+      "sha256": "5f7ca35d0c9fa9fa744f9eb45be16d0dda924dcb6700d825e26a367eb891d1e8"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-v1/trace/clocks.jsonl",
+      "bytes": 990220,
+      "sha256": "98a0caa91046b47a6bc647d64083e917b1cd6635352eecf609ad433779c93248"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-v1/trace/identities.json",
+      "bytes": 2698,
+      "sha256": "a4e517bc176c8726486ee10f560006d12cf905006139474ae4ad234cc06bee9b"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-v1/trace/identity-after.json",
+      "bytes": 2350,
+      "sha256": "39d6b967a4897a18f2098afe196b1244d41c128ce73fe3ec2859645005b80dba"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-v1/trace/instance-config.json",
+      "bytes": 245,
+      "sha256": "e3154b5e9029a70d5a99f55e34f5732b6b83661ea427b6c7d1c760cd68dda462"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-v1/trace/summary.json",
+      "bytes": 1426,
+      "sha256": "9c6c60d6dbf7ae659ae330b2a2c32fa36227ec8714263e0beb7935e7e8c3a764"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-v1/trace/trace.txt",
+      "bytes": 9257,
+      "sha256": "85cf9be67cb9618e9c97cf68d2427a27a2d1ed6c6facfe6e021644b6c042e379"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/joint-v1/trace-process.log",
+      "bytes": 1348,
+      "sha256": "932bae4a54cc3a2ea492de45da681a2989829f9b73b9793ec523f5766fa77c8e"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/mariner-canonical-spec.json",
+      "bytes": 47494,
+      "sha256": "38c82619c48dc9863d9443e2f036e206c0f46d1e8fca9da91984ba1483782499"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/mariner-fetch-error.json",
+      "bytes": 334,
+      "sha256": "4d75f525102de0e9f5d24caa27ff203d5d4b69687b060daadb226a54ddf4edfc"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/mariner-spec.json",
+      "bytes": 1177,
+      "sha256": "fa964736178e0d71d9cd0659896196af6becf2188a900ef9ec9edab52e7999ff"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/mini-debug-symbols.txt",
+      "bytes": 62711,
+      "sha256": "1159d6e048359424f80a9d1bda8a059dfcd5341b38f1ce033feb4a3b7cb602e7"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/natural-future-v1/future-rejection-traceback.txt",
+      "bytes": 1421,
+      "sha256": "e455685ebec97ab838f294be404cf9fc5d569e4dc182e278cf9d1f84f83a9348"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/natural-future-v1/natural-decision.jsonl",
+      "bytes": 370861,
+      "sha256": "540137de27dcddb90290ef8e616444d28477a47318a18519599bc9ce69b76980"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/natural-future-v1/summary.json",
+      "bytes": 632,
+      "sha256": "49ba48715fd46129e204eb23c4824683764f73ea28c58a6a12738cbdc83f8516"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/natural-future-v1.json",
+      "bytes": 613,
+      "sha256": "193ac03f04044497a3763ff4e571f90ed2750edd9220e8396be9d652189f3cc6"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/natural-future-v1.log",
+      "bytes": 580,
+      "sha256": "87ab055b4204811b843197660bb91bade40962c5d012b19755311ca301278cb5"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/official-head-v1.json",
+      "bytes": 491,
+      "sha256": "190c62308fca372747afca8a91789e92508b0a22f380a21de94452431c2e09a1"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/official-head-v1.log",
+      "bytes": 2853,
+      "sha256": "1045249f4b7ab76f0e1d4ee6b8638def6fe2b7ebb0aae67ee8c755413e7c798a"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/official-head-v2.json",
+      "bytes": 490,
+      "sha256": "4bfb7f37b228a2e5788fb35c5efbce86ae23cec15ac9baec4047ed58d1922b8c"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/official-head-v2.log",
+      "bytes": 389,
+      "sha256": "fd5370e69bd88ae78b060b228df10df693600782d301b5b2b7df8776f4e81ef0"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/overlap-v1/trace/buffer-stats.json",
+      "bytes": 1270,
+      "sha256": "5ef894789a1a7eca0116acfa7160c6275561560f1aee00635c80d1010409f155"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/overlap-v1/trace/clocks.jsonl",
+      "bytes": 978880,
+      "sha256": "e87c15532070599091934af7070b848bfeafaf007bf5475a25b8eafcefdc4a62"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/overlap-v1/trace/identities.json",
+      "bytes": 2698,
+      "sha256": "d1394ccc7b8640dea3df8f7bcb0490d0d66273262faf9d220d1d16a39a0e24c4"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/overlap-v1/trace/identity-after.json",
+      "bytes": 2350,
+      "sha256": "050b31129ec7ff446d66f8bdf4eefa1f84519452c3be50a2208f1042cf6d8bc8"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/overlap-v1/trace/instance-config.json",
+      "bytes": 245,
+      "sha256": "e3154b5e9029a70d5a99f55e34f5732b6b83661ea427b6c7d1c760cd68dda462"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/overlap-v1/trace/summary.json",
+      "bytes": 1426,
+      "sha256": "ae6edc934738b4c33944743843cba567d9b66e788792b2936b896a85905d35ff"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/overlap-v1/trace/trace.txt",
+      "bytes": 8488,
+      "sha256": "53885e6523ab050b8f5d5a774c03bf7666a93deee3952023825526a13c94671b"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/overlap-v1/trace-process.log",
+      "bytes": 1348,
+      "sha256": "f97398e05c1a3b9b25f2618088d4c341bd7974ab95551050ac42b616bbf16013"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/overlap-v1/tracking-samples.jsonl",
+      "bytes": 7488,
+      "sha256": "f1daf509ec169f4bd5009aa506f5eb80d457dec7279df3a64b0aefa73b54bcea"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/package-sync-v1.json",
+      "bytes": 491,
+      "sha256": "9457251366d054ab721dcab6db940cdbd3a0dbe0796e926a10626d635a5487a5"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/package-sync-v1.log",
+      "bytes": 1258,
+      "sha256": "d7704be15574c478068307e536589c21167a000d86a9618a4f24330248a030d2"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/read-current.py",
+      "bytes": 2419,
+      "sha256": "c506f54a8c62612d4599d23bec4a8211507ad89ea283ffb254e086646e3f54e6"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/read-package.py",
+      "bytes": 1769,
+      "sha256": "8f540cb061d1650b60b954b4c5634d6ba1c64472cfc476b25924473b55d4627a"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/resource-reader-target-v1.json",
+      "bytes": 572,
+      "sha256": "b901c0c26d51280d8dd2c99632f7c2700bfeb064c2462f91fa02eb61e932a691"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/resource-reader-target-v1.log",
+      "bytes": 3814,
+      "sha256": "935d8814c6a2f0a5b1cde32218ef71ed593e1b71c6884f7cd59ff9d53f3a3c2c"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/resource-reader-target-v2.json",
+      "bytes": 572,
+      "sha256": "26ea14642c038ea8748869f46524686b24401f727cfa98edc2d0465cce45ce0b"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/resource-reader-target-v2.log",
+      "bytes": 2189,
+      "sha256": "374d278814193c71449b67833c5018c16de6fec1be70ba2acd9395cc870c33b8"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/resource-reader-target-v3.json",
+      "bytes": 572,
+      "sha256": "a27a475429a57ac621d806bfc3627bc45da94a2026da8079a210c554a86581df"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/resource-reader-target-v3.log",
+      "bytes": 2507,
+      "sha256": "7bddf6c48d5d80ff920b91a38532e2e521cb9b48aeffc011d44e4a8e59bf3e6f"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/resource-reader-target-v4.json",
+      "bytes": 572,
+      "sha256": "f94581ab65e9cc74f1ee21fc9967cb93e581c84080f46e3005095b817ed36af7"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/resource-reader-target-v4.log",
+      "bytes": 2507,
+      "sha256": "aa576ef8ad7335c2d401048a3a2ae11b8da6eb7f6a107029a6a0df6b103c3d6d"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/run_attempt.py",
+      "bytes": 1052,
+      "sha256": "406a4bdeab4fe1af3b18e0e4c98f4e36c7c1d67a415b362dc23b62e61c0b3594"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/source_head.py",
+      "bytes": 624,
+      "sha256": "48afbdd2b40d469329e8f34e474a886606d1b160787bac897579440726d2862e"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-journal-v1.json",
+      "bytes": 563,
+      "sha256": "d92a4c20a365239f8dcebcd3c34b3b2314f8e7853e6c54f945677e27e60389a6"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-journal-v1.log",
+      "bytes": 1869,
+      "sha256": "e782ce2e6e5cf4b6ec417e2f9006eac4d7134f1186ec1ff94abf31202962ff53"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-traces/signal-SIGKILL-d47f7fbd51664696a0c48a9a6123cf13/child-stacks.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-traces/signal-SIGKILL-d47f7fbd51664696a0c48a9a6123cf13/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-traces/signal-SIGKILL-d47f7fbd51664696a0c48a9a6123cf13/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-traces/signal-SIGKILL-d47f7fbd51664696a0c48a9a6123cf13/child.jsonl",
+      "bytes": 1128,
+      "sha256": "afd3f7a6eb80f93d2071d20fb9f5afc95d9687a753e547c0e6d045d3d96001a3"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-traces/signal-SIGKILL-d47f7fbd51664696a0c48a9a6123cf13/parent.jsonl",
+      "bytes": 936,
+      "sha256": "a00e0535ab3704e23f46db062c9c0e83c4a41d01fddaa5e1b373e4f99e5218d0"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-traces/signal-SIGTERM-8d07128f074a4589bdc2b3a3577d63fd/child-stacks.txt",
+      "bytes": 594,
+      "sha256": "80276b4910512d7f48146d25f1f75f5c1129198be42de6500092671d6628c753"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-traces/signal-SIGTERM-8d07128f074a4589bdc2b3a3577d63fd/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-traces/signal-SIGTERM-8d07128f074a4589bdc2b3a3577d63fd/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-traces/signal-SIGTERM-8d07128f074a4589bdc2b3a3577d63fd/child.jsonl",
+      "bytes": 1950,
+      "sha256": "65da3d7616b80fbf658278a7112c1f540256141635b1f92141bd9c052d82db63"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-traces/signal-SIGTERM-8d07128f074a4589bdc2b3a3577d63fd/parent.jsonl",
+      "bytes": 1085,
+      "sha256": "1cd701abae80fa57b84f8006eb702916b5990102d093e69c76ce537c5782dac0"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-traces/signal-SIGTERM-f99af288920344ba9651124fdd123996/child-stacks.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-traces/signal-SIGTERM-f99af288920344ba9651124fdd123996/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-traces/signal-SIGTERM-f99af288920344ba9651124fdd123996/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-traces/signal-SIGTERM-f99af288920344ba9651124fdd123996/child.jsonl",
+      "bytes": 2497,
+      "sha256": "bcdd06f66252b9b29f290046047020a288a7f914ad3a41f6596a266ca24c7a61"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/t03-traces/signal-SIGTERM-f99af288920344ba9651124fdd123996/parent.jsonl",
+      "bytes": 943,
+      "sha256": "20671385b6f1c442bfb13948c6231fd00fe40c921dde6517ee4ff16f287fb09c"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/trace-current.py",
+      "bytes": 5810,
+      "sha256": "30f1a9bff9b2ed887a91c0ed00cab0c4f94c3102d0460e309c8768a24f5212ae"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/trace-tracking-v1.json",
+      "bytes": 496,
+      "sha256": "b9e66a1718862f99ae3e06feae05a9858e8adc1d3f0c85c7d53f599613ff90ff"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/trace-tracking-v1.log",
+      "bytes": 1402,
+      "sha256": "f2ad18cf8b7de2834a3bcd1aacb6bb0a438cfd72e111adf2a5c2a5cb1abf4821"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/ubuntu-resource-scope-v1.json",
+      "bytes": 633,
+      "sha256": "4f2a51a8b76f9d406a71466d7c3ca2ede8d7d0e56cd82ba40d4e3f29f515284b"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/ubuntu-resource-scope-v1.log",
+      "bytes": 205,
+      "sha256": "74458f01f6186a15b3a81cd3e7c2b8092df80b8519436051cfe59cb25917532b"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/upload-latest.json",
+      "bytes": 5784,
+      "sha256": "650efed434f52d1b20ed446cc2be2ead4303d13906edd727708cf3f07b7edf31"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/upload-v7-action.json",
+      "bytes": 7999,
+      "sha256": "516e6da676c2132d7aa206d554c81a0a8270a6804cf1b1e70dcf918a6fb484e3"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/upload-v7-readme.json",
+      "bytes": 38851,
+      "sha256": "51f93d175a6b3f776e84d21bb0f5bf018c04ccc0da9485dfa9881d8b74e43e35"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/upload-v7-release.json",
+      "bytes": 7273,
+      "sha256": "fcdc45f6883f1edbfa78c75d1cfaa39b4a9c8fc535d7cfbd6ac79f750b9f1d03"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/validate.py",
+      "bytes": 1638,
+      "sha256": "e0ba86ac3f73e63221e62f574588deb83602d3f6dc070857cb521aca96628c73"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/validation-v1.json",
+      "bytes": 484,
+      "sha256": "512b6fdb1329c48bb52494d986d10a5dccd09268d1bbecdbe7225d33ce0ba00c"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/validation-v1.log",
+      "bytes": 165,
+      "sha256": "d21d3e834aff77ddf6f4953bb67b9b3817d5b8e45809e43ddc44bf4c20806fdd"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/visible-chronyd.elf",
+      "bytes": 320600,
+      "sha256": "bf39d010dfc6177cd864d96ddd0cb32eb796704e8c68fe8bd65088d20d2e64b8"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/visible-elf-v1.json",
+      "bytes": 495,
+      "sha256": "2b87e959823f8edbf2cb49d87756c54e052aced8ba3646e8e43fd74e79831f99"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/visible-elf-v1.log",
+      "bytes": 20790,
+      "sha256": "555b0dda97404bd803d2d974d40a3bf741b563ac498545958a5406869ec9632d"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/windows-bracket-v1/pairs.jsonl",
+      "bytes": 33271,
+      "sha256": "9c2ccee709503a7d7b1af9c392a299736054621428a90cd430dd71409573ae1e"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/windows-bracket-v1/query.ps1",
+      "bytes": 411,
+      "sha256": "d12db39fefdcfeb8ab55e70f80ff2c0df47dbe500acb12ec25aa6df12589847c"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/windows-bracket-v1/stderr.txt",
+      "bytes": 432,
+      "sha256": "87e1686bfc5aa86e7d51030d17161b4dd054313a2e742555623fcf367e0fabd0"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/windows-bracket-v1.json",
+      "bytes": 565,
+      "sha256": "78ba8f23c080d1f2759489a7808a686a8f8b632481bb1b160698a71cf7d9f383"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-followup/windows-bracket-v1.log",
+      "bytes": 83,
+      "sha256": "db34c126b3267cf0109ea9aaa54ce73b623a1a40789218dc6173138ee829cd47"
+    }
+  ],
+  "limitations": [
+    "Current natural reproduction identifies timesyncd step; historical failures remain separate.",
+    "No new initial-PID-namespace live exe/fd/config read. Administrator token unavailable; no automatic elevation.",
+    "Chronyd internal variables not sampled; exact build patches not proven; visible file hash is not a new runtime inventory.",
+    "initd negative step caller executable/owner and an untraced large UTC gap remain unresolved.",
+    "Finite clock observations do not qualify clocks or allow retrospective timing correction.",
+    "Synthetic fixtures/probes are not real Capital monitor, performance, deployment or adoption evidence.",
+    "Provider source fetches are saved without retrospective process timing; initial exploration remains in tool transcript.",
+    "package-sync-v1 outer exit0 contains inner rpm127; package verification not accepted."
+  ]
+}
