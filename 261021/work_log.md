@@ -3126,3 +3126,15 @@ GitHub connectorのraw source取得はproviderのAttributeError、旧Mariner con
 
 今回の局所検証は専用16件、既存journal9件、decision9件、Python構文、shell構文/管理者snippet、link/hash/diff確認。product source/lockを変更していないため、この記録単位で全suite/Dockerを繰り返さない。
 最終コマンド・log・hash・限界は[今回索引](docs/reviews/20261103-clock-followup-checks.json)。実Capital採否/時計資格を合格にせず、次は限定管理者採取を待ちながら独立CI保守を進める。
+
+### 時計診断の節目commitと独立P2 action保守
+
+時計診断は`7174a1f`として対象9pathだけをcommit/pushした。直前の通常sandboxでは.git/index.lock作成がread-onlyで拒否された（exit128）。
+失敗を`git-stage-sandbox-failure.txt`へ保存し、許可済み対象だけのsandbox外stageで全差分/statusを再確認した。無関係な未追跡3pathは含めていない。
+21attempt・113原本hashとsource/test SHA・staged9path一致を最終確認した。Git pushはdcfdd9c→7174a1f成功。
+
+P2は`actions/upload-artifact`だけをv4→公式固定v7.0.2に更新する。公式action.yml/README/7.0.0新機能と7.0.2releaseをconnectorで保存した。
+Node24とZIP既定を確認し、単一file非archive機能へ切り替わらないよう`archive: true`を明示する。
+workflow-validation-v1はYAMLをparseして、正規化した変更がこの2点だけ、allowlist16path・他のif/timeout/pipefail/stepすべて不変、全10run block bash -n、上流input互換/diff check成功。
+既存Python/MLflow/依存lockを変更しない。rawは`data/reports/20261103-upload-maintenance/`。
+この時点では実装commitのCI/artifact/cleanup未確認で、[local索引](docs/reviews/20261103-upload-action-checks.json)はCI_PENDINGを維持する。

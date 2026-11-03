@@ -542,7 +542,7 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 | P1 | D1・Luna | T09の202610公式原本公開待ち。公開後に既存手順で取得・bytes/hash/構造を照合。HEADだけで取得完了としない |
 | P0（実fit前） | D3・Sol | T10：独立protocol/全原本snapshot/分割/recipe/基準をfit前に固定。10月bufferなしで窓を短縮しない |
 | P1 | D3・Sol | T02実producerおよびT11/T12/T13b：同一の実candidate/artifactに精度・監視・復旧・metadata・運用測定を結合し採否を記録。T09/T10/時計資格等の前提を満たす範囲で順に進める |
-| P2 | D2・Sol review | 既知のCI action/依存経由の非推奨警告の個別保守。今回の受入失敗とは区別し、lockを全面更新しない |
+| P2 | D2・Sol review | CI保守：upload-artifact v7.0.2/Node24への単独更新とarchive:true固定を実施中。allowlist16path不変・local YAML/10shell構文成功。実装commit CI/artifact/cleanup確認前は未完了。[保守記録](../261021/docs/ci-artifact-maintenance.md)。その他の依存経由警告は個別判断、lockを全面更新しない |
 
 T14の証拠入口・task対応表・操作説明は最新CIへ追記済み。T06a OS補足とT07a CI接続を残件一覧へ再掲しない。旧checkpoint表は当時の記録として保持する。
 

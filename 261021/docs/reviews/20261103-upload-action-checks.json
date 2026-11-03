@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "base_commit": "7174a1f",
+  "status": "LOCAL_VALIDATED_CI_PENDING",
+  "change": {
+    "action_before": "actions/upload-artifact@v4",
+    "action_after": "actions/upload-artifact@v7.0.2",
+    "archive": true,
+    "unchanged_allowlist_members": 16,
+    "run_blocks": 10
+  },
+  "scope": {
+    "lock_or_product_source_changes": false,
+    "real_DB_registry_deployment_OS_clock_changes": false
+  },
+  "validation": {
+    "command": [
+      ".venv/bin/python",
+      "data/reports/20261103-upload-maintenance/validate-workflow.py"
+    ],
+    "cwd": "/home/kenshin/work/claude_practice/261021",
+    "started_at_utc": "2026-11-03T07:43:14.923806+00:00",
+    "monotonic_start_ns": 148652332432888,
+    "exit_code": 0,
+    "finished_at_utc": "2026-11-03T07:43:15.245300+00:00",
+    "monotonic_end_ns": 148652653906236,
+    "log": "workflow-validation-v1.log",
+    "bytes": 1039,
+    "sha256": "5c49b4c4d755bae161be62b7d6d36f4fb2fbc256d33a287b2b039b26147a50cf"
+  },
+  "inputs": {
+    ".github/workflows/bike-mlops-contracts.yml": {
+      "bytes": 8436,
+      "sha256": "80dd92e2bf457554b8bf7c6bd266800f5b78b4c146dcec80fc44ee23d4dfa793"
+    },
+    "261021/data/reports/20261103-clock-followup/upload-latest.json": {
+      "bytes": 5784,
+      "sha256": "650efed434f52d1b20ed446cc2be2ead4303d13906edd727708cf3f07b7edf31"
+    },
+    "261021/data/reports/20261103-clock-followup/upload-v7-action.json": {
+      "bytes": 7999,
+      "sha256": "516e6da676c2132d7aa206d554c81a0a8270a6804cf1b1e70dcf918a6fb484e3"
+    },
+    "261021/data/reports/20261103-clock-followup/upload-v7-release.json": {
+      "bytes": 7273,
+      "sha256": "fcdc45f6883f1edbfa78c75d1cfaa39b4a9c8fc535d7cfbd6ac79f750b9f1d03"
+    },
+    "261021/data/reports/20261103-clock-followup/upload-v7-readme.json": {
+      "bytes": 38851,
+      "sha256": "51f93d175a6b3f776e84d21bb0f5bf018c04ccc0da9485dfa9881d8b74e43e35"
+    }
+  },
+  "files": {
+    "261021/data/reports/20261103-upload-maintenance/build-local.py": {
+      "bytes": 1410,
+      "sha256": "71975d12ee0a8b30723c7b39354275fc92fe1da49bb998c9de2c9a9462596ad1"
+    },
+    "261021/data/reports/20261103-upload-maintenance/fetch-artifact.py": {
+      "bytes": 581,
+      "sha256": "fac568d7af742759fe4fe6abd7bc2ad1f0c48b3b4eb8a19617540956bd2c6214"
+    },
+    "261021/data/reports/20261103-upload-maintenance/run_attempt.py": {
+      "bytes": 1052,
+      "sha256": "406a4bdeab4fe1af3b18e0e4c98f4e36c7c1d67a415b362dc23b62e61c0b3594"
+    },
+    "261021/data/reports/20261103-upload-maintenance/validate-workflow.py": {
+      "bytes": 1641,
+      "sha256": "296d52061f94af717ca8723cb7ecb5bfc03efecfc8f9fcdadad77857ca5820d6"
+    },
+    "261021/data/reports/20261103-upload-maintenance/workflow-validation-v1.json": {
+      "bytes": 516,
+      "sha256": "8dea12d45aaed2afa96383bbd2f40b0009004fc86ae6887d24b27b3c1d475c4a"
+    },
+    "261021/data/reports/20261103-upload-maintenance/workflow-validation-v1.log": {
+      "bytes": 1039,
+      "sha256": "5c49b4c4d755bae161be62b7d6d36f4fb2fbc256d33a287b2b039b26147a50cf"
+    }
+  },
+  "limits": [
+    "Commit CI ZIP/hash/archive-only recalculation and cleanup not yet verified.",
+    "Synthetic only; no real model adoption or clock qualification."
+  ]
+}
