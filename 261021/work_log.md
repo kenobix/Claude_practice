@@ -3041,3 +3041,12 @@ T07aは既存cached stack imageを使う方式から、allowlist workspaceで現
 CI実装commitのartifact/hash/normal+TERM cleanup確認はこの時点では未実施で、T07a/T17bをCI完了にしない。ローカルsystem実行中にも独立sourceを補強したため、local成功を最終commit全体の同一source証明とは呼ばず、最終対象試験と実装CIを照合する。T03歴史的停止の原因・UTC補正の内部理由・時計資格、T02実producer、T09以降の実Capital採否は未完了。合成数値を実候補採否・本番SLOへ使わない。
 
 最終追記: target-final-v3は70件18.803秒成功。操作照合をprobe送信前へ移した後のrecovery-finalも成功。daemon build clientのtimeoutを空inventoryだけでcleanup成功にしない負例を追加し、最初はharnessのmodule import経路で失敗した。script直実行/module importを分岐し、harness-timeout-v2の7件が成功した。最終compile/差分と同commit CIへ進む。これらは製品deadline/future拒否を緩める修正ではない。
+
+
+### b5aa7c5のCI追跡とcold runner補足
+
+23対象path/114原本hash/staged bytes一致/全差分176507bytes・SHA0cf68d8fc5ab381a260b6ec3dad7e65395421ff49de2d963cbc1597cbc164b67を確認してb5aa7c5d096972511b3315430302eba733ba7e77をcommit/push。CI41556503335のunitは443件60.936秒で成功した。push runの探索はconnectorがPR専用のためgh API、jobs/logはconnectorを用いてignored data/reports/20261103-t17b-ciへ分離保存した。
+
+待機中の静的再確認で、新T07a harnessのpreflightがcached caddy:2.10.2-alpineを要求する一方、既存Capital staging試験はCaddyを起動せず、cold CI runnerへ取得するstepがないことを特定した。ローカルにはcached imageがあったためlocal受入では見えなかった。製品source/検査条件は変更せず、CIの新step内だけで固定版Caddyの明示pullを180秒・TERM/KILL・pipefail・同じallowlist logへ追加した。先行runのCI全体を成功/完了とせず、最終workflow commitのrunを再確認する。Docker upstream base imageはCI VMのcacheであり、既存ユーザーstackのapp tagを更新しない。
+
+同じ実装commitのSQLite OS補足scriptも再実行し、実chmod拒否・実lock timeout・全原本不変を確認した。先行索引はlocal snapshotの履歴として保持し、後続CI索引で最終のworkflow commitと原本hashを結ぶ。

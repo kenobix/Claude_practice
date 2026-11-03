@@ -139,9 +139,11 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p data/reports
+          timeout --signal=TERM --kill-after=10 180 docker pull caddy:2.10.2-alpine 2>&1 \
+            | tee data/reports/deployment-recovery-ci.log
           timeout --signal=TERM --kill-after=30 900 python scripts/test_deployment_recovery_system.py \
             --run-disposable --evidence-dir data/reports/t07a-ci 2>&1 \
-            | tee data/reports/deployment-recovery-ci.log
+            | tee -a data/reports/deployment-recovery-ci.log
           set +e
           timeout --signal=TERM --kill-after=30 900 python scripts/test_deployment_recovery_system.py \
             --run-disposable --term-after-startup --evidence-dir data/reports/t07a-term-ci 2>&1 \
