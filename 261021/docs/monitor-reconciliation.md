@@ -200,3 +200,5 @@ MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python scripts/test_monitor_inspection_sql
 ```
 
 今回の実測待機は約5.025秒で、失敗結果はいずれも`database_unavailable`/終了区分2だった。全filesystem/ネットワークmountの挙動や実Capital monitorの受入を代表するものではない。rootでは権限拒否の証明にならないので明示的に停止する。原本/hashは[2026-11-03索引](reviews/20261103-t17b-t07a-checks.json)を参照。
+
+2026-11-03最終確認: 実装`4a4474e`の[CI41559833990](https://github.com/kenobix/Claude_practice/actions/runs/41559833990)で全447件・Caddy normal/TERM・対応復元・artifact16 member/hash/cleanupが成功。[最終CI索引](reviews/20261103-t17b-t07a-ci-checks.json)を確認する。合成受入とSQLite OS補足は完了し、実producer・時計資格・新原本からの採否は計画§11.6の残件に従う。

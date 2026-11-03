@@ -1,4 +1,4 @@
-# 配信処理の進み具合・timeout・旧stateの読取診断（T17bの一部）
+# 配信処理の進み具合・timeout・旧stateの読取診断（T17b）
 
 `deploy promote`と`deploy recover`は、配信の成否とは別に、現在の処理段階をstderrへJSON Linesで表示する。通常の最終結果JSONはstdoutに残る。
 同じ診断行は、対象profileのruntime directoryにある`deployment-progress.jsonl`へ追記する。これは承認証拠や配信台帳の代用品ではない。
@@ -17,7 +17,7 @@ promote中のDocker timeoutは、台帳を`in_progress / recovery_required`の�
 まず対象profileで`deploy inspect`を実行し、診断logと入口・runtime・台帳を確認してから、手動で`deploy recover`を判断する。
 通常のready失敗には既存の補償と旧版確認を適用し、補償未確認なら同じく未確定を残す。
 
-**残る制限:** MLflow registry/artifactダウンロード自体を別processで打ち切るend-to-end timeoutは未実装。
+**2026-11-02時点の制限（後述2026-11-03節でCLI全体deadlineを実装）:** MLflow registry/artifactダウンロード自体を別processで打ち切るend-to-end timeoutは未実装。
 その処理中のheartbeatを追加しただけで、全配信が一定時間内に終わるとは主張しない。Dockerのtimeout値を運用p95や本番SLOに流用しない。
 
 ## 読取専用の旧state診断
@@ -71,3 +71,5 @@ Docker daemonや送信済みHTTPの完了はprocess停止で取消保証でき�
 この上限はCLI配信操作の上限で、API起動自身のloader時間や予測応答SLOを変更するものではない。合成試験の時間を実Capital性能・時計資格として使わない。受入原本・失敗・未達ケースは[今回の索引](reviews/20261103-t17b-t07a-checks.json)に追記する。
 
 Composeへ必要なDB設定3項目（`APP_DB_PASSWORD`、`MLFLOW_DB_PASSWORD`、`POSTGRES_ADMIN_PASSWORD`）と`APP_DB_HOST_PORT`も子processの明示環境へ渡す。環境変数だけの構成とport上書きを維持し、これらの値をargv/診断logへ表示しない。その他の無関係な環境変数を一括継承しない。
+
+最終確認は実装4a4474eの[CI索引](reviews/20261103-t17b-t07a-ci-checks.json)。全447件・artifact/cleanupまで確認済み。冒頭の部分実装に関する記述は2026-11-02時点の履歴であり、現在のCLI契約は2026-11-03節を使う。

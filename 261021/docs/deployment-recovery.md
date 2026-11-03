@@ -125,3 +125,5 @@ T07bの合成対応復元を完了とし、T07a復旧harnessのCIと実producer�
 `--term-after-startup`は実PG/API/Caddyの起動後にharness自身へTERMを送り、非0終了・signal記録・cleanupを確認する専用負例。通常runの3停止点SIGKILL/recoverでは、新しいAPI操作binding・state・同じ台帳行も照合する。復元APIの元要求再送はlegacy起動であり、新しい配信操作の承認を作らない。T07bの実MLflow/skopsとは引き続き別の合成受入である。
 
 CIにはnormal/TERMの2 runと明示したlog/summary3 fileだけを追加する。dump、環境file、raw HTTP、model資料は公開allowlistに加えない。CI実装commitのartifact/member hashと両runのcleanupが確認されるまではCI受入を完了扱いにしない。build client自体のtimeoutでdaemonに作業が残る場合の取消は保証せず、残存またはcleanup未確認は成功にしない。
+
+2026-11-03最終確認: 実装`4a4474e`の[CI41559833990](https://github.com/kenobix/Claude_practice/actions/runs/41559833990)で全447件・Caddy normal/TERM・対応復元・artifact16 member/hash/cleanupが成功。[最終CI索引](reviews/20261103-t17b-t07a-ci-checks.json)を確認する。合成受入とSQLite OS補足は完了し、実producer・時計資格・新原本からの採否は計画§11.6の残件に従う。

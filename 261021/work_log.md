@@ -3066,3 +3066,18 @@ ec71c8a/CI41558409256は445件42.026秒とT07a normal/TERM・全PG/HTTPが成功
 scannerはURI以外の全stringでも@を資格情報と判定していた。Intel CPUの`CPU @ 2.80GHz`/`v4 @2.30GHz`で同じ拒否を再現した。先行runの保存原本のCPUはAMD EPYC 9V74で@なし。runner差による仮説と整合するが、元ec71のCPUを直接観測したとは記載しない。最初の追加testはmain guardの後ろへ置いてしまい0件/exit5だった。class内へ移したt16-cpu-before-v2でCPU文字列2件の拒否を確認した。
 
 実URIのauthority（埋込みを含む）、bare user@host/emailと通常hardware説明を区別し、空username付きURIも拒否するよう修正した。絶対path/外部URL/秘密fieldの拒否を残し、CPU fieldを無条件に例外化しない。例外に出す分類はcpu_model/other_stringの固定語だけでraw値を出さない。専用24件成功後、archive-only別processの1000件/p95/blocked検算と同じCPU fieldに資格情報URIを置く拒否も成功。秘密情報を含む原本の書換え・export成功までの自動retry・future拒否緩和は行わない。最終sourceの同commit CIで再確認する。
+
+
+### 最終実装4a4474eのCI artifact/hash/cleanup確認完了
+
+最終sourceは4a4474ec2997a62ea16250646086344decda6d2c、CI41559833990。両job全step成功、全447件65.772秒、compileall成功。実artifact 13196428050のZIP SHA ae1f101f77c7767dff8e5f5014d82cc81302f88751ce0d883f26613507e9fc43はGitHub digestと一致し、明示allowlist16 memberと各bytes/SHAを確認した。T16内側archiveはarchiveだけを別processへ渡して再計算し、50暖機を除く1000件/p95の保存値・report/journal/hashを一致確認した。数値は合成保存値の検算であり実性能/SLO/時計資格ではない。
+
+T07a normalは実Caddy/API/PGの並行同ID/409、監査失敗503、3地点SIGKILL→recover、操作metadata、5table別volume復元を確認。TERM負例は意図した非0/failed/SIGTERMで、正常/TERMとも固有image/current Dockerfile・全4種類残存0・保護container ID不変・cleanup成功。T07bの実MLflow/skops対応復元・両project cleanupと、既存PG/HTTP障害stepも成功した。[最終索引](docs/reviews/20261103-t17b-t07a-ci-checks.json)に全16 member・原本hash・先行失敗run・試行を保存した。
+
+先行b5aa7c5/CI41556503335はunit443件成功だがCaddy cached image不足で新step失敗。実ZIP14 member/SHA5d8e59a4d8b9dc9392e32b3f24418afc498f0d15f08f7fd108f72df8781c56aaも保存し、CI受入不合格を明示した。795d3e1/CI41557135899とf2cc523/CI41557788564は両job成功だが、そのartifactを最終sourceの受入へ流用していない。legacy修正前1 failure→27回帰成功、Compose環境伝播修正前1 failure→15process回帰成功も別attempt/hashで保持した。
+
+実DB/registry/現在配信・OS/時計設定・future拒否・schema/writer/lockは変更していない。T03歴史的停止/時計管理元と資格、T09の公式202610 HEAD404、T10以降の実candidate/必須producer/最終採否は残件。後続は文書記録commitで、4a4474eのCIがその記録commitを直接試験したとは呼ばない。
+
+完了記録のcompletion-validation-v1はexit0でCI側107原本hash・相対link・最新残課題anchor、最終実装4a4474eからsource/tests/scripts/workflow/lockが不変であることを確認した。connectorの実行中job log取得はNOT_FOUNDだったため失敗JSONを保存し、完了後に再取得した。最終artifact-check-v1はexit0で、16 memberと内側4原本のhash、archive-only別process・独立nearest-rank、T07a normal/TERM・T07b/PGのcleanupを確認。最終保存CPUはAMD EPYC 9V45で、Intel@は固定fixtureで確認したことを区別する。download参照は0600の一時fileだけへ置き、各取得後に削除した。最初のartifact checker旧候補path探索はtool transcriptのみの失敗で、検算成功とは数えない。
+
+最後の直接validator（tool transcript）でも109原本hash・229相対link・source/workflow不変を確認した。最終stageで再度全原本hashと11文書pathだけのstaged/worktree一致・git status/全差分を確認し、記録単位をcommit/pushする。無関係な未追跡3pathは含めない。

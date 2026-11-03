@@ -116,3 +116,5 @@ T07bでは[実MLflow/skops・DBの対応復元](docs/deployment-recovery.md)を�
 2026-11-02、T07bは実装`2414b20`の[CI41462429218](https://github.com/kenobix/Claude_practice/actions/runs/41462429218)で419 tests・実MLflow/skops/対応DBの別3volume復元・破損拒否・archive再計算・cleanupまで成功しました。[CI証拠](docs/reviews/20261102-t07b-ci-checks.json)。T17b残件とT07aのCaddy復旧CIの具体的な受入条件は[Sol向け引継ぎ](docs/t17b-sol-handoff.md)にまとめています。
 
 2026-11-03更新: 新規配信のAPI・state・台帳の操作ID照合と、CLI promote900秒/recover300秒の全体deadline、未確定時の手順は[配信診断](docs/deployment-observability.md#2026-11-03-t17b-操作の照合とcli全体の待機上限)を参照。最終受入状況は[検証索引](docs/reviews/20261103-t17b-t07a-checks.json)を確認する。
+
+2026-11-03最終確認: 実装`4a4474e`の[CI41559833990](https://github.com/kenobix/Claude_practice/actions/runs/41559833990)で全447件・Caddy normal/TERM・対応復元・artifact16 member/hash/cleanupが成功。[最終CI索引](docs/reviews/20261103-t17b-t07a-ci-checks.json)を確認する。合成受入とSQLite OS補足は完了し、実producer・時計資格・新原本からの採否は計画§11.6の残件に従う。

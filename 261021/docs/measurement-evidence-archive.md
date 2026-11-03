@@ -54,3 +54,5 @@ Solの検証結果は[review索引](reviews/20261102-t16-sol-review.json)へ記�
 実装`2492abc`の[CI41442578156](https://github.com/kenobix/Claude_practice/actions/runs/41442578156)で399 testsと両job全stepが成功しました。T16の3ファイルを含むartifactの全13 memberとhashを照合し、ZIPだけを別processへ渡して1050応答・warmup50除外・1000測定件のp95を再計算しました。同じattemptの報告値と一致し、専用project cleanupも確認したため、T16を完了とします。[CI証拠](reviews/20261102-t16-ci-checks.json)に記録しています。上記のlocal/CI pending記述は受入条件・実施順の説明であり、最新の完了状態はこの節です。
 
 2026-11-03補足: 通常のCPU名（例: `CPU @ 2.80GHz`）の`@`をURI資格情報と誤分類するケースを修正した。URI authorityのuserinfo（空usernameを含む）、埋込み資格情報URI、bare user@host/email、絶対path、外部URLは引き続き拒否する。CPU fieldを無条件で許可せず、同fieldへ資格情報URIを置いた負例も確認する。原本を正規化・削除してからexportする回避はしない。ec71 CIで拒否した具体的field/valueはcleanup後に回収できず、CPU原因との同一性は推定として残す。
+
+最終実装`4a4474e`の[CI41559833990](https://github.com/kenobix/Claude_practice/actions/runs/41559833990)で全447件・16 member/hash・archive-only再計算・cleanupまで成功した。[最新CI索引](reviews/20261103-t17b-t07a-ci-checks.json)を参照。実CIの保存CPUはAMD EPYCで、Intelの@を含む原本の再計算は固定fixtureの別process試験で確認した。自然失敗の具体的field未採取という限界を、後続の成功で埋め合わせない。

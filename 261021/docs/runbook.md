@@ -398,3 +398,5 @@ T03のSIGTERM終了待ちやT13の未来時刻拒否が再発した場合は、[
 現行initializeは`predictions.predicted`がREALならDOUBLE PRECISIONへ移行します。実DBに新コードを適用する前に、[T08の検証・復元手順](prediction-precision-migration.md)で制約を確認してください。専用fixtureでは保存値・metadata・同一ID再送・中断時rollback・別volumeへのbackup/restoreを検証します。旧保存時に失われた桁は戻らず、APIの十進表示は変わる場合があります（例: 415.72473→415.7247314453125）。過去JSONとの完全一致を保証した検証ではありません。実DBの移行は今回行っていません。
 
 2026-11-03更新: 新規配信のAPI・state・台帳の操作ID照合と、CLI promote900秒/recover300秒の全体deadline、未確定時の手順は[配信診断](deployment-observability.md#2026-11-03-t17b-操作の照合とcli全体の待機上限)を参照。最終受入状況は[検証索引](reviews/20261103-t17b-t07a-checks.json)を確認する。
+
+2026-11-03最終確認: 実装`4a4474e`の[CI41559833990](https://github.com/kenobix/Claude_practice/actions/runs/41559833990)で全447件・Caddy normal/TERM・対応復元・artifact16 member/hash/cleanupが成功。[最終CI索引](reviews/20261103-t17b-t07a-ci-checks.json)を確認する。合成受入とSQLite OS補足は完了し、実producer・時計資格・新原本からの採否は計画§11.6の残件に従う。
