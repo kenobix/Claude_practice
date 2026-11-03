@@ -73,11 +73,17 @@ def _assert_no_sensitive_or_external(value, *, key="") -> None:
     elif isinstance(value, str):
         docker_inventory_row = key == "containers" and re.fullmatch(
             r"/bikemlopstest[0-9a-f]{16}-[a-z0-9-]+-\d+\|[a-zA-Z0-9_.:/-]+\|\d+\|\d+", value)
-        if (ABSOLUTE_PATH.match(value) and not docker_inventory_row) or "@" in value.split("://", 1)[-1].split("/", 1)[0]:
-            raise ValueError("Evidence contains an absolute path or URI credentials")
+        # An at sign in a hardware description is not URI userinfo. Continue
+        # rejecting scheme authorities (also embedded in text), bare user@host,
+        # credential-shaped tokens and email addresses, without copying secrets.
+        credential_authority = re.search(
+            r"(?:[A-Za-z][A-Za-z0-9+.-]*://[^\s/]*@|(?<!\S)[^/\s@]+@[^\s/]+)", value)
+        if (ABSOLUTE_PATH.match(value) and not docker_inventory_row) or credential_authority:
+            category = "cpu_model" if key == "cpu_model" else "other_string"
+            raise ValueError(f"Evidence contains an absolute path or URI credentials (category={category})")
         if re.match(r"^[a-z][a-z0-9+.-]*://", value, re.I):
             parsed = urlsplit(value)
-            if parsed.scheme and (parsed.username or parsed.password):
+            if parsed.scheme and (parsed.username is not None or parsed.password is not None):
                 raise ValueError("Evidence contains URI credentials")
             if parsed.scheme != "http" or parsed.hostname not in {"localhost", "127.0.0.1"}:
                 raise ValueError("Evidence contains a non-local URI")

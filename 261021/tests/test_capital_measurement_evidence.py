@@ -451,5 +451,31 @@ class CapitalMeasurementEvidenceTests(unittest.TestCase):
         self.assertFalse(output.exists())
 
 
+    def test_hardware_at_sign_is_not_uri_authority_but_credentials_stay_rejected(self):
+        from bike_mlops.capital_measurement_evidence import _assert_no_sensitive_or_external
+        for cpu in ('Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz',
+                    'Intel(R) Xeon(R) CPU E5-2673 v4 @2.30GHz'):
+            with self.subTest(cpu=cpu):
+                _assert_no_sensitive_or_external({'resource_context':{'host':{'cpu_model':cpu}}})
+        for value in ('postgresql://user:private@host/db', 'http://user:private@127.0.0.1/x',
+                      'http://@localhost/x', 'user:private@host/db', 'person@example.invalid',
+                      'notes postgresql://user:private@host/db', '/private/data', 'https://example.invalid/data'):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                _assert_no_sensitive_or_external({'value':value})
+
+    def test_cpu_at_sign_roundtrip_recomputes_archive_and_does_not_exempt_credentials(self):
+        report = json.loads(self.report_raw)
+        report['resource_context'] = {'host': {'cpu_model': 'Intel(R) Xeon(R) Platinum CPU @ 2.80GHz'}}
+        self._write_archive(self._rebind_report(report))
+        result = verify_archive_process(self.archive)
+        self.assertEqual(result['measured_requests_recalculated'], 1000)
+        self.assertEqual(result['p95_ms'], 95.0)
+        self.assertEqual(result['deployment_permission'], 'blocked')
+        report['resource_context']['host']['cpu_model'] = 'http://user:private@127.0.0.1/x'
+        self._write_archive(self._rebind_report(report))
+        with self.assertRaises(ValueError):
+            verify_archive_process(self.archive)
+
+
 if __name__ == "__main__":
     unittest.main()

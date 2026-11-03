@@ -524,3 +524,5 @@ T14は今回checkpointのT01〜T17対応表と説明導線を整理し、過去�
 | P2 / D1 / Luna可 | T14: 新実装commit/CI/artifact/hashを証拠対応表とdemoへ反映。CI確認後に追記 |
 
 OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lockは変更しない。実候補やT02 producerの完了を合成fixtureから作らない。
+
+2026-11-03追加のCI診断: ec71c8a/CI41558409256は全445件とT07a normal/TERMが成功した一方、T16 exportのstring scannerで拒否され全体不合格。原本cleanup済みで自然拒否fieldは未取得。CPU名の`@`をURI資格情報と誤分類する同じ拒否を固定fixtureで再現し、authority/bare credentialsと通常hardware説明を区別した。秘密URI/絶対path/外部URLの拒否とbyte-preserving契約は保つ。**P1/D3/Sol: 修正後の同commit CI・artifact検算/cleanup確認までは最終受入未完了**。過去T16完了索引は当時の証拠として保持し、自然失敗fieldの未採取は後続索引にも限界として残す。

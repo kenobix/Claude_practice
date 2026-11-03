@@ -3058,3 +3058,11 @@ CI待機中に、legacy/contextなしの候補recoverで、previous stateのdepl
 ### Compose環境変数だけの起動互換
 
 scripts/bikectlとComposeの環境変数契約を照合し、子processの最小環境にAPP_DB_PASSWORD/MLFLOW_DB_PASSWORD/POSTGRES_ADMIN_PASSWORD/APP_DB_HOST_PORTが不足していたことを確認した。.envを持つ通常構成では表面化しないが、環境変数だけの従来構成やport上書きを落としていた。compose-environment-beforeで不足を再現し、4項目だけを明示allowlistへ追加。値をargv/診断へ出さず、無関係な秘密情報は伝播しないことを修正後試験で確認した。全process境界の回帰も実行し、最終のsource commit CIと結合する。OS/時計/実サービス・future拒否は変更しない。
+
+### 最終CIで再検出したT16文字列分類の誤検知
+
+ec71c8a/CI41558409256は445件42.026秒とT07a normal/TERM・全PG/HTTPが成功したが、既存systemのT16 exportでabsolute path/URI credentials拒否になった。main cleanup成功とT16出力削除を確認し、全体成功へしない。artifact13195474949は13 member、SHAa37bf37997cb0e77ed039c166221751293a7d9736c350c8263ea260236431fb7がGitHub digestと一致。元plan/reportは安全なcleanupで消えており、自然失敗の具体的なfield/valueは取得できない。`ec71-rejection-analysis.json`に事実と限界を保存した。
+
+scannerはURI以外の全stringでも@を資格情報と判定していた。Intel CPUの`CPU @ 2.80GHz`/`v4 @2.30GHz`で同じ拒否を再現した。先行runの保存原本のCPUはAMD EPYC 9V74で@なし。runner差による仮説と整合するが、元ec71のCPUを直接観測したとは記載しない。最初の追加testはmain guardの後ろへ置いてしまい0件/exit5だった。class内へ移したt16-cpu-before-v2でCPU文字列2件の拒否を確認した。
+
+実URIのauthority（埋込みを含む）、bare user@host/emailと通常hardware説明を区別し、空username付きURIも拒否するよう修正した。絶対path/外部URL/秘密fieldの拒否を残し、CPU fieldを無条件に例外化しない。例外に出す分類はcpu_model/other_stringの固定語だけでraw値を出さない。専用24件成功後、archive-only別processの1000件/p95/blocked検算と同じCPU fieldに資格情報URIを置く拒否も成功。秘密情報を含む原本の書換え・export成功までの自動retry・future拒否緩和は行わない。最終sourceの同commit CIで再確認する。
