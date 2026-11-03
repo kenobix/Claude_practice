@@ -75,6 +75,8 @@ Linux driver範囲へ制限 → −100000 ppm → tick11000/freq0の組合せが
 [WSL 2.6.3のStartTimeSyncAgent](https://github.com/microsoft/WSL/blob/2.6.3/src/linux/init/main.cpp)はPHC用configを生成してchronydを起動する設計だが、runtimeの所有証明にはしない。
 system distroから見えるtime.windows.comのpackage既定fileを稼働設定とみなして修正しない。
 
+<a id="clock-repair-options"></a>
+
 ## 次の採取と修復案・影響・切戻し
 
 次は[管理者採取手順](clock-owner-admin-read.md)を実施し、表示された保存directoryをチャットに伝える。

@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "base_commit": "5a687a7a58ead84240bfd72bfcbe4cfbe31f3559",
+  "status": "bounded_host_and_namespace_read_complete_clock_not_qualified",
+  "findings": {
+    "initd_visible_Ubuntu": 0,
+    "initd_visible_SYSTEM": 0,
+    "services": [
+      {
+        "Name": "vmictimesync",
+        "Status": 1,
+        "StartType": 3
+      },
+      {
+        "Name": "W32Time",
+        "Status": 1,
+        "StartType": 3
+      }
+    ],
+    "Windows_NTP_offsets_seconds": [
+      -1.3495421,
+      -1.3495904,
+      -1.3418427,
+      -1.3537725,
+      -1.3567374
+    ],
+    "NTP_source": "ntp.ubuntu.com",
+    "host_correctness_assumed": false
+  },
+  "attempt": {
+    "command": [
+      "python3",
+      "261021/data/reports/20261103-clock-extra/read-initd-and-host.py"
+    ],
+    "cwd": "/home/kenshin/work/claude_practice",
+    "started_at_utc": "2026-11-03T07:45:06.450521+00:00",
+    "monotonic_start_ns": 148772359783776,
+    "exit_code": 0,
+    "finished_at_utc": "2026-11-03T07:45:14.090082+00:00",
+    "monotonic_end_ns": 148779999341158,
+    "log": "initd-host-read-v1.log",
+    "bytes": 1940,
+    "sha256": "fdf097ee2cc495372033b61232d489433e1a725e85d14ca8fae95b44a9e66906"
+  },
+  "scope": {
+    "OS_clock_service_changes": false,
+    "real_DB_registry_deployment_changes": false
+  },
+  "evidence_files": [
+    {
+      "path": "261021/data/reports/20261103-clock-extra/build-record.py",
+      "bytes": 1772,
+      "sha256": "14e13e1ec73ada9a161e225bcbc202cefc01c31bdb871c5579b12e0d6bb0a7b9"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-extra/initd-host-read-v1.json",
+      "bytes": 498,
+      "sha256": "4ad6a796955b5f90801dc4ce3991a7972b57ad533ae09c1c9e4f69f1c1bfa10d"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-extra/initd-host-read-v1.log",
+      "bytes": 1940,
+      "sha256": "fdf097ee2cc495372033b61232d489433e1a725e85d14ca8fae95b44a9e66906"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-extra/read-initd-and-host.py",
+      "bytes": 2362,
+      "sha256": "53bbc4c2061a56ec584fee0ad5495cbee4ba3ab26a4a331bd617c94fa2fb8db8"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-extra/run_attempt.py",
+      "bytes": 1052,
+      "sha256": "406a4bdeab4fe1af3b18e0e4c98f4e36c7c1d67a415b362dc23b62e61c0b3594"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-extra/windows-stripchart-stderr.bin",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261103-clock-extra/windows-stripchart-stdout.bin",
+      "bytes": 229,
+      "sha256": "af7ec3099d0b9a7ac64315a7a3cd62d0b20caea03506b7e9f7f226f6c7a2e197"
+    }
+  ],
+  "limits": [
+    "No initial PID namespace live initd identity captured.",
+    "Five network offset estimates do not calibrate absolute UTC or identify who changed clocks.",
+    "Service values were read before stripchart; no assertion of a second after-state inventory.",
+    "No resync/start/clock writes, real candidate adoption or retrospective timing correction."
+  ]
+}

@@ -156,3 +156,26 @@ MLflow 3ではモデルの保存場所が従来と変わりました。このプ
 | quiescent snapshot / 書込みを止めた対応保存 | APIやモデル管理サービスの書込みを止めてから、DBとモデルfileを組として保存します。動き続けるシステム全般を無停止でbackupできるという意味ではありません。 |
 | sequence / DBの連番 | DBが次の行番号などを作るために持つカウンターです。復元時は行数だけでなくカウンターの現在値も照合し、次の書込みで番号が衝突する問題を見逃さないようにします。 |
 | torn tail / SHA鎖 | torn tailは中断で最後の行が途中になった状態です。SHA鎖は各行へ前の行の指紋を持たせ、順序や内容の破損を調べる方法です。本人確認や電子署名にはなりません。 |
+
+## 時計調査とCI証拠の用語
+
+[時計の追加調査](clock-followup.md)と[CI保守](ci-artifact-maintenance.md)で使う言葉です。
+
+| 用語 | このプロジェクトでの意味 |
+|---|---|
+| UTC / CLOCK_REALTIME | UTCは世界共通の時刻の基準です。CLOCK_REALTIMEはOSが返す現在日時で、同期によって前後へ動くことがあります。UTC形式で表示しただけでは、そのPCの時計が正確だと証明できません。 |
+| MONOTONIC / MONOTONIC_RAW | 経過時間を調べるLinuxの時計です。MONOTONICは現在日時の急な変更で直接巻き戻る時計ではありませんが、周波数補正の影響を受けます。RAWはその補正を受けない比較用の時計です。どちらも外部の正しい1秒と常に一致する保証ではありません。 |
+| QPC / bracket採取 | QPCはWindowsの経過時間カウンターです。bracket採取はWindowsの読取をWSL側の前後2回の読取で挟み、通信待ちの幅も含めて比較する方法です。違うOSの値を同時に読んだことにはしません。 |
+| NTP / offset / step / slew | NTPはネットワーク越しに時計を合わせるための仕組みです。offsetは時計の差、stepは日時を一度に動かす補正、slewは進む速さを少しずつ変える補正です。通信で見積もった差にも誤差があります。 |
+| chronyd / chronyc | chronydは時計を合わせる常駐プログラム、chronycはその状態を問い合わせる道具です。設定を変える機能もあるため、今回使うのは明示した読取コマンドだけです。 |
+| systemd-timesyncd / W32Time | 前者はUbuntu側、後者はWindows側の時計同期サービスです。この環境でどちらが動いているかを確認しています。サービスが動作中というだけでは時計の正確さは証明できません。 |
+| PHC / Hyper-Vのptp0 | PHCはOSが時刻源として使う装置の一種です。今回のWSLでは仮想化基盤側の時計を`/dev/ptp0`で参照しています。装置があるだけで、それをどのprocessが使用中か、元の時計が正確かは分かりません。 |
+| tick / freq / ppm | tickとfreqはLinuxの時計の進み方を補正する値です。ppmは100万分のいくつかを表す割合で、1,000ppmは0.1%です。tick=11000を11,000Hzという意味にはせず、freqとの組合せで解釈します。 |
+| PID / namespace / comm | PIDはプログラムの実行番号、namespaceはOS内で見える範囲を分ける仕組みです。同じprocessでも見えるPIDが異なります。commは短い表示名で、同じ名前だけでは実行fileや管理元を特定できません。 |
+| exe / 開始tick / 親process | exeは実際の実行file、開始tickはそのprocessが起動した時点を表す値です。PIDの再利用を見分けるため併用します。親processは現在の親で、元の起動者が終了して親が変わる場合もあります。 |
+| fd / socket inode | fdはprocessが開いているfileや通信口の番号です。socket inodeはOS上の通信口を照合する手掛かりです。今回、processのfdとそのprocessのUDP一覧を合わせ、応答した名前だけで所有者を決めないようにしています。 |
+| setter / syscall / kernel trace | setterは時計の変更を要求した側を指す調査用の呼び方です。syscallはプログラムからOSへの要求、kernel traceはOS内部の出来事の記録です。変更要求だけでなく戻り値と時計の変化を対応付けます。 |
+| ELF / Build ID / symbol | ELFはLinux実行fileの形式、Build IDはbuildを識別する手掛かり、symbolは関数や変数の位置などの情報です。関数の位置が分かっても、実行中の変数の値まで読めたことにはなりません。 |
+| future拒否 / 時計資格 | future拒否は、証拠の時刻が検証時点より未来なら受け入れない規則です。時計資格は、その実行環境の時計を測定や証拠に使ってよいか確認することです。拒否を緩めたり一度正常に動いたりしただけでは資格確認の代わりにしません。 |
+| stripchart | Windowsのw32tmで、指定した時刻サーバーとの差を繰り返し表示する読取機能です。今回使う`/stripchart`と、時刻を合わせ直す`/resync`は別の操作です。 |
+| allowlist / archive-only再計算 | allowlistは保存を許可するfileの限定一覧です。archive-only再計算は、元の作業環境やDBを渡さず、ZIPだけで件数・p95・hashを計算し直す確認です。元の測定が実運用で正しかったことまで証明するものではありません。 |

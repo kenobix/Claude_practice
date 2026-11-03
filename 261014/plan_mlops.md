@@ -538,11 +538,11 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 | 優先度 | 難易度・担当 | 残課題と次の条件 |
 |---|---|---|
-| P1 | D3・Sol | 時計：追加の同時採取で現在の自然future拒否とtimesyncd496の負方向stepを対応済み。残りは初期namespaceのPHC fd/UDP所有の追加採取、chronydの内部制御値・initdの実行主体、修復案と時計資格。T03自然停止の歴史的原因は未確定。詳細は[追加読取](../261021/docs/clock-followup.md)。OS修復は未許可、future拒否/clamp/retryで代替しない |
+| P1 | D3・Sol | 時計：追加の同時採取で現在の自然future拒否とtimesyncd496の負方向stepを対応済み。残りは初期namespaceのPHC fd/UDP所有の追加採取、chronydの内部制御値・initdの実行主体、host外部UTC差と同期責任、修復案と時計資格。Windows stripchartの5offsetは約−1.35秒で、hostを無条件に正確とみなさない。T03自然停止の歴史的原因は未確定。詳細は[追加読取](../261021/docs/clock-followup.md)。OS修復は未許可、future拒否/clamp/retryで代替しない |
 | P1 | D1・Luna | T09の202610公式原本公開待ち。公開後に既存手順で取得・bytes/hash/構造を照合。HEADだけで取得完了としない |
 | P0（実fit前） | D3・Sol | T10：独立protocol/全原本snapshot/分割/recipe/基準をfit前に固定。10月bufferなしで窓を短縮しない |
 | P1 | D3・Sol | T02実producerおよびT11/T12/T13b：同一の実candidate/artifactに精度・監視・復旧・metadata・運用測定を結合し採否を記録。T09/T10/時計資格等の前提を満たす範囲で順に進める |
-| P2 | D2・Sol review | CI保守：upload-artifact v7.0.2/Node24への単独更新とarchive:true固定を実施中。allowlist16path不変・local YAML/10shell構文成功。実装commit CI/artifact/cleanup確認前は未完了。[保守記録](../261021/docs/ci-artifact-maintenance.md)。その他の依存経由警告は個別判断、lockを全面更新しない |
+| P2 | D2・Sol review | 残るCI依存警告はMLflow経由SQLAlchemy noloadの将来互換を個別確認。upload-artifact v7.0.2/Node24単独更新は実装5a687a7/CI41598271089の463件・16member ZIP/digest・archive-only再計算・全cleanupまで完了。[CI索引](../261021/docs/reviews/20261103-upload-action-ci-checks.json)。lockを全面更新しない |
 
 T14の証拠入口・task対応表・操作説明は最新CIへ追記済み。T06a OS補足とT07a CI接続を残件一覧へ再掲しない。旧checkpoint表は当時の記録として保持する。
 
@@ -551,6 +551,12 @@ T14の証拠入口・task対応表・操作説明は最新CIへ追記済み。T0
 initdとtimesyncdの両方の負方向stepを確認。前回区間のinitd前進だけという記録を今回全区間へ一般化しない。
 別のjoint採取でreviewが1.235856秒futureとなる自然拒否とtimesyncdのstepを生成/検証MONOTONIC区間内で照合し、tag不変/blockedを確認した。
 T03 journal9件・decision9件は成功し、自然停止は未再発。PHC/socket補助reader16件はfixture受入済み、Ubuntu rootでの実行は対象が見えず42。
-初期namespace本採取はWindows管理者操作待ちで、[手順](../261021/docs/clock-owner-admin-read.md#追加のphcsocket所有採取2026-11-03)を追加した。
+初期namespace本採取はWindows管理者操作待ちで、[手順](../261021/docs/clock-owner-admin-read.md#chrony-resources-admin)を追加した。
 可視ELFのMariner2.0/4.1 package noteとBuild IDは取得したが、内部変数symbol/実数値は未取得。
 T09は同日06:02 UTCの公式HEADで202609=200/202610=404。原本取得・fit・窓変更・時計資格の完了へ流用しない。
+
+同日追加の独立P2：`7174a1f`の時計readerを含む実装`5a687a7`の[CI41598271089](https://github.com/kenobix/Claude_practice/actions/runs/41598271089)は全463件64.677秒・全system成功。
+実artifact13214080832は16member、外側SHA`f02bdd44b3082142f0f5cc38ef7b384cf52b9b744c02d1ddf482a278874a8789`がGitHub digestと一致。
+内側archive4原本hash・暖機50除外/要求1000/p95の別process・独立再計算、T07a正常/TERM・T07b対応復元・PG/HTTP cleanupを確認した。
+Node20強制移行/punycode/url.parse警告は今回system logで見られず、unitのMLflow noload警告は別の残件。
+T14として時計/CIの用語16項目も補足した。後続記録commitをこの実装CIが直接試験したとは呼ばない。

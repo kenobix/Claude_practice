@@ -123,5 +123,9 @@ T07bでは[実MLflow/skops・DBの対応復元](docs/deployment-recovery.md)を�
 
 2026-11-03の[追加読取](docs/clock-followup.md)と[検証索引](docs/reviews/20261103-clock-followup-checks.json)に、
 自然future拒否と現在のtimesyncd stepの同時照合、T03回帰、未採取範囲を記録した。
-初期namespaceのPHC/socket所有の追加採取は[管理者手順](docs/clock-owner-admin-read.md#追加のphcsocket所有採取2026-11-03)を参照。
+初期namespaceのPHC/socket所有の追加採取は[管理者手順](docs/clock-owner-admin-read.md#chrony-resources-admin)を参照。
 時計修復・資格確認・実Capital候補の採否は未完了。
+
+CIの独立保守は[artifact action更新](docs/ci-artifact-maintenance.md)を参照。
+実装`5a687a7`の[CI41598271089](https://github.com/kenobix/Claude_practice/actions/runs/41598271089)で463件・隔離system・16member ZIP/digest・再計算・cleanupまで成功した。
+この記録と時計の新しい用語は[用語集](docs/glossary.md)・[証拠入口](docs/evidence-guide.md)から確認できる。

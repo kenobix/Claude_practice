@@ -93,6 +93,8 @@ Solは開始/終了のidentity、exe/hash、親/namespace、選択configを先�
 別bootやPID再利用、identity変化があれば旧setter traceへ結び付けない。
 `INVENTORY_COMPLETE`でもtickの内部変数や修復完了を証明しないため、[追加調査の未確定事項](chrony-control-analysis.md)を残す。
 
+<a id="chrony-resources-admin"></a>
+
 ## 追加のPHC/socket所有採取（2026-11-03）
 
 [追加調査](clock-followup.md)でWindows非管理者tokenと、Ubuntuからchronydが見えない境界を再確認した。

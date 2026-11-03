@@ -80,15 +80,25 @@ PHCのdevice番号と候補processの開いたfdを照合し、socket inodeを**
 Ubuntu rootでの実行はchronydが見えず42だった。**初期namespaceでのPHC/socket採取は未実施。**
 fixtureのdevice照合には`/dev/null`を利用してdevice番号照合を試し、本物のPHC測定とは明確に区別する。
 専用16件が成功。inodeの他namespace/別port、IPv6、include/別argv、fd/実行file/config変更、fd上限の負例を含む。
-管理者での追加採取は[手順書](clock-owner-admin-read.md#追加のphcsocket所有採取2026-11-03)を参照。
+管理者での追加採取は[手順書](clock-owner-admin-read.md#chrony-resources-admin)を参照。
 
 ## 修復案・影響・切戻し
 
-今回修復は行っていない。[既存の修復候補表](chrony-control-analysis.md#次の採取と修復案影響切戻し)を維持する。
+今回修復は行っていない。[既存の修復候補表](chrony-control-analysis.md#clock-repair-options)を維持する。
 採取後、同期責任を一つにする保守比較の必要性を判断する。実施するなら事前にOS変更の許可、host精度、
 全WSLへの影響、元のservice active/enabled・設定hash、切戻し方法を具体化する。
 service停止だけで資格合格にせず、独立した長時間/休止再開後の時計観測と厳密future拒否を確認する。
 現在の前提ではT12の実時間計測・T13bの実採否を進めない。
+
+追加のhost読取では、Ubuntu/system distroの可視process内に`initd`は見つからなかった。
+これは初期namespaceを含む共有kernel全体で不在という意味ではない。現setterのexe/管理元は未確定のまま。
+WindowsのW32Time/vmictimesyncはStopped/Manualだった。
+Windowsから`w32tm /stripchart /computer:ntp.ubuntu.com /samples:5 /period:1 /dataonly`を実行し、
+返った5offsetは−1.3567374〜−1.3418427秒だった。`/resync`やservice開始は行っていない。
+単一NTP先・短区間・通信経路の観測なので絶対UTC精度の校正や原因確定とはしないが、
+**host/PHC側が正確だと無条件に仮定してUbuntuの同期だけを止める修復案は採用しない。**
+hostの外部UTCとの差と、同期責任の決定も先に確認する。
+[追加原本索引](reviews/20261103-clock-extra-checks.json)を参照。
 
 最初のsandboxではWindows interop socketとDNSを拒否されたため、読取範囲のsandbox外実行で確認した。
 package照会は外側exit0でも内側rpmが127だったので、package検証成功には数えない。

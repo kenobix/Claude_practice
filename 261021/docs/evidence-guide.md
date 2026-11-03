@@ -5,6 +5,8 @@
 
 | 対象 | 実装commit / CI | 確認できる証拠 | 限界 |
 |---|---|---|---|
+| **CI artifact action保守・時計reader（最新）** | `7174a1f`→`5a687a7` / [41598271089](https://github.com/kenobix/Claude_practice/actions/runs/41598271089) | [CI索引](reviews/20261103-upload-action-ci-checks.json)。463件、Node24/ZIP維持、16member/hash・archive-only検算、正常/TERM/対応復元cleanup | 時計readerは合成16件。初期namespaceでのPHC/socket本採取・時計資格は未完了 |
+| **現在の自然future拒否の変更元** | `7174a1f` / 読取・FakeRegistryのみ | [時計索引](reviews/20261103-clock-followup-checks.json)、[host追加読取](reviews/20261103-clock-extra-checks.json)、[説明](clock-followup.md)。生成/検証区間内のtimesyncd step、tag不変/blocked | 過去停止の全原因やchronyd内部理由・host精度は未確定。実DB/registry/時計設定は変更していない |
 | **T17b/T07a/T16補足（最新）** | `4a4474e` / [41559833990](https://github.com/kenobix/Claude_practice/actions/runs/41559833990) | [最終CI索引](reviews/20261103-t17b-t07a-ci-checks.json)。447件、API/state/操作台帳、全体deadline、中断・遅延応答、現imageのCaddy/TERM cleanup、16 member/hash照合 | 合成受入。実Capital producer/時計資格は別条件 |
 | T07a/T17a（2026-11-01時点） | `f341e94` / [41298859518](https://github.com/kenobix/Claude_practice/actions/runs/41298859518) | [local受入](reviews/20261101-t07-t17-checks.json)・[CI索引](reviews/20261101-t07-t17-ci-checks.json)。実Caddy切替/SIGKILLと台帳復旧はlocal、既存system/PGはCI | local復旧harnessのmodel/registryはdouble。新harness自体のCI接続は未了 |
 | T13a | `f1cc9ff` / [41300378098](https://github.com/kenobix/Claude_practice/actions/runs/41300378098) | [HTTP障害CI](reviews/20261101-t13-http-ci-checks.json)。部分保存、commit後の応答喪失、同値retry、競合拒否、cleanup | 使い捨て実MLflow HTTPに対する合成決定。実人間の採否ではない |

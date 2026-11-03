@@ -3138,3 +3138,39 @@ Node24とZIP既定を確認し、単一file非archive機能へ切り替わらな
 workflow-validation-v1はYAMLをparseして、正規化した変更がこの2点だけ、allowlist16path・他のif/timeout/pipefail/stepすべて不変、全10run block bash -n、上流input互換/diff check成功。
 既存Python/MLflow/依存lockを変更しない。rawは`data/reports/20261103-upload-maintenance/`。
 この時点では実装commitのCI/artifact/cleanup未確認で、[local索引](docs/reviews/20261103-upload-action-checks.json)はCI_PENDINGを維持する。
+
+### CI待機中の追加clock読取
+
+`initd-host-read-v1`は既存Ubuntu/system namespaceからcommがinitdのprocessだけを探し、両方0件だった。初期namespaceを含む不在証明にはしない。
+WindowsのW32Time/vmictimesyncはStopped/Manualを読取。同じ読取で`w32tm.exe /stripchart /computer:ntp.ubuntu.com /samples:5 /period:1 /dataonly`を実行し、exit0、5offset −1.3567374〜−1.3418427秒を保存した。
+生stdout/stderr bytesも保持し、CP932表示を解析した。PowerShell module progress stderrも残した。`/resync`・config/service変更はしていない。
+単一NTP先の有限観測なので絶対精度校正とはしない。hostが正確だと仮定してUbuntu timesyncdだけを停止する案を先行せず、hostの外部UTC差と同期責任も修復前に確認する。
+原本は`data/reports/20261103-clock-extra/`、[索引](docs/reviews/20261103-clock-extra-checks.json)へ別保存。主時計索引113原本は上書きしていない。
+
+T14の独立した文書補足として、時計/CI調査で増えた用語16項目を`docs/glossary.md`へ追記した。
+UTC表示と正確さ、MONOTONICと外部秒、QPC bracketの非同時性、PHC存在と所有、commとexe、関数symbolと内部値、archive-only検算と実運用証明を区別した。
+
+### P2実装5a687a7のCI・実ZIP・再計算・cleanup受入
+
+対象5pathの全差分/status/秘密情報を確認後、`5a687a7a58ead84240bfd72bfcbe4cfbe31f3559`をcommit/pushした。
+CI41598271089は同じhead SHAで全job/step成功。unit463件64.677秒・compileall、全Docker/PG/HTTP/Caddy正常/TERM/対応復元が成功した。
+connectorのjobs-v1〜v6を順に保存し、完了後のjob logとrun metadata/artifactを取得した。進行中logの不必要な反復取得はしていない。
+実action解決はv7.0.2/SHA cf430e030ddbb5b0abf93d22962f4752f3646cd9、archive:trueを実行logで確認した。
+
+artifact13214080832をconnectorの一時参照で実downloadした。参照は0600の一時fileだけへ置きfinally削除し、signed URLを記録・公開しない。
+artifact-download-v1成功、233,299 bytes/外側SHA f02bdd44b3082142f0f5cc38ef7b384cf52b9b744c02d1ddf482a278874a8789がGitHub digestと一致。
+artifact-check-v1成功。ZIPは明示allowlist16memberだけで、各bytes/SHA、内側archive4原本/manifest/hash、source revision=5a687a7/dirty=falseを確認した。
+archiveだけを渡した別process（元DB/registry/workspace/credentialなし）で1,050 journal応答、50暖機除外/1,000 measured・errors0・p95 19.50349099999471msを保存結果と一致確認し、独立nearest-rankでも同値だった。
+CPUはIntel Xeon6975P-C（@を含まない）。Intel@のscanner負例fixture成功と、今回の実CI CPUを取り違えない。
+
+T07a normal/TERMの固有current image・3地点SIGKILL復旧・metadata・別volume復元、資源4種類残存0・保護container不変・cleanup trueを照合。
+T07bの65registry table/5audit table・8artifact file・3別volume・破損skops拒否/元retry・新規予測・両project cleanup、既存PG/HTTP cleanupも確認した。
+system logではNode20強制移行/punycode/url.parseの警告は見られなかった。unitのMLflow経由SQLAlchemy noload非推奨は残す。
+ZIP重複member警告は意図した負例で、通常upload破損ではない。依存lockの広範更新・警告抑制は行っていない。
+
+受入の正規索引は[20261103-upload-action-ci-checks.json](docs/reviews/20261103-upload-action-ci-checks.json)。local索引のCI_PENDINGを後から上書きせず、最終CI索引を追加した。
+時計の限定管理者採取・chronyd内部値・initd実体・host外部UTC差/同期責任と資格、T09公開/T10以降の実candidate/producer/採否は残る。
+合成成功を実運用性能や時計資格へ流用しない。後続文書commitは5a687a7の実装内容を変更せず、当該CIがその文書commitを直接試験したとは呼ばない。
+
+completion-validation-v1は成功。主時計・追加clock・local/CI索引の154原本hash、相対リンク、明示anchor3箇所、管理者shell snippet構文とdiffを検証し、実装5a687a7からsource/scripts/tests/workflow/lockが不変であることを確認した。
+記録後に同validatorでCI側の最終30原本を含む全hashを再確認し、今回の文書/証拠だけをstageして全差分/statusを確認する。無関係な未追跡3pathは保持する。
