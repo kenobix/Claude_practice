@@ -117,3 +117,11 @@ registry65table・audit5table（744観測/1052予測）・column/sequence・8 ar
 restoreの残存container/network/volume/imageがすべて0、workspace回収済み、source project cleanupと保護container ID不変も確認できた。
 T16の内側ZIPは`c6ca847386fe751a8d559a6b1ffc2e41e2b90e3eaada4581c22ce5fd82cab66d`で、archiveだけを渡した別processの再計算も一致した。
 T07bの合成対応復元を完了とし、T07a復旧harnessのCIと実producerは別の未完了条件として維持する。
+
+## 2026-11-03 T07a更新: 現DockerfileとTERM cleanup
+
+上記のcached image/tzdata複製は旧試行の記録。現在のharnessはallowlistで複製したworkspaceの現Dockerfileを固有tag・UUID labelでbuildし、image ID/labelを確認してAPI/worker/復元APIへ渡す。既存stackのtagを上書きしない。全resource回収後はimageも同じ所有確認をして削除し、残存0と保護container ID不変を確認する。
+
+`--term-after-startup`は実PG/API/Caddyの起動後にharness自身へTERMを送り、非0終了・signal記録・cleanupを確認する専用負例。通常runの3停止点SIGKILL/recoverでは、新しいAPI操作binding・state・同じ台帳行も照合する。復元APIの元要求再送はlegacy起動であり、新しい配信操作の承認を作らない。T07bの実MLflow/skopsとは引き続き別の合成受入である。
+
+CIにはnormal/TERMの2 runと明示したlog/summary3 fileだけを追加する。dump、環境file、raw HTTP、model資料は公開allowlistに加えない。CI実装commitのartifact/member hashと両runのcleanupが確認されるまではCI受入を完了扱いにしない。build client自体のtimeoutでdaemonに作業が残る場合の取消は保証せず、残存またはcleanup未確認は成功にしない。

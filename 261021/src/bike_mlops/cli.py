@@ -35,6 +35,8 @@ from bike_mlops.config import (
 from bike_mlops.data import audit_hourly, download_dataset, load_hourly, sha256_file
 from bike_mlops.db import Database, canonical_time, stable_hash
 from bike_mlops.deployment_gates import require_deployment_eligible
+from bike_mlops.deployment_metadata import operation_identity
+from bike_mlops.deployment_process import remaining_seconds, run_operation, interruption_guard
 from bike_mlops.deployment_progress import DeploymentTimeout, deployment_stage
 from bike_mlops.features import FEATURE_COLUMNS, available_observation_frame, feature_frame_for_dataset
 from bike_mlops.monitoring import score_monitor_windows
@@ -239,7 +241,7 @@ def _url_json(url: str, payload: dict | None = None, timeout: float = 5.0) -> di
         headers={"Content-Type": "application/json"},
         method="GET" if payload is None else "POST",
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
+    with urllib.request.urlopen(request, timeout=remaining_seconds(timeout)) as response:
         return json.loads(response.read())
 
 
@@ -562,7 +564,7 @@ def _compose(*args, check=True, operation_id=None):
         try:
             return subprocess.run(command, cwd=PROJECT_ROOT, check=check, text=True,
                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                  timeout=600 if build else 30)
+                                  timeout=remaining_seconds(600 if build else 30))
         except subprocess.TimeoutExpired:
             # The client timeout cannot cancel/roll back Docker daemon work.
             raise DeploymentTimeout("Docker wait expired; daemon outcome unconfirmed; run deploy inspect/recover") from None
@@ -635,10 +637,20 @@ def _require_live_deployment(actual: dict, version: str, registered) -> None:
 
 
 def _live_identity(payload: dict) -> dict:
-    return {key: payload.get(key) for key in (
+    identity = {key: payload.get(key) for key in (
         "model_name", "model_version", "artifact_sha256", "quality_gate_status",
         "feature_contract_version", "data_profile_id", "target_contract_id",
     )}
+    operation = payload.get("deployment_operation", {}).get("operation")
+    if operation is not None:
+        identity["deployment_operation"] = operation
+    return identity
+
+
+def _require_operation(actual, expected):
+    observed = actual.get("deployment_operation", {})
+    if observed.get("status") not in {"matched_pending", "matched_completed"} or observed.get("operation") != expected:
+        raise RuntimeError("API operation metadata differs from the prepared deployment")
 
 
 def _require_ready_deployment(url: str, version: str, registered) -> None:
@@ -696,7 +708,7 @@ def _wait_ready(url: str, version: str, quality_gate: str, timeout_seconds: int 
             return {"ready": ready, "version": actual}
         except Exception as error:
             last_error = error
-            time.sleep(2)
+            time.sleep(remaining_seconds(2))
     raise TimeoutError(f"Candidate did not become ready at {url}: {last_error}")
 
 
@@ -723,7 +735,8 @@ def _deployment_probe(url: str, version: str, deployment_id: str, frame: pd.Data
         "data_profile_id": DATA_PROFILE_ID,
         "target_contract_id": TARGET_CONTRACT_ID,
     }
-    actual = _url_json(f"{url}/predict", payload, timeout=10)
+    with deployment_stage(RUNTIME_DIR, "probe_http", operation_id=deployment_id):
+        actual = _url_json(f"{url}/predict", payload, timeout=10)
     if str(actual.get("model_version")) != version:
         raise RuntimeError("Candidate probe response reports a different model version")
     if actual.get("artifact_sha256") != model_hash:
@@ -731,6 +744,8 @@ def _deployment_probe(url: str, version: str, deployment_id: str, frame: pd.Data
     if actual.get("model_quality_gate") != model_gate:
         raise RuntimeError("Candidate probe response reports a different quality-gate status")
     actual_prediction = float(actual["prediction"])
+    if not np.isfinite(expected) or not np.isfinite(actual_prediction):
+        raise RuntimeError("Deployment probe returned a nonfinite prediction")
     if not np.isclose(expected, actual_prediction, rtol=1e-6, atol=1e-5):
         raise RuntimeError(
             f"Offline/API parity check failed: expected {expected}, API returned {actual_prediction}"
@@ -765,6 +780,8 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
             )
         if not _version_matches_active_profile(live_before):
             raise RuntimeError("Live proxy serves a different data profile/target contract")
+        if state.get("deployment_operation") is not None:
+            _require_operation(live_before, state["deployment_operation"])
         if not approver.strip() or not reason.strip():
             raise ValueError("Promotion requires a named approver and a non-empty reason")
         if version == old_version:
@@ -819,7 +836,7 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
         _, replay_data_hash, replay_frame = _seed_observations(database, DEFAULT_DATASET)
         now = datetime.now().astimezone().isoformat()
         recovery_context = {
-            "schema_version": 2, "previous_state": state,
+            "schema_version": 3, "previous_state": state,
             "previous_identity": _live_identity(live_before),
             "candidate_identity": {
                 "model_name": MODEL_NAME, "model_version": version,
@@ -828,6 +845,10 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
                 "data_profile_id": DATA_PROFILE_ID, "target_contract_id": TARGET_CONTRACT_ID,
             },
         }
+        binding = operation_identity(dict(deployment_id=deployment_id, to_slot=new_slot,
+            to_version=version, data_profile_id=DATA_PROFILE_ID, target_contract_id=TARGET_CONTRACT_ID,
+            approver=approver, reason=reason), model_version.tags["artifact_sha256"])
+        recovery_context["candidate_identity"]["deployment_operation"] = binding
         with database.transaction(immediate=database.sqlite) as connection:
             database.execute(
                 connection,
@@ -841,11 +862,12 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
                     json.dumps({"recovery_context": recovery_context}, allow_nan=False), now, now,
                 ),
             )
-        (RUNTIME_DIR / f"{new_slot}.env").write_text(f"MODEL_VERSION={version}\n", encoding="utf-8")
+        (RUNTIME_DIR / f"{new_slot}.env").write_text(f"MODEL_VERSION={version}\nDEPLOYMENT_ID={deployment_id}\nDEPLOYMENT_SLOT={new_slot}\n", encoding="utf-8")
         try:
             _compose("up", "-d", "--build", "--no-deps", service, operation_id=deployment_id)
             with deployment_stage(RUNTIME_DIR, "candidate_ready", operation_id=deployment_id):
                 candidate = _wait_ready(f"http://127.0.0.1:{host_port}", version, quality_gate)
+                _require_operation(candidate.get("version", {}), binding)
             with deployment_stage(RUNTIME_DIR, "artifact_load_and_probe", operation_id=deployment_id):
                 probe = _deployment_probe(f"http://127.0.0.1:{host_port}", version, deployment_id, replay_frame)
             probe["recovery_context"] = recovery_context
@@ -856,12 +878,16 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
             _deployment_row(database, deployment_id, "proxy_switched")
             active = _url_json(f"{_proxy_url()}/version", timeout=5)
             _require_live_deployment(active, version, model_version)
+            _require_operation(active, binding)
             state = _candidate_runtime_state(state, {
                 "to_slot": new_slot, "to_version": version, "from_version": old_version,
                 "deployment_id": deployment_id, "approver": approver, "reason": reason,
             }, quality_gate)
-            _write_atomic(state_path, json.dumps(state, indent=2) + "\n")
-            _deployment_row(database, deployment_id, "completed", "completed")
+            state["deployment_operation"] = binding
+            with deployment_stage(RUNTIME_DIR, "state_finalize", operation_id=deployment_id):
+                _write_atomic(state_path, json.dumps(state, indent=2) + "\n")
+            with deployment_stage(RUNTIME_DIR, "ledger_finalize", operation_id=deployment_id):
+                _deployment_row(database, deployment_id, "completed", "completed")
             return {
                 "deployment_id": deployment_id,
                 "status": "completed",
@@ -877,10 +903,16 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
                 "reason": reason,
                 "rollback": rollback,
             }
-        except Exception as error:
-            if isinstance(error, DeploymentTimeout):
+        except BaseException as error:
+            # A result/log failure after the commit must not rewrite completed history.
+            with database.session() as connection:
+                committed = database.execute(connection, "SELECT status FROM deployments WHERE deployment_id=?",
+                                             (deployment_id,)).fetchone()
+            if committed is not None and committed["status"] == "completed":
+                raise RuntimeError("Deployment committed but response is unconfirmed; run deploy inspect") from None
+            if isinstance(error, (DeploymentTimeout, KeyboardInterrupt, SystemExit)):
                 _deployment_row(database, deployment_id, "recovery_required", "in_progress",
-                                "Docker wait expired; daemon outcome unconfirmed; inspect before recovery")
+                                "Deployment interrupted or timed out; outcome unconfirmed; inspect before recovery")
                 raise
             try:
                 _write_atomic(RUNTIME_DIR / "Caddyfile", old_caddyfile)
@@ -903,7 +935,9 @@ def _promote(version: str, approver: str, reason: str, rollback: bool, diagnosti
 
 def command_deploy_promote(args) -> None:
     approver = args.approver or getpass.getuser()
-    _print(_promote(str(args.version), approver, args.reason, args.rollback, args.diagnostic))
+    with interruption_guard():
+        _print(run_operation(dict(mode="promote", version=str(args.version), approver=approver,
+                                  reason=args.reason, rollback=args.rollback, diagnostic=args.diagnostic)))
 
 
 def _recover_deployment() -> dict:
@@ -922,6 +956,8 @@ def _recover_deployment() -> dict:
         actual = _url_json(f"{_proxy_url()}/version", timeout=5)
         registered = _checked_registered_deployment(str(state["active_version"]))
         _require_live_deployment(actual, str(state["active_version"]), registered)
+        if state.get("deployment_operation") is not None:
+            _require_operation(actual, state["deployment_operation"])
         return {"status": "no_incomplete_deployments", "active_version": state["active_version"],
                 "proxy_version": actual}
     row = dict(rows[0])
@@ -944,7 +980,7 @@ def _recover_deployment() -> dict:
         probe = json.loads(row["probe_json"])
         context = probe.get("recovery_context")
         if context is not None:
-            if not isinstance(context, dict) or context.get("schema_version") not in {1, 2}:
+            if not isinstance(context, dict) or context.get("schema_version") not in {1, 2, 3}:
                 raise RuntimeError("Unsupported deployment recovery context")
             previous = context.get("previous_state")
             if not isinstance(previous, dict):
@@ -959,13 +995,15 @@ def _recover_deployment() -> dict:
     registered = _checked_registered_deployment(actual_version)
     _require_live_deployment(actual, actual_version, registered)
     expected_identity = None
-    if context is not None and context["schema_version"] == 2:
+    if context is not None and context["schema_version"] in {2, 3}:
         key = "candidate_identity" if actual_version == str(row["to_version"]) else "previous_identity"
         expected_identity = context.get(key)
         if not isinstance(expected_identity, dict) or _live_identity(actual) != expected_identity:
             raise RuntimeError("Proxy identity differs from the prepared deployment")
     if actual_version == str(row["from_version"]) and previous is None and str(state["active_version"]) != actual_version:
         raise RuntimeError("Previous approval metadata unavailable; cannot restore state safely")
+    if context is not None and context["schema_version"] == 3 and actual_version == str(row["to_version"]):
+        _require_operation(actual, operation_identity(row, registered.tags["artifact_sha256"]))
     slot = expected_slots[actual_version]
     _write_atomic(RUNTIME_DIR / "Caddyfile", f":8080 {{\n  reverse_proxy api-{slot}:8000\n}}\n")
     _compose("exec", "-T", "caddy", "caddy", "validate", "--config", "/runtime/Caddyfile", "--adapter", "caddyfile")
@@ -974,9 +1012,13 @@ def _recover_deployment() -> dict:
     _require_live_deployment(actual, actual_version, registered)
     if expected_identity is not None and _live_identity(actual) != expected_identity:
         raise RuntimeError("Proxy identity changed from the prepared deployment during recovery")
+    if context is not None and context["schema_version"] == 3 and actual_version == str(row["to_version"]):
+        _require_operation(actual, operation_identity(row, registered.tags["artifact_sha256"]))
     _require_ready_deployment(_proxy_url(), actual_version, registered)
     if actual_version == str(row["to_version"]):
         state = _candidate_runtime_state(previous or state, row, registered.tags["quality_gate"])
+        if context is not None and context["schema_version"] == 3:
+            state["deployment_operation"] = operation_identity(row, registered.tags["artifact_sha256"])
         _write_atomic(state_path, json.dumps(state, indent=2) + "\n")
         _deployment_row(database, row["deployment_id"], "completed_after_restart", "completed")
         resolution = "proxy is on candidate; deployment journal and runtime state finalized"
@@ -990,9 +1032,8 @@ def _recover_deployment() -> dict:
 
 
 def command_deploy_recover(args) -> None:
-    with _deployment_lock():
-        with deployment_stage(RUNTIME_DIR, "recover"):
-            _print(_recover_deployment())
+    with interruption_guard():
+        _print(run_operation(dict(mode="recover")))
 
 
 def command_deploy_inspect(args) -> None:

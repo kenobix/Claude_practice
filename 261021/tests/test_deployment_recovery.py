@@ -50,7 +50,7 @@ class DeploymentRecoveryTests(unittest.TestCase):
         self.http = self.stack.enter_context(patch.object(cli, "_url_json", side_effect=self.http_reply))
         self.live = self.version("3")
         self.stack.enter_context(patch.object(cli, "_seed_observations", return_value=(0, "synthetic", pd.DataFrame())))
-        self.stack.enter_context(patch.object(cli, "_wait_ready", return_value={"status": "ready"}))
+        self.stack.enter_context(patch.object(cli, "_wait_ready", side_effect=lambda *a: {"version": self.current_candidate()}))
         self.probe = self.stack.enter_context(patch.object(cli, "_deployment_probe", return_value={"model_version": "3"}))
 
     @staticmethod
@@ -64,6 +64,15 @@ class DeploymentRecoveryTests(unittest.TestCase):
         return dict(data_profile_id=PROFILE, target_contract_id=TARGET, model_name="bike-demand",
                     model_version=version, artifact_sha256=version * 64,
                     quality_gate_status="passed", feature_contract_version="bike-demand-features-v1")
+
+    def current_candidate(self):
+        rows = self.journal()
+        if rows and json.loads(rows[-1]["probe_json"] or "{}").get("recovery_context", {}).get("schema_version") == 3:
+            row = rows[-1]
+            from bike_mlops.deployment_metadata import operation_identity
+            return dict(self.version(str(row["to_version"])), deployment_operation=dict(
+                status="matched_pending", operation=operation_identity(row, str(row["to_version"])*64)))
+        return self.version("3")
 
     def http_reply(self, url, *args, **kwargs):
         return dict(self.live, status="ready") if url.endswith("/ready") else dict(self.live)
@@ -93,7 +102,7 @@ class DeploymentRecoveryTests(unittest.TestCase):
 
     def recover(self):
         with redirect_stdout(io.StringIO()) as output:
-            cli.command_deploy_recover(SimpleNamespace())
+            cli._print(cli._recover_deployment())
         return json.loads(output.getvalue())
 
     def assert_refused_unchanged(self, regex):
@@ -239,13 +248,14 @@ class DeploymentRecoveryTests(unittest.TestCase):
         with (self.runtime / "deployment.lock").open("a+") as lock:
             fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
             with self.assertRaises(BlockingIOError):
-                self.recover()
+                with cli._deployment_lock():
+                    self.recover()
             with self.assertRaises(BlockingIOError):
                 cli._promote("3", "operator", "reason", False, False)
         self.http.assert_not_called()
 
     def test_successful_promotion_records_new_approval_and_previous_snapshot(self):
-        self.http.side_effect = [self.version("2"), self.version("3")]
+        self.http.side_effect = lambda *a, **k: self.version("2") if not self.journal() else self.current_candidate()
         result = cli._promote("3", "operator-3", "promote reason", False, False)
         state = self.read_state()
         self.assertEqual((state["approver"], state["reason"]), ("operator-3", "promote reason"))
@@ -302,3 +312,18 @@ class DeploymentRecoveryTests(unittest.TestCase):
         self.assertEqual(self.journal(), [])
         self.assertFalse((self.runtime / "green.env").exists())
         self.compose.assert_not_called()
+
+    def test_timeout_after_completion_commit_does_not_rewrite_completed_history(self):
+        from bike_mlops.deployment_progress import DeploymentTimeout
+        self.http.side_effect = lambda *a, **k: self.version("2") if not self.journal() else self.current_candidate()
+        original = cli._deployment_row
+        def committed_then_lost(database, operation, phase, *a, **k):
+            result = original(database, operation, phase, *a, **k)
+            if phase == "completed":
+                raise DeploymentTimeout("response lost after commit")
+            return result
+        with patch.object(cli, "_deployment_row", side_effect=committed_then_lost):
+            with self.assertRaisesRegex(RuntimeError, "committed but response"):
+                cli._promote("3", "operator", "test", False, False)
+        self.assertEqual(self.journal()[0]["status"], "completed")
+        self.assertEqual(self.read_state()["active_version"], "3")

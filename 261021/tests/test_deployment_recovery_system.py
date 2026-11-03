@@ -51,6 +51,36 @@ class DeploymentFixtureSafetyTests(unittest.TestCase):
                 f.owned("container", "unknown")
         self.assertEqual(docker.call_args.args[0], "inspect")
 
+    def test_image_requires_exact_owned_id_not_a_cached_shared_tag(self):
+        f = fixture.Fixture(self.spec)
+        with self.assertRaisesRegex(ValueError, "image identity"):
+            f.verified_image()
+        image = "sha256:" + "d"*64
+        f = fixture.Fixture(dict(self.spec, image_id=image))
+        import json
+        for labels, expected in (({}, False), ({fixture.LABEL:self.token}, True)):
+            with self.subTest(labels=labels), patch.object(fixture, "docker", return_value=json.dumps([
+                    {"Id":image,"Config":{"Labels":labels}}])):
+                if expected: self.assertEqual(f.verified_image(), image)
+                else:
+                    with self.assertRaisesRegex(RuntimeError, "unowned"):
+                        f.verified_image()
+
+    def test_build_timeout_does_not_claim_cleanup_even_when_inventory_is_empty(self):
+        import json, subprocess
+        evidence = Path(self.temp.name) / "evidence"
+        def docker(*args, **kwargs):
+            if args[0] == "build":
+                raise subprocess.TimeoutExpired(["docker","build"], 600)
+            return ""
+        with patch("scripts.capital_system_harness.check_local_daemon"), \
+             patch("scripts.capital_system_harness.copy_workspace"), patch.object(fixture,"docker",side_effect=docker):
+            with self.assertRaisesRegex(RuntimeError, "cleanup"):
+                fixture.main(evidence)
+        summary=json.loads((evidence/"summary.json").read_text())
+        self.assertTrue(summary["daemon_outcome_unconfirmed"])
+        self.assertFalse(summary["cleanup_complete"])
+
 
 if __name__ == "__main__":
     unittest.main()

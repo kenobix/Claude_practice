@@ -190,3 +190,13 @@ MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python scripts/test_monitor_inspection_pos
 CIにT06b専用stepを追加し、`monitor-inspection-postgres-ci.log`を既存artifactへ保存する。実行済みの件数・終了値・cleanup・source/log SHA・post-push CIは[検証記録](reviews/20261030-t06b-checks.json)と[作業ログ](../work_log.md)へ記録する。ネットワーク上の実接続timeout満了は未注入で、接続5秒の指定はunitで検査し、実接続失敗・切断と実statement/lock timeoutはPG受入で確認する。
 
 T06b実装commit `164ac53`の[CI 41068758500](https://github.com/kenobix/Claude_practice/actions/runs/41068758500)は全337 tests（39.970秒）、T06b専用PG25 tests（14.461秒）、既存system/PG試験とcleanupまで成功した。artifact ZIPのSHA-256と4 memberの内容・hashも検算済み。2026-11-01に観測し、[検証記録](reviews/20261030-t06b-checks.json)へ追記した。
+
+## SQLite S13の実OS補足（2026-11-03）
+
+`test_monitor_inspection_sqlite_os.py --run-disposable`は、既存の合成fixtureが作った一時SQLite/CSV/JSON/markerだけを使う。非root実行でDB fileをchmod 000にした読取拒否と、DELETE journal modeの`BEGIN EXCLUSIVE`で実際の5秒busy timeoutを確認する。writer/schemaを変更せず、検査後に権限とlockを必ず戻す。DB bytes/全論理行/3 fileの不変と、権限・lock解除後のmatchedを要求する。
+
+```bash
+MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python scripts/test_monitor_inspection_sqlite_os.py --run-disposable
+```
+
+今回の実測待機は約5.025秒で、失敗結果はいずれも`database_unavailable`/終了区分2だった。全filesystem/ネットワークmountの挙動や実Capital monitorの受入を代表するものではない。rootでは権限拒否の証明にならないので明示的に停止する。原本/hashは[2026-11-03索引](reviews/20261103-t17b-t07a-checks.json)を参照。

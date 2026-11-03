@@ -3006,3 +3006,38 @@ source-HEAD-v1では公式S3へHEADだけを送り、202609=200/25848624bytes、
 T17bは通常CLIのstage/経過/診断log・Docker timeout未確定・旧state読取診断までの部分完了。API操作metadataとregistry/artifact全体deadline、T07a現image/TERM cleanup付き復旧CI、時計資格、T09〜実candidate/producer/採否は残る。具体的な受入条件と禁止境界を[Sol引継ぎ](docs/t17b-sol-handoff.md)へ分け、可能な限り多くの独立taskを進められるようにした。OS/時計・実DB/registry/現配信・future拒否・schema/writerは変更していない。
 
 record-validation-v1はexit0でCI原本38hash・相対link152件・source/workflow/tests/lockが実装2414b20から不変・一時URL回収を確認。validator自身のscript/log/metaを含めた最終CI索引は41原本・8構造化試行になった。最終stageでは再度全descriptorと8対象pathのstaged/worktree一致を確認し、記録単位だけをcommit/pushする。
+
+## 2026-11-03 基点0472111からのT17b・T07a・SQLite S13補足
+
+指定のhandoff/計画§11.6/直近T07b CI索引を読取。HEADは0472111で、既存無関係の未追跡3pathを保持した。今回の全構造化試行はignored `data/reports/20261103-t17b/`へ分離し、command/UTC開始終了/MONOTONIC/終了値/log SHAをrun_attempt.pyで保存した。[今回索引](docs/reviews/20261103-t17b-t07a-checks.json)が原本hashと失敗をまとめる。
+
+T17bは、prepared時のschema3 contextに固定した操作ID/profile/target/slot/version/artifact/申告者/理由をAPI起動環境へ結び付けた。DB profile確認前にdeployment行をSELECTせず、read-only snapshotで指定1行だけを照合する。APIのpending/completed表示、stateの同一binding、recoverでの再照合、legacy/bootstrapの照合不能を区別する。新規API書込/schema/writerは追加しない。申告者は認証済みidentityではなく、approval_evidence=falseを維持する。
+
+通常CLIのpromote/recoverを専用process groupとMONOTONIC全体deadline900/300秒で囲み、最小の明示環境・stdin JSON・有限JSON結果だけを使う。registry/artifact/hash/deserialize/probe/proxy/state/台帳まで含め、段階残時間を表示する。TERM/INT時はprepared後の未確定を残し、5秒TERM後のKILL、leader/子孫の停止確認を行う。開始identity/PGIDを確認して自分のgroupだけを操作し、親KILL時もLinuxのprocess-local PDEATHSIGで通知する。OS時計設定は変更しない。native stderr/credentialを転送せず、診断JSONだけを通す。completed commit後の応答喪失は履歴を書き戻さない。HTTP/daemonの遅延完了を取消済みと呼ばず、固定probe IDとinspect/recoverへ結ぶ。
+
+| 試行（261021をcwdとし、各metaの正確なargvを参照） | 結果・修正 |
+|---|---|
+| metadata-v1 / deployment対象discover | 基本の操作照合と既存回帰が成功 |
+| process-v1/v2 | 子process境界と基本中断の対象試験が成功 |
+| process-v3 | sandboxのTestClient起動待ちで進まず、今回開始したPIDのcmdline/cwdを照合してTERM停止。終了-15を保存。過去のsandbox同症状の根本原因を解決したとは扱わない |
+| process-v4 | 権限付き90秒faulthandler診断で63件中1 failure。leader終了後の子孫停止をまだ待たない問題を再現。KILL後に所有groupの非zombie子孫停止まで上限付きで確認するよう修正 |
+| process-v5 | 上記修正後、phase試験の3秒予算に重いimportが入って対象段階へ達せず3 errors。製品deadlineを延長せず、phase到達時にTERMを送る固定注入へ分離。親deadlineによる停止は別の実child/HTTP負例で検証 |
+| process-v6 | 対象9件成功。registry前は配信行なし、prepared後のartifact/proxy/state中断は未確定、state更新後の中断も保持 |
+| full-unit-v1 | 全437件213.026 unittest秒成功。以降に追加した負例はtarget-final等で確認し、最終commit全体はCIで確認する |
+| target-final-v1/v2 | 68件/69件成功。実loopback遅延応答がclient timeout後に完了しても自動再送しない、親KILL通知、cleanup未確認、UTC逆行と独立な予算、APIのpending→completed/不一致拒否等を確認 |
+| process-entry-final | 通常sandboxでloopback bind拒否の失敗を保存。新しいworker入口のdispatch/有限JSON/秘密native出力抑制を含む対象全体は、権限付きtarget-final-v3で確認する |
+| recovery-system-sandbox | Docker socket permission denied。許可された隔離試験だけを権限付きで実行 |
+| recovery-system-v1 | 現Dockerfileの固有image/実PG/API/Caddyを起動。3停止点の最後に達する前、正常API起動にも適用していたfixture専用5秒が尽きConnection reset。status failedだが全container/network/volume/image回収・保護ID不変を確認 |
+| recovery-system-v2 | 正常起動は製品の90秒を使用、5秒は意図的に永続503となる破損artifactだけへ限定。3地点SIGKILL(-9)→recover、metadata、並行同ID/409、監査503、API停止、failed gate、5table/モデル資料の別volume復元が成功。全resource/image回収・保護container ID不変 |
+| recovery-term-v1 | 現image/実PG/API/Caddy起動後の自己TERMで意図した非0。summary failed/SIGTERM、cleanup成功/全4種類残存0/保護ID不変。通常成功として数えない |
+| sqlite-os-v1/final | 非rootの実chmod000拒否とDELETE journal modeの実EXCLUSIVE lock待ちを確認。約5.02秒でdatabase_unavailable/区分2。DB bytes/全論理行/CSV/JSON/marker不変、権限・lock解除後matched。使い捨てDBだけで実行 |
+| source-head-v1 | 2026-11-03公式S3 HEADで202609=200/25,848,624bytes、202610=404。download/fit/評価期間変更をしない |
+| validation-v1/v2/final-checks-v1 | YAML parse、全16 run block bash -n、artifact allowlist16 member、pipefail 23/124伝播、AST/compileall/diff成功。db.py/決定のfuture拒否/証拠schema/lockが基点から不変 |
+
+T07aは既存cached stack imageを使う方式から、allowlist workspaceで現Dockerfileを固有tag/label付きbuildしIDを全APIへ引き継ぐ方式へ変更。imageも所有確認後に回収する。正常切替・3中断recoverでAPI/state/同じ台帳行のmetadataを確認し、置換前container logも新規fileへ残す。復元APIの元要求再送はlegacy起動であり、過去の配信承認を遡及証明しない。CIにはnormal/TERM run、明示的log1本とsummary2本だけを追加し、raw dump/model/環境fileは公開しない。
+
+静的review中に一括置換がruntime initへ不要なbinding変数を挿入していたことを発見し、実行前に除去した。誤った存在しないsource候補の探索（deploy.py/settings.py等）、既存log探索の過大な出力もtool transcript上の失敗・制約として保持し、成功検証へ混ぜない。Docker buildのnative出力は従来同様に抑制されるため、秘密を含まないcommand/source hashと終了値、resource summaryが診断の境界である。
+
+CI実装commitのartifact/hash/normal+TERM cleanup確認はこの時点では未実施で、T07a/T17bをCI完了にしない。ローカルsystem実行中にも独立sourceを補強したため、local成功を最終commit全体の同一source証明とは呼ばず、最終対象試験と実装CIを照合する。T03歴史的停止の原因・UTC補正の内部理由・時計資格、T02実producer、T09以降の実Capital採否は未完了。合成数値を実候補採否・本番SLOへ使わない。
+
+最終追記: target-final-v3は70件18.803秒成功。操作照合をprobe送信前へ移した後のrecovery-finalも成功。daemon build clientのtimeoutを空inventoryだけでcleanup成功にしない負例を追加し、最初はharnessのmodule import経路で失敗した。script直実行/module importを分岐し、harness-timeout-v2の7件が成功した。最終compile/差分と同commit CIへ進む。これらは製品deadline/future拒否を緩める修正ではない。

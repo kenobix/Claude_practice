@@ -130,6 +130,38 @@ jobs:
           timeout --signal=TERM --kill-after=10 180 python scripts/test_capital_decision_http.py \
             --run-disposable --evidence-dir data/reports/t13-http-ci 2>&1 \
             | tee data/reports/capital-decision-http-ci.log
+      - name: Run disposable Caddy deployment recovery and TERM cleanup
+        if: >-
+          ${{ !cancelled() && steps.install-lock.outcome == 'success' &&
+          steps.install-project.outcome == 'success' && steps.pip-check.outcome == 'success' }}
+        env:
+          MLFLOW_DISABLE_AGENT_HINT: "1"
+        run: |
+          set -o pipefail
+          mkdir -p data/reports
+          timeout --signal=TERM --kill-after=30 900 python scripts/test_deployment_recovery_system.py \
+            --run-disposable --evidence-dir data/reports/t07a-ci 2>&1 \
+            | tee data/reports/deployment-recovery-ci.log
+          set +e
+          timeout --signal=TERM --kill-after=30 900 python scripts/test_deployment_recovery_system.py \
+            --run-disposable --term-after-startup --evidence-dir data/reports/t07a-term-ci 2>&1 \
+            | tee -a data/reports/deployment-recovery-ci.log
+          result=$?
+          set -e
+          test "$result" -ne 0
+          test "$result" -ne 124
+          test "$result" -ne 137
+          python - <<'PYCODE'
+          import json
+          from pathlib import Path
+          normal = json.loads(Path('data/reports/t07a-ci/summary.json').read_text())
+          term = json.loads(Path('data/reports/t07a-term-ci/summary.json').read_text())
+          assert normal['status'] == 'passed'
+          assert term['status'] == 'failed' and term['interrupted_signal'] == 'SIGTERM'
+          for item in (normal, term):
+              assert item['current_Dockerfile_build'] and item['cleanup_complete']
+              assert item['protected_container_ids_unchanged'] and not any(item['resources_remaining'].values())
+          PYCODE
       - name: Upload synthetic system test log
         if: always()
         uses: actions/upload-artifact@v4
@@ -149,5 +181,8 @@ jobs:
             261021/data/reports/t16-ci/synthetic-measurement-evidence.zip
             261021/data/reports/t16-ci/archive-sha256.json
             261021/data/reports/t16-ci/recalculation.json
+            261021/data/reports/deployment-recovery-ci.log
+            261021/data/reports/t07a-ci/summary.json
+            261021/data/reports/t07a-term-ci/summary.json
           if-no-files-found: ignore
           retention-days: 14

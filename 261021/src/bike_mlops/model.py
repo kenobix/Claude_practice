@@ -1,13 +1,21 @@
 from __future__ import annotations
 
+from contextlib import nullcontext
 import hashlib
 import os
 from pathlib import Path
 
 import numpy as np
 
-from bike_mlops.config import DATA_PROFILE_ID, DEFAULT_MLFLOW_URI, TARGET_CONTRACT_ID
+from bike_mlops.config import DATA_PROFILE_ID, DEFAULT_MLFLOW_URI, TARGET_CONTRACT_ID, RUNTIME_DIR
 from bike_mlops.deployment_gates import require_deployment_eligible
+
+
+def _load_stage(stage):
+    if not os.getenv("BIKE_DEPLOYMENT_DEADLINE_NS"):
+        return nullcontext()
+    from bike_mlops.deployment_progress import deployment_stage
+    return deployment_stage(RUNTIME_DIR, stage)
 
 
 def directory_sha256(path: Path) -> str:
@@ -31,9 +39,8 @@ def load_registered_model(model_name: str, model_version: str | int, tracking_ur
     mlflow.set_tracking_uri(resolved_uri)
     client = (MlflowClient(tracking_uri=resolved_uri, registry_uri=resolved_uri)
               if DATA_PROFILE_ID == "capital-bikeshare" else MlflowClient(tracking_uri=resolved_uri))
-    registered_version = client.get_model_version(
-        model_name, str(int(model_version))
-    )
+    with _load_stage("model_registry"):
+        registered_version = client.get_model_version(model_name, str(int(model_version)))
     registered_profile = registered_version.tags.get("data_profile_id")
     registered_target = registered_version.tags.get("target_contract_id")
     if DATA_PROFILE_ID != "uci-bike-sharing" and (
@@ -67,16 +74,19 @@ def load_registered_model(model_name: str, model_version: str | int, tracking_ur
     uri = f"models:/{model_name}/{int(model_version)}"
     artifact_options = ({"tracking_uri": resolved_uri, "registry_uri": resolved_uri}
                         if DATA_PROFILE_ID == "capital-bikeshare" else {})
-    local_path = Path(mlflow.artifacts.download_artifacts(artifact_uri=uri, **artifact_options))
+    with _load_stage("artifact_download"):
+        local_path = Path(mlflow.artifacts.download_artifacts(artifact_uri=uri, **artifact_options))
     if not (local_path / "MLmodel").is_file():
         raise ValueError(f"Registered model version {model_version} artifact is missing its MLmodel file")
-    actual_hash = directory_sha256(local_path)
+    with _load_stage("artifact_hash"):
+        actual_hash = directory_sha256(local_path)
     if actual_hash != expected_hash:
         raise ValueError(
             f"Model artifact hash mismatch for version {model_version}: expected {expected_hash}, got {actual_hash}"
         )
     # Verify the artifact before skops deserializes any estimator objects.
-    model = mlflow.sklearn.load_model(str(local_path))
+    with _load_stage("deserialize"):
+        model = mlflow.sklearn.load_model(str(local_path))
     return model, actual_hash, quality_gate
 
 

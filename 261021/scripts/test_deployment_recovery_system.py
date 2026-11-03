@@ -2,7 +2,7 @@
 
 Model and registry are explicit doubles. Only UUID-labelled disposable resources,
 random loopback ports and an allowlisted workspace copy are used. No real registry.
-Requires cached postgres:17.6-bookworm, caddy:2.10.2-alpine and bike-mlops-api-blue.
+Builds a uniquely tagged current Dockerfile image; PostgreSQL/Caddy are disposable.
 """
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LABEL = "bike.deployment.test"
 PROFILE, TARGET = "uci-bike-sharing", "uci-bike-sharing-cnt-dataset-local-hour"
 MODEL = "bike-demand-synthetic-recovery"
-IMAGES = ("postgres:17.6-bookworm", "caddy:2.10.2-alpine", "bike-mlops-api-blue")
+IMAGES = ("postgres:17.6-bookworm", "caddy:2.10.2-alpine")
 HTTP_LOG = None
 HTTP_LOCK = threading.Lock()
 
@@ -128,6 +128,15 @@ class Fixture:
         if labels.get(LABEL) != self.spec["token"]:
             raise RuntimeError("Refusing operation on a resource outside this fixture")
 
+    def verified_image(self):
+        image = self.spec.get("image_id", "")
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", image):
+            raise ValueError("Missing disposable image identity")
+        data = json.loads(docker("image", "inspect", image))[0]
+        if data["Id"] != image or data["Config"].get("Labels", {}).get(LABEL) != self.spec["token"]:
+            raise RuntimeError("Refusing unowned fixture image")
+        return image
+
     def api(self, slot, version):
         endpoint = urlsplit(self.spec["internal_database_url"])
         if (endpoint.scheme != "postgresql" or endpoint.hostname not in {
@@ -141,6 +150,9 @@ class Fixture:
         name = self.spec["prefix"] + "-api-" + slot
         if docker("ps", "-a", "-q", "--filter", "name=^/" + name + "$"):
             self.owned("container", name)
+            if self.spec.get("evidence_dir"):
+                previous = subprocess.run(["docker", "logs", name], capture_output=True, timeout=15)
+                Path(self.spec["evidence_dir"], slot + "-replaced-" + str(time.monotonic_ns()) + ".log").write_bytes(previous.stdout + previous.stderr)
             docker("rm", "-f", "-v", name)
         env = os.environ.copy()
         env["DATABASE_URL"] = self.spec["internal_database_url"]
@@ -150,7 +162,9 @@ class Fixture:
                "--publish", f"127.0.0.1:{port}:8000", "--mount", f"type=bind,src={self.root},dst=/workspace,readonly",
                "-e", "DATABASE_URL", "-e", "PYTHONPATH=/workspace/src:/workspace", "-e", "DATA_PROFILE_ID=" + PROFILE,
                "-e", "MLFLOW_MODEL_NAME=" + MODEL, "-e", "MODEL_VERSION=" + version,
-               IMAGES[2], "uvicorn", "fixture_api:app", "--host", "0.0.0.0", "--port", "8000", env=env)
+               "-e", "DEPLOYMENT_ID=" + self.spec.get("operation_ids", {}).get(slot, ""),
+               "-e", "DEPLOYMENT_SLOT=" + slot,
+               self.verified_image(), "uvicorn", "fixture_api:app", "--host", "0.0.0.0", "--port", "8000", env=env)
         bound = docker("port", name, "8000/tcp")
         if not bound.startswith("127.0.0.1:") or "\n" in bound:
             raise RuntimeError("API did not bind only to loopback")
@@ -159,7 +173,9 @@ class Fixture:
     def compose(self, *args, **kwargs):
         if len(args) == 5 and args[:4] == ("up", "-d", "--build", "--no-deps") and args[-1] in {"api-blue", "api-green"}:
             slot = args[-1].split("-", 1)[1]
-            self.api(slot, (self.runtime / (slot + ".env")).read_text().strip().split("=", 1)[1])
+            values = dict(line.split("=", 1) for line in (self.runtime / (slot + ".env")).read_text().splitlines())
+            self.spec.setdefault("operation_ids", {})[slot] = values.get("DEPLOYMENT_ID", "")
+            self.api(slot, values["MODEL_VERSION"])
         elif args[:4] == ("exec", "-T", "caddy", "caddy"):
             name = self.spec["prefix"] + "-caddy"
             self.owned("container", name)
@@ -213,8 +229,6 @@ class Fixture:
             return result
         stack.enter_context(patch.object(cli, "_url_json", side_effect=observed_url))
         stack.enter_context(patch("bike_mlops.model.load_registered_model", side_effect=lambda name, version: read_model(self.root, str(version))))
-        original_wait = cli._wait_ready
-        stack.enter_context(patch.object(cli, "_wait_ready", side_effect=lambda url, version, gate: original_wait(url, version, gate, timeout_seconds=5)))
         return stack, cli, db
 
 
@@ -239,12 +253,14 @@ def worker(path, stage):
     raise AssertionError("Worker did not reach the intended SIGKILL checkpoint")
 
 
-def main(evidence):
+def main(evidence, term_after_startup=False):
     global HTTP_LOG
-    from capital_system_harness import check_local_daemon, copy_workspace
+    if __package__:
+        from .capital_system_harness import check_local_daemon, copy_workspace
+    else:
+        from capital_system_harness import check_local_daemon, copy_workspace
     import pandas as pd
     import psycopg
-    import tzdata
     from bike_mlops.db import Database
     check_local_daemon()
     for image in IMAGES:
@@ -257,6 +273,15 @@ def main(evidence):
     summary = dict(synthetic_only=True, model_registry_boundary="constant JSON model/registry doubles",
                    real_API_PostgreSQL_Caddy=True, real_Capital_evidence=False, cleanup_complete=False)
     containers, volumes, volume, network = [], [], prefix + "-pg-data", False
+    image_tag = prefix + ":current"
+    image_id = None
+    build_started = build_finished = False
+    old_handlers = {sig: signal.getsignal(sig) for sig in (signal.SIGTERM, signal.SIGINT)}
+    def interrupted(sig, frame):
+        summary["interrupted_signal"] = signal.Signals(sig).name
+        raise KeyboardInterrupt("Disposable deployment harness interrupted")
+    for sig in old_handlers:
+        signal.signal(sig, interrupted)
     fixture = None
     try:
         with tempfile.TemporaryDirectory(prefix=prefix) as directory:
@@ -264,15 +289,14 @@ def main(evidence):
             (root / ".fixture-token").write_text(token)
             fixture = Fixture(dict(workspace=str(root), prefix=prefix, token=token, ports={}))
             copy_workspace(ROOT, root)
-            # The installed UCI image predates the project's tzdata addition.
-            # Supply this pure data/Python package from the locked host env only
-            # in the disposable copy; no image/venv/network install is performed.
-            if f"tzdata=={tzdata.__version__}" not in (ROOT / "requirements.lock").read_text().splitlines():
-                raise RuntimeError("Host tzdata does not match the project lock")
-            shutil.copytree(Path(tzdata.__file__).resolve().parent, root / "tzdata",
-                            ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-            summary["fixture_tzdata_version"] = tzdata.__version__
-            summary["cached_image_is_not_a_current_Dockerfile_build_test"] = True
+            build_started = True
+            docker("build", "--label", f"{LABEL}={token}", "-t", image_tag, str(root), timeout=600)
+            image_id = docker("image", "inspect", image_tag, "--format", "{{.Id}}")
+            fixture.spec["image_id"] = image_id
+            fixture.verified_image()
+            build_finished = True
+            summary.update(current_Dockerfile_build=True, image_id=image_id,
+                           Dockerfile_sha256=digest(root / "Dockerfile"))
             shutil.copyfile(Path(__file__), root / "fixture_models.py")
             (root / "fixture_api.py").write_text("import os\nfrom pathlib import Path\nfrom bike_mlops import api\nfrom fixture_models import read_model\ndef runtime():\n v=os.environ['MODEL_VERSION']\n try:\n  model,h,gate=read_model(Path('/workspace'),v)\n  return model,v,h,gate,None\n except Exception as e:return None,v,None,None,str(e)\napi._runtime_model=runtime\napp=api.app\n")
             runtime, raw, artifacts = root / "data/runtime", root / "data/raw", root / "artifacts"
@@ -322,7 +346,7 @@ def main(evidence):
             for slot in ("blue", "green"):
                 (runtime / (slot + ".env")).write_text("MODEL_VERSION=2\n")
             (runtime / "Caddyfile").write_text(":8080 {\n reverse_proxy api-blue:8000\n}\n")
-            spec = dict(workspace=str(root), prefix=prefix, token=token, database_url=url,
+            spec = dict(workspace=str(root), prefix=prefix, token=token, image_id=image_id, database_url=url,
                         internal_database_url=f"postgresql://postgres:{password}@{pg}:5432/postgres", ports={},
                         evidence_dir=str(evidence), http_log=str(evidence / "cli-http.jsonl"))
             fixture = Fixture(spec)
@@ -341,6 +365,9 @@ def main(evidence):
             spec["ports"]["caddy"] = int(bound.rsplit(":", 1)[1])
             proxy = f"http://127.0.0.1:{spec['ports']['caddy']}"
             wait(proxy + "/ready")
+            if term_after_startup:
+                os.kill(os.getpid(), signal.SIGTERM)
+                raise AssertionError("TERM was ignored")
             spec_path = root / "worker-spec.json"
             spec_path.write_text(json.dumps(spec))
             stack, cli, db = fixture.patches()
@@ -353,7 +380,15 @@ def main(evidence):
             def confirm(v):
                 assert wait(proxy + "/ready")["model_version"] == v
                 assert http(proxy + "/version")[1]["artifact_sha256"] == specs[v]["sha256"]
-                assert state_now()["active_version"] == v
+                state = state_now()
+                assert state["active_version"] == v
+                if "deployment_operation" in state:
+                    identity = http(proxy + "/version")[1]["deployment_operation"]
+                    row = next(x for x in rows("deployments") if x["deployment_id"] == state["last_deployment_id"])
+                    from bike_mlops.deployment_metadata import operation_identity
+                    assert identity["status"] == "matched_completed"
+                    assert identity["operation"] == state["deployment_operation"] == operation_identity(row, specs[v]["sha256"])
+                    assert not identity["approval_evidence"]
             with stack:
                 cli._seed_observations(db, raw / "hour.csv")
                 body = dict(request_id="synthetic-concurrent-0001", target_hour="2012-01-09T00:00:00", as_of="2012-01-09T00:00:00", feature_contract_version="bike-demand-features-v1")
@@ -386,7 +421,11 @@ def main(evidence):
                 artifact.write_text('{"constant":999}')
                 try:
                     try:
-                        cli._promote("3", "synthetic-operator", "corrupt artifact", False, False)
+                        original_wait = cli._wait_ready
+                        # This case deliberately never becomes ready; use a short
+                        # refusal fixture only here, not for normal API startup.
+                        with patch.object(cli, "_wait_ready", side_effect=lambda url, version, gate: original_wait(url, version, gate, timeout_seconds=5)):
+                            cli._promote("3", "synthetic-operator", "corrupt artifact", False, False)
                     except TimeoutError:
                         pass
                     else:
@@ -407,7 +446,7 @@ def main(evidence):
                     pending = [x for x in rows("deployments") if x["status"] == "in_progress"]
                     assert len(pending) == 1
                     operation = pending[0]["deployment_id"]
-                    cli.command_deploy_recover(SimpleNamespace())
+                    cli._recover_deployment()
                     expected = "2" if stage == "candidate_ready" else "3"
                     confirm(expected)
                     resolved = next(x for x in rows("deployments") if x["deployment_id"] == operation)
@@ -491,7 +530,7 @@ def main(evidence):
                 restore_root = root / "restored-workspace"
                 restore_root.mkdir()
                 (restore_root / ".fixture-token").write_text(token)
-                for folder in ("src", "configs", "tzdata"):
+                for folder in ("src", "configs"):
                     shutil.copytree(root / folder, restore_root / folder)
                 for filename in ("fixture_api.py", "fixture_models.py"):
                     shutil.copyfile(root / filename, restore_root / filename)
@@ -504,6 +543,7 @@ def main(evidence):
                 restore_spec = dict(spec, workspace=str(restore_root),
                                     internal_database_url=f"postgresql://postgres:{password}@{restore_name}:5432/postgres")
                 containers.append(prefix + "-api-restored")
+                restore_spec["operation_ids"] = {}
                 restore_port = Fixture(restore_spec).api("restored", "3")
                 restore_api = f"http://127.0.0.1:{restore_port}"
                 wait(restore_api + "/ready")
@@ -515,8 +555,12 @@ def main(evidence):
                 summary["status"] = "passed"
     except BaseException as error:
         summary.update(status="failed", error_type=type(error).__name__)
+        if (build_started and not build_finished) or isinstance(error, subprocess.TimeoutExpired):
+            summary["daemon_outcome_unconfirmed"] = True
         raise
     finally:
+        for sig in old_handlers:
+            signal.signal(sig, signal.SIG_IGN)
         errors = []
         for name in reversed(containers):
             try:
@@ -539,12 +583,24 @@ def main(evidence):
                 docker("network", "rm", prefix)
             except BaseException as error:
                 errors.append(type(error).__name__ + ":network")
+        if image_id is None:
+            image_id = docker("images", "-q", "--no-trunc", "--filter", f"label={LABEL}={token}") or None
+        if image_id:
+            try:
+                fixture.spec["image_id"] = image_id
+                fixture.verified_image()
+                docker("image", "rm", image_tag)
+            except BaseException as error:
+                errors.append(type(error).__name__ + ":image")
         remaining = {kind: docker(*args, "--filter", f"label={LABEL}={token}") for kind, args in (
             ("containers", ("ps", "-a", "-q")), ("volumes", ("volume", "ls", "-q")), ("networks", ("network", "ls", "-q")))}
+        remaining["images"] = docker("images", "-q", "--filter", f"label={LABEL}={token}")
         summary.update(cleanup_errors=errors, resources_remaining=remaining, protected_container_ids_unchanged=before == protected(),
-                       cleanup_complete=not errors and not any(remaining.values()))
+                       cleanup_complete=not errors and not any(remaining.values()) and not summary.get("daemon_outcome_unconfirmed", False))
         (evidence / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
         print(json.dumps(summary), flush=True)
+        for sig, handler in old_handlers.items():
+            signal.signal(sig, handler)
         if not summary["cleanup_complete"] or not summary["protected_container_ids_unchanged"]:
             raise RuntimeError("Disposable cleanup or protected-container comparison failed")
 
@@ -556,10 +612,11 @@ if __name__ == "__main__":
     mode.add_argument("--worker", type=Path)
     parser.add_argument("--stop-at", choices=("candidate_ready", "proxy_switched", "before_completed"))
     parser.add_argument("--evidence-dir", type=Path)
+    parser.add_argument("--term-after-startup", action="store_true")
     args = parser.parse_args()
     if args.worker:
         worker(args.worker, args.stop_at)
     elif args.evidence_dir:
-        main(args.evidence_dir.resolve())
+        main(args.evidence_dir.resolve(), args.term_after_startup)
     else:
         parser.error("--evidence-dir is required")

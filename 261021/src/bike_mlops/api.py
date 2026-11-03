@@ -22,6 +22,7 @@ from bike_mlops.config import (
     TARGET_CONTRACT_ID,
 )
 from bike_mlops.db import Database, RequestConflict, canonical_time, stable_hash
+from bike_mlops.deployment_metadata import inspect_api_operation
 from bike_mlops.features import FEATURE_COLUMNS, build_feature_row
 from bike_mlops.model import load_registered_model, predict_non_negative
 from bike_mlops.timezones import load_pinned_timezone, timezone_data_identity
@@ -108,6 +109,8 @@ async def lifespan(app: FastAPI):
     database.initialize()
     model, version, artifact_hash, quality_gate, model_error = _runtime_model()
     app.state.database = database
+    app.state.deployment_binding = (os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL),
+                                    os.getenv("DEPLOYMENT_ID"), os.getenv("DEPLOYMENT_SLOT"))
     app.state.model = model
     app.state.model_version = version
     app.state.artifact_hash = artifact_hash
@@ -135,6 +138,14 @@ def health():
     return {"status": "alive"}
 
 
+def _deployment_operation(request):
+    url, operation_id, slot = getattr(request.app.state, "deployment_binding", (DEFAULT_DATABASE_URL, None, None))
+    return inspect_api_operation(
+        url, operation_id, slot, DATA_PROFILE_ID, TARGET_CONTRACT_ID, MODEL_NAME,
+        getattr(request.app.state, "model_version", None), getattr(request.app.state, "artifact_hash", None),
+    )
+
+
 @api_router.get("/ready")
 def ready(request: Request):
     if not hasattr(request.app.state, "database"):
@@ -146,7 +157,11 @@ def ready(request: Request):
             request.app.state.database.execute(connection, "SELECT 1").fetchone()
     except Exception as error:
         raise HTTPException(status_code=503, detail=f"Database is unavailable: {error}") from error
+    operation = _deployment_operation(request)
+    if operation["status"] not in {"legacy_unverifiable", "matched_pending", "matched_completed"}:
+        raise HTTPException(status_code=503, detail={"deployment_operation": operation})
     return {
+        "deployment_operation": operation,
         "status": "ready",
         "data_profile_id": DATA_PROFILE_ID,
         "target_contract_id": TARGET_CONTRACT_ID,
@@ -166,6 +181,7 @@ def ready(request: Request):
 @api_router.get("/version")
 def version(request: Request):
     return {
+        "deployment_operation": _deployment_operation(request),
         "application_version": __version__,
         "data_profile_id": DATA_PROFILE_ID,
         "data_profile_status": DATA_PROFILE["status"],

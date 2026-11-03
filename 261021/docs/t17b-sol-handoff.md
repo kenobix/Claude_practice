@@ -50,3 +50,7 @@ schema/writer・承認の信頼境界を変更する必要があれば、Solが�
 独立して進められる実装・負例・文書整備を可能な限り多く行い、全試行・失敗・コマンド・結果・hash・限界を保存する。
 確認済みの節目ごとに対象pathだけcommit/pushし、CIを接続した場合は同じ実装commitのartifactとcleanupまで確認する。
 最後に完了項目・残件・次のSol/Lunaへの依頼文を提示する。
+
+## 2026-11-03実装後の追跡
+
+本書の「未実装」は基点の状態である。今回のAPI操作binding/schema3・CLI process全体deadlineと現image/TERM cleanup付きT07a CI接続の判定は[最新索引](reviews/20261103-t17b-t07a-checks.json)、残件の正規状態は計画§11.6の2026-11-03追記を参照する。CI artifactを確認するまで受入完了へ昇格しない。T02の実producer、時計資格、T09以降の実候補評価は別条件である。

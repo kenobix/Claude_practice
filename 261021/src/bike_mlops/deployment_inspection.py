@@ -23,6 +23,15 @@ def compare_state(state, row, pending, profile, target):
     expected = dict(active_version=str(row["to_version"]), active_slot=row["to_slot"],
                     approver=row["approver"], reason=row["reason"], last_deployment_id=row["deployment_id"])
     differences = [key for key, value in expected.items() if state.get(key) != value]
+    if state.get("deployment_operation") is not None:
+        try:
+            import json
+            prepared = json.loads(row["probe_json"] or "{}")["recovery_context"]["candidate_identity"]["deployment_operation"]
+            from bike_mlops.deployment_metadata import operation_identity
+            if state["deployment_operation"] != prepared or prepared != operation_identity(row, prepared["artifact_sha256"]):
+                differences.append("deployment_operation")
+        except (KeyError, TypeError, ValueError):
+            differences.append("deployment_operation")
     if row["data_profile_id"] != profile or row["target_contract_id"] != target:
         differences.append("ledger_profile")
     if row["status"] != "completed":
