@@ -534,12 +534,16 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 #### 2026-11-03 最終CI確認後の残課題
 
+最新コードは`f45733a`の[CI41603978704](https://github.com/kenobix/Claude_practice/actions/runs/41603978704)で全464件・全隔離system/cleanup成功。
+[今回のCI索引](../261021/docs/reviews/20261103-chrony-runtime-ci-checks.json)で16member ZIP/digest・archive-only検算まで確認した。
+新readerのinode境界と17件はCI受入済み。時計の24組の数値観測はlocal診断であり、CIを時計資格の証明にしない。
+
 [最終CI索引](../261021/docs/reviews/20261103-t17b-t07a-ci-checks.json)の実装4a4474e/CI41559833990で全447件、T07aのnormal/TERM、T07b対応復元、16 artifact member/SHA・archive-only検算・全cleanupを確認した。T17b/T07aの実装・合成受入とT06a OS補足は完了。先行b5aa7c5のcold Caddy欠落CI失敗、legacy操作binding持越し、Compose設定伝播漏れの修正前失敗も保持する。T16のCPU名@誤分類は専用25件と同じ最終CIで修正を検証した。自然ec71拒否fieldは未採取で、最終CIのCPUはAMD EPYCだったことと区別する。これらを実Capital producerや時計資格の証明にしない。
 
 | 優先度 | 難易度・担当 | 残課題と次の条件 |
 |---|---|---|
 | P1 | D3・Sol | 時計：自然future拒否とtimesyncd step、配布build/debug照合、非飽和時の内部計算24組（うち16組はkernel書込/戻り値も）は確認済み。残りはPHC fd/UDP・開始時刻/親/namespaceの管理者採取、tick11000時の内部値・initd管理元、host外部UTC差/同期責任、修復案と時計資格。35/75秒区間では11000未再現で、過去の上限原因は未確定。[内部観測](../261021/docs/chrony-runtime-control.md)。T03歴史的停止も未確定。OS修復未許可、future拒否/clamp/retryで代替しない |
-| P1 | D1・Luna | T09の202610公式原本公開待ち。公開後に既存手順で取得・bytes/hash/構造を照合。HEADだけで取得完了としない |
+| P1 | D1・Luna | T09の202610公式原本公開待ち。2026-11-03 08:35UTCの再HEADも404。公開後に既存手順で取得・bytes/hash/構造を照合。HEADだけで取得完了としない |
 | P0（実fit前） | D3・Sol | T10：独立protocol/全原本snapshot/分割/recipe/基準をfit前に固定。10月bufferなしで窓を短縮しない |
 | P1 | D3・Sol | T02実producerおよびT11/T12/T13b：同一の実candidate/artifactに精度・監視・復旧・metadata・運用測定を結合し採否を記録。T09/T10/時計資格等の前提を満たす範囲で順に進める |
 | P2（上流変更時） | D2・Sol review | MLflow noloadの発生箇所/通常import/厳格警告負例と現行publisher6件は確認済み。最新3.17.2にも同指定があり、修正releaseまたはloader変更時に個別再検証。それまではlock変更/警告抑制をしない。[調査と報告下書き](../261021/docs/mlflow-orm-compatibility.md)。upload-artifact保守は前回CI受入済み |
@@ -564,5 +568,9 @@ T14として時計/CIの用語16項目も補足した。後続記録commitをこ
 2026-11-03・298c6c8以降：追加管理者ログは未採取とユーザー確認。T09の公式08:02UTC HEADも202610=404（202609=200）。
 時計は[配布debugと内部数値の照合](../261021/docs/reviews/20261103-chrony-runtime-checks.json)を追加した。
 完全debugのBuild ID/CRC、compile unit/型、稼働inodeを照合し、計算とkernel入力が一致する非飽和16組を確認した。tick11000が出るまでの延長/retryはせず未再現を保持する。
-exe dev/inode/sizeの前後比較を追加readerへ接続し、同bytesの別inode置換も拒否する専用17件が成功。実装commit CIは後続記録で確認し、local成功だけで新CI完了にしない。
+exe dev/inode/sizeの前後比較を追加readerへ接続し、同bytesの別inode置換も拒否する専用17件が成功。local索引のCI_PENDINGは当時のsnapshotとして保持し、最終受入はf45733aのCI索引を参照する。
 T03 journal9件/既存publisher6件成功。MLflow警告は[独立調査](../261021/docs/reviews/20261103-orm-compatibility-checks.json)で上流修正待ちへ整理した。
+
+次は追加管理者ログがあればPHC/UDPと現在identityを照合し、tick11000が自然再現した区間で内部数値とkernel書込を対応させる。
+新しいログ・状態変化がない間、同じ非飽和確認や未修正releaseの確認だけを繰り返して進捗扱いにしない。
+依存条件を満たす独立課題は進めるが、原本/修復許可/資格/必須producerを未取得のまま実fit・運用合格・採否へ進めない。

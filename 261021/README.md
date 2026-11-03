@@ -132,3 +132,6 @@ CIの独立保守は[artifact action更新](docs/ci-artifact-maintenance.md)を�
 
 298c6c8以降の[chronyd内部計算の観測](docs/chrony-runtime-control.md)では、対応debugと非飽和時の計算を照合した。
 tick11000時の原因・時計資格は未解決。[MLflow警告の調査](docs/mlflow-orm-compatibility.md)も行い、上流修正待ちと現在の検証結果を区別している。
+
+追加readerの実装`f45733a`は[CI41603978704](https://github.com/kenobix/Claude_practice/actions/runs/41603978704)で全464件・隔離system・実artifact16member/hash・再計算・cleanupまで成功。
+[CI記録](docs/reviews/20261103-chrony-runtime-ci-checks.json)を参照。内部数値のlocal診断と時計資格は別の確認である。

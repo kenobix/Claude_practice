@@ -3221,3 +3221,31 @@ MLflow3.17.2にも同指定があるため、依存lock/SQLAlchemy downgrade/sit
 records-validation-v1成功：当時の2索引×171原本hash、相対link、known double fixture、parser/shell/管理者snippet、product source/lock/workflow不変を確認。
 検証ログも含む32attempt/173原本へ索引を再生成して再照合し、対象reader/test/文書/証拠だけの全差分とstatusを確認して節目commit/pushする。
 追加の用語6項目でDWARF/IP相対/読取FD/dev-inode/非飽和/ORMを説明した。新しい実装commitのCI完了前はreaderのCI受入を未完了とする。
+
+### 実装f45733aのCI・artifact・cleanup確認
+
+対象14pathだけのstaged/worktree一致、全差分、秘密情報pattern、git statusと173原本hashを確認し、`f45733a467e09c79d9d557682195c85da37b8b4a`をcommit/pushした。
+CI41603978704は同じSHAで全464件60.164秒・compileall・全隔離system/PG/HTTP/Caddy正常/TERM/対応復元が成功。
+CI reader17件はinode境界の回帰であり、localのclock uprobe採取をGitHubで再実行したものではない。
+jobs-v1〜v5、完了run/job logを保存。進行中job logの反復取得はせず、終了後の実logから結果を確認した。
+
+終盤のsource-head-final-v1でも202609=200/25,848,624 bytes、202610=404（08:35:36UTC）。
+このwrapperはUTC終了が開始より前でもMONOTONIC経過が正で、値を補っていない。原本取得・fit・窓短縮へ進めない。
+
+artifact13216600174のZIPを実downloadし、234,656 bytes、外側SHA`2bbf5e182bca2f7571d360999336ae3e8f852e4493984f6b1237e8e7a77adee7`がGitHub digestと一致。
+一時参照は0600fileのみ、fetchのfinallyで削除しURLを保存/公開しない。artifact-download-v1/ artifact-check-v1は成功。
+明示allowlist16member全bytes/SHA、内側archive4原本/manifest/hash、source revision=f45733a/dirty=false、
+archiveのみを渡した別processで暖機50除外/1000 measured・1050journal/誤り0・p95保存値一致、独立nearest-rank再計算を確認。
+T07a normal/TERMのcurrent image・3地点SIGKILL復旧・metadata・別volume復元・4資源残存0・保護container不変と、
+T07bの65registry/5audit table・8file・別3volume・破損skops拒否/元retry/新規予測・全cleanup、既存PG/HTTP cleanupを照合した。
+合成計測と実候補採否・時計資格を混同しない。local索引のCI_PENDINGは当時のsnapshotとして保持し、[最終CI索引](docs/reviews/20261103-chrony-runtime-ci-checks.json)を追加する。
+
+追加管理者ログ未採取、tick11000時の内部状態・initd管理元・host精度/同期責任・修復/資格、T03歴史的停止、T09公開/T10以降の実candidate/producer/採否は残る。
+同じ非飽和区間や未修正releaseだけの再確認を進捗にせず、新しい状態/ログ/上流変更を次の判断条件にした。
+以下の記録commitでsource/scripts/tests/workflow/lockは変えず、f45733aのCIがその文書commitを直接試験したとは呼ばない。
+
+completion-validation-v1成功：371原本hash、相対link、実装不変とdownload参照削除を確認した。
+validation log/metadataも含めCI側27原本・4attemptの最終索引へ再生成し、時計/ORM各173原本と併せて再照合する。
+今回の記録文書/CI索引だけをstageし、全差分・status・秘密情報patternを確認してcommit/pushする。無関係な未追跡3pathは含めない。
+
+最後の直接validatorも成功し373件のhash照合・209相対linkを確認した。hash件数は時計/ORM索引が共有する原本の再照合を含み、相異なる373fileを取得したという意味ではない。

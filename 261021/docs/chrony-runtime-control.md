@@ -9,7 +9,9 @@
 
 ## 配布物と稼働実体の対応
 
-Microsoft公式配布先から、Mariner2.0の`chrony-4.1-3.cm2.x86_64.rpm`と対応するdebuginfoを取得した。
+Microsoftの[公式binary一覧](https://packages.microsoft.com/yumrepos/cbl-mariner-2.0-prod-base-x86_64/Packages/c/)と
+[debuginfo一覧](https://packages.microsoft.com/yumrepos/cbl-mariner-2.0-prod-base-debuginfo-x86_64/Packages/c/)から、
+Mariner2.0の`chrony-4.1-3.cm2.x86_64.rpm`と対応するdebuginfoを取得した。
 OSへinstallせず、libarchiveで必要な通常fileだけを作業directoryへ読み出した。package内のkeyfileは読んでいない。
 
 | 照合 | 結果 |
@@ -83,3 +85,10 @@ OS時計/同期設定、実DB・実registry・現配信は変更していない�
 tick11000が自然に現れる区間で同じ限定数値とtimexを対応させること、initdの実体、host外部UTC差/同期責任、
 許可された保守比較と資格確認は残る。OS修復は別途許可が必要。future拒否の緩和・clamp・自動retryは行わない。
 T03は今回9件成功して自然停止未再発、T09は公式202610が404のままで、実fitは行っていない。
+
+## readerのCI受入
+
+実装`f45733a467e09c79d9d557682195c85da37b8b4a`の[CI41603978704](https://github.com/kenobix/Claude_practice/actions/runs/41603978704)は全464件・全system成功。
+[CI索引](reviews/20261103-chrony-runtime-ci-checks.json)で実artifact16member/hash・別process再計算・正常/TERM/対応復元cleanupまで確認した。
+17件のreader fixtureを含むコード回帰の受入であり、この文書の稼働uprobeをGitHub runnerで再現したことや、時計資格の合格ではない。
+初期local索引のCI_PENDINGは当時の記録として保持する。後続文書commitはこの実装CIが直接試験したcommitではない。

@@ -5,7 +5,7 @@
 
 | 対象 | 実装commit / CI | 確認できる証拠 | 限界 |
 |---|---|---|---|
-| **chronyd配布buildと内部計算** | 基点`298c6c8`後のlocal採取 / 新reader CIは後続確認 | [時計索引](reviews/20261103-chrony-runtime-checks.json)。Build ID/CRC/DWARF、24対の非飽和計算、うち16対のkernel書込、probe/IPC cleanup、reader17件 | tick11000時の内部値・初期namespace管理者採取・修復資格は未完了 |
+| **chronyd配布buildと内部計算・reader（最新）** | local数値採取 / reader実装`f45733a`・[CI41603978704](https://github.com/kenobix/Claude_practice/actions/runs/41603978704) | [local時計索引](reviews/20261103-chrony-runtime-checks.json)・[CI索引](reviews/20261103-chrony-runtime-ci-checks.json)。24対の非飽和計算、うち16対kernel書込、cleanup、reader17件/全464件・16artifact/hash | 稼働uprobeはlocal。tick11000時の内部値・管理者採取・時計資格は未完了 |
 | **MLflow noload互換調査** | 基点`298c6c8`後の独立process | [ORM索引](reviews/20261103-orm-compatibility-checks.json)。通常import/strict負例、最新3.17.2 source、publisher6件 | 上流未修正・lock不変。未公開SQLAlchemyやMCP全機能の試験ではない |
 | **CI artifact action保守・時計reader（最新）** | `7174a1f`→`5a687a7` / [41598271089](https://github.com/kenobix/Claude_practice/actions/runs/41598271089) | [CI索引](reviews/20261103-upload-action-ci-checks.json)。463件、Node24/ZIP維持、16member/hash・archive-only検算、正常/TERM/対応復元cleanup | 時計readerは合成16件。初期namespaceでのPHC/socket本採取・時計資格は未完了 |
 | **現在の自然future拒否の変更元** | `7174a1f` / 読取・FakeRegistryのみ | [時計索引](reviews/20261103-clock-followup-checks.json)、[host追加読取](reviews/20261103-clock-extra-checks.json)、[説明](clock-followup.md)。生成/検証区間内のtimesyncd step、tag不変/blocked | 過去停止の全原因やchronyd内部理由・host精度は未確定。実DB/registry/時計設定は変更していない |
