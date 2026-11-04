@@ -3536,3 +3536,41 @@ workflowのreadも一度cwd違いで失敗し、repo rootから読み直した�
 source snapshotや初回失敗を削除していない。修正版validation-v2でraw/hash/linkとscopeを再照合する。
 validation-v2はexit0。当時の50 hash record・194相対link・8対象path、coreと全suite時sourceの一致を確認。
 同attemptのlog/metadataも最終索引へ追加し、最終52 hash recordを直接validatorで再照合してからstageする。
+
+## 2026-11-04・f26b334のCI最終確認
+
+実装`f26b33441d1bfc52915e6471d669c99575afc263`をcommit/pushし、
+[CI41845551048](https://github.com/kenobix/Claude_practice/actions/runs/41845551048)のunit482件/60.896表示秒と両job全step成功を確認した。
+最終IO guardと専用18件を含む正確な実装commitの結果で、local全480件を482件へ読み替えたものではない。
+OS/時計・実DB/registry/現配信、future拒否、schema/writer/lock/workflowは変更していない。
+T09は同turnで再照会しておらず、最後の実観測13:42:25UTCの404を保持する。
+
+原本は`data/reports/20261104-clock-rate-ci/`。
+利用可能なGitHub connectorのcommit run取得はPR-triggerに限定されるため、push run一覧/追跡には既存ghを使用した。
+component側ci-list-v1/ci-view-v1に初期進行状態、CI側run-read-v1に後続状態を保存した。
+`watch-v1`は`timeout --signal=TERM --kill-after=10 900 gh run watch … --interval 30 --exit-status`でexit0。
+fetch-final-v1でexact SHAの完了run・2 job/step・artifact metadata・両job logを保存した。
+全コマンド/終了値/UTC/MONOTONICとhashは[最終CI索引](docs/reviews/20261104-clock-rate-ci-checks.json)を参照する。
+
+artifact-check-v1はexit0。先行の検算helperを新しいcommit/run/482件とgh API envelopeへ明示的に合わせ、
+artifact13331782007を実downloadした。外側SHA
+`71410ad7dc8905824840137433223e9314434bf4475eb9a439575a63452e4a6a`はGitHub digestと一致し、固定allowlist16 memberのbytes/SHAも照合した。
+内側T16 archiveのmanifest/4原本hash、source_revision=f26b334/dirty=false、50 warmup除外・1000 measured/1050 journalを照合。
+archiveだけを渡した別processと独立nearest-rank計算でp95=36.19063799999367msが一致した。
+これは合成fixture/CI runnerの値で、実性能・本番SLO・時計資格・採否ではない。operational gate=not_evaluated、permission=blockedを確認した。
+
+同じartifactからT07aの現Dockerfile image・3地点SIGKILL復旧・通常/TERM cleanupと、T07bのMLflow/skops/DB対応復元を照合した。
+別volume、元retry/新予測/破損skops拒否、65 registry table/5 audit table/8 artifact file、全資源残存0、保護container不変を確認。
+PG/HTTP試験cleanupも完了job logから確認した。既存local監視や実配信へ適用した結果ではない。
+
+local索引のCI未確認は当時のsnapshotとして保持し、後続の最終CI索引を追加する。
+計画の最新残件・README・component手順・証拠入口に新しいCIを反映した。
+証拠入口の「現在の優先度」とT09/T10参照が旧checkpointを指していたため、最新残件anchorへ修正した。
+この文書commitをf26b334のCIで直接試験したとは記載しない。
+
+残りは全campaign判定・外部UTC/QPC校正/identity/採取真正性、採取器/固定負荷/外部源reader、
+管理者PHC/UDP追加入力、同期責任review、別途許可後の修復/資格、T09/T10と実candidate/producer。
+新情報なしの時計/原本再確認は反復せず、静的解析や合成成功を過去原因/実採否へ遡及適用しない。
+最後にraw/hash/link/実装不変・diff・対象pathを検証し、この記録文書だけをcommit/pushする。
+validation-v1はexit0。当時80 hash record・241相対link・6対象fileと、CI実装以降の製品path不変を確認した。
+この検証の2原本を含む最終索引を再生成し、82 hash recordを直接validatorで照合後に対象6文書だけをstageする。

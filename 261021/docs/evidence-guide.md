@@ -1,10 +1,11 @@
 # 証拠の入口と5分の説明手順（T14・初版）
 
-現在の優先度は[計画§11.6](../../261014/plan_mlops.md#remaining-work-20261030)、コマンド・失敗・仮説の履歴は[作業log](../work_log.md)を正規の入口とする。
+現在の優先度は[計画§11.6の最新残件](../../261014/plan_mlops.md#remaining-work-latest)、コマンド・失敗・仮説の履歴は[作業log](../work_log.md)を正規の入口とする。
 レビューJSONはその時点のsnapshotなので、後続のCI確認JSONと区別する。記録だけの後続commitを、先行CIで試験した実装commitとは呼ばない。
 
 | 対象 | 実装commit / CI | 確認できる証拠 | 限界 |
 |---|---|---|---|
+| **時計資格設計・offline進行率component** | `f26b334` / [CI41845551048](https://github.com/kenobix/Claude_practice/actions/runs/41845551048) | [CI索引](reviews/20261104-clock-rate-ci-checks.json)。最終18件含む全482件・全system、16 artifact member/SHA・archive-only検算・cleanup。[使用手順](clock-rate-review.md) | componentのみ。QPC校正・外部UTC・identity/採取真正性・全campaignと実時計資格は未了 |
 | **backend時刻経路・左端buffer（891a420以降）** | 保存済みELF静的解析 / 左端原本2file / local pipeline8件 | [検証索引](reviews/20261104-backend-boundary-checks.json)。PIE relocation/interface/CALL照合・5拒否コピー、202212取得、2parserで379,310行の境界監査 | 新しいruntime setter/PHC所有・時計資格ではない。正式snapshot/protocol/fit・新しいCI受入は未実施 |
 | **initd管理層とT10入力準備（2026-11-04）** | 基点`d8ec164`後のlocal読取・文書のみ | [検証索引](reviews/20261104-clock-readiness-checks.json)。Docker Desktopの35thread前後対応と負方向settimeofday、7拒否検証、既存45 ZIP/hash/header、T10開始手順 | PHC/socket採取・飽和時の内部理由・時計資格は未了。新protocol/fit・CIの新しい受入ではない |
 | **chronyd配布buildと内部計算・reader（最新）** | local数値採取 / reader実装`f45733a`・[CI41603978704](https://github.com/kenobix/Claude_practice/actions/runs/41603978704) | [local時計索引](reviews/20261103-chrony-runtime-checks.json)・[CI索引](reviews/20261103-chrony-runtime-ci-checks.json)。24対の非飽和計算、うち16対kernel書込、cleanup、reader17件/全464件・16artifact/hash | 稼働uprobeはlocal。tick11000時の内部値・管理者採取・時計資格は未完了 |
@@ -33,8 +34,8 @@ SHA欄はartifact ZIPの先頭12文字。full SHA・member別SHA・raw logの相
 | T06b | `164ac53` / [41068758500](https://github.com/kenobix/Claude_practice/actions/runs/41068758500) | `9d82e8d21062` | [PostgreSQL読取照合](reviews/20261030-t06b-checks.json)。実HTTP監視への接続は後続 |
 | T07/T17 | `f341e94`→`2414b20`→`4a4474e` | 上段参照 | [切替/復旧](deployment-recovery.md)と[診断](deployment-observability.md)。subtaskと実候補の境界を保持 |
 | T08 | `20abdab` / [41263492531](https://github.com/kenobix/Claude_practice/actions/runs/41263492531) | `f8b4d540112d` | [旧schema精度移行/別volume復元](reviews/20261101-t08-checks.json)。既存実DBへは未適用 |
-| T09 | 実装CIではなく原本公開待ち | 対象外 | [計画§11.6](../../261014/plan_mlops.md#remaining-work-20261030)。HEAD成功だけでは原本取得/hash照合完了ではない |
-| T10/T11/T12 | 実候補の独立protocol/一度評価/blocked運用測定は未実施 | 対象外 | [計画§11.6](../../261014/plan_mlops.md#remaining-work-20261030)。合成CIを実精度・実性能へ転用しない |
+| T09 | 実装CIではなく原本公開待ち | 対象外 | [計画§11.6の最新残件](../../261014/plan_mlops.md#remaining-work-latest)。HEAD成功だけでは原本取得/hash照合完了ではない |
+| T10/T11/T12 | 実候補の独立protocol/一度評価/blocked運用測定は未実施 | 対象外 | [計画§11.6の最新残件](../../261014/plan_mlops.md#remaining-work-latest)。合成CIを実精度・実性能へ転用しない |
 | T13a/T13b | `f1cc9ff`のHTTP合成受入 / 実採否は未実施 | 上段の索引参照 | [HTTP CI](reviews/20261101-t13-http-ci-checks.json)。実採否には同一candidateの必須producer証拠が必要 |
 | T14 | この文書・計画・作業log | 対象外 | 文書の整理であり、新しい実験成功を作らない |
 | T15 | `5cc5a89` / [41264954179](https://github.com/kenobix/Claude_practice/actions/runs/41264954179) | `62f54b9fe779` | [monitor persistence CI接続](reviews/20261101-t15-checks.json) |

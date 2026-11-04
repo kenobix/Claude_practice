@@ -532,9 +532,13 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 <a id="remaining-work-latest"></a>
 
-#### 2026-11-04 backend静的経路・左端境界review後の残課題
+#### 2026-11-04 backend経路・左端境界・時計資格設計/進行率照合後の残課題
 
-最新コードは`f45733a`の[CI41603978704](https://github.com/kenobix/Claude_practice/actions/runs/41603978704)で全464件・全隔離system/cleanup成功。
+最新実装`f26b334`の[CI41845551048](https://github.com/kenobix/Claude_practice/actions/runs/41845551048)は全482件・全隔離system/cleanup成功。
+[進行率component最終CI索引](../261021/docs/reviews/20261104-clock-rate-ci-checks.json)で、artifact16 member/hash・archive-only検算まで確認した。
+設計とoffline componentの合成受入で、実時計資格・PHC/UDP所有・過去の動的原因を確定しない。
+
+先行実装`f45733a`の[CI41603978704](https://github.com/kenobix/Claude_practice/actions/runs/41603978704)も全464件・全隔離system/cleanup成功。
 [今回のCI索引](../261021/docs/reviews/20261103-chrony-runtime-ci-checks.json)で16member ZIP/digest・archive-only検算まで確認した。
 新readerのinode境界と17件はCI受入済み。時計の24組の数値観測はlocal診断であり、CIを時計資格の証明にしない。
 
@@ -542,7 +546,7 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 | 優先度 | 難易度・担当 | 残課題と次の条件 |
 |---|---|---|
-| P1 | D3・Sol | 時計：前回initd setterの実exe/親/namespaceは照合済み。保存済みELFの[backend取得interfaceとSettimeofday CALL](../261021/docs/backend-time-path-review.md)も静的照合したが、新しいruntime応答/stackではない。新管理者ログなし。残りはPHC fd/UDPと現在identity、tick11000時内部値、backend/host時刻源・外部UTC差・同期責任、許可後の修復と時計資格。[資格計測設計v1](../261021/docs/clock-qualification-plan.md)と[offline進行率phase component](../261021/docs/clock-rate-review.md)を追加。componentは最終専用18件成功・先行全480件成功、実装CI未確認。次は全campaign判定/校正/外部UTC/identity、採取器/負荷生成器/外部源reader、同期責任review、別途許可後の修復/全受入。componentだけで資格合格にしない。非飽和traceを反復せず、過去の飽和/T03歴史的停止も未確定。initd全体を止めず、future拒否/clamp/retryの禁止は維持 |
+| P1 | D3・Sol | 時計：前回initd setterの実exe/親/namespaceは照合済み。保存済みELFの[backend取得interfaceとSettimeofday CALL](../261021/docs/backend-time-path-review.md)も静的照合したが、新しいruntime応答/stackではない。新管理者ログなし。残りはPHC fd/UDPと現在identity、tick11000時内部値、backend/host時刻源・外部UTC差・同期責任、許可後の修復と時計資格。[資格計測設計v1](../261021/docs/clock-qualification-plan.md)と[offline進行率phase component](../261021/docs/clock-rate-review.md)を追加し、実装f26b334のCI482件/全system/artifact/cleanupまで受入済み。次は全campaign判定/校正/外部UTC/identity、採取器/負荷生成器/外部源reader、同期責任review、別途許可後の修復/全受入。componentだけで資格合格にしない。非飽和traceを反復せず、過去の飽和/T03歴史的停止も未確定。initd全体を止めず、future拒否/clamp/retryの禁止は維持 |
 | P1 | D1・Luna | T09の202610公式原本公開待ち。2026-11-04 13:42:25UTCの公式S3 HEADも404（今回の記録は[追跡索引](../261021/docs/reviews/20261104-followup-checks.json)）。公開後に既存手順で取得・bytes/hash/構造を照合。HEADだけで取得完了としない。今回の202212追加取得をT09の10月到着と混同しない |
 | P0（実fit前） | D3・Sol | T10：独立protocol/全原本snapshot/分割/recipe/基準をfit前に固定。[左端bufferを202212に決定・取得し、202301との2file/379,310行を別parserでも監査](../261021/docs/t10-input-readiness.md)。原本範囲202212〜202610、target窓とrecipeは不変。保管46件/予定47件だが正式集約/manifest監査/凍結は未実施。10月bufferなしで窓を短縮せず、1か月bufferを母集団の完全性保証にしない |
 | P1 | D3・Sol | T02実producerおよびT11/T12/T13b：同一の実candidate/artifactに精度・監視・復旧・metadata・運用測定を結合し採否を記録。T09/T10/時計資格等の前提を満たす範囲で順に進める |
@@ -565,7 +569,9 @@ QPC基準で固定した30分/60秒窓を選び、MONOTONIC/RAWのbracketを厳�
 専用試験・回帰の結果と限界は後続のwork log/検証索引へ記録する。
 localは専用13→16件、sandbox中断を保存後の承認付き全480件、IO guard追加後の最終専用18件が成功。
 全480件を最終482件の実行と読み替えない。[進行率component検証索引](../261021/docs/reviews/20261104-clock-rate-checks.json)。
-実装commitのCIは未確認であり、最新CI受入の記述は先行f45733aのまま保持する。
+実装記録時点ではCI未確認だった。最終受入はf26b334/CI41845551048、
+[後続索引](../261021/docs/reviews/20261104-clock-rate-ci-checks.json)の全482件/両job全step成功・artifact16 member/SHA・archive-only再計算・全cleanupで確認した。
+後続文書commitをこの実装CIが直接試験したとは呼ばない。
 
 891a420以降の[検証索引](../261021/docs/reviews/20261104-backend-boundary-checks.json)では、
 静的PIE解析の初回exit0不採用・maxpc/etext assert失敗、テストcwd誤りも保存した。

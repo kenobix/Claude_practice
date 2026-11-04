@@ -150,3 +150,4 @@ tick11000時の原因・時計資格は未解決。[MLflow警告の調査](docs/
 
 続いて[保存済み進行率phaseのoffline照合](docs/clock-rate-review.md)を実装しました。
 指定JSONの固定窓/上下限/hashを検算するcomponentであり、時計資格全体の状態は常に`not_evaluated`です。
+[実装f26b334のCI](docs/reviews/20261104-clock-rate-ci-checks.json)では全482件と全隔離system、artifact16 member/SHA・archive-only検算・cleanupまで確認しました。

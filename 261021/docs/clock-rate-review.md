@@ -70,5 +70,10 @@ IO失敗時はstagingを削除する。入力や原本の台帳を更新しな�
 JSON拒否、読取中変更、link/fsync失敗cleanup、既存report保護を検証する。
 これを実Capital運用性能や時計資格の証拠へ流用しない。
 
+実装`f26b334`の[CI41845551048](https://github.com/kenobix/Claude_practice/actions/runs/41845551048)で
+最終の専用18件を含む全482件と全隔離systemが成功した。
+[最終CI索引](reviews/20261104-clock-rate-ci-checks.json)でartifact/member hash・archive-only再計算・cleanupも確認した。
+localの全480件は最終IO guard追加前の記録として保持し、CIの482件と区別する。
+
 次は、全campaignの入力schemaとpolicy binding、外部UTC区間/校正/identity/採取真正性・coverageの判定を設計・実装する。
 採取器、固定fixture負荷、外部時刻源readerも未実装。実採取・設定変更や休止再開を自動実行する部品は追加していない。
