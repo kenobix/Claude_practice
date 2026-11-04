@@ -94,6 +94,10 @@ MLFLOW_DISABLE_AGENT_HINT=1 \
 protocol作成だけでT11や運用合格を開始しない。計画の時計資格・必須証拠等の依存条件を満たし、
 T10のレビューが完了してから一度だけcandidate fitへ進む。validation不合格時は同じ窓で調整し直さない。
 
+時計資格の前提は[修復後の受入設計v1](clock-qualification-plan.md)を参照する。
+設計と合成算術の検算は資格の合格ではない。採取器/外部UTC比較の実装・修復許可・実受入は未完了であり、
+この設計追加によってT10以降の停止条件が満たされたとは扱わない。
+
 ## 891a420以降の左端buffer review（2026-11-04）
 
 公式[system-data説明](https://capitalbikeshare.com/system-data)は月次公開と開始/終了日時を説明するが、

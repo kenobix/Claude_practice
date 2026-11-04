@@ -144,3 +144,6 @@ tick11000時の原因・時計資格は未解決。[MLflow警告の調査](docs/
 [T10の左端buffer](docs/t10-input-readiness.md)に202212を採用・取得して隣月2fileを監査しました。
 新たな時計書込やbackend応答の観測ではなく、10月原本・管理者PHC/UDP採取・正式protocol/fitは引き続き待機です。
 [追加索引](docs/reviews/20261104-backend-boundary-checks.json)で不採用解析・失敗と回帰8件の結果も確認できます。
+
+24c30c0以降は[修復後の時計資格の計測設計](docs/clock-qualification-plan.md)を追加しました。
+固定期間・bracketによる進行率・独立外部UTC・欠測/失効条件を具体化した設計であり、修復や資格合格の記録ではありません。

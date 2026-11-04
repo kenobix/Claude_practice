@@ -3412,3 +3412,64 @@ UTC表示はこのWSL環境の時計由来で資格済み外部時刻ではな�
 
 T09の404を確認したため、未取得10月原本が前提のT10 formal snapshot/manifest/protocol、fitおよびT11以降は着手できない。過去に評価済みの窓を再利用したり、評価窓を短縮したりしていない。その他の未完了項目も今回新しい入力/実行証拠がなく、条件を満たす独立タスクは確認できなかったため、完了数へ計上していない。
 次回はT09公開後にのみ取得・検査し、新しい管理者採取ログまたは自然再発が来た場合に時計調査を再開する。製品コードが不変の文書・公開状態確認であり、テスト/CIは実行していない。
+
+## 2026-11-04・基点24c30c0以降：時計資格の受入設計を具体化
+
+基点`24c30c0`。開始時のtracked差分は0、mainとorigin/mainは一致していた。
+既存の無関係な未追跡3pathは保持し、今回のstage対象に含めない。
+計画§11.6、work log、最新T09索引、backend/chronyd/管理者採取/時計診断資料、T10準備書と
+protocol/aggregation/trainingの関係箇所を読み、依存条件と独立作業をreviewした。`.env`は読んでいない。
+
+### 今回繰り返さなかった調査と前提
+
+開始時刻は13:49UTC頃で、前回T09 HEADの13:42:25UTCから約7分だった。
+相応の時間経過や新しい公開情報がないため、HTTP HEAD/検索/原本検査を反復しない。
+最新の実観測は前回索引の404であり、今回も404を観測したとは記載しない。
+`find 261021/data/reports -maxdepth 2`でresources.log/inventory.log/collection.jsonを確認したが、新規追加はなかった。
+別保存先の不存在を証明する探索ではない。新しいtick11000/T03の入力もなく、traceや自然再現campaignは追加していない。
+したがって、環境全体で再発がないという証明や、現在process identityの再照合とは呼ばない。
+静的ELF照合を過去の動的原因へ遡及せず、OS/時計・実DB/registry/現配信とfuture拒否は変更していない。
+
+### 新しい独立作業：実観測前の資格計測設計
+
+既存の修復案は「長時間/再開後に確認する」までで、固定期間・誤差予算・bracket全区間の判定・欠測/失効条件が不足していた。
+`docs/clock-qualification-plan.md`へ設計v1を記述した。QPC基準60分と別途許可後の休止再開後60分、
+MONOTONIC/RAWの区間比、独立外部UTC区間、厳密future拒否を別条件にした。
+進行率の許容比±0.1%と外部UTC±1秒は学習環境の工学上の設計値で、vendor仕様や本番SLOではない。
+特に外部UTCの予算をfuture拒否の許容幅に使わない。採取・判定・負荷・外部源readerは後続実装で、
+管理者採取・同期責任review・修復許可と実受入も未了。設計追加だけではT10/T12の停止条件を満たさない。
+
+WSL要求前後bracketの両端からrateの下限/上限を計算し、区間全体が許容範囲に入った場合だけ通す。
+許容範囲と部分的に重なる場合はincomplete、完全に離れる場合はfailedとする。
+明確な違反と不足が共存する場合はfailedを主状態にし、不足も残す。都合のよい窓選択・合格までのretryは認めない。
+実装済み判定器ではない点をREADME、T10準備書、管理者手順、計画最新一覧へ反映した。
+
+### コマンド・検証・失敗
+
+原本はignoredの`data/reports/20261104-qualification-design/`、公開用は
+[今回の検証索引](docs/reviews/20261104-qualification-design-checks.json)。
+read/status/log/rg/sed/findの出力はこのチャットのtool transcriptにあり、独立したraw file/hashとして保存したとは主張しない。
+新しい算術検証と最終文書検証はrunnerでcommand/cwd、UTC/MONOTONIC、終了値、stdout/stderr、bytes/SHAを保存する。
+runnerは既存attemptの上書きを拒否する。UTC/MONOTONICは未資格で、外部の秒数校正には使わない。
+
+| attempt / command | 結果と限界 |
+|---|---|
+| `math-v1` / `python3 …/check_math.py` | exit0。Fractionの厳密算術で境界10件、不正bracket5件を検査。独立にbracket内の時点を列挙した192組で上下限と極値が一致。1.1倍の合成時計はfailed、幅が広いbracketはincomplete。250ms×0.1%=0.25msも確認。製品unitの追加やlive時計検証ではない |
+| `validation-v1` / `python3 …/validate_docs.py` | exit0。当時のraw/policy7件のhash、204相対link、7対象path、製品path不変、diffを照合。結果は同名log/metadataへ保存し、その2原本も最終索引へ追加 |
+
+探索で存在しない`docs/independent-evaluation.md`をrgへ渡し、missing fileのstderrが出た。存在する資料とsourceへ読み替え、存在しない資料を読了扱いにしない。
+最初の複数file patchはT10文書のcontext不一致で失敗し、git diffでtracked部分変更0を確認後に正しいcontextで適用した。
+これらはtool transcriptに残り、local raw/hashがある算術attemptと区別する。
+
+製品source/scripts/tests/schema/writer/lock/workflowは変更していない。今回の文書設計に対し製品suite/CIは再実行せず、
+最新実装f45733aの既存CI受入を今回の新しい設計/時計資格の受入へ読み替えない。
+残る独立実装は保存bracketを読むoffline判定器と合成負例、続いて採取protocol/fixture負荷/外部UTC reader。
+OS操作が必要な箇所は別途許可後。T09/T10・実candidate/producerと時計の過去未確定事項は残件として保持する。
+
+validation-v1のlog/metadataを含めて最終索引を再生成し、直接validatorで9件のraw/policy hashを再照合する。
+今回の7対象fileだけをstageし、git statusと全差分をreviewしてcommit/pushする。無関係な未追跡pathとignoredのrawは含めない。
+
+通常sandboxの`git add -- <7対象path>`は`.git/index.lock: Read-only file system`で失敗した。
+後続のread-only status/diffがexit0でもstage成功としない。statusで全対象が未stageのままと確認した。
+承認付きの同じ対象path指定へ切り替え、結果はrunnerの`git-stage-v2`へ保存する。
+git-stage-v2はexit0。結果2原本も索引へ追加し、最終のraw/policy11件のhashを照合後、記録更新分を再stageする。
