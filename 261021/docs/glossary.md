@@ -185,3 +185,6 @@ MLflow 3ではモデルの保存場所が従来と変わりました。このプ
 | dev / file inode / 同内容の置換 | devとinodeは現在のfile実体を識別する手掛かりです。内容のhashが同じでも、別fileに置き換わる場合があります。今回のreaderは前後の実体番号も比べます。別bootの同じ番号を同じfileと決めつけません。 |
 | 飽和 / 非飽和 | 計算した補正が許された上限に達することを飽和と呼びます。非飽和は上限に達していない状態です。今回の非飽和の観測だけで、過去に上限へ達した原因が分かったことにはしません。 |
 | ORM / mapper / noload | ORMはDBの行とプログラムのobjectを対応させる仕組み、mapperはその対応設定です。noloadは関連するobjectを自動で読まない指定です。今回のSQLAlchemyでは非推奨なので、MLflowの設定箇所と修正releaseの有無を調べています。 |
+| TID / TGID / scheduler照会 | TIDは実行中のthreadの番号、TGIDはthreadが所属するprocessの番号です。1つのprocessに複数threadがあるため、時計を書いたTIDをexeや親へ結ぶには所属も確認します。今回の`chrt -p 番号`はschedulerの状態を読むだけで、優先度変更はしていません。 |
+| wsl-bootstrap / initd services | 今回確認したDocker Desktopの起動・service管理processです。単独の時刻同期service名とは限りません。時計調整だけを止めるつもりでprocess全体を停止すると、他のserviceやcontainerにも影響し得ます。 |
+| Go build情報 / 静的解析 | 実行fileに埋め込まれたコンパイラ版やmodule名を、起動せずに読む調査です。記載された関数名が見つかっても、その関数が今回の要求で実行されたことや、署名済みの出所を保証するものではありません。 |

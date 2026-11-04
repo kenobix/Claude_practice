@@ -1,5 +1,9 @@
 # chronydの配布build照合と内部計算の観測
 
+2026-11-04追補：[initdのsetter・Docker Desktop管理層の照合](initd-owner-correlation.md)を追加した。
+今回のinitdは実exe/親/namespaceまで対応したが、PHC/socket管理者採取・tick11000の内部原因・時計資格は引き続き未了。
+以下の11月3日の未確定記述と数値観測は、その時点の記録として保持する。
+
 基点`298c6c82db98c2ae607e69f81e9f99695a4a1f59`、2026-11-03。
 [前回の時計調査](clock-followup.md)の続き。原本・失敗・hashは
 [検証索引](reviews/20261103-chrony-runtime-checks.json)で確認する。

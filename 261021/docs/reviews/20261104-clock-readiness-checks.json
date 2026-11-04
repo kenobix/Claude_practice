@@ -1,0 +1,2471 @@
+{
+  "schema_version": 1,
+  "base_commit": "d8ec16412cc833e4b9eb9582921a4309265d1166",
+  "status": "CURRENT_DOCKER_INITD_SETTER_IDENTIFIED_INPUTS_CHECKED_ADMIN_RESOURCES_CLOCK_QUALIFICATION_AND_OCT_PENDING",
+  "scope": {
+    "OS_clock_service_settings_changed": false,
+    "temporary_private_kernel_probes": true,
+    "user_code_uprobes_used_this_turn": false,
+    "real_DB_registry_deployment_changed": false,
+    "future_refusal_relaxed": false,
+    "source_schema_writer_lock_workflow_changed": false,
+    "fit_aggregation_protocol_freeze_or_accuracy_evaluation_executed": false,
+    "new_product_suite_or_CI_acceptance_claimed": false
+  },
+  "findings": {
+    "initd_trace": {
+      "status": "CURRENT_DOCKER_INITD_SETTER_CORRELATED_NOT_REPAIRED",
+      "mapped_threads": 35,
+      "identity_snapshots_match": true,
+      "processes": {
+        "43": {
+          "start_ticks": 183008,
+          "exe_sha256": "37ddac517530bcdf87c40c2b1df37188d093a6ee6204df43e64edbfba3c27b43",
+          "file_id": "118:1266:69586424",
+          "namespaces": {
+            "pid": "pid:[4026532393]",
+            "mnt": "mnt:[4026532392]",
+            "time": "time:[4026531834]",
+            "net": "net:[4026532251]"
+          }
+        },
+        "64": {
+          "start_ticks": 183037,
+          "exe_sha256": "37ddac517530bcdf87c40c2b1df37188d093a6ee6204df43e64edbfba3c27b43",
+          "file_id": "118:1266:69586424",
+          "namespaces": {
+            "pid": "pid:[4026532393]",
+            "mnt": "mnt:[4026532392]",
+            "time": "time:[4026531834]",
+            "net": "net:[4026532251]"
+          }
+        }
+      },
+      "mapping": [
+        {
+          "local_tid": 43,
+          "start_ticks": 183008,
+          "global_tid": 12550,
+          "global_tgid": 12550,
+          "global_parent": 12549,
+          "start_ns": 1830081545198
+        },
+        {
+          "local_tid": 53,
+          "start_ticks": 183018,
+          "global_tid": 12560,
+          "global_tgid": 12550,
+          "global_parent": 12549,
+          "start_ns": 1830184089397
+        },
+        {
+          "local_tid": 54,
+          "start_ticks": 183018,
+          "global_tid": 12561,
+          "global_tgid": 12550,
+          "global_parent": 12549,
+          "start_ns": 1830184755683
+        },
+        {
+          "local_tid": 55,
+          "start_ticks": 183018,
+          "global_tid": 12562,
+          "global_tgid": 12550,
+          "global_parent": 12549,
+          "start_ns": 1830184985786
+        },
+        {
+          "local_tid": 56,
+          "start_ticks": 183018,
+          "global_tid": 12563,
+          "global_tgid": 12550,
+          "global_parent": 12549,
+          "start_ns": 1830186583465
+        },
+        {
+          "local_tid": 57,
+          "start_ticks": 183019,
+          "global_tid": 12564,
+          "global_tgid": 12550,
+          "global_parent": 12549,
+          "start_ns": 1830190242559
+        },
+        {
+          "local_tid": 58,
+          "start_ticks": 183029,
+          "global_tid": 12565,
+          "global_tgid": 12550,
+          "global_parent": 12549,
+          "start_ns": 1830291239984
+        },
+        {
+          "local_tid": 59,
+          "start_ticks": 183034,
+          "global_tid": 12566,
+          "global_tgid": 12550,
+          "global_parent": 12549,
+          "start_ns": 1830340458498
+        },
+        {
+          "local_tid": 60,
+          "start_ticks": 183034,
+          "global_tid": 12567,
+          "global_tgid": 12550,
+          "global_parent": 12549,
+          "start_ns": 1830340741036
+        },
+        {
+          "local_tid": 61,
+          "start_ticks": 183034,
+          "global_tid": 12568,
+          "global_tgid": 12550,
+          "global_parent": 12549,
+          "start_ns": 1830341200113
+        },
+        {
+          "local_tid": 62,
+          "start_ticks": 183034,
+          "global_tid": 12569,
+          "global_tgid": 12550,
+          "global_parent": 12549,
+          "start_ns": 1830342012478
+        },
+        {
+          "local_tid": 101,
+          "start_ticks": 183057,
+          "global_tid": 12611,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830572526724
+        },
+        {
+          "local_tid": 102,
+          "start_ticks": 183057,
+          "global_tid": 12612,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830573813601
+        },
+        {
+          "local_tid": 103,
+          "start_ticks": 183057,
+          "global_tid": 12613,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830575300230
+        },
+        {
+          "local_tid": 104,
+          "start_ticks": 183058,
+          "global_tid": 12614,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830584651487
+        },
+        {
+          "local_tid": 105,
+          "start_ticks": 183072,
+          "global_tid": 12615,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830720750229
+        },
+        {
+          "local_tid": 110,
+          "start_ticks": 183090,
+          "global_tid": 12627,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830901839557
+        },
+        {
+          "local_tid": 111,
+          "start_ticks": 183090,
+          "global_tid": 12628,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830902079178
+        },
+        {
+          "local_tid": 112,
+          "start_ticks": 183090,
+          "global_tid": 12629,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830902706345
+        },
+        {
+          "local_tid": 115,
+          "start_ticks": 183092,
+          "global_tid": 12633,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830928845242
+        },
+        {
+          "local_tid": 1981,
+          "start_ticks": 225755,
+          "global_tid": 15968,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 2257557947280
+        },
+        {
+          "local_tid": 36230,
+          "start_ticks": 740377,
+          "global_tid": 68226,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 7403772383873
+        },
+        {
+          "local_tid": 64,
+          "start_ticks": 183037,
+          "global_tid": 12571,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830371985560
+        },
+        {
+          "local_tid": 65,
+          "start_ticks": 183039,
+          "global_tid": 12572,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830397234970
+        },
+        {
+          "local_tid": 66,
+          "start_ticks": 183039,
+          "global_tid": 12573,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830397532814
+        },
+        {
+          "local_tid": 67,
+          "start_ticks": 183039,
+          "global_tid": 12574,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830397837291
+        },
+        {
+          "local_tid": 68,
+          "start_ticks": 183039,
+          "global_tid": 12575,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830398153164
+        },
+        {
+          "local_tid": 69,
+          "start_ticks": 183039,
+          "global_tid": 12576,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830398580981
+        },
+        {
+          "local_tid": 70,
+          "start_ticks": 183041,
+          "global_tid": 12577,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830411165589
+        },
+        {
+          "local_tid": 71,
+          "start_ticks": 183044,
+          "global_tid": 12578,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830440000457
+        },
+        {
+          "local_tid": 72,
+          "start_ticks": 183044,
+          "global_tid": 12579,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830440481236
+        },
+        {
+          "local_tid": 73,
+          "start_ticks": 183044,
+          "global_tid": 12580,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830440928833
+        },
+        {
+          "local_tid": 74,
+          "start_ticks": 183044,
+          "global_tid": 12581,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830441492916
+        },
+        {
+          "local_tid": 75,
+          "start_ticks": 183044,
+          "global_tid": 12582,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 1830441609058
+        },
+        {
+          "local_tid": 94183,
+          "start_ticks": 4199879,
+          "global_tid": 25142,
+          "global_tgid": 12571,
+          "global_parent": 12550,
+          "start_ns": 41998797095229
+        }
+      ],
+      "initd_writes": [
+        {
+          "global_tid": 12582,
+          "local_tid": 75,
+          "global_tgid": 12571,
+          "local_process": 64,
+          "monotonic_seconds": "154322.417563",
+          "requested_utc_ns": 1793795939033317000,
+          "syscall_return": 0,
+          "bracket": {
+            "before": {
+              "realtime_ns": 1793795939775980612,
+              "monotonic_ns": 154322416771957,
+              "raw_ns": 145749431239858
+            },
+            "after": {
+              "realtime_ns": 1793795939042892890,
+              "monotonic_ns": 154322427141713,
+              "raw_ns": 145749441154107
+            },
+            "realtime_delta_ns": -733087722,
+            "monotonic_delta_ns": 10369756
+          }
+        }
+      ],
+      "tick11000_count": 0,
+      "negative_timesyncd_requests": [
+        "systemd-timesyn-496     [000] ..... 154322.688609: adjust: (do_adjtimex+0x4/0x340) modes=8476 freq=0 seconds=-1 subsecond=362242222 tick=0"
+      ],
+      "cleanup": {
+        "start_utc": "2026-11-04T12:38:34.671708+00:00",
+        "start_monotonic_ns": 154297312529038,
+        "global_before": {
+          "tracing_on": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+          "current_tracer": "64aec5a7fa151222572a241383c857738318e63cca7ee771952c95a31d92a19d",
+          "trace_clock": "f0963b80f088ee8f1a167da850b227de617aaabc47bc635081c536782c93aad7",
+          "set_ftrace_filter": "5c83074a334aa00236037c3c0621b592cf3c740b5f5977f6ee95a308c5c8281e",
+          "kprobe_events": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "uprobe_events": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "cleanup_complete": true,
+        "clock_settings_written": false,
+        "btf_sha256": "7a56bbf53f875fcf5c09d907b178bf15e6ee77748289532a85435e74222fa00a",
+        "status": "observed",
+        "end_utc": "2026-11-04T12:39:18.794522+00:00",
+        "end_monotonic_ns": 154342816577328,
+        "global_after": {
+          "tracing_on": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+          "current_tracer": "64aec5a7fa151222572a241383c857738318e63cca7ee771952c95a31d92a19d",
+          "trace_clock": "f0963b80f088ee8f1a167da850b227de617aaabc47bc635081c536782c93aad7",
+          "set_ftrace_filter": "5c83074a334aa00236037c3c0621b592cf3c740b5f5977f6ee95a308c5c8281e",
+          "kprobe_events": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "uprobe_events": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "probe_events_removed": true,
+        "global_controls_unchanged": true
+      },
+      "limits": [
+        "Current cohort only; no retroactive proof of the historical setter TIDs or launch moment.",
+        "One fixed 45-second interval; no repeated-until-success tracing; no clock qualification."
+      ]
+    },
+    "initd_binary": {
+      "elf_sha256": "37ddac517530bcdf87c40c2b1df37188d093a6ee6204df43e64edbfba3c27b43",
+      "go_version": "go1.27.3",
+      "build_info_selected": [
+        "path\tgithub.com/docker/pinata/linuxkit/pkg/desktop/rootfs/cmd/initd",
+        "mod\tgithub.com/docker/pinata\t(devel)\t",
+        "build\t-buildmode=pie",
+        "build\t-compiler=gc",
+        "build\t-tags=osusergo,seccomp,mutagensspl,mutagenfanotify",
+        "build\t-trimpath=true",
+        "build\tCGO_ENABLED=1",
+        "build\tGOARCH=amd64",
+        "build\tGOOS=linux",
+        "build\tGOAMD64=v1"
+      ],
+      "clock_related_symbol_strings": [
+        "github.com/docker/pinata/linuxkit/pkg/desktop/rootfs/cmd/initd/desktop.runBackendTimeSync",
+        "github.com/docker/pinata/linuxkit/pkg/desktop/rootfs/cmd/initd/desktop.runBackendTimeSync.func1",
+        "syscall.Settimeofday"
+      ],
+      "limits": "Embedded build metadata and symbol strings, not a signed provenance or proof of the active calling path."
+    },
+    "analysis_negative_cases": [
+      {
+        "case": "missing_syscall_success",
+        "exit": 1,
+        "log_sha256": "c2b853b24ab6d6c68fc36486a1123f722d1f2cf5ba8c2e68297a8d94b9aa985e"
+      },
+      {
+        "case": "unmapped_setter_tid",
+        "exit": 1,
+        "log_sha256": "3225246d8b6e129bfbb6db8ae79669f012813f20577f7e9bd874b2e9f4bf24d3"
+      },
+      {
+        "case": "changed_query_identity",
+        "exit": 1,
+        "log_sha256": "ab6d36353e16d18642eed0e486b25e8b1b078ac80403afa5bcc8e15092a885cd"
+      },
+      {
+        "case": "different_executable_sha",
+        "exit": 1,
+        "log_sha256": "dd3d165d5ca7165b627a7f1d6e389cc580ea1db7bdd664f21265ff5b13401223"
+      },
+      {
+        "case": "cleanup_false",
+        "exit": 1,
+        "log_sha256": "fd9e9a5e9f8e0a4ed177c5dcb432ac970cbd5a6a63d7a8aecfd137b25e37160c"
+      },
+      {
+        "case": "buffer_overrun",
+        "exit": 1,
+        "log_sha256": "ea06bb043263978780825decc551729895f5bc65584cbd5b4749315ac54990f4"
+      },
+      {
+        "case": "changed_namespace",
+        "exit": 1,
+        "log_sha256": "86886678a51d0744f9df6bddc881de680d0092e138206a0a68cc6894edeff2f5"
+      }
+    ],
+    "readiness": {
+      "status": "LOCAL_ORIGINALS_INTACT_NOT_T09_OR_T10_COMPLETE",
+      "existing_count": 45,
+      "missing_months": [
+        "202610"
+      ],
+      "historical_comparison": {
+        "old_manifest": "261021/data/derived/capitalbikeshare-hourly-2023-202604-manifest.json",
+        "old_manifest_sha256": "b4fc2e187b87127a4d845680f9edb19826976cf067c64e0470fd0df388752852",
+        "matched_old_manifest_archives": 41,
+        "matched_work_log_archives": 4
+      },
+      "legacy_registry_sha256": "264e1a0350e4e3b930c01ce0614e4f2a486971afe46223adc8a6a1c1acffd4ef",
+      "ledger": {
+        "path": "261021/data/evaluations/consumption-ledger.json",
+        "exists": false
+      },
+      "proposed_validation_hours": 1464,
+      "proposed_evaluation_hours": 1461,
+      "proposed_windows_overlap_observed_consumed_windows": false,
+      "protocol_frozen": false,
+      "labels_aggregated_or_scored": false,
+      "limits": [
+        "ZIP CRC and CSV header checks do not audit row-level duplicates, timestamp coverage, publisher omissions or DST.",
+        "No new aggregate/manifest schema3/protocol or source completeness claim; Oct buffer is missing.",
+        "JSON ledger absence is only current local state, not proof of never consuming a window in other checkouts."
+      ]
+    },
+    "original_archive_inventory": [
+      {
+        "month": "202301",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 7513453,
+        "sha256": "bb0af48b0503a18b30a249eb5c339ee3c141ff0f61ea0a4c64cf44d67bd121b9",
+        "csv_member": "202301-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 40818384
+      },
+      {
+        "month": "202302",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 6990171,
+        "sha256": "24e2c3a40957c423db3b11f6284571412385f27528335affc5935478aea5defb",
+        "csv_member": "202302-captialbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 41558266
+      },
+      {
+        "month": "202303",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 10430022,
+        "sha256": "6703cc879642856d5e63ff09cdec1956bf889ec092c75ac124e4d7a07c1a8d55",
+        "csv_member": "202303-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 58128166
+      },
+      {
+        "month": "202304",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 14781363,
+        "sha256": "c6bb789cb4f4e4fba8cd47dc188891260194c4243d92723aef430f3fbcc5673a",
+        "csv_member": "202304-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 77469614
+      },
+      {
+        "month": "202305",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 15638722,
+        "sha256": "29dae1c45b7dfaab62759c90b7d872b1b1ef3891fbaa801532b5848cc15c282c",
+        "csv_member": "202305-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 85942766
+      },
+      {
+        "month": "202306",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 16007936,
+        "sha256": "81ffb125b70260b6d5d69cba51e2b472196bba28535306f5ccbc6328c4c7373f",
+        "csv_member": "202306-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 85407319
+      },
+      {
+        "month": "202307",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 15674765,
+        "sha256": "add7a8a542c2fd90544ec11fa64457ab2ebf18401bc1ef7d9eb645c6d0889be8",
+        "csv_member": "202307-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 92503220
+      },
+      {
+        "month": "202308",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 17485575,
+        "sha256": "aad57d57d27fd1c665d6336e4e91f0762cf80b92b59760c3c002a0e1dd67a73c",
+        "csv_member": "202308-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 93046138
+      },
+      {
+        "month": "202309",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 16052300,
+        "sha256": "64c7f702b156820c3c566612bfe1b5f0bedbd80102683c8c398cf787128af1b9",
+        "csv_member": "202309-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 88694986
+      },
+      {
+        "month": "202310",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 16692265,
+        "sha256": "85901a965011c7d5142276b61c42331ca95afcdcc12c0d158f0e0c06ce2bed98",
+        "csv_member": "202310-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 96229984
+      },
+      {
+        "month": "202311",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 12778048,
+        "sha256": "8b38e66ffaed39d74b4e3a10dc3336b9df4f4d0621c61dae72b0ffbb7e7c8cd2",
+        "csv_member": "202311-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 69724332
+      },
+      {
+        "month": "202312",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 10563448,
+        "sha256": "47b93bac31d03646737eb672ed724c79a8314f12156a0b9fbcf2795fb109fb41",
+        "csv_member": "202312-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 53276499
+      },
+      {
+        "month": "202401",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 8837907,
+        "sha256": "48d11e148db00bd53c47fe419b166f37862faefac61a1ce9503b87017573ed34",
+        "csv_member": "202401-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 45823391
+      },
+      {
+        "month": "202402",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 12038545,
+        "sha256": "470885c1432d5150f1f1783df0ee1d8238484e5636681f1d67eda6d7b85762d9",
+        "csv_member": "202402-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 61399057
+      },
+      {
+        "month": "202403",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 16315953,
+        "sha256": "87524c79c508e5989b50d5bbeac198792d3ba4d5be4fdff49b19a47bbc24c674",
+        "csv_member": "202403-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 84463527
+      },
+      {
+        "month": "202404",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 18097545,
+        "sha256": "b1752b59d3cd174ce65ddb215edc50c727849fb6b8e11f077112cd982f3dfa74",
+        "csv_member": "202004-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 94922783
+      },
+      {
+        "month": "202405",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 19399362,
+        "sha256": "ef1120e68c1744251451a12bf003e74eed58f14f53547122302e1821b6e1c142",
+        "csv_member": "202405-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 99370217
+      },
+      {
+        "month": "202406",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 24847557,
+        "sha256": "d3e7b270fca3daec928f1d60120c72242420a1bb055165f667f78ef4e022828c",
+        "csv_member": "202406-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 116659331
+      },
+      {
+        "month": "202407",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 24116339,
+        "sha256": "60f025f88379487953083ec67dfe23eb51cb16047f7f399c47d44b3e170b9ba3",
+        "csv_member": "202407-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 116578785
+      },
+      {
+        "month": "202408",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 24772714,
+        "sha256": "6f16ceab010a3b176a8d7965b7db9f50f5b140be3fe3ebffd9cae991dd4d2213",
+        "csv_member": "202408-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 120669988
+      },
+      {
+        "month": "202409",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 26194186,
+        "sha256": "2007093d9c1c00ba55fe62a6be226b588af6aed78f8ee26ee5635c97921e2843",
+        "csv_member": "202409-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 129379040
+      },
+      {
+        "month": "202410",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 27277170,
+        "sha256": "3d4b61949bc001d8c25bc2ceeaa8f61ec4dba7c2d1b354c1eadf6b42c29f36e6",
+        "csv_member": "202410-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 139732412
+      },
+      {
+        "month": "202411",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 21919417,
+        "sha256": "ab2b18cd8be5040aa9f869ec8a5404e72dee80becf22d5568b69624850eee82a",
+        "csv_member": "202411-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 105838568
+      },
+      {
+        "month": "202412",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 14865654,
+        "sha256": "41d4a31e17cfc3073b836d27c29170570c3d062bc0d1d7d2bf2084e92c33d807",
+        "csv_member": "202412-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 69775583
+      },
+      {
+        "month": "202501",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 11453201,
+        "sha256": "d1bb7539d0a2b016bfdce2bc3db60b801869948ecf5139a32f897422ee6d312e",
+        "csv_member": "202501-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 52774579
+      },
+      {
+        "month": "202502",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 13403235,
+        "sha256": "332df8d389179ecf95a192813556567f63ee65837f899e5ae1c890797b99f02e",
+        "csv_member": "202502-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 68889095
+      },
+      {
+        "month": "202503",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 24906531,
+        "sha256": "b8dd1f8317a60481ebaec5ae406e2dfc5393d1689e7a8bce4aa8ece4f6a854b2",
+        "csv_member": "202503-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 118597376
+      },
+      {
+        "month": "202504",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 25712657,
+        "sha256": "99b5269424607d32adb4f0545a613748df5493eda8104cc1d59031e128a70328",
+        "csv_member": "202504-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 125312959
+      },
+      {
+        "month": "202505",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 27079061,
+        "sha256": "53188c67d23bae6a2872571a9cc8611519ed2f858100375f2aeaf942cb0c524a",
+        "csv_member": "202505-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 128977452
+      },
+      {
+        "month": "202506",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 27463070,
+        "sha256": "10090df8b77eab6425c6979b1d501d7ce25a79da11b4ff37704200883746e097",
+        "csv_member": "202506-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 129140364
+      },
+      {
+        "month": "202507",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 27435004,
+        "sha256": "348704ce73f24de1753ef2ce66ef7fc45ea3df4dc4c96b201b72b58f256482f3",
+        "csv_member": "202507-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 131972173
+      },
+      {
+        "month": "202508",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 24470299,
+        "sha256": "529e1e4919ec28b950d9577e79c0cbad170f07f0ceee1c320a8802e130554795",
+        "csv_member": "202508-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 127605886
+      },
+      {
+        "month": "202509",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 25272829,
+        "sha256": "d026498b2f694b050193672f33ce0e7f113684477e51d9e5247715aa3a1aaab8",
+        "csv_member": "202509-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 124939828
+      },
+      {
+        "month": "202510",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 24133261,
+        "sha256": "fed6aa625af5d9598c2587f542f6ab81b35b0721606426792ea037b9f807b537",
+        "csv_member": "202510-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 125175310
+      },
+      {
+        "month": "202511",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 16490186,
+        "sha256": "7ead9084e76e65898289bb47e09e5321e14b5915e1fdd347d56b1d47af8da376",
+        "csv_member": "202511-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 88964144
+      },
+      {
+        "month": "202512",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 11656999,
+        "sha256": "2651bb9be1b2cfa4aba8a4db1b66f9a61554496c2cfdec493e98f8dd1d3ebffc",
+        "csv_member": "202512-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 58076809
+      },
+      {
+        "month": "202601",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 10203313,
+        "sha256": "e7627b31f3aff79ff692fe85322e5969e5c2776b2023083041153b700183462d",
+        "csv_member": "202601-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 51408186
+      },
+      {
+        "month": "202602",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 9302230,
+        "sha256": "9c7c2ff4ad454dd7a30041dee1bf10008a544c8ff9aa5b3503c2ce17cccb9e35",
+        "csv_member": "202602-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 46462044
+      },
+      {
+        "month": "202603",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 18384297,
+        "sha256": "1d891467a1aa134596e072027dd03f9c9b3fd1c7c03072ac1a9448b194464864",
+        "csv_member": "202603-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 99741875
+      },
+      {
+        "month": "202604",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 22943045,
+        "sha256": "43a3a7cc424f0cfb2124f554e06837161e120af8a4093d4e427c0878e7154c18",
+        "csv_member": "202604-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 120249434
+      },
+      {
+        "month": "202605",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 23325894,
+        "sha256": "09af6b9d7bfdfeff084783f9397da7371e745bbf604ca3065fcdd50843078f9f",
+        "csv_member": "202605-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 117819292
+      },
+      {
+        "month": "202606",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 25458172,
+        "sha256": "82deffbb845ddc6a841c23f1759ed18d4ac52091fff81f2d2b27af7435fa8c9c",
+        "csv_member": "202606-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 130560815
+      },
+      {
+        "month": "202607",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 24191626,
+        "sha256": "60ac4ee82ab65ff818b60afccf6293056626ff4757460d31bce41e0d0bf8aadd",
+        "csv_member": "202607-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 130157242
+      },
+      {
+        "month": "202608",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 24268203,
+        "sha256": "bd59385ba5a872f687d685269d6f6fec7cfe3e7bbf5c4de29422e73b87db4471",
+        "csv_member": "202608-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 128940592
+      },
+      {
+        "month": "202609",
+        "status": "bytes_hash_zip_header_match",
+        "bytes": 25848624,
+        "sha256": "5f4517b46f7c11e5eb088221f0b83d8c348931e157c117a93346048958171435",
+        "csv_member": "202609-capitalbikeshare-tripdata.csv",
+        "header": [
+          "ride_id",
+          "rideable_type",
+          "started_at",
+          "ended_at",
+          "start_station_name",
+          "start_station_id",
+          "end_station_name",
+          "end_station_id",
+          "start_lat",
+          "start_lng",
+          "end_lat",
+          "end_lng",
+          "member_casual"
+        ],
+        "uncompressed_bytes": 134303849
+      },
+      {
+        "month": "202610",
+        "status": "missing"
+      }
+    ],
+    "official_HEAD": {
+      "202609": 200,
+      "202610": 404,
+      "observed_utc": "2026-11-04T12:34:46.038702+00:00"
+    },
+    "new_admin_logs_found": false,
+    "T03_natural_recurrence_observed": false,
+    "T03_tests_rerun_this_turn": false
+  },
+  "limits": [
+    "The matched current cohort is not a retrospective proof for all historical setter TIDs or failures.",
+    "No new PHC fd/UDP inventory or initial namespace administrative capture.",
+    "No saturation internal-value trace this turn: one tick read 10262 and the initd-focused trace contained no tick11000.",
+    "Go embedded metadata and symbol strings are not an authenticated build provenance or dynamic goroutine call stack.",
+    "T09 official HEAD succeeded after a sandbox DNS failure; October is still missing, with no data acquisition.",
+    "Existing ZIP integrity and header checks do not prove row-level completeness or a new audited snapshot.",
+    "All timed research attempts are indexed here; exploratory repository reads and one atomic patch failure are summarized separately in the work log.",
+    "The previous f45733a CI is historical acceptance for unchanged product sources; not CI of this record."
+  ],
+  "attempts": [
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261104-followup-d8ec164/source_head.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-04T12:34:30.533482+00:00",
+      "monotonic_start_ns": 154040919093339,
+      "exit_code": 1,
+      "finished_at_utc": "2026-11-04T12:34:30.861850+00:00",
+      "monotonic_end_ns": 154041247385476,
+      "log": "source-head-v1.log",
+      "bytes": 2855,
+      "sha256": "357e4a3ccb7b7033af027a0eb7ffcb2714e0b42cc65c5092a2748b809defb93c",
+      "attempt": "source-head-v1"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261104-followup-d8ec164/source_head.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-04T12:34:43.965562+00:00",
+      "monotonic_start_ns": 154055699639518,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-04T12:34:46.129010+00:00",
+      "monotonic_end_ns": 154057860323075,
+      "log": "source-head-v2.log",
+      "bytes": 389,
+      "sha256": "82f3fdcd6d2d136ed80756e2aea7b9c4b6cbe3d77512e523f5f029a44c4ae280",
+      "attempt": "source-head-v2"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261104-followup-d8ec164/read_state.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-04T12:35:32.796963+00:00",
+      "monotonic_start_ns": 154105820387282,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-04T12:35:33.321905+00:00",
+      "monotonic_end_ns": 154106345333466,
+      "log": "state-read-v1.log",
+      "bytes": 1613,
+      "sha256": "8cfadc3676db7625f0097b1182d0bf9bfadbf16dca8ebaee27dee8700139793f",
+      "attempt": "state-read-v1"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261104-followup-d8ec164/read_initd.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-04T12:37:13.635047+00:00",
+      "monotonic_start_ns": 154212148590862,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-04T12:37:16.607014+00:00",
+      "monotonic_end_ns": 154215120567601,
+      "log": "docker-initd-inventory-v1.log",
+      "bytes": 14789,
+      "sha256": "0dba63f575f7ea147b3a7b020dbbba7c36ea3aae64e5cf2c5495dc2cc3a7063f",
+      "attempt": "docker-initd-inventory-v1"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261104-followup-d8ec164/run_initd_trace.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-04T12:38:34.200348+00:00",
+      "monotonic_start_ns": 154296841170468,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-04T12:39:18.888809+00:00",
+      "monotonic_end_ns": 154342910851545,
+      "log": "initd-joint-trace-v1.log",
+      "bytes": 1540,
+      "sha256": "aefc3351835117ff40007cbbd1f297ff235cb2d82eef89de28b914b89e89610f",
+      "attempt": "initd-joint-trace-v1"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261104-followup-d8ec164/read_initd_binary.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-04T12:40:13.121607+00:00",
+      "monotonic_start_ns": 154399909563714,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-04T12:40:17.157842+00:00",
+      "monotonic_end_ns": 154403945791560,
+      "log": "initd-binary-chain-v1.log",
+      "bytes": 135,
+      "sha256": "b690897ebc248ecf30fd38b950b24bc1a3329c03edbb297c67a84c84305a3878",
+      "attempt": "initd-binary-chain-v1"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261104-followup-d8ec164/analyze_initd_binary.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-04T12:41:01.141748+00:00",
+      "monotonic_start_ns": 154450636555037,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-04T12:41:05.039269+00:00",
+      "monotonic_end_ns": 154454534069988,
+      "log": "initd-binary-analysis-v1.log",
+      "bytes": 913,
+      "sha256": "342d8a33c3c40232e94acd22f2d39e5620aca3dabc1a236ef8e8fed8d38382f7",
+      "attempt": "initd-binary-analysis-v1"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261104-followup-d8ec164/analyze_initd_trace.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-04T12:42:17.232714+00:00",
+      "monotonic_start_ns": 154529462432394,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-04T12:42:17.351921+00:00",
+      "monotonic_end_ns": 154529581638002,
+      "log": "initd-trace-analysis-v1.log",
+      "bytes": 9955,
+      "sha256": "78689ae42dc0518f0f0748dad913bb704fd61968b7ea32d8df405de43fe60e84",
+      "attempt": "initd-trace-analysis-v1"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261104-followup-d8ec164/audit_readiness.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-04T12:45:07.302353+00:00",
+      "monotonic_start_ns": 154606333760076,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-04T12:45:36.693734+00:00",
+      "monotonic_end_ns": 154636613536768,
+      "log": "t10-local-input-audit-v1.log",
+      "bytes": 29185,
+      "sha256": "fa70bcc0d114fc37074a9c6937d2bacb45d1a79f732f8177f13e15a9bf54c9f2",
+      "attempt": "t10-local-input-audit-v1"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "scripts/prepare_capitalbikeshare.py",
+        "--help"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "started_at_utc": "2026-11-04T12:45:43.872524+00:00",
+      "monotonic_start_ns": 154643792336284,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-04T12:45:44.901165+00:00",
+      "monotonic_end_ns": 154644820965016,
+      "log": "aggregation-cli-help-v1.log",
+      "bytes": 1016,
+      "sha256": "1fa82bf13a9b36f331fcb9e3803bf5b9504478b3a5a6b66fc30c86ff09248298",
+      "attempt": "aggregation-cli-help-v1"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "scripts/create_capital_evaluation_protocol.py",
+        "--help"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "started_at_utc": "2026-11-04T12:45:43.881755+00:00",
+      "monotonic_start_ns": 154643801569637,
+      "exit_code": 1,
+      "finished_at_utc": "2026-11-04T12:45:46.777146+00:00",
+      "monotonic_end_ns": 154646696948421,
+      "log": "protocol-cli-help-v1.log",
+      "bytes": 73,
+      "sha256": "5b8734bf479dd233ad74a7564789710ca2b2156d08f0be9265154660ebba5b16",
+      "explicit_nonsensitive_environment": {
+        "MLFLOW_DISABLE_AGENT_HINT": "1",
+        "DATA_PROFILE_ID": "unset/default uci-bike-sharing"
+      },
+      "attempt": "protocol-cli-help-v1"
+    },
+    {
+      "command": [
+        ".venv/bin/python",
+        "scripts/create_capital_evaluation_protocol.py",
+        "--help"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "started_at_utc": "2026-11-04T12:46:26.881017+00:00",
+      "monotonic_start_ns": 154688599826042,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-04T12:46:29.516237+00:00",
+      "monotonic_end_ns": 154691235026572,
+      "log": "protocol-cli-help-v2.log",
+      "bytes": 1294,
+      "sha256": "f32fe919b8472c4cff99d5153b6bdf9858480d32f899dcac22d99c1e2f979f28",
+      "explicit_nonsensitive_environment": {
+        "DATA_PROFILE_ID": "capital-bikeshare",
+        "MLFLOW_DISABLE_AGENT_HINT": "1"
+      },
+      "attempt": "protocol-cli-help-v2"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261104-followup-d8ec164/analyze_initd_trace.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-04T12:47:02.825653+00:00",
+      "monotonic_start_ns": 154725463117075,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-04T12:47:02.942901+00:00",
+      "monotonic_end_ns": 154725580371020,
+      "log": "initd-trace-analysis-v2.log",
+      "bytes": 9955,
+      "sha256": "78689ae42dc0518f0f0748dad913bb704fd61968b7ea32d8df405de43fe60e84",
+      "attempt": "initd-trace-analysis-v2"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261104-followup-d8ec164/test_analysis_rejections.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-04T12:47:03.184298+00:00",
+      "monotonic_start_ns": 154725821763306,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-04T12:47:04.770451+00:00",
+      "monotonic_end_ns": 154727407906759,
+      "log": "initd-analysis-negative-v1.log",
+      "bytes": 1010,
+      "sha256": "1a99a56004de38d4125faa44f5a4e83e5567e319784507ef4b418a4d5a870439",
+      "attempt": "initd-analysis-negative-v1"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261104-followup-d8ec164/validate_completion.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "started_at_utc": "2026-11-04T12:54:22.925363+00:00",
+      "monotonic_start_ns": 155179925036219,
+      "exit_code": 0,
+      "finished_at_utc": "2026-11-04T12:54:23.296926+00:00",
+      "monotonic_end_ns": 155180296605893,
+      "log": "completion-validation-v1.log",
+      "bytes": 298,
+      "sha256": "203479bf214cc1fc351b3a4d9017e199fd82524a2ee9d0f2b112938bf4fa00e0",
+      "attempt": "completion-validation-v1"
+    }
+  ],
+  "raw_files": [
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/aggregation-cli-help-v1.json",
+      "bytes": 505,
+      "sha256": "c294a1b2512d9723cf7bf7f6355c2d5cd453fdcdc5a762b6d36db4219a4d3632"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/aggregation-cli-help-v1.log",
+      "bytes": 1016,
+      "sha256": "1fa82bf13a9b36f331fcb9e3803bf5b9504478b3a5a6b66fc30c86ff09248298"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/buffer_overrun/analyze_initd_trace.py",
+      "bytes": 4670,
+      "sha256": "281d83640741813a586f8cb52ade2f579de416b544326a3676a46dc6f9c41f3c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/buffer_overrun/identity-after.json",
+      "bytes": 29311,
+      "sha256": "ab302c684d4b5ba5f475c8572dbbbda969454d88dcc86e7d642209127894ea46"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/buffer_overrun/identity-before.json",
+      "bytes": 29363,
+      "sha256": "09978ae9cf5be7d812b99f09e225971a9008e78866bc68187e97c80f6bf9043c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/buffer_overrun/initd-binary-analysis.json",
+      "bytes": 913,
+      "sha256": "342d8a33c3c40232e94acd22f2d39e5620aca3dabc1a236ef8e8fed8d38382f7"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/buffer_overrun/initd-trace/buffer-stats.json",
+      "bytes": 1268,
+      "sha256": "02b5f7570c12b0771964824ad76f1302bbe4e1aebe1c27e864911b40e1708f40"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/buffer_overrun/initd-trace/clocks.jsonl",
+      "bytes": 406624,
+      "sha256": "72f8ab4dd172199b65e2dc981751045f5f51bd85ae6c97d30fb1468ae829b88a"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/buffer_overrun/initd-trace/definitions.json",
+      "bytes": 412,
+      "sha256": "be1fc3ef8b1e4ef9752304abdcae87ac359ec5a9af80b92a870caca7607f3c86"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/buffer_overrun/initd-trace/ready.json",
+      "bytes": 178,
+      "sha256": "50992a7aa2ed1c726f53397ed679852a1e6c2c79e1c4ba8c1fbe73382660739e"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/buffer_overrun/initd-trace/summary.json",
+      "bytes": 1540,
+      "sha256": "aefc3351835117ff40007cbbd1f297ff235cb2d82eef89de28b914b89e89610f"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/buffer_overrun/initd-trace/trace.txt",
+      "bytes": 29563,
+      "sha256": "61b256aa93f5f919057d597b8555d1924edbff58793014bb57fff0c3caf6a801"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/buffer_overrun/rejection.log",
+      "bytes": 509,
+      "sha256": "ea06bb043263978780825decc551729895f5bc65584cbd5b4749315ac54990f4"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_namespace/analyze_initd_trace.py",
+      "bytes": 4670,
+      "sha256": "281d83640741813a586f8cb52ade2f579de416b544326a3676a46dc6f9c41f3c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_namespace/identity-after.json",
+      "bytes": 29295,
+      "sha256": "6cd576552814f3dc03cbde9b718fe06f538176215ec12bbf47776e128af4e1d9"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_namespace/identity-before.json",
+      "bytes": 29363,
+      "sha256": "09978ae9cf5be7d812b99f09e225971a9008e78866bc68187e97c80f6bf9043c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_namespace/initd-binary-analysis.json",
+      "bytes": 913,
+      "sha256": "342d8a33c3c40232e94acd22f2d39e5620aca3dabc1a236ef8e8fed8d38382f7"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_namespace/initd-trace/buffer-stats.json",
+      "bytes": 1287,
+      "sha256": "2274f6b1294faf09e1575f6c287641e34d75da5f50c1ea0067a66a8ac221ad26"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_namespace/initd-trace/clocks.jsonl",
+      "bytes": 406624,
+      "sha256": "72f8ab4dd172199b65e2dc981751045f5f51bd85ae6c97d30fb1468ae829b88a"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_namespace/initd-trace/definitions.json",
+      "bytes": 412,
+      "sha256": "be1fc3ef8b1e4ef9752304abdcae87ac359ec5a9af80b92a870caca7607f3c86"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_namespace/initd-trace/ready.json",
+      "bytes": 178,
+      "sha256": "50992a7aa2ed1c726f53397ed679852a1e6c2c79e1c4ba8c1fbe73382660739e"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_namespace/initd-trace/summary.json",
+      "bytes": 1540,
+      "sha256": "aefc3351835117ff40007cbbd1f297ff235cb2d82eef89de28b914b89e89610f"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_namespace/initd-trace/trace.txt",
+      "bytes": 29563,
+      "sha256": "61b256aa93f5f919057d597b8555d1924edbff58793014bb57fff0c3caf6a801"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_namespace/rejection.log",
+      "bytes": 348,
+      "sha256": "86886678a51d0744f9df6bddc881de680d0092e138206a0a68cc6894edeff2f5"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_query_identity/analyze_initd_trace.py",
+      "bytes": 4670,
+      "sha256": "281d83640741813a586f8cb52ade2f579de416b544326a3676a46dc6f9c41f3c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_query_identity/identity-after.json",
+      "bytes": 29311,
+      "sha256": "ab302c684d4b5ba5f475c8572dbbbda969454d88dcc86e7d642209127894ea46"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_query_identity/identity-before.json",
+      "bytes": 29351,
+      "sha256": "44d2e74252b640873da646e5287a728e05119b6b70dc44cd1c32862ea8b11333"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_query_identity/initd-binary-analysis.json",
+      "bytes": 913,
+      "sha256": "342d8a33c3c40232e94acd22f2d39e5620aca3dabc1a236ef8e8fed8d38382f7"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_query_identity/initd-trace/buffer-stats.json",
+      "bytes": 1287,
+      "sha256": "2274f6b1294faf09e1575f6c287641e34d75da5f50c1ea0067a66a8ac221ad26"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_query_identity/initd-trace/clocks.jsonl",
+      "bytes": 406624,
+      "sha256": "72f8ab4dd172199b65e2dc981751045f5f51bd85ae6c97d30fb1468ae829b88a"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_query_identity/initd-trace/definitions.json",
+      "bytes": 412,
+      "sha256": "be1fc3ef8b1e4ef9752304abdcae87ac359ec5a9af80b92a870caca7607f3c86"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_query_identity/initd-trace/ready.json",
+      "bytes": 178,
+      "sha256": "50992a7aa2ed1c726f53397ed679852a1e6c2c79e1c4ba8c1fbe73382660739e"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_query_identity/initd-trace/summary.json",
+      "bytes": 1540,
+      "sha256": "aefc3351835117ff40007cbbd1f297ff235cb2d82eef89de28b914b89e89610f"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_query_identity/initd-trace/trace.txt",
+      "bytes": 29563,
+      "sha256": "61b256aa93f5f919057d597b8555d1924edbff58793014bb57fff0c3caf6a801"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/changed_query_identity/rejection.log",
+      "bytes": 711,
+      "sha256": "ab6d36353e16d18642eed0e486b25e8b1b078ac80403afa5bcc8e15092a885cd"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/cleanup_false/analyze_initd_trace.py",
+      "bytes": 4670,
+      "sha256": "281d83640741813a586f8cb52ade2f579de416b544326a3676a46dc6f9c41f3c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/cleanup_false/identity-after.json",
+      "bytes": 29311,
+      "sha256": "ab302c684d4b5ba5f475c8572dbbbda969454d88dcc86e7d642209127894ea46"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/cleanup_false/identity-before.json",
+      "bytes": 29363,
+      "sha256": "09978ae9cf5be7d812b99f09e225971a9008e78866bc68187e97c80f6bf9043c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/cleanup_false/initd-binary-analysis.json",
+      "bytes": 913,
+      "sha256": "342d8a33c3c40232e94acd22f2d39e5620aca3dabc1a236ef8e8fed8d38382f7"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/cleanup_false/initd-trace/buffer-stats.json",
+      "bytes": 1287,
+      "sha256": "2274f6b1294faf09e1575f6c287641e34d75da5f50c1ea0067a66a8ac221ad26"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/cleanup_false/initd-trace/clocks.jsonl",
+      "bytes": 406624,
+      "sha256": "72f8ab4dd172199b65e2dc981751045f5f51bd85ae6c97d30fb1468ae829b88a"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/cleanup_false/initd-trace/definitions.json",
+      "bytes": 412,
+      "sha256": "be1fc3ef8b1e4ef9752304abdcae87ac359ec5a9af80b92a870caca7607f3c86"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/cleanup_false/initd-trace/ready.json",
+      "bytes": 178,
+      "sha256": "50992a7aa2ed1c726f53397ed679852a1e6c2c79e1c4ba8c1fbe73382660739e"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/cleanup_false/initd-trace/summary.json",
+      "bytes": 1458,
+      "sha256": "6a8185f0cbbe59abf799745cd338ab0aa6669de680841205528a81b420dc7cff"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/cleanup_false/initd-trace/trace.txt",
+      "bytes": 29563,
+      "sha256": "61b256aa93f5f919057d597b8555d1924edbff58793014bb57fff0c3caf6a801"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/cleanup_false/rejection.log",
+      "bytes": 568,
+      "sha256": "fd9e9a5e9f8e0a4ed177c5dcb432ac970cbd5a6a63d7a8aecfd137b25e37160c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/different_executable_sha/analyze_initd_trace.py",
+      "bytes": 4670,
+      "sha256": "281d83640741813a586f8cb52ade2f579de416b544326a3676a46dc6f9c41f3c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/different_executable_sha/identity-after.json",
+      "bytes": 29311,
+      "sha256": "ab302c684d4b5ba5f475c8572dbbbda969454d88dcc86e7d642209127894ea46"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/different_executable_sha/identity-before.json",
+      "bytes": 29363,
+      "sha256": "09978ae9cf5be7d812b99f09e225971a9008e78866bc68187e97c80f6bf9043c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/different_executable_sha/initd-binary-analysis.json",
+      "bytes": 840,
+      "sha256": "c7cc510f24ce34b765dbd130dcbc1f4831a78c9f74a86083006258755b725b2a"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/different_executable_sha/initd-trace/buffer-stats.json",
+      "bytes": 1287,
+      "sha256": "2274f6b1294faf09e1575f6c287641e34d75da5f50c1ea0067a66a8ac221ad26"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/different_executable_sha/initd-trace/clocks.jsonl",
+      "bytes": 406624,
+      "sha256": "72f8ab4dd172199b65e2dc981751045f5f51bd85ae6c97d30fb1468ae829b88a"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/different_executable_sha/initd-trace/definitions.json",
+      "bytes": 412,
+      "sha256": "be1fc3ef8b1e4ef9752304abdcae87ac359ec5a9af80b92a870caca7607f3c86"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/different_executable_sha/initd-trace/ready.json",
+      "bytes": 178,
+      "sha256": "50992a7aa2ed1c726f53397ed679852a1e6c2c79e1c4ba8c1fbe73382660739e"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/different_executable_sha/initd-trace/summary.json",
+      "bytes": 1540,
+      "sha256": "aefc3351835117ff40007cbbd1f297ff235cb2d82eef89de28b914b89e89610f"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/different_executable_sha/initd-trace/trace.txt",
+      "bytes": 29563,
+      "sha256": "61b256aa93f5f919057d597b8555d1924edbff58793014bb57fff0c3caf6a801"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/different_executable_sha/rejection.log",
+      "bytes": 437,
+      "sha256": "dd3d165d5ca7165b627a7f1d6e389cc580ea1db7bdd664f21265ff5b13401223"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/missing_syscall_success/analyze_initd_trace.py",
+      "bytes": 4670,
+      "sha256": "281d83640741813a586f8cb52ade2f579de416b544326a3676a46dc6f9c41f3c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/missing_syscall_success/identity-after.json",
+      "bytes": 29311,
+      "sha256": "ab302c684d4b5ba5f475c8572dbbbda969454d88dcc86e7d642209127894ea46"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/missing_syscall_success/identity-before.json",
+      "bytes": 29363,
+      "sha256": "09978ae9cf5be7d812b99f09e225971a9008e78866bc68187e97c80f6bf9043c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/missing_syscall_success/initd-binary-analysis.json",
+      "bytes": 913,
+      "sha256": "342d8a33c3c40232e94acd22f2d39e5620aca3dabc1a236ef8e8fed8d38382f7"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/missing_syscall_success/initd-trace/buffer-stats.json",
+      "bytes": 1287,
+      "sha256": "2274f6b1294faf09e1575f6c287641e34d75da5f50c1ea0067a66a8ac221ad26"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/missing_syscall_success/initd-trace/clocks.jsonl",
+      "bytes": 406624,
+      "sha256": "72f8ab4dd172199b65e2dc981751045f5f51bd85ae6c97d30fb1468ae829b88a"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/missing_syscall_success/initd-trace/definitions.json",
+      "bytes": 412,
+      "sha256": "be1fc3ef8b1e4ef9752304abdcae87ac359ec5a9af80b92a870caca7607f3c86"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/missing_syscall_success/initd-trace/ready.json",
+      "bytes": 178,
+      "sha256": "50992a7aa2ed1c726f53397ed679852a1e6c2c79e1c4ba8c1fbe73382660739e"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/missing_syscall_success/initd-trace/summary.json",
+      "bytes": 1540,
+      "sha256": "aefc3351835117ff40007cbbd1f297ff235cb2d82eef89de28b914b89e89610f"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/missing_syscall_success/initd-trace/trace.txt",
+      "bytes": 29563,
+      "sha256": "eaefa58db19fdb3dcece1e443d77234800c7b0760453207f810694361a6c6745"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/missing_syscall_success/rejection.log",
+      "bytes": 519,
+      "sha256": "c2b853b24ab6d6c68fc36486a1123f722d1f2cf5ba8c2e68297a8d94b9aa985e"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/unmapped_setter_tid/analyze_initd_trace.py",
+      "bytes": 4670,
+      "sha256": "281d83640741813a586f8cb52ade2f579de416b544326a3676a46dc6f9c41f3c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/unmapped_setter_tid/identity-after.json",
+      "bytes": 29311,
+      "sha256": "ab302c684d4b5ba5f475c8572dbbbda969454d88dcc86e7d642209127894ea46"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/unmapped_setter_tid/identity-before.json",
+      "bytes": 29363,
+      "sha256": "09978ae9cf5be7d812b99f09e225971a9008e78866bc68187e97c80f6bf9043c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/unmapped_setter_tid/initd-binary-analysis.json",
+      "bytes": 913,
+      "sha256": "342d8a33c3c40232e94acd22f2d39e5620aca3dabc1a236ef8e8fed8d38382f7"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/unmapped_setter_tid/initd-trace/buffer-stats.json",
+      "bytes": 1287,
+      "sha256": "2274f6b1294faf09e1575f6c287641e34d75da5f50c1ea0067a66a8ac221ad26"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/unmapped_setter_tid/initd-trace/clocks.jsonl",
+      "bytes": 406624,
+      "sha256": "72f8ab4dd172199b65e2dc981751045f5f51bd85ae6c97d30fb1468ae829b88a"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/unmapped_setter_tid/initd-trace/definitions.json",
+      "bytes": 412,
+      "sha256": "be1fc3ef8b1e4ef9752304abdcae87ac359ec5a9af80b92a870caca7607f3c86"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/unmapped_setter_tid/initd-trace/ready.json",
+      "bytes": 178,
+      "sha256": "50992a7aa2ed1c726f53397ed679852a1e6c2c79e1c4ba8c1fbe73382660739e"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/unmapped_setter_tid/initd-trace/summary.json",
+      "bytes": 1540,
+      "sha256": "aefc3351835117ff40007cbbd1f297ff235cb2d82eef89de28b914b89e89610f"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/unmapped_setter_tid/initd-trace/trace.txt",
+      "bytes": 29563,
+      "sha256": "425f97ee9ac0d686f8cf5f845a80689ca1a3d5803e6dae0ed95935b770fc04d0"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-fixtures/unmapped_setter_tid/rejection.log",
+      "bytes": 312,
+      "sha256": "3225246d8b6e129bfbb6db8ae79669f012813f20577f7e9bd874b2e9f4bf24d3"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analysis-negative-results.json",
+      "bytes": 1010,
+      "sha256": "1a99a56004de38d4125faa44f5a4e83e5567e319784507ef4b418a4d5a870439"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analyze_initd_binary.py",
+      "bytes": 1507,
+      "sha256": "8bfad6c80c723ac06d4e85aff0e036ca68333a6f5ada446bcfd6896217993c3a"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/analyze_initd_trace.py",
+      "bytes": 4670,
+      "sha256": "281d83640741813a586f8cb52ade2f579de416b544326a3676a46dc6f9c41f3c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/audit_readiness.py",
+      "bytes": 4294,
+      "sha256": "9d75d5cda53d8dcf8b34129dafe919f4a8bb3ba5af372d8047d9cc55fa0d4b7b"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/build_record.py",
+      "bytes": 3495,
+      "sha256": "6628d45f4da2ee6fb212f1b45ef345a1df1e93f2a0754b8ff0b18b20d1268b17"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/completion-validation-v1.json",
+      "bytes": 508,
+      "sha256": "b94df84e699df5090ce513cea335315a40572c756b07f47293878951f1526817"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/completion-validation-v1.log",
+      "bytes": 298,
+      "sha256": "203479bf214cc1fc351b3a4d9017e199fd82524a2ee9d0f2b112938bf4fa00e0"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/docker-initd-inventory-v1.json",
+      "bytes": 502,
+      "sha256": "b63f65e732de8eb6570b7d06f0fa53a773c6db80c3bd3a2b03f6ccd05132e288"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/docker-initd-inventory-v1.log",
+      "bytes": 14789,
+      "sha256": "0dba63f575f7ea147b3a7b020dbbba7c36ea3aae64e5cf2c5495dc2cc3a7063f"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/exploration-failures.txt",
+      "bytes": 928,
+      "sha256": "60c5e4e2b2144bcfdfa5e01a11c89e8fc7d5cc3ee6924d95812c5694336c1b02"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/identity-after.json",
+      "bytes": 29311,
+      "sha256": "ab302c684d4b5ba5f475c8572dbbbda969454d88dcc86e7d642209127894ea46"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/identity-before.json",
+      "bytes": 29363,
+      "sha256": "09978ae9cf5be7d812b99f09e225971a9008e78866bc68187e97c80f6bf9043c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-analysis-negative-v1.json",
+      "bytes": 516,
+      "sha256": "0644d93e8a4ba9072ae5b3267cfaaaab94be7e27a3878fe1e19ccfd376c24839"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-analysis-negative-v1.log",
+      "bytes": 1010,
+      "sha256": "1a99a56004de38d4125faa44f5a4e83e5567e319784507ef4b418a4d5a870439"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-binary-analysis-v1.json",
+      "bytes": 509,
+      "sha256": "df4c7bf10b2815147e6c5193a73c1b8c42150dbdf20de85b4614fbdd1fef73b9"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-binary-analysis-v1.log",
+      "bytes": 913,
+      "sha256": "342d8a33c3c40232e94acd22f2d39e5620aca3dabc1a236ef8e8fed8d38382f7"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-binary-analysis.json",
+      "bytes": 913,
+      "sha256": "342d8a33c3c40232e94acd22f2d39e5620aca3dabc1a236ef8e8fed8d38382f7"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-binary-chain-v1.json",
+      "bytes": 503,
+      "sha256": "e013cca8cbd4bc58c1d366362a8a0b11cc64c598c944a2fe479c5bd69f2a02b7"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-binary-chain-v1.log",
+      "bytes": 135,
+      "sha256": "b690897ebc248ecf30fd38b950b24bc1a3329c03edbb297c67a84c84305a3878"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-chain.json",
+      "bytes": 10192,
+      "sha256": "91a8e897b13c72f6628e6d64efb1aec144946d3af487b28585300f05de498051"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-joint-trace-v1.json",
+      "bytes": 501,
+      "sha256": "dc43677abb976ca2d59d6d48ba670be2d64253a27bf16b793891aa44fb49db82"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-joint-trace-v1.log",
+      "bytes": 1540,
+      "sha256": "aefc3351835117ff40007cbbd1f297ff235cb2d82eef89de28b914b89e89610f"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-trace/buffer-stats.json",
+      "bytes": 1287,
+      "sha256": "2274f6b1294faf09e1575f6c287641e34d75da5f50c1ea0067a66a8ac221ad26"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-trace/clocks.jsonl",
+      "bytes": 406624,
+      "sha256": "72f8ab4dd172199b65e2dc981751045f5f51bd85ae6c97d30fb1468ae829b88a"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-trace/definitions.json",
+      "bytes": 412,
+      "sha256": "be1fc3ef8b1e4ef9752304abdcae87ac359ec5a9af80b92a870caca7607f3c86"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-trace/ready.json",
+      "bytes": 178,
+      "sha256": "50992a7aa2ed1c726f53397ed679852a1e6c2c79e1c4ba8c1fbe73382660739e"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-trace/summary.json",
+      "bytes": 1540,
+      "sha256": "aefc3351835117ff40007cbbd1f297ff235cb2d82eef89de28b914b89e89610f"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-trace/trace.txt",
+      "bytes": 29563,
+      "sha256": "61b256aa93f5f919057d597b8555d1924edbff58793014bb57fff0c3caf6a801"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-trace-analysis-v1.json",
+      "bytes": 508,
+      "sha256": "3f59a50d70a5e291c47f8c600f72529a2c18e5d30b99e0194d4a16f963b6fd0c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-trace-analysis-v1.log",
+      "bytes": 9955,
+      "sha256": "78689ae42dc0518f0f0748dad913bb704fd61968b7ea32d8df405de43fe60e84"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-trace-analysis-v2.json",
+      "bytes": 508,
+      "sha256": "aa4476dbef7c8165573107f5406f3804ff22256f3804ce80b387b01cbc7a32ef"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-trace-analysis-v2.log",
+      "bytes": 9955,
+      "sha256": "78689ae42dc0518f0f0748dad913bb704fd61968b7ea32d8df405de43fe60e84"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd-trace-analysis.json",
+      "bytes": 9955,
+      "sha256": "78689ae42dc0518f0f0748dad913bb704fd61968b7ea32d8df405de43fe60e84"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/initd.elf",
+      "bytes": 69586424,
+      "sha256": "37ddac517530bcdf87c40c2b1df37188d093a6ee6204df43e64edbfba3c27b43"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/protocol-cli-help-v1.json",
+      "bytes": 510,
+      "sha256": "5cabb5dc993b7ba32b41f3a9c748f2e19c5376088d37f1df8a76a4d1cbee36c5"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/protocol-cli-help-v1.log",
+      "bytes": 73,
+      "sha256": "5b8734bf479dd233ad74a7564789710ca2b2156d08f0be9265154660ebba5b16"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/protocol-cli-help-v2.json",
+      "bytes": 512,
+      "sha256": "4ee2ba521d834ca78bee255ce3a21b7e4d86b7b6192da556b2dc88d93b23b4e0"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/protocol-cli-help-v2.log",
+      "bytes": 1294,
+      "sha256": "f32fe919b8472c4cff99d5153b6bdf9858480d32f899dcac22d99c1e2f979f28"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/read_initd.py",
+      "bytes": 1573,
+      "sha256": "7d65aa3aee61385968154c0038cc08307d46cf8ec3bd97be1e82463ad33ebf05"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/read_initd_binary.py",
+      "bytes": 2055,
+      "sha256": "37c626c3d8094693c94e268a6df2ad759e27f0252e687369dfb41d5e4f5665f0"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/read_state.py",
+      "bytes": 2720,
+      "sha256": "c22a6181f0270e4097ac9dcd4f3265f8f9707626bc9cbedab011079464dfd8e7"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/readiness-audit.json",
+      "bytes": 29185,
+      "sha256": "fa70bcc0d114fc37074a9c6937d2bacb45d1a79f732f8177f13e15a9bf54c9f2"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/root-trace-process.log",
+      "bytes": 1458,
+      "sha256": "35854ed9c9b41786e24599af862ebde46d4c48eeea076c0b41fd25517636cfda"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/run_attempt.py",
+      "bytes": 1052,
+      "sha256": "406a4bdeab4fe1af3b18e0e4c98f4e36c7c1d67a415b362dc23b62e61c0b3594"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/run_initd_trace.py",
+      "bytes": 2284,
+      "sha256": "46912c6704af1a5cca05a5887099e6ac769fcb4edca5926ec8a39c14f2c5469e"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/source-head-v1.json",
+      "bytes": 491,
+      "sha256": "b3f2efed74261bfd33520073be164e6cb09e785a12dee2e30df081e7ff405d31"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/source-head-v1.log",
+      "bytes": 2855,
+      "sha256": "357e4a3ccb7b7033af027a0eb7ffcb2714e0b42cc65c5092a2748b809defb93c"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/source-head-v2.json",
+      "bytes": 490,
+      "sha256": "f53f0bd7a0e5ca57241dfb21fa0295b15d85de8f6bfd737b905c7105ba91a299"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/source-head-v2.log",
+      "bytes": 389,
+      "sha256": "82f3fdcd6d2d136ed80756e2aea7b9c4b6cbe3d77512e523f5f029a44c4ae280"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/source_head.py",
+      "bytes": 624,
+      "sha256": "48afbdd2b40d469329e8f34e474a886606d1b160787bac897579440726d2862e"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/state-read-v1.json",
+      "bytes": 489,
+      "sha256": "ea7d586e34fd24d9c32b37a09db36df7fa9680e5c035933f7a44edc3d0518462"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/state-read-v1.log",
+      "bytes": 1613,
+      "sha256": "8cfadc3676db7625f0097b1182d0bf9bfadbf16dca8ebaee27dee8700139793f"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/t10-local-input-audit-v1.json",
+      "bytes": 506,
+      "sha256": "6db7a103e16108239cd295dbafb8a807afdc5b12e3f26bf704b1c3b367299ce4"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/t10-local-input-audit-v1.log",
+      "bytes": 29185,
+      "sha256": "fa70bcc0d114fc37074a9c6937d2bacb45d1a79f732f8177f13e15a9bf54c9f2"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/test_analysis_rejections.py",
+      "bytes": 2125,
+      "sha256": "5b41acda1542a926a8d351d7d44dc6b38191ea803575143fe7c577296f33646b"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/trace_initd.py",
+      "bytes": 3812,
+      "sha256": "738cbef5aee86dcbd49848fdf209a58cbc786c67697793fb494e10cdd87e192b"
+    },
+    {
+      "path": "261021/data/reports/20261104-followup-d8ec164/validate_completion.py",
+      "bytes": 2516,
+      "sha256": "1cde52400998ca589e0233de98c0b575bbeeb32eb81c4ef6f13728ce192d4289"
+    }
+  ],
+  "raw_file_count": 136
+}

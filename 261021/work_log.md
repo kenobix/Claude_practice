@@ -3249,3 +3249,74 @@ validation log/metadataも含めCI側27原本・4attemptの最終索引へ再生
 今回の記録文書/CI索引だけをstageし、全差分・status・秘密情報patternを確認してcommit/pushする。無関係な未追跡3pathは含めない。
 
 最後の直接validatorも成功し373件のhash照合・209相対linkを確認した。hash件数は時計/ORM索引が共有する原本の再照合を含み、相異なる373fileを取得したという意味ではない。
+
+## 2026-11-04・d8ec164以降：initdの管理層照合とT10入力準備
+
+基点`d8ec16412cc833e4b9eb9582921a4309265d1166`、開始時のtracked差分は0。
+計画§11.6、前回work log、chrony-runtime-control、管理者手順、CI41603978704の保存済み索引を確認した。
+無関係な未追跡3pathは保持する。新しい管理者ログはなく、旧debug-shell.logだけが同bytes/SHAで存在した。
+非管理者debug-shellの再試行、OS/時計設定・実DB/registry・現配信の変更、future拒否の緩和は行わない。
+今回は製品source/schema/writer/依存lock/workflowを変えず、読取診断と文書を進めた。
+
+原本は`data/reports/20261104-followup-d8ec164/`。
+runnerはcommand/cwd、開始終了UTC/MONOTONIC、exit、log bytes/SHAを保存し、同名attemptの上書きを拒否する。
+以下の全14 timed research attemptは[今回の索引](docs/reviews/20261104-clock-readiness-checks.json)へ対応する。
+
+| attempt / 実行コマンド | 結果・失敗・判断 |
+|---|---|
+| source-head-v1 / `python3 source_head.py` | 通常sandboxはDNS接続失敗、exit1。objectの404とは区別し、tracebackを保存 |
+| source-head-v2 / 同script、外部読取可能なscope | exit0。公式202609=200/25,848,624bytes、202610=404（12:34:46UTC）。download/fit・評価窓変更なし |
+| state-read-v1 / `python3 read_state.py` | exit0。新管理者directoryなし、同boot。modes0の単発adjtimexはtick10262/freq2792973。chronyc tracking/公開binary SHAは読取成功。systemのcwd翻訳警告もstderrに保存し、成功exitで隠さない |
+| docker-initd-inventory-v1 / `python3 read_initd.py` | exit0。既にRunningのdocker-desktopだけへ入り、initd2processのexe/親/開始tick/namespace/threadsを読取。探索中に消えた無関係processのcomm読取警告を保存。対象2processの成功と全system不在証明を混同しない |
+| initd-joint-trace-v1 / `python3 run_initd_trace.py` | exit0。BTF SHA検査後、private kernel trace45秒と前後35threadの`chrt -p`照会。setterと実exeを照合する目的で、chronyd非飽和の反復確認ではない。instance/probe回収、global制御/SHA不変、lost/overrun0 |
+| initd-binary-chain-v1 / `python3 read_initd_binary.py` | exit0。同SHAのpublic exe69,586,424bytesだけをcopy。実行せず、最大6段の親を読取。原本argvには個人path/data-disk識別値があるためGitへ出さない |
+| initd-binary-analysis-v1 / `python3 analyze_initd_binary.py` | exit0。ELFのGo buildinfo/限定symbolを静的読取。Docker pinata initd module、Go1.27.3、runBackendTimeSync等。埋込情報を署名済みprovenanceや今回の動的stackと扱わない |
+| initd-trace-analysis-v1/v2 / `python3 analyze_initd_trace.py` | 各exit0。2×35照会順序・MONOTONIC範囲・開始tick/ns・exe/inode/namespaceを対応。v2で静的binary SHAとの明示比較も追加。両analysis出力SHA一致 |
+| initd-analysis-negative-v1 / `python3 test_analysis_rejections.py` | exit0。原本コピー7負例を別processへ渡し、戻り値欠落/未照合TID/照会identity/別exeSHA/cleanup false/overrun/namespace変更を全拒否。これは製品suiteの7unit追加ではない |
+| t10-local-input-audit-v1 / `python3 audit_readiness.py` | exit0。45 ZIP計842,692,154bytesのhashを41件の旧manifest+4件の既存logへ照合。全CRC/header/member重複とread前後statを確認。10月だけ欠落。legacy/既定ledgerを読取、validation1464/final1461時間を算術照合。行の再集計/ラベル採点なし |
+| aggregation-cli-help-v1 / `.venv/bin/python scripts/prepare_capitalbikeshare.py --help` | exit0。実集約や新しい原本downloadはしていない |
+| protocol-cli-help-v1 / `.venv/bin/python scripts/create_capital_evaluation_protocol.py --help` | exit1。既定UCI profileのままなのでhelpより前のCapital guardで拒否。環境依存のつまずきとして保存 |
+| protocol-cli-help-v2 / 同commandに`DATA_PROFILE_ID=capital-bikeshare`を明示 | exit0。MLFLOW_DISABLE_AGENT_HINT=1も使用。将来のT10コマンドへ明示profileを反映。guardの緩和や製品修正はしない |
+
+探索的なrg/sedは不存在候補path/globでexit2、`command -v go`は不存在1となった。
+必要なfileをrg --filesで確認し直し、GoをinstallせずPython静的読取へ進めた。
+webのZIP描画はinaccessibleとなり、公式HEADの保存済み結果を公開判断に使った。
+文書の複数file patchはglossaryのcontext違いで検証失敗し、git diffで部分変更0を確認後、正しいcontextで適用した。
+これらの探索/編集失敗は`exploration-failures.txt`とtool transcriptに残し、timed runtime成功と混ぜない。
+
+### initdの今回の特定範囲
+
+global TID12582はDocker Desktopの可視TID75、TGID12571は可視PID64の`/initd services`へ対応した。
+kernel thread開始1830441609058nsとlocal開始183044tick、exe SHA
+`37ddac517530bcdf87c40c2b1df37188d093a6ee6204df43e64edbfba3c27b43`/dev118/inode1266/size、namespaceの前後が一致した。
+親PID43の`/initd`、unshare、wsl-bootstrap runのbase/CLI ISO指定まで照合した。
+35threadすべて同じ前後mappingで、commだけでDocker由来と推測していない。
+MONOTONIC154322.417563のsettimeofdayはreturn0。同じsample間でREALTIMEは733,087,722ns逆行、MONOTONICは10,369,756ns前進。
+別のtimesyncd496要求も約0.271秒後にあり、二つの調整経路を確認した。
+現在のinitd setter/管理層は特定できたが、起動瞬間・backendの時刻源・過去全setterへの遡及は未確認。
+trace45秒のtick11000は0件で、飽和時内部理由や時計資格の完了とは呼ばない。
+T03の自然停止は今回観測しておらず、新しいphase/stackはない。9件等の前回成功を今回再実行したと記載しない。
+
+### T10の先行準備と残件
+
+45原本が保たれていることは確認できた。202604も実在し、過去の診断で除外された事実を原本欠落と読み違えない。
+header/CRCだけでは行重複・境界/coverage/DST・出版社の欠落は検証できず、正式schema3 manifestやsplit件数は未作成。
+現在の消費台帳JSONは不存在だがlock fileは残した。他checkoutまで含む未消費の保証にはしない。
+`docs/t10-input-readiness.md`へ、原本/左右buffer review→新path集約→正式manifest監査→profile明示protocol凍結、
+固定cutoff/窓/recipe/MAE-RMSE/monitor policy/消費台帳の停止条件を具体化した。掲載blockは今回実行していない。
+時計資格や必須producerの前提を無視して実fit・運用合格・実採否へ進めない。
+
+計画の最新一覧を11月4日へ更新し、今回特定したinitd管理層を未確定事項と分離した。
+残るP1はPHC/UDP管理者採取、tick11000内部理由、backend/host同期責任・修復/資格、T03歴史的停止。
+T09は10月公開待ち、T10は正式snapshot/protocol前、T02/T11〜T13bは実candidate/producer前。
+MLflow未修正releaseや同じ非飽和採取を新情報なしに再確認せず、既存CI受入を新しい実証へ転用しない。
+T14としてREADME/証拠入口/用語と管理者案内に今回の参照を追加した。
+
+この節目はlocal読取/診断と文書だけなので、製品unit全suiteやDocker CIを再実行しない。
+製品source/scripts/tests/configs/lock/workflowが基点と不変であること、今回のraw hash・リンク・shell構文・診断Python構文・diffを別途検証して対象pathだけcommit/pushする。
+
+completion-validation-v1成功：当時の134原本hash、238相対link、T10の未実行bash block2件をbash -nで確認し、診断Python13fileを実行せずcompileした。
+製品source/tests/configs/docker/workflowの基点からの差分0と秘密情報pattern・diff checkも確認した。
+このvalidationのlog/metadataも含め、最終索引は15 attempt/136原本へ更新する。14件はresearch、残る1件は最終検証である。
+記録更新後の直接validatorで最終索引をもう一度照合し、今回の文書/証拠10pathだけをstageして全差分とstatusを確認する。
+raw binary・Windows個人pathを含むchain log・実原本・無関係な未追跡3pathはcommitへ含めない。

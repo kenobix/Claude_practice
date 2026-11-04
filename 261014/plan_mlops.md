@@ -532,7 +532,7 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 <a id="remaining-work-latest"></a>
 
-#### 2026-11-03 最終CI確認後の残課題
+#### 2026-11-04 読取診断・入力準備後の残課題
 
 最新コードは`f45733a`の[CI41603978704](https://github.com/kenobix/Claude_practice/actions/runs/41603978704)で全464件・全隔離system/cleanup成功。
 [今回のCI索引](../261021/docs/reviews/20261103-chrony-runtime-ci-checks.json)で16member ZIP/digest・archive-only検算まで確認した。
@@ -542,9 +542,9 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 | 優先度 | 難易度・担当 | 残課題と次の条件 |
 |---|---|---|
-| P1 | D3・Sol | 時計：自然future拒否とtimesyncd step、配布build/debug照合、非飽和時の内部計算24組（うち16組はkernel書込/戻り値も）は確認済み。残りはPHC fd/UDP・開始時刻/親/namespaceの管理者採取、tick11000時の内部値・initd管理元、host外部UTC差/同期責任、修復案と時計資格。35/75秒区間では11000未再現で、過去の上限原因は未確定。[内部観測](../261021/docs/chrony-runtime-control.md)。T03歴史的停止も未確定。OS修復未許可、future拒否/clamp/retryで代替しない |
-| P1 | D1・Luna | T09の202610公式原本公開待ち。2026-11-03 08:35UTCの再HEADも404。公開後に既存手順で取得・bytes/hash/構造を照合。HEADだけで取得完了としない |
-| P0（実fit前） | D3・Sol | T10：独立protocol/全原本snapshot/分割/recipe/基準をfit前に固定。10月bufferなしで窓を短縮しない |
+| P1 | D3・Sol | 時計：今回のinitd setterは35スレッドの前後照会でDocker Desktop `/initd services`の実exe/親/namespaceへ照合済み。[管理層と負方向step](../261021/docs/initd-owner-correlation.md)。残りはPHC fd/UDPの管理者採取、tick11000時の内部値、backend時刻源/host外部UTC差・同期責任、修復案と時計資格。非飽和24組は前回の範囲で、今回の固定45秒でも11000は0件。過去の飽和/T03歴史的停止は未確定。initd全体の停止で回避せず、OS修復は別途許可、future拒否/clamp/retryは維持 |
+| P1 | D1・Luna | T09の202610公式原本公開待ち。2026-11-04 12:34UTCの公式HEADも404（202609=200）。公開後に既存手順で取得・bytes/hash/構造を照合。HEADだけで取得完了としない |
+| P0（実fit前） | D3・Sol | T10：独立protocol/全原本snapshot/分割/recipe/基準をfit前に固定。既存45原本のbytes/SHA/ZIP/headerと固定窓算術/legacy照合、現CLI helpは確認済み。[開始手順と停止条件](../261021/docs/t10-input-readiness.md)。正式集約/manifest監査/凍結は未実施。10月bufferなしで窓を短縮せず、左側buffer要否も根拠を残す |
 | P1 | D3・Sol | T02実producerおよびT11/T12/T13b：同一の実candidate/artifactに精度・監視・復旧・metadata・運用測定を結合し採否を記録。T09/T10/時計資格等の前提を満たす範囲で順に進める |
 | P2（上流変更時） | D2・Sol review | MLflow noloadの発生箇所/通常import/厳格警告負例と現行publisher6件は確認済み。最新3.17.2にも同指定があり、修正releaseまたはloader変更時に個別再検証。それまではlock変更/警告抑制をしない。[調査と報告下書き](../261021/docs/mlflow-orm-compatibility.md)。upload-artifact保守は前回CI受入済み |
 

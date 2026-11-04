@@ -135,3 +135,7 @@ tick11000時の原因・時計資格は未解決。[MLflow警告の調査](docs/
 
 追加readerの実装`f45733a`は[CI41603978704](https://github.com/kenobix/Claude_practice/actions/runs/41603978704)で全464件・隔離system・実artifact16member/hash・再計算・cleanupまで成功。
 [CI記録](docs/reviews/20261103-chrony-runtime-ci-checks.json)を参照。内部数値のlocal診断と時計資格は別の確認である。
+
+2026-11-04追補: [initdの時計setterとDocker Desktop管理層](docs/initd-owner-correlation.md)を実exe/親/namespaceで照合しました。
+[T10の入力準備・開始手順](docs/t10-input-readiness.md)では手元45原本と固定窓を確認しています。
+10月原本は今回も404で、正式protocol・fit・時計資格は未完了です。[今回の索引](docs/reviews/20261104-clock-readiness-checks.json)に全試行を残しています。

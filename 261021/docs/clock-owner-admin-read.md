@@ -97,6 +97,10 @@ Solは開始/終了のidentity、exe/hash、親/namespace、選択configを先�
 
 ## 追加のPHC/socket所有採取（2026-11-03）
 
+2026-11-04時点でも追加directoryは未採取。[別scopeでのinitd管理層照合](initd-owner-correlation.md)は進んだが、
+chronydのPHC fd/UDP所有や現在の初期namespace inventoryを採取した代わりにはならない。
+次にユーザー側で必要な限定読取は、引き続きこの節の手順。既に保存済みであればdirectoryだけを伝えればよい。
+
 [追加調査](clock-followup.md)でWindows非管理者tokenと、Ubuntuからchronydが見えない境界を再確認した。
 以下は未採取のPHC fd/UDP inodeだけを補う手順。基本inventoryも同じ新規directoryへ採り、identityを対応付ける。
 旧PIDを固定しない。OS・時計・service・実行policyは変更しない。
