@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "base_commit": "1e622ddb808ab0d682dbee03a26de1ecaf94591d",
+  "status": "T09_OFFICIAL_OBJECT_STILL_404_CLOCK_INPUT_NOT_UPDATED",
+  "checked_at_utc_from_local_clock_unqualified": "2026-11-04T13:42:27.730750+00:00",
+  "scope": {
+    "os_clock_settings_changed": false,
+    "real_db_registry_current_deployment_changed": false,
+    "dot_env_read": false,
+    "admin_clock_resource_capture_found": false,
+    "natural_tick_11000_reproduction": false,
+    "natural_t03_reproduction": false,
+    "t09_archive_downloaded": false,
+    "t10_aggregate_protocol_fit_or_scoring_started": false,
+    "product_tests_or_ci_run": false
+  },
+  "t09_head": {
+    "url": "https://s3.amazonaws.com/capitalbikeshare-data/202610-capitalbikeshare-tripdata.zip",
+    "result": "HTTP 404 Not Found",
+    "server_date_header": "Wed, 04 Nov 2026 13:42:25 GMT",
+    "interpretation": "The official object was not available at this observation. This does not establish a publication date, reason for absence, or archive contents.",
+    "attempts": [
+      {
+        "id": "t09-head-v1",
+        "command": "curl --head --silent --show-error --max-time 20 https://s3.amazonaws.com/capitalbikeshare-data/202610-capitalbikeshare-tripdata.zip",
+        "start_utc_local_unqualified": "2026-11-04T13:42:00.571689+00:00",
+        "end_utc_local_unqualified": "2026-11-04T13:42:00.640894+00:00",
+        "start_monotonic_ns": 158161761546475,
+        "end_monotonic_ns": 158161830696784,
+        "exit_code": 6,
+        "log_path_ignored": "data/reports/20261104-followup-1e622dd/t09-head-v1.log",
+        "log_bytes": 185,
+        "log_sha256": "520aa4ad381a2825300d42414f96ecdb70bab6a42e8d0766979050718362a832",
+        "result": "Could not resolve host: s3.amazonaws.com; no object-status conclusion"
+      },
+      {
+        "id": "t09-head-v2",
+        "command": "curl --head --silent --show-error --max-time 20 https://s3.amazonaws.com/capitalbikeshare-data/202610-capitalbikeshare-tripdata.zip",
+        "start_utc_local_unqualified": "2026-11-04T13:42:26.535313+00:00",
+        "end_utc_local_unqualified": "2026-11-04T13:42:27.730750+00:00",
+        "start_monotonic_ns": 158189211214677,
+        "end_monotonic_ns": 158190406610907,
+        "exit_code": 0,
+        "log_path_ignored": "data/reports/20261104-followup-1e622dd/t09-head-v2.log",
+        "log_bytes": 412,
+        "log_sha256": "5df7abd4a71c2ff42829a7ea8fc74c3acdc368d856903827c2faf39e89b363c5",
+        "result": "HTTP 404 Not Found; no Content-Length or Last-Modified returned"
+      }
+    ],
+    "supplemental_web_attempts": [
+      {
+        "tool": "web search",
+        "query": "site:capitalbikeshare.com/system-data 202610-capitalbikeshare-tripdata.zip October 2026 Capital Bikeshare",
+        "result": "Returned general Capital Bikeshare pages but no precise October 2026 object status; not used as evidence of availability. Tool response was not available as a local raw file/hash."
+      },
+      {
+        "tool": "web open",
+        "url": "https://s3.amazonaws.com/capitalbikeshare-data/202610-capitalbikeshare-tripdata.zip",
+        "result": "Tool reported the URL was not accessible; not treated as an HTTP response from S3. Tool response was not available as a local raw file/hash."
+      }
+    ]
+  },
+  "clock_and_t03": {
+    "admin_resource_directory": "No new PHC/socket administrator capture found in the conventional report location; only previously indexed debug-shell.log was present.",
+    "chronyd_saturation": "tick=11000 did not naturally recur; no new internal value/kernel-write pairing.",
+    "t03": "No natural recurrence; no new phase/stack evidence.",
+    "static_analysis_limit": "The saved initd ELF backend/Settimeofday path is static evidence and was not applied to historical dynamic failures or used to infer backend response, host time authority, or chronyd saturation cause."
+  },
+  "dependencies_and_next_actions": {
+    "t09": "Wait for the October source object; once available, use the existing acquisition procedure and record bytes, SHA-256, ZIP/CSV structure and source metadata.",
+    "t10": "Keep the 202212..202610 source range, target windows and recipe unchanged. Formal snapshot/manifest/protocol review remains blocked on the October original and the other plan prerequisites.",
+    "clock": "Resume PHC/UDP and current-identity correlation only when a new administrator capture is supplied; correlate T03 phase/stack only on natural recurrence.",
+    "other_independent_work": "No new upstream release, input, or execution evidence was present to unlock another pending task in this checkpoint."
+  },
+  "limitations": [
+    "Local UTC and monotonic readings are recorded for attempt ordering only and are not qualified external time.",
+    "A 404 is a point-in-time object-status observation and does not prove why publication is delayed.",
+    "No archive, historical source set, product code, real database, registry, active deployment, operating-system clock setting, or future-time rejection behavior was changed.",
+    "This documentation checkpoint did not run product tests or CI."
+  ]
+}

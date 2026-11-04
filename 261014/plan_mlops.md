@@ -543,7 +543,7 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 | 優先度 | 難易度・担当 | 残課題と次の条件 |
 |---|---|---|
 | P1 | D3・Sol | 時計：前回initd setterの実exe/親/namespaceは照合済み。保存済みELFの[backend取得interfaceとSettimeofday CALL](../261021/docs/backend-time-path-review.md)も静的照合したが、新しいruntime応答/stackではない。新管理者ログなし。残りはPHC fd/UDPと現在identity、tick11000時内部値、backend/host時刻源・外部UTC差・同期責任、許可後の修復と時計資格。今回は非飽和traceを反復せず、過去の飽和/T03歴史的停止も未確定のまま。initd全体を止めず、OS修復は別途許可、future拒否/clamp/retryの禁止は維持 |
-| P1 | D1・Luna | T09の202610公式原本公開待ち。2026-11-04 13:15:46UTCの公式HEADも404。公開後に既存手順で取得・bytes/hash/構造を照合。HEADだけで取得完了としない。今回の202212追加取得をT09の10月到着と混同しない |
+| P1 | D1・Luna | T09の202610公式原本公開待ち。2026-11-04 13:42:25UTCの公式S3 HEADも404（今回の記録は[追跡索引](../261021/docs/reviews/20261104-followup-checks.json)）。公開後に既存手順で取得・bytes/hash/構造を照合。HEADだけで取得完了としない。今回の202212追加取得をT09の10月到着と混同しない |
 | P0（実fit前） | D3・Sol | T10：独立protocol/全原本snapshot/分割/recipe/基準をfit前に固定。[左端bufferを202212に決定・取得し、202301との2file/379,310行を別parserでも監査](../261021/docs/t10-input-readiness.md)。原本範囲202212〜202610、target窓とrecipeは不変。保管46件/予定47件だが正式集約/manifest監査/凍結は未実施。10月bufferなしで窓を短縮せず、1か月bufferを母集団の完全性保証にしない |
 | P1 | D3・Sol | T02実producerおよびT11/T12/T13b：同一の実candidate/artifactに精度・監視・復旧・metadata・運用測定を結合し採否を記録。T09/T10/時計資格等の前提を満たす範囲で順に進める |
 | P2（上流変更時） | D2・Sol review | MLflow noloadの発生箇所/通常import/厳格警告負例と現行publisher6件は確認済み。最新3.17.2にも同指定があり、修正releaseまたはloader変更時に個別再検証。それまではlock変更/警告抑制をしない。[調査と報告下書き](../261021/docs/mlflow-orm-compatibility.md)。upload-artifact保守は前回CI受入済み |
@@ -556,6 +556,11 @@ T14の証拠入口・task対応表・操作説明は最新CIへ追記済み。T0
 製品source/schema/writer/lock/workflowは変更しておらず、全suite/CIを新規受入と呼ばない。
 今回の新しい完了単位は保存ELFのbackend経路reviewと左端buffer判断・取得・境界監査まで。
 PHC/UDP管理者採取・時計修復/資格、10月原本、T10正式protocol、実producer/採否を未完了として維持する。
+
+2026-11-04の後続確認（基点`1e622dd`）は[追跡索引](../261021/docs/reviews/20261104-followup-checks.json)を参照。
+公式S3への権限付きHEADは13:42:25UTCに202610 object=404。通常sandbox試行はDNS解決失敗(exit 6)であり、別試行の404で補完した。
+公開後取得は未実施。管理者PHC/socketの新規採取directoryは見つからず、tick11000もT03も自然再発していない。
+時計の未確定事項を閉じず、T10正式aggregate/protocol・fitにも進んでいない。依存前提に変化がないため、それ以外の独立タスクもこの確認では新規受入していない。
 
 2026-11-03・基点dcfdd9c以降の追加読取：[時計調査索引](../261021/docs/reviews/20261103-clock-followup-checks.json)。
 同bootのtimesyncd identityを再対応し、専用40秒traceでchronydのtick/freq8指定（11000は3件）、

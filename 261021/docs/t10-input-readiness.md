@@ -4,6 +4,10 @@
 以下の開始手順を`202212`開始へ更新した。target/評価窓・recipeは変更していない。
 追加の[検証索引](reviews/20261104-backend-boundary-checks.json)と、末尾の境界reviewを参照する。
 
+**1e622dd以降のT09確認:** 2026-11-04 13:42:25UTCの公式S3 HEADも202610=404。
+通常sandboxのDNS失敗を含む試行/終了値/hashは[追跡索引](reviews/20261104-followup-checks.json)へ保存した。
+既存原本の追加取得・正式集計・protocol作成・fitは行わず、10月原本待ちを維持する。
+
 2026-11-04、基点`d8ec164`。[今回の検証索引](reviews/20261104-clock-readiness-checks.json)。
 **既存45 ZIPの完全性と既存手順を確認した。T09/T10の完了、protocol凍結、fit・採点はまだ行っていない。**
 計画の[最新残件](../../261014/plan_mlops.md#remaining-work-latest)と

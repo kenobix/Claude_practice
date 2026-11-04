@@ -3391,3 +3391,24 @@ T10文書の将来commandを202212開始へ修正したが、その正式aggrega
 completion-validation-v1成功：当時のraw64件+入力7件のhash、235相対link、将来bash2blockの構文、
 診断Python13fileの実行しないcompile、製品path不変・diff/秘密情報patternを確認した。
 検証log/metadataも含めて最終索引を再生成し、hash/attemptを再照合してからstageする。
+
+## 2026-11-04・基点1e622dd以降：T09公開状態の差分確認
+
+計画§11.6、backend時刻経路、clock管理者採取手順、T10入力準備、最新のbackend-boundary索引を確認した。
+基点は`1e622ddb808ab0d682dbee03a26de1ecaf94591d`、作業開始時のtracked差分なし。
+既存の無関係な未追跡3path（`260701/charts/`、`260701/logs/`、`260905/sets/bookkeeping-2kyu/images/assekiritono-flow.png`）は保持。
+`.env`は読まず、OS/時計設定・実DB/registry/現配信は変更していない。
+
+今回の全記録は[検証索引](docs/reviews/20261104-followup-checks.json)、raw log/attempt JSONはignoredの`data/reports/20261104-followup-1e622dd/`にある。
+
+| attempt | 実行 | 結果 |
+|---|---|---|
+| `t09-head-v1` | 通常sandboxから公式S3の202610 ZIPへ`curl --head --silent --show-error --max-time 20` | `curl` exit 6、`Could not resolve host: s3.amazonaws.com`。記録logは185 bytes / SHA-256 `520aa4ad381a2825300d42414f96ecdb70bab6a42e8d0766979050718362a832`。DNS到達失敗で公開状態は判定していない |
+| web検索・直接open | 公式月次ページ/正確なobject URLを検索・open | 検索結果は正確な月次object状態を示さず、直接openはweb toolでaccess不可。S3 HEADの代用にしない。tool応答はローカルraw/hashを持たない |
+| `t09-head-v2` | 同一objectへ明示的に許可された読み取り専用HEAD | HTTP 404、S3応答日時 `Wed, 04 Nov 2026 13:42:25 GMT`。curl exit 0。412 bytes / SHA-256 `5df7abd4a71c2ff42829a7ea8fc74c3acdc368d856903827c2faf39e89b363c5` |
+
+UTC表示はこのWSL環境の時計由来で資格済み外部時刻ではない。HEADは存在状態だけを示し、未公開の理由・将来公開日・10月CSVの内容を証明しない。202609を再照会せず、過去45原本も再検査しない。
+管理者ログdirectoryを確認したが、PHC/UDP追加採取はなく既存debug-shell.logのみ。tick11000の自然再現もT03停止もなく、新しいphase/stackはない。保存ELFの静的経路を動的原因へ遡及適用しない。
+
+T09の404を確認したため、未取得10月原本が前提のT10 formal snapshot/manifest/protocol、fitおよびT11以降は着手できない。過去に評価済みの窓を再利用したり、評価窓を短縮したりしていない。その他の未完了項目も今回新しい入力/実行証拠がなく、条件を満たす独立タスクは確認できなかったため、完了数へ計上していない。
+次回はT09公開後にのみ取得・検査し、新しい管理者採取ログまたは自然再発が来た場合に時計調査を再開する。製品コードが不変の文書・公開状態確認であり、テスト/CIは実行していない。
