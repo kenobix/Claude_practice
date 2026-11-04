@@ -3473,3 +3473,66 @@ validation-v1のlog/metadataを含めて最終索引を再生成し、直接vali
 後続のread-only status/diffがexit0でもstage成功としない。statusで全対象が未stageのままと確認した。
 承認付きの同じ対象path指定へ切り替え、結果はrunnerの`git-stage-v2`へ保存する。
 git-stage-v2はexit0。結果2原本も索引へ追加し、最終のraw/policy11件のhashを照合後、記録更新分を再stageする。
+
+## 2026-11-04・61643ac以降：保存済み時計進行率のoffline component
+
+設計の節目`61643ac`をcommit/pushした後、管理者ログや新原本を待たずに進められる計算部品を実装した。
+`src/bike_mlops/clock_rate_review.py`と`scripts/review_clock_rate_phase.py`、専用test、
+`docs/clock-rate-review.md`を追加した。OS/時計・実DB/registry/現配信・schema/writer/lock/workflowと
+future拒否は変更していない。T09再照会・原本処理・実fit・評価窓変更も行っていない。
+
+### 実装とreview
+
+全sampleからQPCで60/120/…/1800秒へ最初に到達する時点を選び、30窓とphase全体の
+MONOTONIC/RAW上下限をFractionで判定する。良好な後続sampleへ差し替えない。
+各componentの結果はpassed/failed/incomplete、全体の`clock_qualification_status`は常に`not_evaluated`。
+外部UTC、QPC校正、identity、採取protocol/真正性、通常/負荷の全campaignや休止再開の確認は未実装である。
+入力SHA/bytesとpolicy本体/hashをreportへ結合し、不足も明確な違反も全issuesに保存する。
+CLIは0/1/2で結果を返し、不正schema/IOでは2。NaN/Infinity/重複key/bool時刻/未知fieldを拒否する。
+単一FDのstat前後比較、16MiB上限、通常file限定・nofollow/nonblock、排他的出力確定と失敗時staging削除を実装した。
+入力や既存reportは書き換えず、stderrへ入力値や絶対pathを出さない。
+
+code reviewでは、QPC gapが複数の60秒境界を飛び越すと同じ終点が連続し、除算0になり得る経路を見つけた。
+同一端点をunobserved/incompleteにする修正と負例を追加した。修正前の失敗実行はしておらず、
+実際に観測したテスト失敗だったとは記載しない。返すpolicyのlistはdeep copyして、呼出側変更の持越しを防いだ。
+最後にFIFOのwriter待ちを避けるIO guardと2負例を追加した。この追加は全480件の実行後で、最終18件の専用testで検証した。
+
+### 全試行と失敗
+
+原本はignoredの`data/reports/20261104-clock-rate-component/`、
+[公開用検証索引](docs/reviews/20261104-clock-rate-checks.json)にcommands/cwd/UTC/MONOTONIC/終了値とbytes/hashを記録する。
+UTC/MONOTONICは校正済みではなく、testが表示した秒数も時計資格の証明ではない。
+
+| attempt / コマンド | 結果 |
+|---|---|
+| target-v1 / `.venv/bin/python -m unittest discover -s tests -p test_clock_rate_review.py -v` | 13件成功 |
+| target-v2 / 同command | 追加のgap/IO変更検知・cleanup等を含む16件成功 |
+| compile-v1/v2 / 3対象Pythonを`compile()` | 各exit0。v2は最終IO guard後。pycを新しく書かない構文検証 |
+| full-unit-v1 / `timeout --signal=TERM --kill-after=10 300 .venv/bin/python -m unittest discover -s tests -v` | 通常sandboxで最初のAPI TestClientから進まず。今回開始したwrapperだけを照合してTERM停止し、runner returncode=-15を保存。完了summaryはない |
+| stop-sandbox-v1 / 限定stop helper | 同scopeでは対象が見えずsignal送信0。rawのalready_exitedという表記だけで終了したと判断しない |
+| stop-sandbox-v2 / 親runner・argv/cwd/開始tickを検査する同helper、承認付き | exact今回wrapper PID43682を照合しTERM送信。実サービスへsignalを送っていない |
+| full-unit-v2 / 同じ300秒の全suite、承認付き | 全480件/表示194.962秒で成功。使用source hashは`inputs-before-full-v2.json`に保存。T03/T13の新しい失敗はなく、過去原因の解決とはしない |
+| target-v3 / 同専用test command | 最終通常file/nofollow/nonblock/サイズguard後の18件成功。CLI別processで入力hash、0/1/2、上書き拒否、秘密値非出力、FIFO等の即時拒否、link/fsync失敗cleanupも確認 |
+
+全suiteでは`MLFLOW_DISABLE_AGENT_HINT=1`と、試行別`BIKE_MLOPS_TEST_DIAGNOSTICS_DIR`を指定した。
+通常sandboxの停止位置はAPI TestClientであり、T03 journal SIGTERM後の過去停止とは同一視しない。
+承認付きでの成功は比較結果で、sandboxの低水準原因が確定したという意味ではない。
+中断された最初の試行はtemporary fixtureのtearDown完了まで未確認として残す。
+full-unit-v2後にIO guardと2テストを追加したため、全480件を最終482件の実行と読み替えない。
+最終18件が追加変更を検証し、core計算は全suite時と不変である。
+
+runner準備の初回はproject cwdから`261021/`を重ねたためcp/Python lookupが失敗し、testは開始されなかった。
+誤ってできた空の二重directoryだけをrmdirし、正しいpathで準備し直した。
+workflowのreadも一度cwd違いで失敗し、repo rootから読み直した。これらはtool transcriptにあり、
+独立raw/hashを保存した試験attemptの成功と混ぜない。
+
+最後に対象hash/link/構文/diff・全変更とstatusをreviewし、今回の新component/文書/検証索引だけをcommit/pushする。
+実装commitのCIはこの時点では未確認。clock資格全体/実運用性能/採否の合格は主張しない。
+
+最終記録validatorのvalidation-v1はTypeError/exit1で失敗した。
+原因はattempt用globが`inputs-before-full-v2.json`（source hashのlist）も含めていたためで、
+試験結果の失敗ではなく記録生成側の型混同である。元draft indexと両helper旧版をrawへ残し、
+既知のsource snapshotをattempt列挙から分け、metadataの必須keyを検証する形へ修正した。
+source snapshotや初回失敗を削除していない。修正版validation-v2でraw/hash/linkとscopeを再照合する。
+validation-v2はexit0。当時の50 hash record・194相対link・8対象path、coreと全suite時sourceの一致を確認。
+同attemptのlog/metadataも最終索引へ追加し、最終52 hash recordを直接validatorで再照合してからstageする。

@@ -147,3 +147,6 @@ tick11000時の原因・時計資格は未解決。[MLflow警告の調査](docs/
 
 24c30c0以降は[修復後の時計資格の計測設計](docs/clock-qualification-plan.md)を追加しました。
 固定期間・bracketによる進行率・独立外部UTC・欠測/失効条件を具体化した設計であり、修復や資格合格の記録ではありません。
+
+続いて[保存済み進行率phaseのoffline照合](docs/clock-rate-review.md)を実装しました。
+指定JSONの固定窓/上下限/hashを検算するcomponentであり、時計資格全体の状態は常に`not_evaluated`です。
