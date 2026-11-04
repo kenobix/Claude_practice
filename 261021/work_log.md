@@ -3320,3 +3320,74 @@ completion-validation-v1成功：当時の134原本hash、238相対link、T10の
 このvalidationのlog/metadataも含め、最終索引は15 attempt/136原本へ更新する。14件はresearch、残る1件は最終検証である。
 記録更新後の直接validatorで最終索引をもう一度照合し、今回の文書/証拠10pathだけをstageして全差分とstatusを確認する。
 raw binary・Windows個人pathを含むchain log・実原本・無関係な未追跡3pathはcommitへ含めない。
+
+## 2026-11-04・891a420以降：backend静的経路とT10左端buffer
+
+基点`891a4201ce02e7a6eb648a1b1e8e9304e4067d25`。tracked差分0から開始。
+計画§11.6、前回log、initd照合、管理者手順、T10準備、chrony-runtimeの最終CI索引を確認した。
+無関係な未追跡3pathは保持。`.env`の内容は読まず、OS/時計設定・実DB・registry・現配信は変更しない。
+新しい管理者採取directoryはなく、旧debug-shell.log1件だけが同bytes/SHAで存在した。
+非管理者debug-shellの拒否を再試行せず、同じ非飽和trace・45原本の全件CRC・未修正MLflow release確認も反復しなかった。
+
+原本は`data/reports/20261104-followup-891a420/`、[検証索引](docs/reviews/20261104-backend-boundary-checks.json)に対応する。
+前回runnerを再利用し、command/cwd・開始終了UTC/MONOTONIC・exit・log bytes/SHAを保存した。
+UTCおよびMONOTONICは今回も外部秒として資格確認済みではない。
+
+| attempt / 実行コマンド | 結果・失敗・判断 |
+|---|---|
+| initd-static-v1 / `python3 static_initd.py` | exit0だが不採用。pcHeader.textStart=0をPIEの基準にして多数のCALLが未解決・関数途中を逆アセンブル。初回script/summary/assembly/logを保存し、正しい成功と数えない |
+| initd-static-v2 / 同script | exit1。module relocationでtextを解決後、maxpcとetextの末尾paddingを同一視したassertが失敗。scriptとtracebackを保持 |
+| initd-static-v3 / 同script | exit0。moduledataのminpc/text・maxpc/最終functab・etextの範囲を分離。75,982関数の境界、対象関数の全直接CALLを対応 |
+| admin-availability-v1 / `python3 read_admin_logs.py` | exit0。標準保存先に新PHC/UDP採取なし。既存旧logのSHA一致。初期namespace/現在PID/PHC所有の再確認をしたとは扱わない |
+| initd-backend-static-v1 / `python3 extend_static.py` | exit0。backendclient.Newのinterface table/relocationとGetCurrentTimeを対応。対象関数のliteralとSettimeofday直接CALLを読取。backendへ要求を送っていない |
+| official-sources-v1 / `python3 fetch_sources.py` | 外部読取scopeでexit0。Capital/Canonical/Docker/Goの公式6資料を保存しbytes/SHA記録。HEADは202212=200/6,207,590bytes、202610=404（13:15:46UTC）。時計設定やHTTP制御API操作なし |
+| acquire-left-buffer-v1 / `.venv/bin/python acquire_left_buffer.py` | exit0。先にboundary-design.jsonへ202212〜202610採用理由を保存後、既存acquire_archiveで202212を追加取得。target/評価窓は不変。新原本SHAは下記 |
+| boundary-audit-v1 / `.venv/bin/python audit_boundary.py` | exit0。12月175,233行+1月204,077行、required欠測/ID重複/開始年月越境0。前後statと既存1月SHA一致。IDはprocess memory内だけ。hourly targetは生成しない |
+| boundary-independent-v1 / `python3 verify_boundary_independent.py` | exit0。別processの標準csv/固定ISO秒文字列の比較でも379,310行・ID集合・bounds/越境を照合。pandasの集計値を読むだけの検算ではない |
+| static-validation-v1 / `python3 validate_static.py` | exit0。同ELFのx86 CALL bytes/相対target・interface summaryを検算し、合成改変5件を拒否。動的stack/新しいsetterの証拠ではない |
+| pipeline-regression-v1 / repo rootで`MLFLOW_DISABLE_AGENT_HINT=1 261021/.venv/bin/python -m unittest discover -s 261021/tests -p test_capital_pipeline.py -v` | exit1。test import時に`ModuleNotFoundError: scripts`。test bodyは実行できず、失敗を成功回数へ含めない |
+| pipeline-regression-v2 / cwd261021で`MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m unittest discover -s tests -p test_capital_pipeline.py -v` | exit0、既存8件/0.232秒成功。連続archive・cross-month ID・conflict・row収支/DST/hash・pair保護。sourceやimport guardは変更しない |
+
+探索段階の`rg`は不存在test globでexit2。`rg --files`で実fileを確認した。
+objdumpの通常symbol表は空だったため、Go pclntabを使った。Goのinstallはしない。
+公式sourceの関連passageは保存済みHTMLをscript/style除外で限定抽出した。inline抽出コマンドはtool transcriptにあり、
+この補助読取を開始終了時刻付きの新しい研究attemptとして遡及記録しない。
+技能は`data-analytics:analyze-data-quality`を左端partitionの限定監査へ適用した。新しいreport/dashboardや外部送信は作らない。
+
+### 時計経路の進捗と未確定事項
+
+今回使ったELFは前回の公開binaryコピーで、SHA一致を確認した。
+`runBackendTimeSync`内のbackend interface offset0x140は、同じtableのrelocationでGetCurrentTimeへ対応し、
+CALL site0x20955d8の命令bytesはsyscall.Settimeofday=0x8e4f20へ対応した。
+symbol名だけの仮説から静的な取得/書込経路の照合へ進んだが、backend応答値・接続先process・Windows内の時刻源、
+前回setterのgoroutine stackは未取得。保存ELFの結果を現在PID/inodeの再照合や過去全失敗へ適用しない。
+kernel probe/uprobe/新しい時刻sampleは今回は採取しない。11000の自然再現を今回観測したとは呼ばない。
+T03の自然停止も今回観測しておらず、新phase/stackはない。
+
+Canonical公開説明にはHyper-Vとguest NTPの競合の説明があり、一般的な修復案の根拠として保存した。
+この説明でMariner chronydの内部飽和を確定せず、Dockerの公開設定2資料で専用toggleを特定できなかった限界も残す。
+Ubuntuのdaemon1つを止めれば全setterが消えると仮定せず、複数管理層・現配信への影響・切戻し・資格の停止条件を
+`docs/backend-time-path-review.md`へ整理した。OS変更の実施許可としては扱わない。
+
+### T10左端の判断・新原本
+
+202212 ZIP: 6,207,590 bytes / SHA `f3044ca2af1e1688c3f305e5806ac256d3c8b327c63726e82523a954cb8ffc97`。
+公式URL `https://s3.amazonaws.com/capitalbikeshare-data/202212-capitalbikeshare-tripdata.zip`、
+CSV member `202212-capitalbikeshare-tripdata.csv`、取得13:16:50UTC。Gitではignoredのrawに保存する。
+公式月次説明は厳密なstarted_at月partitionを保証しないため、隣月の保守的bufferとして結果を見る前に採用した。
+今回の2fileで月越境0だったが採否を結果に合わせて変えず、1か月bufferを全母集団の完全性証明にしない。
+既存45件+今回1件の保管46件となり、予定47件のうち10月だけが未取得。
+target開始2023-01-01、validation/final窓、recipe、gate、label delayは不変。
+12月開始tripを新しい学習targetへ追加したり、初期lag欠測を消すために使ったりしない。
+
+T10文書の将来commandを202212開始へ修正したが、その正式aggregate/protocol blockは実行していない。
+正式schema3 manifest・全原本snapshot・消費履歴照合・protocol凍結、T02実producer/T11〜T13bと時計資格は引き続き残件。
+製品source/schema/writer/lock/workflowは不変なので全suite/CIの反復は行わず、今回の対象回帰8件と診断検算を記録する。
+最新の製品実装CI受入は引き続きf45733a/41603978704であり、この文書commitを直接試験した結果ではない。
+
+最後にraw/入力hash、相対link、T10将来blockのbash構文、診断Python構文、製品不変・diff・秘密情報混入を確認し、
+この節目の文書/検証索引だけをstageしてcommit/pushする。無関係な未追跡3path・公開binary・raw ZIP・生ID・個人argvは含めない。
+
+completion-validation-v1成功：当時のraw64件+入力7件のhash、235相対link、将来bash2blockの構文、
+診断Python13fileの実行しないcompile、製品path不変・diff/秘密情報patternを確認した。
+検証log/metadataも含めて最終索引を再生成し、hash/attemptを再照合してからstageする。

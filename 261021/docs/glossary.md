@@ -183,6 +183,10 @@ MLflow 3ではモデルの保存場所が従来と変わりました。このプ
 | uprobe / IP相対 | uprobeは実行中の指定命令の地点を一時的に観測する仕組み、IPはその命令の位置です。IP相対はそこからの距離で数値を読む方法です。今回、既知値のfixture検証後だけ使い、機密情報や全メモリは読みません。観測による負荷もあります。 |
 | SCM_RIGHTS / 読取FDの受渡し | Linuxの通信口を使い、開いたfileへの参照を別processへ渡す仕組みです。今回は公開実行fileを読む参照だけを渡しました。daemonのPHCやsocketの所有情報を取得したことにはしません。 |
 | dev / file inode / 同内容の置換 | devとinodeは現在のfile実体を識別する手掛かりです。内容のhashが同じでも、別fileに置き換わる場合があります。今回のreaderは前後の実体番号も比べます。別bootの同じ番号を同じfileと決めつけません。 |
+| PIE / relocation / virtual address | PIEは起動するたびに配置アドレスを変えられる実行fileです。relocationは配置に合わせてアドレスを決める情報、virtual addressはプログラムから見えるアドレスです。fileの何byte目か、起動後の実アドレスと同じとは限りません。保存ELFの解析では基準位置を確かめます。 |
+| pclntab / moduledata / CALL site | Goの関数名・範囲を調べる表、実行fileの配置情報、別の関数を呼ぶ命令の場所です。関数名があるだけで実行したとは分からないため、今回も静的なコード照合と実際の動作記録を分けます。 |
+| interface table / literal | interface tableは共通の呼び方から実際の処理へ結ぶ表です。literalはコードに埋め込んだ文字列や数値です。時刻取得の呼出先とエラー文は経路の手掛かりになりますが、実際の応答値の証明にはなりません。 |
+| 隣月buffer / partition | bufferは境界の取りこぼしなどを調べるため、対象の前後へ余分に含める入力です。partitionはfile等へ分ける単位です。月名のfileにその月の開始tripだけが入ると決めつけず、前後のfileも確認します。追加した12月入力を2023年開始の学習targetへ混ぜる意味ではありません。 |
 | 飽和 / 非飽和 | 計算した補正が許された上限に達することを飽和と呼びます。非飽和は上限に達していない状態です。今回の非飽和の観測だけで、過去に上限へ達した原因が分かったことにはしません。 |
 | ORM / mapper / noload | ORMはDBの行とプログラムのobjectを対応させる仕組み、mapperはその対応設定です。noloadは関連するobjectを自動で読まない指定です。今回のSQLAlchemyでは非推奨なので、MLflowの設定箇所と修正releaseの有無を調べています。 |
 | TID / TGID / scheduler照会 | TIDは実行中のthreadの番号、TGIDはthreadが所属するprocessの番号です。1つのprocessに複数threadがあるため、時計を書いたTIDをexeや親へ結ぶには所属も確認します。今回の`chrt -p 番号`はschedulerの状態を読むだけで、優先度変更はしていません。 |

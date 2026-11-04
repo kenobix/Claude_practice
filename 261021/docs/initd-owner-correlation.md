@@ -1,5 +1,8 @@
 # initdの時計書込とDocker Desktop管理層の照合
 
+基点891a420以降の[backend取得interface・時計書込CALLの静的照合](backend-time-path-review.md)を追加した。
+保存済みELFを対象とし、新しいsetter traceやbackend応答の証拠ではない。以下の動的観測は前回区間のまま保持する。
+
 2026-11-04、基点`d8ec16412cc833e4b9eb9582921a4309265d1166`。
 [前回の内部制御調査](chrony-runtime-control.md)からの追加診断。
 原本・全試行・失敗・hashは[今回の索引](reviews/20261104-clock-readiness-checks.json)を参照する。

@@ -5,6 +5,7 @@
 
 | 対象 | 実装commit / CI | 確認できる証拠 | 限界 |
 |---|---|---|---|
+| **backend時刻経路・左端buffer（891a420以降）** | 保存済みELF静的解析 / 左端原本2file / local pipeline8件 | [検証索引](reviews/20261104-backend-boundary-checks.json)。PIE relocation/interface/CALL照合・5拒否コピー、202212取得、2parserで379,310行の境界監査 | 新しいruntime setter/PHC所有・時計資格ではない。正式snapshot/protocol/fit・新しいCI受入は未実施 |
 | **initd管理層とT10入力準備（2026-11-04）** | 基点`d8ec164`後のlocal読取・文書のみ | [検証索引](reviews/20261104-clock-readiness-checks.json)。Docker Desktopの35thread前後対応と負方向settimeofday、7拒否検証、既存45 ZIP/hash/header、T10開始手順 | PHC/socket採取・飽和時の内部理由・時計資格は未了。新protocol/fit・CIの新しい受入ではない |
 | **chronyd配布buildと内部計算・reader（最新）** | local数値採取 / reader実装`f45733a`・[CI41603978704](https://github.com/kenobix/Claude_practice/actions/runs/41603978704) | [local時計索引](reviews/20261103-chrony-runtime-checks.json)・[CI索引](reviews/20261103-chrony-runtime-ci-checks.json)。24対の非飽和計算、うち16対kernel書込、cleanup、reader17件/全464件・16artifact/hash | 稼働uprobeはlocal。tick11000時の内部値・管理者採取・時計資格は未完了 |
 | **MLflow noload互換調査** | 基点`298c6c8`後の独立process | [ORM索引](reviews/20261103-orm-compatibility-checks.json)。通常import/strict負例、最新3.17.2 source、publisher6件 | 上流未修正・lock不変。未公開SQLAlchemyやMCP全機能の試験ではない |

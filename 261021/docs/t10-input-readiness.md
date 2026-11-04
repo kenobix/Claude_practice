@@ -1,5 +1,9 @@
 # T09公開待ちの間に確認した入力とT10開始手順
 
+**891a420以降の更新:** 左側は202212を保守的な隣月bufferに採用し、公式原本を取得・202301との境界を監査した。
+以下の開始手順を`202212`開始へ更新した。target/評価窓・recipeは変更していない。
+追加の[検証索引](reviews/20261104-backend-boundary-checks.json)と、末尾の境界reviewを参照する。
+
 2026-11-04、基点`d8ec164`。[今回の検証索引](reviews/20261104-clock-readiness-checks.json)。
 **既存45 ZIPの完全性と既存手順を確認した。T09/T10の完了、protocol凍結、fit・採点はまだ行っていない。**
 計画の[最新残件](../../261014/plan_mlops.md#remaining-work-latest)と
@@ -25,10 +29,10 @@ ZIP検査は、行ごとの重複・時刻異常・月境界・DST・出版社�
 ## 開始時の停止条件と実施順
 
 1. **T09:** 10月objectが公開されてから既存`acquire_archive()`で取得し、取得元・日時・bytes/SHA・ZIP/CSV schemaを新規logへ保存する。
-   HEAD200だけで完了にせず、既存45原本との組合せを固定する。原本の差替えやschema差があれば保存してSol判断へ戻す。
-2. **T10の境界review:** 原本範囲案は202301〜202610、対象target窓は2023-01-01〜2026-10-01未満。
-   10月を右側bufferへ含める理由を記録する。左側202212などの追加bufferの要否も公開仕様・境界の根拠でreviewする。
-   月名の連続やmin/maxだけで全tripの完全性を宣言しない。buffer範囲が変われば取得・監査へ戻し、評価窓は短縮しない。
+   HEAD200だけで完了にせず、既存45原本と追加した202212 bufferとの組合せを固定する。原本の差替えやschema差があれば保存してSol判断へ戻す。
+2. **T10の境界review:** 原本範囲は202212〜202610、対象target窓は2023-01-01〜2026-10-01未満。
+   12月を左側buffer、10月を右側bufferとして採用する。採否理由と限界は末尾を参照する。
+   月名の連続やmin/maxだけで全tripの完全性を宣言しない。追加の原本範囲変更が必要なら取得・監査へ戻し、評価窓は短縮しない。
 3. **新pathへ集計:** 以下のコマンド案を既存原本・buffer review後に使う。古いdefaultの202604終了や、既存CSVを使わない。
    この文書内のblockは今回実行していない。集計が途中で失敗した場合もlog/途中状態を保持し、別の期間へ自動retryしない。
 
@@ -36,7 +40,7 @@ ZIP検査は、行ごとの重複・時刻異常・月境界・DST・出版社�
 cd /home/kenshin/work/claude_practice/261021
 TASK_T10_DIR="data/derived/capital-bootstrap-$(.venv/bin/python -c 'import uuid; print(uuid.uuid4().hex)')"
 .venv/bin/python scripts/prepare_capitalbikeshare.py \
-  --archive-start 202301 --archive-end 202610 \
+  --archive-start 202212 --archive-end 202610 \
   --data-start '2023-01-01 00:00:00' \
   --data-end-exclusive '2026-10-01 00:00:00' \
   --output-csv "$TASK_T10_DIR/hourly.csv" \
@@ -85,3 +89,28 @@ MLFLOW_DISABLE_AGENT_HINT=1 \
 今回の1464/1461は日時算術とlegacy/台帳の読取照合であり、実CSV/manifestのsplit件数ではない。
 protocol作成だけでT11や運用合格を開始しない。計画の時計資格・必須証拠等の依存条件を満たし、
 T10のレビューが完了してから一度だけcandidate fitへ進む。validation不合格時は同じ窓で調整し直さない。
+
+## 891a420以降の左端buffer review（2026-11-04）
+
+公式[system-data説明](https://capitalbikeshare.com/system-data)は月次公開と開始/終了日時を説明するが、
+すべてのrowが`started_at`の年月で厳密にpartitionされることを保証していない。
+以前に202510原本へ9月開始tripが含まれた記録もある。
+そこで、**境界のrowを数える前に**原本範囲を202212〜202610とする保守的な判断を`boundary-design.json`へ保存した。
+結果が0でも12月を後から除外しない。1か月bufferで公開母集団全体の完全性や最大遅延を保証するものではない。
+
+- 202212を既存`acquire_archive()`で取得。6,207,590 bytes、SHA
+  `f3044ca2af1e1688c3f305e5806ac256d3c8b327c63726e82523a954cb8ffc97`。
+  取得時刻は2026-11-04 13:16:50UTC（未資格のlocal時計）。ZIP CRC/CSV memberを確認した。
+- 202212の175,233行、202301の204,077行を`ride_id/started_at/ended_at`だけで監査。
+  必須欠測、各file内ID重複、両file間の共有ID、開始年月の越境はいずれも0。
+  read前後のstat不変、202301のSHAは前回索引と一致。別processの標準`csv` parserでも件数・ID集合・時刻boundsを照合した。
+- これは左端2fileの入力監査。原本45件の全件再検査、全行の品質保証、hourly targetの再集約、
+  validation/finalの採点、消費台帳の開始ではない。trip IDを公開log/derived CSVへ出力していない。
+- 既存45件に今回1件を追加し、保管原本は46件になった。全範囲案47件のうち202610は13:15:46UTCの公式HEADで404。
+  今回も10月待ちを維持し、正式schema3 manifest/全原本snapshot/消費確認/protocol凍結は未実施。
+- 既存の合成pipeline回帰8件で、連続archive、月をまたぐID重複排除、conflict拒否、row収支/DST/hash、既存pair保護を確認した。
+  最初はrepo rootから起動して`ModuleNotFoundError: scripts`となった。`261021`をcwdにした別試行で全8件成功。
+  source・import条件・検証基準を変えて通したものではない。
+
+今回の12月原本の開始時刻はすべてtarget開始より前なので出力targetへ含めず、学習開始を2022年へ延ばさない。
+ラグの初期欠測を消すための追加学習データにも使わない。6月/8月の独立窓とlabel cutoffも維持する。

@@ -139,3 +139,8 @@ tick11000時の原因・時計資格は未解決。[MLflow警告の調査](docs/
 2026-11-04追補: [initdの時計setterとDocker Desktop管理層](docs/initd-owner-correlation.md)を実exe/親/namespaceで照合しました。
 [T10の入力準備・開始手順](docs/t10-input-readiness.md)では手元45原本と固定窓を確認しています。
 10月原本は今回も404で、正式protocol・fit・時計資格は未完了です。[今回の索引](docs/reviews/20261104-clock-readiness-checks.json)に全試行を残しています。
+
+891a420以降は[backend時刻取得経路](docs/backend-time-path-review.md)を保存済みELFから静的照合し、
+[T10の左端buffer](docs/t10-input-readiness.md)に202212を採用・取得して隣月2fileを監査しました。
+新たな時計書込やbackend応答の観測ではなく、10月原本・管理者PHC/UDP採取・正式protocol/fitは引き続き待機です。
+[追加索引](docs/reviews/20261104-backend-boundary-checks.json)で不採用解析・失敗と回帰8件の結果も確認できます。
