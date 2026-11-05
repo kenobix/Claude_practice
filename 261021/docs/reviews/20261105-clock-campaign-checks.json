@@ -1,0 +1,826 @@
+{
+  "schema_version": 1,
+  "status": "OFFLINE_CAMPAIGN_CHECKS_LOCAL_ONLY_WHOLE_CLOCK_INCOMPLETE",
+  "base_commit": "fb33af2",
+  "synthetic_only": true,
+  "policy": {
+    "id": "clock-campaign-offline-v1",
+    "design_sha256": "cc077a3d963df7fd9e14e999d30c32e4f8a9e8093af7b54978ab68741be73a9e",
+    "rate_policy_sha256": "4ad37f62704c8074b255b26147b5f1cf40da1883bb775c1448ace1016711868d",
+    "campaigns": [
+      "normal",
+      "post-resume"
+    ],
+    "phases": [
+      "idle",
+      "fixture-load"
+    ],
+    "phase_seconds": 1800,
+    "boundary_seconds": 60,
+    "maximum_gap_seconds": 2,
+    "maximum_utc_offset_ns": 1000000000,
+    "qpc_minimum_ratio": [
+      9999,
+      10000
+    ],
+    "qpc_maximum_ratio": [
+      10001,
+      10000
+    ],
+    "automatic_qualification": false
+  },
+  "policy_sha256": "b48eb2d3c3702359ab741a56c42e0e334cad3b4b9347b929ae8ce1fdf75af1dd",
+  "implementation_files": [
+    {
+      "path": "src/bike_mlops/clock_campaign_review.py",
+      "bytes": 21997,
+      "sha256": "4499d32e51b367b193da5513970e5aab66241835fa9723587a6fc46f959fc06f"
+    },
+    {
+      "path": "scripts/review_clock_campaign.py",
+      "bytes": 3541,
+      "sha256": "b619917e9dfe1998539b08a5c37657f52db0c433e16cb1013f8a981a9722ed78"
+    },
+    {
+      "path": "tests/test_clock_campaign_review.py",
+      "bytes": 23328,
+      "sha256": "0192dd773b2d49e728a1f2d191aa2fe9aec1720c34090dd646da30deae4f4d52"
+    },
+    {
+      "path": "docs/clock-campaign-review.md",
+      "bytes": 10932,
+      "sha256": "a6637e6cb81f80117304c1628e8b1866445bfbe13c367dc77d6bd0304407cf16"
+    }
+  ],
+  "attempts": [
+    {
+      "id": "conditional-inputs-v1",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261105-clock-campaign/readiness_context.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-04T23:59:00.448079+00:00",
+      "end_utc_local_unqualified": "2026-11-04T23:59:00.519112+00:00",
+      "start_monotonic_ns": 162434625522909,
+      "end_monotonic_ns": 162434696536795,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/conditional-inputs-v1.log",
+      "log_bytes": 389,
+      "log_sha256": "f19af7f167fd6788766116cfd0e37a75099ca3f2708b3cf9901f97db19b4ba5a"
+    },
+    {
+      "id": "fixtures-v1",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261105-clock-campaign/make_fixture.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-05T00:00:25.127522+00:00",
+      "end_utc_local_unqualified": "2026-11-05T00:00:25.305064+00:00",
+      "start_monotonic_ns": 162527521569542,
+      "end_monotonic_ns": 162527699107645,
+      "exit_code": 1,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/fixtures-v1.log",
+      "log_bytes": 664,
+      "log_sha256": "3bbbc618b9a92f37cb4cd551209ad5466a2cdb1b91813b1c3a51e42254fe14c6"
+    },
+    {
+      "id": "fixtures-v2",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261105-clock-campaign/make_fixture.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-05T00:00:38.243812+00:00",
+      "end_utc_local_unqualified": "2026-11-05T00:00:39.580599+00:00",
+      "start_monotonic_ns": 162540637864798,
+      "end_monotonic_ns": 162541974639024,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/fixtures-v2.log",
+      "log_bytes": 639,
+      "log_sha256": "684e4ba04ba970e84ced7f20a0c165772629e4b7b5feb8331e59bfc372abd6a7"
+    },
+    {
+      "id": "full-unit-v1",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "300",
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "BIKE_MLOPS_TEST_DIAGNOSTICS_DIR=data/reports/20261105-clock-campaign/diagnostics-full-v1",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-04T23:59:36.780440+00:00",
+      "end_utc_local_unqualified": "2026-11-05T00:02:59.855999+00:00",
+      "start_monotonic_ns": 162473695883477,
+      "end_monotonic_ns": 162695884419149,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/full-unit-v1.log",
+      "log_bytes": 134427,
+      "log_sha256": "782866f36c4f568114e46ad2dc251bc73bc775a6fd834930081390d5a58d9233"
+    },
+    {
+      "id": "separate-complete-v1",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261105-clock-campaign/check_fixture.py",
+        "complete"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-05T00:00:25.377231+00:00",
+      "end_utc_local_unqualified": "2026-11-05T00:00:25.484510+00:00",
+      "start_monotonic_ns": 162527771274392,
+      "end_monotonic_ns": 162527878560059,
+      "exit_code": 1,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/separate-complete-v1.log",
+      "log_bytes": 793,
+      "log_sha256": "35d3644b4be658a7ae53b7a9a3bc0cdd201e85c4366ad49060fb270b86894b2e"
+    },
+    {
+      "id": "separate-complete-v2",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261105-clock-campaign/check_fixture.py",
+        "complete"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-05T00:00:42.665833+00:00",
+      "end_utc_local_unqualified": "2026-11-05T00:00:43.372956+00:00",
+      "start_monotonic_ns": 162547778732646,
+      "end_monotonic_ns": 162548485847636,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/separate-complete-v2.log",
+      "log_bytes": 806,
+      "log_sha256": "0631047c9eab5814f687631a4c8d4af9f361a4f7f32b2a011610bb6ee86a7ddb"
+    },
+    {
+      "id": "separate-missing-v1",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261105-clock-campaign/check_fixture.py",
+        "missing"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-05T00:00:25.560297+00:00",
+      "end_utc_local_unqualified": "2026-11-05T00:00:25.627096+00:00",
+      "start_monotonic_ns": 162527954343439,
+      "end_monotonic_ns": 162528021149788,
+      "exit_code": 1,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/separate-missing-v1.log",
+      "log_bytes": 793,
+      "log_sha256": "35d3644b4be658a7ae53b7a9a3bc0cdd201e85c4366ad49060fb270b86894b2e"
+    },
+    {
+      "id": "separate-missing-v2",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261105-clock-campaign/check_fixture.py",
+        "missing"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-05T00:00:43.620316+00:00",
+      "end_utc_local_unqualified": "2026-11-05T00:00:44.069926+00:00",
+      "start_monotonic_ns": 162548733243588,
+      "end_monotonic_ns": 162549182816234,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/separate-missing-v2.log",
+      "log_bytes": 809,
+      "log_sha256": "eddcfb57eaa8bb99cd9ea636c7425c05ff2928c73a53a3680117dbfc000d61f1"
+    },
+    {
+      "id": "separate-violating-v1",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261105-clock-campaign/check_fixture.py",
+        "violating"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-05T00:00:25.699614+00:00",
+      "end_utc_local_unqualified": "2026-11-05T00:00:25.769665+00:00",
+      "start_monotonic_ns": 162528093668020,
+      "end_monotonic_ns": 162528163709868,
+      "exit_code": 1,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/separate-violating-v1.log",
+      "log_bytes": 793,
+      "log_sha256": "35d3644b4be658a7ae53b7a9a3bc0cdd201e85c4366ad49060fb270b86894b2e"
+    },
+    {
+      "id": "separate-violating-v2",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261105-clock-campaign/check_fixture.py",
+        "violating"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-05T00:00:44.402792+00:00",
+      "end_utc_local_unqualified": "2026-11-05T00:00:45.024853+00:00",
+      "start_monotonic_ns": 162549515688591,
+      "end_monotonic_ns": 162550137805332,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/separate-violating-v2.log",
+      "log_bytes": 799,
+      "log_sha256": "4070a92a10e22b492321b4504312f547106d89107f6f95503c56a682e75f224f"
+    },
+    {
+      "id": "source-before-full-v1",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261105-clock-campaign/snapshot.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-04T23:59:36.655517+00:00",
+      "end_utc_local_unqualified": "2026-11-04T23:59:36.714935+00:00",
+      "start_monotonic_ns": 162473570963018,
+      "end_monotonic_ns": 162473630380632,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/source-before-full-v1.log",
+      "log_bytes": 803,
+      "log_sha256": "ae06ce0ef6b63b292c1627a87e798b6c67afec245a7568539c9c0bb9dc9856a6"
+    },
+    {
+      "id": "t09-head-v1",
+      "command": [
+        "curl",
+        "--head",
+        "--silent",
+        "--show-error",
+        "--max-time",
+        "20",
+        "https://s3.amazonaws.com/capitalbikeshare-data/202610-capitalbikeshare-tripdata.zip"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-04T23:59:15.436550+00:00",
+      "end_utc_local_unqualified": "2026-11-04T23:59:16.296825+00:00",
+      "start_monotonic_ns": 162449613983688,
+      "end_monotonic_ns": 162450474286348,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/t09-head-v1.log",
+      "log_bytes": 286,
+      "log_sha256": "2c370eb93f5e340618fe75955cc4e967e597b08a32e5363bcbe38ef8fcd0ddfe"
+    },
+    {
+      "id": "target-v1",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_campaign_review.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-04T23:55:48.226285+00:00",
+      "end_utc_local_unqualified": "2026-11-04T23:56:06.207136+00:00",
+      "start_monotonic_ns": 162223318665049,
+      "end_monotonic_ns": 162241299518060,
+      "exit_code": 1,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/target-v1.log",
+      "log_bytes": 5677,
+      "log_sha256": "8c723d5807d47a36d1d1379cd6d1a7637ab5737880bfa902d86485e0f894a200"
+    },
+    {
+      "id": "target-v2",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_campaign_review.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-04T23:56:56.247036+00:00",
+      "end_utc_local_unqualified": "2026-11-04T23:57:12.945992+00:00",
+      "start_monotonic_ns": 162296791170447,
+      "end_monotonic_ns": 162316217057051,
+      "exit_code": 1,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/target-v2.log",
+      "log_bytes": 6168,
+      "log_sha256": "8650d88fa83e0638044594c6f1158ebcfd457fcd825557ec6ca3a7789621cc91"
+    },
+    {
+      "id": "target-v3",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_campaign_review.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-04T23:58:22.053149+00:00",
+      "end_utc_local_unqualified": "2026-11-04T23:58:38.657180+00:00",
+      "start_monotonic_ns": 162390793905114,
+      "end_monotonic_ns": 162410065930988,
+      "exit_code": 1,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/target-v3.log",
+      "log_bytes": 6168,
+      "log_sha256": "0e916a595e2d74329e45d0bac0cf8623dce113301daedd11b0db3bbca92defb8"
+    },
+    {
+      "id": "target-v4",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_campaign_review.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-04T23:58:41.169894+00:00",
+      "end_utc_local_unqualified": "2026-11-04T23:58:58.961118+00:00",
+      "start_monotonic_ns": 162412578655109,
+      "end_monotonic_ns": 162433138546639,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/target-v4.log",
+      "log_bytes": 5721,
+      "log_sha256": "29f6ab460262c595d49372745916825acfc93e2c199056239d1314f76354b13e"
+    },
+    {
+      "id": "target-v5",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_campaign_review.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-05T00:03:25.158365+00:00",
+      "end_utc_local_unqualified": "2026-11-05T00:03:43.574211+00:00",
+      "start_monotonic_ns": 162723921912189,
+      "end_monotonic_ns": 162745063448154,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/target-v5.log",
+      "log_bytes": 6061,
+      "log_sha256": "f8ea23eccae2a9ce4793223a35061dad6fd6515d36bdfdc2ee0c3af4e5db1828"
+    },
+    {
+      "id": "validation-v1",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261105-clock-campaign/validate.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-05T00:03:48.111900+00:00",
+      "end_utc_local_unqualified": "2026-11-05T00:03:48.282938+00:00",
+      "start_monotonic_ns": 162749601147640,
+      "end_monotonic_ns": 162749772187652,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261105-clock-campaign/validation-v1.log",
+      "log_bytes": 122,
+      "log_sha256": "885c55a492c3ccdfd1dde4c81464960514e25529e394162d542d8cf67396abfa"
+    }
+  ],
+  "local_verification": {
+    "full_unit_before_final_guards": {
+      "tests": 515,
+      "reported_seconds": 216.771,
+      "exit_code": 0
+    },
+    "final_target_tests": 35,
+    "final_full_ci": "pending"
+  },
+  "raw_files": [
+    {
+      "path": "data/reports/20261105-clock-campaign/build_index.py",
+      "bytes": 2627,
+      "sha256": "c82c0b68443d9d4901d28c022ee2733dd2800f987269bd317908b469eb492969"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/check_fixture.py",
+      "bytes": 3021,
+      "sha256": "3c7fd21e5d9f5dc63ae1f7693c89095f75e12ba4112c67b6f7b8f1949f2f0202"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/cli-v1.py",
+      "bytes": 3525,
+      "sha256": "975f4fa8c5a7d41be25225390d712c8f5993103d61afef62799f2ad8d57cb3fb"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/complete-input.json",
+      "bytes": 3549076,
+      "sha256": "528b3503c844b3f7fe972239565952eeb6d83af05fd98ca9a0fad3a7569e8f11"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/complete-report.json",
+      "bytes": 211235,
+      "sha256": "de9ff9d90af4a6d47412efbfa37d4def6d91d10a477f03fa909215e94c400841"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/conditional-inputs-v1.json",
+      "bytes": 624,
+      "sha256": "ae6a26c1c804130d35e7af8d6310a8845cfde250ce872f9b52c3fac427af7bf9"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/conditional-inputs-v1.log",
+      "bytes": 389,
+      "sha256": "f19af7f167fd6788766116cfd0e37a75099ca3f2708b3cf9901f97db19b4ba5a"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/signal-SIGKILL-5b551ad3b1f64dcd9546a46c5fb6c6b1/child-stacks.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/signal-SIGKILL-5b551ad3b1f64dcd9546a46c5fb6c6b1/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/signal-SIGKILL-5b551ad3b1f64dcd9546a46c5fb6c6b1/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/signal-SIGKILL-5b551ad3b1f64dcd9546a46c5fb6c6b1/child.jsonl",
+      "bytes": 1128,
+      "sha256": "8a133107df31e7fae102ad2f8293ff34b554cd79a6103ad38edba317a1b5609b"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/signal-SIGKILL-5b551ad3b1f64dcd9546a46c5fb6c6b1/parent.jsonl",
+      "bytes": 936,
+      "sha256": "c11a9e15bed4e5abdd5b90e5f0656c800b9b16cc9fb7c6bf32512a1e2d979869"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/signal-SIGTERM-2d06bb53bb2d46189e340cae99963cb3/child-stacks.txt",
+      "bytes": 594,
+      "sha256": "aaa27b9942033ead83f3a8c30d2a41c5e31827b6167aca6a026a05f4a5ae6924"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/signal-SIGTERM-2d06bb53bb2d46189e340cae99963cb3/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/signal-SIGTERM-2d06bb53bb2d46189e340cae99963cb3/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/signal-SIGTERM-2d06bb53bb2d46189e340cae99963cb3/child.jsonl",
+      "bytes": 1950,
+      "sha256": "efda4a404ad780ca834a7d882ed579086db46f683bb3942cec38fee09738e4ae"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/signal-SIGTERM-2d06bb53bb2d46189e340cae99963cb3/parent.jsonl",
+      "bytes": 1085,
+      "sha256": "048afc5b065b94c318b340c18e1fd5278cc2762d6c5a7f6840d203a0adc297c6"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/signal-SIGTERM-4ecbed07b9fd49ceb7038a39c73d10ac/child-stacks.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/signal-SIGTERM-4ecbed07b9fd49ceb7038a39c73d10ac/child-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/signal-SIGTERM-4ecbed07b9fd49ceb7038a39c73d10ac/child-stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/signal-SIGTERM-4ecbed07b9fd49ceb7038a39c73d10ac/child.jsonl",
+      "bytes": 2497,
+      "sha256": "66c35eb0530eb711d7eb42630b16bc2b675f147d2f23b92de20f429019848cfc"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/signal-SIGTERM-4ecbed07b9fd49ceb7038a39c73d10ac/parent.jsonl",
+      "bytes": 943,
+      "sha256": "263432e863791b7d170c8e87a089715cfe8c304f4177feac0baed19aaccfd23b"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/test_regressed_review_validation_clock_blocks_approval_without_tag_writes-fa0f2f3bac3d4d53be0c85b88690ee14/decision.jsonl",
+      "bytes": 13107,
+      "sha256": "30b36c6664703b6fda731ca639a1db0a8ab429512ba41e27bf6b119e38715284"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/test_report_artifact_review_approval_and_tamper_rejection_in_temporary_sqlite_registry-b2af31b7d61047dda172e6b71eeb2b1a/decision.jsonl",
+      "bytes": 20369,
+      "sha256": "f3bd804d31d41de678c01e32bc89ea0763bde6d636943ccd7255b6a478d7b2d2"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/diagnostics-full-v1/test_utc_boundary_is_strict_and_rejection_retains_exact_clock_values-43292b4f5dd447cd9dd583664ec64769/decision.jsonl",
+      "bytes": 1647,
+      "sha256": "3861d8f204c06e0a32cabc36c21966fd7426c2857dfa644f1bbe4b544c6fcc9b"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/fixtures-v1.json",
+      "bytes": 599,
+      "sha256": "bd14c49bc5d54a6c1421549e097e35cd58dd7aa6f0ecd867b9a5f5f31d0fb482"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/fixtures-v1.log",
+      "bytes": 664,
+      "sha256": "3bbbc618b9a92f37cb4cd551209ad5466a2cdb1b91813b1c3a51e42254fe14c6"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/fixtures-v2.json",
+      "bytes": 599,
+      "sha256": "ae83fdb3e3a911bc60e8e0f72248d54e98023e1c041d54627413e2ef9e7bcfd9"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/fixtures-v2.log",
+      "bytes": 639,
+      "sha256": "684e4ba04ba970e84ced7f20a0c165772629e4b7b5feb8331e59bfc372abd6a7"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/full-unit-v1.json",
+      "bytes": 831,
+      "sha256": "0367aa39eec96ca522eee09cf5a2b10f642e3f43451edfc92b99fda6e869e535"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/full-unit-v1.log",
+      "bytes": 134427,
+      "sha256": "782866f36c4f568114e46ad2dc251bc73bc775a6fd834930081390d5a58d9233"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/make_fixture-v1.py",
+      "bytes": 1040,
+      "sha256": "8a3d2f54c55b9c86c7500b95aba71161875528e26f22506748732fd862a381d4"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/make_fixture.py",
+      "bytes": 1079,
+      "sha256": "0e7dfb5974ad59ef5126710fd53a06e2475407a488b5df9565c0459d631d6907"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/missing-input.json",
+      "bytes": 1771098,
+      "sha256": "85cffbc5c934857247e08c592f3c16f6a003e26160d772ce63c774a59f81f65e"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/missing-report.json",
+      "bytes": 106538,
+      "sha256": "6d9397e91bea10a80ee91a0f8b33e83d229339e61e87a7b8670cf2e7cbff1e8a"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/readiness_context.py",
+      "bytes": 715,
+      "sha256": "7fe776de80dbeeb213faa58175e3c31291f3d41023a5bea75a6a8d0d4427b838"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/run_attempt.py",
+      "bytes": 1244,
+      "sha256": "62df5fee98294644b7a3ebc2a0087ffa98f9be75fc4c26285681b39def88ac29"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/separate-complete-v1.json",
+      "bytes": 634,
+      "sha256": "40e0ab8a9ab80e2754e6cbe8072450f96f3c0e08415c92d4882bb83695509daa"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/separate-complete-v1.log",
+      "bytes": 793,
+      "sha256": "35d3644b4be658a7ae53b7a9a3bc0cdd201e85c4366ad49060fb270b86894b2e"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/separate-complete-v2.json",
+      "bytes": 634,
+      "sha256": "734d49d286f23a80e5cb5a07a426e0a958702f5f3ad868ea8124834a2e7ad01d"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/separate-complete-v2.log",
+      "bytes": 806,
+      "sha256": "0631047c9eab5814f687631a4c8d4af9f361a4f7f32b2a011610bb6ee86a7ddb"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/separate-missing-v1.json",
+      "bytes": 631,
+      "sha256": "a66e7997194e67fe07eedd233ebf80deba4eb6b72774ae29e3a78f7dcaeeee80"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/separate-missing-v1.log",
+      "bytes": 793,
+      "sha256": "35d3644b4be658a7ae53b7a9a3bc0cdd201e85c4366ad49060fb270b86894b2e"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/separate-missing-v2.json",
+      "bytes": 631,
+      "sha256": "e51b0b1ff336fb4c2a919f5838416ad756f351bbcea010b2e67cc82f7658f178"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/separate-missing-v2.log",
+      "bytes": 809,
+      "sha256": "eddcfb57eaa8bb99cd9ea636c7425c05ff2928c73a53a3680117dbfc000d61f1"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/separate-violating-v1.json",
+      "bytes": 637,
+      "sha256": "3505ddc699475e34c7dd7867a8fbb1ac1a61732f011367dcaefb979be2bcd609"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/separate-violating-v1.log",
+      "bytes": 793,
+      "sha256": "35d3644b4be658a7ae53b7a9a3bc0cdd201e85c4366ad49060fb270b86894b2e"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/separate-violating-v2.json",
+      "bytes": 637,
+      "sha256": "dc664ea25a7e986f1e04b9a7749b4c5b8cc2f1fcbe78920817eb7b1ac91377da"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/separate-violating-v2.log",
+      "bytes": 799,
+      "sha256": "4070a92a10e22b492321b4504312f547106d89107f6f95503c56a682e75f224f"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/snapshot.py",
+      "bytes": 418,
+      "sha256": "b57385424de51c330eb9b97f3312d8cb70cc9b49e68d49da8c154b3ee5fc8944"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/source-before-final-guard.py",
+      "bytes": 21931,
+      "sha256": "6cd7fd275ac3c15941cdc926fcf97838da8495a70ce8cb579da5cdedef27452a"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/source-before-full-v1.json",
+      "bytes": 615,
+      "sha256": "0daa0592f3c033da5d9f0657a3f77c987a77ea8833793c3d5c298e665105adc5"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/source-before-full-v1.log",
+      "bytes": 803,
+      "sha256": "ae06ce0ef6b63b292c1627a87e798b6c67afec245a7568539c9c0bb9dc9856a6"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/source-v1.py",
+      "bytes": 18681,
+      "sha256": "3b10ceeb6de851788adf0b25ac3cde8f17b3213813be15f44fdc128c8c3591eb"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/source-v3.py",
+      "bytes": 21931,
+      "sha256": "6cd7fd275ac3c15941cdc926fcf97838da8495a70ce8cb579da5cdedef27452a"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/synthetic-plan.sha256",
+      "bytes": 65,
+      "sha256": "5bdca322ccb721d2d6ddc1deaf0ddd3564d5ae2bbd98e47039b09704ca6d99e8"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/t09-head-v1.json",
+      "bytes": 696,
+      "sha256": "a76b840abe067f5d96d5fd4d24661890bc68e91b9448f716d621a59ad584788a"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/t09-head-v1.log",
+      "bytes": 286,
+      "sha256": "2c370eb93f5e340618fe75955cc4e967e597b08a32e5363bcbe38ef8fcd0ddfe"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/target-v1.json",
+      "bytes": 704,
+      "sha256": "875dcfed45f49d2501d5563ef4e091be0f29c515b17df5204036cf0d221460b9"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/target-v1.log",
+      "bytes": 5677,
+      "sha256": "8c723d5807d47a36d1d1379cd6d1a7637ab5737880bfa902d86485e0f894a200"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/target-v2.json",
+      "bytes": 704,
+      "sha256": "bd3f9945952b6df21446bb91404112c834157a5bf9fd27d88f299f3b680b0bcd"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/target-v2.log",
+      "bytes": 6168,
+      "sha256": "8650d88fa83e0638044594c6f1158ebcfd457fcd825557ec6ca3a7789621cc91"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/target-v3.json",
+      "bytes": 704,
+      "sha256": "d1181ee76dcb9d37f30730f7a965da2e5fcdf5458c09601acdbd2aa8cd48c796"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/target-v3.log",
+      "bytes": 6168,
+      "sha256": "0e916a595e2d74329e45d0bac0cf8623dce113301daedd11b0db3bbca92defb8"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/target-v4.json",
+      "bytes": 704,
+      "sha256": "79802200083f2ceaeba3c96d4f88e5ebd68b54c4cdd5d87ce00ac122782d7c97"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/target-v4.log",
+      "bytes": 5721,
+      "sha256": "29f6ab460262c595d49372745916825acfc93e2c199056239d1314f76354b13e"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/target-v5.json",
+      "bytes": 704,
+      "sha256": "bf8f614cab59c7a15ed06a5908352364943167f6f269c5da735825e6850a39dc"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/target-v5.log",
+      "bytes": 6061,
+      "sha256": "f8ea23eccae2a9ce4793223a35061dad6fd6515d36bdfdc2ee0c3af4e5db1828"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/tests-before-final-guard.py",
+      "bytes": 22143,
+      "sha256": "c6953bdcf481430ea0d7d4d10cf4dba67a5b4935c99ec96562aa8abf7b8aafe7"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/tests-v1.py",
+      "bytes": 20300,
+      "sha256": "28670d0c45b2424ef87a8899b9da038d6c172952c009f000f5c7f050af51c816"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/tests-v3.py",
+      "bytes": 21660,
+      "sha256": "59e9f30bdde127d4a8634488453c2339744741d48fc901803e379c947e3f5eae"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/validate.py",
+      "bytes": 1555,
+      "sha256": "33145133b6456f46c36da8abae70f595431d301c6a021f6809d11ac6a6e2affb"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/validation-v1.json",
+      "bytes": 599,
+      "sha256": "b994532a3ea29db2c42eb3b5db904aff472730d5a02a0cfde2ad37dc713d1c80"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/validation-v1.log",
+      "bytes": 122,
+      "sha256": "885c55a492c3ccdfd1dde4c81464960514e25529e394162d542d8cf67396abfa"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/violating-input.json",
+      "bytes": 3549058,
+      "sha256": "05c5dc6f58cf2c62163e43b51e9371c71140050db8762dc49569816509593213"
+    },
+    {
+      "path": "data/reports/20261105-clock-campaign/violating-report.json",
+      "bytes": 211392,
+      "sha256": "da541688fd6f22ce82554e28867d22e201dd2e5160d8c54d09b5119e21bb8913"
+    }
+  ],
+  "T09": {
+    "status": 404,
+    "server_date": "Wed, 04 Nov 2026 23:59:13 GMT",
+    "url": "https://s3.amazonaws.com/capitalbikeshare-data/202610-capitalbikeshare-tripdata.zip",
+    "web_reader": "URL unavailable; not an object-status conclusion",
+    "curl_exit": 0,
+    "new_data_acquired": false
+  },
+  "conditions": {
+    "new_admin_capture_candidates": [],
+    "new_natural_recurrence_input": false,
+    "additional_trace": false
+  },
+  "limitations": [
+    "Untrusted saved numbers/digests cannot authenticate collection or independent references.",
+    "No whole-clock passed result or CLI zero exit is possible.",
+    "QPC 100ppm is a new pre-observation project policy; not a vendor guarantee or historical diagnosis.",
+    "No repair/suspend/resume/OS change/real DB/registry/live deployment/fit was performed.",
+    "Existing strict future rejection is unchanged; fixture-only reproduction is not a producer proof.",
+    "T09 absent; T10 protocol and real-candidate acceptance prerequisites remain open.",
+    "CI acceptance must be separately recorded against the exact implementation commit."
+  ]
+}

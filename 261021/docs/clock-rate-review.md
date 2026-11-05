@@ -77,3 +77,7 @@ localの全480件は最終IO guard追加前の記録として保持し、CIの48
 
 次は、全campaignの入力schemaとpolicy binding、外部UTC区間/校正/identity/採取真正性・coverageの判定を設計・実装する。
 採取器、固定fixture負荷、外部時刻源readerも未実装。実採取・設定変更や休止再開を自動実行する部品は追加していない。
+
+2026-11-05追記：[4区間を結合する全観測期間のoffline reader](clock-campaign-review.md)を追加した。
+このphase部品の契約は変更せず、各phaseから同じ計算を呼ぶ。外部UTC/校正/identity/欠測の数値照合が揃っても、
+全体資格はincompleteのままとし、採取真正性/独立源/許可・修復・人のreviewを残す。

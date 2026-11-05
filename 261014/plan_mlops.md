@@ -532,9 +532,9 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 <a id="remaining-work-latest"></a>
 
-#### 2026-11-04 backend経路・左端境界・時計資格設計/進行率照合後の残課題
+#### 2026-11-05 全観測期間のoffline契約/照合後の残課題
 
-最新実装`f26b334`の[CI41845551048](https://github.com/kenobix/Claude_practice/actions/runs/41845551048)は全482件・全隔離system/cleanup成功。
+直近のCI受入済み実装`f26b334`の[CI41845551048](https://github.com/kenobix/Claude_practice/actions/runs/41845551048)は全482件・全隔離system/cleanup成功。
 [進行率component最終CI索引](../261021/docs/reviews/20261104-clock-rate-ci-checks.json)で、artifact16 member/hash・archive-only検算まで確認した。
 設計とoffline componentの合成受入で、実時計資格・PHC/UDP所有・過去の動的原因を確定しない。
 
@@ -546,8 +546,8 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 | 優先度 | 難易度・担当 | 残課題と次の条件 |
 |---|---|---|
-| P1 | D3・Sol | 時計：前回initd setterの実exe/親/namespaceは照合済み。保存済みELFの[backend取得interfaceとSettimeofday CALL](../261021/docs/backend-time-path-review.md)も静的照合したが、新しいruntime応答/stackではない。新管理者ログなし。残りはPHC fd/UDPと現在identity、tick11000時内部値、backend/host時刻源・外部UTC差・同期責任、許可後の修復と時計資格。[資格計測設計v1](../261021/docs/clock-qualification-plan.md)と[offline進行率phase component](../261021/docs/clock-rate-review.md)を追加し、実装f26b334のCI482件/全system/artifact/cleanupまで受入済み。次は全campaign判定/校正/外部UTC/identity、採取器/負荷生成器/外部源reader、同期責任review、別途許可後の修復/全受入。componentだけで資格合格にしない。非飽和traceを反復せず、過去の飽和/T03歴史的停止も未確定。initd全体を止めず、future拒否/clamp/retryの禁止は維持 |
-| P1 | D1・Luna | T09の202610公式原本公開待ち。2026-11-04 13:42:25UTCの公式S3 HEADも404（今回の記録は[追跡索引](../261021/docs/reviews/20261104-followup-checks.json)）。公開後に既存手順で取得・bytes/hash/構造を照合。HEADだけで取得完了としない。今回の202212追加取得をT09の10月到着と混同しない |
+| P1 | D3・Sol | 時計：前回initd setterの実exe/親/namespaceは照合済み。保存済みELFの[backend取得interfaceとSettimeofday CALL](../261021/docs/backend-time-path-review.md)も静的照合したが、新しいruntime応答/stackではない。新管理者ログなし。残りはPHC fd/UDPと現在identity、tick11000時内部値、backend/host時刻源・外部UTC差・同期責任、許可後の修復と時計資格。[資格計測設計v1](../261021/docs/clock-qualification-plan.md)と[offline進行率phase component](../261021/docs/clock-rate-review.md)を追加し、実装f26b334のCI482件/全system/artifact/cleanupまで受入済み。全campaignのpolicy/事前plan SHA結合・外部UTC/校正/identity/欠測を[offline照合](../261021/docs/clock-campaign-review.md)する実装を追加（今回CIは後続索引で確認）。数値/構造だけの成功でも資格はincompleteを保つ。次は採取protocol/真正性/独立源不確かさ・identity元資料、固定負荷/reader、同期責任review、別途許可後の修復/全受入。非飽和traceを反復せず、過去の飽和/T03歴史的停止も未確定。initd全体を止めず、future拒否/clamp/retryの禁止は維持 |
+| P1 | D1・Luna | T09の202610公式原本公開待ち。前回から約10時間後の2026-11-04 23:59:13UTC（JST11月5日）の公式S3 HEADも404（[今回索引](../261021/docs/reviews/20261105-clock-campaign-checks.json)）。公開後に既存手順で取得・bytes/hash/構造を照合。HEADだけで取得完了としない。今回の202212追加取得をT09の10月到着と混同しない |
 | P0（実fit前） | D3・Sol | T10：独立protocol/全原本snapshot/分割/recipe/基準をfit前に固定。[左端bufferを202212に決定・取得し、202301との2file/379,310行を別parserでも監査](../261021/docs/t10-input-readiness.md)。原本範囲202212〜202610、target窓とrecipeは不変。保管46件/予定47件だが正式集約/manifest監査/凍結は未実施。10月bufferなしで窓を短縮せず、1か月bufferを母集団の完全性保証にしない |
 | P1 | D3・Sol | T02実producerおよびT11/T12/T13b：同一の実candidate/artifactに精度・監視・復旧・metadata・運用測定を結合し採否を記録。T09/T10/時計資格等の前提を満たす範囲で順に進める |
 | P2（上流変更時） | D2・Sol review | MLflow noloadの発生箇所/通常import/厳格警告負例と現行publisher6件は確認済み。最新3.17.2にも同指定があり、修正releaseまたはloader変更時に個別再検証。それまではlock変更/警告抑制をしない。[調査と報告下書き](../261021/docs/mlflow-orm-compatibility.md)。upload-artifact保守は前回CI受入済み |

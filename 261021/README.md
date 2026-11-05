@@ -151,3 +151,8 @@ tick11000時の原因・時計資格は未解決。[MLflow警告の調査](docs/
 続いて[保存済み進行率phaseのoffline照合](docs/clock-rate-review.md)を実装しました。
 指定JSONの固定窓/上下限/hashを検算するcomponentであり、時計資格全体の状態は常に`not_evaluated`です。
 [実装f26b334のCI](docs/reviews/20261104-clock-rate-ci-checks.json)では全482件と全隔離system、artifact16 member/SHA・archive-only検算・cleanupまで確認しました。
+
+2026-11-05、[全観測期間のoffline照合](docs/clock-campaign-review.md)を追加しました。
+通常/再開後の4区間をpolicy・事前plan SHAと結合し、外部UTC・QPC校正・identity・欠測・厳密futureを再計算します。
+数値/構造が揃っても時計資格はincompleteのままで、採取の真正性・独立源・修復/保守・人のreviewを省略しません。
+[今回の試行と限界](docs/reviews/20261105-clock-campaign-checks.json)を参照してください。実時計の修復・資格判定やfitは未実施です。

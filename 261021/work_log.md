@@ -3574,3 +3574,66 @@ local索引のCI未確認は当時のsnapshotとして保持し、後続の最�
 最後にraw/hash/link/実装不変・diff・対象pathを検証し、この記録文書だけをcommit/pushする。
 validation-v1はexit0。当時80 hash record・241相対link・6対象fileと、CI実装以降の製品path不変を確認した。
 この検証の2原本を含む最終索引を再生成し、82 hash recordを直接validatorで照合後に対象6文書だけをstageする。
+
+## 2026-11-05・基点fb33af2から全観測期間のoffline照合
+
+計画§11.6、work log、固定済み資格設計、phase部品、実装f26b334/CI41845551048の索引を確認した。
+実時計の修復ではなく、独立して実装できる全観測期間の入力契約/数値照合を進めた。
+[新契約と操作](docs/clock-campaign-review.md)、[試行/hash索引](docs/reviews/20261105-clock-campaign-checks.json)。
+OS/時計設定・実DB/registry/現配信、既存future拒否、schema/writer/lock/workflowは変更しない。
+既存の凍結済みclock-qualification-plan.mdも不変。設計で未定だったQPC校正の数値を、
+今回policyで±100ppmに固定した。WSL対QPCの±1000ppmとは別予算で、合成結果/過去p95を補正しない。
+
+新しいread-only計算部品と独立CLIを追加。単一JSONのpolicy本文/固定SHA・事前plan SHA・4phase canonical SHAを結合する。
+通常と再開後で別trial、idle終端と負荷始端で共有sample、60秒境界/30分全体、外部UTCの不確かさ区間、
+独立参照のQPC校正区間、identity、欠測/lost/中断、resume前後UTCとidentity、保存済みfuture probeを照合する。
+時刻差はFractionで扱い、点推定や境界の一部重なりを合格にしない。
+NULLで確認できないことを不一致と断定せず、他の項目で観測した違反があれば不足よりfailedを優先する。
+
+数値/構造のoffline_checks_status=passedとclock_qualification_statusを分け、後者はfailed/incompleteのみ。
+自己申告のflag/hashだけで採取真正性・独立源・修復/保守許可・人のreviewを満たしたとは扱わない。
+CLIの終了値も1/2だけで、良好な合成入力から実測解禁する経路を設けていない。
+既存phase CLIの0/1/2は変更していない。新CLIは32MiB/通常file/nofollow/nonblock/単一FDの前後statとpath照合、
+byte SHA、fsync/排他的確定、上書き拒否、失敗時staging cleanup、安全なstderrを持つ。
+
+### 条件付き入力確認
+
+前回T09実観測から約10時間経過したためHEADを1回だけ実施した。web readerはURLに到達できず物体状態の結論なし。
+外部接続を許可したcurl HEADはexit0だが、HTTPは404。AmazonS3 Dateは2026-11-04 23:59:13GMT（JST11月5日）。
+curl終了0をデータ取得成功とは扱わない。GET/ZIP再検査/fit/正式snapshot/protocol/窓短縮は行っていない。
+管理者標準capture候補resources.log/inventory.log/collection.jsonの限定検索は新規候補なし。
+新しい自然tick11000/T03入力は提供されておらず、trace採取を繰り返していない。環境全体の未再発や現在PID再照合まで主張しない。
+
+### 試行・初回失敗
+
+ignored原本は`data/reports/20261105-clock-campaign/`。
+runnerは試行ID/command/cwd/UTC（未資格）/MONOTONIC/終了値/log bytes/SHAを保存し、上書きを拒否する。
+表示所要秒も校正済み時計の証拠とは呼ばない。
+
+- target-v1：28件中1件失敗。rate値がNULLだとQPC境界まで未確定扱いにし、提出UTC indexを「違反」と断定していた。
+  QPC coverageと他clock値の充足を分離し、未観測境界は不足、確認できる端点の進行率違反は計算するよう修正した。
+- target-v2/v3：各31件中1件失敗。疎sample負例が元のlive probeのindexを残しており、対応sampleが変わった違反を正しく検出した。
+  製品の拒否を緩めず、その欠測専用fixtureから未採取のprobeも除き、別のprobe不一致負例を維持した。
+  v3ではphase境界identity/valueのNULLを不一致と混同しない修正も行っていた。
+- target-v4：33件成功。通常/再開後4区間、policy/plan/phase binding、UTC/校正境界、欠測、identity、strict future、
+  別process CLI/上書き拒否/hash、FIFO/symlink/サイズ拒否、read/fsync/link失敗cleanupを確認した。
+- fixtures-v1：raw補助generatorがtest fixtureをimportする際、scripts import pathを解決できず失敗。
+  同じshellが停止せず依存するseparate-*-v1を3件実行し、未生成plan SHAの読取で全件失敗した。
+  この不要な依存失敗も削除せず保存した。raw補助だけにproject import rootを明示し、以後は前段成功を確認して実行した。
+- fixtures-v2とseparate-complete/missing/violating-v2：成功。保存した単一JSONだけをCLI別processへ渡し、
+  子CLIはそれぞれexit2/2/1、offline状態passed/incomplete/failed、資格はincomplete/incomplete/failedを確認。
+  completeの外部UTC/QPC校正372区間を独立Fraction計算でも照合した。
+  事前plan SHAはこの合成fixture生成時のもので、実観測前の真正性を証明したとは呼ばない。
+
+全unit suiteは、前回通常sandboxのTestClient停止を踏まえ、許可付き使い捨てfixtureで実行する。
+source-before-full-v1に5対象source/designのbytes/SHAを記録した。結果と最終変更後の対象検証は後続に追記する。
+
+full-unit-v1は全515件/表示216.771秒、exit0で成功した。T03/T13に新たな自然失敗はなく、過去原因の解決とは扱わない。
+最終reviewで、identity_start欠測時にも各sampleのdigest形式を検査するguardを追加し、
+実際のstat変更検知とその形式拒否の2テスト、既存CLI負例へ深いJSONの安全拒否を追加した。
+全515件はこの最終追加前のsnapshotとして保持し、最終517件の結果に読み替えない。
+
+target-v5は最終35件/表示20.902秒、exit0で成功した。追加guard後の全suiteは実装commitのCIで確認し、
+local515件と区別する。validation-v1は78 hash record、210相対link、3Python構文、git diff --checkを確認して成功。
+同検証の原本2件を索引へ追加し、最終hashを再照合してから対象9ファイルだけをstageする。
+CI未確認のlocal索引は当時のsnapshotとして残し、実装commitのCI/全artifact/cleanupは後続索引に記録する。
