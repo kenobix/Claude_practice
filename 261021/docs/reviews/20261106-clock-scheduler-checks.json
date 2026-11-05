@@ -1,0 +1,1070 @@
+{
+  "schema_version": 1,
+  "status": "SYNTHETIC_FIXED_SCHEDULE_LOCAL_ACCEPTED_IMPLEMENTATION_CI_PENDING",
+  "base_commit": "89c544374fbb575e64ac066263beb50d7e333f82",
+  "synthetic_only": true,
+  "product_sources": {
+    "261021/src/bike_mlops/clock_campaign_capture.py": "010260e5144242bc45be69b6cdf6e12b47ed616908213aed4b7c6bb0d953f953",
+    "261021/src/bike_mlops/clock_campaign_schedule.py": "f067c01095d6877f6244d4e84ea8535561466cc8421f9ad945b9354226478899",
+    "261021/scripts/capture_fake_clock_campaign.py": "6f88e90198609762f7be2660e10e510668818a168c717d92261874bc31689780",
+    "261021/tests/test_clock_campaign_schedule.py": "e4546c29f52470869af448e7ddd12ff12461aed937d919818723fdac3b6dccc9"
+  },
+  "unit_tests": {
+    "initial": {
+      "id": "target-v1",
+      "count": 16,
+      "seconds": 82.753,
+      "source_snapshot": "source-v1"
+    },
+    "final": {
+      "id": "target-v2",
+      "count": 19,
+      "seconds": 107.12,
+      "source_snapshot": "source-v2"
+    },
+    "legacy": {
+      "id": "legacy-regression-v1",
+      "count": 30,
+      "seconds": 103.582
+    },
+    "reviewers": {
+      "id": "reviewer-regression-v2",
+      "count": 55,
+      "seconds": 20.685
+    }
+  },
+  "pipeline": {
+    "status": "passed",
+    "synthetic_only": true,
+    "cases": [
+      {
+        "scenario": "punctual",
+        "fault": "none",
+        "plan_sha256": "66803aa26911a89b197da09564a679fb934cd54d7be90bf210026cfb457dc27f",
+        "records": 14415,
+        "requests": 7202,
+        "missing_slots": 0,
+        "late_responses": 0,
+        "slots_enumerated": 7202,
+        "calibration_intervals_checked": 124,
+        "offline_checks_status": "passed",
+        "clock_qualification_status": "incomplete",
+        "raw_members": {
+          "journal.jsonl": {
+            "bytes": 16843497,
+            "sha256": "814a36f5bd4c3a45fac6d4cbf1b1b9be9341900b1efc20202438517482f37f66"
+          },
+          "complete.json": {
+            "bytes": 347,
+            "sha256": "7428f2b7dcdf76f47da80e0495be1c01520078a3d1bfed96ea9a00d99e8ac00b"
+          },
+          "plan.json": {
+            "bytes": 549,
+            "sha256": "ae35268d32304cf8bbace9a8a32d1a5079605857450b9dc19251db62b9025f15"
+          },
+          "sources.json": {
+            "bytes": 170126,
+            "sha256": "8631d0933d4bd077e42218d552f2cfcd32ffd8f0d318c9ec5b7c0f2475587fe4"
+          }
+        }
+      },
+      {
+        "scenario": "wake-late",
+        "fault": "none",
+        "plan_sha256": "2a4ff3830ccfb92c3e707a62b9d2768ca166636464e2b9cde5dac6c7c9c91bbc",
+        "records": 14412,
+        "requests": 7199,
+        "missing_slots": 3,
+        "late_responses": 0,
+        "slots_enumerated": 7202,
+        "calibration_intervals_checked": 124,
+        "offline_checks_status": "incomplete",
+        "clock_qualification_status": "incomplete",
+        "raw_members": {
+          "journal.jsonl": {
+            "bytes": 16837651,
+            "sha256": "bf5cb7c96de4b066e1a9211dd4f3bda782cc7c13b14eaae0d305abe2de15e3d7"
+          },
+          "complete.json": {
+            "bytes": 347,
+            "sha256": "0d076f759410730c7527928b2e672a88436720fcaa0cedad5e3394e7e23810c6"
+          },
+          "plan.json": {
+            "bytes": 549,
+            "sha256": "39c87995f12dc530c92142b74913d0329ceb6bc64e77e0b8715071afb2a6b517"
+          },
+          "sources.json": {
+            "bytes": 170126,
+            "sha256": "8631d0933d4bd077e42218d552f2cfcd32ffd8f0d318c9ec5b7c0f2475587fe4"
+          }
+        }
+      },
+      {
+        "scenario": "response-late",
+        "fault": "reverse",
+        "plan_sha256": "1ceed09761e494fe0b2d47e98b2c6cb8ee3157b84624c0888c3c278adf0ac8ff",
+        "records": 14413,
+        "requests": 7200,
+        "missing_slots": 2,
+        "late_responses": 1,
+        "slots_enumerated": 7202,
+        "calibration_intervals_checked": 124,
+        "offline_checks_status": "failed",
+        "clock_qualification_status": "failed",
+        "raw_members": {
+          "journal.jsonl": {
+            "bytes": 16839585,
+            "sha256": "0ad384f3d64949c3126e0bacbe7e4aed09226ca437d87990f433512dc05fdb17"
+          },
+          "complete.json": {
+            "bytes": 347,
+            "sha256": "764f98a42e8b13660bdf0a9f0fa0dd9ab54dd9284d0361cff31a91d682e5408f"
+          },
+          "plan.json": {
+            "bytes": 549,
+            "sha256": "25d346997cb1ba0ea30e68d5cfb4efbd2c9a37d9521a267e2ab0f210a90d2314"
+          },
+          "sources.json": {
+            "bytes": 170126,
+            "sha256": "8631d0933d4bd077e42218d552f2cfcd32ffd8f0d318c9ec5b7c0f2475587fe4"
+          }
+        }
+      },
+      {
+        "scenario": "deadline",
+        "fault": "none",
+        "plan_sha256": "f534150406f19f2312d47870c6a2ceeb6d6fc731ff600eb40260ebe8d5f9c5bd",
+        "records": 12634,
+        "requests": 5421,
+        "missing_slots": 1781,
+        "late_responses": 0,
+        "slots_enumerated": 7202,
+        "calibration_intervals_checked": 91,
+        "offline_checks_status": "incomplete",
+        "clock_qualification_status": "incomplete",
+        "raw_members": {
+          "journal.jsonl": {
+            "bytes": 13339762,
+            "sha256": "956b81c0b173249daed46beab3c927a8d46544182660caf4971c357773899375"
+          },
+          "complete.json": {
+            "bytes": 347,
+            "sha256": "6327cd1eb769ad7249f386fb4afca2802d855cc339299d5658655d1a61bc8508"
+          },
+          "plan.json": {
+            "bytes": 549,
+            "sha256": "24d8b01ef506e87bc72e24a158dcb78299394ea08b54f61202c93c6f248d7a33"
+          },
+          "sources.json": {
+            "bytes": 170126,
+            "sha256": "8631d0933d4bd077e42218d552f2cfcd32ffd8f0d318c9ec5b7c0f2475587fe4"
+          }
+        }
+      },
+      {
+        "scenario": "endpoint-late",
+        "fault": "none",
+        "plan_sha256": "71ba8df7829b1c6d7ee4878b5bffb3a65ddb20b44c56da596a1485a08645ce2b",
+        "records": 14415,
+        "requests": 7202,
+        "missing_slots": 0,
+        "late_responses": 1,
+        "slots_enumerated": 7202,
+        "calibration_intervals_checked": 124,
+        "offline_checks_status": "incomplete",
+        "clock_qualification_status": "incomplete",
+        "raw_members": {
+          "journal.jsonl": {
+            "bytes": 16843501,
+            "sha256": "ef28c931cfed87e3a7a24973ff174081f0d8f24d30a77e65caa2696a29c5940c"
+          },
+          "complete.json": {
+            "bytes": 347,
+            "sha256": "aa4aae528d5328b3183f1641242d48699ff36ca3b4262f36b07f96dbc812090a"
+          },
+          "plan.json": {
+            "bytes": 549,
+            "sha256": "3c3c6c0f80793e3f9880fa7e7b03695d484aebaedd2aa044548861201438ccf9"
+          },
+          "sources.json": {
+            "bytes": 170126,
+            "sha256": "8631d0933d4bd077e42218d552f2cfcd32ffd8f0d318c9ec5b7c0f2475587fe4"
+          }
+        }
+      },
+      {
+        "scenario": "wake-late",
+        "fault": "identity",
+        "plan_sha256": "2a4ff3830ccfb92c3e707a62b9d2768ca166636464e2b9cde5dac6c7c9c91bbc",
+        "records": 14412,
+        "requests": 7199,
+        "missing_slots": 3,
+        "late_responses": 0,
+        "slots_enumerated": 7202,
+        "calibration_intervals_checked": 124,
+        "offline_checks_status": "failed",
+        "clock_qualification_status": "failed",
+        "raw_members": {
+          "journal.jsonl": {
+            "bytes": 16837651,
+            "sha256": "01522e87df2df411bc3c45ed7d45d8e4dc9cf2add8e1fdc25073c1203dc85d8e"
+          },
+          "complete.json": {
+            "bytes": 347,
+            "sha256": "cb3dba61744b3095b705ef43bb6c1731b76845ab4f965d23b914be15e9ac9101"
+          },
+          "plan.json": {
+            "bytes": 549,
+            "sha256": "39c87995f12dc530c92142b74913d0329ceb6bc64e77e0b8715071afb2a6b517"
+          },
+          "sources.json": {
+            "bytes": 170126,
+            "sha256": "8631d0933d4bd077e42218d552f2cfcd32ffd8f0d318c9ec5b7c0f2475587fe4"
+          }
+        }
+      }
+    ],
+    "attempts": [
+      "capture-punctual-none",
+      "derive-punctual-none",
+      "review-punctual-none",
+      "capture-wake-late-none",
+      "derive-wake-late-none",
+      "review-wake-late-none",
+      "capture-response-late-reverse",
+      "derive-response-late-reverse",
+      "review-response-late-reverse",
+      "capture-deadline-none",
+      "derive-deadline-none",
+      "review-deadline-none",
+      "capture-endpoint-late-none",
+      "derive-endpoint-late-none",
+      "review-endpoint-late-none",
+      "capture-wake-late-identity",
+      "derive-wake-late-identity",
+      "review-wake-late-identity",
+      "capture-qpc-backwards",
+      "partial-qpc-backwards",
+      "capture-interrupt",
+      "partial-interrupt"
+    ],
+    "limitations": [
+      "No real clock qualification, fixed workload, source authentication or real candidate decision.",
+      "Partial raw cannot create a numeric report; original known violations remain in journal.",
+      "Unit temporary raw files are cleaned; representative raw originals retained here."
+    ]
+  },
+  "conditional_inputs": {
+    "admin_capture_filenames": [],
+    "new_admin_input_supplied": false,
+    "natural_trace_input_supplied": false,
+    "T09": "No new publication signal; last official HEAD 2026-11-05 13:16:12 UTC = 404. No repeated HEAD/GET, raw reinspection, fit, or window changes in this milestone.",
+    "source_dossier": "No new authenticity/uncertainty evidence; source remains unselected.",
+    "clock_qualification_design_sha256": "cc077a3d963df7fd9e14e999d30c32e4f8a9e8093af7b54978ab68741be73a9e"
+  },
+  "failures": [
+    {
+      "id": "same-phase-before-fix-v1",
+      "meaning": "Strengthened test proves missing and identity fault were in different phases; changed injection to actual dispatch ordinal."
+    },
+    {
+      "id": "reviewer-regression-v1",
+      "meaning": "Helper executed by file lacks project import path; use standard unittest module discovery instead; no product changes."
+    }
+  ],
+  "attempts": [
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/capture-deadline-none.json",
+      "exit_code": 0,
+      "log_sha256": "f69fa3e947f23bad27afcddf14a41acca2ac0a3b9eb8e227e747ca0496e6406d"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/capture-endpoint-late-none.json",
+      "exit_code": 0,
+      "log_sha256": "139bd485c44c55a2cb53cab1159f018b0164be3a7e5f41b70d4d4f5f57b6e15f"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/capture-interrupt.json",
+      "exit_code": 2,
+      "log_sha256": "68a2d9dd182196eae590d77e95c6d4bd50176029dc7ca0577e831b8b666f1bc6"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/capture-punctual-none.json",
+      "exit_code": 0,
+      "log_sha256": "4cdb6cc5efaa37713f5b938d97a24abd9a3f8c2e6e68b60fafabab2475083dc2"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/capture-qpc-backwards.json",
+      "exit_code": 2,
+      "log_sha256": "68a2d9dd182196eae590d77e95c6d4bd50176029dc7ca0577e831b8b666f1bc6"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/capture-response-late-reverse.json",
+      "exit_code": 0,
+      "log_sha256": "b1fd8eef0a681ec78b0d1a1aa009c1ce620aedf778fe628d7187f7c39be0444f"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/capture-wake-late-identity.json",
+      "exit_code": 0,
+      "log_sha256": "4bf866bfa827af4c2d75079f0d8a79ded31705297f0c657e21527161bd757fd0"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/capture-wake-late-none.json",
+      "exit_code": 0,
+      "log_sha256": "4bf866bfa827af4c2d75079f0d8a79ded31705297f0c657e21527161bd757fd0"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/derive-deadline-none.json",
+      "exit_code": 2,
+      "log_sha256": "43db659eac45114d6047c603b610e98281c7afb8b21c091a089d23be2384cab0"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/derive-endpoint-late-none.json",
+      "exit_code": 2,
+      "log_sha256": "43db659eac45114d6047c603b610e98281c7afb8b21c091a089d23be2384cab0"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/derive-punctual-none.json",
+      "exit_code": 2,
+      "log_sha256": "3f33754ecd1ca2a68461276b8c8757ee06049e668d7a392c83bdf94814b8f998"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/derive-response-late-reverse.json",
+      "exit_code": 1,
+      "log_sha256": "de04beda3777657efc7acc9456b1eb0b35c78ce10fb392d52b12ac23266b35c4"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/derive-wake-late-identity.json",
+      "exit_code": 1,
+      "log_sha256": "de04beda3777657efc7acc9456b1eb0b35c78ce10fb392d52b12ac23266b35c4"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/derive-wake-late-none.json",
+      "exit_code": 2,
+      "log_sha256": "43db659eac45114d6047c603b610e98281c7afb8b21c091a089d23be2384cab0"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/legacy-regression-v1.json",
+      "exit_code": 0,
+      "log_sha256": "466856325f4d9fb05ed0613f66b16dfe0891ac74d4afc8170219d2126edd77fc"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/partial-interrupt.json",
+      "exit_code": 2,
+      "log_sha256": "ef45a7efb870b0e00d4bd6f433a989603c5660e2d9e2c345fd30e7ace7a90676"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/partial-qpc-backwards.json",
+      "exit_code": 2,
+      "log_sha256": "ef45a7efb870b0e00d4bd6f433a989603c5660e2d9e2c345fd30e7ace7a90676"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/pipeline-v1.json",
+      "exit_code": 0,
+      "log_sha256": "45666e136d789e18aec16ebc4da2cfba3fe28433b6897b87aaed44328af62518"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/review-deadline-none.json",
+      "exit_code": 2,
+      "log_sha256": "5235b7e55bf423c5ccdecf063aad16fecdde512dd0dad8878396a037e9d9270f"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/review-endpoint-late-none.json",
+      "exit_code": 2,
+      "log_sha256": "292e706c044d9a6f2fe71165f1b876b556c0cfde015df7a940f3d7ea8ef53e37"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/review-punctual-none.json",
+      "exit_code": 2,
+      "log_sha256": "1d8ada3458686fbd74a09e6f06bc5338499d519af2b7322603e1b5d7010dc215"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/review-response-late-reverse.json",
+      "exit_code": 1,
+      "log_sha256": "447378a7d5d32e4e05b70db445296033ff901cf260be0e6ec8246bc6365d94ee"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/review-wake-late-identity.json",
+      "exit_code": 1,
+      "log_sha256": "5a77feec865979ac220766730660ae48d3e1270771c57900d224b827ca15bc1a"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/review-wake-late-none.json",
+      "exit_code": 2,
+      "log_sha256": "3d11d7988b4acd3b6b1a941c90b7fdd2c8736ceadbdc2c971d63db56f61ebc75"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/reviewer-regression-v1.json",
+      "exit_code": 1,
+      "log_sha256": "b41386f3a747d8568625d68add5dda2608714276e2d69cefc36b44fd618970a5"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/reviewer-regression-v2.json",
+      "exit_code": 0,
+      "log_sha256": "db5e84092bd4f50cda31abb5563fdb161f84a6ac843f502eb58be3d60bf8ad91"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/same-phase-before-fix-v1.json",
+      "exit_code": 1,
+      "log_sha256": "cacb6b57350f01860a722c0b999852e04cfbd443d59309d2b298baf6b3de41e6"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/saved-legacy-v1.json",
+      "exit_code": 0,
+      "log_sha256": "babb306a9ee6e484bf8f4e01b0a5fe888fbfccdc80441602202a828756741b1f"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/target-v1.json",
+      "exit_code": 0,
+      "log_sha256": "b3a779fc9ff5252bb8b767785525ff9a02665f8765852953ae65019886b1130d"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/target-v2.json",
+      "exit_code": 0,
+      "log_sha256": "0635864cabd65ca3489fee6a1e39f6e8ee15e43903117379fb2383c995e84035"
+    },
+    {
+      "metadata": "data/reports/20261106-clock-scheduler/validation-v1.json",
+      "exit_code": 0,
+      "log_sha256": "cb8d25bd283e6b0aa28f5781d2dd47f0de18f1d41e8fee9e2f2490fc62b36547"
+    }
+  ],
+  "raw_files": [
+    {
+      "path": "data/reports/20261106-clock-scheduler/build_index.py",
+      "bytes": 3222,
+      "sha256": "ada0b9b612354b5d22f3b024c8eb3a5271139cd9dcade67cc449b1ead55be742"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-deadline-none/complete.json",
+      "bytes": 347,
+      "sha256": "6327cd1eb769ad7249f386fb4afca2802d855cc339299d5658655d1a61bc8508"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-deadline-none/journal.jsonl",
+      "bytes": 13339762,
+      "sha256": "956b81c0b173249daed46beab3c927a8d46544182660caf4971c357773899375"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-deadline-none/plan.json",
+      "bytes": 549,
+      "sha256": "24d8b01ef506e87bc72e24a158dcb78299394ea08b54f61202c93c6f248d7a33"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-deadline-none/sources.json",
+      "bytes": 170126,
+      "sha256": "8631d0933d4bd077e42218d552f2cfcd32ffd8f0d318c9ec5b7c0f2475587fe4"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-deadline-none.json",
+      "bytes": 661,
+      "sha256": "77d963d78afc26eb11d7da39d9b850526c7128dd97ba3a8aae07a69db7ebc36d"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-deadline-none.log",
+      "bytes": 87,
+      "sha256": "f69fa3e947f23bad27afcddf14a41acca2ac0a3b9eb8e227e747ca0496e6406d"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-endpoint-late-none/complete.json",
+      "bytes": 347,
+      "sha256": "aa4aae528d5328b3183f1641242d48699ff36ca3b4262f36b07f96dbc812090a"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-endpoint-late-none/journal.jsonl",
+      "bytes": 16843501,
+      "sha256": "ef28c931cfed87e3a7a24973ff174081f0d8f24d30a77e65caa2696a29c5940c"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-endpoint-late-none/plan.json",
+      "bytes": 549,
+      "sha256": "3c3c6c0f80793e3f9880fa7e7b03695d484aebaedd2aa044548861201438ccf9"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-endpoint-late-none/sources.json",
+      "bytes": 170126,
+      "sha256": "8631d0933d4bd077e42218d552f2cfcd32ffd8f0d318c9ec5b7c0f2475587fe4"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-endpoint-late-none.json",
+      "bytes": 671,
+      "sha256": "54717e34c7de5a083f20e214bec00a5bce2fc8b6c2f1c28c0d3ab937be2e6161"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-endpoint-late-none.log",
+      "bytes": 87,
+      "sha256": "139bd485c44c55a2cb53cab1159f018b0164be3a7e5f41b70d4d4f5f57b6e15f"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-interrupt/journal.jsonl",
+      "bytes": 48144,
+      "sha256": "98d378c2d1221646503344c569e7318b8b97b3bfa468f9a4ad00ff10ac5f1afe"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-interrupt/plan.json",
+      "bytes": 549,
+      "sha256": "1fd707d8fffe420ac6f3c17a894cd50d9b22067defa7cf5ffa5b9124f789d915"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-interrupt/sources.json",
+      "bytes": 170126,
+      "sha256": "8631d0933d4bd077e42218d552f2cfcd32ffd8f0d318c9ec5b7c0f2475587fe4"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-interrupt.json",
+      "bytes": 631,
+      "sha256": "acdd2de76c47427a9a5b930cfbcf456fdf7e247cca9439dce20af663335284c4"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-interrupt.log",
+      "bytes": 73,
+      "sha256": "68a2d9dd182196eae590d77e95c6d4bd50176029dc7ca0577e831b8b666f1bc6"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-punctual-none/complete.json",
+      "bytes": 347,
+      "sha256": "7428f2b7dcdf76f47da80e0495be1c01520078a3d1bfed96ea9a00d99e8ac00b"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-punctual-none/journal.jsonl",
+      "bytes": 16843497,
+      "sha256": "814a36f5bd4c3a45fac6d4cbf1b1b9be9341900b1efc20202438517482f37f66"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-punctual-none/plan.json",
+      "bytes": 549,
+      "sha256": "ae35268d32304cf8bbace9a8a32d1a5079605857450b9dc19251db62b9025f15"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-punctual-none/sources.json",
+      "bytes": 170126,
+      "sha256": "8631d0933d4bd077e42218d552f2cfcd32ffd8f0d318c9ec5b7c0f2475587fe4"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-punctual-none.json",
+      "bytes": 661,
+      "sha256": "fe00e60decc8b8fc54adcbc502f388defd0f861093925a74fca73aaa7e705cd8"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-punctual-none.log",
+      "bytes": 87,
+      "sha256": "4cdb6cc5efaa37713f5b938d97a24abd9a3f8c2e6e68b60fafabab2475083dc2"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-qpc-backwards/journal.jsonl",
+      "bytes": 48142,
+      "sha256": "e20bc67ab0e7640dd5b51d8b08797ba8a1674d5b2733aed5355dccda1903f9a5"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-qpc-backwards/plan.json",
+      "bytes": 549,
+      "sha256": "ca5d727f35c247bb003e98298a1e842a03dfdf0ac43876448e7471eb542619a3"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-qpc-backwards/sources.json",
+      "bytes": 170126,
+      "sha256": "8631d0933d4bd077e42218d552f2cfcd32ffd8f0d318c9ec5b7c0f2475587fe4"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-qpc-backwards.json",
+      "bytes": 639,
+      "sha256": "67b1273f793f5b7941122f1e07c0b946c7737e75c253011dc5042c29b612132c"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-qpc-backwards.log",
+      "bytes": 73,
+      "sha256": "68a2d9dd182196eae590d77e95c6d4bd50176029dc7ca0577e831b8b666f1bc6"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-response-late-reverse/complete.json",
+      "bytes": 347,
+      "sha256": "764f98a42e8b13660bdf0a9f0fa0dd9ab54dd9284d0361cff31a91d682e5408f"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-response-late-reverse/journal.jsonl",
+      "bytes": 16839585,
+      "sha256": "0ad384f3d64949c3126e0bacbe7e4aed09226ca437d87990f433512dc05fdb17"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-response-late-reverse/plan.json",
+      "bytes": 549,
+      "sha256": "25d346997cb1ba0ea30e68d5cfb4efbd2c9a37d9521a267e2ab0f210a90d2314"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-response-late-reverse/sources.json",
+      "bytes": 170126,
+      "sha256": "8631d0933d4bd077e42218d552f2cfcd32ffd8f0d318c9ec5b7c0f2475587fe4"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-response-late-reverse.json",
+      "bytes": 677,
+      "sha256": "93860442a37fcf6bcf065a29ac190ef6896603631f962776bacffb83b6ec7f42"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-response-late-reverse.log",
+      "bytes": 87,
+      "sha256": "b1fd8eef0a681ec78b0d1a1aa009c1ce620aedf778fe628d7187f7c39be0444f"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-wake-late-identity/complete.json",
+      "bytes": 347,
+      "sha256": "cb3dba61744b3095b705ef43bb6c1731b76845ab4f965d23b914be15e9ac9101"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-wake-late-identity/journal.jsonl",
+      "bytes": 16837651,
+      "sha256": "01522e87df2df411bc3c45ed7d45d8e4dc9cf2add8e1fdc25073c1203dc85d8e"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-wake-late-identity/plan.json",
+      "bytes": 549,
+      "sha256": "39c87995f12dc530c92142b74913d0329ceb6bc64e77e0b8715071afb2a6b517"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-wake-late-identity/sources.json",
+      "bytes": 170126,
+      "sha256": "8631d0933d4bd077e42218d552f2cfcd32ffd8f0d318c9ec5b7c0f2475587fe4"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-wake-late-identity.json",
+      "bytes": 671,
+      "sha256": "11ceb0e23deae4c5a0199807f9a91eba13b54c7d6d02bb00076ac985fde107f9"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-wake-late-identity.log",
+      "bytes": 87,
+      "sha256": "4bf866bfa827af4c2d75079f0d8a79ded31705297f0c657e21527161bd757fd0"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-wake-late-none/complete.json",
+      "bytes": 347,
+      "sha256": "0d076f759410730c7527928b2e672a88436720fcaa0cedad5e3394e7e23810c6"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-wake-late-none/journal.jsonl",
+      "bytes": 16837651,
+      "sha256": "bf5cb7c96de4b066e1a9211dd4f3bda782cc7c13b14eaae0d305abe2de15e3d7"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-wake-late-none/plan.json",
+      "bytes": 549,
+      "sha256": "39c87995f12dc530c92142b74913d0329ceb6bc64e77e0b8715071afb2a6b517"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-wake-late-none/sources.json",
+      "bytes": 170126,
+      "sha256": "8631d0933d4bd077e42218d552f2cfcd32ffd8f0d318c9ec5b7c0f2475587fe4"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-wake-late-none.json",
+      "bytes": 663,
+      "sha256": "25d0dbcd3b5d42d64aab25ffec5dc2b99459d19cea5003ff76ca73bdfd43feda"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/capture-wake-late-none.log",
+      "bytes": 87,
+      "sha256": "4bf866bfa827af4c2d75079f0d8a79ded31705297f0c657e21527161bd757fd0"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/conditional-inputs.json",
+      "bytes": 484,
+      "sha256": "27d4c7874d94947cb641fa476cd5c80d46c255142f328a30c7441c34e97556d5"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/deadline-none-campaign.json",
+      "bytes": 3225854,
+      "sha256": "718c0f3fdd8c7df7ffeaadbc0b43f34d3824fcf30892fe56348609ef3aa9dbcc"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/deadline-none-report.json",
+      "bytes": 3797302,
+      "sha256": "d1893d610581de2fd62113ec385ecf41a68184abdf5581092186fe02b2a29a22"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/derive-deadline-none.json",
+      "bytes": 826,
+      "sha256": "8781297efe22dc10f735916f2022fb0e79986f6d12713d37293645acb83dfbab"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/derive-deadline-none.log",
+      "bytes": 43,
+      "sha256": "43db659eac45114d6047c603b610e98281c7afb8b21c091a089d23be2384cab0"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/derive-endpoint-late-none.json",
+      "bytes": 836,
+      "sha256": "16c037b3d7b4632e5a71f00248f21304f017704f03d96792dbb26b6287d32360"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/derive-endpoint-late-none.log",
+      "bytes": 43,
+      "sha256": "43db659eac45114d6047c603b610e98281c7afb8b21c091a089d23be2384cab0"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/derive-punctual-none.json",
+      "bytes": 822,
+      "sha256": "387404d7d0966462dc34732904a38caa62018afe07d40cdfbd32cd907e33b940"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/derive-punctual-none.log",
+      "bytes": 39,
+      "sha256": "3f33754ecd1ca2a68461276b8c8757ee06049e668d7a392c83bdf94814b8f998"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/derive-response-late-reverse.json",
+      "bytes": 842,
+      "sha256": "df5dd34d3ea941283b391c38a10eaa6d9afb382b39a0460f8475d7396de2915e"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/derive-response-late-reverse.log",
+      "bytes": 39,
+      "sha256": "de04beda3777657efc7acc9456b1eb0b35c78ce10fb392d52b12ac23266b35c4"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/derive-wake-late-identity.json",
+      "bytes": 836,
+      "sha256": "38776cc84a3dd8a31669c82836f440fd832688dfbb6864a2218a908b9aba07bd"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/derive-wake-late-identity.log",
+      "bytes": 39,
+      "sha256": "de04beda3777657efc7acc9456b1eb0b35c78ce10fb392d52b12ac23266b35c4"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/derive-wake-late-none.json",
+      "bytes": 828,
+      "sha256": "70ec3d3e5b2b04e13c2eab57b26020e4aa6723d0eb367a3e8a1a289150121ce1"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/derive-wake-late-none.log",
+      "bytes": 43,
+      "sha256": "43db659eac45114d6047c603b610e98281c7afb8b21c091a089d23be2384cab0"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/detached-punctual/complete.json",
+      "bytes": 347,
+      "sha256": "7428f2b7dcdf76f47da80e0495be1c01520078a3d1bfed96ea9a00d99e8ac00b"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/detached-punctual/journal.jsonl",
+      "bytes": 16843497,
+      "sha256": "814a36f5bd4c3a45fac6d4cbf1b1b9be9341900b1efc20202438517482f37f66"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/detached-punctual/plan.json",
+      "bytes": 549,
+      "sha256": "ae35268d32304cf8bbace9a8a32d1a5079605857450b9dc19251db62b9025f15"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/detached-punctual/sources.json",
+      "bytes": 170126,
+      "sha256": "8631d0933d4bd077e42218d552f2cfcd32ffd8f0d318c9ec5b7c0f2475587fe4"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/endpoint-late-none-campaign.json",
+      "bytes": 3549453,
+      "sha256": "8dedc750b860712a79277006afa17a2587c88ed90ec6c7ea80c5b68edc3798ec"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/endpoint-late-none-report.json",
+      "bytes": 211297,
+      "sha256": "db5c01cfd68a89ee807f71dde801ebfda7693edd07f906627a0db37867b662ea"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/exercise_pipeline.py",
+      "bytes": 6804,
+      "sha256": "c2c178f7db3deccd8cdf6f6884100dc7d6381c57e77f5e8d560688cfdb62b89a"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/legacy-regression-v1.json",
+      "bytes": 682,
+      "sha256": "b864849b49b56a153800aa6a9bbf51ff5224e1e7bdf2f59f9e311838675f1ec1"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/legacy-regression-v1.log",
+      "bytes": 5259,
+      "sha256": "466856325f4d9fb05ed0613f66b16dfe0891ac74d4afc8170219d2126edd77fc"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/legacy_replay.py",
+      "bytes": 933,
+      "sha256": "8abdb150a5f696e40bb40f0a7abaa964f8a3ca6fd2138fa471e14f8c895fc507"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/partial-interrupt.json",
+      "bytes": 817,
+      "sha256": "52141ac2618e805a75a6f44a73becb2507f38a4cf38f9c7c113578c1a7157124"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/partial-interrupt.log",
+      "bytes": 64,
+      "sha256": "ef45a7efb870b0e00d4bd6f433a989603c5660e2d9e2c345fd30e7ace7a90676"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/partial-qpc-backwards.json",
+      "bytes": 825,
+      "sha256": "1e875c9c5e26d3f8fa099db4e2e95ca30ff3a31ef4a390d7f301d9b795f1a51f"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/partial-qpc-backwards.log",
+      "bytes": 64,
+      "sha256": "ef45a7efb870b0e00d4bd6f433a989603c5660e2d9e2c345fd30e7ace7a90676"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/pipeline-v1.json",
+      "bytes": 607,
+      "sha256": "3da54ff949feaf810ca2f1c6f4ed73beb3fec78adfe9afd9932efe254f62e90f"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/pipeline-v1.log",
+      "bytes": 7410,
+      "sha256": "45666e136d789e18aec16ebc4da2cfba3fe28433b6897b87aaed44328af62518"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/pipeline.json",
+      "bytes": 7410,
+      "sha256": "45666e136d789e18aec16ebc4da2cfba3fe28433b6897b87aaed44328af62518"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/punctual-none-campaign.json",
+      "bytes": 3549453,
+      "sha256": "6d6bbc9669350534f2fcd87e1d838c8a46eb72b4018f11c41a3f6ec0a97276f8"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/punctual-none-report.json",
+      "bytes": 211095,
+      "sha256": "c50a4e843ae375abf6f55bf25f105b32904f5a3d1deedb450dc68dac9600a060"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/response-late-reverse-campaign.json",
+      "bytes": 3549105,
+      "sha256": "0526b1932822e37bdb643a74e9d9a2b54cd2374f0368cf9e67fbbb9084709fe3"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/response-late-reverse-report.json",
+      "bytes": 192022,
+      "sha256": "09358dcbe225caa1f0fd7d748572f1a2c0e42fcddda03247a12f9103b30db467"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/review-deadline-none.json",
+      "bytes": 827,
+      "sha256": "031dfe062247492c935770e89de73b6d04f426ed592cef87aed9baad8224a932"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/review-deadline-none.log",
+      "bytes": 168,
+      "sha256": "5235b7e55bf423c5ccdecf063aad16fecdde512dd0dad8878396a037e9d9270f"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/review-endpoint-late-none.json",
+      "bytes": 837,
+      "sha256": "5dded63b2aba0dc5efda0833eaf183c7ff34b93d9ddcdae7ec71e22999abf159"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/review-endpoint-late-none.log",
+      "bytes": 168,
+      "sha256": "292e706c044d9a6f2fe71165f1b876b556c0cfde015df7a940f3d7ea8ef53e37"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/review-punctual-none.json",
+      "bytes": 827,
+      "sha256": "ebc0a85bdd36ba018a23dfa4bd3080929d3871548f8642a5602deada2c8f92f7"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/review-punctual-none.log",
+      "bytes": 164,
+      "sha256": "1d8ada3458686fbd74a09e6f06bc5338499d519af2b7322603e1b5d7010dc215"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/review-response-late-reverse.json",
+      "bytes": 843,
+      "sha256": "4dcef126780e00293594ddbad3a838696a197c99825b915d4948b2291f309146"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/review-response-late-reverse.log",
+      "bytes": 160,
+      "sha256": "447378a7d5d32e4e05b70db445296033ff901cf260be0e6ec8246bc6365d94ee"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/review-wake-late-identity.json",
+      "bytes": 837,
+      "sha256": "7e0f91d4f7af4ed3002e869992d2ad487a49b1de99fadbd23162d302e7229f48"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/review-wake-late-identity.log",
+      "bytes": 160,
+      "sha256": "5a77feec865979ac220766730660ae48d3e1270771c57900d224b827ca15bc1a"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/review-wake-late-none.json",
+      "bytes": 829,
+      "sha256": "35e377b72b4f238483b7aed996e2fbeee8c23a76a60a1c9d6089adac9b9e2eae"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/review-wake-late-none.log",
+      "bytes": 168,
+      "sha256": "3d11d7988b4acd3b6b1a941c90b7fdd2c8736ceadbdc2c971d63db56f61ebc75"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/reviewer-regression-v1.json",
+      "bytes": 631,
+      "sha256": "b6abd4bcdbfb04776062f495ec16358ff4382c9a8e8b2bb3f5e2b65b4b30a145"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/reviewer-regression-v1.log",
+      "bytes": 1927,
+      "sha256": "b41386f3a747d8568625d68add5dda2608714276e2d69cefc36b44fd618970a5"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/reviewer-regression-v2.json",
+      "bytes": 676,
+      "sha256": "e945c447fa7a895355063154c8a5c10ea5eba0e899d6122bb9799d4fcc94e77b"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/reviewer-regression-v2.log",
+      "bytes": 9739,
+      "sha256": "db5e84092bd4f50cda31abb5563fdb161f84a6ac843f502eb58be3d60bf8ad91"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/reviewer_regression.py",
+      "bytes": 307,
+      "sha256": "37e6bcee03595d88756d2af2f5171fae9dea747a3c0cbfa8ba319e9fadfbfa8f"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/run_attempt.py",
+      "bytes": 1244,
+      "sha256": "62df5fee98294644b7a3ebc2a0087ffa98f9be75fc4c26285681b39def88ac29"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/same-phase-before-fix-v1.json",
+      "bytes": 740,
+      "sha256": "83a9df2718bdacfbc0bf1e0fe2c2587c857890c687635a70bf8dec5f88bc3b48"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/same-phase-before-fix-v1.log",
+      "bytes": 1016,
+      "sha256": "cacb6b57350f01860a722c0b999852e04cfbd443d59309d2b298baf6b3de41e6"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/saved-legacy-v1.json",
+      "bytes": 611,
+      "sha256": "983ab06183c27554ddcf14060c098d8da402eceeb8631e3442bfac588863b6bc"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/saved-legacy-v1.log",
+      "bytes": 1072,
+      "sha256": "babb306a9ee6e484bf8f4e01b0a5fe888fbfccdc80441602202a828756741b1f"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/source-v1/capture_fake_clock_campaign.py",
+      "bytes": 1485,
+      "sha256": "6f88e90198609762f7be2660e10e510668818a168c717d92261874bc31689780"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/source-v1/clock_campaign_capture.py",
+      "bytes": 30994,
+      "sha256": "010260e5144242bc45be69b6cdf6e12b47ed616908213aed4b7c6bb0d953f953"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/source-v1/clock_campaign_schedule.py",
+      "bytes": 18896,
+      "sha256": "816169321c886ef2f7a3ae40a4b0f7356325399343d3ca951a963001acd7b5bc"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/source-v1/same-phase-strengthened-test.py",
+      "bytes": 15226,
+      "sha256": "ed04466ee20ac2942f0c82f472705ab5c3b0c0847f4a463b15c59468d184c4be"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/source-v1/test_clock_campaign_schedule.py",
+      "bytes": 14962,
+      "sha256": "03cfbcedeb8dc7d50d0c51ef800329b8e1ac7dda015a2d2984702594673dce0e"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/source-v2/capture_fake_clock_campaign.py",
+      "bytes": 1485,
+      "sha256": "6f88e90198609762f7be2660e10e510668818a168c717d92261874bc31689780"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/source-v2/clock_campaign_capture.py",
+      "bytes": 30994,
+      "sha256": "010260e5144242bc45be69b6cdf6e12b47ed616908213aed4b7c6bb0d953f953"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/source-v2/clock_campaign_schedule.py",
+      "bytes": 19089,
+      "sha256": "f067c01095d6877f6244d4e84ea8535561466cc8421f9ad945b9354226478899"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/source-v2/test_clock_campaign_schedule.py",
+      "bytes": 18213,
+      "sha256": "e4546c29f52470869af448e7ddd12ff12461aed937d919818723fdac3b6dccc9"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/target-v1.json",
+      "bytes": 661,
+      "sha256": "881bc6cfc0bfb215556654a72a3e28c6bffcefbb39267156072128788a90b2d2"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/target-v1.log",
+      "bytes": 2975,
+      "sha256": "b3a779fc9ff5252bb8b767785525ff9a02665f8765852953ae65019886b1130d"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/target-v2.json",
+      "bytes": 661,
+      "sha256": "5ea5287ad5c8d383b99554aa02930d1dc13f975f25e5478dee5e0ba619d51260"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/target-v2.log",
+      "bytes": 3510,
+      "sha256": "0635864cabd65ca3489fee6a1e39f6e8ee15e43903117379fb2383c995e84035"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/validate_local.py",
+      "bytes": 2776,
+      "sha256": "6773d56ad622a3dc904f6dd596d88aa66b68d73559ed50df333930dcaa55e783"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/validation-v1.json",
+      "bytes": 607,
+      "sha256": "df706a0e8faadc158ef821b2ec01791f88051ac6921fff494edf8e7a84e3a171"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/validation-v1.log",
+      "bytes": 193,
+      "sha256": "cb8d25bd283e6b0aa28f5781d2dd47f0de18f1d41e8fee9e2f2490fc62b36547"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/wake-late-identity-campaign.json",
+      "bytes": 3548958,
+      "sha256": "7094fae6156e02685e25e0802860078030201d84353cf812ab0eef9ffe8772a2"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/wake-late-identity-report.json",
+      "bytes": 194049,
+      "sha256": "18ce49fb5f989a0c1ced1c9c2d1678d7a71d8b3c400accc2dd923262df2ff78b"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/wake-late-none-campaign.json",
+      "bytes": 3548958,
+      "sha256": "fa98e166ed31399c144285ac63550a334979bc9caee1f2d345b5aba8874acd74"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/wake-late-none-report.json",
+      "bytes": 193920,
+      "sha256": "6537097134be4321669a69a62b3dc889e54c6b8c751f671e7f3509c5e403d4b6"
+    }
+  ],
+  "previous_ci_index_sha256": "05c26337fcf8a7a928b802fa7a8c351dc0a3dc38b61f75db6e1a4384f33077b6",
+  "limitations": [
+    "Fake clock only; no actual QPC/external UTC, fixed workload, source authenticity or calibration qualification.",
+    "Late actual pipe IO is bounded by safety timeout, not a real host phase scheduler; no real deadline-aware collector implemented.",
+    "Partial protocol cannot create a numeric report; original known violations remain raw.",
+    "Source SHA and self-generated fixture plan bind content, not authentic execution or independent source.",
+    "No OS/clock settings, real DB/registry/current deployment changes; strict future refusal unchanged.",
+    "No new admin capture/trace/publication input; T09 last404 and T10/real fit prerequisites retained.",
+    "Local UTC/MONOTONIC and unittest seconds unqualified. Unit temp originals cleaned; representative originals indexed.",
+    "CI unit fixtures disposable; existing integration artifact allowlist unchanged; no clock raw artifact added."
+  ]
+}

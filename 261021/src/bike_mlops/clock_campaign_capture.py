@@ -266,29 +266,35 @@ class Reader:
             raise ValueError("Synthetic reader did not exit normally")
 
 
-def make_plan():
+def make_plan(*, scheduled_recipe=None):
     # Hash the exact two execution modules plus offline dependency implementations.
     files = ("clock_campaign_capture.py", "clock_campaign_fake_reader.py",
              "clock_campaign_review.py", "clock_rate_review.py")
     sources = {name: Path(__file__).with_name(name).read_bytes().hex() for name in files}
+    if scheduled_recipe is not None:
+        sources["clock_campaign_schedule.py"] = Path(__file__).with_name("clock_campaign_schedule.py").read_bytes().hex()
     for name in ("capture_fake_clock_campaign.py", "derive_clock_campaign.py"):
         sources[name] = (Path(__file__).resolve().parents[2] / "scripts" / name).read_bytes().hex()
     manifest = {"kind": "synthetic-module-manifest-v1", "files": {
         name: hashlib.sha256(bytes.fromhex(payload)).hexdigest() for name, payload in sources.items()}}
     manifest["python_version"] = list(sys.version_info[:3])
     plan = {"policy_sha256": POLICY_SHA256, "collector_sha256": canonical_sha256(manifest),
-            "workload_sha256": canonical_sha256(RECIPE), "utc_reader_sha256": canonical_sha256(manifest),
+            "workload_sha256": canonical_sha256(RECIPE if scheduled_recipe is None else scheduled_recipe), "utc_reader_sha256": canonical_sha256(manifest),
             "utc_source_sha256": canonical_sha256(SOURCE), "calibration_source_sha256": canonical_sha256(SOURCE),
             "qpc_frequency_hz": FREQUENCY}
     return plan, manifest, sources
 
 
-def capture_fake(root, *, fault="none", reader_timeout=3.0, on_record=None):
+def capture_fake(root, *, fault="none", reader_timeout=3.0, on_record=None, schedule=None):
     """Exclusive synthetic attempt. Partial journal survives failures; no complete marker.
 
     on_record is an in-process test injection, not a CLI command/plugin surface.
     No workload, real source, or real collector exists behind this fixture entry.
     """
+    if schedule is not None:
+        from bike_mlops.clock_campaign_schedule import capture_scheduled
+        return capture_scheduled(root, scenario=schedule, fault=fault,
+                                 reader_timeout=reader_timeout, on_record=on_record)
     root.mkdir()  # Caller selects a new path; never delete/reuse an existing one.
     plan, manifest, sources = make_plan()
     publish_json(root / "sources.json", sources)
@@ -443,15 +449,23 @@ def derive_raw(root, *, expected_plan_sha256):
     cursor = iter(records)
     header = next(cursor)
     object_exact(header, {"type", "kind", "plan_sha256", "manifest", "source", "recipe"})
-    if (header["type"] != "header" or header["kind"] != "synthetic-clock-raw-v1"
+    scheduled = header["kind"] == "synthetic-clock-scheduled-raw-v1"
+    if scheduled:
+        from bike_mlops.clock_campaign_schedule import validate_recipe, replay_scheduled
+        validate_recipe(header["recipe"])
+    recipe = header["recipe"] if scheduled else RECIPE
+    if (header["type"] != "header" or header["kind"] not in ("synthetic-clock-raw-v1", "synthetic-clock-scheduled-raw-v1")
             or header["plan_sha256"] != expected_plan_sha256
-            or encode(header["source"]) != encode(SOURCE) or encode(header["recipe"]) != encode(RECIPE)):
+            or encode(header["source"]) != encode(SOURCE) or encode(header["recipe"]) != encode(recipe)):
         raise ValueError("Synthetic header mismatch")
     manifest = header["manifest"]
     object_exact(manifest, {"kind", "files", "python_version"})
-    object_exact(manifest["files"], {"clock_campaign_capture.py", "clock_campaign_fake_reader.py",
+    expected_sources = {"clock_campaign_capture.py", "clock_campaign_fake_reader.py",
                                     "clock_campaign_review.py", "clock_rate_review.py",
-                                    "capture_fake_clock_campaign.py", "derive_clock_campaign.py"})
+                                    "capture_fake_clock_campaign.py", "derive_clock_campaign.py"}
+    if scheduled:
+        expected_sources.add("clock_campaign_schedule.py")
+    object_exact(manifest["files"], expected_sources)
     if manifest["kind"] != "synthetic-module-manifest-v1":
         raise ValueError("Unsupported manifest")
     sources = decode(payloads["sources.json"])
@@ -467,97 +481,100 @@ def derive_raw(root, *, expected_plan_sha256):
     for value in manifest["python_version"]:
         integer(value)
     for key, original in (("collector_sha256", manifest), ("utc_reader_sha256", manifest),
-                          ("workload_sha256", RECIPE), ("utc_source_sha256", SOURCE),
+                          ("workload_sha256", recipe), ("utc_source_sha256", SOURCE),
                           ("calibration_source_sha256", SOURCE)):
         if plan[key] != canonical_sha256(original):
             raise ValueError("Recipe/source binding mismatch")
     result = {"schema_version": 1, "kind": "clock-campaign-v1", "policy": copy.deepcopy(POLICY),
               "policy_sha256": POLICY_SHA256, "plan": plan, "plan_sha256": expected_plan_sha256,
               "campaigns": [], "resume": None}
-    nonces, trials = set(), set()
-    for ci, role in enumerate(ROLES):
-        campaign = {"role": role, "trial_sha256": None, "phases": []}
-        shared = shared_reference = None
-        for pi, phase in enumerate(PHASES):
-            start = next(cursor)
-            object_exact(start, {"type", "role", "phase", "trial", "identity"})
-            trial = token(start["trial"])
-            if start["type"] != "phase-start" or start["role"] != role or start["phase"] != phase:
-                raise ValueError("Phase order mismatch")
-            if not pi:
-                if trial in trials:
-                    raise ValueError("Trial reused")
-                trials.add(trial)
-                campaign["trial_sha256"] = canonical_sha256(trial)
-            elif campaign["trial_sha256"] != canonical_sha256(trial):
-                raise ValueError("Trial changed within campaign")
-            data = {"phase": phase, "identity_start": identity_hashes(start["identity"]), "identity_end": None,
-                    "samples": [], "external_utc": [], "qpc_calibration": [], "future_probes": [],
-                    "lost_samples": 0, "interrupted": False}
-            references = []
-            if pi:
-                data["samples"].append({**shared, "index": 0})
-                references.append(shared_reference)
-            for sequence in range(1 if pi else 0, 1801):
-                intent = next(cursor)
-                object_exact(intent, {"type", "request", "before"})
-                if intent["type"] != "request":
-                    raise ValueError("Request intent missing")
-                record = next(cursor)
-                object_exact(record, {"type", "request", "before", "response", "after", "identity"})
-                if record["type"] != "sample":
-                    raise ValueError("Sample missing")
-                if encode(intent["request"]) != encode(record["request"]) or encode(intent["before"]) != encode(record["before"]):
-                    raise ValueError("Request intent changed before response")
-                request = record["request"]
-                object_exact(request, {"trial", "role", "phase", "sequence", "nonce", "truth_second"})
-                nonce = token(request["nonce"])
-                if (nonce in nonces or request["trial"] != trial or request["role"] != role
-                        or request["phase"] != phase or integer(request["sequence"]) != sequence
-                        or integer(request["truth_second"]) != ci * 4000 + pi * 1800 + sequence):
-                    raise ValueError("Sample challenge/order mismatch")
-                nonces.add(nonce)
-                validate_response(request, record["response"], plan["qpc_frequency_hz"])
-                sample = {"index": sequence, "qpc_tick": record["response"]["qpc_tick"],
-                          "identity_sha256": canonical_sha256(identity_hashes(record["identity"]))}
-                for edge in ("before", "after"):
-                    object_exact(record[edge], CLOCKS)
-                    for clock, value in record[edge].items():
-                        sample[f"{clock}_{edge}_ns"] = integer(value)
-                    sample[f"windows_utc_{edge}_ns"] = record["response"][f"utc_{edge}_ns"]
-                data["samples"].append(sample)
-                references.append(record["response"]["reference"])
-            end = next(cursor)
-            object_exact(end, {"type", "role", "phase", "identity", "future_probes"})
-            if end["type"] != "phase-end" or end["role"] != role or end["phase"] != phase:
-                raise ValueError("Phase end mismatch")
-            data["identity_end"] = identity_hashes(end["identity"])
-            for second in range(0, 1801, 60):
-                ref = references[second]
-                data["external_utc"].append({"boundary_seconds": second, "sample_index": second,
-                    "lower_ns": ref["utc_center_ns"] - ref["uncertainty_ns"],
-                    "upper_ns": ref["utc_center_ns"] + ref["uncertainty_ns"],
-                    "source_sha256": plan["utc_source_sha256"]})
-            for a, b in [(s, s + 60) for s in range(0, 1800, 60)] + [(0, 1800)]:
-                elapsed = references[b]["elapsed_counter_ns"] - references[a]["elapsed_counter_ns"]
-                uncertainty = references[a]["uncertainty_ns"] + references[b]["uncertainty_ns"]
-                data["qpc_calibration"].append({"first_index": a, "last_index": b,
-                    "reference_lower_ns": elapsed - uncertainty, "reference_upper_ns": elapsed + uncertainty,
-                    "source_sha256": plan["calibration_source_sha256"]})
-            data["future_probes"] = end["future_probes"]
-            shared, shared_reference = data["samples"][-1], references[-1]
-            campaign["phases"].append({"sha256": canonical_sha256(data), "data": data})
-        result["campaigns"].append(campaign)
-        if ci == 0:
-            resume = next(cursor)
-            object_exact(resume, {"type", "before_identity_sha256", "after_identity_sha256",
-                                  "windows_before_ns", "windows_after_ns", "guest_before_ns", "guest_after_ns"})
-            if resume.pop("type") != "resume":
-                raise ValueError("Resume record missing")
-            result["resume"] = resume
-    end = next(cursor)
-    if encode(end) != encode({"type": "end", "campaigns": 2}) or next(cursor, None) is not None:
-        raise ValueError("Unexpected journal tail")
+    if scheduled:
+        replay_scheduled(cursor, result, header["recipe"])
+    else:
+        nonces, trials = set(), set()
+        for ci, role in enumerate(ROLES):
+            campaign = {"role": role, "trial_sha256": None, "phases": []}
+            shared = shared_reference = None
+            for pi, phase in enumerate(PHASES):
+                start = next(cursor)
+                object_exact(start, {"type", "role", "phase", "trial", "identity"})
+                trial = token(start["trial"])
+                if start["type"] != "phase-start" or start["role"] != role or start["phase"] != phase:
+                    raise ValueError("Phase order mismatch")
+                if not pi:
+                    if trial in trials:
+                        raise ValueError("Trial reused")
+                    trials.add(trial)
+                    campaign["trial_sha256"] = canonical_sha256(trial)
+                elif campaign["trial_sha256"] != canonical_sha256(trial):
+                    raise ValueError("Trial changed within campaign")
+                data = {"phase": phase, "identity_start": identity_hashes(start["identity"]), "identity_end": None,
+                        "samples": [], "external_utc": [], "qpc_calibration": [], "future_probes": [],
+                        "lost_samples": 0, "interrupted": False}
+                references = []
+                if pi:
+                    data["samples"].append({**shared, "index": 0})
+                    references.append(shared_reference)
+                for sequence in range(1 if pi else 0, 1801):
+                    intent = next(cursor)
+                    object_exact(intent, {"type", "request", "before"})
+                    if intent["type"] != "request":
+                        raise ValueError("Request intent missing")
+                    record = next(cursor)
+                    object_exact(record, {"type", "request", "before", "response", "after", "identity"})
+                    if record["type"] != "sample":
+                        raise ValueError("Sample missing")
+                    if encode(intent["request"]) != encode(record["request"]) or encode(intent["before"]) != encode(record["before"]):
+                        raise ValueError("Request intent changed before response")
+                    request = record["request"]
+                    object_exact(request, {"trial", "role", "phase", "sequence", "nonce", "truth_second"})
+                    nonce = token(request["nonce"])
+                    if (nonce in nonces or request["trial"] != trial or request["role"] != role
+                            or request["phase"] != phase or integer(request["sequence"]) != sequence
+                            or integer(request["truth_second"]) != ci * 4000 + pi * 1800 + sequence):
+                        raise ValueError("Sample challenge/order mismatch")
+                    nonces.add(nonce)
+                    validate_response(request, record["response"], plan["qpc_frequency_hz"])
+                    sample = {"index": sequence, "qpc_tick": record["response"]["qpc_tick"],
+                              "identity_sha256": canonical_sha256(identity_hashes(record["identity"]))}
+                    for edge in ("before", "after"):
+                        object_exact(record[edge], CLOCKS)
+                        for clock, value in record[edge].items():
+                            sample[f"{clock}_{edge}_ns"] = integer(value)
+                        sample[f"windows_utc_{edge}_ns"] = record["response"][f"utc_{edge}_ns"]
+                    data["samples"].append(sample)
+                    references.append(record["response"]["reference"])
+                end = next(cursor)
+                object_exact(end, {"type", "role", "phase", "identity", "future_probes"})
+                if end["type"] != "phase-end" or end["role"] != role or end["phase"] != phase:
+                    raise ValueError("Phase end mismatch")
+                data["identity_end"] = identity_hashes(end["identity"])
+                for second in range(0, 1801, 60):
+                    ref = references[second]
+                    data["external_utc"].append({"boundary_seconds": second, "sample_index": second,
+                        "lower_ns": ref["utc_center_ns"] - ref["uncertainty_ns"],
+                        "upper_ns": ref["utc_center_ns"] + ref["uncertainty_ns"],
+                        "source_sha256": plan["utc_source_sha256"]})
+                for a, b in [(s, s + 60) for s in range(0, 1800, 60)] + [(0, 1800)]:
+                    elapsed = references[b]["elapsed_counter_ns"] - references[a]["elapsed_counter_ns"]
+                    uncertainty = references[a]["uncertainty_ns"] + references[b]["uncertainty_ns"]
+                    data["qpc_calibration"].append({"first_index": a, "last_index": b,
+                        "reference_lower_ns": elapsed - uncertainty, "reference_upper_ns": elapsed + uncertainty,
+                        "source_sha256": plan["calibration_source_sha256"]})
+                data["future_probes"] = end["future_probes"]
+                shared, shared_reference = data["samples"][-1], references[-1]
+                campaign["phases"].append({"sha256": canonical_sha256(data), "data": data})
+            result["campaigns"].append(campaign)
+            if ci == 0:
+                resume = next(cursor)
+                object_exact(resume, {"type", "before_identity_sha256", "after_identity_sha256",
+                                      "windows_before_ns", "windows_after_ns", "guest_before_ns", "guest_after_ns"})
+                if resume.pop("type") != "resume":
+                    raise ValueError("Resume record missing")
+                result["resume"] = resume
+        end = next(cursor)
+        if encode(end) != encode({"type": "end", "campaigns": 2}) or next(cursor, None) is not None:
+            raise ValueError("Unexpected journal tail")
     # Validate numerical/schema output too. It may fail, but never qualifies a real clock.
     report = review_clock_campaign(result, expected_plan_sha256=expected_plan_sha256)
     # Re-read each saved file after all computation, catching visible replacement/changes.

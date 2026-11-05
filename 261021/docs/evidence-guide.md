@@ -68,3 +68,7 @@ CI artifact以外の実DB原本、`.env`、認証値、実候補データを説�
 合成採取の最終受入は実装a5c1605/[CI42037278421](https://github.com/kenobix/Claude_practice/actions/runs/42037278421)。
 [最終索引](reviews/20261105-clock-acquisition-ci-checks.json)の549件/専用30件、artifact/hash・cleanupと、
 初回28件/追加30件のlocal snapshotを区別する。CIの既存16memberにはfake原本を追加しておらず、local原本の照合path/hashを別に保存している。
+
+2026-11-06：[fake固定周期/終端](clock-fixed-schedule.md)は固定した仮想QPCの予定表だけを試験する。
+予定番号と実送信数を区別し、欠測・応答遅延・中断/回収、同phaseの既知違反を保存する。
+実sourceの真正性・不確かさや、実時間を観測した証拠と取り違えない。

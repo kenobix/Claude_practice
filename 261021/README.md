@@ -170,3 +170,8 @@ tick11000時の原因・時計資格は未解決。[MLflow警告の調査](docs/
 最終実装`a5c1605`は[CI42037278421](https://github.com/kenobix/Claude_practice/actions/runs/42037278421)で全549件（fake採取30件を含む）と全隔離systemが成功しました。
 [最終証拠索引](docs/reviews/20261105-clock-acquisition-ci-checks.json)でartifact16 member/hash・archive-only再計算・cleanupを確認しています。
 fake原本の代表はlocal保存で、独立源や実時計資格を認定したものではありません。
+
+2026-11-06追補：[fake QPC固定周期/phase deadline](docs/clock-fixed-schedule.md)を追加しました。
+`--schedule`で合成予定表を選び、遅いwakeは欠測、遅い応答は原本と損失を保持します。
+catch-upや観測延長をせず、欠測と同じphaseのUTC/identity/future違反も隠しません。
+独立UTC/elapsed源は未選定で、実host deadline/固定負荷や実時計資格の完成ではありません。

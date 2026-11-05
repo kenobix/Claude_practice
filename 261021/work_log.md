@@ -3840,3 +3840,63 @@ local代表raw/単位試行log/source snapshotと、既存system artifactの証�
 
 validation-final-v1は214原本hash/281相対link、5Python AST/最終CI commit不変、歴史的snapshotの元commit対応、diff/秘密パターン確認でexit0。
 この検証2原本も最終索引へ追加して216原本hashを再照合し、記録6pathだけをstageする。
+
+## 2026-11-06・基点89c5443：fake QPC固定周期/phase deadline
+
+指定の§11.6、前回work_log、clock-fake-acquisition/source-readiness、前回CI索引を確認。
+開始HEAD=89c544374fbb575e64ac066263beb50d7e333f82、tracked差分なし。
+無関係な未追跡260701/charts・logsと260905の画像は保持しstage対象外。
+.envやOS/時計設定、実DB/registry/現配信は読取/変更していない。
+
+`clock_campaign_schedule.py`とopt-in `--schedule`を追加。
+仮想QPCだけを進める固定周期1,000tick/phase1,800,000tickの制御で、実時間やWindowsのQPCを採取しない。
+予定tickを過ぎたslotは送らずmissedへ残し、catch-up・起点/終端のずらし・終端再取得を行わない。
+送信前intentと完了tick/late/guest bracketを原本へ結合し、遅延応答そのものと不足を残す。
+同じraw終端を次phaseへ共有し、欠測/遅延なら両phaseに不足を伝える。
+planのrecipe SHAと7source manifestを照合し、別processで各slot/skip/deadline/計数を再計算する。
+旧CLI/APIの省略時と旧rawの読取を保つ。既存offline policy/design/future拒否とwriter/schema/lock/workflowは不変。
+
+原本・全試行は`data/reports/20261106-clock-scheduler/`。
+runnerは既存run_attempt.pyを複製し、各実行argv/cwd/終了値/非資格local UTCとMONOTONIC/実log bytes/SHAを保存。
+これらのlocal時計は未資格であり、値の差や試験の表示秒を時計の正しさ/原因の証拠へ使わない。
+初期の資料読取/編集はチャットtool transcriptで、後の検証/commit/CIコマンドはrunnerと保存patchへ残す。
+unitごとの一時rawはcleanupされるため、全unit原本を永続保存したとは言わない。代表CLI原本は保存する。
+
+主な実行：`MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python data/reports/20261106-clock-scheduler/run_attempt.py <試行名> <実コマンド>`。
+- target-v1：`python -m unittest discover -s tests -p test_clock_campaign_schedule.py -v`、16件/82.753表示秒で成功。source-v1を保存。
+- 追加reviewで「欠測とidentity違反が同じphase」に条件を強めたところ、same-phase-before-fix-v1の1件/11.450表示秒がFAIL。
+  当初は予定sequence20がskipされ、identity faultは別phaseにだけ現れていた。正常を補う修正ではなく、負例の注入位置の不備。
+  固定readerと同じ21番目の実送信へ注入して、同じphaseの欠測と既知違反の併存を確認できるようにした。
+  初回成功16件を修正後19件の結果へ読み替えない。強化後/修正前test bytesもsource-v1へ別保存。
+- target-v2：専用19件/107.120表示秒で成功。改変後もhashが正しい欠測行/dispatch/終端/完了/late/計数の嘘を拒否。
+  SIGINT/TERMの実subprocess、応答待ちintent、起動時signal/selector例外の回収とmask復元、disk/IO timeoutも確認。
+  仮想QPC逆行/中断、欠測後に保存したUTC逆行を中断時に残す試験も含む。source-v2を保存し以後製品source不変。
+- pipeline-v1：代表6ケースをCLI capture→derive→既存offline CLIへ通し、別processで予定slot7,202個の分割を独立列挙。
+  punctual=7,202要求/14,415行/数値passed・全資格incomplete。
+  wake-late=7,199要求/3欠測、response-late+UTC逆行=7,200要求/2欠測+1遅延/failed、
+  deadline=5,421要求/1,781欠測（共有終端も次phaseで不足）、endpoint-late=7,202要求/終端1遅延、
+  wake-late+identity=7,199要求/同phaseの既知違反failed。
+  正常原本4fileを別directoryへcopyしてderive/既存CLIへ通した。
+  校正端点は通常各124区間、終端欠測caseは91区間を、固定周期と±2,000nsの合算半径から独立検算。
+  qpc-backwards/interruptのpartialはreader_reapedとscheduler-errorを保存し、correct plan指定でも派生出力なし/exit2を確認。
+  partialに既知違反がある場合、raw保持だけで数値reportを生成したとは呼ばない。
+- legacy-regression-v1：旧採取器30件/103.582表示秒で成功。
+- saved-legacy-v1：前回final-v5-normal/reverse原本をread-onlyで照合し、保存済みJSONと同値/数値passedまたはfailed、4member SHA前後不変。
+- reviewer-regression-v1：補助scriptをfileとして起動し、project rootがsys.pathへ入らず`from scripts`で2 import ERROR、exit1。
+  製品の失敗ではない。失敗script/logを残し、通常の`python -m unittest discover -s tests -p 'test_clock*review.py' -v`で再実行する。
+
+新しい管理者capture/resources・inventory・collection入力は標準reports配下のファイル名走査で見つからなかった。
+新しい自然T03/飽和時traceの入力も未提出なので追加trace/inventoryや過去原因の確定は行わない。
+T09は前回公式HEAD=2026-11-05 13:16:12UTC（JST同日22:16）404後の新しい公開情報がなく、反復HEAD/GET/原本再検査/fit/窓変更をしない。
+独立源の真正性/不確かさdossierに新入力なし。選定保留/実時計資格incomplete、46of47/T10以降の前提を維持する。
+実host deadline-aware IO、実固定負荷、事前plan/実行真正性、修復/保守/人の全受入は未完了。
+仮想phase終端と実IO safety timeoutの違いをclock-fixed-schedule.mdに明記した。
+
+README/証拠入口/旧採取説明/§11.6を更新。
+[local索引](docs/reviews/20261106-clock-scheduler-checks.json)へ全試行/失敗/hash/限界を結合する。
+全suiteは実装commitのCIで確認予定。CI/artifact/cleanup確認前に全体の受入完了としない。
+
+reviewer-regression-v2は通常のmodule discoveryで55件/20.685表示秒が成功。製品sourceをこの起動問題で変更していない。
+validation-v1は原本122hash・相対link288件、製品4pathとsource-v2一致/AST、compileall、
+資格設計/既存policy/reader/lock/workflowのbase byte不変、diffと秘密パターン確認が成功。
+validatorとその結果も索引へ追加して再照合し、今回の11対象pathだけstageする。

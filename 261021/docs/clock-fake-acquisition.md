@@ -79,6 +79,8 @@ readerはUTC-before→QPC→UTC-afterの固定順序を返す。
 通常/再開後の各trialは別token。最初のphaseは0..1800、次のphaseは1..1800を要求する。
 次phaseのindex 0には、直前phase終端の**同じraw record**を再利用する。要求し直しや似た値への置換をしない。
 全7,202要求、各phase1,801 sample、原本14,415行。real QPCの周期/deadline schedulerは未実装。
+2026-11-06追加の[固定周期/終端の合成モード](clock-fixed-schedule.md)は`--schedule`で選ぶ。
+この節の既存形式は省略時の互換モードとして保持し、新形式では欠測/遅延も原本へ結合する。
 pipeのIO timeoutに使うlocal MONOTONICはprocess回収の安全上限だけで、観測期間や資格の証拠に使わない。
 
 identityは毎sampleの原本とphase開始/終了を別々に保存する。
@@ -123,6 +125,7 @@ future equal/1µs/live probeとresume境界もrawへ保存して照合する。�
 [最終索引](reviews/20261105-clock-acquisition-ci-checks.json)にunit log・原本/試行hashと既存16 artifactの検算/cleanupを保存する。
 CI unitのclock原本は使い捨てで、local代表原本と区別する。16 artifactにclock原本を追加したとは主張しない。
 
-次はfake QPCを使った固定周期/phase deadline schedulerの制御を検証する。
+上記はa5c1605時点の受入。続くfake QPCを使った固定周期/phase deadline schedulerの制御は
+[追加実装/検証](clock-fixed-schedule.md)に記録する。
 catch-upや観測窓延長で遅延を隠さず、欠測・中断と既知違反を保持する。
 これは実host reader/実負荷/独立源未選定のまま進められる制御部の合成受入であり、実採取への許可や資格とは分ける。
