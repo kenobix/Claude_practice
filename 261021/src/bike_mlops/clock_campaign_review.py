@@ -206,11 +206,26 @@ def review_clock_campaign(value, *, expected_plan_sha256):
                         cursor += 1
                     if cursor < len(samples):
                         boundaries[seconds] = cursor
-            if not complete_base and len(boundaries) > 1:
-                # Missing unrelated values do not erase an observed rate violation.
-                pairs = list(zip(list(boundaries.values()), list(boundaries.values())[1:]))
-                if 1800 in boundaries:
-                    pairs.append((0, boundaries[1800]))
+            rate_boundaries = boundaries
+            rate_check = "partial_elapsed_rate"
+            if samples and samples[0]["qpc_tick"] is not None and any(s["qpc_tick"] is None for s in samples):
+                # Exact observed endpoints still prove a rate violation. They cannot
+                # establish first-reach coverage across the missing QPC samples.
+                origin = samples[0]["qpc_tick"]
+                if all(b > a for a, b in zip(known_qpc, known_qpc[1:])):
+                    rate_boundaries = {0: 0}
+                    for index, sample in enumerate(samples[1:], 1):
+                        tick = sample["qpc_tick"]
+                        if tick is not None and (tick - origin) % (60 * frequency) == 0:
+                            second = (tick - origin) // frequency
+                            if second in range(60, 1801, 60):
+                                rate_boundaries[second] = index
+                    rate_check = "observed_exact_boundary_rate"
+            if not complete_base and len(rate_boundaries) > 1:
+                # These diagnostics never fill missing coverage or grant qualification.
+                pairs = list(zip(list(rate_boundaries.values()), list(rate_boundaries.values())[1:]))
+                if 1800 in rate_boundaries:
+                    pairs.append((0, rate_boundaries[1800]))
                 for first, last in pairs:
                     if first == last:
                         continue
@@ -219,7 +234,7 @@ def review_clock_campaign(value, *, expected_plan_sha256):
                         b0, a0 = (samples[first][f"{clock}_{edge}_ns"] for edge in ("before", "after"))
                         b1, a1 = (samples[last][f"{clock}_{edge}_ns"] for edge in ("before", "after"))
                         if all(v is not None for v in (b0, a0, b1, a1)) and b0 <= a0 < b1 <= a1:
-                            check_bounds("partial_elapsed_rate", Fraction(b1 - a0, 10**9) / elapsed,
+                            check_bounds(rate_check, Fraction(b1 - a0, 10**9) / elapsed,
                                          Fraction(a1 - b0, 10**9) / elapsed, Fraction(999, 1000),
                                          Fraction(1001, 1000), clock=clock, first_index=first, last_index=last, **where)
             if len(boundaries) != 31:
@@ -235,14 +250,14 @@ def review_clock_campaign(value, *, expected_plan_sha256):
                 utc_seen.add(seconds)
                 if item["source_sha256"] != plan["utc_source_sha256"]:
                     issue("utc_source_changed", "failed", **where)
+                if lower > upper:
+                    issue("utc_reference_reversed", "failed", **where)
+                    continue
                 if seconds not in boundaries:
                     issue("utc_sample_unobserved", **where)
                     continue
                 if boundaries[seconds] != index:
                     issue("utc_wrong_sample", "failed", **where)
-                    continue
-                if lower > upper:
-                    issue("utc_reference_reversed", "failed", **where)
                     continue
                 for clock in ("windows_utc", "realtime"):
                     b, a = samples[index][f"{clock}_before_ns"], samples[index][f"{clock}_after_ns"]

@@ -430,6 +430,33 @@ class ClockCampaignTests(unittest.TestCase):
                 self.assertEqual([p.name for p in root.iterdir()], ["input.json"])
                 self.assertNotIn("private failure", stderr.getvalue())
 
+# Additional review regressions: missing evidence must not hide a known violation.
+class ClockCampaignMissingEvidenceRegressionTests(unittest.TestCase):
+    def test_missing_qpc_does_not_erase_exact_known_endpoint_rate_violation(self):
+        value = fixture()
+        value['campaigns'] = value['campaigns'][:1]
+        value['campaigns'][0]['phases'] = value['campaigns'][0]['phases'][:1]
+        value['resume'] = None
+        data = value['campaigns'][0]['phases'][0]['data']
+        data['samples'][10]['qpc_tick'] = None
+        for sample in data['samples']:
+            for edge in ('before', 'after'):
+                sample[f'raw_{edge}_ns'] = sample[f'raw_{edge}_ns'] * 11 // 10
+        seal(value)
+        report = review_clock_campaign(value, expected_plan_sha256=value['plan_sha256'])
+        self.assertIn('observed_exact_boundary_rate', {i['code'] for i in report['issues']})
+        self.assertEqual(report['clock_qualification_status'], 'failed')
+
+    def test_missing_qpc_does_not_erase_reversed_external_utc_interval(self):
+        value = fixture()
+        data = value['campaigns'][0]['phases'][0]['data']
+        data['samples'][10]['qpc_tick'] = None
+        data['external_utc'][1]['upper_ns'] = 1
+        seal(value)
+        report = review_clock_campaign(value, expected_plan_sha256=value['plan_sha256'])
+        self.assertIn('utc_reference_reversed', {i['code'] for i in report['issues']})
+        self.assertEqual(report['clock_qualification_status'], 'failed')
+
 
 if __name__ == "__main__":
     unittest.main()

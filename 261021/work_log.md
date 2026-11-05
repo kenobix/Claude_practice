@@ -3637,3 +3637,25 @@ target-v5は最終35件/表示20.902秒、exit0で成功した。追加guard後�
 local515件と区別する。validation-v1は78 hash record、210相対link、3Python構文、git diff --checkを確認して成功。
 同検証の原本2件を索引へ追加し、最終hashを再照合してから対象9ファイルだけをstageする。
 CI未確認のlocal索引は当時のsnapshotとして残し、実装commitのCI/全artifact/cleanupは後続索引に記録する。
+
+### 7ef985c以降の追加review・欠測による違反の抑制を防ぐ
+
+7ef985c5fd38d6a822a3b2e793cab1141ae36ed8を対象9ファイルだけでcommit/push。
+ci-list-v1の短縮SHA filterは空配列で、CI未起動とは断定しなかった。
+最新一覧ci-list-v2から完全SHAとCI41938599826を照合した。
+GitHub connectorのcommit-run取得がPRに限られるため、push run追跡には既存ghを使った。
+
+待機中の追加reviewで、QPC1件欠測によりboundary計算を停止すると、
+他の既知QPCの正確な60秒端点同士に明確な10%進行率逸脱があっても計算されない経路を確認。
+また外部UTCのlower>upperを境界未観測判定の後へ置いたため、その明確な違反まで隠れた。
+missing-regression-before-v1で新規2件の失敗を実行・保存した。
+既知のQPCが正確な固定境界に一致する端点の診断計算を追加し、境界未観測を補完せず違反だけ保持するよう修正。
+外部UTC区間自身の上下逆転は対応sampleの充足確認より先に検査する。
+欠測で実行できない計算を成功としない方針・資格incomplete・厳密futureは維持する。
+これを別の確認済み節目とし、最初の7ef985cのCIを補強後の最終CIと混同しない。
+
+target-v6は補強後の専用37件/表示21.782秒で成功。既存phaseの回帰18件も成功した。
+新しい索引を追加し、最初の35件時点の索引を書き換えず保持する。
+最終の全suiteは補強commitのCI（予定519件）で確認し、7ef985cの517件やlocal515件と区別する。
+validation-missing-v1は98 hash record/211相対link/3Python構文/diff checkで成功。
+その2原本も新索引へ入れ、100 hash recordを再照合した後、追加補強の6対象だけをcommit/pushする。
