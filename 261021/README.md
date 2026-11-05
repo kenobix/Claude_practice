@@ -160,3 +160,9 @@ tick11000時の原因・時計資格は未解決。[MLflow警告の調査](docs/
 補強後の実装`f6b3cad`は[最終CI索引](docs/reviews/20261105-clock-campaign-ci-checks.json)の全519件・全system/16 artifact/hash/cleanupで確認済みです。
 次の[採取protocol契約](docs/clock-campaign-acquisition.md)にはnonce/sequence、identity元資料、独立源の不確かさ、負例/cleanupを記述しています。
 契約は採取器の実装や実時計資格の取得ではありません。
+
+2026-11-05追補：[fake readerから原本→全campaign→offline CLI](docs/clock-fake-acquisition.md)を接続しました。
+送信前intent、nonce/sequence、identity元資料/6部品SHA、独立参照を模した不確かさ区間、
+中断/IO失敗と子process回収を使い捨て環境で検証します。
+[独立源の選定review](docs/clock-source-readiness.md)は採用保留で、合成成功でも実時計資格はincompleteです。
+[今回の試行索引](docs/reviews/20261105-clock-acquisition-checks.json)を参照してください。

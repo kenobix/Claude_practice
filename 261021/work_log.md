@@ -3699,3 +3699,74 @@ T09は08:59JST相当の404以降を再照会せず、正式T10/実候補のfit�
 最後に製品3pathがf6b3cadとbyte一致すること、raw/hash/link・全差分/statusを照合し、記録/設計7対象だけをcommit/pushする。
 validation-final-v1は128 hash record/260相対linkと製品3pathのf6b3cad不変を確認してexit0。
 同検証のlog/metadataを含めた最終130 hash recordを再照合してからstageする。
+
+## 2026-11-05・基点002718e：fake採取と原本から全campaignへの結合
+
+依頼された§11.6、前回の全campaign最終CI索引、採取契約を確認した。
+OS/時計設定、実DB/registry/現配信、既存future validator/schema/writer/lock/workflowは変更していない。
+.envも読取/変更していない。無関係な既存未追跡3パスは対象外。
+[操作/入力/終了値](docs/clock-fake-acquisition.md)、[独立源のreview](docs/clock-source-readiness.md)、
+[今回の試行/hash索引](docs/reviews/20261105-clock-acquisition-checks.json)を追加する。
+
+### 実装とreviewで補強した点
+
+固定fake host/外部reader subprocessへnonce/trial/role/phase/sequence付きの要求を逐次送り、
+guest before/after、host echo/QPC/frequency/読取順、外部参照を模したraw counterと非ゼロ不確かさ、
+identity元資料をhash chain付きjournalへ保存する。6部品identity SHA、全4phase、共有境界、
+31 external UTC/31 calibration/future probes/合成resumeを原本から再構築する。
+原本4memberとsource bytes/manifest/plan SHA/complete markerを照合し、派生JSONを別processの既存offline CLIへ渡す。
+readerは任意command/endpointを受け取らず、実sourceの自己申告flagも追加していない。
+
+追加reviewでは読取処理全体の同内容inode replacement検知、原本内への派生output拒否、
+終了時に遅れて届く余剰応答の拒否、failure recordのsequence連続性を補強した。
+さらに、応答待ちの要求はresponse後にしか保存されていない欠けを見つけた。
+inflight-before-fix-v1で新規回帰1件のFAILを実行/保存後、送信前request intentを追加した。
+request intentとresponse後sampleのchallenge/before bracketもreplayで一致を要求する。
+未応答要求を捨てて成功だけを並べず、送信前記録だけを「送信完了」ともみなさない。
+SIGINT/TERMやreader失敗時には対象childだけを回収し、failure保存を試し、正常markerを発行しない。
+SIGKILL/OS停止/disk障害で保存/cleanupを保証せず、公開直後のsignalとprocess exitの境界も文書へ明記した。
+
+### コマンド・結果・失敗と証拠の区別
+
+原本/attempt runnerは`data/reports/20261105-clock-acquisition/`。
+各runにcommand/cwd/exit、未資格local UTCとMONOTONICの前後、log bytes/SHAを保存した。
+最初の読取や編集操作の全てをrunnerで包んだわけではなく、tool transcript/本節/差分と区別する。
+UTC/経過時間の差は未資格環境の値であり、時計合格や修復の根拠へ流用しない。
+
+- capture-v1: 初期仕様の原本保存exit0。derive-v1は数値passed/資格incompleteによる**期待どおりexit2**。
+- target-v1: 初期21件/111.819表示秒、exit0。実行中に後続IOガードを編集したため最終sourceの受入には使わない。
+- target-v2: source snapshot v2の26件/102.075表示秒、exit0。
+- target-v3: 余剰応答/連続sequence補強後26件/97.470表示秒、exit0。
+- regression-v1: 既存全campaign37件+rate18件の55件/30.671表示秒、exit0。既存sourceは不変。
+- pipeline-v1: 旧7213行仕様のnormal/reverseを別processで再構築、各372区間を独立Fraction算術でも照合した。
+  partial nonceのderiveにcollector SHAを誤ってexpected planへ渡していたため、その拒否だけでは正しいplanでの未完了拒否としない。
+  helper原本を保持し、nonce-correct-v1でcanonical plan SHAを渡した拒否exit2/未出力を確認した。正常2scenarioのSHAは正しかった。
+- inflight-before-fix-v1: 1件FAIL、応答待ちrequestがjournalに無いことを再現。待ち時間の延長や既知違反の緩和では修復していない。
+- target-v4: 送信前intent/応答bracket一致を追加した最終専用**28件/116.342表示秒**、exit0。
+  timeout/nonce/trial/sequence/duplicate/frequency/missing/trailingと、実SIGINT/TERM・disk/finalfsync失敗のchild回収/marker不在を確認。
+- pipeline-v4: 最終sourceでnormal/reverse各14415原本行/7202要求、各phase1801 sample、共有境界で計7204 sample。
+  原本4memberだけを別dirへ渡したderiveと既存offline CLIは、normalが数値passed/資格incomplete/exit2、reverseがfailed/exit1。
+  canonical plan/phase/hash chain/markerを別計算し、各372区間も独立算術で照合。nonce partialは正しいplan SHAでも拒否/出力なし。
+
+各testの使い捨てfixtureは試験後cleanupし、全unit fixtureの原本を永続化したとは主張しない。
+代表のnormal/reverse/nonce partialはignored原本として保存し、試験全体のlog/commands/hashとsource snapshot v1〜v4も保持した。
+コードの構文/文書link/hash/差分確認は下記検証索引に記録する。
+実装commitの全suite/CI/artifactは後続の追跡対象で、local28件/55件から全suite成功を先取りしない。
+
+### 条件付き確認と残件
+
+標準のdata/reports以下をファイル名で再帰検索したが、新resources/inventory/collection原本は見つからなかった。
+新T03自然失敗やtick11000内部値の入力はなく、追加trace/基本inventoryの反復は行っていない。
+環境全体で自然再発が無い、現在PHC/UDPを確認済み、過去動的原因を解決したとは主張しない。
+前回T09 HEADから約13時間後に、公式S3の202610へHEADを**1回だけ**実行。
+HTTP404/Server AmazonS3/Date 2026-11-05 13:16:12 GMT、curl exit0を保存。
+GET/原本再検査/正式T10集約やfit、評価窓変更は未実施。46/47原本の条件を維持する。
+
+実UTC/独立elapsed源は未選定で、真正性・依存経路・不確かさ・reader/protocol原本をreviewするためのdossierが必要。
+fake双方のcounterは同じ合成生成元で、独立源/実host API/実負荷/休止再開の証拠ではない。
+実collector/host deadline/固定負荷、事前planの真正性、同期責任/修復と保守許可、人の全原本受入は残る。
+部分的な合成成功を実時計資格、実Capital性能/採否や過去p95の修正へ流用しない。
+
+validation-v1は121原本hash/製品5PythonのAST・v4 snapshot一致・275相対link・固定設計SHA・diff check・秘密パターン検査を確認してexit0。
+validator自身とこの検証のmetadata/logも索引へ追加し、再照合してから対象13pathだけstage/commitする。
+全suite/CIはこの時点では未確認として維持する。

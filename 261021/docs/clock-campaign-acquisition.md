@@ -1,5 +1,8 @@
 # 全観測期間の採取protocol：次の実装に向けた契約
 
+2026-11-05。追補：[fake採取/原本結合](clock-fake-acquisition.md)と[源選定review](clock-source-readiness.md)を実装・整理した。
+以下は実装前に固定した契約として保持する。実collector/固定負荷/実外部readerは未実装、実資格は未達。
+
 2026-11-05。[全観測期間のoffline入力](clock-campaign-review.md)を作る採取器の実装前契約。
 採取器、外部reader、負荷生成器を実装・実行した証拠ではない。
 既存の[受入設計](clock-qualification-plan.md)を維持し、以下の未選定事項がある間は本採取を開始しない。

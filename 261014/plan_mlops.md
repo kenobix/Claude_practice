@@ -532,7 +532,7 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 <a id="remaining-work-latest"></a>
 
-#### 2026-11-05 全観測期間のoffline契約/照合後の残課題
+#### 2026-11-05 fake採取/全観測期間の原本結合後の残課題
 
 最新実装`f6b3cad`の[CI41939041432](https://github.com/kenobix/Claude_practice/actions/runs/41939041432)は
 最終37件を含む全519件/79.058表示秒・両job全step成功。
@@ -551,8 +551,8 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 | 優先度 | 難易度・担当 | 残課題と次の条件 |
 |---|---|---|
-| P1 | D3・Sol | 時計：前回initd setterの実exe/親/namespaceは照合済み。保存済みELFの[backend取得interfaceとSettimeofday CALL](../261021/docs/backend-time-path-review.md)も静的照合したが、新しいruntime応答/stackではない。新管理者ログなし。残りはPHC fd/UDPと現在identity、tick11000時内部値、backend/host時刻源・外部UTC差・同期責任、許可後の修復と時計資格。[資格計測設計v1](../261021/docs/clock-qualification-plan.md)と[offline進行率phase component](../261021/docs/clock-rate-review.md)を追加し、実装f26b334のCI482件/全system/artifact/cleanupまで受入済み。全campaignのpolicy/事前plan SHA結合・外部UTC/校正/identity/欠測を[offline照合](../261021/docs/clock-campaign-review.md)する実装f6b3cadをCI519件/全system/artifact/cleanupまで受入済み。数値/構造だけの成功でも資格はincompleteを保つ。次は[採取protocol契約](../261021/docs/clock-campaign-acquisition.md)のfake reader/collector・raw→identity/全JSON結合、独立源/校正方法と不確かさreview、実採取器/固定負荷、同期責任review、別途許可後の修復/全受入。非飽和traceを反復せず、過去の飽和/T03歴史的停止も未確定。initd全体を止めず、future拒否/clamp/retryの禁止は維持 |
-| P1 | D1・Luna | T09の202610公式原本公開待ち。前回から約10時間後の2026-11-04 23:59:13UTC（JST11月5日）の公式S3 HEADも404（[今回索引](../261021/docs/reviews/20261105-clock-campaign-checks.json)）。公開後に既存手順で取得・bytes/hash/構造を照合。HEADだけで取得完了としない。今回の202212追加取得をT09の10月到着と混同しない |
+| P1 | D3・Sol | 時計：前回initd setterの実exe/親/namespaceは照合済み。保存済みELFの[backend取得interfaceとSettimeofday CALL](../261021/docs/backend-time-path-review.md)も静的照合したが、新しいruntime応答/stackではない。新管理者ログなし。残りはPHC fd/UDPと現在identity、tick11000時内部値、backend/host時刻源・外部UTC差・同期責任、許可後の修復と時計資格。[資格計測設計v1](../261021/docs/clock-qualification-plan.md)と[offline進行率phase component](../261021/docs/clock-rate-review.md)を追加し、実装f26b334のCI482件/全system/artifact/cleanupまで受入済み。全campaignのpolicy/事前plan SHA結合・外部UTC/校正/identity/欠測を[offline照合](../261021/docs/clock-campaign-review.md)する実装f6b3cadをCI519件/全system/artifact/cleanupまで受入済み。数値/構造だけの成功でも資格はincompleteを保つ。[fake採取](../261021/docs/clock-fake-acquisition.md)で送信前intent/nonce/sequence、raw→identity/全JSON→offline CLI、負例/中断cleanupを実装。local受入と実装commit CIは[今回索引](../261021/docs/reviews/20261105-clock-acquisition-checks.json)で段階を区別する。残りは[源選定review](../261021/docs/clock-source-readiness.md)に必要な独立UTC/elapsed参照と不確かさ根拠（未選定）、実採取器/host deadline/固定負荷、原本/実行真正性、同期責任review、別途許可後の修復/休止再開/全受入。非飽和traceを反復せず、過去の飽和/T03歴史的停止も未確定。initd全体を止めず、future拒否/clamp/retryの禁止は維持 |
+| P1 | D1・Luna | T09の202610公式原本公開待ち。前回から約13時間後の2026-11-05 13:16:12UTC（JST11月5日22:16）の公式S3 HEADも404（[今回索引](../261021/docs/reviews/20261105-clock-acquisition-checks.json)）。公開後に既存手順で取得・bytes/hash/構造を照合。HEADだけで取得完了としない。今回の202212追加取得をT09の10月到着と混同しない |
 | P0（実fit前） | D3・Sol | T10：独立protocol/全原本snapshot/分割/recipe/基準をfit前に固定。[左端bufferを202212に決定・取得し、202301との2file/379,310行を別parserでも監査](../261021/docs/t10-input-readiness.md)。原本範囲202212〜202610、target窓とrecipeは不変。保管46件/予定47件だが正式集約/manifest監査/凍結は未実施。10月bufferなしで窓を短縮せず、1か月bufferを母集団の完全性保証にしない |
 | P1 | D3・Sol | T02実producerおよびT11/T12/T13b：同一の実candidate/artifactに精度・監視・復旧・metadata・運用測定を結合し採否を記録。T09/T10/時計資格等の前提を満たす範囲で順に進める |
 | P2（上流変更時） | D2・Sol review | MLflow noloadの発生箇所/通常import/厳格警告負例と現行publisher6件は確認済み。最新3.17.2にも同指定があり、修正releaseまたはloader変更時に個別再検証。それまではlock変更/警告抑制をしない。[調査と報告下書き](../261021/docs/mlflow-orm-compatibility.md)。upload-artifact保守は前回CI受入済み |
@@ -622,3 +622,9 @@ QPC1件欠測時にも既知の正確な固定端点の逸脱と提出UTC区間�
 全campaignの最終受入はf6b3cad/CI41939041432。専用37件と既存phase18件、CI全519件/全system、
 16 artifact/hash・archive-only検算・Caddy通常/TERM・対応復元cleanupが成功した。
 採取protocol契約は次の実装の設計で、採取器・外部reader・負荷生成器の完成や実資格を先取りしない。
+
+基点`002718e`からの次の節目：fake host/外部reader（固定subprocess）の合成protocolと
+4ファイル原本を実装し、hash/順序/nonce・identity/校正区間を別processで再計算する。
+初回reviewで応答待ち要求が原本へ残らない欠けを回帰1件で再現し、送信前intent保存と応答時の同一bracket照合を追加。
+partialを正常markerで覆わず、実sourceの認証/独立性を自己申告flagで通す入口も作らない。
+新管理者採取/自然T03・飽和時の入力なし。追加traceや基本inventoryの反復はせず、T09は1回のHEAD以外に原本再検査/GET/fit/窓変更を行っていない。

@@ -59,3 +59,8 @@ CI artifact以外の実DB原本、`.env`、認証値、実候補データを説�
 用語は[用語集](glossary.md)、時計の限界は[中断と時計診断](interruption-clock-diagnostics.md)を参照する。
 
 2026-11-03更新: 配信の名前/理由は申告情報で、APIのmatched_pendingは処理中、matched_completedも認証済み承認の証明ではない。新しいCI artifact ZIP SHA先頭は`ae1f101f77c7`。操作の読取とtimeout時の手順は[配信診断](deployment-observability.md)へ。
+
+2026-11-05追補：[合成時計採取](clock-fake-acquisition.md)は、送信前intentを含むraw journalとidentity原本から
+別processで全campaignを作り、既存offline CLIへ渡す受入です。
+[試行/失敗/hash索引](reviews/20261105-clock-acquisition-checks.json)を入口とし、
+[独立源の選定不足](clock-source-readiness.md)や実時計資格の未達と分けて説明します。
