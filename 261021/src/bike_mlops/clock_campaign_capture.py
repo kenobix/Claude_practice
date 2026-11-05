@@ -206,10 +206,21 @@ class Reader:
             raise ValueError("Unknown fixture fault")
         self.timeout = timeout
         self.buffer = b""
-        self.process = subprocess.Popen([sys.executable, "-m", "bike_mlops.clock_campaign_fake_reader", fault],
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True)
+        self.process = None
         self.selector = selectors.DefaultSelector()
-        self.selector.register(self.process.stdout, selectors.EVENT_READ)
+        try:
+            self.process = subprocess.Popen([sys.executable, "-m", "bike_mlops.clock_campaign_fake_reader", fault],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True)
+            self.selector.register(self.process.stdout, selectors.EVENT_READ)
+        except BaseException:
+            if self.process is not None:
+                try:
+                    self.close()
+                except (OSError, ValueError, subprocess.TimeoutExpired):
+                    pass
+            else:
+                self.selector.close()
+            raise
 
     def request(self, value):
         self.process.stdin.write(encode(value))
@@ -298,7 +309,13 @@ def capture_fake(root, *, fault="none", reader_timeout=3.0, on_record=None):
         try:
             append({"type": "header", "kind": "synthetic-clock-raw-v1", "plan_sha256": plan_hash,
                     "manifest": manifest, "source": SOURCE, "recipe": RECIPE})
-            reader = Reader(fault=fault, timeout=reader_timeout)
+            # Deliver interruption only after the caller owns the child. Otherwise
+            # a handler during Popen's return can strand a child before assignment.
+            previous_mask = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT, signal.SIGTERM})
+            try:
+                reader = Reader(fault=fault, timeout=reader_timeout)
+            finally:
+                signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
             for ci, role in enumerate(ROLES):
                 trial = secrets.token_hex(16)
                 for pi, phase in enumerate(PHASES):

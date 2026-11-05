@@ -3770,3 +3770,35 @@ fake双方のcounterは同じ合成生成元で、独立源/実host API/実負�
 validation-v1は121原本hash/製品5PythonのAST・v4 snapshot一致・275相対link・固定設計SHA・diff check・秘密パターン検査を確認してexit0。
 validator自身とこの検証のmetadata/logも索引へ追加し、再照合してから対象13pathだけstage/commitする。
 全suite/CIはこの時点では未確認として維持する。
+
+## df3aeb4以降・reader生成時の回収責任を補強
+
+df3aeb48823fd5098ba850c12dd5ae4fb5089a58を対象13pathでcommit/pushし、CI42036165988を完全SHAで特定した。
+GitHub connectorのcommit-run取得はPR trigger限定なので、push runの特定/追跡に既存ghを使う。
+待機中の追加reviewで、Popen成功後のselector登録例外と、Popen返却時のsignalにより、
+呼出し側へのReader代入前に中断するとchildを見失う経路を発見した。
+startup-before-fix-v1で新規2件ともFAILを再現。失敗した試験のfinallyがその試験childだけをKILL/communicateし、残置しなかった。
+これは今回の人工startup raceで、過去T03の自然停止原因の確定には使わない。
+
+Reader構築例外時のclose/reapを追加。生成/所有権移譲の短区間だけparentの当該threadでSIGINT/TERMを保留し、
+呼出し側への代入後に元のmaskへ復元する。固定fixture childは継承maskを自process内だけで解除する。
+startup-after-fix-v1の2件/0.280表示秒が成功。OS全体/他process/時計の設定変更ではない。
+最終target-v5はmask復元の照合も含む**30件/106.920表示秒**、exit0。
+pipeline-v5も最終sourceで正常/逆行各14415行・7202要求・372区間、別process再構築/既存CLI、nonce partial拒否が成功。
+先行v4原本とそのplan/hashは保持し、v5へ遡及適用しない。
+
+source-budget-v1は14仮定条件をFractionで検算してexit0。
+中心経過Cと理想QPCが等しく、各端点半径uを加算する条件では`2u <= C/10001`が必要。
+60秒でu=2,999,700nsは区間内、次の1nsは越える。
+1800秒全体だけで良好でも必須60秒窓を代替せず、中心差/輸送/読取/丸め等の追加誤差も別に必要。
+[源選定review](docs/clock-source-readiness.md)にこの条件を追記したが、実provider/精度/真正性/資格の認定ではない。
+
+[起動時回収の追加索引](docs/reviews/20261105-clock-acquisition-startup-checks.json)へ全試行/hash/sourceを記録する。
+初回索引はdf3aeb4時点の28件/CI未確定snapshotとして保持し、最終30件と混同しない。
+最終実装commitの全suite（予定549件）/CI/artifact/cleanupは後続で照合する。
+
+先行df3aeb4のCI42036165988はwatch exit0/両job全step success（system5m15s、tests3m45s）を確認した。
+この先行runのartifactは最終受入としてdownload/検算しておらず、起動補強後sourceのCIへ流用しない。
+validation-startup-v1は185原本hash/5AST/v5一致/168相対link/固定設計/diff/秘密パターン確認でexit0。
+初回索引の製品hashは現在fileへ読み替えず、git show df3aeb4のbytesと照合して一致した。
+同検証2原本も追加した索引を再照合し、追加8pathのみstage/commit/pushする。

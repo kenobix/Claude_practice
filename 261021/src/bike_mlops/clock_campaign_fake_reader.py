@@ -1,11 +1,14 @@
 """Fixed synthetic host/external reader subprocess. No OS clock/source access."""
 import sys
+import signal
 import time
 
 from bike_mlops.clock_campaign_capture import FAULTS, decode, encode, fake_response
 
 
 def main():
+    # Only this fixture child: do not retain the parent's short startup mask.
+    signal.pthread_sigmask(signal.SIG_UNBLOCK, {signal.SIGINT, signal.SIGTERM})
     if len(sys.argv) != 2 or sys.argv[1] not in FAULTS:
         return 2
     fault = sys.argv[1]

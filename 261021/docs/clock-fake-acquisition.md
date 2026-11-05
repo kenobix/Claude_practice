@@ -99,6 +99,9 @@ future equal/1µs/live probeとresume境界もrawへ保存して照合する。�
 - 欠測QPCなどprotocol必須値の欠落は原本照合段階で拒否。併存する既知違反はrawに残るが、数値summaryへ進まない。
   既存offline JSONのnullable sample契約を変更したものではない。
 - SIGINT/TERMを中断例外へ変換し、対象readerだけをEOF/TERM/KILLで回収する。
+  child生成時だけparent当該threadのsignal maskを保留し、controllerへの所有権移譲後に元のmaskへ戻す。
+  fixture childは継承したmaskを自process内だけで解除する。生成後のselector登録失敗もchildを回収する。
+  OS全体/他processのsignal設定や時計設定を変える操作ではない。
   エラー種別と回収状態のfailure recordの保存も試す。例外の値/任意argv/認証情報は記録しない。
   SIGKILL/OS停止ではcleanupを保証せず、markerなしの未完了原本を成功扱いにしない。
 - reader応答は16KiB、原本fileは各64MiBまで。単一fd/O_NOFOLLOW/非blockingでregular fileだけを読む。

@@ -311,6 +311,56 @@ class ClockCaptureTests(unittest.TestCase):
 
 
 class ClockCaptureFailureTests(unittest.TestCase):
+    def test_constructor_failure_reaps_already_spawned_reader(self):
+        processes, original = [], subprocess.Popen
+        previous_mask = signal.pthread_sigmask(signal.SIG_BLOCK, set())
+        def factory(*args, **kwargs):
+            child = original(*args, **kwargs)
+            processes.append(child)
+            return child
+        with tempfile.TemporaryDirectory() as directory:
+            try:
+                with patch.object(capture.subprocess, "Popen", side_effect=factory), \
+                     patch("selectors.EpollSelector.register", side_effect=OSError("synthetic registration failure")):
+                    with self.assertRaises(OSError):
+                        capture.capture_fake(Path(directory) / "attempt")
+                self.assertTrue(processes)
+                self.assertIsNotNone(processes[0].poll(), "Child survived failed Reader construction")
+                self.assertEqual(signal.pthread_sigmask(signal.SIG_BLOCK, set()), previous_mask)
+            finally:
+                for child in processes:
+                    if child.poll() is None:
+                        child.kill()
+                        child.communicate(timeout=5)
+
+    def test_signal_during_spawn_reaps_reader_before_capture_returns(self):
+        processes, original = [], subprocess.Popen
+        previous_mask = signal.pthread_sigmask(signal.SIG_BLOCK, set())
+        def interrupted(signum, frame):
+            raise InterruptedError("Synthetic startup signal")
+        def factory(*args, **kwargs):
+            child = original(*args, **kwargs)
+            processes.append(child)
+            os.kill(os.getpid(), signal.SIGTERM)
+            return child
+        previous = signal.signal(signal.SIGTERM, interrupted)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "attempt"
+            try:
+                with patch.object(capture.subprocess, "Popen", side_effect=factory):
+                    with self.assertRaises(InterruptedError):
+                        capture.capture_fake(root)
+                self.assertTrue(processes)
+                self.assertIsNotNone(processes[0].poll(), "Startup signal lost ownership of the child")
+                self.assertFalse((root / "complete.json").exists())
+                self.assertEqual(signal.pthread_sigmask(signal.SIG_BLOCK, set()), previous_mask)
+            finally:
+                signal.signal(signal.SIGTERM, previous)
+                for child in processes:
+                    if child.poll() is None:
+                        child.kill()
+                        child.communicate(timeout=5)
+
     def test_inflight_request_is_preserved_before_timeout(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "attempt"
