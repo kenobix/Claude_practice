@@ -156,3 +156,7 @@ tick11000時の原因・時計資格は未解決。[MLflow警告の調査](docs/
 通常/再開後の4区間をpolicy・事前plan SHAと結合し、外部UTC・QPC校正・identity・欠測・厳密futureを再計算します。
 数値/構造が揃っても時計資格はincompleteのままで、採取の真正性・独立源・修復/保守・人のreviewを省略しません。
 [今回の試行と限界](docs/reviews/20261105-clock-campaign-checks.json)を参照してください。実時計の修復・資格判定やfitは未実施です。
+
+補強後の実装`f6b3cad`は[最終CI索引](docs/reviews/20261105-clock-campaign-ci-checks.json)の全519件・全system/16 artifact/hash/cleanupで確認済みです。
+次の[採取protocol契約](docs/clock-campaign-acquisition.md)にはnonce/sequence、identity元資料、独立源の不確かさ、負例/cleanupを記述しています。
+契約は採取器の実装や実時計資格の取得ではありません。

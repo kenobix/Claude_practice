@@ -142,3 +142,7 @@ host/backend同期責任review・新PHC/UDPログ、別途許可後の修復/休
 既知のQPC値が正確な60秒境界に一致する端点同士の進行率は診断として計算する。
 ここで確認した逸脱はfailedとするが、良好な端点だけで欠測を補完/合格させない。
 提出外部UTC区間そのものの上下逆転は、対応境界が欠けていても違反として残す。
+
+最終37件を含む全519件・全systemを実装f6b3cadの[CI41939041432](https://github.com/kenobix/Claude_practice/actions/runs/41939041432)で確認した。
+[最終索引](reviews/20261105-clock-campaign-ci-checks.json)にartifact/member SHA・別process再計算・cleanupを残す。
+次の実装の[採取protocol](clock-campaign-acquisition.md)は設計契約であり、採取真正性や実資格の証明ではない。

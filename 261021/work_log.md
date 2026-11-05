@@ -3659,3 +3659,43 @@ target-v6は補強後の専用37件/表示21.782秒で成功。既存phaseの回
 最終の全suiteは補強commitのCI（予定519件）で確認し、7ef985cの517件やlocal515件と区別する。
 validation-missing-v1は98 hash record/211相対link/3Python構文/diff checkで成功。
 その2原本も新索引へ入れ、100 hash recordを再照合した後、追加補強の6対象だけをcommit/pushする。
+
+## 2026-11-05・全campaign最終CIと次の採取契約
+
+補強`f6b3cad720ec64f244dbf8651961916ce4637828`を6対象だけでcommit/pushした。
+[CI41939041432](https://github.com/kenobix/Claude_practice/actions/runs/41939041432)で最終37件を含む全519件/79.058表示秒と
+両job全stepが成功した。source/setup時点が異なるlocal515件、専用35→37件、最初の7ef985cを混同しない。
+先行CI41938599826もsuccessだが、最終の受入はf6b3cadだけに結合した。
+本節の文書commit自体をf6b3cadのCIで直接試験したとは呼ばない。
+
+原本は`data/reports/20261105-clock-campaign-ci/`、
+[最終CI/hash索引](docs/reviews/20261105-clock-campaign-ci-checks.json)。
+watch-v1は900秒上限/TERM/kill-after10、gh --interval30 --exit-statusでexit0。
+fetch-final-v1はexact SHA/完了成功/全job-stepとartifact metadata・両job log、先行runの状態を保存してexit0。
+準備の最初はproject cwdで261021/を重ねてcpとrunner lookupが失敗し、CI commandは始まらなかった。
+このtool transcriptからの再記述をsetup-cwd-failure.txtへ区別して残し、空の二重directoryだけをrmdirした。
+
+artifact-check-v1はexit0。前回の検算helperをexact commit/run/519件へ明示的に合わせ、
+artifact13375427884をdownloadした。外側ZIP SHA
+`913dacb18d7488c8f8099ab6d9f47335cd79d10ffa803a7dce8a0a2cf8a85b69`はGitHub digestと一致し、固定allowlist16 memberのbytes/SHAも確認。
+内側archive SHAは`018644f5319b8b24305e55fed7d704108723955a40697e1c17b3576e60fc74e2`。
+manifest/4原本とsource_revision=f6b3cad/dirty=falseを照合した。
+archiveだけを渡す別processと独立nearest-rank計算で、1050 journal/50 warmup除外/1000 measured/0 error、
+p95=32.33582699999715msが一致した。operational gate=not_evaluated、deployment permission=blocked。
+これは合成CI runnerの値で、実Capital性能/本番SLO/時計資格/採否へ流用しない。
+今回はIntel Xeon Platinum 8370CのCPU説明に@が含まれるままarchiveが通った。
+以前の自然拒否field未採取を遡及解決したという意味ではない。
+
+Caddy現Dockerfile build、3段階SIGKILL、通常/TERM cleanup、保護container不変/残存0を確認。
+MLflow/skopsとDBの対応を保った別volume復元、元retry/新予測/破損skops拒否、
+65 registry table/5 audit table/8 artifact、PG/HTTPのcleanupも同artifact/完了job logで照合した。
+既存source/schema/writer/lock/workflowの変更や、実DB/実registry/現配信の操作ではない。
+
+待機中に[次の採取protocol契約](docs/clock-campaign-acquisition.md)も整理した。
+nonce/sequenceとbracket、事前planの別review保存、identity元資料、独立源の不確かさ、固定負荷/失敗時cleanup、
+fake readerで先に確認する負例を明記した。採取器/外部reader/負荷生成器は未実装、独立源/校正方法は未選定。
+PHC/UDPの追加入力・同期責任review・許可後の修復/休止再開・人の全原本reviewも残件。
+T09は08:59JST相当の404以降を再照会せず、正式T10/実候補のfitも始めていない。
+最後に製品3pathがf6b3cadとbyte一致すること、raw/hash/link・全差分/statusを照合し、記録/設計7対象だけをcommit/pushする。
+validation-final-v1は128 hash record/260相対linkと製品3pathのf6b3cad不変を確認してexit0。
+同検証のlog/metadataを含めた最終130 hash recordを再照合してからstageする。

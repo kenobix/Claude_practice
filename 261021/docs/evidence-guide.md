@@ -5,6 +5,7 @@
 
 | 対象 | 実装commit / CI | 確認できる証拠 | 限界 |
 |---|---|---|---|
+| **全観測期間のoffline照合（最新）** | `f6b3cad` / [CI41939041432](https://github.com/kenobix/Claude_practice/actions/runs/41939041432) | [最終CI索引](reviews/20261105-clock-campaign-ci-checks.json)。37専用を含む519件、4区間/policy/plan/hash・UTC/校正/identity/欠測・strict future、16 member/hash・archive-only/cleanup。[操作](clock-campaign-review.md)・[次の採取契約](clock-campaign-acquisition.md) | 保存数値の合成照合のみ。全資格はfailed/incomplete、真正性/独立源/修復/実採取は未了 |
 | **時計資格設計・offline進行率component** | `f26b334` / [CI41845551048](https://github.com/kenobix/Claude_practice/actions/runs/41845551048) | [CI索引](reviews/20261104-clock-rate-ci-checks.json)。最終18件含む全482件・全system、16 artifact member/SHA・archive-only検算・cleanup。[使用手順](clock-rate-review.md) | componentのみ。QPC校正・外部UTC・identity/採取真正性・全campaignと実時計資格は未了 |
 | **backend時刻経路・左端buffer（891a420以降）** | 保存済みELF静的解析 / 左端原本2file / local pipeline8件 | [検証索引](reviews/20261104-backend-boundary-checks.json)。PIE relocation/interface/CALL照合・5拒否コピー、202212取得、2parserで379,310行の境界監査 | 新しいruntime setter/PHC所有・時計資格ではない。正式snapshot/protocol/fit・新しいCI受入は未実施 |
 | **initd管理層とT10入力準備（2026-11-04）** | 基点`d8ec164`後のlocal読取・文書のみ | [検証索引](reviews/20261104-clock-readiness-checks.json)。Docker Desktopの35thread前後対応と負方向settimeofday、7拒否検証、既存45 ZIP/hash/header、T10開始手順 | PHC/socket採取・飽和時の内部理由・時計資格は未了。新protocol/fit・CIの新しい受入ではない |
