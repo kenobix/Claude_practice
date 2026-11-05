@@ -64,3 +64,7 @@ CI artifact以外の実DB原本、`.env`、認証値、実候補データを説�
 別processで全campaignを作り、既存offline CLIへ渡す受入です。
 [試行/失敗/hash索引](reviews/20261105-clock-acquisition-checks.json)を入口とし、
 [独立源の選定不足](clock-source-readiness.md)や実時計資格の未達と分けて説明します。
+
+合成採取の最終受入は実装a5c1605/[CI42037278421](https://github.com/kenobix/Claude_practice/actions/runs/42037278421)。
+[最終索引](reviews/20261105-clock-acquisition-ci-checks.json)の549件/専用30件、artifact/hash・cleanupと、
+初回28件/追加30件のlocal snapshotを区別する。CIの既存16memberにはfake原本を追加しておらず、local原本の照合path/hashを別に保存している。

@@ -3802,3 +3802,41 @@ source-budget-v1は14仮定条件をFractionで検算してexit0。
 validation-startup-v1は185原本hash/5AST/v5一致/168相対link/固定設計/diff/秘密パターン確認でexit0。
 初回索引の製品hashは現在fileへ読み替えず、git show df3aeb4のbytesと照合して一致した。
 同検証2原本も追加した索引を再照合し、追加8pathのみstage/commit/pushする。
+
+## 2026-11-05・最終a5c1605 CI受入
+
+起動補強を8対象だけでcommit/pushした最終実装はa5c160598cdc15217d466065eebe6ed081ad9683。
+[CI42037278421](https://github.com/kenobix/Claude_practice/actions/runs/42037278421)は全549件/119.271表示秒、
+新しいclock採取の30件全てがok、compileallと両job全stepが成功。
+unit job2m56s/system6m22s。先行df3aeb4のCI成功/28件を最終sourceの受入へ流用しない。
+この記録更新だけの後続commit自体を、この実装CIで直接試験したとも呼ばない。
+
+原本は`data/reports/20261105-clock-acquisition-ci/`、
+[最終索引](docs/reviews/20261105-clock-acquisition-ci-checks.json)。
+list-final-v1で完全SHA/runを特定し、watch-final-v1は900秒/TERM/kill-after10・30秒間隔/exit-statusでexit0。
+fetch-final-v1は完全SHAとsuccess/全job-step、artifact metadata・両job log、先行runの成功状態を保存してexit0。
+artifact-check-v1は既存checkerのexact SHA/run/549件を合わせ、新clock30件の全ok照合も追加してexit0。
+元のmember/整合/cleanup条件は緩めていない。
+
+artifact13418689448の外側ZIP SHA
+8a8eb79245ec497037f8c532b20d36bd9bd61ad044ac4ff2e2403165f1daf763はGitHub digestと一致。
+固定allowlist16 memberのbytes/SHAを確認。内側T16 archive SHA
+794a3b163efeb9ed5f1882dc60e52ab50cb627815d3fdc5bd8cacc758dd5ffce、manifest/4原本と
+source_revision=a5c1605/dirty=falseも一致した。
+archiveだけを渡した別processと独立nearest-rank計算で1050 journal/50 warmup除外/1000 measured/0 error、
+p95=29.640094000001227msが一致。operational gate=not_evaluated/deployment permission=blocked。
+これは既存合成systemのCI値で、実Capital性能/本番SLO/時計資格/採否へ流用しない。
+
+現在DockerfileのCaddy build/3段階SIGKILL/通常+TERM cleanup、保護container不変/専用resources残存0、
+MLflow/skopsとDB対応の別volume復元、元retry/新予測/破損skops拒否、65 registry table/5 audit table/8artifact、
+PG/HTTP cleanupを保存log/summaryから照合した。実DB/実registry/現在の配信への操作ではない。
+既存16memberへclock raw原本を追加しておらず、新clock unitのfixture原本はCIではcleanup済み。
+local代表raw/単位試行log/source snapshotと、既存system artifactの証拠範囲を分けて記録する。
+
+実UTC/独立elapsed source、実collector/host deadline/固定負荷、PHC/UDP/current identity、修復/保守と人の全受入は残る。
+次の独立実装としてfake QPCの固定周期/phase deadline・遅延/欠測/中断を検証する制御部を計画へ明記した。
+新情報なしの追加HEAD/trace/原本再検査はせず、T09=404/46of47/正式T10と実fit/採否の前提を維持する。
+最終のhash/link/製品5pathのa5c1605 byte一致・全差分/statusを照合し、記録6対象だけcommit/pushする。
+
+validation-final-v1は214原本hash/281相対link、5Python AST/最終CI commit不変、歴史的snapshotの元commit対応、diff/秘密パターン確認でexit0。
+この検証2原本も最終索引へ追加して216原本hashを再照合し、記録6pathだけをstageする。

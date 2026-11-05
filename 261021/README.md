@@ -166,3 +166,7 @@ tick11000時の原因・時計資格は未解決。[MLflow警告の調査](docs/
 中断/IO失敗と子process回収を使い捨て環境で検証します。
 [独立源の選定review](docs/clock-source-readiness.md)は採用保留で、合成成功でも実時計資格はincompleteです。
 [今回の試行索引](docs/reviews/20261105-clock-acquisition-checks.json)を参照してください。
+
+最終実装`a5c1605`は[CI42037278421](https://github.com/kenobix/Claude_practice/actions/runs/42037278421)で全549件（fake採取30件を含む）と全隔離systemが成功しました。
+[最終証拠索引](docs/reviews/20261105-clock-acquisition-ci-checks.json)でartifact16 member/hash・archive-only再計算・cleanupを確認しています。
+fake原本の代表はlocal保存で、独立源や実時計資格を認定したものではありません。

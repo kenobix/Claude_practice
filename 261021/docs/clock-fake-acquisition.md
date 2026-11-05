@@ -115,3 +115,14 @@ future equal/1µs/live probeとresume境界もrawへ保存して照合する。�
 管理元/修復/保守許可と実休止後の受入、人の全原本reviewは未完了。
 [源選定のreview](clock-source-readiness.md)と[計画§11.6](../../261014/plan_mlops.md#remaining-work-latest)に従う。
 合成成功を実Capital採否、過去の時計原因、実運用p95や時計資格へ流用しない。
+
+## 最終受入と次の境界
+
+実装a5c1605の[CI42037278421](https://github.com/kenobix/Claude_practice/actions/runs/42037278421)で
+専用30件を含む全549件/119.271表示秒と両job全stepが成功した。
+[最終索引](reviews/20261105-clock-acquisition-ci-checks.json)にunit log・原本/試行hashと既存16 artifactの検算/cleanupを保存する。
+CI unitのclock原本は使い捨てで、local代表原本と区別する。16 artifactにclock原本を追加したとは主張しない。
+
+次はfake QPCを使った固定周期/phase deadline schedulerの制御を検証する。
+catch-upや観測窓延長で遅延を隠さず、欠測・中断と既知違反を保持する。
+これは実host reader/実負荷/独立源未選定のまま進められる制御部の合成受入であり、実採取への許可や資格とは分ける。
