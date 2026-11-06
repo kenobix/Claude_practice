@@ -94,6 +94,34 @@ class CapitalAggregationContractTests(unittest.TestCase):
                 raw_dir=self.raw,
             )
 
+    def test_multiple_unique_trips_in_one_hour_keep_weights_after_id_dedup(self):
+        for month, start, end, valid_hour, dst_hour, next_hour, before, after in (
+            ("202403", "2024-03-09", "2024-03-11", "2024-03-09 00", "2024-03-10 02", "2024-03-10 03", "2024-03-08 23", "2024-03-11 00"),
+            ("202411", "2024-11-02", "2024-11-04", "2024-11-02 00", "2024-11-03 01", "2024-11-03 03", "2024-11-01 23", "2024-11-04 00"),
+        ):
+            with self.subTest(month=month):
+                rows = []
+                for name, hour, count in (("before", before, 4), ("valid", valid_hour, 7),
+                                          ("next", next_hour, 3), ("dst", dst_hour, 5), ("after", after, 6)):
+                    rows.extend((f"{name}-{i}", hour + ":15:00") for i in range(count))
+                rows.append(("valid-0", valid_hour + ":59:00"))
+                self.write_archive(month, rows)
+                csv_path = self.output / f"{month}.csv"
+                manifest_path = self.output / f"{month}.json"
+                report = aggregate_archives([month], pd.Timestamp(start), pd.Timestamp(end),
+                                            csv_path, manifest_path, raw_dir=self.raw)
+                self.assertEqual(report["source_rows_read"], 26)
+                self.assertEqual(report["duplicate_rows_skipped"], 1)
+                self.assertEqual(report["unique_ride_ids"], 25)
+                self.assertEqual(report["unique_out_of_window"], 10)
+                self.assertEqual(report["unique_dst_excluded"], 5)
+                self.assertEqual(report["output_trip_count"], 10)
+                _, frame = validate_capital_manifest(report, csv_path, self.raw)
+                actual = frame.set_index("timestamp")["cnt"]
+                self.assertEqual(actual[pd.Timestamp(valid_hour + ":00:00")], 7)
+                self.assertEqual(actual[pd.Timestamp(next_hour + ":00:00")], 3)
+                self.assertNotIn(pd.Timestamp(dst_hour + ":00:00"), actual.index)
+
     def test_empty_archive_is_rejected_and_does_not_create_output_pair(self):
         self.write_archive("202401", [])
         csv_path = self.output / "hourly.csv"

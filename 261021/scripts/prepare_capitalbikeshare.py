@@ -298,14 +298,17 @@ def _aggregate_archives_locked(
                             month_duplicates += skipped
                             duplicate_ids += skipped
 
-                            for _, started_at in inserted:
+                            # IDs were deduplicated and checked for conflicting
+                            # hours above. Classify each canonical hour once per
+                            # chunk, retaining its exact number of unique trips.
+                            for started_at, added_count in Counter(value for _, value in inserted).items():
                                 hour = pd.Timestamp(started_at)
                                 if hour < start or hour >= end_exclusive:
-                                    unique_out_of_window += 1
+                                    unique_out_of_window += added_count
                                 elif hour in ambiguous_set or hour in nonexistent_set:
-                                    unique_dst_excluded += 1
+                                    unique_dst_excluded += added_count
                                 else:
-                                    counts[hour] += 1
+                                    counts[hour] += added_count
 
                 raw_rows += row_count
                 if row_count == 0:

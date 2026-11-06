@@ -3971,3 +3971,76 @@ fit、validation/final採点、消費台帳、実DB/registry/配信、OS/時計/
 
 T09 validation-v1は27原本hash/297相対link、既存取得scriptのc1c5dcb byte不変/AST、diff/秘密パターン確認でexit0。
 同検証2原本も索引へ追加して再照合し、T09記録の7対象だけcommit/pushする。
+
+## 2026-11-06・T10正式入力の新規集計を開始（この時点は未完了）
+
+T09を36b9306でcommit/push後、固定済みT10手順の前提が変化したため次の単位を開始。
+`data/reports/20261106-t10/`へpreflight/command/逐次処理logを保存する。
+preflight-v1で202212〜202610の47原本/881,747,861bytesが既存保存hash（前回45件+12月buffer+今回10月）と一致し、
+dev/inode/size/mtime/ctimeを固定。新出力は`data/derived/capital-bootstrap-c66c8888e4c243d7ad88d527b1899c20/`。
+sourceは36b9306、prepare script SHA f7b075a87b5f1c194bd2c542bdf48e0d9dbf59660b354639701fc47ceb1e355b。
+評価窓/recipeや原本範囲を変えず、targetは2023-01-01〜2026-10-01未満のまま。
+
+aggregate-v1：保存argvを使い、既存prepare CLIをtimeout TERM/kill-after10/1800で新pathへ実行。
+実DBやregistryは使わず、既存原本の再downloadもしていない。完了前にCSV/manifestを受入済みとしない。
+pipeline-regression-v1は8件/0.242表示秒、protocol-regression-v1は10件/8.866表示秒が成功。
+追加資料参照で誤ったcapital_protocol.py pathを指定してnot foundとなり、import先のevaluation_protocol.pyを確認した。
+これは集計/testの失敗ではなく、sourceを変更して通したものでもない。
+
+独立raw-recount-v1を並行開始し、標準csvの全row構造/必須ride_id/started_at、月別行数/bounds、
+固定時間窓のhour histogramを再計算する。別のfold/UTC round-trip法で同じpinned TZifのDST gridを検算する。
+実時刻を読む処理ではない。一体型audit_formal_combined-unexecuted-draft.pyは未実行の設計原本として保持し、
+counterとproducer完了後の照合を別helperへ分割した。全47原本の照合は新しい正式snapshotの受入であり、
+404時の原本再検査を反復したものではない。
+
+この段階では正式集計/独立histogram照合/protocol固定はまだ未完了。
+fit・採点・消費台帳・実監視/運用・実DB/registry/配信・OS/時計設定に進まない。
+
+raw-recount-v1は47原本/22,925,436行の標準CSV再計数を完了（ID重複除去前）。
+固定gridは32,849時間、fall ambiguous3時間/spring nonexistent4時間。原本bounds/arity/必須入力/前後identity・SHAも記録した。
+予想と違った点：producerの202406処理でduplicate_rows_skipped=141が出た。
+そのため、重複0の場合だけraw histogramを最終CSVへ照合する予定だった分岐を合格へ使わない。
+未実行のbefore-dedup helperを保存し、独立側に外部ソート/heap mergeによる全ID照合を追加した。
+これはproducerのpandas chunk/SQLite primary key方式とは別で、privateな200,000行単位sorted runを作り、
+ride_id→month→hour順にmergeして古い原本から1件だけ数え、異なる開始hourを拒否する。
+sort-unit-v1の5件はcross-chunk/month・末尾重複・空/欠落・unsorted・開始hour conflictの負例を確認して成功。
+sort-dedup-v1を1200秒/TERM/kill-after10で開始。trip IDのsorted runはTemporaryDirectory内だけで使い、公開しない。
+
+時計について：pipeline-regression-v1のlocal UTCは開始11:26:36.994052→終了11:26:35.829464と逆行した一方、
+MONOTONICは増加していた。runnerの元値をそのまま保存し、UTCのclampやretryで置き換えていない。
+setter trace/internal値は今回採取しておらず、過去initd対応を今回の変更元へ流用しない。
+これはSIGTERM後の子process停止というT03自然再発の証拠ではない。時計資格は未達のまま保持する。
+
+独立sort-dedup-v1は全22,925,436行/115 sorted runを照合してexit0。
+重複205件（202406=141、202605=64）、unique22,925,231、範囲外852,840、DST除外1,568、
+対象trip22,070,823/32,849時間を得た。全IDの開始hour conflictは拒否する方式で、今回conflictは出ていない。
+private sorted runを全てclose/削除し、row IDは公開していない。
+未実行の重複0専用helperは使わず、最終照合はこの独立dedup histogramと月別unique/duplicate値を使う。
+
+producerの行ごとのTimestamp変換を減らすため、grouping-probe-v1で合成90,000行を確認。
+scalarと同hour加算はtarget/範囲外/DSTの件数が同値で、Timestamp構築回数は90,000対6。
+これは演算回数の証拠であり、実測speed倍率/SLO/時計資格の主張ではない。処理時間全体のprofileも行っていない。
+初回集計は完了まで待ってからのtimeoutではなく、改善のため意図的にSIGINT中断した。
+own-identity-v1でexact argv/開始tick/exe/namespace/NSpid/FD先を照合し、専用lockのPIDと一致する66138（内部11）だけを対象にした。
+interrupt-v1前に旧prepare source bytesを保存し、旧f7b075...と照合。旧processのsource稼働中に書換えていない。
+aggregate-v1のchild終了値は-2、wrapper/runnerは254。非0を成功へ補完せず保持する。
+stackはその時点のpandas CSV parse内で、行ごとのTimestampが全時間の原因だったとの動的証明には使わない。
+interrupted-cleanup-v1で旧process消滅、記録した専用TemporaryDirectory削除、専用build lock削除、CSV/manifest不存在を確認した。
+追加削除や他processへのsignalはしていない。旧attemptの空出力directoryと失敗logは保持する。
+意図中断であり、自然T03停止の再発/解決や時計の修復へ流用しない。
+
+prepare CLIのID重複/開始hour conflict照合後だけ、同一hourの件数を束ねて範囲内/外/DSTへ加算するよう修正。
+SQLite/schema/label定義/期間/zero-fill/manifest version/原本・既存出力保護を変えない。
+pipeline-grouped-v1は新しい重み検証（spring/fall2例）を含む9件/0.327表示秒、protocol-grouped-v1は10件/8.332表示秒が成功。
+source-grouped-v1に最終script/test bytesを保存。compileall/diffも確認した。
+
+plan-grouped-v1は同じ47原本/固定窓とidentityを再照合し、新出力`data/derived/capital-bootstrap-f5daf2e4114e4788b8c77f357249422f/`を固定。
+prepare source SHAは05e2905da2015af129a2c6da812ca4209ffe783fea9267fb9ba8c6302e39f7bb。
+aggregate-v2を同じ1800秒/TERM/kill-after10で明示的に開始（timeout延長/自動retry/評価窓変更ではない）。
+開始時は36b9306にsource未commit差分があることをplanへ記録し、後のcommit sourceとのbyte照合で結合する。
+TMPDIRはこの子process専用の新しいprivate rootへ限定し、終了後のcleanupも記録する。OS全体の設定変更ではない。
+現時点で新しいdataset pair/正式protocolはまだ未受入。実fit/採点・消費台帳は開始していない。
+
+grouping-validation-v1は60原本hash/180相対link、製品2pathとsource-grouped-v1一致/AST、compileall/diff/秘密パターン確認で成功。
+同検証2原本もpre-CI索引へ追加して再照合し、今回の実装/受入記録6対象だけをcommit/pushする。
+active aggregate-v2.log/private tempは変動中なのでこのsnapshotのhash一覧に入れず、完了後の別索引へ結合する。
