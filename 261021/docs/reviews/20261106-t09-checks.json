@@ -1,0 +1,345 @@
+{
+  "schema_version": 1,
+  "status": "T09_OFFICIAL_OCTOBER_ACQUIRED_STRUCTURE_RIGHT_PAIR_ACCEPTED_T10_NOT_COMPLETE",
+  "base_commit": "8d8ad743d435ee072e05abbaa927873a1d8f7240",
+  "source": "https://s3.amazonaws.com/capitalbikeshare-data/202610-capitalbikeshare-tripdata.zip",
+  "publication": {
+    "head_status": 200,
+    "server_date_utc": "2026-11-06T11:11:56Z",
+    "last_modified_utc": "2026-11-05T16:54:56Z",
+    "bytes": 32848117
+  },
+  "acquisition": {
+    "month": "202610",
+    "filename": "202610-capitalbikeshare-tripdata.zip",
+    "url": "https://s3.amazonaws.com/capitalbikeshare-data/202610-capitalbikeshare-tripdata.zip",
+    "archive_bytes": 32848117,
+    "archive_sha256": "f57da7b7b93f95d3e14f4377369b1db2aeb2c5f6542d30a60ecd25f4507a69fe",
+    "csv_member": "202610-capitalbikeshare-tripdata.csv",
+    "acquired_at_utc_local_unqualified": "2026-11-06T11:13:38.324400+00:00",
+    "purpose": "T09 raw acquisition only; no aggregation, protocol freeze, fit, scoring or evaluation consumption",
+    "prior_archive_count": 46,
+    "held_archive_count": 47,
+    "source_head_log": "../20261106-clock-scheduler/t09-head-resume-v1.log",
+    "time_qualification": "unqualified; HTTP Date is publication evidence only, not source calibration"
+  },
+  "boundary_audit": {
+    "status": "RIGHT_PAIR_AUDITED_NOT_FORMAL_AGGREGATE",
+    "pair": [
+      {
+        "month": "202609",
+        "bytes": 25848624,
+        "archive_sha256": "5f4517b46f7c11e5eb088221f0b83d8c348931e157c117a93346048958171435",
+        "rows": 676808,
+        "unique_ids": 676808,
+        "duplicate_rows": 0,
+        "within_archive_duplicate_rows": 0,
+        "cross_archive_duplicate_rows": 0,
+        "conflicting_start_hour_rows": 0,
+        "missing_required_rows": 0,
+        "invalid_timestamp_rows": 0,
+        "ends_before_start_rows": 0,
+        "starts_before_nominal_month": 50,
+        "starts_at_or_after_next_month": 0,
+        "minimum_started_ns": 1788132796363000000,
+        "maximum_started_ns": 1790812493727000000,
+        "csv_member": "202609-capitalbikeshare-tripdata.csv",
+        "zip_members": [
+          "202609-capitalbikeshare-tripdata.csv",
+          "__MACOSX/._202609-capitalbikeshare-tripdata.csv"
+        ],
+        "started_at_min": "2026-08-30 23:33:16.363000",
+        "started_at_max": "2026-09-30 23:54:53.727000",
+        "read_identity_and_hash_unchanged": true
+      },
+      {
+        "month": "202610",
+        "bytes": 32848117,
+        "archive_sha256": "f57da7b7b93f95d3e14f4377369b1db2aeb2c5f6542d30a60ecd25f4507a69fe",
+        "rows": 677607,
+        "unique_ids": 677607,
+        "duplicate_rows": 0,
+        "within_archive_duplicate_rows": 0,
+        "cross_archive_duplicate_rows": 0,
+        "conflicting_start_hour_rows": 0,
+        "missing_required_rows": 0,
+        "invalid_timestamp_rows": 0,
+        "ends_before_start_rows": 0,
+        "starts_before_nominal_month": 0,
+        "starts_at_or_after_next_month": 0,
+        "minimum_started_ns": 1790812806852000000,
+        "maximum_started_ns": 1793491187573000000,
+        "csv_member": "202610-capitalbikeshare-tripdata.csv",
+        "zip_members": [
+          "202610-capitalbikeshare-tripdata.csv"
+        ],
+        "started_at_min": "2026-10-01 00:00:06.852000",
+        "started_at_max": "2026-10-31 23:59:47.573000",
+        "read_identity_and_hash_unchanged": true
+      }
+    ],
+    "cross_archive_duplicate_rows": 0,
+    "conflicting_shared_start_hours": 0,
+    "held_archive_months": [
+      "202212",
+      "202301",
+      "202302",
+      "202303",
+      "202304",
+      "202305",
+      "202306",
+      "202307",
+      "202308",
+      "202309",
+      "202310",
+      "202311",
+      "202312",
+      "202401",
+      "202402",
+      "202403",
+      "202404",
+      "202405",
+      "202406",
+      "202407",
+      "202408",
+      "202409",
+      "202410",
+      "202411",
+      "202412",
+      "202501",
+      "202502",
+      "202503",
+      "202504",
+      "202505",
+      "202506",
+      "202507",
+      "202508",
+      "202509",
+      "202510",
+      "202511",
+      "202512",
+      "202601",
+      "202602",
+      "202603",
+      "202604",
+      "202605",
+      "202606",
+      "202607",
+      "202608",
+      "202609",
+      "202610"
+    ],
+    "schema_matches_previous_month": true,
+    "raw_column_count": 13,
+    "temporary_sqlite_removed": true,
+    "time_contract": "source naive local timestamp; no UTC conversion and no clock qualification",
+    "limitations": [
+      "Only September/October boundary audited; left pair uses prior independent evidence. Not a full 47-archive manifest or publisher completeness proof.",
+      "No ride IDs or row data exported; temporary dedup SQLite removed. Existing real DB/registry/live serving unchanged.",
+      "No hourly aggregation, labels/features/fit/scoring, evaluation consumption, protocol freeze or window changes."
+    ]
+  },
+  "independent_parser": {
+    "status": "passed",
+    "method": "stdlib csv/regex/datetime integer ns and in-memory ID map; no pandas, no SQL or UTC conversion",
+    "pair": [
+      {
+        "month": "202609",
+        "checks": {
+          "rows": 676808,
+          "within_archive_duplicate_rows": 0,
+          "cross_archive_duplicate_rows": 0,
+          "conflicting_start_hour_rows": 0,
+          "ends_before_start_rows": 0,
+          "starts_before_nominal_month": 50,
+          "starts_at_or_after_next_month": 0,
+          "minimum_started_ns": 1788132796363000000,
+          "maximum_started_ns": 1790812493727000000
+        },
+        "csv_field_count": 13,
+        "hash_and_identity_unchanged": true
+      },
+      {
+        "month": "202610",
+        "checks": {
+          "rows": 677607,
+          "within_archive_duplicate_rows": 0,
+          "cross_archive_duplicate_rows": 0,
+          "conflicting_start_hour_rows": 0,
+          "ends_before_start_rows": 0,
+          "starts_before_nominal_month": 0,
+          "starts_at_or_after_next_month": 0,
+          "minimum_started_ns": 1790812806852000000,
+          "maximum_started_ns": 1793491187573000000
+        },
+        "csv_field_count": 13,
+        "hash_and_identity_unchanged": true
+      }
+    ],
+    "total_rows": 1354415,
+    "limits": "Only fixed right pair; does not perform hourly aggregation, change input scope, score labels or prove publisher completeness. Raw IDs never exported."
+  },
+  "snapshot_state": "47 archives held; formal full aggregation/manifest/protocol not yet created in this unit",
+  "source_code": {
+    "path": "scripts/prepare_capitalbikeshare.py",
+    "sha256": "f7b075a87b5f1c194bd2c542bdf48e0d9dbf59660b354639701fc47ceb1e355b",
+    "unchanged": true
+  },
+  "raw_files": [
+    {
+      "path": "data/reports/20261106-clock-scheduler/commit-ci-v1.json",
+      "bytes": 627,
+      "sha256": "1ab2a7e63a7d20ee4f78ae7ea45eec026842781bb261f1738b98aecaee940604"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/commit-ci-v1.log",
+      "bytes": 215,
+      "sha256": "6caa6d2c8d9a80e648d0de883cf3e77e9a732c24170f2e88b945b378b4515081"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/push-ci-v1.json",
+      "bytes": 562,
+      "sha256": "c29cd47c8fff21ee3a10b6c250e38cb65af0fe8cd9e4124ae56f3907c7414a8d"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/push-ci-v1.log",
+      "bytes": 76,
+      "sha256": "9ae78ddbefa168c12aeb785e7e3518cda991396b809d11b55ced071624fdafdc"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/resume-state.json",
+      "bytes": 829,
+      "sha256": "ea7f6ef5b9d7d1c4ca19cd17e73d926afb056fffe8fffd8a7265e59fa19fdf22"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/stage-ci-v1.json",
+      "bytes": 753,
+      "sha256": "2194162eb6933843a314fec09cb7d0a04f7b4d8ed97992a4c99fb9654d2c7590"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/stage-ci-v1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/staged-ci-v1.patch",
+      "bytes": 95170,
+      "sha256": "0022212836100368b850fa6ea35e746f42091e88b29caaa537837e67c296203e"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/t09-head-resume-v1.json",
+      "bytes": 711,
+      "sha256": "50525f709eec9e3c93b57b252a051767fdf80325bd485be16e9aee400f232d8b"
+    },
+    {
+      "path": "data/reports/20261106-clock-scheduler/t09-head-resume-v1.log",
+      "bytes": 427,
+      "sha256": "1a6d619f6d037e6eb71fedcbe0ef0558724ef00f0d1945e7c2caf381d3d05758"
+    },
+    {
+      "path": "data/reports/20261106-t09/acquire-v1.json",
+      "bytes": 578,
+      "sha256": "cbd83afd421d2629accea282e52781d737d1790fa9146e42ff245aa1f7c97531"
+    },
+    {
+      "path": "data/reports/20261106-t09/acquire-v1.log",
+      "bytes": 771,
+      "sha256": "de3dee41f9db5f4294fad4b749981a24d373f4b71b33f8edbf7d294a5ec1b5c0"
+    },
+    {
+      "path": "data/reports/20261106-t09/acquire_october.py",
+      "bytes": 1578,
+      "sha256": "afa5c895062ecb9bd3870b87e1b371734523834e777fff636f6a8def03c1a0fa"
+    },
+    {
+      "path": "data/reports/20261106-t09/acquisition.json",
+      "bytes": 771,
+      "sha256": "de3dee41f9db5f4294fad4b749981a24d373f4b71b33f8edbf7d294a5ec1b5c0"
+    },
+    {
+      "path": "data/reports/20261106-t09/audit_right_boundary.py",
+      "bytes": 6315,
+      "sha256": "bb21f052e067c8a8bf3ac56036cedbef0b7202b662acc21a54adbdb32f739a11"
+    },
+    {
+      "path": "data/reports/20261106-t09/boundary-audit-v1.json",
+      "bytes": 598,
+      "sha256": "62ece6ec43ea537bc532fb3c731530641d0e81bdc02b27af6ebe87ec705d690c"
+    },
+    {
+      "path": "data/reports/20261106-t09/boundary-audit-v1.log",
+      "bytes": 3384,
+      "sha256": "a9e8a2dfbf6dfa32ee472464bdc3ef95bb78c6e6136c4ff8af99761dd3f0177d"
+    },
+    {
+      "path": "data/reports/20261106-t09/boundary-independent-v1.json",
+      "bytes": 623,
+      "sha256": "cfc5f2a41bb72e09ec792da41859c81c265a8fdab47ac262d5a6878337e26ab7"
+    },
+    {
+      "path": "data/reports/20261106-t09/boundary-independent-v1.log",
+      "bytes": 1368,
+      "sha256": "3bca47aae028897a67e6ff525a93335a911e4797c457ed1ffece2348e83db6e6"
+    },
+    {
+      "path": "data/reports/20261106-t09/build_index.py",
+      "bytes": 2794,
+      "sha256": "2d95ac1d76b7b35093b20dca7244c8eac15c5612eea2138ac596184bff15e724"
+    },
+    {
+      "path": "data/reports/20261106-t09/right-boundary-audit.json",
+      "bytes": 3384,
+      "sha256": "a9e8a2dfbf6dfa32ee472464bdc3ef95bb78c6e6136c4ff8af99761dd3f0177d"
+    },
+    {
+      "path": "data/reports/20261106-t09/right-boundary-independent.json",
+      "bytes": 1368,
+      "sha256": "3bca47aae028897a67e6ff525a93335a911e4797c457ed1ffece2348e83db6e6"
+    },
+    {
+      "path": "data/reports/20261106-t09/run_attempt.py",
+      "bytes": 1244,
+      "sha256": "62df5fee98294644b7a3ebc2a0087ffa98f9be75fc4c26285681b39def88ac29"
+    },
+    {
+      "path": "data/reports/20261106-t09/schema-preview.json",
+      "bytes": 1196,
+      "sha256": "ab30cdb8ceb051b16015ae8c7ffcfc786df58ad60292ceaee03334db5e16ff9f"
+    },
+    {
+      "path": "data/reports/20261106-t09/validate_t09.py",
+      "bytes": 2074,
+      "sha256": "a65d4b605e4c9233e9d6a2fda3cb47d6a06e752c93ec26558fecc4316ed610ec"
+    },
+    {
+      "path": "data/reports/20261106-t09/validation-v1.json",
+      "bytes": 581,
+      "sha256": "9a66264a18db9d6d5d487d409b5de56c21418dbc1bc80de3b69db7a8d21583f5"
+    },
+    {
+      "path": "data/reports/20261106-t09/validation-v1.log",
+      "bytes": 124,
+      "sha256": "43f4b599d959e50c793e94c17eb9f81c1e2c739d3892d99138ecd7106c9a0a5b"
+    },
+    {
+      "path": "data/reports/20261106-t09/verify_right_boundary_independent.py",
+      "bytes": 3325,
+      "sha256": "1b24eeb2f595033940cdd9d4a2b24be4bad47c48a73189a551023bd4cd32e468"
+    }
+  ],
+  "raw_archive": {
+    "path": "data/raw/capitalbikeshare/monthly/202610-capitalbikeshare-tripdata.zip",
+    "bytes": 32848117,
+    "sha256": "f57da7b7b93f95d3e14f4377369b1db2aeb2c5f6542d30a60ecd25f4507a69fe"
+  },
+  "prior_boundary_index_sha256": "4f29009dce90a83a01010b20657b9352cf59f0c5becf50d9e815ce2ac983c762",
+  "failures": [],
+  "limitations": [
+    "No hourly targets, fit, scoring, consumption ledger, formal protocol or real DB/registry/serving/clock settings changed.",
+    "Right pair quality only; no claim of publisher population completeness or full 47-file manifest acceptance.",
+    "Local UTC/MONOTONIC unqualified; HTTP Date is publication evidence and not clock calibration.",
+    "Trip IDs remain in raw files and temporary process/dedup state; no row identifiers exported or committed.",
+    "Only expected raw ZIP is newly acquired. Archive/license not republished; data and helper logs remain gitignored.",
+    "No source change or new CI acceptance claimed for T09; exact implementation CI remains c1c5dcb."
+  ]
+}

@@ -76,3 +76,6 @@ CI artifact以外の実DB原本、`.env`、認証値、実候補データを説�
 固定周期はc1c5dcb/[CI42126656283](https://github.com/kenobix/Claude_practice/actions/runs/42126656283)の全568件/専用19件・全systemで受入済み。
 [最終索引](reviews/20261106-clock-scheduler-ci-checks.json)へ16 artifact/hash/archive-only/cleanupとraw改変6件拒否を結合した。
 中断したwatchの終了値は不明で、再開後に取得したexact SHA/runの成功を使う。T09の新公開/取得は別の証拠単位。
+
+T09は[10月原本取得/右端境界検査](t09-october-acquisition.md)・[取得索引](reviews/20261106-t09-checks.json)を参照する。
+実際の原本検査と、時計の合成CI/実Capital精度を区別する。47原本の保管だけでT10/学習/採否の完了を宣言しない。

@@ -3938,3 +3938,36 @@ Linux補正tick=11000、配信のblue/green slotと混同しないようにし�
 validation-final-v1は原本167hash/相対link292件、製品4pathのexact CI commit byte一致/AST、
 資格設計不変・diff/秘密パターン確認が成功した。同検証のmetadata/logを最終索引へ追加し再照合する。
 時計のCI受入記録7対象だけをcommit/pushし、T09取得/境界監査の最終記録は次の節目へ分ける。
+
+## 2026-11-06・T09公開後の原本取得/右端境界照合
+
+公開状態が200へ変化したため、data-analytics:analyze-data-qualityの限定した原本品質確認を適用した。
+既存source/固定済みgrain・時間窓を使い、別のdashboard/分析reportや源選定のやり直しは行わない。
+T09側の保存先は`data/reports/20261106-t09/`。初期のschema previewはstdin toolコマンドとschema-preview.json、
+主要な実行は保存scriptとrun_attempt.pyでcommand/cwd/exit/未資格時計/log bytes/SHAを記録する。
+
+- acquire-v1：既存prepare_capitalbikeshare.pyのacquire_archiveをimportして、未存在の202610だけを新規取得。
+  既存ZIP/`.part`の上書きを拒否し、前の202212〜202609の46原本のfile名集合を確認した。
+  32,848,117bytes、SHA f57da7b7b93f95d3e14f4377369b1db2aeb2c5f6542d30a60ecd25f4507a69fe。
+  HTTP HEADのsizeと一致し、ZIP CRC正常/CSV1memberを確認。保管は固定範囲47原本になった。
+  取得localUTCは11:13:38UTCという未資格時計の表示で、公式HEAD Dateや独立UTC校正とは分ける。
+- schema-preview：202609/202610の13列headerが一致。9月のMACOSX補助memberは元から存在し、10月にはない。
+  202609のSHAは前回readiness-auditの5f4517b4...と照合した。
+- boundary-audit-v1：pandas chunk読取/使い捨てSQLiteで9月・10月のID/start-hourと必須ride_id/started_at/ended_atを監査、exit0。
+  9月676,808行/10月677,607行。必須欠測、parse不正、終了が開始より前、原本内/間のID重複・開始hour conflictは各0。
+  原本のdev/inode/size/mtime/ctimeとSHAを前後比較し不変。専用一時SQLiteはcleanup済み。
+- boundary-independent-v1：別processで標準csv/regex/datetimeと整数nsを使い、SQL/pandasなしで全row13列/日時/ID/境界を照合、exit0。
+  合計1,354,415行、時刻bounds、重複/境界等の検査値が主監査と一致した。trip ID/個別rowは公開出力しない。
+
+予想と違った点：9月ZIPに8月30日開始を含む50行があった。10月ZIPの9月以前開始は0だが、
+月名と開始月を同一視せず、結果を見て10月bufferを除外しない。固定202212〜202610/target202301〜202610未満を維持する。
+これをpublisher全母集団の完全性保証や全47件manifestの受入と呼ばない。
+T09の取得/構造検査は完了として、残件から公開待ちを除く。T10の正式集計/全manifest/protocolは後続の別単位。
+fit、validation/final採点、消費台帳、実DB/registry/配信、OS/時計/.envは変更していない。
+
+[取得と限界](docs/t09-october-acquisition.md)・[検証索引](docs/reviews/20261106-t09-checks.json)へ証拠を結合する。
+時計の合成CIはc1c5dcb、記録commit8d8ad74をそのCIで直接試験したとは呼ばない。
+このT09もsource修正や追加CI実装ではなく、取得実原本の限定監査と文書更新である。
+
+T09 validation-v1は27原本hash/297相対link、既存取得scriptのc1c5dcb byte不変/AST、diff/秘密パターン確認でexit0。
+同検証2原本も索引へ追加して再照合し、T09記録の7対象だけcommit/pushする。

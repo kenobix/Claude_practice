@@ -561,10 +561,11 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 | 優先度 | 難易度・担当 | 残課題と次の条件 |
 |---|---|---|
 | P1 | D3・Sol | 時計：前回initd setterの実exe/親/namespaceは照合済み。保存済みELFの[backend取得interfaceとSettimeofday CALL](../261021/docs/backend-time-path-review.md)も静的照合したが、新しいruntime応答/stackではない。新管理者ログなし。残りはPHC fd/UDPと現在identity、tick11000時内部値、backend/host時刻源・外部UTC差・同期責任、許可後の修復と時計資格。[資格計測設計v1](../261021/docs/clock-qualification-plan.md)と[offline進行率phase component](../261021/docs/clock-rate-review.md)を追加し、実装f26b334のCI482件/全system/artifact/cleanupまで受入済み。全campaignのpolicy/事前plan SHA結合・外部UTC/校正/identity/欠測を[offline照合](../261021/docs/clock-campaign-review.md)する実装f6b3cadをCI519件/全system/artifact/cleanupまで受入済み。数値/構造だけの成功でも資格はincompleteを保つ。[fake採取](../261021/docs/clock-fake-acquisition.md)で送信前intent/nonce/sequence、raw→identity/全JSON→offline CLI、負例/中断cleanupを実装。local28件の[初回索引](../261021/docs/reviews/20261105-clock-acquisition-checks.json)を保持し、[起動回収の追加索引](../261021/docs/reviews/20261105-clock-acquisition-startup-checks.json)で30件/起動時所有権移譲とmask復元/源予算を照合する。最終a5c1605の[CI549件/30件・artifact/hash/cleanup](../261021/docs/reviews/20261105-clock-acquisition-ci-checks.json)も受入済み。[fake QPC固定周期/phase deadline](../261021/docs/clock-fixed-schedule.md)を追加し、専用19件で遅延のcatch-up/観測延長拒否、欠測/中断と同phaseの既知違反保持、子process回収をlocal検証済み。[今回索引](../261021/docs/reviews/20261106-clock-scheduler-checks.json)へ初回16件と同phase負例の失敗/修正を別記する。実装c1c5dcbの[CI568件/専用19件・artifact/hash/cleanup](../261021/docs/reviews/20261106-clock-scheduler-ci-checks.json)まで受入済み。残りは[源選定review](../261021/docs/clock-source-readiness.md)に必要な独立UTC/elapsed参照と不確かさ根拠（未選定）、実採取器/host deadline/固定負荷、原本/実行真正性、同期責任review、別途許可後の修復/休止再開/全受入。非飽和traceを反復せず、過去の飽和/T03歴史的停止も未確定。initd全体を止めず、future拒否/clamp/retryの禁止は維持 |
-| P1 | D1・Luna | T09：再開後、前回から約22時間経過した2026-11-06 11:11:56UTC（JST20:11）の公式S3 HEADは200/32,848,117bytes。既存acquire_archiveで新規ZIP取得済み。SHA/CSV構造・右端境界監査を別節目で進行中。HEAD200や保管件数だけでT09/T10の全検査完了とはしない |
 | P0（実fit前） | D3・Sol | T10：独立protocol/全原本snapshot/分割/recipe/基準をfit前に固定。[左端bufferを202212に決定・取得し、202301との2file/379,310行を別parserでも監査](../261021/docs/t10-input-readiness.md)。原本範囲202212〜202610、target窓とrecipeは不変。保管47件/予定47件となったが正式集約/全manifest監査/凍結は未実施。10月bufferなしで窓を短縮せず、1か月bufferを母集団の完全性保証にしない |
 | P1 | D3・Sol | T02実producerおよびT11/T12/T13b：同一の実candidate/artifactに精度・監視・復旧・metadata・運用測定を結合し採否を記録。T09/T10/時計資格等の前提を満たす範囲で順に進める |
 | P2（上流変更時） | D2・Sol review | MLflow noloadの発生箇所/通常import/厳格警告負例と現行publisher6件は確認済み。最新3.17.2にも同指定があり、修正releaseまたはloader変更時に個別再検証。それまではlock変更/警告抑制をしない。[調査と報告下書き](../261021/docs/mlflow-orm-compatibility.md)。upload-artifact保守は前回CI受入済み |
+
+T09は2026-11-06に[10月原本取得/構造・右端2原本の独立照合](../261021/docs/t09-october-acquisition.md)を完了した（[索引](../261021/docs/reviews/20261106-t09-checks.json)）。原本47件が揃い、公開待ちを残件から除いた。T10の正式集計/全manifest/protocol/実fitは未完了。
 
 T14の証拠入口・task対応表・操作説明は最新CIへ追記済み。T06a OS補足とT07a CI接続を残件一覧へ再掲しない。旧checkpoint表は当時の記録として保持する。
 
@@ -661,3 +662,9 @@ late wakeをcatch-upせず、phase起点/終端もずらさない。遅延応答
 clock raw代表はlocal保存であり、既存CI artifactへ追加したものではない。後続の記録commitをこの実装CIで直接試験したとは呼ばない。
 中断前watchは終了metadataがなく終了値不明。再開後のexact SHA/run successと完成logを受入の根拠にする。
 raw改変6件の別process CLI拒否と8用語の補足も追加した。T09の公開状態変化/取得/境界監査は別の証拠単位として記録する。
+
+2026-11-06・T09の状態変化：公式HEAD200/32,848,117bytesを確認し、既存acquire_archiveで202610を新規取得。
+SHA f57da7b7b93f95d3e14f4377369b1db2aeb2c5f6542d30a60ecd25f4507a69fe。ZIP/13列/677,607行を監査し、
+202609との右端1,354,415行を別processの独立csv parserでも照合した。必須欠測/時刻不正/ID重複/開始hour conflictはいずれも0。
+9月原本には8月開始50行があったため、月名で開始月を限定せず固定buffer/全47原本を維持する。
+今回の新しい受入はT09まで。正式schema3集計/manifest・protocol凍結と実fit/採否は後続の別証拠を必要とする。

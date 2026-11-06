@@ -179,3 +179,6 @@ catch-upや観測延長をせず、欠測と同じphaseのUTC/identity/future違
 固定周期の最終実装`c1c5dcb`は[CI42126656283](https://github.com/kenobix/Claude_practice/actions/runs/42126656283)で全568件（専用19件）・全systemが成功しました。
 [最終索引](docs/reviews/20261106-clock-scheduler-ci-checks.json)で16 artifact/hash・archive-only再計算・cleanupを照合済みです。
 実時計資格と実候補採否は未達です。新用語は[用語集](docs/glossary.md#合成時計採取の固定周期で使う用語)へ補足しました。
+
+2026-11-06：[T09の10月原本取得・構造/右端境界照合](docs/t09-october-acquisition.md)を完了しました。
+固定範囲の47原本が揃いました。T10の正式集計/protocol凍結、実時計資格、学習・採点は別の未完了条件です。
