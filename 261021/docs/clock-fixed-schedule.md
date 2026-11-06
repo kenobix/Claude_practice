@@ -84,5 +84,10 @@ SIGINT/TERM、IO timeout、disk失敗や仮想時計逆行でも、対象reader�
 SIGKILL/OS停止、disk障害での全原本保存、不可視の一時差替えの検出を保証しない。
 complete公開直後の中断とexit非0の境界も旧契約どおり。実設定/DB/registry/配信は変更しない。
 
-検証とCIの確定結果は後続の索引/作業ログへ記録する。実source、真正性/不確かさdossier、
+[最終CI索引](reviews/20261106-clock-scheduler-ci-checks.json)で実装c1c5dcb/CI42126656283の
+全568件（専用19件）/169.811表示秒、全system・既存16 artifact/hash/archive-only/cleanupを照合した。
+clock unitのrawはCIで使い捨て、代表原本はlocal保存であり16 artifactへ加えたとは主張しない。
+記録だけの後続commitを先行実装CIで直接試験したとも呼ばない。
+[8用語の説明](glossary.md#合成時計採取の固定周期で使う用語)も参照できる。
+実source、真正性/不確かさdossier、
 事前reviewの真正な保存、実host deadline/固定負荷、管理元/修復/保守と人の全受入は引き続き未完了。

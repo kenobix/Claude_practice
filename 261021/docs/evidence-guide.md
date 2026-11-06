@@ -72,3 +72,7 @@ CI artifact以外の実DB原本、`.env`、認証値、実候補データを説�
 2026-11-06：[fake固定周期/終端](clock-fixed-schedule.md)は固定した仮想QPCの予定表だけを試験する。
 予定番号と実送信数を区別し、欠測・応答遅延・中断/回収、同phaseの既知違反を保存する。
 実sourceの真正性・不確かさや、実時間を観測した証拠と取り違えない。
+
+固定周期はc1c5dcb/[CI42126656283](https://github.com/kenobix/Claude_practice/actions/runs/42126656283)の全568件/専用19件・全systemで受入済み。
+[最終索引](reviews/20261106-clock-scheduler-ci-checks.json)へ16 artifact/hash/archive-only/cleanupとraw改変6件拒否を結合した。
+中断したwatchの終了値は不明で、再開後に取得したexact SHA/runの成功を使う。T09の新公開/取得は別の証拠単位。

@@ -3900,3 +3900,41 @@ reviewer-regression-v2は通常のmodule discoveryで55件/20.685表示秒が成
 validation-v1は原本122hash・相対link288件、製品4pathとsource-v2一致/AST、compileall、
 資格設計/既存policy/reader/lock/workflowのbase byte不変、diffと秘密パターン確認が成功。
 validatorとその結果も索引へ追加して再照合し、今回の11対象pathだけstageする。
+
+## 2026-11-06・c1c5dcb CI受入と中断からの再開
+
+11対象をstage-v1/commit-v1/push-v1でcommit/pushした実装SHAはc1c5dcbbe8e772e40ec4c13887b40a1609463c62。
+local索引はCI_PENDING当時のsnapshotとして保持する。staged-v1.patchと11path/bytes照合も保存済み。
+ci-list-v1は短縮SHAのfilterで空配列。完全SHAのci-list-v2でCI42126656283を特定した。
+ci-watch-v1は900秒/TERM/kill-after10、30秒間隔/exit-statusで開始したが会話中断でlogだけが残り、終了metadata/終了値は不明。
+再開時に同watch processは見えず、元watchをexit0と補完していない。
+ci-status-resume-v1はexact SHA/completed/successでexit0。runは再実行していない。
+
+ci-fetch-v1で完全SHA/run、2job全step成功、metadata/artifact一覧とunit/system完成logを保存。
+ci-artifact-v1は前回checkerのSHA/run/568件を合わせ、新scheduler19件全okも要求しexit0。
+全568件/169.811表示秒、既存capture30件と新scheduler19件が全ok、compileall・全systemが成功した。
+artifact13461403290のZIP SHA264cbcb4b991e701acc0aefb2ef2d1949ebfaacd2ff4dabca4cda4b0bebf758cはGitHub digestと一致。
+固定allowlist16memberのbytes/SHA、内側T16 archive/4原本/manifest/source_revision=c1c5dcb/dirty=falseも一致。
+archive-only別processと独立nearest-rank計算でjournal1050/暖機50除外/要求1000/エラー0、
+p95=22.63061499999708msが一致。gate=not_evaluated/permission=blocked。
+これは既存合成CIの値で、実Capital性能・本番SLO・時計資格や承認の証拠ではない。
+Caddyの現Dockerfile/3段階SIGKILL/通常+TERM cleanup、保護container不変、
+MLflow/skopsとDBの別volume対応復元/破損拒否、PG/HTTP cleanup、専用resources残存0も完成log/summaryで確認した。
+clock rawは既存16artifactへ追加せず、unitは一時原本、代表原本はlocal保存という境界を維持する。
+
+待機中のadversarial-v1では有効hashを付け直した6改変（欠測→架空on-time要求、late wake隠蔽、次phase起点/deadline移動、
+欠測行削除、理由の偽装、損失0化）を別processのderive CLIへ渡し、全てexit2/出力なし/安全stderrを確認。
+改変原本は使い捨てでcleanupし、代表原本のbytes不変を照合した。最終19unitへ追加した件数ではない。
+用語集へfake QPC・QPC tick/周波数・slot/固定周期・deadline・wake/overshoot・catch-up・不足計数・共有終端の8項目を追加。
+Linux補正tick=11000、配信のblue/green slotと混同しないようにした。
+[最終CI索引](docs/reviews/20261106-clock-scheduler-ci-checks.json)へ初回/失敗/local snapshotと最終CIを結合する。
+
+再開時のT09は前回から約22時間経過したため一度だけ公式HEADを実行。
+2026-11-06 11:11:56UTC（JST20:11）、200/32,848,117bytes、Last-Modified=11月5日16:54:56UTCへ変化。
+取得と右端境界監査は`data/reports/20261106-t09/`で別単位として進める。
+以前の404/46of47記録を当時の履歴として保持し、現在の公開/保管件数と区別する。
+時計の源選定/真正性/不確かさ、PHC/UDP・修復/資格、T10正式manifest/protocol/実fit・採否は未達。
+
+validation-final-v1は原本167hash/相対link292件、製品4pathのexact CI commit byte一致/AST、
+資格設計不変・diff/秘密パターン確認が成功した。同検証のmetadata/logを最終索引へ追加し再照合する。
+時計のCI受入記録7対象だけをcommit/pushし、T09取得/境界監査の最終記録は次の節目へ分ける。
