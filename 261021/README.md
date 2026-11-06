@@ -182,3 +182,7 @@ catch-upや観測延長をせず、欠測と同じphaseのUTC/identity/future違
 
 2026-11-06：[T09の10月原本取得・構造/右端境界照合](docs/t09-october-acquisition.md)を完了しました。
 固定範囲の47原本が揃いました。T10の正式集計/protocol凍結、実時計資格、学習・採点は別の未完了条件です。
+
+[T10のsnapshot作業](docs/t10-snapshot-review.md)では、全原本を独立parser/外部sortで照合し、
+重複205件を含む収支を確認しました。集計の重みを保つ改善bae010aは[CI569件/全system/cleanup](docs/reviews/20261106-t10-grouping-ci-checks.json)で受入済みです。
+実snapshot/正式protocolはまだ作業中で、実fit・採点は開始していません。

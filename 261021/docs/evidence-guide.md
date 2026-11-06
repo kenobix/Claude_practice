@@ -79,3 +79,7 @@ CI artifact以外の実DB原本、`.env`、認証値、実候補データを説�
 
 T09は[10月原本取得/右端境界検査](t09-october-acquisition.md)・[取得索引](reviews/20261106-t09-checks.json)を参照する。
 実際の原本検査と、時計の合成CI/実Capital精度を区別する。47原本の保管だけでT10/学習/採否の完了を宣言しない。
+
+T10は[原本snapshot review](t10-snapshot-review.md)で初回意図中断・独立sort照合・新producerを分けて読む。
+[集計改善CI](reviews/20261106-t10-grouping-ci-checks.json)の569件/16artifact/hash/cleanupは合成契約の証拠。
+実原本23百万行の照合はlocal保存原本が根拠で、実fit/採否/時計資格の証拠へ置き換えない。

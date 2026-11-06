@@ -4044,3 +4044,23 @@ TMPDIRはこの子process専用の新しいprivate rootへ限定し、終了後�
 grouping-validation-v1は60原本hash/180相対link、製品2pathとsource-grouped-v1一致/AST、compileall/diff/秘密パターン確認で成功。
 同検証2原本もpre-CI索引へ追加して再照合し、今回の実装/受入記録6対象だけをcommit/pushする。
 active aggregate-v2.log/private tempは変動中なのでこのsnapshotのhash一覧に入れず、完了後の別索引へ結合する。
+
+集計改善を6対象だけでbae010a35a585ec01ce21fdfdfc03374a3c23bb6としてcommit/pushした。
+ci-list-grouped-v1で完全SHAのCI42214102466を特定。
+ci-watch-grouped-v1は900秒/TERM/kill-after10・30秒間隔/exit-statusでexit0、両job全step成功を確認した。
+artifact検算はこれからで、data集計v2/正式protocolの受入とは別の確認単位として扱う。
+
+ci-fetch-grouped-v1でbae010aの完全SHA、2job全step、metadata/完成log/artifact一覧を保存。
+ci-artifact-grouped-v1もexit0。全569件/160.812表示秒、pipeline9件、clock scheduler19件/旧capture30件が全ok。
+artifact13500328315のZIP SHA7f7301a64ac6a60882b7e213b19b598f754c333ed8c53b384f9f3f646f08b7baはGitHub digestと一致。
+固定16member、内側T16 archive/manifest/4原本、source_revision=bae010a/dirty=falseも一致。
+archive-only別processと独立nearest-rankで1050 journal/暖機50除外/1000要求/エラー0/p95=61.23893700004146msが一致した。
+gate=not_evaluated/permission=blockedで、実Capital性能・時計資格・承認の証拠ではない。
+現DockerfileのCaddy通常/TERM・3段階SIGKILL/保護container不変、MLflow/skops+DBの別volume対応復元・破損拒否、
+PG/HTTPのcleanupと専用resource残存0も完成log/summaryで照合した。
+[集計改善CI索引](docs/reviews/20261106-t10-grouping-ci-checks.json)は実pair/protocolの受入と分ける。
+実データ/clock rawを既存16artifactへ追加していない。後続の記録commitをこの実装CIで直接試験したとも呼ばない。
+
+grouping-ci-validation-v1は89原本hash/315相対link、製品2pathのbae010a byte一致/AST・diff/秘密パターン確認で成功。
+同検証2原本も索引へ追加して再照合し、実47原本pairがまだ未受入の時点のCI証拠/説明8対象をcommit/pushする。
+T10-snapshot-review.mdと用語3項目に、独立IDソート/重み付き加算・中断/cleanupと未達条件を整理した。

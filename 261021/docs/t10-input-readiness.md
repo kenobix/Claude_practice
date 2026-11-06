@@ -3,6 +3,7 @@
 **2026-11-06の現在状態:** [T09の10月原本取得・構造/右端境界検査](t09-october-acquisition.md)は完了。
 連続47原本が揃った。正式集約を新pathで開始した。初回は行ごとの変換を改善するため意図的に中断しcleanupを確認し、
 同hourの重みを保つ加算へ変更して別pathで実行中。[中断とlocal検証](reviews/20261106-t10-grouping-checks.json)。
+改善実装bae010aの[CI569件/全system/16artifact/hash/cleanup](reviews/20261106-t10-grouping-ci-checks.json)は受入済み。
 新pair/全manifest/protocol凍結はまだ未受入で、実fit/採点も行っていない。
 以下の404/46of47等は当時の履歴として保持し、現状の公開待ちと解釈しない。
 
