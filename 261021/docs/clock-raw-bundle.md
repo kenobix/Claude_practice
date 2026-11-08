@@ -30,6 +30,8 @@ archive内の値を期待値として自動コピーする機能はない。合�
 | reviewで数値passedまたは不足 | 2 | 同report。時計資格は`incomplete` |
 | 不正schema/ZIP、IO拒否、中断 | 2 | 完成reportは作らない。stderrは入力内容・絶対pathを出さない固定文 |
 
+export stdoutは保存の受領票を返し、時計資格欄は常に`incomplete`を示す。既知違反を含む数値の合否はreview reportで確認する。
+
 CLIではTERM/INTを例外へ変換してprivate stagingを回収し、元のsignal handlerへ戻す。
 bundle処理自体は子processを起動せず、archive-onlyの検証試験では別processの終了値も確認する。
 atomic publish直後のsignalでは完成fileが存在して非0になり得る。終了値を0へ補正しない。
@@ -64,3 +66,7 @@ archiveはcodeの自己完結した実行環境ではなく、対応するverifi
 代表raw/ZIP/reportはignoredな`data/reports/20261108-clock-bundle/`へ保存し、公開Gitや既存16CI artifactには追加しない。
 任意の秘密情報を検出する汎用scannerではない。合成schema/許可sourceでも、公開前には内容と共有範囲を別途reviewする。
 既存の実T10 snapshot/protocol/ledgerは変更しない。次の実入力は[必要資料一覧](clock-input-request.md)を参照する。
+
+修正後067d3ceの[CI42449911296/最終索引](reviews/20261108-clock-bundle-ci-checks.json)で全588件（専用18件）と全system、既存16 artifact/hash/archive-only/cleanupを確認した。
+初期のZIP末尾byte拒否漏れと、その後のraw/manifest予算混同は、修正前FAILと修正後成功を別索引に保持する。
+別processの可搬性は受入済みだが、合成raw ZIPをCI artifactへ公開したものではない。[用語集](glossary.md#時計源の提出資料と原本bundleで使う用語)も参照できる。

@@ -4198,3 +4198,21 @@ raw memberのサイズ合計をLIMITへ照合し、manifestは別のMANIFEST_LIM
 境界修正後bundle-budget-final-v1は18件/80.099表示秒で成功、budget-compile-v1もexit0。
 追加文書patchは2つ目の対象に別文書の行を指定してverification failedとなった。実diffではplan側も未適用だったため、必要なplan追記だけを再適用した。
 [境界索引](docs/reviews/20261108-clock-bundle-budget-checks.json)で修正前FAILと最終専用試験を分離する。
+
+### 2026-11-08：合成raw bundleの最終実装CI受入
+
+境界修正067d3ceを6対象だけでcommit/push。専用18件/80.099表示秒・compileallを確認後、完全SHAのCI42449911296を追跡した。
+新しいrunでも最初の照会commandへ短いSHAを残してしまいexit0/空配列。完全SHAで特定し直し、両照会原本を保存した。
+先行f071c09/CI42449372982は全588件/158.611表示秒、artifact13605445431/SHA f6201b463b905d02ad5665bbe63ebf11c5f1f545dbca4e11a134d296b38e5254、16member/内側hash/archive-only/cleanupまで確認済み。ただし後続のraw総量境界はこの先行CIへ含めない。
+最終067d3ce/CI42449911296は全588件/260.54表示秒、bundle18/capture30/schedule19/pipeline10を含む全単体・compileall・両job全stepが成功。
+artifact13605825491の外側ZIP SHA=f0344962c583f7dae0953bf692b3699ec14c84458e798dbe28e30e9515ff11c7がGitHub digestに一致。固定16memberと内側T16原本hash/source_revision067d3ce/dirty=falseを照合。
+別processのarchive-onlyと独立nearest-rankで暖機50除外/要求1000/エラー0/p95を再計算し保存reportと一致した。合成gate=not_evaluated/permission=blockedで、実時計資格/実Capital性能や採否ではない。
+現DockerfileのCaddy normal/TERMと3 SIGKILL段階、MLflow/skops+DBの別volume対応復元・破損拒否・同ID/新ID予測、全cleanup/resource残存0/保護container ID不変も照合。
+最終CI原本はdata/reports/20261108-clock-bundle-final-ci/へ分離。docs/reviews/20261108-clock-bundle-ci-checks.jsonでlocal FAIL/先行CI/修正後CIを結合し、過去索引は書き換えない。
+合成rawの17MB ZIPはlocal ignoredへ保持し、既存16CI artifactへ追加していない。後続文書commitをこの先行実装CIの直接試験対象とは呼ばない。
+新しい管理者ログ/独立源は未取得のままで、源資料・同期責任/内部飽和理由・実collector/host deadline/固定負荷・修復/保守/全資格と実candidate証拠が残件。新情報なしのtrace/HEAD反復や実fit/採点は行っていない。
+OS/時計設定・実DB/registry/現在配信・T10凍結3file・future拒否を維持。無関係な未追跡3パスは含めない。
+
+final-validation-v1は原本122件＋過去local45件とsource3件のhash、307相対link、固定資格policy不変、全CI588件を照合しexit0。
+同検証自身のlog/metadataも最終索引へ追加して再照合する。export受領票のincompleteと、数値合否を示すreview reportも説明に明記した。
+今回の最終6文書/索引だけをcommit/pushし、製品codeの実装CIと後続文書commitを区別する。

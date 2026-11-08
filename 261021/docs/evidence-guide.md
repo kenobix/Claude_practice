@@ -92,3 +92,8 @@ T10は[原本snapshot review](t10-snapshot-review.md)で初回意図中断・独
 SQL改善9147027/[CI42447659584](https://github.com/kenobix/Claude_practice/actions/runs/42447659584)は全570件/対象10件、全systemが成功。
 [正式pair/protocol・CI最終索引](reviews/20261108-t10-snapshot-checks.json)で16 artifact/SHA・archive-only再計算・cleanupを照合した。
 原本47件の実集計/独立照合はlocalの保存原本が根拠であり、このCIが実データを集約・学習したという意味ではない。
+
+2026-11-08追補：[合成時計raw bundle](clock-raw-bundle.md)と[最終CI索引](reviews/20261108-clock-bundle-ci-checks.json)。
+修正後067d3ce/CI42449911296の全588件/固定16 artifact/hash/archive-only/cleanupまで受入。
+raw4原本をZIPから別processで再計算する合成可搬性の証拠で、実源の真正性/時計資格/T02実producerの証拠ではない。
+[次に必要な入力](clock-input-request.md)を未取得のまま、実fit・採点・採否へ進めない。

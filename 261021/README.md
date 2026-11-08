@@ -198,3 +198,5 @@ T09/T10の静的受入後も、独立時計源と時計資格が未達のため�
 次に必要な管理者ログ・源の真正性/依存関係/不確かさの資料は[入力一覧](docs/clock-input-request.md)、
 合成rawを別processで再計算する方法は[原本bundle](docs/clock-raw-bundle.md)を参照する。
 bundleの数値が良好でも時計資格は`incomplete`。[今回の検証索引](docs/reviews/20261108-clock-bundle-checks.json)で試行/失敗/CI状態を区別する。
+
+合成raw bundleは修正後067d3ceの[CI588件・artifact/hash/cleanup](docs/reviews/20261108-clock-bundle-ci-checks.json)まで受入済み。時計資格と実fitの保留は変わりません。
