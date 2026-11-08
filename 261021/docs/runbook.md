@@ -400,3 +400,14 @@ T03のSIGTERM終了待ちやT13の未来時刻拒否が再発した場合は、[
 2026-11-03更新: 新規配信のAPI・state・台帳の操作ID照合と、CLI promote900秒/recover300秒の全体deadline、未確定時の手順は[配信診断](deployment-observability.md#2026-11-03-t17b-操作の照合とcli全体の待機上限)を参照。最終受入状況は[検証索引](reviews/20261103-t17b-t07a-checks.json)を確認する。
 
 2026-11-03最終確認: 実装`4a4474e`の[CI41559833990](https://github.com/kenobix/Claude_practice/actions/runs/41559833990)で全447件・Caddy normal/TERM・対応復元・artifact16 member/hash/cleanupが成功。[最終CI索引](reviews/20261103-t17b-t07a-ci-checks.json)を確認する。合成受入とSQLite OS補足は完了し、実producer・時計資格・新原本からの採否は計画§11.6の残件に従う。
+
+## 2026-11-08：保存したCapital事前protocolを読む
+
+正式snapshot/固定split/完全SHAと読取コマンドは[T10 snapshot review](t10-snapshot-review.md)を参照する。
+`data/derived/capital-bootstrap-a5b76d0f89d6433287007f3414d2208b/`のCSV/manifest/protocolは保存済み。
+実行ログは`data/reports/20261106-t10/`、新SQL実装のCIログは`data/reports/20261108-t10-ci/`へ分けて保存する。
+学習や登録をしていないため、MLflow UIにはこの新protocolの精度runはまだない。
+
+protocol保存は評価窓の消費予約ではない。fit前にはledger/legacyの未使用状態と同じinput/source/依存bytesを再照合し、
+時計資格・独立源/不確かさ・修復/保守・その他の前提が揃うまでcandidate/fit/測定/承認を開始しない。
+過去の失敗出力pathやprotocolを上書きせず、失敗・中断した消費窓も無断再利用しない。

@@ -1,14 +1,13 @@
 # T09取得監査とT10開始手順
 
-**2026-11-06の現在状態:** [T09の10月原本取得・構造/右端境界検査](t09-october-acquisition.md)は完了。
-連続47原本が揃った。正式集約を新pathで開始した。初回は行ごとの変換を改善するため意図的に中断しcleanupを確認し、
-同hourの重みを保つ加算へ変更して別pathで実行中。[中断とlocal検証](reviews/20261106-t10-grouping-checks.json)。
-改善実装bae010aの[CI569件/全system/16artifact/hash/cleanup](reviews/20261106-t10-grouping-ci-checks.json)は受入済み。
-先行再集計は1800秒/exit124でpairなし。SQLの蓄積ID全走査を使い捨てplan/VM試験で切り分け、
-current chunkからのPK照合に修正した[local検証](reviews/20261106-t10-query-checks.json)後、別pathへ同条件で実行中。
-2026-11-08再開時、v3のexit0/CSV・manifest完成とtemp/lock回収を確認。全47 SHA/stat・schema3/月別収支、独立IDソート後の32,849全hour一致も受入済み。
-protocol凍結と新実装CIはまだ未受入。実fit/採点は行っていない。
-以下の404/46of47等は当時の履歴として保持し、現状の公開待ちと解釈しない。
+**2026-11-08の現在状態:** [T09の10月原本取得・構造/右端境界検査](t09-october-acquisition.md)は完了。
+固定した202212〜202610の47原本で正式CSV/manifest schema3を作り、全32,849 hourを独立照合した。
+[正式snapshotと事前protocol](t10-snapshot-review.md)は固定済み。train29,919/validation1,464/final1,461、境界5 hourは除外する。
+原本/CSV/manifest/protocol/11 sourceのSHAを結合し、local消費台帳/legacy窓を読取確認した。実fit/採点は未実施。
+SQL修正9147027の[CI570件・artifact/hash/cleanup](reviews/20261108-t10-snapshot-checks.json)まで受入済み。時計資格・独立源/校正・修復/実受入は未達で、protocol保存はfit開始許可ではない。
+[SQL切り分けのlocal索引](reviews/20261106-t10-query-checks.json)は正式pair監査後/CI前のsnapshot。
+初回意図中断と次の1800秒timeout、3回目exit0を別々の試行として保存し、上限や窓は変更していない。
+以下の404/46of47/未集約等は当時の履歴として保持し、現在の公開待ち/未集約と解釈しない。
 
 **891a420以降の更新:** 左側は202212を保守的な隣月bufferに採用し、公式原本を取得・202301との境界を監査した。
 以下の開始手順を`202212`開始へ更新した。target/評価窓・recipeは変更していない。
@@ -100,7 +99,7 @@ MLFLOW_DISABLE_AGENT_HINT=1 \
 | 監視 | training-only referenceと現行monitor policyを凍結。後続分布でbins/閾値を選び直さない |
 | 消費 | 保存時の重複拒否を確認し、fit直前に消費台帳の開始記録。失敗・中断した窓も無断再利用しない |
 
-今回の1464/1461は日時算術とlegacy/台帳の読取照合であり、実CSV/manifestのsplit件数ではない。
+入力準備時の1464/1461は日時算術による想定だった。2026-11-08には正式CSV/manifestから29,919/1,464/1,461を固定し、標準datetimeだけの別processでも照合した。
 protocol作成だけでT11や運用合格を開始しない。計画の時計資格・必須証拠等の依存条件を満たし、
 T10のレビューが完了してから一度だけcandidate fitへ進む。validation不合格時は同じ窓で調整し直さない。
 

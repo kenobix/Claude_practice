@@ -186,3 +186,8 @@ catch-upや観測延長をせず、欠測と同じphaseのUTC/identity/future違
 [T10のsnapshot作業](docs/t10-snapshot-review.md)では、全原本を独立parser/外部sortで照合し、
 重複205件を含む収支を確認しました。集計の重みを保つ改善bae010aは[CI569件/全system/cleanup](docs/reviews/20261106-t10-grouping-ci-checks.json)で受入済みです。
 実snapshot/正式protocolはまだ作業中で、実fit・採点は開始していません。
+
+2026-11-08：T10の[正式snapshot・事前protocol](docs/t10-snapshot-review.md)を保存しました。
+47原本のSHAと32,849全hourを独立照合し、train29,919/validation1,464/final1,461を固定しています。
+ログ・確認用の読取コマンドも同文書にあります。実fit・採点・Capitalモデル登録は未実施で、MLflowに新しい精度結果はまだありません。
+時計資格等が未達のため、この事前固定だけで学習を開始しません。SQL修正9147027の[CI570件・全system・artifact/hash/cleanup](docs/reviews/20261108-t10-snapshot-checks.json)まで確認済みです。

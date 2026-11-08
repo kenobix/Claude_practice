@@ -35,8 +35,9 @@ SHA欄はartifact ZIPの先頭12文字。full SHA・member別SHA・raw logの相
 | T06b | `164ac53` / [41068758500](https://github.com/kenobix/Claude_practice/actions/runs/41068758500) | `9d82e8d21062` | [PostgreSQL読取照合](reviews/20261030-t06b-checks.json)。実HTTP監視への接続は後続 |
 | T07/T17 | `f341e94`→`2414b20`→`4a4474e` | 上段参照 | [切替/復旧](deployment-recovery.md)と[診断](deployment-observability.md)。subtaskと実候補の境界を保持 |
 | T08 | `20abdab` / [41263492531](https://github.com/kenobix/Claude_practice/actions/runs/41263492531) | `f8b4d540112d` | [旧schema精度移行/別volume復元](reviews/20261101-t08-checks.json)。既存実DBへは未適用 |
-| T09 | 実装CIではなく原本公開待ち | 対象外 | [計画§11.6の最新残件](../../261014/plan_mlops.md#remaining-work-latest)。HEAD成功だけでは原本取得/hash照合完了ではない |
-| T10/T11/T12 | 実候補の独立protocol/一度評価/blocked運用測定は未実施 | 対象外 | [計画§11.6の最新残件](../../261014/plan_mlops.md#remaining-work-latest)。合成CIを実精度・実性能へ転用しない |
+| T09 | 2026-11-06の公式10月原本取得・構造/右端監査 | 対象外 | [取得索引](reviews/20261106-t09-checks.json)。過去の404は履歴、47原本が揃った |
+| T10 | 2026-11-08の正式snapshot/protocol静的受入 | 対象外 | [snapshot review](t10-snapshot-review.md)。47原本・32,849全hour一致、固定29,919/1,464/1,461。実fitの許可や消費予約ではない |
+| T11/T12 | 実候補の一度評価/blocked運用測定は未実施 | 対象外 | [計画§11.6の最新残件](../../261014/plan_mlops.md#remaining-work-latest)。時計資格等の前提待ち。合成CIを実精度・実性能へ転用しない |
 | T13a/T13b | `f1cc9ff`のHTTP合成受入 / 実採否は未実施 | 上段の索引参照 | [HTTP CI](reviews/20261101-t13-http-ci-checks.json)。実採否には同一candidateの必須producer証拠が必要 |
 | T14 | この文書・計画・作業log | 対象外 | 文書の整理であり、新しい実験成功を作らない |
 | T15 | `5cc5a89` / [41264954179](https://github.com/kenobix/Claude_practice/actions/runs/41264954179) | `62f54b9fe779` | [monitor persistence CI接続](reviews/20261101-t15-checks.json) |
@@ -53,7 +54,7 @@ CI artifact以外の実DB原本、`.env`、認証値、実候補データを説�
 2. **1〜2分:** MLflowは実験・登録モデルの管理画面。`training-report.json`のMAE/RMSEは予測誤差で、APIの応答時間ではない。学習・評価済み期間を次候補の選択へ再利用しない。
 3. **2〜3分:** T16のCI索引で実装commit・run・artifact SHA・1000 measured・p95・warmup除外を示す。p95は応答時間であり、合成PC試験から本番SLOを合格としない。
 4. **3〜4分:** 配信復旧文書で、同一request IDの再送は元の予測を返すこと、台帳とartifactを対応させて復元すること、timeoutでは未確定を残すことを示す。
-5. **4〜5分:** 計画書で、時計資格、独立した新データ、実候補の精度/監視/復旧/承認がまだ必要と説明する。合成成功を実採否へ格上げしない。
+5. **4〜5分:** 計画書で、新原本取得と事前protocolの静的受入は完了し、時計資格と実候補の精度/監視/復旧/承認がまだ必要と説明する。合成成功を実採否へ格上げしない。
 
 説明のためにlive環境を変更する必要はない。CLIの確認や新しい障害試験は、[runbook](runbook.md)に従い別途実行する。
 用語は[用語集](glossary.md)、時計の限界は[中断と時計診断](interruption-clock-diagnostics.md)を参照する。
@@ -83,3 +84,11 @@ T09は[10月原本取得/右端境界検査](t09-october-acquisition.md)・[取�
 T10は[原本snapshot review](t10-snapshot-review.md)で初回意図中断・独立sort照合・新producerを分けて読む。
 [集計改善CI](reviews/20261106-t10-grouping-ci-checks.json)の569件/16artifact/hash/cleanupは合成契約の証拠。
 実原本23百万行の照合はlocal保存原本が根拠で、実fit/採否/時計資格の証拠へ置き換えない。
+
+2026-11-08：[T10の正式snapshot/protocol](t10-snapshot-review.md)は保存値・splitと原本の静的照合です。
+独立sortが検出した重複205行を除いて全hour一致、正式source11件とprotocol/CSV/manifestのSHAを結合しました。
+時計資格・モデルの誤差・実運用の性能はまだ測定していません。過去の原本待ち/未固定という記載は当時の状態です。
+
+SQL改善9147027/[CI42447659584](https://github.com/kenobix/Claude_practice/actions/runs/42447659584)は全570件/対象10件、全systemが成功。
+[正式pair/protocol・CI最終索引](reviews/20261108-t10-snapshot-checks.json)で16 artifact/SHA・archive-only再計算・cleanupを照合した。
+原本47件の実集計/独立照合はlocalの保存原本が根拠であり、このCIが実データを集約・学習したという意味ではない。

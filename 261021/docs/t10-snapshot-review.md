@@ -1,7 +1,7 @@
 # T10：固定原本の正式snapshot・事前protocolのreview
 
-2026-11-06。[T09の取得](t09-october-acquisition.md)後、固定済みの47原本でT10を進めている。
-この文書の作成時点では、新producerのCSV/manifest受入とprotocol固定はまだ完了していない。
+2026-11-08更新。[T09の取得](t09-october-acquisition.md)後、固定済みの47原本で正式CSV/manifestを独立照合し、事前protocolを固定した。
+学習・採点・candidate作成は開始していない。SQL改善9147027の[CI・正式pair/protocol索引](reviews/20261108-t10-snapshot-checks.json)まで受入済み。
 合成CI、実原本のデータ検査、実候補の学習/採点、実時計資格を別々に扱う。
 
 ## 変えない入力と判断条件
@@ -57,7 +57,7 @@ target・範囲外・DST全てで重みを保ち、schema/出力列/zero-fill/ID
 これは処理回数の比較であり、物理的な速度倍率やSLOの実測ではない。
 spring/fall・複数trip・重複を含む9件、既存protocol10件、独立sort helper5件が成功した。
 
-新しい出力先は`capital-bootstrap-f5daf2e4114e4788b8c77f357249422f`。
+2回目の出力先は`capital-bootstrap-f5daf2e4114e4788b8c77f357249422f`。
 同じ1800秒の上限を使い、専用TMPDIRのlease/cleanupを残す。旧attemptの出力を再利用しない。
 開始時はsource未commit差分を含む36b9306だったことをplanに明記し、保存bytesのSHAを後の実装bae010aへ結合する。
 [local索引](reviews/20261106-t10-grouping-checks.json)はCI/実pair確認前のsnapshotとして保持する。
@@ -65,13 +65,73 @@ spring/fall・複数trip・重複を含む9件、既存protocol10件、独立sor
 [CI索引](reviews/20261106-t10-grouping-ci-checks.json)で16 artifact/hash/archive-only/cleanupも照合した。
 この成功は合成契約の受入であり、実47原本のsnapshot/実候補採否の受入ではない。
 
-## 完了前の停止条件
+## SQL計画の退化と正式pairの受入
+
+重み付き加算だけの2回目は1800秒/exit124で終了し、CSV/manifestは存在しなかった。
+専用tempは親が回収した。残った専用build lockも、終了値・exact argvのprocess不在・lockのstat/内容を照合して保存後に回収した。
+失敗結果を成功に書き換えず、新しい出力先だけで3回目を行った。
+
+同じDDLの使い捨てDBで、従来JOINが蓄積済みID全体を走査していた。
+current10行を固定して履歴1,000→100,000行にするとSQLite VM命令数が4,012→400,012へ増加した。
+currentから履歴の主キーを検索するEXISTSでは119→119。同hour再送許容/異hour拒否を保つ回帰は修正前FAIL、修正後10件成功、既存protocol10件も成功。
+命令数とquery planによる機構の切り分けであり、実時計で測った速度倍率や過去T03の原因確定ではない。
+[local索引](reviews/20261106-t10-query-checks.json)へ負例・失敗・source bytes・原本hashを保存した。
+
+3回目は同じ47原本/窓/1800秒上限でexit0。実行開始時は1bf9584+未commit差分で、保存script SHAを後の実装9147027とbyte照合する。
+正式出力は`data/derived/capital-bootstrap-a5b76d0f89d6433287007f3414d2208b/`。
+2026-11-08にschema3 validatorによる47 ZIP SHA/sizeとstat・月別min/max/収支・pinned TZifを照合し、
+独立した外部sort/merge後の全hour histogramとCSVの完全一致を確認した。専用temp/lockも回収済み。
+7つの欠けhourは秋の曖昧3+春の存在しない4であり、ゼロを挿入しない。その他32,849 hourは既存の有効gridと一致する。
+
+## 固定した事前protocolと確認場所
+
+正式folderの`hourly.csv`、`manifest.json`、`protocol.json`はGit対象外で保存する。原本の再配布やMLflowへの登録はしていない。
+
+| 保存物 | SHA-256 |
+|---|---|
+| hourly.csv | `df216153f825904d3cc06f4b20d4be9f3de8e9270b971ea6a11590b13dea87c0` |
+| manifest.json（file bytes） | `721ee82537ddc4118f222b395d9b671e5d20a20b73cbdf84d5dad6b057b7edce` |
+| protocol.json（file bytes） | `6cfb89a6a226209e2139abb64d40f9b3f7cdd72d781501d886c51ac18f59fcda` |
+| protocol_sha256（自身のhash欄を除いた正規化本文） | `925fc86ff297bba922318c45bff95623e38471a09cec8c365f235ed84f112714` |
+
+| 区分 | 件数 / 境界 |
+|---|---|
+| train | 29,919。最終targetは2026-05-31 21時、そのラベルが6月1日00時に到着する仮定 |
+| validation | 1,464。6月1日00時〜8月1日00時未満。最後のラベル到着後、8月1日02時に選択 |
+| reserved final | 1,461。8月1日03時〜10月1日00時未満。選択に使わず一度だけの同一candidate評価へ予約する設計 |
+| 境界として使用しないhour | 5。5月31日22/23時と8月1日00/01/02時。訓練/validation/final間の重複は0 |
+
+11 source/config/lockのbytesを実装9147027と照合してから、既存CLIでbootstrap protocolを保存した。
+`incumbent`はnull。UCI版3のモデルを読み込まず、Capital初回は履歴baselineと比較する固定方針を維持する。
+MAE厳密改善かつRMSE以下、segment診断のみ、training-only monitor policy、固定recipeは変更しない。
+別processの標準CSV/datetime/hash計算でも、期間の件数/label到着/境界5時間/3 splitの非重複とpolicy/hashを照合した。
+監視policyのdigestは末尾LFを含み、protocol/精度policyは含まない。最初の独立検算のLF見落としFAILもログに残した。
+
+確認用の読取だけなら、project rootで次を実行する。
+
+```bash
+.venv/bin/python -m json.tool < data/derived/capital-bootstrap-a5b76d0f89d6433287007f3414d2208b/protocol.json
+```
+
+生logと実行command/終了値/UTC・MONOTONIC/hashは`data/reports/20261106-t10/`にある。
+`aggregate-v1`/`aggregate-v2`/`aggregate-v3`、`formal-audit-v3`、`freeze-protocol-v3`、`independent-protocol-audit-v1/v2`を区別する。
+時刻は未資格のlocal値。protocolの`created_at_utc`も真正性や実時計資格の根拠にしない。
+MLflowサイトに新しい学習run/Capitalモデルはまだないため、そこで新しい精度結果を探す段階ではない。
+今回見た原本集計値を隠さず`historic_source_aggregate_statistics_were_seen=true`を維持し、blindな将来試験と呼ばない。
+
+## 実fit前に維持する停止条件
 
 producerのschema3 manifest、全47 input SHA/stat、CSV/manifest pair、全hourの独立histogram一致、
-月別unique/duplicate・範囲外/DSTの収支を確認してからprotocolを新pathへ保存する。
+月別unique/duplicate・範囲外/DSTの収支を確認してprotocolを新pathへ保存済み。
 legacy/default消費台帳の重複拒否を維持し、保存しても消費開始や実fitの許可とは扱わない。
 他checkoutも含む未消費の保証や実行真正性は、local hashの一致だけでは得られない。
 
 原本fileの連続/min/maxは出版社の欠落ゼロを証明しない。
 時計資格・独立源/校正dossier・修復/保守・必須producer等が未達の間、実fit/採点/実運用gate/採否は開始しない。
 確認できた範囲と残件は[計画§11.6](../../261014/plan_mlops.md#remaining-work-latest)を正規の一覧とする。
+
+実装9147027/[CI42447659584](https://github.com/kenobix/Claude_practice/actions/runs/42447659584)の全570件/対象pipeline10件は成功した。
+全system/16 artifactのhash・archive-only検算・cleanupも照合した。CIで本47原本を集約したという意味ではない。
+正式pair/protocolの独立照合はlocalの保存原本で、合成CI・実時計資格・実候補性能の証拠と分ける。
+公開索引にはpath/size/SHA/コマンド/終了値と限界を残し、raw trip ID・ZIP原本・実DBや.envは含めない。
+後続の文書commitを、先行9147027のCIで直接試験したとは呼ばない。

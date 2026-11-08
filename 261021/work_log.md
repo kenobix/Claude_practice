@@ -4105,3 +4105,37 @@ CSV SHA=df216153f825904d3cc06f4b20d4be9f3de8e9270b971ea6a11590b13dea87c0、
 manifest SHA=721ee82537ddc4118f222b395d9b671e5d20a20b73cbdf84d5dad6b057b7edce。
 公式原本の公開確認を繰返さず保管47原本だけを検査した。実時計資格/実fit/採点/実DB/registry/配信への操作はない。
 修正前FAIL、local10+10、正式pair監査を結合した索引を再検証して、6対象の実装単位をcommit/pushし、その完全SHAのCIを確認する。
+
+SQL修正は6対象だけを9147027ab082f04fed9d795ab8c50f4f97ccbbcdとしてcommit/pushした。
+完全SHAのCI42447659584をci-list-query-v1で特定し、ci-watch-query-v1は900秒/TERM/kill-after10とexit-statusで監視中。
+この新しいCI原本は`data/reports/20261108-t10-ci/`へ分離し、先行bae010aの索引/原本を上書きしない。
+
+freeze-protocol-v3は11 source/config/lock bytesが9147027と一致していることを先に照合し、正式pair/hashから既存CLIで新protocolを保存、exit0。
+incumbent指定は省略し、MLflowへのモデル照会・fit・採点・消費開始はしない。local ledgerは不存在、legacyはhash不変だった。
+train29,919/validation1,464/reserved final1,461、label+3時間/選択8月1日02時/final開始03時、MAE厳密改善+RMSE以下、固定HGB recipe/monitor policyを確認。
+protocol_sha256=925fc86ff297bba922318c45bff95623e38471a09cec8c365f235ed84f112714、
+file SHA=6cfb89a6a226209e2139abb64d40f9b3f7cdd72d781501d886c51ac18f59fcda。
+
+independent-protocol-audit-v1はexit1。自作の独立検算がmonitor policy digestにも末尾LFなしのcanonical JSONを使ったためで、
+既存capital_deployment_evidence.canonical_bytesの末尾LFありという契約と違っていた。失敗時sourceを別名保存し、製品/基準は変更していない。
+v2では監視policyだけ末尾LFを加え、標準CSV/datetime/hashのみの別processで全hash/11保存source/3 split非重複/件数を照合、exit0。
+境界5 hourは5月31日22/23時と8月1日00/01/02時。原本のtarget値をモデル選択・baseline/誤差計算へ渡さない静的検査である。
+legacyとの重なりなし/local ledger不変も確認したが、他checkoutの未消費や実行真正性・時計資格を証明したとは扱わない。
+新admin情報や自然tick11000/T03再発は今回提示されていないため、同じtrace/HEADを進捗として反復しない。OS/時計/実DB/registry/配信の変更なし。
+
+ci-watch-query-v1はexit0で完了。ci-fetch-query-v1で9147027の完全SHA、2job全step成功・完成log・artifact一覧を保存した。
+ci-artifact-query-v1もexit0。全570件/213.056表示秒、pipeline10/clock capture30/schedule19が成功。
+artifact13604163480のZIP SHA=0f1863b1afff1671c8b306a59d38fa82b88919b8eecd8fa5c90841a5ff6ed01aはGitHub digestと一致。
+固定16member、内側T16 manifest/4原本とsource_revision9147027/dirty=falseを照合した。
+別processのarchive-onlyと独立nearest-rankで暖機50を除く1000要求/エラー0/p95=35.23302900001113msが一致。
+これは合成の保存値。gate=not_evaluated/permission=blockedで実性能/時計資格/実採否には流用しない。
+Caddyの現Dockerfile normal/TERM・3段階SIGKILL、保護container不変、実MLflow/skops+DBの別volume対応復元/破損拒否、PG/HTTP cleanup/残存resource0も照合した。
+今回CIへ47実原本を持ち込んだりartifact allowlistへ追加したりはしていない。正式集計のlocal証拠と分ける。
+計画§11.6/README/証拠入口/手順書/T10 review/用語を更新し、T09待ちやT10未完了の古い記載と現在状態を区別した。
+[最終索引](docs/reviews/20261108-t10-snapshot-checks.json)へ全試行（中断254/timeout124/SQL回帰FAIL1/検算FAIL1を含む）とhash・限界を結合する。
+残件は時計資格等と、その前提後の実candidate評価/producer/運用採否。新情報なしの再採取や、前提未達のfit/採点は行わない。
+
+snapshot-validation-v1は192原本hash+正式dataset3 file、352相対link、9147027の製品2path/保存source11件、
+各失敗終了値と完成CI570件、固定時計policy不変、秘密パターン/diffを照合して成功した。
+同検証log/metadataも最終索引へ追加して再照合し、今回のT10/CI/操作説明9対象だけをcommit/pushする。
+無関係な未追跡3パスは含めない。後続の文書commitを先行実装CIの試験対象と呼ばない。

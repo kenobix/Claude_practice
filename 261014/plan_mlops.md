@@ -561,11 +561,11 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 | 優先度 | 難易度・担当 | 残課題と次の条件 |
 |---|---|---|
 | P1 | D3・Sol | 時計：前回initd setterの実exe/親/namespaceは照合済み。保存済みELFの[backend取得interfaceとSettimeofday CALL](../261021/docs/backend-time-path-review.md)も静的照合したが、新しいruntime応答/stackではない。新管理者ログなし。残りはPHC fd/UDPと現在identity、tick11000時内部値、backend/host時刻源・外部UTC差・同期責任、許可後の修復と時計資格。[資格計測設計v1](../261021/docs/clock-qualification-plan.md)と[offline進行率phase component](../261021/docs/clock-rate-review.md)を追加し、実装f26b334のCI482件/全system/artifact/cleanupまで受入済み。全campaignのpolicy/事前plan SHA結合・外部UTC/校正/identity/欠測を[offline照合](../261021/docs/clock-campaign-review.md)する実装f6b3cadをCI519件/全system/artifact/cleanupまで受入済み。数値/構造だけの成功でも資格はincompleteを保つ。[fake採取](../261021/docs/clock-fake-acquisition.md)で送信前intent/nonce/sequence、raw→identity/全JSON→offline CLI、負例/中断cleanupを実装。local28件の[初回索引](../261021/docs/reviews/20261105-clock-acquisition-checks.json)を保持し、[起動回収の追加索引](../261021/docs/reviews/20261105-clock-acquisition-startup-checks.json)で30件/起動時所有権移譲とmask復元/源予算を照合する。最終a5c1605の[CI549件/30件・artifact/hash/cleanup](../261021/docs/reviews/20261105-clock-acquisition-ci-checks.json)も受入済み。[fake QPC固定周期/phase deadline](../261021/docs/clock-fixed-schedule.md)を追加し、専用19件で遅延のcatch-up/観測延長拒否、欠測/中断と同phaseの既知違反保持、子process回収をlocal検証済み。[今回索引](../261021/docs/reviews/20261106-clock-scheduler-checks.json)へ初回16件と同phase負例の失敗/修正を別記する。実装c1c5dcbの[CI568件/専用19件・artifact/hash/cleanup](../261021/docs/reviews/20261106-clock-scheduler-ci-checks.json)まで受入済み。残りは[源選定review](../261021/docs/clock-source-readiness.md)に必要な独立UTC/elapsed参照と不確かさ根拠（未選定）、実採取器/host deadline/固定負荷、原本/実行真正性、同期責任review、別途許可後の修復/休止再開/全受入。非飽和traceを反復せず、過去の飽和/T03歴史的停止も未確定。initd全体を止めず、future拒否/clamp/retryの禁止は維持 |
-| P0（実fit前） | D3・Sol | T10：独立protocol/全原本snapshot/分割/recipe/基準をfit前に固定。[左端bufferを202212に決定・取得し、202301との2file/379,310行を別parserでも監査](../261021/docs/t10-input-readiness.md)。原本範囲202212〜202610、target窓とrecipeは不変。保管47件/予定47件となったが正式集約を新pathへ開始したが未受入。初回は行ごとの反復処理を改善するため意図中断しcleanup確認済み。同hourの重みを保つ集計を9件/既存protocol10件で検証。bae010aの[CI569件/16 artifact/hash/cleanup](../261021/docs/reviews/20261106-t10-grouping-ci-checks.json)まで受入済み。実再実行は1800秒/exit124でpairなし。追加のSQL計画/VM試験で蓄積済IDの全走査を特定し、current chunkからのPK照合へ修正したlocal10件/既存protocol10件が成功。[SQL切り分け索引](../261021/docs/reviews/20261106-t10-query-checks.json)。新実装CIは未受入。別pathの再実行v3はexit0、2026-11-08に全47 SHA/stat・月別収支・32,849全hourの独立再計数一致を受入。[今回の中断/改善索引](../261021/docs/reviews/20261106-t10-grouping-checks.json)。正式manifest監査は受入済み、protocol凍結はまだ未完了。10月bufferなしで窓を短縮せず、1か月bufferを母集団の完全性保証にしない |
+| P0（実fit前） | D3・Sol | T10の正式snapshot/事前protocolは2026-11-08に静的受入済み。47原本/22,925,436行を重複除去した32,849 hourが独立再計数と全一致、schema3/47 SHA・stat/TZif/月別収支を照合した。[snapshot review](../261021/docs/t10-snapshot-review.md)。固定train29,919/validation1,464/final1,461、境界5 hour除外/label+3時間/選択8月1日02時、固定recipe/policy/source11件、local ledger/legacyを確認。SQL修正9147027の[CI570件/16 artifact/hash/cleanup](../261021/docs/reviews/20261108-t10-snapshot-checks.json)まで受入済み。fit直前に同じ原本・CSV/manifest/protocol/依存bytesと未消費窓を再照合し、時計資格等の前提が未達ならT11へ進まない。保存は消費予約やblind holdoutの保証ではない |
 | P1 | D3・Sol | T02実producerおよびT11/T12/T13b：同一の実candidate/artifactに精度・監視・復旧・metadata・運用測定を結合し採否を記録。T09/T10/時計資格等の前提を満たす範囲で順に進める |
 | P2（上流変更時） | D2・Sol review | MLflow noloadの発生箇所/通常import/厳格警告負例と現行publisher6件は確認済み。最新3.17.2にも同指定があり、修正releaseまたはloader変更時に個別再検証。それまではlock変更/警告抑制をしない。[調査と報告下書き](../261021/docs/mlflow-orm-compatibility.md)。upload-artifact保守は前回CI受入済み |
 
-T09は2026-11-06に[10月原本取得/構造・右端2原本の独立照合](../261021/docs/t09-october-acquisition.md)を完了した（[索引](../261021/docs/reviews/20261106-t09-checks.json)）。原本47件が揃い、公開待ちを残件から除いた。T10の正式集計/全manifest/protocol/実fitは未完了。
+T09は2026-11-06に[10月原本取得/構造・右端2原本の独立照合](../261021/docs/t09-october-acquisition.md)を完了した（[索引](../261021/docs/reviews/20261106-t09-checks.json)）。原本47件が揃い、公開待ちを残件から除いた。2026-11-08にT10の正式集計/全manifest/protocol静的照合も受入済み。実fitは未実施。
 
 T14の証拠入口・task対応表・操作説明は最新CIへ追記済み。T06a OS補足とT07a CI接続を残件一覧へ再掲しない。旧checkpoint表は当時の記録として保持する。
 
@@ -682,3 +682,15 @@ T10集計v2は1800秒/exit124で未完了。private DB/専用stale lockを証拠
 同DDLのSQL plan/VM試験でold table全走査（current10固定、seen1000/100000で4012/400012命令）を確認。
 currentからseen PKを検索するEXISTSは119/119命令で、実helperの仕事量回帰は修正前FAIL→修正後10件成功。
 この退化修正と同じ固定原本/窓/1800秒で新pathへ実行中。実pair/protocol受入、新実装CI、時計資格/実fitは未完了。
+
+2026-11-08再開：集計v3は同じ1800秒上限でexit0/専用temp・lock回収。
+47原本・全32,849 hour/月別収支の独立照合を受入し、実装9147027のsource bytesでprotocolを保存した。
+標準CSV/datetime/hashの独立検算も29,919/1,464/1,461・境界5 hour・非重複を確認。初回monitor digest末尾LFの検算ミスはexit1で保持。
+正式snapshot/protocol静的受入と、実fit/採点/時計資格/実producer/運用採否を分ける。CIの受入はこれから確認する。
+
+SQL改善9147027のCI42447659584は全570件/213.056表示秒、両job全step成功。
+[最終T10索引](../261021/docs/reviews/20261108-t10-snapshot-checks.json)で、16 artifact/member hash、archive-only再計算、Caddy normal/TERM/SIGKILL・MLflow/skops/DB対応復元・PG/HTTP cleanupまで受入した。
+これでT10の静的snapshot/protocol受入とT14の説明更新を完了。fit直前の未消費/bytes再照合は必要時のP0条件として維持する。
+残りは、時計独立源/真正性/不確かさ・実採取/host deadline/固定負荷・同期責任/許可後の修復と資格（P1/D3/Sol）、
+その前提後のT02/T11/T12/T13b実candidate証拠（P1/D3/Sol）、上流変更時だけのMLflow互換再検証（P2/D2/Sol review）。
+T09公開待ちやT10未集約・未凍結を現状の残件へ戻さず、同じtrace/原本検査を新情報なしに繰り返さない。
