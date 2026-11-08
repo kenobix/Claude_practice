@@ -4,7 +4,10 @@
 連続47原本が揃った。正式集約を新pathで開始した。初回は行ごとの変換を改善するため意図的に中断しcleanupを確認し、
 同hourの重みを保つ加算へ変更して別pathで実行中。[中断とlocal検証](reviews/20261106-t10-grouping-checks.json)。
 改善実装bae010aの[CI569件/全system/16artifact/hash/cleanup](reviews/20261106-t10-grouping-ci-checks.json)は受入済み。
-新pair/全manifest/protocol凍結はまだ未受入で、実fit/採点も行っていない。
+先行再集計は1800秒/exit124でpairなし。SQLの蓄積ID全走査を使い捨てplan/VM試験で切り分け、
+current chunkからのPK照合に修正した[local検証](reviews/20261106-t10-query-checks.json)後、別pathへ同条件で実行中。
+2026-11-08再開時、v3のexit0/CSV・manifest完成とtemp/lock回収を確認。全47 SHA/stat・schema3/月別収支、独立IDソート後の32,849全hour一致も受入済み。
+protocol凍結と新実装CIはまだ未受入。実fit/採点は行っていない。
 以下の404/46of47等は当時の履歴として保持し、現状の公開待ちと解釈しない。
 
 **891a420以降の更新:** 左側は202212を保守的な隣月bufferに採用し、公式原本を取得・202301との境界を監査した。

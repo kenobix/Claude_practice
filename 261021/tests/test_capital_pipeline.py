@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
 import tempfile
 import unittest
 import zipfile
@@ -10,7 +11,7 @@ from pathlib import Path
 import pandas as pd
 
 from bike_mlops.capital_data import validate_capital_manifest
-from scripts.prepare_capitalbikeshare import aggregate_archives
+from scripts.prepare_capitalbikeshare import aggregate_archives, _has_conflicting_start_hours
 
 
 class CapitalAggregationContractTests(unittest.TestCase):
@@ -32,6 +33,34 @@ class CapitalAggregationContractTests(unittest.TestCase):
             content = "ride_id,started_at\n" + "".join(f"{ride_id},{started_at}\n" for ride_id, started_at in rows)
             archive.writestr(member, content)
         return archive_path
+
+    def test_conflict_probe_scales_with_current_chunk_and_keeps_exact_hour_rejection(self):
+        instructions = []
+        for size in (1000, 100000):
+            with sqlite3.connect(":memory:") as connection:
+                connection.execute("CREATE TABLE seen_trip_ids(ride_id TEXT PRIMARY KEY, started_at TEXT NOT NULL)")
+                connection.execute("CREATE TEMP TABLE current_chunk(ride_id TEXT PRIMARY KEY, started_at TEXT NOT NULL)")
+                connection.executemany("INSERT INTO seen_trip_ids VALUES(?,?)",
+                                       ((f"old-{i:08d}", "2024-01-01 00:00:00") for i in range(size)))
+                connection.executemany("INSERT INTO current_chunk VALUES(?,?)",
+                                       ((f"new-{i:08d}", "2024-01-01 00:00:00") for i in range(10)))
+                count = [0]
+                def progress():
+                    count[0] += 1
+                    return 0
+                connection.set_progress_handler(progress, 1)
+                self.assertFalse(_has_conflicting_start_hours(connection))
+                connection.set_progress_handler(None, 0)
+                instructions.append(count[0])
+                connection.execute("INSERT INTO current_chunk VALUES('old-00000000','2024-01-01 00:00:00')")
+                self.assertFalse(_has_conflicting_start_hours(connection))
+                connection.execute("UPDATE current_chunk SET started_at='2024-01-01 01:00:00' WHERE ride_id='old-00000000'")
+                self.assertTrue(_has_conflicting_start_hours(connection))
+                connection.execute("DELETE FROM current_chunk")
+                self.assertFalse(_has_conflicting_start_hours(connection))
+        # Bound VM work rather than unqualified wall-clock durations or plan text.
+        self.assertLess(instructions[1], instructions[0] * 4 + 1000)
+        self.assertLess(instructions[1], 5000)
 
     def test_row_accounting_dst_and_manifest_hash_are_consistent(self):
         self.write_archive(

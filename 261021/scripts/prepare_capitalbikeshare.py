@@ -202,6 +202,16 @@ def aggregate_archives(
         lock_path.unlink(missing_ok=True)
 
 
+def _has_conflicting_start_hours(seen: sqlite3.Connection) -> bool:
+    # Iterate the bounded current chunk, probing the accumulated primary key.
+    # An ordinary JOIN can scan the entire growing history on every chunk.
+    return seen.execute(
+        "SELECT 1 FROM current_chunk AS new WHERE EXISTS ("
+        "SELECT 1 FROM seen_trip_ids AS old WHERE old.ride_id = new.ride_id "
+        "AND old.started_at <> new.started_at) LIMIT 1"
+    ).fetchone() is not None
+
+
 def _aggregate_archives_locked(
     months: list[str],
     start: pd.Timestamp,
@@ -282,11 +292,7 @@ def _aggregate_archives_locked(
                                 "INSERT OR IGNORE INTO current_chunk(ride_id,started_at) VALUES (?,?)",
                                 current.itertuples(index=False, name=None),
                             )
-                            conflict = seen.execute(
-                                "SELECT 1 FROM seen_trip_ids AS old JOIN current_chunk AS new USING (ride_id) "
-                                "WHERE old.started_at <> new.started_at LIMIT 1"
-                            ).fetchone()
-                            if conflict:
+                            if _has_conflicting_start_hours(seen):
                                 raise ValueError(f"A ride_id has conflicting start hours across archives near {month}")
                             inserted = seen.execute(
                                 "INSERT OR IGNORE INTO seen_trip_ids(ride_id,started_at) "

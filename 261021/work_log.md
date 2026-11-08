@@ -4064,3 +4064,44 @@ PG/HTTPのcleanupと専用resource残存0も完成log/summaryで照合した。
 grouping-ci-validation-v1は89原本hash/315相対link、製品2pathのbae010a byte一致/AST・diff/秘密パターン確認で成功。
 同検証2原本も索引へ追加して再照合し、実47原本pairがまだ未受入の時点のCI証拠/説明8対象をcommit/pushする。
 T10-snapshot-review.mdと用語3項目に、独立IDソート/重み付き加算・中断/cleanupと未達条件を整理した。
+
+## T10集計上限後の追加切り分け：蓄積済みIDの全走査
+
+aggregate-v2は設定1800秒でexit124、CSV/manifestなし。private TMPDIRは親wrapperが回収したが、専用build lockは残った。
+failed-v2-cleanup-v1でexact argvのprocess不在を照合し、この新attemptだけのlock bytes/sha/dev/inodeを証拠保存後に削除。
+旧/shared lockには触れず、失敗directory/終了値は保持する。dataset/protocol成功へ置換しない。
+profile-tool-availability.jsonではpy-spy/perf/gdbは利用不可。追加installやOS設定変更はしていない。
+
+新しい切り分けとして、同じDDL・SQLite3.45.1の使い捨てin-memory DBで実SQLのEXPLAIN QUERY PLANとVM命令数を取得。
+conflict-query-probe-v1で、従来JOINはSCAN old（蓄積seen_trip_ids）→SEARCH currentとなり、
+current10行固定でseen1,000→100,000行にすると4,012→400,012命令へ増加した。
+候補のcurrent→correlated EXISTS/seen PK検索では両方119命令。elapsed秒やclock calibrationを根拠にしたものではない。
+これは実コードの退化機構を同DDLで確認した証拠で、過去T03や時計setterの動的原因の確定ではない。
+
+旧SQLをhelperへ抽出しただけのsource/testをquery-before-fixへ保存。
+query-work-before-fix-v1は実helperを呼び、全走査に比例してVM workが増えないという回帰条件でFAIL（400,012 >= 17,048）を再現。
+同時に同hour再送は許容/異なるhourは拒否/空chunkは無違反という結果も確認するテストで、SQL文字列/plan文言の一致テストではない。
+_has_conflicting_start_hoursをcurrent chunkからのEXISTS/主キー照合へ変更し、pipeline-query-fixed-v1は10件/0.603表示秒、
+protocol-query-fixed-v1は10件/8.520表示秒が成功した。source-query-fixed-v1に最終2sourceを保存。
+source schema/ID基準/出力/期間/recipe/既存DB writerを変えず、読み取りpredicateの照合順だけを限定した。
+
+plan-query-v1は同じ47原本/stat/SHAを保ち、失敗pathを再利用せず新path
+`data/derived/capital-bootstrap-a5b76d0f89d6433287007f3414d2208b/`を固定した。
+source SHA96746818b1c1b2907f07d81152dfd869b6ba7f2c0a109066853b911100f6b437。
+aggregate-v3を同じ1800秒/TERM/kill-after10で開始。先行timeoutを隠さず、SQL退化機構の修正と負例検証という新情報に基づく明示的な別attemptである。
+実fit/採点・消費開始・実DB/registry/配信・OS/時計設定には進まない。
+
+再開後、aggregate-v3が同じsource/新pathで継続していることを確認。query-validation-v1は131原本hash/185相対link、保存source2件/AST、修正前exit1と修正後pipeline10/protocol10、VM命令数を照合して成功。
+同検証自身のlog/metadataも索引へ追加して再照合し、SQL改善と受入記録6対象だけをcommit/pushする。進行中のCSV/manifestは成功扱いにしない。
+
+### 2026-11-08再開：v3の完了と独立照合
+
+中断中にaggregate-v3はexit0で終了していた。元のUTC/MONOTONIC値とlog hashを保持し、確認日へ書き換えない。
+CSV/manifest完成、専用TMPDIRとbuild lock回収がresultに記録されている。先行v1の意図中断/v2のtimeoutを削除しない。
+formal-audit-v3はexit0。schema3 validatorで47 ZIPのSHA/size、入力stat、月別row/min/max/unique/duplicate、TZifを照合した。
+別実装のCSV+外部sort/merge結果に対し、22,925,436原本行/重複205/unique22,925,231、範囲外852,840/DST除外1,568、
+32,849全hour/target22,070,823が一致した。7 hourの除外は秋の曖昧3+春の存在しない4で、補完はしない。
+CSV SHA=df216153f825904d3cc06f4b20d4be9f3de8e9270b971ea6a11590b13dea87c0、
+manifest SHA=721ee82537ddc4118f222b395d9b671e5d20a20b73cbdf84d5dad6b057b7edce。
+公式原本の公開確認を繰返さず保管47原本だけを検査した。実時計資格/実fit/採点/実DB/registry/配信への操作はない。
+修正前FAIL、local10+10、正式pair監査を結合した索引を再検証して、6対象の実装単位をcommit/pushし、その完全SHAのCIを確認する。
