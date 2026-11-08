@@ -411,3 +411,14 @@ T03のSIGTERM終了待ちやT13の未来時刻拒否が再発した場合は、[
 protocol保存は評価窓の消費予約ではない。fit前にはledger/legacyの未使用状態と同じinput/source/依存bytesを再照合し、
 時計資格・独立源/不確かさ・修復/保守・その他の前提が揃うまでcandidate/fit/測定/承認を開始しない。
 過去の失敗出力pathやprotocolを上書きせず、失敗・中断した消費窓も無断再利用しない。
+
+## 追加時計資料の提出と合成rawの移送（2026-11-08）
+
+[必要入力一覧](clock-input-request.md)に従い、新しいPHC/socket管理者ログや利用できる独立源資料の保存先を伝える。
+資料が無い場合はOS同期操作や同じtraceを反復せず、実時計資格・実fit/採点は保留する。
+既存[管理者限定読取](clock-owner-admin-read.md#chrony-resources-admin)にOS変更は含まれない。
+
+合成原本を別processへ渡す場合は[raw bundle手順](clock-raw-bundle.md)を使う。
+export 0は保存完了のみ、review 1は違反、2は不足/数値成功でも未資格（不正入力も2）。
+保存reportの有無とstatusを合わせて確認し、既存fileを上書きせず、ZIPを実時計/実候補の証拠へ流用しない。
+原本ZIPはignored reports下で保持し、CI artifactの公開allowlistには加えない。

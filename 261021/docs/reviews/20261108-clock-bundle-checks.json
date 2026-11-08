@@ -1,0 +1,624 @@
+{
+  "schema_version": 1,
+  "base_commit": "99f14cd4a2308a53eef8b768dd532737e932b41e",
+  "status": "SYNTHETIC_RAW_BUNDLE_LOCAL_ACCEPTED_IMPLEMENTATION_CI_PENDING",
+  "synthetic_only": true,
+  "inputs": {
+    "base": "99f14cd4a2308a53eef8b768dd532737e932b41e",
+    "admin_directories": [
+      "261021/data/reports/clock-owner-admin-053cb32639e54e04aea39f299e82711d"
+    ],
+    "new_admin_directory_observed": false,
+    "source_dossier_submitted_in_current_request": false,
+    "input_hashes": {
+      "261014/plan_mlops.md": "22ba29d011d3803eb405c359a157bb497dcec6489cebc923619f5fd14987d015",
+      "261021/work_log.md": "758c3b8b8eec36ae85c5ec31068509b4c72fe4f211776396cecac904e09e8f5f",
+      "261021/docs/clock-source-readiness.md": "2ae348963361e7ea7ec150ccf04b37ee1d563d586cb9fe2ed9d301d85a34166a",
+      "261021/docs/clock-owner-admin-read.md": "3501d89599bd2085ca40fbb5d809e88a0fa6efcb0c1924c9b38cc3db5c339477",
+      "261021/docs/clock-qualification-plan.md": "cc077a3d963df7fd9e14e999d30c32e4f8a9e8093af7b54978ab68741be73a9e",
+      "261021/docs/chrony-runtime-control.md": "7956493d37e4d2756764db392fbf7034795b5c49a55575ac85e867b87fa6c238",
+      "261021/docs/backend-time-path-review.md": "4f097f22dfc60e4471e7216252476c6d2e88cd6f39029846536429b90cfdea1f",
+      "261021/docs/reviews/20261108-t10-snapshot-checks.json": "0a6156495c66c4d5de0c0703a88b0c9f2af2e71884eea2b105779b1c1ff8e5cb"
+    },
+    "initial_git_status": "?? 260701/charts/\n?? 260701/logs/\n?? 260905/sets/bookkeeping-2kyu/images/assekiritono-flow.png\n",
+    "limits": [
+      "Directory names only; historical inventory is not current identity.",
+      "No repeated trace, source HEAD, OS changes, real fit or service operations.",
+      "Initial read-only commands ran through chat tools before this attempt wrapper; this file records inputs, not retroactive timed attempts."
+    ],
+    "user_reply": "No additional admin logs or independent source documents acquired (current async reply)."
+  },
+  "source_files": [
+    {
+      "path": "src/bike_mlops/clock_raw_bundle.py",
+      "bytes": 6817,
+      "sha256": "b7664cc7deb4558d66f4e2608a9e941ebe5a0087d96466d2bce81bacbea6acc0"
+    },
+    {
+      "path": "scripts/clock_raw_bundle.py",
+      "bytes": 2224,
+      "sha256": "3a8be4a49c2169d9d93cca64c9a1b1dd79541c0f9f3edada09157f039a2e9b88"
+    },
+    {
+      "path": "tests/test_clock_raw_bundle.py",
+      "bytes": 16128,
+      "sha256": "48c8f4d1e0c94d3bdc72bda2173420651e2c46878692b638ba53fdad41d6e144"
+    }
+  ],
+  "attempts": [
+    {
+      "id": "bundle-tests-v1",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "180",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_raw_bundle.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-08T04:57:17.460193+00:00",
+      "end_utc_local_unqualified": "2026-11-08T04:58:35.984478+00:00",
+      "start_monotonic_ns": 180319869279266,
+      "end_monotonic_ns": 180398553531651,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261108-clock-bundle/bundle-tests-v1.log",
+      "log_bytes": 2748,
+      "log_sha256": "c13833c88f6ea2f1e40644cba7f692caf74444a3ef8f8c8134f88cec8c5e6c30"
+    },
+    {
+      "id": "metadata-negative-before-fix-v1",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "90",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_raw_bundle.py",
+        "-k",
+        "noncanonical",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-08T04:57:52.513009+00:00",
+      "end_utc_local_unqualified": "2026-11-08T04:58:07.819488+00:00",
+      "start_monotonic_ns": 180355032326583,
+      "end_monotonic_ns": 180370388535568,
+      "exit_code": 1,
+      "log_path_ignored": "data/reports/20261108-clock-bundle/metadata-negative-before-fix-v1.log",
+      "log_bytes": 864,
+      "log_sha256": "777839dd5bc2b273744ddbae2ef5b7fc063effc3434cebc3b89d5163fe1a670d"
+    },
+    {
+      "id": "bundle-tests-v2",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "240",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_raw_bundle.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-08T04:58:17.786667+00:00",
+      "end_utc_local_unqualified": "2026-11-08T04:59:38.889244+00:00",
+      "start_monotonic_ns": 180380355721338,
+      "end_monotonic_ns": 180461764305510,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261108-clock-bundle/bundle-tests-v2.log",
+      "log_bytes": 2916,
+      "log_sha256": "8571df6acfd4626780418dcbf891d479fab6f2925482d6614204b9192820cf28"
+    },
+    {
+      "id": "bundle-tests-v3",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "180",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_raw_bundle.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-08T05:00:43.617758+00:00",
+      "end_utc_local_unqualified": "2026-11-08T05:02:08.588598+00:00",
+      "start_monotonic_ns": 180526685038511,
+      "end_monotonic_ns": 180611971974140,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261108-clock-bundle/bundle-tests-v3.log",
+      "log_bytes": 3066,
+      "log_sha256": "df8926386c1e755ca0e9c6456140a53f8f691834e43db56546bda675930afe82"
+    },
+    {
+      "id": "portable-demo-v1",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "120",
+        ".venv/bin/python",
+        "data/reports/20261108-clock-bundle/check_demo.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-08T04:58:36.251764+00:00",
+      "end_utc_local_unqualified": "2026-11-08T04:58:52.922973+00:00",
+      "start_monotonic_ns": 180398820823593,
+      "end_monotonic_ns": 180415595711882,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261108-clock-bundle/portable-demo-v1.log",
+      "log_bytes": 800,
+      "log_sha256": "64eb359599ccd85908330c7c1b0ad74791e5453242abe12548daa8c4a4bdeac2"
+    },
+    {
+      "id": "capture-regression-v1",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "180",
+        "/home/kenshin/work/claude_practice/261021/.venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_campaign_capture.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-08T04:59:04.666511+00:00",
+      "end_utc_local_unqualified": "2026-11-08T05:00:40.631912+00:00",
+      "start_monotonic_ns": 180427339261741,
+      "end_monotonic_ns": 180523699181476,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261108-clock-bundle/capture-regression-v1.log",
+      "log_bytes": 5258,
+      "log_sha256": "28b274a7bde60ff42e6ec12d5a3cb9eb671aa0ea27dc0979289045b3c50a2ea3"
+    },
+    {
+      "id": "schedule-regression-v1",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "180",
+        "/home/kenshin/work/claude_practice/261021/.venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_campaign_schedule.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-08T05:00:40.700967+00:00",
+      "end_utc_local_unqualified": "2026-11-08T05:02:20.445004+00:00",
+      "start_monotonic_ns": 180523768240751,
+      "end_monotonic_ns": 180623828369832,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261108-clock-bundle/schedule-regression-v1.log",
+      "log_bytes": 3509,
+      "log_sha256": "d57a0d182c4e6aca99dc9d3a039adfcec6af272eabd7fa81e76df4355b8b526d"
+    },
+    {
+      "id": "campaign-regression-v1",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "180",
+        "/home/kenshin/work/claude_practice/261021/.venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_campaign_review.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-08T05:02:20.505765+00:00",
+      "end_utc_local_unqualified": "2026-11-08T05:02:40.773457+00:00",
+      "start_monotonic_ns": 180623889101340,
+      "end_monotonic_ns": 180644252790204,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261108-clock-bundle/campaign-regression-v1.log",
+      "log_bytes": 6483,
+      "log_sha256": "f151953c54e8f7f981309bcb1fdc36040adfc807b77e873358210750dc2c75da"
+    },
+    {
+      "id": "local-structural-v1",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261108-clock-bundle/validate_local.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-08T05:01:06.343522+00:00",
+      "end_utc_local_unqualified": "2026-11-08T05:01:06.494330+00:00",
+      "start_monotonic_ns": 180549410831264,
+      "end_monotonic_ns": 180549561599281,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261108-clock-bundle/local-structural-v1.log",
+      "log_bytes": 298,
+      "log_sha256": "a1ceb72022be76332352e5cca5cd938009787e789eff1062a266bd4ddcfbb888"
+    },
+    {
+      "id": "compile-v1",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "src/bike_mlops/clock_raw_bundle.py",
+        "scripts/clock_raw_bundle.py",
+        "tests/test_clock_raw_bundle.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-08T05:02:49.369718+00:00",
+      "end_utc_local_unqualified": "2026-11-08T05:02:49.431332+00:00",
+      "start_monotonic_ns": 180652849053421,
+      "end_monotonic_ns": 180652910667533,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261108-clock-bundle/compile-v1.log",
+      "log_bytes": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "scope-validation-v1",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261108-clock-bundle/verify_scope.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-08T05:03:07.505138+00:00",
+      "end_utc_local_unqualified": "2026-11-08T05:03:07.675892+00:00",
+      "start_monotonic_ns": 180671040647494,
+      "end_monotonic_ns": 180671211399789,
+      "exit_code": 1,
+      "log_path_ignored": "data/reports/20261108-clock-bundle/scope-validation-v1.log",
+      "log_bytes": 402,
+      "log_sha256": "6c692ea47c5132722d838be8936875469af941e389e2543240deeae428c6f87a"
+    },
+    {
+      "id": "scope-validation-v2",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261108-clock-bundle/verify_scope.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-08T05:03:40.817289+00:00",
+      "end_utc_local_unqualified": "2026-11-08T05:03:41.002286+00:00",
+      "start_monotonic_ns": 180704444336760,
+      "end_monotonic_ns": 180704629324932,
+      "exit_code": 1,
+      "log_path_ignored": "data/reports/20261108-clock-bundle/scope-validation-v2.log",
+      "log_bytes": 402,
+      "log_sha256": "6c692ea47c5132722d838be8936875469af941e389e2543240deeae428c6f87a"
+    },
+    {
+      "id": "scope-validation-v3",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261108-clock-bundle/verify_scope.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-08T05:04:18.784866+00:00",
+      "end_utc_local_unqualified": "2026-11-08T05:04:18.971403+00:00",
+      "start_monotonic_ns": 180742588091721,
+      "end_monotonic_ns": 180742774638879,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261108-clock-bundle/scope-validation-v3.log",
+      "log_bytes": 239,
+      "log_sha256": "bcb8edf6ce5f07c96beac431137b5e4e84393811fd0b0f32ea6e7376023ab5ea"
+    }
+  ],
+  "representative": {
+    "synthetic_only": true,
+    "plan_sha256": "66803aa26911a89b197da09564a679fb934cd54d7be90bf210026cfb457dc27f",
+    "archive_sha256": "fdc44fc03f170b6899515cd7e89ee1d0bb9318e70dcfe97edced1e2460883072",
+    "archive_bytes": 17015650,
+    "campaign_sha256": "12d91db7d1fd0aa7d162c3042bea0c6eb8e0b12058c16e073279a95deffa5265",
+    "archive_only_child_exit": 2,
+    "offline_checks_status": "passed",
+    "clock_qualification_status": "incomplete",
+    "source_raw_files": [
+      "complete.json",
+      "journal.jsonl",
+      "plan.json",
+      "sources.json"
+    ],
+    "zip_members": [
+      "manifest.json",
+      "raw/complete.json",
+      "raw/journal.jsonl",
+      "raw/plan.json",
+      "raw/sources.json"
+    ],
+    "claims_not_established": [
+      "actual clock qualification",
+      "independent source authenticity",
+      "real elapsed or UTC calibration",
+      "real candidate decision"
+    ],
+    "raw_retained_ignored": true
+  },
+  "raw_files": [
+    {
+      "path": "data/reports/20261108-clock-bundle/archive-only-child.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/archive-only-child.stdout",
+      "bytes": 77,
+      "sha256": "15ce783a19f7fbe64e860be575cb01878de6a2fcd9e56c643392d77fca9cdee7"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/archive-only-review.json",
+      "bytes": 111764,
+      "sha256": "7149c9e69a133a2ad572ea1c061deb409e8ecad9714dcee9de5ef1a193754565"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/build_index.py",
+      "bytes": 3468,
+      "sha256": "e8fd753b1f7dcd1dcce15b0419b4fe126711cf476256169e390e832a5c319d48"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/bundle-before-metadata-fix.py",
+      "bytes": 6567,
+      "sha256": "298356d13e8d25626f75449f7bfbd6d93737679ce115e5fcb48b8f84337d97d0"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/bundle-tests-v1.json",
+      "bytes": 733,
+      "sha256": "a815bf431dd002005fb5a3b4240ce90c5390431f6a43ed63c83c2eaf19e5231c"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/bundle-tests-v1.log",
+      "bytes": 2748,
+      "sha256": "c13833c88f6ea2f1e40644cba7f692caf74444a3ef8f8c8134f88cec8c5e6c30"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/bundle-tests-v2.json",
+      "bytes": 733,
+      "sha256": "ccab4a02025e31d7767aa016a6895c0e3d10096e22905f7ca1076b98724e606f"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/bundle-tests-v2.log",
+      "bytes": 2916,
+      "sha256": "8571df6acfd4626780418dcbf891d479fab6f2925482d6614204b9192820cf28"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/bundle-tests-v3.json",
+      "bytes": 733,
+      "sha256": "c7a6bb231bffcad8cea264f07c48465cf37c39a0af02532f607cf9299ae6f077"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/bundle-tests-v3.log",
+      "bytes": 3066,
+      "sha256": "df8926386c1e755ca0e9c6456140a53f8f691834e43db56546bda675930afe82"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/campaign-regression-v1.json",
+      "bytes": 794,
+      "sha256": "5e7711f65ab14f193c5202b3be993d425b309231ea37473da36d1cf0ec62498d"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/campaign-regression-v1.log",
+      "bytes": 6483,
+      "sha256": "f151953c54e8f7f981309bcb1fdc36040adfc807b77e873358210750dc2c75da"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/capture-regression-v1.json",
+      "bytes": 793,
+      "sha256": "ab4e874d391705099251b279f4681c26104bb9bada4be9597aeac54feaf850ac"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/capture-regression-v1.log",
+      "bytes": 5258,
+      "sha256": "28b274a7bde60ff42e6ec12d5a3cb9eb671aa0ea27dc0979289045b3c50a2ea3"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/check_demo.py",
+      "bytes": 2066,
+      "sha256": "6ba95b25907505fe8950b674ef6e6ec5cd735ba5415fb41a0a79dace903f3cfc"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/compile-v1.json",
+      "bytes": 686,
+      "sha256": "948f16b817f321c035b191c4dfebbd29788546fd1261347fd1e94049588880f7"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/compile-v1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/cwd-edit-failure.json",
+      "bytes": 518,
+      "sha256": "ebe89f42fc128860e58161cad5ac09902c504708dacd38a19f2cae1cf4327288"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/demo-summary.json",
+      "bytes": 890,
+      "sha256": "da29423f544e89d7876629502e759423c2395ce00ba8ee9336dd1572d185107b"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/local-structural-v1.json",
+      "bytes": 613,
+      "sha256": "6cdd9cc18866af5dd43cee0fd4cca1a042c0c73cab1daf0fa770c7341e075cc3"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/local-structural-v1.log",
+      "bytes": 298,
+      "sha256": "a1ceb72022be76332352e5cca5cd938009787e789eff1062a266bd4ddcfbb888"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/metadata-negative-before-fix-v1.json",
+      "bytes": 793,
+      "sha256": "88a757045122d9f9c0c6ae542c761e7e0482cf89ab8ae222d00f91083547122d"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/metadata-negative-before-fix-v1.log",
+      "bytes": 864,
+      "sha256": "777839dd5bc2b273744ddbae2ef5b7fc063effc3434cebc3b89d5163fe1a670d"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/portable-demo-v1.json",
+      "bytes": 673,
+      "sha256": "0fda6a991491c5198b21f99d42bf475a0b5786cad793a4c79f27413bceff13b3"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/portable-demo-v1.log",
+      "bytes": 800,
+      "sha256": "64eb359599ccd85908330c7c1b0ad74791e5453242abe12548daa8c4a4bdeac2"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/preflight.json",
+      "bytes": 1727,
+      "sha256": "48787913279d67f0431030abfe681725b2b20d9a8cee731118c75514d6af8b78"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/regression.py",
+      "bytes": 591,
+      "sha256": "c91302a34e75991c63af2c483caec3ff1e66d16210dc11bf84a960fc337e0785"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/representative-raw/complete.json",
+      "bytes": 347,
+      "sha256": "432bbd1a97dc98c6656f35c47f77af5df944aa7a7005d1c2149cf4037e28deb6"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/representative-raw/journal.jsonl",
+      "bytes": 16843497,
+      "sha256": "0a0c52d914cbf0efc41a449de2a2b4b1693c41292c47fb5cedaf394ab16b999d"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/representative-raw/plan.json",
+      "bytes": 549,
+      "sha256": "ae35268d32304cf8bbace9a8a32d1a5079605857450b9dc19251db62b9025f15"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/representative-raw/sources.json",
+      "bytes": 170126,
+      "sha256": "8631d0933d4bd077e42218d552f2cfcd32ffd8f0d318c9ec5b7c0f2475587fe4"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/representative.zip",
+      "bytes": 17015650,
+      "sha256": "fdc44fc03f170b6899515cd7e89ee1d0bb9318e70dcfe97edced1e2460883072"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/run_attempt.py",
+      "bytes": 1244,
+      "sha256": "62df5fee98294644b7a3ebc2a0087ffa98f9be75fc4c26285681b39def88ac29"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/schedule-regression-v1.json",
+      "bytes": 796,
+      "sha256": "59ffb79e1ddfd54e39ee8e62525622681b82c47ca26e766922b055d348531963"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/schedule-regression-v1.log",
+      "bytes": 3509,
+      "sha256": "d57a0d182c4e6aca99dc9d3a039adfcec6af272eabd7fa81e76df4355b8b526d"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/scope-validation-v1.json",
+      "bytes": 611,
+      "sha256": "31a26f58b2d994651a9d977b7ad5cbbad7b4a4fc641e7b3402ed4d582bf17d32"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/scope-validation-v1.log",
+      "bytes": 402,
+      "sha256": "6c692ea47c5132722d838be8936875469af941e389e2543240deeae428c6f87a"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/scope-validation-v2.json",
+      "bytes": 611,
+      "sha256": "f1a05911bfea3bcacabcef599614c6a08762c88e93eae724304d98e889b853f7"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/scope-validation-v2.log",
+      "bytes": 402,
+      "sha256": "6c692ea47c5132722d838be8936875469af941e389e2543240deeae428c6f87a"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/scope-validation-v3.json",
+      "bytes": 611,
+      "sha256": "4db83c2f6eefbea2173e2e4da53361988d4d13dc0266bdcb2ca73fec90b0bc7d"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/scope-validation-v3.log",
+      "bytes": 239,
+      "sha256": "bcb8edf6ce5f07c96beac431137b5e4e84393811fd0b0f32ea6e7376023ab5ea"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/test-before-metadata-fix.py",
+      "bytes": 15274,
+      "sha256": "d9d6f302ec2125c8b4826c35bb60a53b40492e6501d5cda63866c3548a3e4230"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/validate_local.py",
+      "bytes": 1630,
+      "sha256": "6da7c3eb825529174034a35401402c3e81f4751f7996e9e8c1558e935e33cd91"
+    },
+    {
+      "path": "data/reports/20261108-clock-bundle/verify_scope.py",
+      "bytes": 2094,
+      "sha256": "6671f88a331489da301dccefcff77f059b7acb7e2a5978875bb140706dab994a"
+    }
+  ],
+  "limitations": [
+    "Additional admin PHC/UDP and independent UTC/elapsed dossiers are not acquired, confirmed by the user.",
+    "No repeated trace, source HEAD, source reaggregation or real fit/scoring.",
+    "Initial review commands are recorded in preflight as input inspection, not retrospectively timed command attempts.",
+    "The first 16 tests preceded the metadata regression; the failing metadata test was retained before fixing canonical ZIP equality.",
+    "Second run had 17 tests, final run 18 tests adds TERM cleanup. The second 240-second safety limit was not used to resolve a failure; v1 succeeded at 78.435 seconds, final v3 returns to 180 seconds. All displayed local times are unqualified.",
+    "Bundle verifies synthetic raw bytes only; no source authentication, real clock qualification, OS changes or real model decision.",
+    "Source, schema, writer, dependency lock, real DB/registry and current serving unchanged outside the three new bundle/verifier/test files.",
+    "No workflow or 16-member CI artifact allowlist changes; representative raw/ZIP remain ignored local evidence.",
+    "SIGKILL and power-loss cleanup not guaranteed. Atomic publish can precede nonzero interruption.",
+    "Documentation diff check failed twice: first blank EOF lines, then an edit command used the wrong relative cwd; both logs and a separate cwd failure note are retained. The third scope validation passed.",
+    "Exact implementation CI and full-suite acceptance must be added in a later index before calling final CI acceptance complete."
+  ],
+  "boundaries": {
+    "clock_qualification_passed": false,
+    "real_fit_or_scoring": false,
+    "T10_snapshot_protocol_changed": false,
+    "OS_or_clock_setting_changes": false,
+    "real_DB_registry_serving_changes": false,
+    "strict_future_refusal_maintained": true
+  }
+}

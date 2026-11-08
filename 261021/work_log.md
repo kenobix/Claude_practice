@@ -4139,3 +4139,45 @@ snapshot-validation-v1は192原本hash+正式dataset3 file、352相対link、914
 各失敗終了値と完成CI570件、固定時計policy不変、秘密パターン/diffを照合して成功した。
 同検証log/metadataも最終索引へ追加して再照合し、今回のT10/CI/操作説明9対象だけをcommit/pushする。
 無関係な未追跡3パスは含めない。後続の文書commitを先行実装CIの試験対象と呼ばない。
+
+### 2026-11-08：基点99f14cdから、必要時計入力の具体化と合成raw bundle
+
+計画§11.6、T10最終索引、源選定/管理者/chronyd/backend資料を確認。
+標準保存先には旧clock-owner-admin directory1件のみ。追加管理者ログ/独立UTC・elapsed資料は「まだ取得していない」とユーザーが回答した。
+旧inventoryを現在identityへ転記せず、同じtrace/非飽和値/原本HEADを反復しない。
+T09取得/T10正式snapshot・protocol静的受入は保持し、実fit/採点/registry操作には進まない。
+docs/clock-input-request.mdへ必要な限定管理者ログ、source管理元/真正性/共有依存/精度原本/遅延interval/reader bytesと保存先を具体化した。
+候補未選定、同期責任・飽和原因・全時計資格を未確定のまま維持する。
+
+独立課題としてclock_raw_bundle.pyの部品/CLI/専用テストを追加。
+completeな合成raw4fileを固定ZIP_STOREDの5memberへ保存し、plan/member SHAとraw chain/nonce/sequence/source/identityを既存verifierで再計算する。
+保存sourceは実行せず、exportはinstall済み許可6/7 source bytes以外を拒否。余剰file、変化、不正hash、traversal/symlink/圧縮/暗号化を拒否する。
+private領域の固定名へ書き、extractは使わず、排他的確定とTERM/INT・IO例外時のstaging回収を実装。
+CLIの0はexport完了のみ。reviewは既知違反1、未資格2で、実時計資格をpassedにする経路は無い。
+
+全試行はdata/reports/20261108-clock-bundle/へ分離。
+run_attempt.pyはcommand/cwd/終了値・未資格UTC/MONOTONIC・log bytes/SHAを保存する。
+冒頭の読取tool操作はpreflight.jsonへ入力hash/statusとして記録し、後からtimed attemptへ捏造しない。
+bundle-tests-v1は16件/78.435表示秒で成功。追加したmetadata-negative-before-fix-v1は1件FAIL/exit1。
+初期readerはZIP末尾の余剰byteを拒否しなかった。修正前source/testとFAILを保存し、固定表現ZIPとのbyte一致で末尾/前置/comment/extra fieldも拒否するよう修正。
+bundle-tests-v2は17件/81.145表示秒で成功。この試行の上限240秒は失敗回避ではなく、初回は元の180秒内で成功していた。
+最終bundle-tests-v3は上限180秒へ戻し、CLI実SIGTERM自己通知/handler復元とcleanupを加え18件/84.917表示秒が成功。
+既存source/schema/writer/capture・schedule・review・future拒否/依存lock/workflowの変更は無い。
+
+portable-demo-v1はexit0。代表ZIPは17,015,650byte、SHA=fdc44fc03f170b6899515cd7e89ee1d0bb9318e70dcfe97edced1e2460883072。
+元rawを渡さない別process/cwd、PATHだけの環境でarchive-onlyを再計算し、childは想定exit2。
+専用テストでもこのattemptの元rawを削除した後、別processで同report/campaign SHAを照合。
+数値offline passedでもclock qualification incomplete。合成参照は共通fixture生成元で、独立源/実UTC・elapsed/実候補採否を証明しない。
+代表raw/ZIP/reportはignored reportsへ保持し、Git/既存16CI artifactへ追加しない。
+既存回帰はcapture30件/96.130表示秒、schedule19件/99.864表示秒、campaign37件/20.191表示秒が成功。
+AST/compileall、旧capture/schedule/rate/review・lock/compose/固定資格設計hash不変を確認。
+scope-validation-v1はREADME/runbook末尾空行でdiff --check失敗/exit1。
+最初の修正commandはcwdを誤って相対pathへ261021を二重に指定し、FileNotFoundError/文書未編集。scope-validation-v2も同じ末尾空行でexit1。
+cwd-edit-failure.jsonへこのtool操作失敗を保存し、repo rootから余分な空行を除去した。テスト/製品条件は変更しない。
+T10固定3fileはhash一致の確認のみで、再集計/refreeze/消費予約は無い。
+
+local原本/hash/終了値と限界はdocs/reviews/20261108-clock-bundle-checks.jsonへ結合。
+実装commitの全suite/隔離system CIとartifact/cleanupは、このlocal記録時点では未確認。
+後続CI索引で完全commit SHAと受入を確認するまでCI完了と呼ばない。
+SIGKILL/電源断のcleanup、不可視差替え、源の真正性、実host deadlineや実時計資格はbundleでは保証しない。
+OS/時計設定・実DB/registry/現在の配信・T10原本/protocolは変更せず、前提未達のfit/採点を開始しなかった。

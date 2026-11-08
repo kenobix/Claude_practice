@@ -191,3 +191,10 @@ catch-upや観測延長をせず、欠測と同じphaseのUTC/identity/future違
 47原本のSHAと32,849全hourを独立照合し、train29,919/validation1,464/final1,461を固定しています。
 ログ・確認用の読取コマンドも同文書にあります。実fit・採点・Capitalモデル登録は未実施で、MLflowに新しい精度結果はまだありません。
 時計資格等が未達のため、この事前固定だけで学習を開始しません。SQL修正9147027の[CI570件・全system・artifact/hash/cleanup](docs/reviews/20261108-t10-snapshot-checks.json)まで確認済みです。
+
+## 追加の時計入力と合成原本の持ち運び（2026-11-08）
+
+T09/T10の静的受入後も、独立時計源と時計資格が未達のため実fit/採点は保留している。
+次に必要な管理者ログ・源の真正性/依存関係/不確かさの資料は[入力一覧](docs/clock-input-request.md)、
+合成rawを別processで再計算する方法は[原本bundle](docs/clock-raw-bundle.md)を参照する。
+bundleの数値が良好でも時計資格は`incomplete`。[今回の検証索引](docs/reviews/20261108-clock-bundle-checks.json)で試行/失敗/CI状態を区別する。

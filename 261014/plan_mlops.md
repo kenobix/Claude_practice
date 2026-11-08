@@ -532,7 +532,13 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 <a id="remaining-work-latest"></a>
 
-#### 2026-11-06 fake固定周期/phase終端の合成受入後の残課題
+#### 2026-11-08 正式snapshot静的受入後の残課題
+
+基点`99f14cd`からの追加作業：追加管理者ログ/独立源資料はユーザーが未取得と回答。
+[次に必要な入力](../261021/docs/clock-input-request.md)へ提出項目・保存先・不確かさの根拠を具体化した。
+独立課題として[合成raw bundle](../261021/docs/clock-raw-bundle.md)を実装し、rawだけをZIPで別processへ渡して再計算する。
+local専用/回帰/負例と実装commit CIの状況は[今回索引](../261021/docs/reviews/20261108-clock-bundle-checks.json)へ記録する。
+ZIP成功は源認定・実資格・fit許可ではない。既存clock policy、T10原本/protocol、future拒否は維持する。
 
 最新の[fake固定周期/phase終端](../261021/docs/clock-fixed-schedule.md)は`c1c5dcb`の[CI42126656283](https://github.com/kenobix/Claude_practice/actions/runs/42126656283)で
 専用19件/旧採取30件を含む全568件・全system/16 artifact/hash/archive-only/cleanupまで受入済み。
