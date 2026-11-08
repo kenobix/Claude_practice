@@ -123,7 +123,7 @@ def review_bundle(path, *, expected_plan_sha256):
         infos = archive.infolist()
         if len(infos) != len(NAMES) or {item.filename for item in infos} != NAMES:
             raise ValueError("Unexpected synthetic bundle members")
-        if sum(item.file_size for item in infos) > LIMIT + MANIFEST_LIMIT:
+        if sum(item.file_size for item in infos if item.filename != "manifest.json") > LIMIT:
             raise ValueError("Synthetic bundle too large")
         payloads = {}
         for item in infos:

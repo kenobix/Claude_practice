@@ -241,6 +241,12 @@ class ClockBundleTests(unittest.TestCase):
         with patch.object(bundle, "ZIP_LIMIT", 100):
             with self.assertRaises(ValueError):
                 self.review()
+        # Distinguish the total raw budget from the separate manifest allowance.
+        raw_size = sum(len(data) for name, data in self.payloads().items()
+                       if name != "manifest.json")
+        with patch.object(bundle, "LIMIT", raw_size - 1):
+            with self.assertRaises(ValueError):
+                self.review()
         payloads = self.payloads()
         for data in (b'{"kind":"x","kind":"y"}', b'{"kind":NaN}', b"x" * 16385):
             payloads["manifest.json"] = data

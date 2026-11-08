@@ -539,6 +539,9 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 独立課題として[合成raw bundle](../261021/docs/clock-raw-bundle.md)を実装し、rawだけをZIPで別processへ渡して再計算する。
 local専用/回帰/負例と実装commit CIの状況は[今回索引](../261021/docs/reviews/20261108-clock-bundle-checks.json)へ記録する。
 ZIP成功は源認定・実資格・fit許可ではない。既存clock policy、T10原本/protocol、future拒否は維持する。
+先行f071c09後の境界reviewで、raw総量へmanifest用予算を流用できる不足を1byte境界の負例で再現し修正した。
+[追加境界索引](../261021/docs/reviews/20261108-clock-bundle-budget-checks.json)へ修正前FAILと修正後18件を保存。
+最終CI受入は修正後の完全commit SHAで確認し、先行CIの成功を持ち越さない。
 
 最新の[fake固定周期/phase終端](../261021/docs/clock-fixed-schedule.md)は`c1c5dcb`の[CI42126656283](https://github.com/kenobix/Claude_practice/actions/runs/42126656283)で
 専用19件/旧採取30件を含む全568件・全system/16 artifact/hash/archive-only/cleanupまで受入済み。

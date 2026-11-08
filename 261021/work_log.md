@@ -4181,3 +4181,20 @@ local原本/hash/終了値と限界はdocs/reviews/20261108-clock-bundle-checks.
 後続CI索引で完全commit SHAと受入を確認するまでCI完了と呼ばない。
 SIGKILL/電源断のcleanup、不可視差替え、源の真正性、実host deadlineや実時計資格はbundleでは保証しない。
 OS/時計設定・実DB/registry/現在の配信・T10原本/protocolは変更せず、前提未達のfit/採点を開始しなかった。
+
+#### raw総量の境界review追補（実装f071c09後、最終CI受入前）
+
+f071c09を11対象だけでcommit/pushし、完全SHAでCI42449372982を特定した。
+最初の短いSHA照会はexit0/空配列だったため、完全SHAで再照会。空配列をCI失敗や完了と呼ばない。
+CI待ちの追加reviewで、読取側のraw総量上限にmanifest用16KiBを合算していた点を発見した。
+raw総量だけを1byte下回るように試験上のLIMITを小さくし、個別file/ZIP上限には収まるfixtureで拒否を要求。
+total-raw-budget-before-fix-v1は1件FAIL/exit1を再現した。大きなZIP bombを作らず同じ上限分離の不足を検証した。
+raw memberのサイズ合計をLIMITへ照合し、manifestは別のMANIFEST_LIMITを維持するよう修正。
+原本/schema/policy/上限数値は変えず、読取条件を文書どおり厳密化した。
+修正前module/CLI/testをaccepted-f071/へ別名保存。最初の保存commandは2fileの同名basenameを使った不適切なコピーだったため、その新規コピーだけ破棄し別名で再保存した。製品と旧証拠は不変。
+旧local索引は当時のsource/hash/CI_PENDINGとして固定し、新しいbudget索引と最終実装CIへ受入を分ける。
+用語集へsource dossier/真正性/不確かさ・共通障害/raw bundle/固定ZIP・排他的確定を補足。
+
+境界修正後bundle-budget-final-v1は18件/80.099表示秒で成功、budget-compile-v1もexit0。
+追加文書patchは2つ目の対象に別文書の行を指定してverification failedとなった。実diffではplan側も未適用だったため、必要なplan追記だけを再適用した。
+[境界索引](docs/reviews/20261108-clock-bundle-budget-checks.json)で修正前FAILと最終専用試験を分離する。
