@@ -4477,3 +4477,50 @@ tracked差分のscope確認はv1でも有効だったが、未追跡の範囲確
 documentation-validation-v2はexit0、未追跡の許容範囲、3原本/2hash、基点7資料、review証拠34件、相対link246件、秘密pattern/diff checkを確認した。
 最終索引はwrapper終了後にv2の終了済みlog/metadata/resultも結合し、以後のstage/commit/push receiptは循環参照を避けlocalへ分ける。
 製品source/workflowを変更していないため新しいsuite/CI受入は主張しない。
+
+## 2026-11-09：基点114af9d・NICT取得方法とsource条件のreview
+
+基点114af9d7d62870ea668432ede5bb174334a153fbとgit statusを確認。無関係な未追跡3パスは保持し対象外とした。
+計画§11.6の最新表、work_log、前回task/Web reviewと証拠索引、入力一覧/源受入条件、campaignの固定policy/校正入力を読んだ。
+新しい管理者原本や独立elapsed資料は今回提示されていない。受入済みPHC/UDP/task/peer、T09/T10を再採取・再計数しない。
+
+NICT公式公開NTP/index・開発者guideに加え、今回初めてFAQを確認した。
+FAQ Q1-4は平均20回/時・480回/日を超える場合に事前連絡を求め、16秒poll例を配下へ供給するstratum2と関連付けている。
+前回の「16秒以上」だけの説明は不足だったため、Web源review/入力一覧/源readiness/計画を訂正した。
+古いOSの説明も混在する公式FAQだが、個人計測の例外や制限撤廃を確認できず、保守的に両条件を適用する。
+固定policyの直接query案では30分31境界、共有できる最も有利な60分でも61時点、再開後込み122時点。
+半開の1時間でも60回で既定の時間条件を超える。全日480回未満や16秒以上だけでは使用可にしない。
+提供元への頻度/用途・認証資料の問い合わせ文案を用意したが、外部へ送信せず、UDP/TCP/source APIのqueryも0件。
+
+RFC5905 §8、RFC8915の認証/証明書/遅延、RFC8633のKoD、NICT FAQ/公式source精度をreviewした。
+origin照合/peer/nonce/hashと送信者認証を分け、NICT NTSは資料未確認であって非対応確定とも採用済みとも判定しない。
+独立したRTT上限Dがある場合の受信UTC包含[T3-e3,T2+e2+D]を提案し、未校正QPCのRTTをDへ使う循環は拒否した。
+QPC bracketと外部event間の差を使う非循環の平均比の提案式も導出。ただし固定first-reach境界とremote eventの対応は未証明。
+全体比1.0でも固定60秒窓が逸脱する反例を残し、campaign adapterや補間で未取得を埋める実装は行わない。
+これはsource採用/実測の証拠ではなく方法review。server精度・典型値・root dispersionからclient誤差を推定して合格させない。
+
+新しいclock-nict-method-review.mdへ条件/式/原本の拒否設計/依存関係/次の選択肢をまとめた。
+service比較案Dは、外部源の利用条件や精度不足を解決する比較ではないため今回helperを作成/実行しない。
+必要になれば具体的helper作成/検証後に別途許可を求める順序を維持。起動/停止/追加resync/poll/task/log変更は行っていない。
+host/backend管理責任・停止caller・chronyd内部理由・T03過去原因は未確定。自然再発を探索して既存traceを別identityへ付け替えていない。
+
+local ignored recipe verify_math.pyの標準library13件をmathematical-obligations-v1で実行、exit0。
+450通りの隠れevent/誤差で区間包含を検算。広いbracketの中点誤判定、明確な逸脱、8無効domain、
+source誤差の省略、負delay、境界補間の反例、RTT根拠欠落、固定窓/phase差、頻度条件を確認した。
+この13件は研究用の有限モデルで製品unit/packet parser/認証/NICT実通信の試験ではない。数値insideでも資格incompleteを固定。
+全recipe/command/cwd/exit/log/hash/未資格UTC・MONOTONICはdata/reports/20261109-nict-method-review/へ保存。
+Web toolのURL/要約と探索のno-matchもsource-notes.jsonへ記録し、取得時刻精度や生HTTP原本を後付けしない。
+文書/索引の最終検証結果は同directoryとdocs/reviews/20261109-nict-method-checks.jsonへ保存する。
+製品source/schema/writer/lock/workflowの変更は無く、前提待ちで独立着手できる別の未検証製品受入条件も特定できなかった。
+受入済み全suite/CIを反復せず、新しいCI受入や実資格は主張しない。
+OS/時計/サービス・実DB/registry/現配信は変更せず、future拒否・実fit/採点/T02/T11/T12/T13bの保留を維持する。
+documentation-validation-v1はexit1。git ls-files --directoryが空directoryも列挙し、git statusに現れない3つの既存directoryをscope逸脱と判定した。
+それらの内容は読まず、--no-empty-directory付きの列挙がgit statusの既存3パス+今回2新規fileと一致することを確認。
+許容pathを増やすのではなく空directoryを除く方法へ検証recipeを修正した。v1本文/入力索引/終了値/失敗logを保持し、v2を別試行として実施する。
+documentation-validation-v2はexit0。対象7file、基点9資料、review証拠21file、相対link241件、秘密pattern/差分scopeを確認した。
+最終索引はv2終了後のlog/metadata/resultも再結合する。stage/commit/push receiptとstaged.diffは自己参照を避けてlocalで別保存する。
+
+push-review-v1はexit1、remote先行更新によるfetch-first拒否。fetch-review-v1で933ec83までの別作業5commitを取得。
+対象は261109/とroot READMEで今回7fileと非重複。rebase-review-v1はexit0で先行変更を保持し、元5c163faと載せ直し後の7file bytesが完全一致することを確認した。
+この出版前失敗/取得/rebase receiptのhashと終了値も索引へ追記。原本reviewの基点114af9dや既存24証拠を新parentへ書き換えない。
+最終記録を同じ未公開commitへamendして通常pushする。amend/pushの最終receiptは循環参照を避けlocalへ保存し、force pushは行わない。

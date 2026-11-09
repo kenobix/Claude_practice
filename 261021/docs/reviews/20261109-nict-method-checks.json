@@ -1,0 +1,491 @@
+{
+  "schema_version": 1,
+  "base_commit": "114af9d7d62870ea668432ede5bb174334a153fb",
+  "client_date_label": "2026-11-09",
+  "status": "NICT_METHOD_REVIEW_COMPLETE_SOURCE_AND_CLOCK_QUALIFICATION_PENDING",
+  "review": {
+    "new_constraint": "FAQ average20/hour and480/day; prior contact above limit, separate16-second minimum",
+    "direct_boundary_query_model": {
+      "per_phase": 31,
+      "per_trial_minimum": 61,
+      "two_trials_minimum": 122,
+      "half_open_hour": 60
+    },
+    "proposed_method": "Causal timestamp/counter brackets with explicit source error; not a campaign adapter",
+    "source_authenticity": "not established",
+    "source_error_and_fixed_boundary_mapping": "not established",
+    "nict_nts_support": "unconfirmed, not proved unsupported",
+    "service_comparison": "not necessary to resolve source review; helper not prepared; not authorized or executed",
+    "other_independently_runnable_unverified_product_acceptance_identified": false
+  },
+  "mathematical_obligations": {
+    "status": "SYNTHETIC_MATHEMATICAL_OBLIGATIONS_ONLY",
+    "tests": 13,
+    "finite_hidden_event_combinations": 450,
+    "examples": {
+      "small_synthetic_bracket": {
+        "lower": {
+          "numerator": 2999950,
+          "denominator": 3000001
+        },
+        "upper": {
+          "numerator": 3000050,
+          "denominator": 2999999
+        },
+        "numeric_relation": "inside"
+      },
+      "wide_synthetic_bracket": {
+        "lower": {
+          "numerator": 2999000,
+          "denominator": 3000001
+        },
+        "upper": {
+          "numerator": 3001000,
+          "denominator": 2999999
+        },
+        "numeric_relation": "indeterminate"
+      }
+    },
+    "nict_source_adopted": false,
+    "real_packets_sent": 0,
+    "clock_qualification_status": "incomplete",
+    "campaign_adapter_implemented": false
+  },
+  "web_document_review": {
+    "kind": "PRIMARY_DOCUMENT_REVIEW_NOT_RAW_HTTP_OR_TIME_CALIBRATION",
+    "client_date_label": "2026-11-09",
+    "sources": [
+      {
+        "url": "https://jjy.nict.go.jp/tsp/PubNtp/index.html",
+        "finding": "Official ntp.nict.jp service and independent JST candidate; server-side precision is not a client-side accuracy guarantee. No service requests performed."
+      },
+      {
+        "url": "https://jjy.nict.go.jp/tsp/PubNtp/clients.html",
+        "finding": "Minimum poll interval16 seconds; alone does not establish all applicability conditions."
+      },
+      {
+        "url": "https://jjy.nict.go.jp/tsp/PubNtp/qa.html",
+        "finding": "Q1-4 additionally limits average20/hour and480/day and asks prior contact above this;16-second example concerns stratum2 serving downstream clients. Q2-2 separates server timestamp precision and client uncertainty. Old OS examples are present; no revocation or private measurement exception established. Authentication/NTS adoption details not established by these pages."
+      },
+      {
+        "url": "https://www.rfc-editor.org/rfc/rfc5905.html#section-8",
+        "finding": "Origin and replay checks, four timestamps and offset/delay calculation; client frequency mismatch may cause negative calculated delay. These protocol facts do not authenticate a sender or provide a metrological bound for this client. No RFC clamp adopted in the diagnostic."
+      },
+      {
+        "url": "https://www.rfc-editor.org/rfc/rfc8915.html#section-8",
+        "finding": "NTS provides identity/authentication with TLS/AEAD; initial certificate validation has time-bootstrap considerations and delay attacks remain. No validation bypass or NICT NTS support assumed."
+      },
+      {
+        "url": "https://www.rfc-editor.org/rfc/rfc8633.html#section-5.4",
+        "finding": "KoD handling must respect request correspondence and reduce load; the proposed diagnostic instead terminates for review, with no retry/fallback loop."
+      }
+    ],
+    "exploration": [
+      "web find for the literal negative delay returned no match; focused RFC5905 section8 read located frequency-mismatch discussion. This was a search no-match, not a product test failure.",
+      "Broad tool output included truncation. Focused reads were used for the relied-on passages. No missing source bytes, original HTTP responses, acquisition times, or complete tool transcript were reconstructed."
+    ],
+    "not_performed": [
+      "NTP/DNS-specific service probe",
+      "NTS handshake",
+      "HTTP time API request",
+      "provider inquiry",
+      "OS/service change",
+      "time calibration"
+    ],
+    "limitations": [
+      "Tool-rendered document review, not source raw archive",
+      "No packet capture or source authentication evidence",
+      "No new independent elapsed dossier supplied",
+      "No new administrator capture or natural T03/tick11000 trace"
+    ]
+  },
+  "base_references": [
+    {
+      "base_path": "261014/plan_mlops.md",
+      "commit": "114af9d7d62870ea668432ede5bb174334a153fb",
+      "path": "261021/data/reports/20261109-nict-method-review/references/261014/plan_mlops.md",
+      "bytes": 145277,
+      "sha256": "c7ade6136c743723d96a833ba4b196f12a8a15314616586cbc5c1ebb27d703e1"
+    },
+    {
+      "base_path": "261021/work_log.md",
+      "commit": "114af9d7d62870ea668432ede5bb174334a153fb",
+      "path": "261021/data/reports/20261109-nict-method-review/references/261021/work_log.md",
+      "bytes": 564981,
+      "sha256": "809992a537ecf889c3ceefe7ab1b6fc5a3a7e2a4a6e77314a8fc09f636af3817"
+    },
+    {
+      "base_path": "261021/docs/clock-web-source-review.md",
+      "commit": "114af9d7d62870ea668432ede5bb174334a153fb",
+      "path": "261021/data/reports/20261109-nict-method-review/references/261021/docs/clock-web-source-review.md",
+      "bytes": 5323,
+      "sha256": "ebad77e5f4f22b92fbe8cc5bb22f0659b9e4aa1e447a99d0f5977fe06c101315"
+    },
+    {
+      "base_path": "261021/docs/clock-task-definition-review.md",
+      "commit": "114af9d7d62870ea668432ede5bb174334a153fb",
+      "path": "261021/data/reports/20261109-nict-method-review/references/261021/docs/clock-task-definition-review.md",
+      "bytes": 5235,
+      "sha256": "0256a087bb0e361354c1f02cf7bbdafa58601b66eb569593bdd29aea33f5132f"
+    },
+    {
+      "base_path": "261021/docs/clock-input-request.md",
+      "commit": "114af9d7d62870ea668432ede5bb174334a153fb",
+      "path": "261021/data/reports/20261109-nict-method-review/references/261021/docs/clock-input-request.md",
+      "bytes": 9981,
+      "sha256": "1fc29bcac16e9e45ea327c3757382cf756ec35cbdd1cf41e42089e6f9d78280d"
+    },
+    {
+      "base_path": "261021/docs/clock-source-readiness.md",
+      "commit": "114af9d7d62870ea668432ede5bb174334a153fb",
+      "path": "261021/data/reports/20261109-nict-method-review/references/261021/docs/clock-source-readiness.md",
+      "bytes": 7551,
+      "sha256": "930900e3805353df286dd80cd981957f55740074b70c81391cbdadd039e5cd3f"
+    },
+    {
+      "base_path": "261021/docs/clock-host-maintenance-plan.md",
+      "commit": "114af9d7d62870ea668432ede5bb174334a153fb",
+      "path": "261021/data/reports/20261109-nict-method-review/references/261021/docs/clock-host-maintenance-plan.md",
+      "bytes": 9460,
+      "sha256": "9be709aa779431282eff3df24a6f2f559a02b1e8421d33a25e31ebc9226f2471"
+    },
+    {
+      "base_path": "261021/docs/reviews/20261109-task-source-checks.json",
+      "commit": "114af9d7d62870ea668432ede5bb174334a153fb",
+      "path": "261021/data/reports/20261109-nict-method-review/references/261021/docs/reviews/20261109-task-source-checks.json",
+      "bytes": 27214,
+      "sha256": "e6db5cb2b230a0f9e5fd1ce0e111f81ec1e03c4c52833c900104776552d75cc1"
+    },
+    {
+      "base_path": "261021/src/bike_mlops/clock_campaign_review.py",
+      "commit": "114af9d7d62870ea668432ede5bb174334a153fb",
+      "path": "261021/data/reports/20261109-nict-method-review/references/261021/src/bike_mlops/clock_campaign_review.py",
+      "bytes": 23009,
+      "sha256": "c951b2ebfd4bfb6d0554987a2782280d0cc49cd79856ab1062cc4a48b19a1a46"
+    }
+  ],
+  "attempts": [
+    {
+      "id": "mathematical-obligations-v1",
+      "command": [
+        "python3",
+        "261021/data/reports/20261109-nict-method-review/verify_math.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T12:52:38.978355+00:00",
+      "end_utc_local_unqualified": "2026-11-09T12:52:39.097908+00:00",
+      "start_monotonic_ns": 196355212620715,
+      "end_monotonic_ns": 196355332175308,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-nict-method-review/mathematical-obligations-v1.log",
+      "log_bytes": 2460,
+      "log_sha256": "2e37ac441e02569b4e3accbcb4b6b85afb500ff0b4cdce1c1d2384fb599cf6e5"
+    },
+    {
+      "id": "documentation-validation-v1",
+      "command": [
+        "python3",
+        "261021/data/reports/20261109-nict-method-review/validate.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T12:56:41.856566+00:00",
+      "end_utc_local_unqualified": "2026-11-09T12:56:42.261108+00:00",
+      "start_monotonic_ns": 196622336922826,
+      "end_monotonic_ns": 196622741464740,
+      "exit_code": 1,
+      "log_path_ignored": "261021/data/reports/20261109-nict-method-review/documentation-validation-v1.log",
+      "log_bytes": 535,
+      "log_sha256": "3d91e7089f0463e476cca085f67fc17af44c39f24fcb5a506050ab3a8717d68c"
+    },
+    {
+      "id": "documentation-validation-v2",
+      "command": [
+        "python3",
+        "261021/data/reports/20261109-nict-method-review/validate.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T12:57:18.561084+00:00",
+      "end_utc_local_unqualified": "2026-11-09T12:57:18.825793+00:00",
+      "start_monotonic_ns": 196664062278483,
+      "end_monotonic_ns": 196664326975596,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-nict-method-review/documentation-validation-v2.log",
+      "log_bytes": 256,
+      "log_sha256": "542216c960570f2fecda0238b3a180e6f6fe07e12bbf9bb166fa8a55aaf07dcf"
+    }
+  ],
+  "review_evidence_files": [
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/build_index.py",
+      "bytes": 4431,
+      "sha256": "70bebf980c4eb71e2456a5f80573b9b9468c18db4750e43dbe875b0fdb5cc8cb"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/documentation-validation-v1.json",
+      "bytes": 633,
+      "sha256": "f0828ca375be3284840a2737a8adf0765acb3ff07ab2c7e0909b6e3068ce500e"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/documentation-validation-v1.log",
+      "bytes": 535,
+      "sha256": "3d91e7089f0463e476cca085f67fc17af44c39f24fcb5a506050ab3a8717d68c"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/documentation-validation-v2.json",
+      "bytes": 633,
+      "sha256": "24cc22ffa883a0318ce5ad6e4e9533ae2aec59b13660b7ca74b0dac05ebe8130"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/documentation-validation-v2.log",
+      "bytes": 256,
+      "sha256": "542216c960570f2fecda0238b3a180e6f6fe07e12bbf9bb166fa8a55aaf07dcf"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/index-before-validation-v1.json",
+      "bytes": 13466,
+      "sha256": "c0a0fb41217634e0f986676503dd8fc4b397a2c2eeefd56ace102df8e4592129"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/math-result.json",
+      "bytes": 785,
+      "sha256": "60f069c61992dc60e59f3421883fc34579fc4f6c949b8098cd2bc9d1790ad818"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/mathematical-obligations-v1.json",
+      "bytes": 637,
+      "sha256": "401668ed7e59f9a83f71c69bfa6500399674cbe2c82ec7269370dffbc9ae8aef"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/mathematical-obligations-v1.log",
+      "bytes": 2460,
+      "sha256": "2e37ac441e02569b4e3accbcb4b6b85afb500ff0b4cdce1c1d2384fb599cf6e5"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/references/261014/plan_mlops.md",
+      "bytes": 145277,
+      "sha256": "c7ade6136c743723d96a833ba4b196f12a8a15314616586cbc5c1ebb27d703e1"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/references/261021/docs/clock-host-maintenance-plan.md",
+      "bytes": 9460,
+      "sha256": "9be709aa779431282eff3df24a6f2f559a02b1e8421d33a25e31ebc9226f2471"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/references/261021/docs/clock-input-request.md",
+      "bytes": 9981,
+      "sha256": "1fc29bcac16e9e45ea327c3757382cf756ec35cbdd1cf41e42089e6f9d78280d"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/references/261021/docs/clock-source-readiness.md",
+      "bytes": 7551,
+      "sha256": "930900e3805353df286dd80cd981957f55740074b70c81391cbdadd039e5cd3f"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/references/261021/docs/clock-task-definition-review.md",
+      "bytes": 5235,
+      "sha256": "0256a087bb0e361354c1f02cf7bbdafa58601b66eb569593bdd29aea33f5132f"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/references/261021/docs/clock-web-source-review.md",
+      "bytes": 5323,
+      "sha256": "ebad77e5f4f22b92fbe8cc5bb22f0659b9e4aa1e447a99d0f5977fe06c101315"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/references/261021/docs/reviews/20261109-task-source-checks.json",
+      "bytes": 27214,
+      "sha256": "e6db5cb2b230a0f9e5fd1ce0e111f81ec1e03c4c52833c900104776552d75cc1"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/references/261021/src/bike_mlops/clock_campaign_review.py",
+      "bytes": 23009,
+      "sha256": "c951b2ebfd4bfb6d0554987a2782280d0cc49cd79856ab1062cc4a48b19a1a46"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/references/261021/work_log.md",
+      "bytes": 564981,
+      "sha256": "809992a537ecf889c3ceefe7ab1b6fc5a3a7e2a4a6e77314a8fc09f636af3817"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/run_attempt.py",
+      "bytes": 1244,
+      "sha256": "62df5fee98294644b7a3ebc2a0087ffa98f9be75fc4c26285681b39def88ac29"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/source-notes.json",
+      "bytes": 2774,
+      "sha256": "2056ce08ee7600167c079f6da4208dc5208c7b9574a1023fe610ece955631f31"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/validate-v1.py",
+      "bytes": 3238,
+      "sha256": "7edd0900bbe8e4de07fc8cf3a7063a734ce01fbb9487f28b03943d9d3313c48e"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/validate.py",
+      "bytes": 3343,
+      "sha256": "832d037e008057c9d19c57dfd8fbcd401643575495a9e80a608103d4ee026da9"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/validation-result.json",
+      "bytes": 272,
+      "sha256": "72f654f78bba586d0cbfe50440a2928581d04f0a49eee35df3956888ed5c31a9"
+    },
+    {
+      "path": "261021/data/reports/20261109-nict-method-review/verify_math.py",
+      "bytes": 7615,
+      "sha256": "03a3d639963708f12f36e47829b1188764ddd55a309ca60b07708bebb0abcb1c"
+    }
+  ],
+  "product_source_schema_writer_lock_workflow_changed": false,
+  "new_product_suite_or_ci_acceptance_claimed": false,
+  "network_time_service_queries": 0,
+  "provider_message_sent": false,
+  "os_clock_service_or_real_db_registry_serving_changed": false,
+  "real_fit_scoring_started": false,
+  "future_rejection_relaxed": false,
+  "clock_qualification_status": "incomplete",
+  "limits": [
+    "13 tests concern a finite synthetic mathematical model, not the product unit suite or NTP parser",
+    "450 hidden-event combinations do not prove real source/reader correctness",
+    "No independent source authentication or client uncertainty obtained",
+    "A causal remote-event rate interval does not establish fixed QPC sample calibration",
+    "All local UTC/MONOTONIC readings remain unqualified",
+    "Initial interactive inspection and edits have no fabricated wrapper timestamps",
+    "Web tool notes are not raw HTTP archive or measured time samples",
+    "No new administrator inputs or T03/tick11000 recurrence supplied"
+  ],
+  "validation": {
+    "status": "DOCUMENTATION_EVIDENCE_SCOPE_VALIDATED",
+    "target_paths": 7,
+    "base_references": 9,
+    "evidence_files_checked": 21,
+    "relative_links_checked": 241,
+    "secret_pattern_diff_scope_checks": "passed",
+    "product_suite_or_clock_qualification": "not claimed"
+  },
+  "publication_preflight": {
+    "initial_local_commit": "5c163fa00f58ed28987052de5799b9f53e86df77",
+    "fetched_remote_head": "933ec83dbb26644b572b19cf6ddb3387af25602d",
+    "rebased_local_before_this_receipt_update": "4246a301a97fa9b6fb8dce971e97a695deedecf3",
+    "reason": "push rejected fetch-first due to five independent261109/rootREADME commits; no force push",
+    "reviewed_seven_paths_identical_after_rebase": true,
+    "receipts": [
+      {
+        "metadata_path": "261021/data/reports/20261109-nict-method-review/stage-review-v1.json",
+        "metadata_sha256": "980a2e5520f7aabd701cff1f63edfe9aa8f9b19319e01576d22a602aec58bc12",
+        "attempt": {
+          "id": "stage-review-v1",
+          "command": [
+            "git",
+            "add",
+            "--",
+            "261014/plan_mlops.md",
+            "261021/docs/clock-input-request.md",
+            "261021/docs/clock-source-readiness.md",
+            "261021/docs/clock-web-source-review.md",
+            "261021/docs/clock-nict-method-review.md",
+            "261021/docs/reviews/20261109-nict-method-checks.json",
+            "261021/work_log.md"
+          ],
+          "cwd": "/home/kenshin/work/claude_practice",
+          "start_utc_local_unqualified": "2026-11-09T12:57:52.742795+00:00",
+          "end_utc_local_unqualified": "2026-11-09T12:57:52.776892+00:00",
+          "start_monotonic_ns": 196700887701845,
+          "end_monotonic_ns": 196700921791360,
+          "exit_code": 0,
+          "log_path_ignored": "261021/data/reports/20261109-nict-method-review/stage-review-v1.log",
+          "log_bytes": 0,
+          "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      {
+        "metadata_path": "261021/data/reports/20261109-nict-method-review/commit-review-v1.json",
+        "metadata_sha256": "277c7d63212b4ad28f682e10637e17a7d9e896919c7fdde57fedc11bc67ce4bc",
+        "attempt": {
+          "id": "commit-review-v1",
+          "command": [
+            "git",
+            "commit",
+            "-m",
+            "Review NICT polling limits and independent timing method constraints"
+          ],
+          "cwd": "/home/kenshin/work/claude_practice",
+          "start_utc_local_unqualified": "2026-11-09T12:58:18.612323+00:00",
+          "end_utc_local_unqualified": "2026-11-09T12:58:18.649864+00:00",
+          "start_monotonic_ns": 196729418763927,
+          "end_monotonic_ns": 196729456297587,
+          "exit_code": 0,
+          "log_path_ignored": "261021/data/reports/20261109-nict-method-review/commit-review-v1.log",
+          "log_bytes": 269,
+          "log_sha256": "e6783a88adcb20ab3648509f2d3c4a7c21361aa4fa64abf7d31237f2220b2d1e"
+        }
+      },
+      {
+        "metadata_path": "261021/data/reports/20261109-nict-method-review/push-review-v1.json",
+        "metadata_sha256": "59e420c04307f8aa3483ad2a6d3926ae0d6a711bd6d9865674ce8df6f11596a8",
+        "attempt": {
+          "id": "push-review-v1",
+          "command": [
+            "git",
+            "push",
+            "origin",
+            "main"
+          ],
+          "cwd": "/home/kenshin/work/claude_practice",
+          "start_utc_local_unqualified": "2026-11-09T12:58:31.317264+00:00",
+          "end_utc_local_unqualified": "2026-11-09T12:58:34.259574+00:00",
+          "start_monotonic_ns": 196742123702824,
+          "end_monotonic_ns": 196745066011334,
+          "exit_code": 1,
+          "log_path_ignored": "261021/data/reports/20261109-nict-method-review/push-review-v1.log",
+          "log_bytes": 502,
+          "log_sha256": "c5a9e1843452fce9deea9e0843b71513a8909c0279ed45d269e8680c956e9502"
+        }
+      },
+      {
+        "metadata_path": "261021/data/reports/20261109-nict-method-review/fetch-review-v1.json",
+        "metadata_sha256": "71ef0f241c0e3ec7ba9c25f79e091f4a5ddb868b8a5efe966856a22b708b2f92",
+        "attempt": {
+          "id": "fetch-review-v1",
+          "command": [
+            "git",
+            "fetch",
+            "origin",
+            "main"
+          ],
+          "cwd": "/home/kenshin/work/claude_practice",
+          "start_utc_local_unqualified": "2026-11-09T12:58:44.507374+00:00",
+          "end_utc_local_unqualified": "2026-11-09T12:58:47.696822+00:00",
+          "start_monotonic_ns": 196758037840295,
+          "end_monotonic_ns": 196761227279410,
+          "exit_code": 0,
+          "log_path_ignored": "261021/data/reports/20261109-nict-method-review/fetch-review-v1.log",
+          "log_bytes": 133,
+          "log_sha256": "a0e3001a2d627bf2e5899b834023a4370b5b64290b5abc47db914b63f9305750"
+        }
+      },
+      {
+        "metadata_path": "261021/data/reports/20261109-nict-method-review/rebase-review-v1.json",
+        "metadata_sha256": "b362b986b411bd6353e671a75ab774361d7dc1ec6d4c0a11fe9fa465d3d1df99",
+        "attempt": {
+          "id": "rebase-review-v1",
+          "command": [
+            "git",
+            "rebase",
+            "origin/main"
+          ],
+          "cwd": "/home/kenshin/work/claude_practice",
+          "start_utc_local_unqualified": "2026-11-09T12:59:04.258970+00:00",
+          "end_utc_local_unqualified": "2026-11-09T12:59:04.372801+00:00",
+          "start_monotonic_ns": 196777789435502,
+          "end_monotonic_ns": 196777903260091,
+          "exit_code": 0,
+          "log_path_ignored": "261021/data/reports/20261109-nict-method-review/rebase-review-v1.log",
+          "log_bytes": 69,
+          "log_sha256": "81afa9a2bc044101b5442904ff94bf7a97bb3cd6dbe8c6f993f71820655c2e41"
+        }
+      }
+    ],
+    "limit": "Final amendment/push receipts kept locally outside this index to avoid recursive publication hashes"
+  }
+}

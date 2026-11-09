@@ -1,5 +1,8 @@
 # time.is・NICTを時計の参照元に使う場合
 
+**2026-11-09追加訂正:** [取得方法review](clock-nict-method-review.md)で、公式FAQの平均20回/時・480回/日と超過時の事前連絡を確認した。
+下記の「16秒以上」だけでは利用条件として不足。毎分の直接取得案は、頻度の回答・真正性・不確かさの根拠が揃うまで開始しない。
+
 2026-11-09、基点`67f4586`。ユーザー提示2サイトと提供元の説明をreviewした。
 [証拠索引](reviews/20261109-task-source-checks.json)、[既存の源受入条件](clock-source-readiness.md)を参照。
 
@@ -37,7 +40,8 @@ JST5まで終了したと説明しない。反対に、JST5のHTMLを取得で�
 [公開NTPの説明](https://jjy.nict.go.jp/tsp/PubNtp/index.html)は、利用者側の精度が回線により数ms〜数百msと変わり、保証しないとしている。
 サーバ内の精度を、そのままPCでの取得誤差に流用しない。
 [開発者ガイド](https://jjy.nict.go.jp/tsp/PubNtp/clients.html)のpoll間隔は16秒以上。
-将来の計測設計ではこの制限を守り、必要サンプル頻度に足りなければ別の源/方法を検討する。高速queryで不足を埋めない。
+追加reviewで[FAQ Q1-4](https://jjy.nict.go.jp/tsp/PubNtp/qa.html)の平均20回/時・480回/日と超過時の事前連絡も確認した。
+将来の計測設計では両条件を守り、必要頻度と合わなければ提供元への確認または別の源/方法をreviewする。高速queryで不足を埋めない。
 
 次にreviewする不足は以下。これは実queryやreader開始の許可ではない。
 

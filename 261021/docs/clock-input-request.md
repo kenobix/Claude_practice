@@ -1,5 +1,10 @@
 # 時計調査を再開するために必要な入力
 
+**2026-11-09 NICT方法追補:** [公式FAQの頻度条件と方法review](clock-nict-method-review.md)を追加。
+必要入力は頻度/用途についての提供元の回答、認証/来歴・source誤差、固定境界の独立elapsedへの対応根拠。
+問い合わせ文案は同文書に用意したが送信していない。今すぐservice起動や追加採取を実行する必要はない。
+16秒下限だけで毎分取得可とは扱わず、受入済みPHC/task/peer原本は再依頼しない。
+
 **2026-11-09 task/Web追補:** 新しい[タスク定義XMLのreview](clock-task-definition-review.md)で、
 task_startedとForceSynchronizeTimeのCOM Action、現在の限定HKLM登録/DLL hashを確認した。
 同じXMLの再採取は不要。停止caller/引数の内部意味、実源の根拠は未確定。

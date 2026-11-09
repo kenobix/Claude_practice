@@ -1,5 +1,9 @@
 # 独立UTC源・QPC校正の選定前review
 
+**2026-11-09 NICT方法追補:** [頻度・認証・非循環の計算候補](clock-nict-method-review.md)をreview。
+FAQの平均20回/時・480回/日は前回の16秒下限とは別条件。直接毎分取得は未許可。
+因果bracketの数値包含を合成検算したが、源採用/固定境界への対応/全資格は未達。QPC由来RTTの自己校正や境界補間は採用しない。
+
 **2026-11-09 Web源追補:** ユーザー提示のtime.isとNICTを[用途・規約・不確かさでreview](clock-web-source-review.md)した。
 time.isは人の目視用と自動APIを区別し、NICTはJST5表示・終了済みHTTP配信・継続するNTPを区別する。
 NTPは調査候補だが、実sample/真正性/輸送誤差/独立elapsedの根拠は未取得。源採用・全資格・実fit保留は維持する。
