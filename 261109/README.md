@@ -11,6 +11,7 @@
 - [OpenCode × Ollama実験記録](opencode_local_llm_test_20261109.md): 同じ計算アプリ課題を8B/14Bで比較。追加指示は8Bが1回、14Bが0回で、今回のUbuntu側の再確認では各5テスト成功。
 - [OpenCode実験の保存指示](codex_push_opencode_20261109.md): 対象ファイル、検査とGit反映の手順。
 - [OpenCode Go・無料モデルの追加検証](opencode_go_evaluation_20261109.md): GLM-5.3-Flash Freeは8テスト、Kimi K2.7 Code（Go）は5テスト成功。契約・設定の観測とCodex/Goの今後の運用方針を記録。
+- [Codex CLIとOpenCode Goの連携手順](codex_opencode_go_setup.md): nvm/Node.js導入、`--keep-provider`、Go専用プロファイルと起動経路を記録。通常の`codex`はGPT-6 Luna、`codex-go`はKimi K2.7 Codeを選択。
 
 ## 初回公開前の検証結果（当時の状態）
 
@@ -83,6 +84,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -v
 
 ## 追記：OpenCode Go・無料モデルの追加検証
 
+本節はCodexからGoへ接続する前の検証履歴。後続の連携完了は次節と[連携手順](codex_opencode_go_setup.md)を参照。
+
 利用者の2026-11-09の追加実験では、GLM-5.3-Flash Freeは初回指示で生成と8テストに成功し、最終報告あり。Go契約後のKimi K2.7 Codeは`python`不在での失敗から追加指示なしで`python3`へ切り替え、5テストに成功し、最終報告あり。両方とも人間の追加指示は0回。8B/14Bの過去の履歴とは別の後続実験として保存する。
 
 公開コピーはGLMの[calculator.py](opencode_samples/glm-5.3-flash-free/calculator.py)・[test_calculator.py](opencode_samples/glm-5.3-flash-free/test_calculator.py)、Kimiの[calculator.py](opencode_samples/kimi-k2.7-code-go/calculator.py)・[test_calculator.py](opencode_samples/kimi-k2.7-code-go/test_calculator.py)。4ファイルだけを原本から内容を変えずにコピーした。標準Pythonだけで再検証でき、クラウドAPI接続や認証情報は不要。
@@ -96,9 +99,15 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -v
 
 今回の保存作業では2026-11-09 21:50 JSTに元実験フォルダーでGLM 8件・Kimi 5件の成功を再確認した。原本は変更していない。契約・利用額・設定は利用者共有の観測として[追加検証記録](opencode_go_evaluation_20261109.md)に記載し、今回Consoleの設定確認・変更、追加課金、モデル取得、CodexからGoへの接続は行っていない。
 
+## 追記：Codex CLIとOpenCode Goの連携
+
+2026-11-09、利用者からCodex CLIとPersonalワークスペースのGo連携完了が報告された。実機でnvm 0.41.0、Node.js 24.22.2、npm/npx 11.19.1、Codex CLI 0.167.0を確認。`--keep-provider`はOpenCode Consoleのセットアップ側のオプションで、通常モデルを維持する方式。
+
+`config.toml`の既定モデルは`gpt-6-luna`のまま、`go.config.toml`で`kimi-k2.7-code`と`opencode-go`を選ぶ構造を確認した。`~/.local/bin/codex-go`は`codex --profile go`を起動する。公開範囲をモデル選択・起動経路に絞った構造例を[連携手順](codex_opencode_go_setup.md)に保存した。今回、設定変更やモデルへの問い合わせは行っていない。
+
 ## 残作業
 
 - 通常の開発中にモデルごとの成功と手戻りを記録する。専用ベンチマークの優先度は下げる。
 - 無料モデルの学習利用許可の現在値を再確認する。
-- 将来CodexからGoモデルを使う場合は、公式オプションと設定保持手順を調査し、既存設定を上書きせず追加する。
+- 従来のCodexとGoを併用し、既存設定を保持する。
 - 外部媒体へのWindows/WSLバックアップ、デバイス暗号化の調査、CPU/GPUの継続負荷試験。
