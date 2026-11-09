@@ -585,7 +585,12 @@ version 9.9・patched-data・strong-encryptionで未捕捉例外/CLI終了値1/�
 version例外の入力エラー化と固定ZIP以外のflag拒否を追加し、local-only header改変も含む5変種で
 replay前拒否・終了値2・秘密canary非表示・原本不変・report/stagingなしを検証する。
 この節目は[追加入力境界索引](../261021/docs/reviews/20261109-clock-bundle-input-checks.json)で追跡し、
-実装commitのCI/artifact/cleanupが確認されるまでは新CI受入と呼ばない。
+local受入時点では実装CI待ちとして保存した。その後、実装`3d1a5bf`の[CI42539864950](https://github.com/kenobix/Claude_practice/actions/runs/42539864950)で
+全590件（bundle20件）・両job全step、16 artifact/digest/member hash、archive-only要求1000/p95再計算、
+Caddy normal/TERM・3 SIGKILL段階、MLflow/skops+DB対応復元・PG/HTTPを含むcleanupまで受入済み。
+[最終CI索引](../261021/docs/reviews/20261109-clock-bundle-input-ci-checks.json)に原本と失敗/限界を結合した。
+初回stageのread-only拒否、SHA転記誤り/接続失敗、log原本取得失敗後に空logを検証した失敗も保持する。
+合成入力境界を1件閉じたが、追加資料なしに着手できる別の計画上の未検証条件は今回特定できなかった。
 実源のidentity/真正性/不確かさ・同期責任、実採取器/host deadline/固定負荷、許可後の修復と全資格、
 T02/T11/T12/T13bの前提は上表から変更しない。独立して進められる未検証条件の新発見と、受入済み試験の単純な反復を区別する。
 

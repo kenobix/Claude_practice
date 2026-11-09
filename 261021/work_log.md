@@ -4242,3 +4242,38 @@ localのbundle-regression-v1は全20件/87.284表示秒で成功。compile-v1も
 ここで受入れたのはlocal専用20件までで、全suite/実装commit CIはまだ未確認である。
 新しい管理者資料・独立UTC/elapsed根拠・自然T03/飽和区間は供給されておらず、過去の動的原因は未確定。
 OS/時計設定・実DB/registry/現配信・T10固定snapshot/protocol・future拒否は変更していない。
+
+#### 2026-11-09：追加入力境界の実装CI受入と残課題
+
+最初のstage-implementation-v1は通常sandboxの.git read-onlyでexit128。個別の許可付きstage-v2は成功した。
+git status/全差分・stage対象6fileを確認し、実装3d1a5bf7ee8cd7e22136a856b1654a7fcd2af04aをcommit/pushした。
+最初のCI照会は完全SHAを誤転記し、sandboxのapi.github.com接続もexit1だった。
+正しい完全SHAと許可付き別試行ci-list-v2でCI42539864950を特定した。転記誤りを時計/CI不具合としない。
+GitHub connectorでもjob/stepを読取り、gh watchはexit0で両job全step成功を確認。
+全590 tests/225.577表示秒、bundle20・capture30・schedule19・pipeline10件が全てok。
+T03の自然停止は今回観測しておらず、未再発を修復扱いにしない。
+
+ci-fetch-final-v1はrun/jobs/artifact metadata取得後のgh log取得でexit1、unit原本は0byte、system原本は未取得。
+helperがstderr詳細を保存していなかったため、この取得失敗の正確な原因は未特定とする。
+取得失敗を確認する前提を満たさずci-artifact-v1を開始し、空のunit log照合でexit1となった。
+これは検証の段取りの誤りで、CI上のテスト失敗ではない。空原本・失敗log・当時のcheckerを保存した。
+成功したGitHub connectorのdecode済みunit/system logを終端LF1つへ正規化して保存し、再検証ci-artifact-v2はexit0。
+log textのhashと、ghで取得したartifact実byteのhashを区別する。connectorのartifact取得はremote file参照を返したため、
+一時署名URLは保存/公開せず、ローカル検算用のZIP bytesはghで取得した。CI再実行や製品条件の変更は行わない。
+
+artifact13641365556は234,466byte、外側ZIP SHA=e6b4e0893e510de03249438f7e5a900ca746ab7ae70e400efc171be634a01f51でGitHub digestと一致。
+固定16member、内部4原本hash/source_revision=3d1a5bf/dirty=falseを確認。archiveのみを別processへ渡し、
+暖機50除外/要求1000/エラー0/p95=30.70699799999943msを再計算し、独立nearest-rankとも一致した。
+数値は保存済み合成証拠であり、実性能/本番SLO/実時計資格ではない。gate=not_evaluated/permission=blockedを維持する。
+Caddy normal/TERM・3 SIGKILL段階、MLflow/skops+DB別volume対応復元・破損拒否/同ID新ID予測、
+PG/HTTPを含むcleanup/resource残存0/保護container ID不変も照合した。
+
+local索引は当時のCI_PENDINGとして保持し、最終受入をdocs/reviews/20261109-clock-bundle-input-ci-checks.jsonへ別記する。
+初回の単一version負例testの中間bytesは別保存していない。logは保持し、拡張した5変種のtest bytesは修正前後で同じものを保存した。
+新資料の無い状態で着手できる他の計画上の未検証条件は特定できなかった。必要入力はclock-input-request.mdの既存一覧を維持する。
+実源のidentity/真正性/不確かさ・同期責任、実採取器/host deadline/固定負荷、別途許可後の修復/全資格、
+その前提後のfit前再照合とT02/T11/T12/T13b実candidate証拠、上流変更時のみのMLflow互換確認を残す。
+後続の記録commitを先行実装CIの直接試験対象にせず、対象文書/索引だけをcommit/pushする。
+final-validation-v1は原本65件と実装source2件/local索引のhash、GitHub connector/raw metadata一致、
+全590件/16member/blocked、保護12file・固定3file不変、相対link191件・diff checkを確認してexit0。
+この検証自身のlog/metadataも最終索引へ追加し、未追跡の無関係3パスは対象外として保持する。
