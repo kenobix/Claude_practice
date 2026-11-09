@@ -1,6 +1,11 @@
 # 時計調査を再開するために必要な入力
 
-**2026-11-09 host追補:** `clock-host-admin-00f021d1-…`の[管理者runtime review](clock-host-runtime-review.md)でsource/configuration取得も完了。
+**2026-11-09 peer追補:** `clock-host-cause-a52e422e-…`の[peer/status/identity review](clock-host-cause-review.md)も完了。
+全体はno time data/未同期、peerはpending/現在のvalid sample0。host/serviceの前後identityとevent該当なしの診断も保存した。
+同じbasic/peer/PHC採取を直後に再依頼しない。次の条件は新しい状態変化・自然event、独立UTC/elapsed資料、または明示許可後の[保守比較](clock-host-maintenance-plan.md)。
+根本原因/同期責任の全体・独立源の真正性/不確かさ・全資格は未確定で、実fit/採点の保留は維持する。
+
+**2026-11-09 host追補（peer追補前の履歴）:** `clock-host-admin-00f021d1-…`の[管理者runtime review](clock-host-runtime-review.md)でsource/configuration取得も完了。
 設定peerはtime.windows.com、採取時はLI3/Local CMOS Clock。basic queryや同じPHC/UDPの再採取は不要。
 原因を絞る新しい不足は[peer/verbose last-error・新イベントの限定読取](clock-owner-admin-read.md#host-w32time-cause-read)と、独立UTC/elapsedの根拠である。
 hostの誤差量/現在の未同期原因/全同期責任は未確定。実資格・fit/採点の保留は維持する。
@@ -21,7 +26,7 @@ PHCやhostの自己申告を独立参照として採用しておらず、実時�
 |---|---|---|
 | 追加管理者ログ（指定2件は照合済み） | 同じPHC/socket採取は不要。新しい変更・自然再発等で追加資料ができた場合のみ保存先を伝える | 採取区間のidentity/所有の受入を保持し、新情報がある範囲だけ対応付ける。将来の再起動やidentity変更へ今回値を持ち越さない |
 | 独立参照の候補 | 実際に利用可能な機器・サービス名、管理元、説明書/校正資料/原本の保存先。まだ無い項目は「未取得」 | 下記の依存関係・真正性・不確かさをreview。候補名だけでは採用しない |
-| host/backendの同期資料 | basic queryは取得済み。[原因限定読取](clock-owner-admin-read.md#host-w32time-cause-read)の保存先、どの管理層が何を参照して補正するかを示す既存資料 | Windows→PHC→chronyd、Windows/backend→initd、Ubuntu timesyncdを役割別に整理。peer/last-errorは原因の補足で、独立UTC/elapsed資料や動的stackの代用ではない |
+| host/backendの同期資料 | basic/peer/status/identity queryは取得済み。新しい状態変化・自然event・管理責任を示す既存資料がある場合のみ保存先を伝える | 未同期/保留/現在有効sample0の受入を維持し、追加情報のある範囲で原因と各管理層の責任をreview。独立源や動的stackの代用にはしない |
 
 管理者権限が使えない場合、その旨だけを伝えればよい。Ubuntu root、Codex許可、Windows管理者tokenは別である。
 PHC/socketの旧PIDを手入力で固定せず、既存readerが現在の実体を探索する方式を使う。

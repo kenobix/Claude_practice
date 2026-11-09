@@ -4373,3 +4373,44 @@ documentation-validation-v1はexit1。Windows parserのrawにASCII成功marker�
 raw bytes/log/validator初版を保持し、必要なASCII markerだけをbytesとして照合する形へ修正。文字化けを無視decodeして成功扱いにする修正ではない。PowerShellの構文確認自体は前段でexit0だった。
 documentation-validation-v2はexit0。原本6件・review証拠22件・基点資料14件のhash、snapshot一致、12負例（再hash7）、相対link233件、実parser対象block一致、対象範囲/diff checkを確認した。
 最終索引はwrapper終了後に再生成し、検証自身の終了済みlog/metadata/resultもhash一覧へ結合する。builderを自身の実行中logと循環させず、stage/commit/pushと最終差分のreceiptは索引freeze後のlocal記録に分ける。
+
+### 2026-11-09：基点9c32298・host peer/status/identity reviewと保守案の具体化
+
+添付db633732のconsoleからclock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0bを特定。原本9file/manifest8member、query2件native exit0、添付保存先と実出力を照合した。
+UTF8 BOM/CRLFの元bytesとSHAをignored snapshotへ保持し、解析文字列だけを正規化した。UNC parent/basenameを限定し、任意のmanifest pathへアクセスしていない。
+host Version10.0.26200/Build26200、host報告LastBootUTCとStopwatch周波数10,000,000、query前後ローカルUTC/QPCを保存した。
+W32Time Running/Manual、process PID34104/StartUTC2026-11-09T00:25:22.0395997Z、svchost.exe SHA1222a44a5fdb4efde4dfcb41093648627950e7ec02d8667f1c26ccae31d922e2が前後で一致。
+host process開始時刻をservice自身のstart eventや署名認証と同一視しない。query間の連続監視や過去WSL setterとの対応は未採取。
+
+`261021/.venv/bin/python 261021/data/reports/20261109-host-cause-review/run_attempt.py offline-cause-v1 261021/.venv/bin/python 261021/data/reports/20261109-host-cause-review/review.py`はexit0。
+全体statusはLI3/階層0/Local CMOS/最終正常同期未指定、Unset/flag0/role0、最終エラー1=no time data。
+peerはtime.windows.com,0x9/保留中/残り10301.3131813秒、現在valid counter0/reachability0、ResolvedAttempts0、NoAuth。
+peer個別error0/過去時刻欄を全体同期成功へ昇格させない。ResolvedAttempts0は恒久DNS失敗の根拠ではなく、valid counter0は過去一度も受信しなかった証明でもない。
+peer表示の時刻はtimezone/formatterの対応が無いためUTCへ変換せず保存。statusのsince-last-sync4395秒も成功event時刻の逆算へ使わない。
+QPC名目差はstatus0.0307197秒/peers0.026156秒、外側UTC差0.0403222/0.0302828。API呼出し位置の異なるbracket差を、独立した進行率検証へ使わない。
+
+event-resultはRecordId>26321/最大32件/返却0、「指定した選択条件に一致するイベントが見つかりませんでした」の診断を保持した。
+no eventをfaultなし/全履歴読取成功の証拠としない。前回保存の12event原本5170bytes/SHA b4ecda50ab27c367cca23fe943b653c10ddc4bb31488bef7b2353abb121ddfbdを検算して読んだだけで、hostへ同じ照会は再実行していない。
+旧Record26266/ID37 valid受信UTCは今回process開始のhost wall値より0.1858371秒後。近接だけで当時PID/採用sample/継続同期や過去失敗原因を帰属しない。
+過去DNS失敗と後の受信/同期開始の両方を保持する。標準clock-source-input-*に新dossierはなく、未提示の別pathの不存在までは断定しない。
+
+固定captureの診断14負例（再hash12）をすべて拒否。identity差、QPC/UTC逆転、query失敗、global/peerエラー誤読、counter/認証差、event件数/診断欠落を含む。
+製品unit14件追加や実源/資格の受入ではない。原本9件は不変でsnapshotと一致。
+準備中に旧索引のkeyをreview_evidence_recordsと仮定した読取がKeyError/exit1。実key review_evidence_filesを確認して修正し、原本hash検算を診断内で実施した。
+この準備コマンドはwrapper外なので時刻を後付けしない。tool出力の失敗内容/限界をpreparation-failures.jsonへ保存した。初期の長い対話読取に出力切れもあり、完全なraw command logを後から作ったとは呼ばない。
+
+Microsoft公式peer要素/KB2638243/KB3205089/tools説明をWebで読んだ。MS-W32T root URLのopenはInternal Errorで取得できず、個別の公式peer要素ページを根拠にした。追加StateMachine検索に使える公式一致はなく、無関係な検索結果を採用しない。
+Web結果はURL/限定した利用根拠を索引へ記録し、生HTTP原本のローカル保存とは区別する。
+`.../run_attempt.py maintenance-review-v1 261021/.venv/bin/python 261021/data/reports/20261109-host-cause-review/maintenance-review.py`はexit0。
+前回runtime索引が基点bytesと同じと照合し、special16384/MinPoll10/Hold5からKB回避条件の上限6144を計算した。条件は満たさないが、SPIKE/実offset未観測でKB原因確定ではない。
+今回observed stateはUnset。式の一致/不一致や長い保留だけで診断せず、現在設定のままresync1回と0x9→0x8のpoll方式比較を別の未許可案としてclock-host-maintenance-plan.mdへ記述した。
+変更前の管理元/値、影響、復元候補、統計/時計履歴は戻せないこと、失敗時の自動retry/別案移行禁止、後続の全資格条件を明記した。記載コマンドは実行していない。
+
+peer/status/identityの読取不足を残件から外し、同じblockを直後に再依頼しない。次は新状態変化/自然event/独立資料か、明示許可を得た保守比較である。
+OS/時計設定・実DB/registry/現配信・future拒否、製品source/schema/writer/lock/workflowは変更しない。
+新T03/tick11000資料はなくtrace/probeなし。T09/T10静的受入は維持し、独立源/全資格/collector等の前提未達で実fit/採点/窓消費/T02/T11/T12/T13bは未開始。
+これらの前提なしに開始できる別の計画上の実装条件は特定できず、製品suite/CI/原本取得・集計を反復して進捗にはしない。
+原本・snapshot・recipe・実コマンド/cwd/exit・未資格UTC/MONOTONICはdata/reports/20261109-host-cause-review/へ、公開索引はdocs/reviews/20261109-host-cause-checks.jsonへ保存する。
+documentation-validation-v1はexit0。原本9件/manifest8、review証拠22件/基点14資料のhash、snapshot一致、14負例（再hash12）、相対link245件、対象範囲/秘密scan/diff checkが成功した。
+管理者案内のPowerShell block本文は前回構文確認済みbytesと一致し、同じparserを反復実行しなかった。最終索引はwrapper終了後に検証自身のlog/metadata/resultも結合して更新する。
+索引の循環参照を避け、freeze後のstage/commit/push receiptとstaged.diffはlocalへ分けて保存する。製品変更がないため新しい実装CI受入はなく、自動CIが走っても今回索引で追跡済みと主張しない。

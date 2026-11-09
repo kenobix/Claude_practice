@@ -1,0 +1,712 @@
+{
+  "schema_version": 1,
+  "review_date_client": "2026-11-09",
+  "base_commit": "9c3229851956dc56f644532179b8f3e9406b6988",
+  "status": "HOST_PEER_STATUS_IDENTITY_ACCEPTED_UNSYNC_CAUSE_AND_REAL_QUALIFICATION_PENDING",
+  "completed_scope": [
+    "User supplied 9 files/8 hash manifest members; both native query exits0; service before/after identity equal.",
+    "Global status no time data/Unset distinguished from per-peer error0/pending/current valid samples0/NoAuth.",
+    "Event no-match diagnostic retained; historical valid-data event reviewed without assigning its PID or continuous synchronization.",
+    "Conditional maintenance candidates, impact/rollback and stop conditions prepared; no OS operations performed."
+  ],
+  "capture_review": {
+    "host": {
+      "Version": "10.0.26200",
+      "BuildNumber": "26200",
+      "LastBootUpTimeUTC": "2026-10-27T14:23:16.1235780Z",
+      "StopwatchFrequency": 10000000
+    },
+    "service_identity": {
+      "Name": "W32Time",
+      "State": "Running",
+      "StartMode": "Manual",
+      "ProcessId": 34104,
+      "StartUTC": "2026-11-09T00:25:22.0395997Z",
+      "Exe": "C:\\WINDOWS\\system32\\svchost.exe",
+      "ExeSHA256": "1222A44A5FDB4EFDE4DFCB41093648627950E7EC02D8667F1C26CCAE31D922E2"
+    },
+    "service_identity_before_after_equal": true,
+    "queries": [
+      {
+        "query": "status",
+        "native_exit": 0,
+        "before_utc_local": "2026-11-09T02:06:44.7640694Z",
+        "after_utc_local": "2026-11-09T02:06:44.8043916Z",
+        "before_qpc_local": 10790324957059,
+        "after_qpc_local": 10790325264256
+      },
+      {
+        "query": "peers",
+        "native_exit": 0,
+        "before_utc_local": "2026-11-09T02:06:44.8291682Z",
+        "after_utc_local": "2026-11-09T02:06:44.8594510Z",
+        "before_qpc_local": 10790325536438,
+        "after_qpc_local": 10790325797998
+      }
+    ],
+    "query_brackets": [
+      {
+        "query": "status",
+        "qpc_reported_seconds": "0.0307197",
+        "wall_reported_seconds": "0.0403222",
+        "calibrated": false
+      },
+      {
+        "query": "peers",
+        "qpc_reported_seconds": "0.026156",
+        "wall_reported_seconds": "0.0302828",
+        "calibrated": false
+      }
+    ],
+    "status_fields": {
+      "閏インジケーター": "3 (同期未実行)",
+      "階層": "0 (未指定)",
+      "精度": "-23 (ティックごとに 119.209ns)",
+      "ルート遅延": "0.0000000s",
+      "ルート分散": "0.0000000s",
+      "参照 ID": "0x00000000 (未指定)",
+      "最終正常同期時刻": "未指定",
+      "ソース": "Local CMOS Clock",
+      "ポーリング間隔": "10 (1024s)",
+      "フェーズ オフセット": "0.0000000s",
+      "クロック レート": "0.0156250s",
+      "State Machine": "0 (設定解除)",
+      "タイム ソース フラグ": "0 (なし)",
+      "サーバーのロール": "0 (なし)",
+      "最終同期エラー": "1 (時刻データが利用できなかったため、コンピューターは同期をとり直しませんでした。)",
+      "最終正常同期時刻からの時間": "4395.0509461s"
+    },
+    "peer_fields": {
+      "ピア数": "1",
+      "ピア": "time.windows.com,0x9",
+      "状態": "保留中",
+      "残り時間": "10301.3131813s",
+      "モード": "0 (予約)",
+      "階層": "0 (未指定)",
+      "ピアポーリング間隔": "0 (未指定)",
+      "ホストポーリング間隔": "0 (未指定)",
+      "最終正常同期時刻": "2026/11/09 9:25:22",
+      "最終同期エラー": "0x00000000 (成功)",
+      "最終同期エラー メッセージ ID": "0x00000000 (成功)",
+      "認証方法メッセージ ID": "0x0000005A (NoAuth )",
+      "解決試行回数": "0",
+      "有効データ カウンター": "0",
+      "到達の可能性": "0"
+    },
+    "events": {
+      "returned": 0,
+      "lower_record_exclusive": 26321,
+      "maximum": 32,
+      "diagnostic": "No matching events; not proof of no faults or full log history."
+    },
+    "observation": "HOST_UNSYNCHRONIZED_GLOBAL_NO_TIME_DATA_PEER_PENDING_NO_CURRENT_VALID_SAMPLES",
+    "root_cause": "not established",
+    "qualification": "incomplete",
+    "independent_source_accepted": false,
+    "historic_setter_cause_resolved": false,
+    "fit_allowed": false,
+    "negative_cases": [
+      {
+        "case": "member byte alteration",
+        "rehashed": false,
+        "rejected": true
+      },
+      {
+        "case": "missing member",
+        "rehashed": false,
+        "rejected": true
+      },
+      {
+        "case": "service PID changed",
+        "rehashed": true,
+        "rejected": true
+      },
+      {
+        "case": "service exe SHA changed",
+        "rehashed": true,
+        "rejected": true
+      },
+      {
+        "case": "service start changed",
+        "rehashed": true,
+        "rejected": true
+      },
+      {
+        "case": "QPC frequency boolean",
+        "rehashed": true,
+        "rejected": true
+      },
+      {
+        "case": "QPC reversed",
+        "rehashed": true,
+        "rejected": true
+      },
+      {
+        "case": "UTC reversed",
+        "rehashed": true,
+        "rejected": true
+      },
+      {
+        "case": "query failed",
+        "rehashed": true,
+        "rejected": true
+      },
+      {
+        "case": "peer error mistaken for global",
+        "rehashed": true,
+        "rejected": true
+      },
+      {
+        "case": "current sample count changed",
+        "rehashed": true,
+        "rejected": true
+      },
+      {
+        "case": "authentication changed",
+        "rehashed": true,
+        "rejected": true
+      },
+      {
+        "case": "event count disagrees",
+        "rehashed": true,
+        "rejected": true
+      },
+      {
+        "case": "event diagnostic discarded",
+        "rehashed": true,
+        "rejected": true
+      }
+    ],
+    "original_files": [
+      {
+        "path": "261021/data/reports/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/collection.json",
+        "bytes": 986,
+        "sha256": "621edd80006509243ccf0fd45a0ea270cffdbb4059cf05596c9e13dbccb42ee9"
+      },
+      {
+        "path": "261021/data/reports/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/event-result.json",
+        "bytes": 260,
+        "sha256": "4ff80919fdf005e3a791331047299d3e52a3d262de2b687df82282fed5b40ab4"
+      },
+      {
+        "path": "261021/data/reports/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/events.json",
+        "bytes": 11,
+        "sha256": "84b1c14e68260082e3e79edff0a78f4ebf1942cfd6c593246044ec2149cbb87d"
+      },
+      {
+        "path": "261021/data/reports/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/hashes.json",
+        "bytes": 2252,
+        "sha256": "9efbf188fe01c275a863b1bbb51e7959257321ebb8ff828ea7a0e8df039b8eb9"
+      },
+      {
+        "path": "261021/data/reports/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/host.json",
+        "bytes": 166,
+        "sha256": "01119e29916d7b71af6f436b487f4d448f9db4cc5a9369485932166ed4e8a892"
+      },
+      {
+        "path": "261021/data/reports/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/peers-verbose.log",
+        "bytes": 524,
+        "sha256": "2c0d634ac1396284941785108e4cd74f9fe477a9c760f4413884895b1c86f568"
+      },
+      {
+        "path": "261021/data/reports/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/service-after.json",
+        "bytes": 302,
+        "sha256": "64f310fcb977eef2f59d40b30bfcaca5f067f9192152037f82b83f7d1e50f294"
+      },
+      {
+        "path": "261021/data/reports/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/service-before.json",
+        "bytes": 302,
+        "sha256": "64f310fcb977eef2f59d40b30bfcaca5f067f9192152037f82b83f7d1e50f294"
+      },
+      {
+        "path": "261021/data/reports/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/status-verbose.log",
+        "bytes": 712,
+        "sha256": "87b34c26da11794e734944d2b40961ee56c8b69e7d8ebaa5d7bc00c871128102"
+      }
+    ],
+    "attachment": {
+      "path_ignored": "261021/data/reports/20261109-host-cause-review/inputs/attachment.txt",
+      "bytes": 8240,
+      "sha256": "aa5f45168f3ca85c40e1ec7baf33f4be4aaf1d4d74bf5f824267dfb6e617da01"
+    },
+    "historical_events_summary": [
+      {
+        "record_id": 26321,
+        "id": 158,
+        "host_utc_unqualified": "2026-11-09T01:33:54.1348025Z"
+      },
+      {
+        "record_id": 26315,
+        "id": 158,
+        "host_utc_unqualified": "2026-11-09T01:16:50.1324628Z"
+      },
+      {
+        "record_id": 26304,
+        "id": 158,
+        "host_utc_unqualified": "2026-11-09T00:59:46.1291014Z"
+      },
+      {
+        "record_id": 26280,
+        "id": 158,
+        "host_utc_unqualified": "2026-11-09T00:42:42.1237183Z"
+      },
+      {
+        "record_id": 26266,
+        "id": 37,
+        "host_utc_unqualified": "2026-11-09T00:25:22.2254368Z"
+      },
+      {
+        "record_id": 26265,
+        "id": 158,
+        "host_utc_unqualified": "2026-11-09T00:25:22.0931999Z"
+      },
+      {
+        "record_id": 26171,
+        "id": 35,
+        "host_utc_unqualified": "2026-11-08T04:35:07.8052616Z"
+      },
+      {
+        "record_id": 26170,
+        "id": 37,
+        "host_utc_unqualified": "2026-11-08T04:34:51.9390009Z"
+      },
+      {
+        "record_id": 26137,
+        "id": 158,
+        "host_utc_unqualified": "2026-11-08T04:34:23.5656713Z"
+      },
+      {
+        "record_id": 26136,
+        "id": 134,
+        "host_utc_unqualified": "2026-11-08T04:34:23.5597502Z"
+      },
+      {
+        "record_id": 26112,
+        "id": 158,
+        "host_utc_unqualified": "2026-11-07T05:35:41.2770531Z"
+      },
+      {
+        "record_id": 26111,
+        "id": 134,
+        "host_utc_unqualified": "2026-11-07T05:35:41.2760695Z"
+      }
+    ],
+    "historical_event_26266_after_process_start_wall_seconds": "0.1858371",
+    "prior_events_file": {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-events-v1.log",
+      "bytes": 5170,
+      "sha256": "b4ecda50ab27c367cca23fe943b653c10ddc4bb31488bef7b2353abb121ddfbd"
+    },
+    "source_dossier_directories_found": []
+  },
+  "maintenance_review": {
+    "saved_runtime_index": {
+      "path": "261021/docs/reviews/20261109-host-admin-checks.json",
+      "bytes": 23556,
+      "sha256": "5c662de2d6cf66e9792eb54c164197777874c642aebe557301760ea632423db9",
+      "commit": "9c32298"
+    },
+    "special_poll_interval": 16384,
+    "min_poll_exponent": 10,
+    "hold_period": 5,
+    "kb2638243_workaround_strict_upper_bound": 6144,
+    "saved_config_meets_conditional_workaround_inequality": false,
+    "observed_state": "Unset",
+    "SPIKE_transition_or_actual_offset_observed": false,
+    "conclusion": "Conditional workaround inequality does not prove KB root cause; maintenance permission and new evidence required.",
+    "OS_operations_executed": [],
+    "qualification": "incomplete",
+    "real_fit_allowed": false
+  },
+  "authenticity_and_uncertainty": {
+    "scope": "Console/procedure/exit/actual files/hash consistent; unsigned receipt is not trusted-source attestation.",
+    "host_boot_and_service_identity": "Reported host boot time/version and svchost process start/hash bound to before/after collection, not independent UTC or all loaded code identity.",
+    "query_UTC_QPC": "Exact input 100ns strings and integer ticks retained; local values unqualified; sequential queries not atomic.",
+    "service_start_is_process_start": true,
+    "reported_NoAuth_accepted_as_independent_authenticated_reference": false,
+    "independent_source_dossier_found_in_conventional_directory": false,
+    "external_UTC_offset_measured": false,
+    "QPC_elapsed_independently_calibrated": false,
+    "qualification": "incomplete",
+    "real_fit_allowed": false
+  },
+  "validation": {
+    "raw_files": 9,
+    "hash_manifest_members": 8,
+    "native_queries_exit0": 2,
+    "diagnostic_negative_cases": 14,
+    "rehashed_negative_cases": 12,
+    "product_unit_tests_added": 0,
+    "product_suite_rerun": false,
+    "documentation_result": {
+      "original_files_verified": 9,
+      "manifest_members": 8,
+      "review_evidence_files_verified": 22,
+      "baseline_files_verified": 14,
+      "negative_cases": 14,
+      "rehashed_negatives": 12,
+      "relative_links": 245,
+      "PowerShell_guide_body_unchanged_from_previously_parsed_bytes": true,
+      "product_source_schema_writer_lock_workflow_changed": false,
+      "scope_and_diff_check": "passed",
+      "secrets_scan": "passed"
+    },
+    "guide_body_changed_since_successful_PowerShell_parse": false,
+    "new_implementation_CI_required": false,
+    "new_CI_accepted": false,
+    "reason": "Documentation plus ignored offline diagnostic recipes only; source/schema/writer/lock/workflow unchanged."
+  },
+  "failures_and_limits_of_preparation": {
+    "timing_wrapper_used": false,
+    "local_utc_start": null,
+    "records": [
+      {
+        "kind": "interactive_shell_read",
+        "exit_code": 1,
+        "command_summary": "Read old 20261109-admin-resources-checks.json using review_evidence_records key while finding host-events-v1.log metadata.",
+        "observed_error": "KeyError: review_evidence_records",
+        "correction": "Inspected actual keys: review_evidence_files; recorded bytes5170/SHA and verified in offline-cause-v1.",
+        "raw_stdout_complete_local_copy": false,
+        "tool_transcript_available": true
+      },
+      {
+        "kind": "web_open",
+        "url": "https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-w32t/",
+        "observed_error": "Internal Error; URL is not accessible via this tool",
+        "correction": "Used the accessible specific Time Peer Elements official page; did not infer from unavailable root.",
+        "raw_HTTP_original_saved": false
+      },
+      {
+        "kind": "web_search",
+        "summary": "Additional StateMachine/PeerState search returned no usable official matching specification; unrelated results ignored.",
+        "used_as_evidence": false
+      }
+    ]
+  },
+  "attempts": [
+    {
+      "id": "offline-cause-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-host-cause-review/review.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T02:10:29.435482+00:00",
+      "end_utc_local_unqualified": "2026-11-09T02:10:29.517556+00:00",
+      "start_monotonic_ns": 188755501861181,
+      "end_monotonic_ns": 188755583924797,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-host-cause-review/offline-cause-v1.log",
+      "log_bytes": 126,
+      "log_sha256": "29c3cf35ad281857044ea366b72339d787ec2d4444d133a800d1b078f7e619e2"
+    },
+    {
+      "id": "maintenance-review-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-host-cause-review/maintenance-review.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T02:14:27.744792+00:00",
+      "end_utc_local_unqualified": "2026-11-09T02:14:27.814047+00:00",
+      "start_monotonic_ns": 188994587888313,
+      "end_monotonic_ns": 188994657127501,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-host-cause-review/maintenance-review-v1.log",
+      "log_bytes": 690,
+      "log_sha256": "36135fe06d7592a4904de684480f818fef59926ced4a28cce8a04c48e0441fc5"
+    },
+    {
+      "id": "documentation-validation-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-host-cause-review/validate.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T02:16:39.416010+00:00",
+      "end_utc_local_unqualified": "2026-11-09T02:16:39.683804+00:00",
+      "start_monotonic_ns": 189126769936324,
+      "end_monotonic_ns": 189127037726851,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-host-cause-review/documentation-validation-v1.log",
+      "log_bytes": 385,
+      "log_sha256": "041738aa8ce3782b9b1b1aada1e8fbdac3e76fd407c5b98bc1fb9555f3f6e19b"
+    }
+  ],
+  "baseline_inputs": [
+    {
+      "path": "AGENTS.md",
+      "commit": "9c32298",
+      "bytes": 3418,
+      "sha256": "dac24a4639ec3fcab16f08605b59cd98ef168c5b84b83f9046455f11030fa412"
+    },
+    {
+      "path": "261014/plan_mlops.md",
+      "commit": "9c32298",
+      "bytes": 140030,
+      "sha256": "4f934b6cee5c503446eeb287598d496bd1cdb69895273c416b472947cd86d284"
+    },
+    {
+      "path": "261021/work_log.md",
+      "commit": "9c32298",
+      "bytes": 548613,
+      "sha256": "b3228b533db3ff7ab42e3b381d59b5aad6b39ea24193dd95e6175c4863d776e4"
+    },
+    {
+      "path": "261021/docs/clock-host-runtime-review.md",
+      "commit": "9c32298",
+      "bytes": 9588,
+      "sha256": "4b975a4dd66bc202eb46085576ed82b49e375a5e9587e954dc69ee159875c791"
+    },
+    {
+      "path": "261021/docs/clock-owner-admin-read.md",
+      "commit": "9c32298",
+      "bytes": 22345,
+      "sha256": "692fa99891a78125abf8c4e17a425ce0627a0ff1152cc39b36c0e3ecb764af25"
+    },
+    {
+      "path": "261021/docs/clock-source-readiness.md",
+      "commit": "9c32298",
+      "bytes": 6482,
+      "sha256": "ee90e69bca67823bd0fbba689c15f5a2b2a72703aa5e034885fc9b8f324a4c54"
+    },
+    {
+      "path": "261021/docs/clock-input-request.md",
+      "commit": "9c32298",
+      "bytes": 8047,
+      "sha256": "ee315a1e28d25c4761166e9efd2eb596e2b63cb773f11e6bb4fb6c109abfe80a"
+    },
+    {
+      "path": "261021/docs/clock-qualification-plan.md",
+      "commit": "9c32298",
+      "bytes": 8957,
+      "sha256": "cc077a3d963df7fd9e14e999d30c32e4f8a9e8093af7b54978ab68741be73a9e"
+    },
+    {
+      "path": "261021/docs/backend-time-path-review.md",
+      "commit": "9c32298",
+      "bytes": 6329,
+      "sha256": "4f097f22dfc60e4471e7216252476c6d2e88cd6f39029846536429b90cfdea1f"
+    },
+    {
+      "path": "261021/docs/t10-input-readiness.md",
+      "commit": "9c32298",
+      "bytes": 11231,
+      "sha256": "45dab204606973c35148fcc20ce7519c5757bfba7467f8e79202a9b76bd46593"
+    },
+    {
+      "path": "261021/docs/reviews/20261108-t10-snapshot-checks.json",
+      "commit": "9c32298",
+      "bytes": 92578,
+      "sha256": "0a6156495c66c4d5de0c0703a88b0c9f2af2e71884eea2b105779b1c1ff8e5cb"
+    },
+    {
+      "path": "261021/docs/reviews/20261109-host-admin-checks.json",
+      "commit": "9c32298",
+      "bytes": 23556,
+      "sha256": "5c662de2d6cf66e9792eb54c164197777874c642aebe557301760ea632423db9"
+    },
+    {
+      "path": "261021/docs/reviews/20261109-admin-resources-checks.json",
+      "commit": "9c32298",
+      "bytes": 37743,
+      "sha256": "830271a0711f1d3c006ffca6cf8321201d5c9e69c9eb92d7b5bdbe8efc796d25"
+    },
+    {
+      "path": "261021/docs/reviews/20261109-clock-bundle-input-ci-checks.json",
+      "commit": "9c32298",
+      "bytes": 55863,
+      "sha256": "c78d5dd8583755415f9202b197e0b9bf9eae6731fd7bc17ed225ea906340f369"
+    }
+  ],
+  "review_evidence_files": [
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/analysis.json",
+      "bytes": 8778,
+      "sha256": "7220166d7b700757d1946f79c02241f8109ea181436e1d302256117e7f4600c2"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/build-index.py",
+      "bytes": 8112,
+      "sha256": "7e08c8975b2cfe110e5976ee11430d0f582509c8775893efa95e9d588d41ac89"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/documentation-validation-v1.json",
+      "bytes": 647,
+      "sha256": "ee7d426abbb452c8ecb4db141b12584f6f5d8b184ebc5f97dea2a9d2a9e6f16b"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/documentation-validation-v1.log",
+      "bytes": 385,
+      "sha256": "041738aa8ce3782b9b1b1aada1e8fbdac3e76fd407c5b98bc1fb9555f3f6e19b"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/inputs/attachment.txt",
+      "bytes": 8240,
+      "sha256": "aa5f45168f3ca85c40e1ec7baf33f4be4aaf1d4d74bf5f824267dfb6e617da01"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/inputs/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/collection.json",
+      "bytes": 986,
+      "sha256": "621edd80006509243ccf0fd45a0ea270cffdbb4059cf05596c9e13dbccb42ee9"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/inputs/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/event-result.json",
+      "bytes": 260,
+      "sha256": "4ff80919fdf005e3a791331047299d3e52a3d262de2b687df82282fed5b40ab4"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/inputs/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/events.json",
+      "bytes": 11,
+      "sha256": "84b1c14e68260082e3e79edff0a78f4ebf1942cfd6c593246044ec2149cbb87d"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/inputs/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/hashes.json",
+      "bytes": 2252,
+      "sha256": "9efbf188fe01c275a863b1bbb51e7959257321ebb8ff828ea7a0e8df039b8eb9"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/inputs/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/host.json",
+      "bytes": 166,
+      "sha256": "01119e29916d7b71af6f436b487f4d448f9db4cc5a9369485932166ed4e8a892"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/inputs/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/peers-verbose.log",
+      "bytes": 524,
+      "sha256": "2c0d634ac1396284941785108e4cd74f9fe477a9c760f4413884895b1c86f568"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/inputs/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/service-after.json",
+      "bytes": 302,
+      "sha256": "64f310fcb977eef2f59d40b30bfcaca5f067f9192152037f82b83f7d1e50f294"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/inputs/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/service-before.json",
+      "bytes": 302,
+      "sha256": "64f310fcb977eef2f59d40b30bfcaca5f067f9192152037f82b83f7d1e50f294"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/inputs/clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b/status-verbose.log",
+      "bytes": 712,
+      "sha256": "87b34c26da11794e734944d2b40961ee56c8b69e7d8ebaa5d7bc00c871128102"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/maintenance-analysis.json",
+      "bytes": 736,
+      "sha256": "dd21826a4474f6ac37817b7eb1d76fc6ed4632cae4414b3800f172e852674df4"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/maintenance-review-v1.json",
+      "bytes": 645,
+      "sha256": "49c6277aa5f8f9820230a7b7b521ca3d4f9c86c76a1a8c62bdb27fcb3953f2c9"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/maintenance-review-v1.log",
+      "bytes": 690,
+      "sha256": "36135fe06d7592a4904de684480f818fef59926ced4a28cce8a04c48e0441fc5"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/maintenance-review.py",
+      "bytes": 1451,
+      "sha256": "89bd6096f44ac314dc7951c6928ac89fd367e43a06680ba6f77d8ee3c1a9567f"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/offline-cause-v1.json",
+      "bytes": 623,
+      "sha256": "f6b53e9c644e4ff1bb19c0e975f341f3bedf8670218f775cf71ceb3cb86d0510"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/offline-cause-v1.log",
+      "bytes": 126,
+      "sha256": "29c3cf35ad281857044ea366b72339d787ec2d4444d133a800d1b078f7e619e2"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/preparation-failures.json",
+      "bytes": 1161,
+      "sha256": "e59071bb21d4991f28ad294e6240e50a53b32cfaba5b0f145905b61b3e4f2375"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/review.py",
+      "bytes": 10657,
+      "sha256": "8287186f1e9628ef384fb55c28588f89f150f097ec1ce3c96f1e56d0952a4e4b"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/run_attempt.py",
+      "bytes": 1244,
+      "sha256": "62df5fee98294644b7a3ebc2a0087ffa98f9be75fc4c26285681b39def88ac29"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/validate.py",
+      "bytes": 3645,
+      "sha256": "8affca13eb00adfe4684a0360fa565361e90f0177dc6f884b67cbc390b26c300"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-cause-review/validation-result.json",
+      "bytes": 409,
+      "sha256": "593a4a67cc135d9994af0a99d3d31d7f3115f5b5687824475e7c16e8ffd8b9eb"
+    }
+  ],
+  "references": [
+    {
+      "url": "https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-w32t/28e3c644-cb9d-4925-8c80-288f6339d9e0",
+      "used_for": "Per-peer resolved-failure counter/current valid sample count/error/authentication field semantics; not proof of full host synchronization."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/active-directory/specialpollinterval-polling-interval-time-service-not-correct",
+      "used_for": "Conditional SPIKE/special-poll issue and strict workaround inequality; actual offset/SPIKE not observed here."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/active-directory/w32time-sync-specialpollInterval-ignored",
+      "used_for": "Separate special-poll delay issue and flag0x9-to0x8 candidate; not an executed or confirmed fix."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/windows-server/networking/windows-time-service/windows-time-service-tools-and-settings",
+      "used_for": "Query/resync/config action distinction; no commands changing time/config executed."
+    }
+  ],
+  "remaining": [
+    {
+      "priority": "P1",
+      "difficulty": "D3/Sol",
+      "task": "New state-change/natural event or explicitly authorized one-condition host maintenance comparison; root cause and sync responsibility remain unresolved."
+    },
+    {
+      "priority": "P1",
+      "difficulty": "D3/Sol",
+      "task": "Independent UTC/elapsed source identity/authenticity/dependencies/uncertainty dossier and adoption review."
+    },
+    {
+      "priority": "P1",
+      "difficulty": "D3/Sol",
+      "task": "After prerequisites: real source reader/collector/host deadline/fixed workload, permitted repair/suspend-resume and complete qualification."
+    },
+    {
+      "priority": "P0 before fit",
+      "difficulty": "D3/Sol",
+      "task": "Exact fixed T10 inputs/dependencies/unconsumed-window check immediately before allowed actual fit."
+    },
+    {
+      "priority": "P1",
+      "difficulty": "D3/Sol",
+      "task": "T02/T11/T12/T13b same-candidate actual evaluation/producer evidence/decision after all prerequisites."
+    },
+    {
+      "priority": "conditional",
+      "difficulty": "D3/Sol",
+      "task": "T03 phase/stack or tick11000 internal values/kernel writes only upon new natural recurrence material."
+    }
+  ],
+  "boundaries": [
+    "No OS/clock configuration, real DB/registry/current serving, future rejection, fit/scoring/window consumption changes.",
+    "No new Windows host query or live trace/probe performed; reads of old events are offline only.",
+    "No basic/peer/PHC recollection request without new conditions; no repeat of T09/T10 aggregation/accepted suites/CI.",
+    "No-match event diagnostic retained, not treated as proof of no failures, successful exhaustive query or complete log history.",
+    "Historical event UTC proximity to current process-start report does not supply historical process identity/payload or prove applied synchronization.",
+    "NoAuth/pending/current counter0 are not no packet ever received or globally permanent endpoint failure.",
+    "No new natural T03/tick11000 input supplied; no nonrecurrence or historic root cause resolution claimed.",
+    "Web calls are source review, not locally stored raw HTTP originals; inaccessible root and irrelevant search results were not evidence.",
+    "Initial interactive commands were outside timed wrapper; missing timing/full stdout not fabricated. Failure summarized in preparation-failures.json.",
+    "Capture-specific 14 negatives are not product unit cases or acceptance of a reusable parser/clock source.",
+    "Index generated after closed attempt logs, without timing itself to avoid self-reference; post-freeze stage/commit/push receipts and staged.diff are local only."
+  ]
+}

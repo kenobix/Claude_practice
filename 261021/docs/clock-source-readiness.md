@@ -6,7 +6,12 @@
 未確認provider名やaddress、`independent=true`の自己申告で不足を埋めない。
 現時点の入力から特定製品/サービスの独立性や精度を認定することもできない。
 
-2026-11-09 host追補：[管理者runtime review](clock-host-runtime-review.md)でhostのsource/configuration取得も完了。
+2026-11-09 peer追補：[実peer/status/identity review](clock-host-cause-review.md)で、peerはNoAuth、pending、現在有効sample0と確認した。
+個別peerのerror0を全体同期成功へ昇格させない。今回metadataは認証・精度・輸送区間・独立elapsed校正の根拠を欠き、採用できない。
+このreaderで資料が不足するという判断で、同名サービスの別の認証方式まで永久に不採用とする判断ではない。
+新dossierは標準保存先に無く、源選定保留を維持する。host修復と独立源採用は別の条件である。
+
+2026-11-09 host追補（peer追補前の履歴）：[管理者runtime review](clock-host-runtime-review.md)でhostのsource/configuration取得も完了。
 runtimeはNtpClient有効/Type=NTP/time.windows.com,0x9だが、状態はLI3/Local CMOS Clockと報告された。
 config flag/precision/root dispersionやquery exit0は真正性・外部UTC誤差・QPC校正の根拠ではない。
 peer/last-error等の原因診断と独立源の採用を分け、採用保留を維持する。

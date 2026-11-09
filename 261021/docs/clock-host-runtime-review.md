@@ -7,6 +7,10 @@
 **前回拒否されたsource/configurationの管理者読取は完了。WindowsはNTPを設定しているが、採取時は同期未実行と報告した。**
 これは実際の提出ログのreviewである。時計のUTC誤差の実測、未同期原因の確定、時計資格の合格とは区別する。
 
+基点`9c32298`後の[peer/status/identity追補](clock-host-cause-review.md)で、下記のpeer/last-error読取不足も解消した。
+全体のno time dataとpeerのpending/現在有効sample0を照合済み。以下の「次の読取」は当時の履歴であり、同じ採取を直後に反復しない。
+次は新しい状態変化/独立源資料、または[別途許可された保守比較](clock-host-maintenance-plan.md)を条件とする。
+
 ## 原本・真正性・identityの範囲
 
 添付consoleの保存先と実directoryが一致し、`status/source/configuration`はすべてnative exit0。

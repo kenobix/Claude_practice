@@ -3,7 +3,8 @@
 **2026-11-09更新:** 指定されたowner/resourcesの2原本を[照合済み](clock-resources-admin-review.md)。
 直接保存方式の終了値/実完了行/hashと、採取区間のchronyd・PHC fd・UDP所有を確認した。
 基本inventory/PHC/socketの同じ採取は不要。hostの[basic管理者queryも受入済み](clock-host-runtime-review.md)。
-以下の未実施・未採取は各旧時点の履歴であり、現在は[peer/last-error等の原因限定読取](#host-w32time-cause-read)と独立源資料が次の入力になる。
+peer/status/identityの限定読取も`clock-host-cause-a52e422e-…`で[受入済み](clock-host-cause-review.md)。同じqueryを直後に反復しない。
+以下の未実施・未採取は各旧時点の履歴。次は新しい状態変化/自然event・独立源資料、または[明示許可後の保守比較](clock-host-maintenance-plan.md)を条件とする。
 dev差・timesyncd identity変更・tick11000内部原因・同期責任・全時計資格は未解決である。
 
 [現在の調査結果](clock-process-ownership.md)の続き。**時計設定を変更する手順ではない。**
@@ -212,7 +213,11 @@ query結果やservice Runningだけで外部UTC精度・QPC校正・同期責任
 
 <a id="host-w32time-cause-read"></a>
 
-## 未同期原因の限定読取（peer・last-error・新イベント）
+## 未同期原因の限定読取（取得済み・peer・last-error・新イベント）
+
+**取得後追補:** `clock-host-cause-a52e422e-…`の[実結果をreview済み](clock-host-cause-review.md)。
+9file/8member SHA、query exit0、host/service identity前後一致を確認し、event該当なしの診断も保持した。
+以下は採取手順の履歴。構文確認だけでなく実原本も受入済みなので、同じblockを直後に再実行する必要はない。
 
 基点`b0589ee`のhost管理者原本は取得済み。以下は**追加項目だけ**を採る任意の次手順であり、同じsource/configuration/PHC採取のやり直しではない。
 今回不足したpeer状態とverbose last-error、前回既存logの最大RecordId26321より後のTime-Serviceイベント最大32件を読む。
