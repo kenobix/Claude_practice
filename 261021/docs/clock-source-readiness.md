@@ -6,6 +6,11 @@
 未確認provider名やaddress、`independent=true`の自己申告で不足を埋めない。
 現時点の入力から特定製品/サービスの独立性や精度を認定することもできない。
 
+2026-11-09：[管理者PHC/UDPの照合](clock-resources-admin-review.md)で、指定採取区間のchronydがHyper-V PHCとlocal UDP323を所有すると確認した。
+これは同期経路の実体照合で、独立源の真正性・UTC精度・elapsed不確かさを満たす資料ではない。
+hostのW32TimeはRunningでもstatusは同期未実行/Local CMOS Clockで、source/configurationは非管理者tokenに拒否された。
+独立源の採用は引き続き保留。追加資料の入口は[更新した入力一覧](clock-input-request.md)を参照し、同じPHC採取を反復しない。
+
 2026-11-08追補：追加資料は未取得とユーザーが回答した。
 [必要入力と保存先](clock-input-request.md)へ、管理者ログ・源のidentity/真正性・依存関係・不確かさの根拠を具体化した。
 資料待ちで独立して進められる[合成raw bundle](clock-raw-bundle.md)を追加したが、実源の選定/資格は保留を維持する。

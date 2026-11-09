@@ -1,0 +1,972 @@
+{
+  "schema_version": 1,
+  "review_date_client": "2026-11-09",
+  "base_commit": "464df19000bb4507edfe69b72ddd90f13e66980e",
+  "status": "ADMIN_CAPTURE_IDENTITY_PHC_UDP_ACCEPTED_HOST_PARTIAL_REAL_QUALIFICATION_BLOCKED",
+  "completed_scope": [
+    "Owner/resources user-supplied capture reader outputs and hashes matched without following stale /proc paths.",
+    "Captured chronyd executable/configuration/parent/start/namespaces and PHC FD/UDP socket owners correlated.",
+    "Direct initial-namespace save path reviewed from supplied real captures; not a synthetic execution claim.",
+    "Local Windows service state, partial runtime status, allowlisted stored values and bounded historical events added."
+  ],
+  "capture_review": {
+    "status": "CAPTURE_HASH_IDENTITY_PHC_UDP_MATCHED_NOT_CLOCK_QUALIFICATION",
+    "owner_capture": {
+      "boot_id": "fa2e753f-22dc-4f88-ad3f-8d372b5b6b1d",
+      "uptime_bracket": [
+        "186127.55",
+        "186127.77"
+      ],
+      "chronyd": {
+        "pid": 213,
+        "parent": 1,
+        "start_ticks": 319,
+        "exe": "/usr/sbin/chronyd",
+        "sha256": "bf39d010dfc6177cd864d96ddd0cb32eb796704e8c68fe8bd65088d20d2e64b8",
+        "namespaces": {
+          "pid": "pid:[4026531836]",
+          "mnt": "mnt:[4026531841]",
+          "time": "time:[4026531834]",
+          "user": "user:[4026531837]"
+        },
+        "parent_exe": "/init",
+        "parent_sha256": "f84f9ae9116b972fce6723f920fb8fb1dedff2aeb0baa40ed7c5d2b9f4b73311"
+      },
+      "timesyncd": {
+        "pid": 973,
+        "parent": 233,
+        "start_ticks": 18257168,
+        "exe": "/usr/lib/systemd/systemd-timesyncd",
+        "sha256": "5e87427803daf1dbe974cc62fba335c96ff24e37892f67d9095d6703d2c32009",
+        "namespaces": {
+          "pid": "pid:[4026532219]",
+          "mnt": "mnt:[4026532222]",
+          "time": "time:[4026531834]",
+          "user": "user:[4026531837]"
+        },
+        "parent_exe": "/usr/lib/systemd/systemd",
+        "parent_sha256": "9a813714ffd4dadb692afe44384c9c5b334fa323a4ec1dd5157aebdcbbb0667a"
+      },
+      "config_sha256": "9315d50044034745ade10c260359b463eb77a61af9330f818f68ed16253f8528",
+      "drift_file_values": [
+        "6820.697933",
+        "361.000827"
+      ]
+    },
+    "resource_capture": {
+      "boot_id": "fa2e753f-22dc-4f88-ad3f-8d372b5b6b1d",
+      "uptime_bracket": [
+        "186422.75",
+        "186423.10"
+      ],
+      "chronyd": {
+        "pid": 213,
+        "parent": 1,
+        "start_ticks": 319,
+        "exe": "/usr/sbin/chronyd",
+        "sha256": "bf39d010dfc6177cd864d96ddd0cb32eb796704e8c68fe8bd65088d20d2e64b8",
+        "namespaces": {
+          "pid": "pid:[4026531836]",
+          "mnt": "mnt:[4026531841]",
+          "time": "time:[4026531834]",
+          "user": "user:[4026531837]"
+        },
+        "parent_exe": "/init",
+        "parent_sha256": "f84f9ae9116b972fce6723f920fb8fb1dedff2aeb0baa40ed7c5d2b9f4b73311"
+      },
+      "timesyncd": {
+        "pid": 973,
+        "parent": 233,
+        "start_ticks": 18257168,
+        "exe": "/usr/lib/systemd/systemd-timesyncd",
+        "sha256": "5e87427803daf1dbe974cc62fba335c96ff24e37892f67d9095d6703d2c32009",
+        "namespaces": {
+          "pid": "pid:[4026532219]",
+          "mnt": "mnt:[4026532222]",
+          "time": "time:[4026531834]",
+          "user": "user:[4026531837]"
+        },
+        "parent_exe": "/usr/lib/systemd/systemd",
+        "parent_sha256": "9a813714ffd4dadb692afe44384c9c5b334fa323a4ec1dd5157aebdcbbb0667a"
+      },
+      "config_sha256": "9315d50044034745ade10c260359b463eb77a61af9330f818f68ed16253f8528",
+      "drift_file_values": [
+        "6820.697933",
+        "361.000827"
+      ]
+    },
+    "resource_exe_file_id": {
+      "dev": 27,
+      "inode": 4227,
+      "bytes": 320600
+    },
+    "resource_net_namespace": "net:[4026531840]",
+    "PHC": {
+      "fd": 3,
+      "rdev_decimal": "247:0",
+      "clock_name": "hyperv"
+    },
+    "UDP": {
+      "port": 323,
+      "ipv4_fd": 5,
+      "ipv4_inode": 3582,
+      "ipv6_fd": 6,
+      "ipv6_inode": 3583
+    },
+    "clock_qualification_status": "incomplete",
+    "history": {
+      "boot_matches_old_inventory": true,
+      "chronyd_pid_start_exe_and_namespaces_match_old_inventory": true,
+      "chronyd_exe_hash_matches_packaged_build": true,
+      "old_probe_exe_file_id": {
+        "dev": 42,
+        "inode": 4227,
+        "bytes": 320600,
+        "sha256": "bf39d010dfc6177cd864d96ddd0cb32eb796704e8c68fe8bd65088d20d2e64b8"
+      },
+      "same_dev_inode_as_old_probe": false,
+      "timesyncd_old_pid_start_sha": [
+        496,
+        "1505",
+        "cbf92a41ffb29efd75daebf8a1a1dd4d0c078d2f3c50f0fc7e9e35715eefb7cd"
+      ],
+      "timesyncd_current_pid_start_sha": [
+        973,
+        18257168,
+        "5e87427803daf1dbe974cc62fba335c96ff24e37892f67d9095d6703d2c32009"
+      ],
+      "past_setter_or_new_control_cause_proved": false
+    },
+    "diagnostic_negative_cases": [
+      {
+        "case": "bad-member-hash",
+        "rehashed": false,
+        "rejected": "hash mismatch"
+      },
+      {
+        "case": "reader-failed",
+        "rehashed": true,
+        "rejected": "reader exit failure"
+      },
+      {
+        "case": "missing-complete",
+        "rehashed": true,
+        "rejected": "resources incomplete"
+      },
+      {
+        "case": "boot-changed",
+        "rehashed": true,
+        "rejected": "resource boot mismatch"
+      },
+      {
+        "case": "start-changed",
+        "rehashed": true,
+        "rejected": "resource start mismatch"
+      },
+      {
+        "case": "exe-changed",
+        "rehashed": true,
+        "rejected": "resource executable hash mismatch"
+      },
+      {
+        "case": "device-changed",
+        "rehashed": true,
+        "rejected": "unexpected capture executable identity"
+      },
+      {
+        "case": "namespace-changed",
+        "rehashed": true,
+        "rejected": "resource namespaces mismatch"
+      },
+      {
+        "case": "config-changed",
+        "rehashed": true,
+        "rejected": "resource config mismatch"
+      },
+      {
+        "case": "PHC-missing",
+        "rehashed": true,
+        "rejected": "PHC fd missing/duplicate"
+      },
+      {
+        "case": "PHC-rdev-changed",
+        "rehashed": true,
+        "rejected": "PHC device mismatch"
+      },
+      {
+        "case": "UDP-inode-changed",
+        "rehashed": true,
+        "rejected": "UDP owner rows mismatch"
+      },
+      {
+        "case": "UDP-port-changed",
+        "rehashed": true,
+        "rejected": "UDP owner rows mismatch"
+      },
+      {
+        "case": "FD-count-changed",
+        "rehashed": true,
+        "rejected": "FD count mismatch"
+      },
+      {
+        "case": "uptime-reversed",
+        "rehashed": true,
+        "rejected": "uptime bracket reversed"
+      },
+      {
+        "case": "unexpected-include",
+        "rehashed": true,
+        "rejected": "unexpected include/source directives"
+      },
+      {
+        "case": "cross-capture-boot-changed",
+        "rehashed": true,
+        "rejected": "boot mismatch"
+      },
+      {
+        "case": "duplicate-PHC-fd",
+        "rehashed": true,
+        "rejected": "PHC fd missing/duplicate"
+      },
+      {
+        "case": "parent-changed",
+        "rehashed": true,
+        "rejected": "resource parent mismatch"
+      },
+      {
+        "case": "resource-errors",
+        "rehashed": true,
+        "rejected": "resources errors"
+      },
+      {
+        "case": "missing-member",
+        "rehashed": false,
+        "rejected": "capture missing/extra file"
+      },
+      {
+        "case": "extra-member",
+        "rehashed": false,
+        "rejected": "capture missing/extra file"
+      },
+      {
+        "case": "duplicate-hash-entry",
+        "rehashed": false,
+        "rejected": "unexpected/duplicate hash member"
+      }
+    ]
+  },
+  "hash_manifest_entries_checked": {
+    "owner": 5,
+    "resources": 7
+  },
+  "host_review": {
+    "status": "PARTIAL_LOCAL_HOST_READ_NOT_EXTERNAL_CLOCK_QUALIFICATION",
+    "admin_token": false,
+    "services": [
+      {
+        "Name": "vmictimesync",
+        "State": "Stopped",
+        "StartMode": "Manual"
+      },
+      {
+        "Name": "W32Time",
+        "State": "Running",
+        "StartMode": "Manual"
+      }
+    ],
+    "status_query_exit": 0,
+    "LI": 3,
+    "stratum": 0,
+    "reported_source": "Local CMOS Clock",
+    "last_successful_sync": "unspecified",
+    "source_and_configuration_query_exits": [
+      -2147024891,
+      -2147024891
+    ],
+    "source_and_configuration_query_error": "0x80070005",
+    "host_query_wrapper_exit": 42,
+    "stored_Type": "NTP",
+    "stored_peer": "time.windows.com,0x9",
+    "stored_NtpClient_enabled": 1,
+    "stored_VMICTimeProvider_enabled": 1,
+    "stored_values_prove_effective_runtime_or_sync": false,
+    "policy_keys": [
+      {
+        "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\W32Time\\Parameters",
+        "status": "absent-or-not-visible"
+      },
+      {
+        "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\W32Time\\TimeProviders\\NtpClient",
+        "status": "absent-or-not-visible"
+      }
+    ],
+    "event_count_limit": 12,
+    "event_count_received": 12,
+    "event_record_id_and_type": [
+      {
+        "record_id": 26321,
+        "event_id": 158
+      },
+      {
+        "record_id": 26315,
+        "event_id": 158
+      },
+      {
+        "record_id": 26304,
+        "event_id": 158
+      },
+      {
+        "record_id": 26280,
+        "event_id": 158
+      },
+      {
+        "record_id": 26266,
+        "event_id": 37
+      },
+      {
+        "record_id": 26265,
+        "event_id": 158
+      },
+      {
+        "record_id": 26171,
+        "event_id": 35
+      },
+      {
+        "record_id": 26170,
+        "event_id": 37
+      },
+      {
+        "record_id": 26137,
+        "event_id": 158
+      },
+      {
+        "record_id": 26136,
+        "event_id": 134
+      },
+      {
+        "record_id": 26112,
+        "event_id": 158
+      },
+      {
+        "record_id": 26111,
+        "event_id": 134
+      }
+    ],
+    "event_interpretation": [
+      "Historical DNS failure 134 and later valid data 37/sync start 35 coexist. Do not assert a persistent/current DNS cause.",
+      "158 describes Windows VMICTimeProvider unsupported environment; not WSL guest PHC failure.",
+      "Host event UTC is unqualified and bounded history is not a continuous capture or calibration."
+    ]
+  },
+  "source_readiness": {
+    "independent_UTC_or_elapsed_source_accepted": false,
+    "new_dossier_directories_at_standard_location": []
+  },
+  "verification": {
+    "offline_diagnostic_negative_cases": 23,
+    "rehashed_semantic_cases": 19,
+    "other_refusals": 4,
+    "guide_PowerShell_parser_exit": 0,
+    "host_admin_guide_execution": "not_executed",
+    "documentation_and_scope_validation": {
+      "status": "passed",
+      "raw_capture_hashes": 11,
+      "review_evidence_hashes": 53,
+      "diagnostic_negative_cases": 23,
+      "relative_links": 219,
+      "PowerShell_guide_matches_syntax_checked_block": true,
+      "source_schema_writer_lock_workflow_unchanged": true,
+      "new_product_suite_CI_or_clock_qualification_claimed": false
+    },
+    "product_suite_or_new_CI_claimed": false
+  },
+  "failures_and_incomplete_attempts": [
+    {
+      "id": "host-read-v1",
+      "exit": 1,
+      "reason": "sandbox WSL interop UtilBindVsockAnyPort socket failure"
+    },
+    {
+      "id": "host-read-v2",
+      "exit": 42,
+      "reason": "partial collection; source/configuration permission denied"
+    },
+    {
+      "id": "offline-review-v1",
+      "exit": 1,
+      "reason": "diagnostic parser conflated child PPid and parent PPid"
+    },
+    {
+      "id": "offline-review-v3",
+      "exit": 1,
+      "reason": "historical CRLF boot line was not normalized after hash verification"
+    }
+  ],
+  "references": [
+    {
+      "title": "Windows Time Service Tools and Settings",
+      "url": "https://learn.microsoft.com/en-us/windows-server/networking/windows-time-service/windows-time-service-tools-and-settings",
+      "method": "web tool read on client date 2026-11-09",
+      "claim_used": "Local w32tm administrator requirement and /query source/configuration/status descriptions.",
+      "raw_HTTP_response_saved": false
+    }
+  ],
+  "limits": [
+    "Capture acceptance applies to submitted intervals only; no new live process inventory, trace, probe, query payload or independent clock source was acquired.",
+    "SHA integrity and supervised user submission are not cryptographic source attestation. Original files and headers can be rewritten by their owner.",
+    "Reader native results and in-file checks were reviewed; Windows token provenance, external wsl.exe exit and QPC were not reconstructed.",
+    "dev42 versus dev27 is unexplained; matching build bytes/inode alone do not establish identical historical file identity or no exec.",
+    "New timesyncd PID/start/executable/parent hashes cannot inherit historical setter496 attribution; change cause not inferred.",
+    "No new natural tick11000/T03 evidence supplied. Non-recurrence and historical root-cause resolution are not claimed.",
+    "Local wall/monotonic and host-event UTC remain unqualified. PHC/Local CMOS/peer setting do not qualify independent UTC/elapsed.",
+    "W32Time source/configuration runtime queries remain denied; stored registry values do not replace effective runtime configuration.",
+    "23 negative cases exercise the saved offline diagnostic recipe, not new product unit tests or CI.",
+    "Initial interactive reads were outside the timed wrapper. Only a truncated tool result remains for the overbroad rg search; full stdout was not saved. No timing was reconstructed. Later searches used exact index fields.",
+    "Native Windows output was CP932 inside query delimiters, PowerShell/CLIXML outside was UTF-8; original bytes retained.",
+    "No product tests/CI/artifact were re-run for documentation-only changes; prior accepted CI is not new evidence.",
+    "Final stage/commit/push raw logs are appended locally after index freeze and cannot include their own final commit hash in this public record.",
+    "Index-builder output/hash was refreshed only after its wrapper closed, avoiding an in-progress empty log being frozen as final evidence."
+  ],
+  "boundaries": {
+    "OS_or_clock_settings_changed": false,
+    "real_DB_registry_current_serving_changed": false,
+    "future_refusal_relaxed": false,
+    "real_fit_scoring_or_window_consumption_started": false,
+    "source_schema_writer_lock_workflow_changed": false,
+    "clock_qualification_passed": false,
+    "T09_T10_static_acceptance_preserved": true
+  },
+  "raw_capture_files": [
+    {
+      "path": "261021/data/reports/clock-owner-admin-b9641680-cb64-4a75-9fe4-a80aa7343244/hashes.sha256",
+      "bytes": 992,
+      "sha256": "b7670cc3fcab766b824937d5ed661cb7ebb91b56b32f65d93344a13be62f644d"
+    },
+    {
+      "path": "261021/data/reports/clock-owner-admin-b9641680-cb64-4a75-9fe4-a80aa7343244/inventory.log",
+      "bytes": 3751,
+      "sha256": "f515127112a9edbd66953d8f1bd6f493e64ab1dd4f660f649c38ef3130c31d61"
+    },
+    {
+      "path": "261021/data/reports/clock-owner-admin-b9641680-cb64-4a75-9fe4-a80aa7343244/reader-exit.txt",
+      "bytes": 19,
+      "sha256": "6e56701531d124b16bf2ea0ea1dbcb6ffd3ec2cc19adedc49f9df0d40def3a58"
+    },
+    {
+      "path": "261021/data/reports/clock-owner-admin-b9641680-cb64-4a75-9fe4-a80aa7343244/uptime-after.txt",
+      "bytes": 21,
+      "sha256": "808d7f54a26e7c252d63df412f5552e64e8fd897e88a341cdfa18e8250144f31"
+    },
+    {
+      "path": "261021/data/reports/clock-owner-admin-b9641680-cb64-4a75-9fe4-a80aa7343244/uptime-before.txt",
+      "bytes": 21,
+      "sha256": "10be9c0a8783a762269c0921d9b02f169be27663c115223f1fe40aa2c858fb5e"
+    },
+    {
+      "path": "261021/data/reports/clock-resources-admin-ed1b37fc-a3b9-45da-a9ba-7e2731de907f/hashes.sha256",
+      "bytes": 1373,
+      "sha256": "5b6ba193474771cfbc65b5f6b3852c92ad102e9bc0908470e31b328962d4f828"
+    },
+    {
+      "path": "261021/data/reports/clock-resources-admin-ed1b37fc-a3b9-45da-a9ba-7e2731de907f/inventory.log",
+      "bytes": 3751,
+      "sha256": "7b8ef51563f35182ff8a4b1541afaa7df9da6a6ed18b2e0b1ae461afec32daa5"
+    },
+    {
+      "path": "261021/data/reports/clock-resources-admin-ed1b37fc-a3b9-45da-a9ba-7e2731de907f/reader-exit.txt",
+      "bytes": 34,
+      "sha256": "9362edd98ebd74d6cfdd1f8e33ca95c72b7891cf26ac51445ea900036231a6a2"
+    },
+    {
+      "path": "261021/data/reports/clock-resources-admin-ed1b37fc-a3b9-45da-a9ba-7e2731de907f/resources.log",
+      "bytes": 889,
+      "sha256": "8a6435537969d93f8a7f11c5f62f41bc183ae1df72dd89909c734378da009932"
+    },
+    {
+      "path": "261021/data/reports/clock-resources-admin-ed1b37fc-a3b9-45da-a9ba-7e2731de907f/uptime-after.txt",
+      "bytes": 21,
+      "sha256": "919c4d84f721a3707d2dbfc3eb2bb7bfc45069a9980f8ceb90906cbd30f067ae"
+    },
+    {
+      "path": "261021/data/reports/clock-resources-admin-ed1b37fc-a3b9-45da-a9ba-7e2731de907f/uptime-before.txt",
+      "bytes": 21,
+      "sha256": "dec456ffd273c2bc920ce79afc7b7a8521d841701093a78d267eec8681074605"
+    }
+  ],
+  "review_evidence_files": [
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/analysis-final.json",
+      "bytes": 6605,
+      "sha256": "34821f2885b843f45f9631e1e12e312fcc74dba36921461f9bf4d55b1c3ae241"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/analysis.json",
+      "bytes": 5752,
+      "sha256": "3ab9fb7315054dfacf3df34923b3abcf2563aa4e9e828891ac15b15505c9850f"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/build-index-v1.json",
+      "bytes": 634,
+      "sha256": "cfd4afafc489217423e91a693d91c190769d157828f56e5176f97dfde2f962fc"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/build-index-v1.log",
+      "bytes": 164,
+      "sha256": "4729a23c856244a312f12823a9efafdd9aff625740981fca36f75dddf0806466"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/build-index.py",
+      "bytes": 7688,
+      "sha256": "3ec38f6f654fa154a581941b226c8715f996c816d538825ff1d05e2631dd875b"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/final-validation-v1.json",
+      "bytes": 641,
+      "sha256": "4fd153d269f414096d74cd77a3882b1e67f56b4a121105fb6a4aa26a2107c170"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/final-validation-v1.log",
+      "bytes": 322,
+      "sha256": "73087fe540d2fba0a277e449a2b30b3fd25c67f44c0d66e4b0349ab79d61a499"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/freeze-index.py",
+      "bytes": 1140,
+      "sha256": "98ddec7f86760b17ffd3c4218ec6b8644c5b1a5edd9de8174928fdc60b3151ca"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/guide-parser-v1.json",
+      "bytes": 641,
+      "sha256": "aeab1d2dfd48b9d569f5a7a8db48fd15b8fc5ec8fcecc7f9b3a9a877eb4b9d9a"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/guide-parser-v1.log",
+      "bytes": 470,
+      "sha256": "db4233572e20efd31cb1a57e973ad8f408d52c96a0b41bb967b58f2c069a91fc"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-admin-guide.ps1",
+      "bytes": 2410,
+      "sha256": "ea2dcd4a4e91a54e389f6710e019b25d42de17ccf780c52a054254def9453459"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-analysis-v1.json",
+      "bytes": 641,
+      "sha256": "f016fa7c300d7b8ed29c9585c8fb1bcb2848754ff5695afb4b54cf54d0ac0ad5"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-analysis-v1.log",
+      "bytes": 1514,
+      "sha256": "5111fed0baaff7f2624787cefea0ab49b376d7cf810feb3b2699c86cc6045856"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-analysis.json",
+      "bytes": 1514,
+      "sha256": "5111fed0baaff7f2624787cefea0ab49b376d7cf810feb3b2699c86cc6045856"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-analysis.py",
+      "bytes": 2063,
+      "sha256": "6397f8a320e715997eb37b657ba5312e3558c71405c1a44b0863fc5b2f763dcd"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-events-v1.json",
+      "bytes": 635,
+      "sha256": "cba014f2d363ca897c36d32fc6f97811fc1b29c0f94fe16ab6b4a3e89b275fa4"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-events-v1.log",
+      "bytes": 5170,
+      "sha256": "b4ecda50ab27c367cca23fe943b653c10ddc4bb31488bef7b2353abb121ddfbd"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-events.ps1",
+      "bytes": 398,
+      "sha256": "b8d6b858585cf0c89b5417e32a402ee5ed95a4a33bc170bd9bc1f950733872f9"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-events.py",
+      "bytes": 869,
+      "sha256": "61fb6b142135ad1110444a4f5af9e781600cc9ab4d9556822217a349999ea180"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-read-v1.json",
+      "bytes": 627,
+      "sha256": "c894230bd4508d9626aec8cc90a3fa6618522a02d9af2b681baea68e75844a66"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-read-v1.log",
+      "bytes": 63,
+      "sha256": "fbee940616bf1ad5a894bb57358246319451ec5dad73ba03776d847602cf25e3"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-read-v2.json",
+      "bytes": 630,
+      "sha256": "16c9bbc8c59822c5ca0b6481591372298c86aa21e5a417108db0696685db7014"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-read-v2.log",
+      "bytes": 1403,
+      "sha256": "fada75f13c8bc86adaeb7793c5531a6ca1d4601d79da8ef80d568fac609e4573"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-read.ps1",
+      "bytes": 870,
+      "sha256": "de1d08b0d40e5744e36f97a127d848df0c0e9490a92017856995af35e313750f"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-read.py",
+      "bytes": 1376,
+      "sha256": "f1eb1ae6c3c442cbc1639469117f99d78502ddca73c080bd5e0cf5db351c8f80"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-stored-config-v1.json",
+      "bytes": 656,
+      "sha256": "6b2cc0ed37c060495914f3d2e7f9b01a793bd1a8584df109246f070990949a88"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-stored-config-v1.log",
+      "bytes": 1390,
+      "sha256": "ff33ce493943b8f8b4c03ac1e4bd2755a2629da58d130e6a9930bf8c2e5c791d"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-stored-config.ps1",
+      "bytes": 1388,
+      "sha256": "9cc234df2be363212fb6eaed73b62c1efec9fc36476504c70ddfabe67180a43b"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/host-stored-config.py",
+      "bytes": 1866,
+      "sha256": "0805de84de7578b49c7d50ec8639a4cf002b46f7fb766ea95791e095e447008e"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/inputs/clock-owner-admin-b9641680-cb64-4a75-9fe4-a80aa7343244/hashes.sha256",
+      "bytes": 992,
+      "sha256": "b7670cc3fcab766b824937d5ed661cb7ebb91b56b32f65d93344a13be62f644d"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/inputs/clock-owner-admin-b9641680-cb64-4a75-9fe4-a80aa7343244/inventory.log",
+      "bytes": 3751,
+      "sha256": "f515127112a9edbd66953d8f1bd6f493e64ab1dd4f660f649c38ef3130c31d61"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/inputs/clock-owner-admin-b9641680-cb64-4a75-9fe4-a80aa7343244/reader-exit.txt",
+      "bytes": 19,
+      "sha256": "6e56701531d124b16bf2ea0ea1dbcb6ffd3ec2cc19adedc49f9df0d40def3a58"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/inputs/clock-owner-admin-b9641680-cb64-4a75-9fe4-a80aa7343244/uptime-after.txt",
+      "bytes": 21,
+      "sha256": "808d7f54a26e7c252d63df412f5552e64e8fd897e88a341cdfa18e8250144f31"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/inputs/clock-owner-admin-b9641680-cb64-4a75-9fe4-a80aa7343244/uptime-before.txt",
+      "bytes": 21,
+      "sha256": "10be9c0a8783a762269c0921d9b02f169be27663c115223f1fe40aa2c858fb5e"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/inputs/clock-resources-admin-ed1b37fc-a3b9-45da-a9ba-7e2731de907f/hashes.sha256",
+      "bytes": 1373,
+      "sha256": "5b6ba193474771cfbc65b5f6b3852c92ad102e9bc0908470e31b328962d4f828"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/inputs/clock-resources-admin-ed1b37fc-a3b9-45da-a9ba-7e2731de907f/inventory.log",
+      "bytes": 3751,
+      "sha256": "7b8ef51563f35182ff8a4b1541afaa7df9da6a6ed18b2e0b1ae461afec32daa5"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/inputs/clock-resources-admin-ed1b37fc-a3b9-45da-a9ba-7e2731de907f/reader-exit.txt",
+      "bytes": 34,
+      "sha256": "9362edd98ebd74d6cfdd1f8e33ca95c72b7891cf26ac51445ea900036231a6a2"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/inputs/clock-resources-admin-ed1b37fc-a3b9-45da-a9ba-7e2731de907f/resources.log",
+      "bytes": 889,
+      "sha256": "8a6435537969d93f8a7f11c5f62f41bc183ae1df72dd89909c734378da009932"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/inputs/clock-resources-admin-ed1b37fc-a3b9-45da-a9ba-7e2731de907f/uptime-after.txt",
+      "bytes": 21,
+      "sha256": "919c4d84f721a3707d2dbfc3eb2bb7bfc45069a9980f8ceb90906cbd30f067ae"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/inputs/clock-resources-admin-ed1b37fc-a3b9-45da-a9ba-7e2731de907f/uptime-before.txt",
+      "bytes": 21,
+      "sha256": "dec456ffd273c2bc920ce79afc7b7a8521d841701093a78d267eec8681074605"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/offline-review-v1.json",
+      "bytes": 636,
+      "sha256": "5520fae81319ea523aa78f31802f6c460e26c6a0981f8197e82aebbac0aeb0a2"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/offline-review-v1.log",
+      "bytes": 1466,
+      "sha256": "06a8047bb10830f5bf7beb47c5f23ab1df355d837b0a894f8cd910e40a9906af"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/offline-review-v2.json",
+      "bytes": 636,
+      "sha256": "ad950a37551ea577692e4d77c69d2ee8e306e1bf07a0e949739601b59e52edae"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/offline-review-v2.log",
+      "bytes": 5752,
+      "sha256": "3ab9fb7315054dfacf3df34923b3abcf2563aa4e9e828891ac15b15505c9850f"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/offline-review-v3.json",
+      "bytes": 635,
+      "sha256": "be6be0e24276b0c61638da127b8d6c2d36a319a8d92eb63a754bd0f9d228fba0"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/offline-review-v3.log",
+      "bytes": 933,
+      "sha256": "26ef7e2c2fd89a9329a5131b2f2965560ef464e38ff5c9c8c653d69f41413f83"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/offline-review-v4.json",
+      "bytes": 636,
+      "sha256": "6e2f772c59e7b418f36f78edac2d520690e04d36d0073f978b90f3adf58ae501"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/offline-review-v4.log",
+      "bytes": 6605,
+      "sha256": "34821f2885b843f45f9631e1e12e312fcc74dba36921461f9bf4d55b1c3ae241"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/parse-host-guide.py",
+      "bytes": 1191,
+      "sha256": "c8f3f65c52a80d5376e45e94ea4a55c158da08d3c95ba25218e81c78be9b1014"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/review-v1.py",
+      "bytes": 14228,
+      "sha256": "6a547832345ed6fd2c7046ad4a7aa207bb179973c05a42899dbe7bc1823e6483"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/review-v2.py",
+      "bytes": 14417,
+      "sha256": "af709dc354b131b03ac206d5946b348125266113d7f338f77e6adb3ecfb57f05"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/review-v3.py",
+      "bytes": 16327,
+      "sha256": "25fb79854c871f9d36076a4480d9617a0394b4c3a8aaee3be9cd959e64d38280"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/review.py",
+      "bytes": 16349,
+      "sha256": "bbbf926a64c11cf63e69f6718894277a50c3c898f359f57bae84a7a0c3b46522"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/run_attempt.py",
+      "bytes": 1244,
+      "sha256": "62df5fee98294644b7a3ebc2a0087ffa98f9be75fc4c26285681b39def88ac29"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/validate.py",
+      "bytes": 3570,
+      "sha256": "7eeb4eb36bf3d11e47994ddf0019df3ea7306d7c18b3773c24a66985587346e4"
+    },
+    {
+      "path": "261021/data/reports/20261109-admin-resources-review/validation-result.json",
+      "bytes": 322,
+      "sha256": "73087fe540d2fba0a277e449a2b30b3fd25c67f44c0d66e4b0349ab79d61a499"
+    }
+  ],
+  "attempts": [
+    {
+      "id": "build-index-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-admin-resources-review/build-index.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T01:45:02.104470+00:00",
+      "end_utc_local_unqualified": "2026-11-09T01:45:02.216403+00:00",
+      "start_monotonic_ns": 187224452967015,
+      "end_monotonic_ns": 187224564890602,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-admin-resources-review/build-index-v1.log",
+      "log_bytes": 164,
+      "log_sha256": "4729a23c856244a312f12823a9efafdd9aff625740981fca36f75dddf0806466"
+    },
+    {
+      "id": "final-validation-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-admin-resources-review/validate.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T01:46:08.640236+00:00",
+      "end_utc_local_unqualified": "2026-11-09T01:46:08.839182+00:00",
+      "start_monotonic_ns": 187291056841043,
+      "end_monotonic_ns": 187291255804296,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-admin-resources-review/final-validation-v1.log",
+      "log_bytes": 322,
+      "log_sha256": "73087fe540d2fba0a277e449a2b30b3fd25c67f44c0d66e4b0349ab79d61a499"
+    },
+    {
+      "id": "guide-parser-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-admin-resources-review/parse-host-guide.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T01:41:35.266929+00:00",
+      "end_utc_local_unqualified": "2026-11-09T01:41:36.056703+00:00",
+      "start_monotonic_ns": 187017374341950,
+      "end_monotonic_ns": 187018164114584,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-admin-resources-review/guide-parser-v1.log",
+      "log_bytes": 470,
+      "log_sha256": "db4233572e20efd31cb1a57e973ad8f408d52c96a0b41bb967b58f2c069a91fc"
+    },
+    {
+      "id": "host-analysis-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-admin-resources-review/host-analysis.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T01:38:33.804562+00:00",
+      "end_utc_local_unqualified": "2026-11-09T01:38:33.903135+00:00",
+      "start_monotonic_ns": 186835826592067,
+      "end_monotonic_ns": 186835925095733,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-admin-resources-review/host-analysis-v1.log",
+      "log_bytes": 1514,
+      "log_sha256": "5111fed0baaff7f2624787cefea0ab49b376d7cf810feb3b2699c86cc6045856"
+    },
+    {
+      "id": "host-events-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-admin-resources-review/host-events.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T01:42:35.022428+00:00",
+      "end_utc_local_unqualified": "2026-11-09T01:42:36.192382+00:00",
+      "start_monotonic_ns": 187077203015273,
+      "end_monotonic_ns": 187078372961842,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-admin-resources-review/host-events-v1.log",
+      "log_bytes": 5170,
+      "log_sha256": "b4ecda50ab27c367cca23fe943b653c10ddc4bb31488bef7b2353abb121ddfbd"
+    },
+    {
+      "id": "host-read-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-admin-resources-review/host-read.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T01:34:30.991698+00:00",
+      "end_utc_local_unqualified": "2026-11-09T01:34:31.128617+00:00",
+      "start_monotonic_ns": 186592668898799,
+      "end_monotonic_ns": 186592805709427,
+      "exit_code": 1,
+      "log_path_ignored": "261021/data/reports/20261109-admin-resources-review/host-read-v1.log",
+      "log_bytes": 63,
+      "log_sha256": "fbee940616bf1ad5a894bb57358246319451ec5dad73ba03776d847602cf25e3"
+    },
+    {
+      "id": "host-read-v2",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-admin-resources-review/host-read.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T01:34:41.320727+00:00",
+      "end_utc_local_unqualified": "2026-11-09T01:34:44.210078+00:00",
+      "start_monotonic_ns": 186602997831161,
+      "end_monotonic_ns": 186605887169198,
+      "exit_code": 42,
+      "log_path_ignored": "261021/data/reports/20261109-admin-resources-review/host-read-v2.log",
+      "log_bytes": 1403,
+      "log_sha256": "fada75f13c8bc86adaeb7793c5531a6ca1d4601d79da8ef80d568fac609e4573"
+    },
+    {
+      "id": "host-stored-config-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-admin-resources-review/host-stored-config.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T01:42:10.537220+00:00",
+      "end_utc_local_unqualified": "2026-11-09T01:42:11.398229+00:00",
+      "start_monotonic_ns": 187052690301539,
+      "end_monotonic_ns": 187053551306662,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-admin-resources-review/host-stored-config-v1.log",
+      "log_bytes": 1390,
+      "log_sha256": "ff33ce493943b8f8b4c03ac1e4bd2755a2629da58d130e6a9930bf8c2e5c791d"
+    },
+    {
+      "id": "offline-review-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-admin-resources-review/review.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T01:36:44.970170+00:00",
+      "end_utc_local_unqualified": "2026-11-09T01:36:45.033738+00:00",
+      "start_monotonic_ns": 186726855905885,
+      "end_monotonic_ns": 186726919463585,
+      "exit_code": 1,
+      "log_path_ignored": "261021/data/reports/20261109-admin-resources-review/offline-review-v1.log",
+      "log_bytes": 1466,
+      "log_sha256": "06a8047bb10830f5bf7beb47c5f23ab1df355d837b0a894f8cd910e40a9906af"
+    },
+    {
+      "id": "offline-review-v2",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-admin-resources-review/review.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T01:37:01.119628+00:00",
+      "end_utc_local_unqualified": "2026-11-09T01:37:01.235976+00:00",
+      "start_monotonic_ns": 186743052426971,
+      "end_monotonic_ns": 186743168771880,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-admin-resources-review/offline-review-v2.log",
+      "log_bytes": 5752,
+      "log_sha256": "3ab9fb7315054dfacf3df34923b3abcf2563aa4e9e828891ac15b15505c9850f"
+    },
+    {
+      "id": "offline-review-v3",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-admin-resources-review/review.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T01:37:58.797971+00:00",
+      "end_utc_local_unqualified": "2026-11-09T01:37:58.871297+00:00",
+      "start_monotonic_ns": 186800803304164,
+      "end_monotonic_ns": 186800876618849,
+      "exit_code": 1,
+      "log_path_ignored": "261021/data/reports/20261109-admin-resources-review/offline-review-v3.log",
+      "log_bytes": 933,
+      "log_sha256": "26ef7e2c2fd89a9329a5131b2f2965560ef464e38ff5c9c8c653d69f41413f83"
+    },
+    {
+      "id": "offline-review-v4",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-admin-resources-review/review.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T01:38:11.524534+00:00",
+      "end_utc_local_unqualified": "2026-11-09T01:38:11.656260+00:00",
+      "start_monotonic_ns": 186813529864819,
+      "end_monotonic_ns": 186813661586166,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-admin-resources-review/offline-review-v4.log",
+      "log_bytes": 6605,
+      "log_sha256": "34821f2885b843f45f9631e1e12e312fcc74dba36921461f9bf4d55b1c3ae241"
+    }
+  ]
+}

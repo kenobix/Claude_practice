@@ -1,5 +1,10 @@
 # Windows管理者での限定した時計process読取
 
+**2026-11-09更新:** 指定されたowner/resourcesの2原本を[照合済み](clock-resources-admin-review.md)。
+直接保存方式の終了値/実完了行/hashと、採取区間のchronyd・PHC fd・UDP所有を確認した。
+基本inventory/PHC/socketの同じ採取は不要。以下の未実施・未採取は各旧時点の履歴であり、現在はhost詳細の[限定読取](#host-w32time-admin)と独立源資料が次の入力になる。
+dev差・timesyncd identity変更・tick11000内部原因・同期責任・全時計資格は未解決である。
+
 [現在の調査結果](clock-process-ownership.md)の続き。**時計設定を変更する手順ではない。**
 現チャットのWindows tokenは非管理者で、`wsl --debug-shell`の起動を拒否された。
 Ubuntu rootやCodexのsandbox許可はWindows管理者tokenとは異なる。
@@ -147,3 +152,55 @@ Linuxのroot promptが出てから、以下を貼り付けてEnterを押す。
 初期namespaceでの新手順のend-to-endはまだ未実施で、構文/fixture成功を実採取と呼ばない。
 0以外でもfileを削除せず保存する。終了行とexit/hashをreviewするまでは不完全扱い。
 出力後はLinux promptへ戻り、`exit`でdebug shellを抜けられる。WSL shutdownやDocker再起動は不要。
+
+<a id="host-w32time-admin"></a>
+
+## W32Timeの管理者限定読取（次の不足分）
+
+2026-11-09のチャット側照会はW32Time Running、statusは同期未実行/Local CMOS Clockだったが、
+source/configurationはWindows非管理者tokenで0x80070005となった。
+次のblockはその不足分を採る案内。**Linux debug shellを`exit`で抜けた後、Windowsの管理者PowerShellで実行する。**
+既にUbuntuがRunningであることをblock内でも確認し、停止していたら新しく起動せず終了する。
+時計変更・resync・service起動/停止・実行policy変更は含まない。[w32tm公式説明](https://learn.microsoft.com/en-us/windows-server/networking/windows-time-service/windows-time-service-tools-and-settings#command-line-parameters-for-w32time)のqueryだけを使う。
+
+```powershell
+& {
+    $taskPrincipal = [Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())
+    if (-not $taskPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        throw '管理者PowerShellで実行してください。自動昇格は行いません。'
+    }
+    $taskRunning = (& wsl.exe --list --running --quiet) -replace "`0", ''
+    if ($LASTEXITCODE -ne 0 -or -not ($taskRunning | Where-Object { $_.Trim() -eq 'Ubuntu' })) {
+        throw 'UbuntuがRunningではありません。起動せず停止します。'
+    }
+    $taskRun = 'clock-host-admin-' + [Guid]::NewGuid().ToString()
+    $taskDir = '\\wsl.localhost\Ubuntu\home\kenshin\work\claude_practice\261021\data\reports\' + $taskRun
+    New-Item -ItemType Directory -Path $taskDir -ErrorAction Stop | Out-Null
+    Get-CimInstance Win32_Service -Filter "Name='W32Time' OR Name='vmictimesync'" -ErrorAction Stop |
+        Select-Object Name, State, StartMode | ConvertTo-Json |
+        Out-File -LiteralPath ($taskDir + '\services.json') -Encoding utf8 -ErrorAction Stop
+    $taskRecords = @()
+    foreach ($taskQuery in @('status', 'source', 'configuration')) {
+        $taskNative = & "$env:SystemRoot\System32\w32tm.exe" /query "/$taskQuery" 2>&1
+        $taskExit = $LASTEXITCODE
+        $taskNative | Out-File -LiteralPath ($taskDir + '\' + $taskQuery + '.log') -Encoding utf8 -ErrorAction Stop
+        $taskRecords += [PSCustomObject]@{ query = $taskQuery; native_exit = $taskExit }
+    }
+    [PSCustomObject]@{ admin = $true; mode = 'read-only-local-query'; queries = $taskRecords } |
+        ConvertTo-Json -Depth 4 | Out-File -LiteralPath ($taskDir + '\collection.json') -Encoding utf8 -ErrorAction Stop
+    @('services.json', 'status.log', 'source.log', 'configuration.log', 'collection.json') |
+        ForEach-Object { Get-FileHash -Algorithm SHA256 -LiteralPath ($taskDir + '\' + $_) -ErrorAction Stop } |
+        Select-Object Path, Hash | ConvertTo-Json |
+        Out-File -LiteralPath ($taskDir + '\hashes.json') -Encoding utf8 -ErrorAction Stop
+    Write-Output ('WSL保存先: /home/kenshin/work/claude_practice/261021/data/reports/' + $taskRun)
+    $taskRecords | Format-Table
+    if ($taskRecords | Where-Object { $_.native_exit -ne 0 }) {
+        Write-Warning '一部queryが失敗しました。失敗logも保持して保存先を伝えてください。'
+    }
+}
+```
+
+この追加blockはPowerShell parserで構文を確認した案内で、管理者での実採取は未実施。
+元のログを削除せず、表示されたWSL directoryだけをチャットへ伝える。rawにpeer/domain等が含まれる可能性があるためGitへ追加しない。
+権限拒否や一部失敗でも保存結果を保持する。文字化けがあれば元fileを保持して伝え、再試行で成功扱いに書き換えない。
+query結果やservice Runningだけで外部UTC精度・QPC校正・同期責任の全体を認定しない。

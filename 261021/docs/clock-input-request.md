@@ -1,5 +1,11 @@
 # 時計調査を再開するために必要な入力
 
+**2026-11-09更新:** owner `b9641680-…` とresources `ed1b37fc-…` の追加管理者原本は[照合済み](clock-resources-admin-review.md)。
+採取区間のchronyd実体・PHC fd・UDP所有を確認できたため、同じinventory/PHC採取を再依頼しない。
+次の不足は[hostの管理者限定query](clock-owner-admin-read.md#host-w32time-admin)、独立UTC/elapsedの根拠、同期責任等。
+今回のhost statusは同期未実行/Local CMOS Clock、source/configurationは権限拒否で部分取得だった。
+PHCやhostの自己申告を独立参照として採用しておらず、実時計資格・fit/採点は保留を維持する。
+
 2026-11-08、基点`99f14cd`。追加管理者ログ・独立時計源の資料は、今回もユーザーから「まだ取得していない」と回答された。
 同じtrace、非飽和値、原本公開状況の確認を繰り返さない。T09/T10の静的受入は完了済みで、再取得は不要。
 この一覧は必要資料の具体化であり、新たな時計源の採用、OS変更、実fitの許可ではない。
@@ -8,9 +14,9 @@
 
 | 入力 | ユーザーから伝える最小限の内容 | Solが次に行うこと |
 |---|---|---|
-| 追加管理者ログ | [既存のPHC/socket限定採取手順](clock-owner-admin-read.md#chrony-resources-admin)で作成したWSL directoryのパス。非0終了でも削除しない | inventory/resources/reader-exit/hashと実完了行を読み、同じboot・開始tick・exe SHA/dev/inode・親・namespaceとPHC fd/UDP inodeの所有を照合 |
+| 追加管理者ログ（指定2件は照合済み） | 同じPHC/socket採取は不要。新しい変更・自然再発等で追加資料ができた場合のみ保存先を伝える | 採取区間のidentity/所有の受入を保持し、新情報がある範囲だけ対応付ける。将来の再起動やidentity変更へ今回値を持ち越さない |
 | 独立参照の候補 | 実際に利用可能な機器・サービス名、管理元、説明書/校正資料/原本の保存先。まだ無い項目は「未取得」 | 下記の依存関係・真正性・不確かさをreview。候補名だけでは採用しない |
-| host/backendの同期資料 | 稼働中の構成で、どの管理層が何を参照して補正するかを示す限定ログ/設定/実装資料の保存先 | Windows→PHC→chronyd、Windows/backend→initd、Ubuntu timesyncdなどを役割別に整理。静的CALLの存在を動的setterの原因へ読み替えない |
+| host/backendの同期資料 | [管理者query](clock-owner-admin-read.md#host-w32time-admin)の保存先、どの管理層が何を参照して補正するかを示す既存資料 | Windows→PHC→chronyd、Windows/backend→initd、Ubuntu timesyncdを役割別に整理。queryは現状態の補足で、独立UTC/elapsed資料や動的stackの代用ではない |
 
 管理者権限が使えない場合、その旨だけを伝えればよい。Ubuntu root、Codex許可、Windows管理者tokenは別である。
 PHC/socketの旧PIDを手入力で固定せず、既存readerが現在の実体を探索する方式を使う。

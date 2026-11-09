@@ -4295,3 +4295,39 @@ T09/T10の静的受入を未完了へ戻さず、未修正上流・原本・合�
 公開索引はdocs/reviews/20261109-prerequisite-review-checks.json、raw command/log/hashはignoredなdata/reports/20261109-prerequisite-review/へ保存する。
 今回の変更は計画・ログ・証拠索引のみ。OS/時計設定・実DB/registry/現配信・future拒否・fit/採点/消費台帳は変更していない。
 documentation-validation-v1はexit0。入力10fileの基点bytes/SHA、当時のraw5file hash、相対link186件・diff check・変更範囲を確認した。検証自身のlog/metadataとvalidatorも索引へ追加した。製品変更なしのためsuite/新CIは実施せず、今回を実装完了として数えない。
+
+### 2026-11-09：基点464df19・新管理者原本2件のPHC/UDP照合とhost限定読取
+
+ユーザー指定owner b9641680-cb64-4a75-9fe4-a80aa7343244、resources ed1b37fc-a3b9-45da-a9ba-7e2731de907fを読取。
+raw11file（owner5/resources6）、hash一覧5/7件（reader1/2件と出力4/5件）が全一致。実完了行/errors0とreader_exit0・inventory_exit0/resources_exit0を照合した。
+保存名の/proc/1031/rootは現在のPIDへ辿らず、既知のrepo相対pathへ限定してhashを検算した。
+同bootのchronyd213/開始tick319/親1/exe SHA/namespace/config、PHC fd3/rdev247:0=hyperv、UDP fd5/6→inode3582/3583→IPv4/IPv6 loopback323を照合した。
+新しい採取区間のidentity/PHC/UDPと直接保存方式のreviewは完了。採取fileは改変せず別ignored directoryへsnapshot保存した。
+旧probeのexe dev42に対し今回27（inode4227/size/SHAは一致）なので、dev込みfile identityの一致とは呼ばない。理由も未確定。
+timesyncdは旧PID496/開始1505から新973/開始18257168へ変化、本人と親systemdのSHAも変化。旧setterの時刻書込を新実体へ帰属させない。
+drift保存値+6820.697933/skew361.000827は内部base/corr/offset/tickの同時値ではない。新飽和/T03資料はなく追加probe/traceなし。
+
+診断script review.pyはoriginal hash/完了/identity/config/PHC/UDP/uptime bracketを検算する、今回原本専用のoffline診断である。
+offline-review-v1は親状態にもPPidがあることを区別せずexit1。process部だけへ限定したv2は16負例成功。
+boot履歴と7負例追加のv3は旧rawのCRLF末尾を正規化せずboot行抽出に失敗、exit1。旧hashを検算後のdecode文字列だけを正規化したv4は23負例成功。
+うち19件はmember SHAを再計算しても意味的不一致を拒否、4件はhash不正/欠落/余剰/重複entry。旧script各版/全log/原本snapshot/recipeを保持した。
+これらは診断parserの負例で、製品unit件数を増やしたものではない。
+
+host-read-v1は通常sandboxのWSL interop UtilBindVsockAnyPort拒否でexit1。許可付きhost-read-v2はWindows token非管理者で一部取得、exit42。
+W32Time Running/Manual、vmictimesync Stopped/Manual。w32tm /query /statusは0でLI3（同期未実行）/stratum0/Local CMOS Clock/最終正常同期未指定。
+/sourceと/configurationは0x80070005、native exit−2147024891。拒否を成功扱いにせずwrapper42。OS管理者への自動昇格や同じ拒否の再試行なし。
+host-analysis-v1はnative CP932と外側UTF-8/CLIXMLを境界ごとにdecodeしてexit0。元bytesは保持し、module準備progressをquery失敗と混同しない。
+host-stored-config-v1は限定HKLM保存値の読取だけでexit0。Type=NTP、peer time.windows.com,0x9、NtpClient/VMICTimeProvider Enabled/InputProvider=1。
+policy key2件はTest-Pathで見つからずabsent-or-not-visible。保存値の存在やservice Runningだけでeffective runtime/同期成功とはしない。
+host-events-v1は既存Time-Service System log最大12件を読取してexit0。過去DNS失敗134、後の受信37/同期開始35、VMICTimeProvider非対応158を保存。
+現在の未同期をDNSだけへ断定せず、Windows側providerとWSL側Hyper-V PHCを混同しない。host event UTCは独立校正されていない。
+
+追加host管理者queryの案内を文書化。guide-parser-v1はWindows実parserで構文だけ確認、exit0。案内の採取block自体は実行していない。
+Microsoft公式w32tm説明も確認しquery/管理者権限の根拠とした。参照URL/要点は原本索引へ記録し、Web tool出力をローカルの生HTTP原本と呼ばない。
+初期読取はwrapper外であり、時刻付き実行ログを後から捏造しない。広すぎた過去report検索は巨大な1行CI JSONを拾い出力が切れたため、以後は指定indexの必要fieldだけへ限定した。
+今回の進捗はcurrent identity/PHC/UDP原本reviewとhost同期責任の根拠追加まで。独立UTC/elapsedの真正性/不確かさは未提出で、実source/collector・修復・全時計資格・実fit/採点・T02/T11/T12/T13bは前提待ちを維持。
+OS/時計設定・実DB/registry/現配信・future拒否、source/schema/writer/lock/workflowは変更しない。T09取得/集計・受入済みsuite/CIも反復しない。
+全command/cwd/終了値・未資格UTC/MONOTONIC・原本/SHA・失敗/限界はdata/reports/20261109-admin-resources-review/、公開要約はdocs/reviews/20261109-admin-resources-checks.jsonへ保存する。
+final-validation-v1はexit0。原本11件とreview証拠53件のhash、原本/snapshot一致、診断23負例（rehashed19）、相対link219件、PowerShell案内blockと実parser対象の一致、変更範囲/diff checkを検証した。
+索引builderのlogを実行中の0byteで固定しないよう、wrapper終了後にhash一覧を更新し、最終検証自身のlog/metadataも追加する。初稿の原本数12は公開前のinventory照合で11へ訂正した。
+製品code変更なしのため製品suite/新しい実装CIの受入は追加していない。後続文書commitの自動CIを、この索引で追跡済みの新証拠としない。
