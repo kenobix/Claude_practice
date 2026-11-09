@@ -4414,3 +4414,18 @@ OS/時計設定・実DB/registry/現配信・future拒否、製品source/schema/
 documentation-validation-v1はexit0。原本9件/manifest8、review証拠22件/基点14資料のhash、snapshot一致、14負例（再hash12）、相対link245件、対象範囲/秘密scan/diff checkが成功した。
 管理者案内のPowerShell block本文は前回構文確認済みbytesと一致し、同じparserを反復実行しなかった。最終索引はwrapper終了後に検証自身のlog/metadata/resultも結合して更新する。
 索引の循環参照を避け、freeze後のstage/commit/push receiptとstaged.diffはlocalへ分けて保存する。製品変更がないため新しい実装CI受入はなく、自動CIが走っても今回索引で追跡済みと主張しない。
+
+### 2026-11-09：ユーザーresync1回後の時刻設定・停止・事後query失敗
+
+ユーザーが補助scriptを実行。clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6aの13原本/manifest12件とhelper SHA f77404569cc96f957e379e3009c88be2f35aa787d71bc6068f1affe111c5dd3eが一致し、/resync命令は1回と確認した。
+exit0だが応答はshutdown中につき同期しなかったと表示。after status/peersは0x80070426/native−2147023834、service-after.jsonは0byte、helperはProcessId<=0でthrowした。空JSONやexit0を成功扱いにしない。
+read-stop-context-v1（run_attempt.pyからread-stop-context.py）は許可付き読取でexit0。Windows token非管理者。CIM/sc queryex/qtriggerinfo/qcは読取成功、Stopped/Manual/PID0/両exit0、workgroup、START trigger2件/STOPなし。一般的なworkgroupの停止trigger例を今回原因へ断定しない。
+同readでSystem event26322/37・26323/35の受信/同期開始を発見。コマンド本文だけからのチャット初期説明「同期していない」は不十分だったため修正した。
+read-operational-v1は既に有効なTime-Service Operationalの02:55〜02:56/最大64件だけを読みexit0。XML5件はPID34104で、266明示resync→264受信→265同期開始→261時刻設定→258停止。OldTime .965Z/NewTime .967Zの報告差+2ms、stop return0。独立外部UTC精度ではなく、恒久安定の証拠でもない。
+read-time-tasks-v1は既存Time Synchronization taskだけを読取、exit0。SynchronizeTimeはsc.exe start w32time task_started、LastRunUTC00:25:21/result0。process開始との近接だけで当時launch/停止callerを断定しない。TaskScheduler Operationalは無効のため有効化しなかった。ForceSynchronizeTimeのaction nullは未展開と記録。
+SCMの限定時間/最大100件に該当なしで停止caller不明。event0件を障害なしとはしない。Microsoft公式traceability/event258/261、service triggerとworkgroupの説明を参照。task_started検索のQ&Aは権威的な実装根拠へ採用しない。
+ユーザーの今回1回許可をservice起動・再resync・poll/trigger/task/log設定変更へ拡張せず、チャット側は全てread-only。OS設定/実DB/registry/現配信・future拒否/製品source/schema/writer/lock/workflowを変更しない。
+offline-review-v1はexit0。13原本/12hash/helper/6native記録、空JSON保持、5Operational XMLのPID/順序/Old-New、current service/triggerとtask metadataを照合。原本をignored snapshotへ保存し不変を確認した。製品テスト追加やsuite/CI反復はしない。
+実コマンド/cwd/exit、未資格UTC/MONOTONIC、raw/log/XML/hashはdata/reports/20261109-resync-result-review/。初期対話読取はwrapper外であり、時刻や完全stdoutを後付けしない。公開要約はdocs/reviews/20261109-resync-result-checks.json。
+残件はtask起動形態/停止責任、独立UTC/elapsed/同期責任・全資格。今回時刻設定/停止を過去T03/tick11000の解決へ持ち越さず、実fit/採点/T02/T11/T12/T13bの保留を維持する。
+documentation-validation-v1はexit0。13原本/12manifest、5Operational event、review証拠36件のhash、相対link218件・scope/秘密scan/diff checkを確認。検証終了後に自身のlog/metadata/resultを索引へ結合する。stage/commit/pushとstaged.diffはfreeze後のlocal記録へ分ける。

@@ -1,0 +1,598 @@
+{
+  "schema_version": 1,
+  "base_commit": "d285aa9535948bcb403968c27d3ca080fec59de8",
+  "review_date_client": "2026-11-09",
+  "review": {
+    "status": "CLOCK_SET_EVENT_THEN_CLEAN_CODE_STOP_POSTCHECKS_FAILED_NOT_QUALIFIED",
+    "source_files": [
+      {
+        "path": "261021/data/reports/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/action-intent.json",
+        "bytes": 218,
+        "sha256": "6fa78dfaac33df5ecb70a5105807cb3a8ccc2e86ff0d3a3c773c736ad06f138f"
+      },
+      {
+        "path": "261021/data/reports/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/after-peers.log",
+        "bytes": 112,
+        "sha256": "e1a93f3a310468bb7f1382166b69e444d118359159411921e85c814215615b8c"
+      },
+      {
+        "path": "261021/data/reports/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/after-status.log",
+        "bytes": 112,
+        "sha256": "e1a93f3a310468bb7f1382166b69e444d118359159411921e85c814215615b8c"
+      },
+      {
+        "path": "261021/data/reports/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/before-configuration.log",
+        "bytes": 1433,
+        "sha256": "067151b27833abe67451978731c87e843d2184a862d104389cfca785451239ac"
+      },
+      {
+        "path": "261021/data/reports/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/before-peers.log",
+        "bytes": 234,
+        "sha256": "869a9db6766c90f79861f5a95c4550ec5fd48a660f3e89cb2456b7bbc49503af"
+      },
+      {
+        "path": "261021/data/reports/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/before-status.log",
+        "bytes": 316,
+        "sha256": "4859868f9e8a3388872b04bd1529f0852b9d4d889ea60b25f650f3119e34e670"
+      },
+      {
+        "path": "261021/data/reports/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/collection.json",
+        "bytes": 4694,
+        "sha256": "c41a688eac1af27e9d82430bb7348900bb9fc3651637ecbeca5e9ebed43ad80d"
+      },
+      {
+        "path": "261021/data/reports/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/failure.log",
+        "bytes": 452,
+        "sha256": "d288cc09e446f23c3beede9f973e8774f3333f5ba5b4708a76e88cfc879b06fc"
+      },
+      {
+        "path": "261021/data/reports/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/hashes.json",
+        "bytes": 3393,
+        "sha256": "df1d4585791b24534a3fe3a8fbef07342a505eaff9ce8d5b29f6edbd60a4a703"
+      },
+      {
+        "path": "261021/data/reports/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/host.json",
+        "bytes": 166,
+        "sha256": "01119e29916d7b71af6f436b487f4d448f9db4cc5a9369485932166ed4e8a892"
+      },
+      {
+        "path": "261021/data/reports/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/resync-once.log",
+        "bytes": 222,
+        "sha256": "49bb9f106a504643615cc2d0e7bf00e048022e193d923ce04bca2a0255d9812b"
+      },
+      {
+        "path": "261021/data/reports/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/service-after.json",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "261021/data/reports/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/service-before.json",
+        "bytes": 302,
+        "sha256": "64f310fcb977eef2f59d40b30bfcaca5f067f9192152037f82b83f7d1e50f294"
+      }
+    ],
+    "helper_source": {
+      "path": "261021/data/reports/clock-resync-guide-20261109/Invoke-ClockResyncOnce.ps1",
+      "bytes": 7751,
+      "sha256": "f77404569cc96f957e379e3009c88be2f35aa787d71bc6068f1affe111c5dd3e"
+    },
+    "user_action": "Exactly one /resync request recorded; assistant performed only read-only diagnostics.",
+    "native_queries": [
+      {
+        "label": "before-configuration",
+        "command": "C:\\WINDOWS\\System32\\w32tm.exe",
+        "arguments": [
+          "/query",
+          "/configuration"
+        ],
+        "native_exit": 0,
+        "before_utc_local": "2026-11-09T02:55:31.0750192Z",
+        "after_utc_local": "2026-11-09T02:55:31.1658619Z",
+        "before_qpc_local": 10819588094019,
+        "after_qpc_local": 10819588859128
+      },
+      {
+        "label": "before-status",
+        "command": "C:\\WINDOWS\\System32\\w32tm.exe",
+        "arguments": [
+          "/query",
+          "/status"
+        ],
+        "native_exit": 0,
+        "before_utc_local": "2026-11-09T02:55:31.1658619Z",
+        "after_utc_local": "2026-11-09T02:55:31.2036458Z",
+        "before_qpc_local": 10819588875602,
+        "after_qpc_local": 10819589260639
+      },
+      {
+        "label": "before-peers",
+        "command": "C:\\WINDOWS\\System32\\w32tm.exe",
+        "arguments": [
+          "/query",
+          "/peers"
+        ],
+        "native_exit": 0,
+        "before_utc_local": "2026-11-09T02:55:31.2073597Z",
+        "after_utc_local": "2026-11-09T02:55:31.2417222Z",
+        "before_qpc_local": 10819589265468,
+        "after_qpc_local": 10819589625530
+      },
+      {
+        "label": "resync-once",
+        "command": "C:\\WINDOWS\\System32\\w32tm.exe",
+        "arguments": [
+          "/resync"
+        ],
+        "native_exit": 0,
+        "before_utc_local": "2026-11-09T02:55:31.7925202Z",
+        "after_utc_local": "2026-11-09T02:55:31.9884572Z",
+        "before_qpc_local": 10819595120413,
+        "after_qpc_local": 10819597078451
+      },
+      {
+        "label": "after-status",
+        "command": "C:\\WINDOWS\\System32\\w32tm.exe",
+        "arguments": [
+          "/query",
+          "/status",
+          "/verbose"
+        ],
+        "native_exit": -2147023834,
+        "before_utc_local": "2026-11-09T02:55:31.9884572Z",
+        "after_utc_local": "2026-11-09T02:55:32.0089508Z",
+        "before_qpc_local": 10819597091852,
+        "after_qpc_local": 10819597322773
+      },
+      {
+        "label": "after-peers",
+        "command": "C:\\WINDOWS\\System32\\w32tm.exe",
+        "arguments": [
+          "/query",
+          "/peers",
+          "/verbose"
+        ],
+        "native_exit": -2147023834,
+        "before_utc_local": "2026-11-09T02:55:32.0296495Z",
+        "after_utc_local": "2026-11-09T02:55:32.0492727Z",
+        "before_qpc_local": 10819597499775,
+        "after_qpc_local": 10819597730687
+      }
+    ],
+    "action": {
+      "explanation": "No automatic retry, regardless of native exit.",
+      "native_exit": 0,
+      "approved_scope": "one w32tm /resync only",
+      "action": "attempted_once"
+    },
+    "post_service_JSON_empty": true,
+    "operational_events": [
+      {
+        "record_id": 2051,
+        "event_id": 266,
+        "process_id": 34104,
+        "host_utc_unqualified": "2026-11-09T02:55:31.8289280Z",
+        "fields": {
+          "ReasonCode": "0",
+          "TickCount": "1081936062"
+        }
+      },
+      {
+        "record_id": 2052,
+        "event_id": 264,
+        "process_id": 34104,
+        "host_utc_unqualified": "2026-11-09T02:55:31.9460790Z",
+        "fields": {
+          "TickCount": "1081936187"
+        }
+      },
+      {
+        "record_id": 2053,
+        "event_id": 265,
+        "process_id": 34104,
+        "host_utc_unqualified": "2026-11-09T02:55:31.9658846Z",
+        "fields": {
+          "LocalStratumNumber": "5",
+          "TickCount": "1081936203"
+        }
+      },
+      {
+        "record_id": 2054,
+        "event_id": 261,
+        "process_id": 34104,
+        "host_utc_unqualified": "2026-11-09T02:55:31.9680008Z",
+        "fields": {
+          "NewTime": "2026-11-09T02:55:31.967Z",
+          "OldTime": "2026-11-09T02:55:31.965Z",
+          "TickCount": "1081936203"
+        }
+      },
+      {
+        "record_id": 2055,
+        "event_id": 258,
+        "process_id": 34104,
+        "host_utc_unqualified": "2026-11-09T02:55:31.9714235Z",
+        "fields": {
+          "CurrentTime(UTC)": "2026-11-09T02:55:31.971Z",
+          "TickCount": "1081936203",
+          "ErrorMessage": "0x00000000: 成功しました."
+        }
+      }
+    ],
+    "logged_clock_delta_ms": 2,
+    "logged_delta_is_external_accuracy": false,
+    "current_service": {
+      "Name": "W32Time",
+      "State": "Stopped",
+      "StartMode": "Manual",
+      "ProcessId": 0,
+      "ExitCode": 0,
+      "ServiceSpecificExitCode": 0
+    },
+    "PartOfDomain": false,
+    "trigger_query": [
+      "[SC] QueryServiceConfig2 SUCCESS",
+      "",
+      "SERVICE_NAME: W32Time",
+      "",
+      "        START SERVICE ",
+      "          DOMAIN JOINED STATUS         : 1ce20aba-9851-4421-9430-1ddeb766e809 [DOMAIN JOINED]",
+      "        START SERVICE ",
+      "          CUSTOM SYSTEM STATE CHANGE EVENT   : 2d7a2816-0c5e-45fc-9ce7-570e5ecde9c9 ",
+      "            DATA                       : 75 10 bc a3 39 07 8b 04"
+    ],
+    "SCM_diagnostic": "指定した選択条件に一致するイベントが見つかりませんでした。",
+    "SCM_limit": "Maximum100 existing SCM events, target service filtered; no matching events is not stop-caller evidence.",
+    "scheduled_tasks": [
+      {
+        "TaskName": "ForceSynchronizeTime",
+        "State": "Ready",
+        "Actions": [
+          {
+            "Execute": null,
+            "Arguments": null
+          }
+        ],
+        "LastRunUTC_local": "2026-10-27T14:24:11.0000000Z",
+        "LastTaskResult": 0
+      },
+      {
+        "TaskName": "SynchronizeTime",
+        "State": "Ready",
+        "Actions": [
+          {
+            "Execute": "%windir%\\system32\\sc.exe",
+            "Arguments": "start w32time task_started"
+          }
+        ],
+        "LastRunUTC_local": "2026-11-09T00:25:21.0000000Z",
+        "LastTaskResult": 0
+      }
+    ],
+    "task_log_enabled": false,
+    "source_of_stop": "Unknown: current trigger list has no STOP trigger; task config/time correlation is not historical launch proof or a stop-call trace.",
+    "limits": [
+      "Exit0 is not resync success: native response said shutdown, but Operational records receive/sync/set/stop in same request interval.",
+      "All five new Operational events carry PID34104; before start/hash identity supports correlation but events alone lack process start/hash.",
+      "Logged +2ms is the provider-reported set-time difference at millisecond precision, not independently measured UTC offset.",
+      "No service start/config/task execution/log enable/extra resync by assistant; no actual fit/DB/registry/serving changes.",
+      "Historical default NOT DOMAIN JOINED stop-trigger example does not match current START-only config.",
+      "Task log disabled: not enabled; ForceSynchronizeTime action fields null are unexpanded action metadata, not proof the task has no action.",
+      "Initial console-only inference of no synchronization was corrected after reading set-time event261.",
+      "Helper capture partial: zero-byte service-after.json retained and not parsed as valid JSON.",
+      "No independent UTC/elapsed source accepted; qualification incomplete; no historic T03/tick11000 cause assigned."
+    ],
+    "qualification": "incomplete",
+    "real_fit_allowed": false
+  },
+  "attempts": [
+    {
+      "id": "read-stop-context-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-resync-result-review/read-stop-context.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T02:57:50.717674+00:00",
+      "end_utc_local_unqualified": "2026-11-09T02:57:52.824753+00:00",
+      "start_monotonic_ns": 191613646656369,
+      "end_monotonic_ns": 191615753722000,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-resync-result-review/read-stop-context-v1.log",
+      "log_bytes": 3301,
+      "log_sha256": "dfc97a29e9e7b6a9d19ce2d2d94f85af449b084630ee0d33127fbbf06e32109e"
+    },
+    {
+      "id": "read-operational-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-resync-result-review/read-operational.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T02:58:35.659751+00:00",
+      "end_utc_local_unqualified": "2026-11-09T02:58:38.719722+00:00",
+      "start_monotonic_ns": 191659935315720,
+      "end_monotonic_ns": 191662995282006,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-resync-result-review/read-operational-v1.log",
+      "log_bytes": 2115,
+      "log_sha256": "1214f9ad38031e6b1fc19316a68578c1bae27d54654ba89b8567f7dc8f227319"
+    },
+    {
+      "id": "read-time-tasks-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-resync-result-review/read-time-tasks.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T03:00:01.187474+00:00",
+      "end_utc_local_unqualified": "2026-11-09T03:00:04.322866+00:00",
+      "start_monotonic_ns": 191747232807368,
+      "end_monotonic_ns": 191750368181819,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-resync-result-review/read-time-tasks-v1.log",
+      "log_bytes": 2689,
+      "log_sha256": "5242195eea89504d68ff4f73166d6ed7b4956fb4f4e646ea1839948684b0bcd2"
+    },
+    {
+      "id": "offline-review-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-resync-result-review/review.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T03:01:23.367617+00:00",
+      "end_utc_local_unqualified": "2026-11-09T03:01:23.443580+00:00",
+      "start_monotonic_ns": 191829833406554,
+      "end_monotonic_ns": 191829909371454,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-resync-result-review/offline-review-v1.log",
+      "log_bytes": 187,
+      "log_sha256": "1aeb9488b68c8efc562606bc1c988a3de968de874befee9035a8f5185fbde1dc"
+    },
+    {
+      "id": "documentation-validation-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-resync-result-review/validate.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T03:03:50.604133+00:00",
+      "end_utc_local_unqualified": "2026-11-09T03:03:50.760842+00:00",
+      "start_monotonic_ns": 191978084635065,
+      "end_monotonic_ns": 191978241330110,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-resync-result-review/documentation-validation-v1.log",
+      "log_bytes": 192,
+      "log_sha256": "6d1471153de4f495341835e9f2f56486d2a8bc65f7218a9b1ec36e61af7c2252"
+    }
+  ],
+  "evidence_files": [
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/analysis.json",
+      "bytes": 10242,
+      "sha256": "075d10f46725019883947f8391ae1803b9694d9bef67e8f930273de74a07e8f8"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/build-index.py",
+      "bytes": 2508,
+      "sha256": "692d4d36f459b96143559565b07f7d9c454af4fd247bc9ddb9e862c8b99803e0"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/documentation-validation-v1.json",
+      "bytes": 653,
+      "sha256": "e54df69cbd7b94791ec4446f1db742b8ff543551461261e90629ce218eea6c7b"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/documentation-validation-v1.log",
+      "bytes": 192,
+      "sha256": "6d1471153de4f495341835e9f2f56486d2a8bc65f7218a9b1ec36e61af7c2252"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/inputs/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/action-intent.json",
+      "bytes": 218,
+      "sha256": "6fa78dfaac33df5ecb70a5105807cb3a8ccc2e86ff0d3a3c773c736ad06f138f"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/inputs/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/after-peers.log",
+      "bytes": 112,
+      "sha256": "e1a93f3a310468bb7f1382166b69e444d118359159411921e85c814215615b8c"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/inputs/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/after-status.log",
+      "bytes": 112,
+      "sha256": "e1a93f3a310468bb7f1382166b69e444d118359159411921e85c814215615b8c"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/inputs/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/before-configuration.log",
+      "bytes": 1433,
+      "sha256": "067151b27833abe67451978731c87e843d2184a862d104389cfca785451239ac"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/inputs/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/before-peers.log",
+      "bytes": 234,
+      "sha256": "869a9db6766c90f79861f5a95c4550ec5fd48a660f3e89cb2456b7bbc49503af"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/inputs/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/before-status.log",
+      "bytes": 316,
+      "sha256": "4859868f9e8a3388872b04bd1529f0852b9d4d889ea60b25f650f3119e34e670"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/inputs/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/collection.json",
+      "bytes": 4694,
+      "sha256": "c41a688eac1af27e9d82430bb7348900bb9fc3651637ecbeca5e9ebed43ad80d"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/inputs/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/failure.log",
+      "bytes": 452,
+      "sha256": "d288cc09e446f23c3beede9f973e8774f3333f5ba5b4708a76e88cfc879b06fc"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/inputs/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/hashes.json",
+      "bytes": 3393,
+      "sha256": "df1d4585791b24534a3fe3a8fbef07342a505eaff9ce8d5b29f6edbd60a4a703"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/inputs/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/host.json",
+      "bytes": 166,
+      "sha256": "01119e29916d7b71af6f436b487f4d448f9db4cc5a9369485932166ed4e8a892"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/inputs/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/resync-once.log",
+      "bytes": 222,
+      "sha256": "49bb9f106a504643615cc2d0e7bf00e048022e193d923ce04bca2a0255d9812b"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/inputs/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/service-after.json",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/inputs/clock-host-resync-d77eedf4-87ab-4e92-b108-daa760b07f6a/service-before.json",
+      "bytes": 302,
+      "sha256": "64f310fcb977eef2f59d40b30bfcaca5f067f9192152037f82b83f7d1e50f294"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/offline-review-v1.json",
+      "bytes": 631,
+      "sha256": "923b4e50cb56268498d2cdf915e81a51fe3e35bfc149a72583e80f56ff838afb"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/offline-review-v1.log",
+      "bytes": 187,
+      "sha256": "1aeb9488b68c8efc562606bc1c988a3de968de874befee9035a8f5185fbde1dc"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/operational.json",
+      "bytes": 6570,
+      "sha256": "820e3779729bcd278b046b024da93fccf36208f58f780ca648a406376c3b5adc"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/operational.raw",
+      "bytes": 9279,
+      "sha256": "dbfb6ec295e51d9ccce10226e10fbb2da947cf38917bb8fda94b9ae9739a4af6"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/read-operational-v1.json",
+      "bytes": 646,
+      "sha256": "29e9d0d5a17ad10a6ae160572ceebdb597dc0a0d482fe1d763c9d9c7cae1d30e"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/read-operational-v1.log",
+      "bytes": 2115,
+      "sha256": "1214f9ad38031e6b1fc19316a68578c1bae27d54654ba89b8567f7dc8f227319"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/read-operational.ps1",
+      "bytes": 955,
+      "sha256": "2bd4b2bfee747813cd74834f1ee8007055a8b36d829159d6c32f8c3765dac4f8"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/read-operational.py",
+      "bytes": 1798,
+      "sha256": "0a6bc05af6015c0bd6909425d60b3f2b092cc1afefc347a31946ae9cbc8767d9"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/read-stop-context-v1.json",
+      "bytes": 649,
+      "sha256": "93d9a618de546c802837647d5053737a2aa65ab145976598a44de23afa50f75a"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/read-stop-context-v1.log",
+      "bytes": 3301,
+      "sha256": "dfc97a29e9e7b6a9d19ce2d2d94f85af449b084630ee0d33127fbbf06e32109e"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/read-stop-context.ps1",
+      "bytes": 2396,
+      "sha256": "270e24ef0cc2a887aaf7c82b4add71ba52f2c43410f4f7f8424039730ce322af"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/read-stop-context.py",
+      "bytes": 2935,
+      "sha256": "74f323e5a64e1177817f3d17df2a58085f0bd0925a18637bd56a828fd9e39134"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/read-time-tasks-v1.json",
+      "bytes": 643,
+      "sha256": "0dba8544a6600a287ede1ad961fd1dd7fd2bcd8fe3f0b161ba89245103f5d92c"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/read-time-tasks-v1.log",
+      "bytes": 2689,
+      "sha256": "5242195eea89504d68ff4f73166d6ed7b4956fb4f4e646ea1839948684b0bcd2"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/read-time-tasks.ps1",
+      "bytes": 1464,
+      "sha256": "26a4015d6d51c6e0180a10718f9435e5ed000f871c13c97d5f5a240f5d1f39cc"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/read-time-tasks.py",
+      "bytes": 1995,
+      "sha256": "ceb094655900d7186335d1a86b6bcb1fdbca7bfb4270fb45a512eec62094a9c4"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/review.py",
+      "bytes": 6268,
+      "sha256": "972d426bd99a84ef26c6364b029c28febafc57dd33c83ed8d9c88717f85cfc64"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/run_attempt.py",
+      "bytes": 1244,
+      "sha256": "62df5fee98294644b7a3ebc2a0087ffa98f9be75fc4c26285681b39def88ac29"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/time-tasks.raw",
+      "bytes": 2688,
+      "sha256": "fd5c48e82b4f82b179f6362593fa42f02fdde6a2e563a0f33d339b7bd1e291b4"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/validate.py",
+      "bytes": 1868,
+      "sha256": "27062266eddba0718877c3faca1491da470c167035dbba63db912560d1e2f7e0"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/validation-result.json",
+      "bytes": 208,
+      "sha256": "a03cb15650817dc268d17cf9f287fe82f59d043fcb29c86ffa5a607ac9e7e2f8"
+    },
+    {
+      "path": "261021/data/reports/20261109-resync-result-review/windows-stop-context.raw",
+      "bytes": 3300,
+      "sha256": "101b085bdc4702a88ee372a71d1d41f0fa9c75833973d84c33f100f15ee26c34"
+    }
+  ],
+  "validation": {
+    "originals": 13,
+    "manifest_members": 12,
+    "operational_events": 5,
+    "evidence_files_verified": 36,
+    "relative_links": 218,
+    "scope_diff_secrets_check": "passed",
+    "product_suite_CI_rerun": false
+  },
+  "references": [
+    {
+      "url": "https://learn.microsoft.com/en-us/windows-server/networking/windows-time-service/windows-time-for-traceability",
+      "used_for": "Operational261 set-system-time and258 service stop; local log interpretation only."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/windows/win32/services/service-trigger-events",
+      "used_for": "Configured triggers do not prove the actual stop caller."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/troubleshoot/windows-client/active-directory/w32time-not-start-on-workgroup",
+      "used_for": "Generic default stop trigger differs from observed START-only current list; not accepted as the dynamic cause."
+    }
+  ],
+  "scope": [
+    "User executed one resync request; assistant only performed read-only Windows/log/task queries.",
+    "The failed post-checks and empty service-after.json remain failures; no auto retry or service start.",
+    "No product source/schema/writer/lock/workflow changes; no product suite/new implementation CI acceptance.",
+    "Private raw XML/peer addresses/host identifiers are not published in this summary.",
+    "Local UTC/ticks and provider set-time event do not independently qualify UTC/elapsed; actual fit blocked.",
+    "Initial shell/Web reads outside wrapper have no retroactively invented timing/full raw stdout.",
+    "Index excludes post-freeze stage/commit/push receipts and staged.diff to avoid recursive binding."
+  ]
+}

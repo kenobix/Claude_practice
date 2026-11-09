@@ -1,5 +1,10 @@
 # 時計調査を再開するために必要な入力
 
+**2026-11-09 resync後追補:** ユーザーの1回要求について[原本・Operational eventをreview済み](clock-resync-result.md)。
+受信/同期開始/時刻設定（報告+2ms）/code0停止が同じ要求区間にあるが、事後queryは失敗し、現状態はStopped。
+同じhelperを再実行しない。次はtask起動形態/停止責任の根拠、新しい自然event、独立source資料、または別途許可された保守比較。
+service起動/追加同期/poll・task・log設定変更は今回の1回許可へ含めない。全資格と実fit/採点は保留。
+
 **2026-11-09 peer追補:** `clock-host-cause-a52e422e-…`の[peer/status/identity review](clock-host-cause-review.md)も完了。
 全体はno time data/未同期、peerはpending/現在のvalid sample0。host/serviceの前後identityとevent該当なしの診断も保存した。
 同じbasic/peer/PHC採取を直後に再依頼しない。次の条件は新しい状態変化・自然event、独立UTC/elapsed資料、または明示許可後の[保守比較](clock-host-maintenance-plan.md)。
