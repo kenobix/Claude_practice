@@ -579,6 +579,16 @@ T09は2026-11-06に[10月原本取得/構造・右端2原本の独立照合](../
 
 T14の証拠入口・task対応表・操作説明は最新CIへ追記済み。T06a OS補足とT07a CI接続を残件一覧へ再掲しない。旧checkpoint表は当時の記録として保持する。
 
+2026-11-09・基点960bf9cの前提確認：標準保存先に新しい管理者採取/source dossierはなく、既存の歴史的ログ1件のみだった。
+追加trace/公開HEAD/原本集計の反復、実fit/採点は行わない。独立した未検証条件として合成bundleの未対応ZIP featureを調べ、
+version 9.9・patched-data・strong-encryptionで未捕捉例外/CLI終了値1/内部pathのtracebackを再現した。
+version例外の入力エラー化と固定ZIP以外のflag拒否を追加し、local-only header改変も含む5変種で
+replay前拒否・終了値2・秘密canary非表示・原本不変・report/stagingなしを検証する。
+この節目は[追加入力境界索引](../261021/docs/reviews/20261109-clock-bundle-input-checks.json)で追跡し、
+実装commitのCI/artifact/cleanupが確認されるまでは新CI受入と呼ばない。
+実源のidentity/真正性/不確かさ・同期責任、実採取器/host deadline/固定負荷、許可後の修復と全資格、
+T02/T11/T12/T13bの前提は上表から変更しない。独立して進められる未検証条件の新発見と、受入済み試験の単純な反復を区別する。
+
 基点`24c30c0`以降の独立作業：[資格計測の設計v1](../261021/docs/clock-qualification-plan.md)と
 [設計検証索引](../261021/docs/reviews/20261104-qualification-design-checks.json)。
 以前は期間/許容範囲/欠測の扱いが未固定だったため、QPCによる60分×通常/再開後試行、全bracket区間を使う進行率、

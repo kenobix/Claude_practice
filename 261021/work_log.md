@@ -4216,3 +4216,29 @@ OS/時計設定・実DB/registry/現在配信・T10凍結3file・future拒否を
 final-validation-v1は原本122件＋過去local45件とsource3件のhash、307相対link、固定資格policy不変、全CI588件を照合しexit0。
 同検証自身のlog/metadataも最終索引へ追加して再照合する。export受領票のincompleteと、数値合否を示すreview reportも説明に明記した。
 今回の最終6文書/索引だけをcommit/pushし、製品codeの実装CIと後続文書commitを区別する。
+
+### 2026-11-09：基点960bf9c・合成bundleの未対応ZIP入力境界review
+
+計画§11.6、work log、最新clock-bundle CI索引、clock-input-request/source-readinessとsource/testを読取。
+標準のclock-owner-admin-/clock-source-input-保存先は、照合済みの歴史的admin directory1件だけだった。
+別の場所に未提示の資料が無いことまでは断定しない。追加trace/非飽和確認/HEAD/原本取得・再集計を繰り返さず、
+実fit/採点・時計資格は前提待ちを維持した。読取toolの不存在glob（rg exit2）とcat→headのBroken pipeは
+preflightへ観察として記録し、時計/製品の失敗やtimed attemptへ読み替えない。
+
+独立した未検証境界として、ZIP reader自体がmember検証前に出す例外をreviewした。
+unsupported-version-before-fix-v1は2test中1FAIL/1ERROR、CLIは想定2ではなく1となりtraceback/内部pathを表示。
+追加のunsupported-features-before-fix-v2は2test/5変種で3FAIL/3ERROR。
+version 9.9・bit5 patched-data・bit6 strong-encryptionがNotImplementedErrorとなる一方、local headerだけの2改変は
+既存の固定ZIP表現照合で拒否された。この差を保存し、全5変種が修正前に失敗したとは説明しない。
+
+未対応versionの例外だけを入力ValueErrorへ変換し、固定ZIPが用いないgeneral-purpose flagは読取前に拒否した。
+CLI/source schema/writer/policy/時計条件を変更せず、既知数値違反の1と入力不正の2の契約を維持する。
+修正後の対象2test/5変種×ライブラリ・別process CLIは成功。replay未実行、stderr固定文、canary/path非表示、
+原本不変、出力/report/stagingなしを確認。全試行のcommand/cwd/終了値・未資格UTC/MONOTONIC・log bytes/SHAと
+小さい合成ZIP5原本/修正前module/testをdata/reports/20261109-clock-bundle-review/に保持する。
+専用全体回帰とcompile、実装commitの全suite/隔離CI/artifact/cleanupは、後続の結果と索引で範囲を区別して記録する。
+localのbundle-regression-v1は全20件/87.284表示秒で成功。compile-v1もexit0、scope-validation-v1は
+保護12fileとT10固定3fileのbytes/hash不変、相対link189件、変更範囲・diff checkを確認してexit0。
+ここで受入れたのはlocal専用20件までで、全suite/実装commit CIはまだ未確認である。
+新しい管理者資料・独立UTC/elapsed根拠・自然T03/飽和区間は供給されておらず、過去の動的原因は未確定。
+OS/時計設定・実DB/registry/現配信・T10固定snapshot/protocol・future拒否は変更していない。

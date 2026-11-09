@@ -119,7 +119,13 @@ def review_bundle(path, *, expected_plan_sha256):
     """Recompute only from a stable ZIP snapshot. No saved code, path or URL executes."""
     raw.digest(expected_plan_sha256)
     data = raw.read_stable(path, ZIP_LIMIT)
-    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+    try:
+        archive = zipfile.ZipFile(io.BytesIO(data))
+    except NotImplementedError:
+        # Required ZIP versions are parsed before our member checks. Treat an
+        # unsupported format as invalid input, not a verifier/qualification failure.
+        raise ValueError("Unsupported synthetic ZIP version") from None
+    with archive:
         infos = archive.infolist()
         if len(infos) != len(NAMES) or {item.filename for item in infos} != NAMES:
             raise ValueError("Unexpected synthetic bundle members")
@@ -130,7 +136,7 @@ def review_bundle(path, *, expected_plan_sha256):
             maximum = MANIFEST_LIMIT if item.filename == "manifest.json" else LIMIT
             if (item.is_dir() or item.create_system != 3
                     or not stat.S_ISREG(item.external_attr >> 16)
-                    or item.flag_bits & 1 or item.compress_type != zipfile.ZIP_STORED
+                    or item.flag_bits != 0 or item.compress_type != zipfile.ZIP_STORED
                     or item.file_size > maximum or item.compress_size != item.file_size):
                 raise ValueError("Invalid synthetic ZIP member")
             payloads[item.filename] = archive.read(item)

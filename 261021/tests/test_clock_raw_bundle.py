@@ -10,6 +10,7 @@ from pathlib import Path
 import shutil
 import signal
 import stat
+import struct
 import subprocess
 import sys
 import tempfile
@@ -23,6 +24,63 @@ from scripts import clock_raw_bundle as cli
 from test_clock_campaign_capture import rewrite, samples
 
 PROJECT = Path(__file__).resolve().parents[1]
+
+
+class ClockBundleMalformedInputTests(unittest.TestCase):
+    """Parser failures must refuse input before replay or report publication."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.archive = self.root / "PRIVATE_ARCHIVE_CANARY.zip"
+        # ZipFile parses the required version while reading the directory,
+        # before our member allowlist or deterministic encoding check runs.
+        original = bundle._zip_bytes({name: b"PRIVATE_PAYLOAD_CANARY" for name in bundle.NAMES})
+        central = original.index(b"PK\x01\x02")
+        self.variants = {}
+        for name, local_flags, central_flags in (
+                ("version-99", 0, 0), ("patched-data", 32, 32),
+                ("strong-encryption", 64, 64),
+                ("local-patched-data", 32, 0), ("local-strong-encryption", 64, 0)):
+            payload = bytearray(original)
+            if name == "version-99":
+                struct.pack_into("<H", payload, 4, 99)
+                struct.pack_into("<H", payload, central + 6, 99)
+            struct.pack_into("<H", payload, 6, local_flags)
+            struct.pack_into("<H", payload, central + 8, central_flags)
+            self.variants[name] = bytes(payload)
+
+    def test_unsupported_zip_features_refused_as_invalid_input_before_replay(self):
+        for name, payload in self.variants.items():
+            with self.subTest(feature=name):
+                self.archive.write_bytes(payload)
+                with patch.object(bundle, "_replay") as replay:
+                    with self.assertRaises(ValueError):
+                        bundle.review_bundle(self.archive, expected_plan_sha256="a" * 64)
+                    replay.assert_not_called()
+                self.assertEqual(self.archive.read_bytes(), payload)
+
+    def test_cli_unsupported_zip_features_are_sanitized_and_write_no_report(self):
+        output = self.root / "report.json"
+        for name, payload in self.variants.items():
+            with self.subTest(feature=name):
+                self.archive.write_bytes(payload)
+                result = subprocess.run(
+                    [sys.executable, str(PROJECT / "scripts/clock_raw_bundle.py"),
+                     "--review-archive", str(self.archive), "--output", str(output),
+                     "--expected-plan-sha256", "a" * 64],
+                    cwd=self.root, env={"PATH": os.environ["PATH"]},
+                    capture_output=True, text=True, timeout=10,
+                )
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(result.stderr,
+                                 "Synthetic bundle invalid or unavailable; no qualification\n")
+                self.assertFalse(output.exists())
+                self.assertEqual(list(self.root.iterdir()), [self.archive])
+                for private in ("Traceback", str(self.root), "PRIVATE_", str(PROJECT)):
+                    self.assertNotIn(private, result.stdout + result.stderr)
 
 
 class ClockBundleTests(unittest.TestCase):

@@ -1,0 +1,386 @@
+{
+  "schema_version": 1,
+  "review_date_client": "2026-11-09",
+  "base_commit": "960bf9cf74d63977ce20e8a46a28a2becaedfd93",
+  "status": "SYNTHETIC_BUNDLE_UNSUPPORTED_ZIP_FEATURES_LOCAL_ACCEPTED_IMPLEMENTATION_CI_PENDING",
+  "source_files": [
+    {
+      "path": "src/bike_mlops/clock_raw_bundle.py",
+      "bytes": 7128,
+      "sha256": "bc79bb26469df6840d3add0c82bf06563b6ea152229caa9852948c4d39dc053e"
+    },
+    {
+      "path": "tests/test_clock_raw_bundle.py",
+      "bytes": 19600,
+      "sha256": "8c68c76e82fb0f157eb7e988c8942092132d9deabda73f804e75f6fe6cb5e916"
+    }
+  ],
+  "prior_CI_index": {
+    "path": "docs/reviews/20261108-clock-bundle-ci-checks.json",
+    "bytes": 76480,
+    "sha256": "e1828f96aae71b8fbfa11a5e6ebf06f08349706b4256945a4ec7dd4d4f8c8170"
+  },
+  "input_inventory": [
+    "261021/data/reports/clock-owner-admin-053cb32639e54e04aea39f299e82711d"
+  ],
+  "observed_defect": {
+    "before_fix": "ZIP version 9.9, patched data bit5, and strong encryption bit6 leaked NotImplementedError/traceback and made CLI exit1 instead of invalid-input exit2.",
+    "already_refused_before_fix": [
+      "local-header-only bit5",
+      "local-header-only bit6"
+    ],
+    "fix": "Normalize unsupported required-version exception to ValueError; require zero ZIP general-purpose flags before member reads.",
+    "negative_scenarios": 5,
+    "new_test_methods": 2,
+    "post_fix_contract": [
+      "ValueError before replay",
+      "CLI exit2 and fixed stderr",
+      "no private canary/path/traceback",
+      "no output/staging",
+      "input unchanged"
+    ]
+  },
+  "local_acceptance": {
+    "bundle_tests": 20,
+    "bundle_tests_exit": 0,
+    "compileall_exit": 0
+  },
+  "attempts": [
+    {
+      "id": "bundle-regression-v1",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "180",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_raw_bundle.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-09T00:19:23.165702+00:00",
+      "end_utc_local_unqualified": "2026-11-09T00:20:50.822230+00:00",
+      "start_monotonic_ns": 182676449066665,
+      "end_monotonic_ns": 182763985387044,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261109-clock-bundle-review/bundle-regression-v1.log",
+      "log_bytes": 3464,
+      "log_sha256": "1567c9561b984c7cf367f1331c5962ad2b24e1080cf1f8b9eedc9b68e2051605"
+    },
+    {
+      "id": "compile-v1",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "30",
+        ".venv/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "src/bike_mlops/clock_raw_bundle.py",
+        "scripts/clock_raw_bundle.py",
+        "tests/test_clock_raw_bundle.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-09T00:20:16.222366+00:00",
+      "end_utc_local_unqualified": "2026-11-09T00:20:16.294597+00:00",
+      "start_monotonic_ns": 182729430709966,
+      "end_monotonic_ns": 182729502935402,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261109-clock-bundle-review/compile-v1.log",
+      "log_bytes": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "scope-validation-v1",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "30",
+        ".venv/bin/python",
+        "data/reports/20261109-clock-bundle-review/validate_local.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-09T00:21:53.585390+00:00",
+      "end_utc_local_unqualified": "2026-11-09T00:21:53.802095+00:00",
+      "start_monotonic_ns": 182826664136954,
+      "end_monotonic_ns": 182826880838989,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261109-clock-bundle-review/scope-validation-v1.log",
+      "log_bytes": 623,
+      "log_sha256": "ded7692b924c11d34787bdcaeec4a8a1dc6f11c3ddb021b3f86a3d05d507504a"
+    },
+    {
+      "id": "stage-implementation-v1",
+      "command": [
+        "git",
+        "add",
+        "../261014/plan_mlops.md",
+        "docs/clock-raw-bundle.md",
+        "src/bike_mlops/clock_raw_bundle.py",
+        "tests/test_clock_raw_bundle.py",
+        "work_log.md",
+        "docs/reviews/20261109-clock-bundle-input-checks.json"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-09T00:22:09.650248+00:00",
+      "end_utc_local_unqualified": "2026-11-09T00:22:09.654974+00:00",
+      "start_monotonic_ns": 182842730931168,
+      "end_monotonic_ns": 182842735637073,
+      "exit_code": 128,
+      "log_path_ignored": "data/reports/20261109-clock-bundle-review/stage-implementation-v1.log",
+      "log_bytes": 100,
+      "log_sha256": "7557cf422ccb3990ccf9f720493c53564206c18299b3b110318682756c37da95"
+    },
+    {
+      "id": "unsupported-features-after-fix-v1",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "30",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_raw_bundle.py",
+        "-k",
+        "ClockBundleMalformedInputTests",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-09T00:19:14.871784+00:00",
+      "end_utc_local_unqualified": "2026-11-09T00:19:15.502118+00:00",
+      "start_monotonic_ns": 182668155147864,
+      "end_monotonic_ns": 182668785479739,
+      "exit_code": 0,
+      "log_path_ignored": "data/reports/20261109-clock-bundle-review/unsupported-features-after-fix-v1.log",
+      "log_bytes": 496,
+      "log_sha256": "3d7428d4f63eb7ed58d93ca409ac83d32cf586085550702ca90df0f710b11074"
+    },
+    {
+      "id": "unsupported-features-before-fix-v2",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "30",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_raw_bundle.py",
+        "-k",
+        "ClockBundleMalformedInputTests",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-09T00:19:02.609657+00:00",
+      "end_utc_local_unqualified": "2026-11-09T00:19:03.261701+00:00",
+      "start_monotonic_ns": 182655893046144,
+      "end_monotonic_ns": 182656545057742,
+      "exit_code": 1,
+      "log_path_ignored": "data/reports/20261109-clock-bundle-review/unsupported-features-before-fix-v2.log",
+      "log_bytes": 10044,
+      "log_sha256": "35ce29d4c483e37ba748704648bde7aab60da97d0f3cf0e7d646d7d5e9002bb7"
+    },
+    {
+      "id": "unsupported-version-before-fix-v1",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "30",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock_raw_bundle.py",
+        "-k",
+        "unsupported_zip_version",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "start_utc_local_unqualified": "2026-11-09T00:18:16.230712+00:00",
+      "end_utc_local_unqualified": "2026-11-09T00:18:16.509101+00:00",
+      "start_monotonic_ns": 182609573468103,
+      "end_monotonic_ns": 182609851850564,
+      "exit_code": 1,
+      "log_path_ignored": "data/reports/20261109-clock-bundle-review/unsupported-version-before-fix-v1.log",
+      "log_bytes": 3036,
+      "log_sha256": "a30f0697f0d1a2fd0556f56d57b607ccbb4cb4a59650e12a5f8855dd14bac0b6"
+    }
+  ],
+  "raw_files": [
+    {
+      "path": "data/reports/20261109-clock-bundle-review/before-bike_mlops-clock_raw_bundle.py",
+      "bytes": 6836,
+      "sha256": "4075447ee757d2cd8abd644e80ea9c2632faa33c50f45a13002a5a89ad09055d"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/before-scripts-clock_raw_bundle.py",
+      "bytes": 2224,
+      "sha256": "3a8be4a49c2169d9d93cca64c9a1b1dd79541c0f9f3edada09157f039a2e9b88"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/before-tests-test_clock_raw_bundle.py",
+      "bytes": 16471,
+      "sha256": "5eeea2553c4b9c678c7c78066c55da14be2811af3d93eb87fe744932d59c9e9a"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/build_index.py",
+      "bytes": 3673,
+      "sha256": "13ec3f2ef026ee8ee9da341c0450dd4125db7f4c7f4b872545cf199cbcf569ea"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/bundle-regression-v1.json",
+      "bytes": 750,
+      "sha256": "f2eb3ab88a795dce2f910ac989ebadfdec4155630d4022359848a2b8bb1c3da9"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/bundle-regression-v1.log",
+      "bytes": 3464,
+      "sha256": "1567c9561b984c7cf367f1331c5962ad2b24e1080cf1f8b9eedc9b68e2051605"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/compile-v1.json",
+      "bytes": 762,
+      "sha256": "f62be0cbf9cf265345b3000a42f19ac159dc40b465dbf5470c3b121e4c3b9b5c"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/compile-v1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/fixtures/local-patched-data.zip",
+      "bytes": 664,
+      "sha256": "c26d9ca86dd92244af9bf37545c9b3eb5b51e4938e8e08b62630e254439bea56"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/fixtures/local-strong-encryption.zip",
+      "bytes": 664,
+      "sha256": "d61bf5b89bb3b7236722b8b123ae536ce246d2e47e808d73532701a58d554b7e"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/fixtures/patched-data.zip",
+      "bytes": 664,
+      "sha256": "9a46f2b3f81f5489228176b0459094e46c1c4e828b014df6b3e4e0a5a9465c6b"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/fixtures/strong-encryption.zip",
+      "bytes": 664,
+      "sha256": "3f54e7f7be3bd1129a9ae447ee5b8b5af8103796f6c2449a1aa24331981accf1"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/fixtures/version-99.zip",
+      "bytes": 664,
+      "sha256": "e396c833c7d3b1c1f143e945a92310d1f96989d65119bc7598bff3cf15636450"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/negative-test-final.py",
+      "bytes": 19600,
+      "sha256": "8c68c76e82fb0f157eb7e988c8942092132d9deabda73f804e75f6fe6cb5e916"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/preflight.json",
+      "bytes": 2285,
+      "sha256": "4b1fe9bbc8d29a14d418afef7603362cd6680e5f4f2f901341bf6a3317882242"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/run_attempt.py",
+      "bytes": 1244,
+      "sha256": "62df5fee98294644b7a3ebc2a0087ffa98f9be75fc4c26285681b39def88ac29"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/scope-validation-v1.json",
+      "bytes": 696,
+      "sha256": "219a2ba3b99a8a4613c45672df213930bbab775e30c21c578611760a21d66d9d"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/scope-validation-v1.log",
+      "bytes": 623,
+      "sha256": "ded7692b924c11d34787bdcaeec4a8a1dc6f11c3ddb021b3f86a3d05d507504a"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/stage-implementation-v1.json",
+      "bytes": 790,
+      "sha256": "edda20d8b004d44fc878ceb5780ae7533e2b5b8e9aea75fdf3612cc9df18286f"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/stage-implementation-v1.log",
+      "bytes": 100,
+      "sha256": "7557cf422ccb3990ccf9f720493c53564206c18299b3b110318682756c37da95"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/unsupported-features-after-fix-v1.json",
+      "bytes": 822,
+      "sha256": "b55d382583e0d92c53efe592ee3a4eefe4a5f74ba50b8a5606c43ae9867a6cde"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/unsupported-features-after-fix-v1.log",
+      "bytes": 496,
+      "sha256": "3d7428d4f63eb7ed58d93ca409ac83d32cf586085550702ca90df0f710b11074"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/unsupported-features-before-fix-v2.json",
+      "bytes": 826,
+      "sha256": "57488e408a8542c370bd08dcd6ff59b84ea71baf8b97093f322589155c5627c4"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/unsupported-features-before-fix-v2.log",
+      "bytes": 10044,
+      "sha256": "35ce29d4c483e37ba748704648bde7aab60da97d0f3cf0e7d646d7d5e9002bb7"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/unsupported-version-before-fix-v1.json",
+      "bytes": 816,
+      "sha256": "f70fc6d55713766868db21ac6d89d9c11790a222c0003b2568d1bdea39348670"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/unsupported-version-before-fix-v1.log",
+      "bytes": 3036,
+      "sha256": "a30f0697f0d1a2fd0556f56d57b607ccbb4cb4a59650e12a5f8855dd14bac0b6"
+    },
+    {
+      "path": "data/reports/20261109-clock-bundle-review/validate_local.py",
+      "bytes": 2627,
+      "sha256": "d1ceb001fbede25f662dd40c1dfc9cd25f41b5fcc86cdbf6fcfa9159329c93ce"
+    }
+  ],
+  "limits": [
+    "Standard input directory scan found only the historical admin directory. Undisclosed paths are not ruled out.",
+    "Early read tool observations are recorded in preflight without invented per-call timing.",
+    "Initial tests failed intentionally and are retained, including differences between three newly failing and two already refused variants.",
+    "Synthetic fixtures do not prove independent-source identity/authenticity/uncertainty, real clock qualification or real candidate acceptance.",
+    "No new natural T03 or tick11000 input was provided; no extra traces, HEAD requests or real aggregate checks were run.",
+    "Local UTC/MONOTONIC and test durations are unqualified diagnostics.",
+    "Raw fixtures/logs are ignored local evidence, not added to the unchanged CI artifact allowlist.",
+    "Full suite/system/artifact/cleanup acceptance must be bound to the exact implementation commit in a later CI record."
+  ],
+  "boundaries": {
+    "synthetic_only": true,
+    "strict_future_refusal_maintained": true,
+    "clock_qualification_passed": false,
+    "real_fit_or_scoring": false,
+    "OS_clock_changes": false,
+    "real_DB_registry_serving_changes": false
+  }
+}

@@ -4,6 +4,15 @@
 [実装](../src/bike_mlops/clock_raw_bundle.py)は保存codeを実行せず、現在のoffline verifierで再計算する。
 これは実時計のcollector/参照源/認証器ではない。数値が全て良好でも時計資格は`incomplete`を維持する。
 
+2026-11-09追加review：未対応ZIP versionとgeneral-purpose flagの入力拒否を補強した。
+version 9.9、patched-data（bit 5）、strong-encryption（bit 6）はPythonのZIP readerが
+`NotImplementedError`を出すため、従来はCLIがtracebackを表示し終了値1になっていた。
+未対応versionを入力エラーへ変換し、固定ZIPが使用しないflagはmember読取前に拒否する。
+local headerだけにflagを付けた不一致も含む5変種を、ライブラリと別processのCLIで確認する。
+拒否時は終了値2・固定の短い診断だけを返し、原本を書き換えずreport/stagingも作らない。
+数値上の既知違反を示す終了値1と、構造が不正な入力の終了値2を区別する。
+修正前失敗・修正後試験・CIの範囲は[追加索引](reviews/20261109-clock-bundle-input-checks.json)に記録する。
+
 ## 使用方法と終了値
 
 以下は`261021`からの使用例。`--expected-plan-sha256`には、採取時に別に保存したplan SHAを渡す。
