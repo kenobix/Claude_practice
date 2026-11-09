@@ -2,7 +2,8 @@
 
 **2026-11-09更新:** 指定されたowner/resourcesの2原本を[照合済み](clock-resources-admin-review.md)。
 直接保存方式の終了値/実完了行/hashと、採取区間のchronyd・PHC fd・UDP所有を確認した。
-基本inventory/PHC/socketの同じ採取は不要。以下の未実施・未採取は各旧時点の履歴であり、現在はhost詳細の[限定読取](#host-w32time-admin)と独立源資料が次の入力になる。
+基本inventory/PHC/socketの同じ採取は不要。hostの[basic管理者queryも受入済み](clock-host-runtime-review.md)。
+以下の未実施・未採取は各旧時点の履歴であり、現在は[peer/last-error等の原因限定読取](#host-w32time-cause-read)と独立源資料が次の入力になる。
 dev差・timesyncd identity変更・tick11000内部原因・同期責任・全時計資格は未解決である。
 
 [現在の調査結果](clock-process-ownership.md)の続き。**時計設定を変更する手順ではない。**
@@ -155,7 +156,11 @@ Linuxのroot promptが出てから、以下を貼り付けてEnterを押す。
 
 <a id="host-w32time-admin"></a>
 
-## W32Timeの管理者限定読取（次の不足分）
+## W32Timeの管理者限定読取（取得済み・手順の履歴）
+
+**追補:** `clock-host-admin-00f021d1-…`でこのblockの実結果を[review済み](clock-host-runtime-review.md)。
+3queryのexit0・原本hashを確認したため、同じbasic queryを再実行する必要はない。
+以下の「未実施」は案内作成時点の履歴。原因調査の新しい不足分は[次の節](#host-w32time-cause-read)を参照する。
 
 2026-11-09のチャット側照会はW32Time Running、statusは同期未実行/Local CMOS Clockだったが、
 source/configurationはWindows非管理者tokenで0x80070005となった。
@@ -204,3 +209,86 @@ source/configurationはWindows非管理者tokenで0x80070005となった。
 元のログを削除せず、表示されたWSL directoryだけをチャットへ伝える。rawにpeer/domain等が含まれる可能性があるためGitへ追加しない。
 権限拒否や一部失敗でも保存結果を保持する。文字化けがあれば元fileを保持して伝え、再試行で成功扱いに書き換えない。
 query結果やservice Runningだけで外部UTC精度・QPC校正・同期責任の全体を認定しない。
+
+<a id="host-w32time-cause-read"></a>
+
+## 未同期原因の限定読取（peer・last-error・新イベント）
+
+基点`b0589ee`のhost管理者原本は取得済み。以下は**追加項目だけ**を採る任意の次手順であり、同じsource/configuration/PHC採取のやり直しではない。
+今回不足したpeer状態とverbose last-error、前回既存logの最大RecordId26321より後のTime-Serviceイベント最大32件を読む。
+RecordIdの巻戻り/保存範囲/最大32件の打切りはあり得るため、結果0件でも失敗や原因の不存在を証明しない。
+queryの前後にhostのUTC/Stopwatch tickを残すが、いずれも未校正のローカル値で、実時計資格や外部源認定には使わない。
+host boot/OS版とW32Timeのprocess ID/開始時刻/実行file SHAも同時期の診断資料として保存する。
+svchost実行fileのhashだけでは中で使うDLL全体や同期元の真正性を認証しない。
+
+Windows管理者PowerShellでblock全体を実行する。resync、DNS問い合わせ、stripchart、設定変更、service操作、event log有効化は含まない。
+Windows shellなのでLinux debug-shellのpromptへ貼らない。
+Ubuntuが既にRunningの場合だけ新しいignored directoryへ保存し、停止中なら起動せず終了する。
+
+```powershell
+& {
+    $ErrorActionPreference = 'Stop'
+    $taskPrincipal = [Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())
+    if (-not $taskPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        throw '管理者PowerShellで実行してください。自動昇格は行いません。'
+    }
+    $taskRunning = (& wsl.exe --list --running --quiet) -replace "`0", ''
+    if ($LASTEXITCODE -ne 0 -or -not ($taskRunning | Where-Object { $_.Trim() -eq 'Ubuntu' })) {
+        throw 'UbuntuがRunningではありません。起動せず停止します。'
+    }
+    $taskRun = 'clock-host-cause-' + [Guid]::NewGuid().ToString()
+    $taskDir = '\\wsl.localhost\Ubuntu\home\kenshin\work\claude_practice\261021\data\reports\' + $taskRun
+    New-Item -ItemType Directory -Path $taskDir -ErrorAction Stop | Out-Null
+    $taskRecords = [Collections.Generic.List[object]]::new()
+    try {
+        $taskOS = Get-CimInstance Win32_OperatingSystem
+        [PSCustomObject]@{
+            Version = $taskOS.Version; BuildNumber = $taskOS.BuildNumber
+            LastBootUpTimeUTC = $taskOS.LastBootUpTime.ToUniversalTime().ToString('o')
+            StopwatchFrequency = [Diagnostics.Stopwatch]::Frequency
+        } | ConvertTo-Json | Out-File ($taskDir + '\host.json') -Encoding utf8
+        foreach ($taskEdge in @('before', 'after')) {
+            $taskService = Get-CimInstance Win32_Service -Filter "Name='W32Time'"
+            $taskIdentity = [ordered]@{ Name = $taskService.Name; State = $taskService.State; StartMode = $taskService.StartMode; ProcessId = $taskService.ProcessId }
+            if ($taskService.ProcessId -gt 0) {
+                $taskProcess = Get-Process -Id $taskService.ProcessId
+                $taskIdentity.StartUTC = $taskProcess.StartTime.ToUniversalTime().ToString('o')
+                $taskIdentity.Exe = $taskProcess.MainModule.FileName
+                $taskIdentity.ExeSHA256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $taskProcess.MainModule.FileName).Hash
+            }
+            $taskIdentity | ConvertTo-Json | Out-File ($taskDir + '\service-' + $taskEdge + '.json') -Encoding utf8
+            if ($taskEdge -eq 'after') { break }
+            foreach ($taskQuery in @('status', 'peers')) {
+                $taskBeforeUTC = [DateTime]::UtcNow.ToString('o')
+                $taskBeforeQPC = [Diagnostics.Stopwatch]::GetTimestamp()
+                $taskNative = & "$env:SystemRoot\System32\w32tm.exe" /query "/$taskQuery" /verbose 2>&1
+                $taskExit = $LASTEXITCODE
+                $taskAfterQPC = [Diagnostics.Stopwatch]::GetTimestamp()
+                $taskAfterUTC = [DateTime]::UtcNow.ToString('o')
+                $taskNative | Out-File ($taskDir + '\' + $taskQuery + '-verbose.log') -Encoding utf8
+                $taskRecords.Add([PSCustomObject]@{ query = $taskQuery; native_exit = $taskExit; before_utc_local = $taskBeforeUTC; after_utc_local = $taskAfterUTC; before_qpc_local = $taskBeforeQPC; after_qpc_local = $taskAfterQPC })
+            }
+        }
+        $taskEventErrors = @()
+        $taskEvents = @(Get-WinEvent -LogName System -FilterXPath "*[System[Provider[@Name='Microsoft-Windows-Time-Service'] and (EventRecordID > 26321)]]" -MaxEvents 32 -ErrorAction SilentlyContinue -ErrorVariable taskEventErrors |
+            Select-Object RecordId, Id, @{Name='TimeCreatedUTC'; Expression={$_.TimeCreated.ToUniversalTime().ToString('o')}}, Message)
+        ConvertTo-Json -InputObject $taskEvents -Depth 4 | Out-File ($taskDir + '\events.json') -Encoding utf8
+        [PSCustomObject]@{ record_id_lower_exclusive = 26321; maximum = 32; returned = $taskEvents.Count; error_records = @($taskEventErrors | ForEach-Object { $_.ToString() }) } |
+            ConvertTo-Json -Depth 4 | Out-File ($taskDir + '\event-result.json') -Encoding utf8
+    } finally {
+        [PSCustomObject]@{ admin = $true; mode = 'read-only-local-cause-diagnostics'; queries = @($taskRecords.ToArray()); clock_values = 'local-unqualified' } |
+            ConvertTo-Json -Depth 5 | Out-File ($taskDir + '\collection.json') -Encoding utf8
+        $taskMembers = @('host.json', 'service-before.json', 'service-after.json', 'status-verbose.log', 'peers-verbose.log', 'events.json', 'event-result.json', 'collection.json')
+        @($taskMembers | ForEach-Object { if (Test-Path -LiteralPath ($taskDir + '\' + $_) -PathType Leaf) { Get-FileHash -Algorithm SHA256 -LiteralPath ($taskDir + '\' + $_) } }) |
+            Select-Object Path, Hash | ConvertTo-Json -Depth 4 | Out-File ($taskDir + '\hashes.json') -Encoding utf8
+        Write-Output ('WSL保存先: /home/kenshin/work/claude_practice/261021/data/reports/' + $taskRun)
+    }
+}
+```
+
+このblockはPowerShellの構文確認だけで、追加の管理者実採取は未実施。
+イベント読取の失敗はerror_recordsへ残す。空配列や`admin=true`を成功の代わりにせず、
+query終了値・取得fileの欠落・service前後identity・収集範囲を受領後にreviewする。
+途中停止/エラーでも新directoryを上書きせず保存先を伝える。native queryが戻らない場合は中断し、既存fileを残す。
+rawのpeer/IP/端末pathはprivate保存で、チャットへ全文貼付けやGit追加をしない。
+既存手順同様、管理者block自体を署名/独立参照の証拠とは扱わない。

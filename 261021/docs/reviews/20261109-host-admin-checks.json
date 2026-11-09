@@ -1,0 +1,584 @@
+{
+  "schema_version": 1,
+  "review_date_client": "2026-11-09",
+  "base_commit": "b0589eeb09dea06c511fb7a010db08ac425600a3",
+  "status": "HOST_RUNTIME_CAPTURE_ACCEPTED_ROOT_CAUSE_AND_REAL_QUALIFICATION_PENDING",
+  "completed_scope": [
+    "Received administrator status/source/configuration: all native exit0; 6 files and 5 member hashes matched.",
+    "Separated runtime configured peer from reported unsynchronized Local CMOS source, NtpClient from NtpServer.",
+    "Documented synchronization responsibility boundaries and conditional repair/impact/rollback.",
+    "Prepared additional-only peer/last-error/new-existing-event collection guide; PowerShell syntax parsed, collection not executed."
+  ],
+  "capture_analysis": {
+    "queries": [
+      {
+        "query": "status",
+        "native_exit": 0
+      },
+      {
+        "query": "source",
+        "native_exit": 0
+      },
+      {
+        "query": "configuration",
+        "native_exit": 0
+      }
+    ],
+    "services": [
+      {
+        "Name": "vmictimesync",
+        "State": "Stopped",
+        "StartMode": "Manual"
+      },
+      {
+        "Name": "W32Time",
+        "State": "Running",
+        "StartMode": "Manual"
+      }
+    ],
+    "status_fields": {
+      "閏インジケーター": "3 (同期未実行)",
+      "階層": "0 (未指定)",
+      "精度": "-23 (ティックごとに 119.209ns)",
+      "ルート遅延": "0.0000000s",
+      "ルート分散": "0.0000000s",
+      "参照 ID": "0x00000000 (未指定)",
+      "最終正常同期時刻": "未指定",
+      "ソース": "Local CMOS Clock",
+      "ポーリング間隔": "10 (1024s)"
+    },
+    "runtime_settings": {
+      "[構成]/EventLogFlags": "2",
+      "[構成]/AnnounceFlags": "10",
+      "[構成]/TimeJumpAuditOffset": "28800",
+      "[構成]/MinPollInterval": "10",
+      "[構成]/MaxPollInterval": "15",
+      "[構成]/MaxNegPhaseCorrection": "54000",
+      "[構成]/MaxPosPhaseCorrection": "54000",
+      "[構成]/MaxAllowedPhaseOffset": "1",
+      "[構成]/FrequencyCorrectRate": "4",
+      "[構成]/PollAdjustFactor": "5",
+      "[構成]/LargePhaseOffset": "50000000",
+      "[構成]/SpikeWatchPeriod": "900",
+      "[構成]/LocalClockDispersion": "10",
+      "[構成]/HoldPeriod": "5",
+      "[構成]/PhaseCorrectRate": "1",
+      "[構成]/UpdateInterval": "360000",
+      "[構成]/FileLogName": "",
+      "[構成]/FileLogEntries": "",
+      "[構成]/FileLogSize": "0",
+      "NtpClient/DllName": "C:\\WINDOWS\\system32\\w32time.dll",
+      "NtpClient/Enabled": "1",
+      "NtpClient/InputProvider": "1",
+      "NtpClient/AllowNonstandardModeCombinations": "1",
+      "NtpClient/ResolvePeerBackoffMinutes": "15",
+      "NtpClient/ResolvePeerBackoffMaxTimes": "7",
+      "NtpClient/CompatibilityFlags": "2147483648",
+      "NtpClient/EventLogFlags": "1",
+      "NtpClient/LargeSampleSkew": "3",
+      "NtpClient/SpecialPollInterval": "16384",
+      "NtpClient/Type": "NTP",
+      "NtpClient/NtpServer": "time.windows.com,0x9",
+      "NtpServer/DllName": "C:\\WINDOWS\\system32\\w32time.dll",
+      "NtpServer/Enabled": "0",
+      "NtpServer/InputProvider": "0"
+    },
+    "settings_count": 34,
+    "reported_source": "Local CMOS Clock",
+    "configured_peer": "time.windows.com,0x9",
+    "observation": "LOCAL_HOST_REPORTS_UNSYNCHRONIZED_NOT_EXTERNAL_QUALIFICATION",
+    "qualification": "incomplete",
+    "real_fit_allowed": false,
+    "limits": [
+      "No UTC/QPC acquisition brackets, host boot/service start or exe hash in this capture.",
+      "Sequential queries are not an atomic snapshot or continuous interval.",
+      "SHA binds received bytes; unsigned admin=true does not authenticate the source.",
+      "No NTP peer status, last-error, external UTC response or elapsed calibration.",
+      "Cannot correlate this capture to old WSL setter events or determine current DNS/UDP failure."
+    ],
+    "negative_cases": [
+      {
+        "case": "member hash mismatch",
+        "member_hashes_recomputed": false,
+        "rejected": true
+      },
+      {
+        "case": "missing member",
+        "member_hashes_recomputed": false,
+        "rejected": true
+      },
+      {
+        "case": "extra member",
+        "member_hashes_recomputed": false,
+        "rejected": true
+      },
+      {
+        "case": "unexpected UNC parent",
+        "member_hashes_recomputed": false,
+        "rejected": true
+      },
+      {
+        "case": "duplicate manifest member",
+        "member_hashes_recomputed": false,
+        "rejected": true
+      },
+      {
+        "case": "query failed despite valid hashes",
+        "member_hashes_recomputed": true,
+        "rejected": true
+      },
+      {
+        "case": "administrator marker false",
+        "member_hashes_recomputed": true,
+        "rejected": true
+      },
+      {
+        "case": "source/status disagree",
+        "member_hashes_recomputed": true,
+        "rejected": true
+      },
+      {
+        "case": "NtpClient disabled not NtpServer",
+        "member_hashes_recomputed": true,
+        "rejected": true
+      },
+      {
+        "case": "provider missing",
+        "member_hashes_recomputed": true,
+        "rejected": true
+      },
+      {
+        "case": "duplicate status source",
+        "member_hashes_recomputed": true,
+        "rejected": true
+      },
+      {
+        "case": "duplicate JSON admin key",
+        "member_hashes_recomputed": true,
+        "rejected": true
+      }
+    ],
+    "capture_files": [
+      {
+        "path": "261021/data/reports/clock-host-admin-00f021d1-2b24-4c53-aaf9-325fbe81cdba/collection.json",
+        "bytes": 518,
+        "sha256": "385bebde51aacf8da1dee2c2c08cf4e129324eeae8e559bc3eb21781253c7669"
+      },
+      {
+        "path": "261021/data/reports/clock-host-admin-00f021d1-2b24-4c53-aaf9-325fbe81cdba/configuration.log",
+        "bytes": 1433,
+        "sha256": "067151b27833abe67451978731c87e843d2184a862d104389cfca785451239ac"
+      },
+      {
+        "path": "261021/data/reports/clock-host-admin-00f021d1-2b24-4c53-aaf9-325fbe81cdba/hashes.json",
+        "bytes": 1398,
+        "sha256": "953e2d100d35f0cb530ea29e26839b5b362decbe050143a6b5ea331586421298"
+      },
+      {
+        "path": "261021/data/reports/clock-host-admin-00f021d1-2b24-4c53-aaf9-325fbe81cdba/services.json",
+        "bytes": 225,
+        "sha256": "38a04cd896ad39642083f4b538db860381c1910ea32123d652c38a258f6edbf1"
+      },
+      {
+        "path": "261021/data/reports/clock-host-admin-00f021d1-2b24-4c53-aaf9-325fbe81cdba/source.log",
+        "bytes": 21,
+        "sha256": "64b01fdeeca5273d882f7dc7310ed8fc66a0cfe85c0d96f4a6d0742bc5ead693"
+      },
+      {
+        "path": "261021/data/reports/clock-host-admin-00f021d1-2b24-4c53-aaf9-325fbe81cdba/status.log",
+        "bytes": 316,
+        "sha256": "4859868f9e8a3388872b04bd1529f0852b9d4d889ea60b25f650f3119e34e670"
+      }
+    ],
+    "attachment": {
+      "bytes": 5743,
+      "sha256": "1cb3f08883a86c759d11c12cfb5c2ff20f3ce833cdb1f5e011a400492731d9a1",
+      "snapshot_path_ignored": "261021/data/reports/20261109-host-admin-review/inputs/attachment.txt"
+    },
+    "source_dossier_directories_found": []
+  },
+  "capture_identity_and_authenticity": {
+    "accepted_scope": "Supplied console/mode/admin marker/native exits/manifest/actual files mutually consistent; not signed attestation.",
+    "missing": [
+      "Host boot and service identity at capture",
+      "Acquisition UTC/QPC brackets",
+      "Independent authenticated source and uncertainty"
+    ],
+    "sequential_queries_atomic": false,
+    "file_mtime_used_as_acquisition_UTC": false,
+    "historic_setters_reassigned_to_current_process": false
+  },
+  "reference_review": [
+    {
+      "url": "https://learn.microsoft.com/en-us/windows-server/networking/windows-time-service/windows-time-service-tools-and-settings",
+      "method": "web open/find, 2026-11-09 client date; not saved as raw HTTP original",
+      "used_for": "Runtime query semantics; peer/status verbose; 0x9 is Client|SpecialInterval. Not a source authentication or accuracy guarantee."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/windows-server/networking/windows-time-service/windows-time-service-top",
+      "method": "web open; general service context, no new measurement"
+    },
+    {
+      "url": "https://ubuntu.com/wsl/docs/stable/explanation/time-sync/",
+      "method": "web open, no service actions",
+      "used_for": "Host/guest synchronization conflict possibility; Ubuntu release behavior not substituted for Mariner or historic dynamic cause."
+    }
+  ],
+  "validation": {
+    "capture_files_verified": 6,
+    "manifest_members_verified": 5,
+    "runtime_settings_parsed": 34,
+    "diagnostic_negative_cases": 12,
+    "negative_member_hashes_recomputed": 7,
+    "product_tests_added": 0,
+    "product_suite_rerun": false,
+    "guide_parse_exit": 0,
+    "guide_collection_executed": false,
+    "documentation_result": {
+      "capture_files": 6,
+      "review_evidence_records_checked": 22,
+      "baseline_files": 14,
+      "negative_cases": 12,
+      "rehashed_negatives": 7,
+      "relative_links": 233,
+      "guide_same_as_parsed": true,
+      "scope_and_diff_check": "passed",
+      "unrelated_untracked_not_included": true,
+      "product_source_schema_writer_lock_workflow_changed": false
+    },
+    "new_implementation_CI_required": false,
+    "new_CI_accepted": false,
+    "reason": "Documentation and ignored capture-specific diagnostics only; no product source/schema/writer/lock/workflow changes."
+  },
+  "failures": [
+    {
+      "attempt": "documentation-validation-v1",
+      "exit_code": 1,
+      "cause": "Validator assumed entire Windows parser raw console output was UTF8; UnicodeDecodeError on mixed-encoding progress.",
+      "fix": "Preserve raw bytes and validate required ASCII parse-success marker as bytes; no ignore-decode and no collection execution.",
+      "verification": "documentation-validation-v2 exit0; original log and validate-v1.py retained."
+    }
+  ],
+  "attempts": [
+    {
+      "id": "offline-review-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-host-admin-review/review.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T01:56:57.800041+00:00",
+      "end_utc_local_unqualified": "2026-11-09T01:56:57.873468+00:00",
+      "start_monotonic_ns": 187941923900832,
+      "end_monotonic_ns": 187941997309141,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-host-admin-review/offline-review-v1.log",
+      "log_bytes": 102,
+      "log_sha256": "02c4fd125126297e1dcc8cbf9f71e28e13c6de304640548c676a581536e18f1c"
+    },
+    {
+      "id": "guide-parser-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-host-admin-review/parse-guide.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T02:00:09.668896+00:00",
+      "end_utc_local_unqualified": "2026-11-09T02:00:10.557343+00:00",
+      "start_monotonic_ns": 188134270470791,
+      "end_monotonic_ns": 188135158927147,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-host-admin-review/guide-parser-v1.log",
+      "log_bytes": 143,
+      "log_sha256": "4d0a47ddc24b37201f8ac19075c407b135e0f86eafee9e0a32476c8a7c5b8330"
+    },
+    {
+      "id": "documentation-validation-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-host-admin-review/validate.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T02:02:41.460646+00:00",
+      "end_utc_local_unqualified": "2026-11-09T02:02:41.614129+00:00",
+      "start_monotonic_ns": 188286440143991,
+      "end_monotonic_ns": 188286593617684,
+      "exit_code": 1,
+      "log_path_ignored": "261021/data/reports/20261109-host-admin-review/documentation-validation-v1.log",
+      "log_bytes": 836,
+      "log_sha256": "f50e144450b781fec683d9c053a3f35e9fde7c57530eada3f4b08304b9a8ced0"
+    },
+    {
+      "id": "documentation-validation-v2",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-host-admin-review/validate.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T02:03:01.163307+00:00",
+      "end_utc_local_unqualified": "2026-11-09T02:03:01.467731+00:00",
+      "start_monotonic_ns": 188306242212274,
+      "end_monotonic_ns": 188306546634721,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-host-admin-review/documentation-validation-v2.log",
+      "log_bytes": 319,
+      "log_sha256": "951207caf1e4af9eef5e4a53a9db36e98315c85cfd1f16322652675dae914184"
+    }
+  ],
+  "input_baseline_records": [
+    {
+      "path": "AGENTS.md",
+      "at_commit": "b0589ee",
+      "bytes": 3418,
+      "sha256": "dac24a4639ec3fcab16f08605b59cd98ef168c5b84b83f9046455f11030fa412"
+    },
+    {
+      "path": "261014/plan_mlops.md",
+      "at_commit": "b0589ee",
+      "bytes": 138325,
+      "sha256": "dd0efedee3b47d9f78b3f9f380483d924c4197e303bf4e71f03fd33f3a7c6d77"
+    },
+    {
+      "path": "261021/work_log.md",
+      "at_commit": "b0589ee",
+      "bytes": 543075,
+      "sha256": "b6ab338935daf3f7b1159bb4d597cd828f49d9ac58df3fddc6eaec268e174c3f"
+    },
+    {
+      "path": "261021/docs/clock-resources-admin-review.md",
+      "at_commit": "b0589ee",
+      "bytes": 11491,
+      "sha256": "aea7b3bdbc004482b16ff103009dcfe0f235394a96298915f232a647255b690d"
+    },
+    {
+      "path": "261021/docs/clock-owner-admin-read.md",
+      "at_commit": "b0589ee",
+      "bytes": 15120,
+      "sha256": "81376febb58757aabe6e90ae332a063aae9f99c442452ca3f08483ce1afa3186"
+    },
+    {
+      "path": "261021/docs/clock-source-readiness.md",
+      "at_commit": "b0589ee",
+      "bytes": 5995,
+      "sha256": "7d5baaf856240c33b57ab83bf97dea864323e01aa6ebef9899c3f6146595b745"
+    },
+    {
+      "path": "261021/docs/clock-input-request.md",
+      "at_commit": "b0589ee",
+      "bytes": 7387,
+      "sha256": "ec3a2b32e0396296123e17e8af48fd5be643f47c9b726a42897253150e4cf5f0"
+    },
+    {
+      "path": "261021/docs/backend-time-path-review.md",
+      "at_commit": "b0589ee",
+      "bytes": 6329,
+      "sha256": "4f097f22dfc60e4471e7216252476c6d2e88cd6f39029846536429b90cfdea1f"
+    },
+    {
+      "path": "261021/docs/clock-qualification-plan.md",
+      "at_commit": "b0589ee",
+      "bytes": 8957,
+      "sha256": "cc077a3d963df7fd9e14e999d30c32e4f8a9e8093af7b54978ab68741be73a9e"
+    },
+    {
+      "path": "261021/docs/t10-input-readiness.md",
+      "at_commit": "b0589ee",
+      "bytes": 11231,
+      "sha256": "45dab204606973c35148fcc20ce7519c5757bfba7467f8e79202a9b76bd46593"
+    },
+    {
+      "path": "261021/docs/reviews/20261108-t10-snapshot-checks.json",
+      "at_commit": "b0589ee",
+      "bytes": 92578,
+      "sha256": "0a6156495c66c4d5de0c0703a88b0c9f2af2e71884eea2b105779b1c1ff8e5cb"
+    },
+    {
+      "path": "261021/docs/reviews/20261109-prerequisite-review-checks.json",
+      "at_commit": "b0589ee",
+      "bytes": 7181,
+      "sha256": "98d485e1dd3429ab99a1aa4c2b0d959df6669bc6e016e19111ec16e79f957f61"
+    },
+    {
+      "path": "261021/docs/reviews/20261109-admin-resources-checks.json",
+      "at_commit": "b0589ee",
+      "bytes": 37743,
+      "sha256": "830271a0711f1d3c006ffca6cf8321201d5c9e69c9eb92d7b5bdbe8efc796d25"
+    },
+    {
+      "path": "261021/docs/reviews/20261109-clock-bundle-input-ci-checks.json",
+      "at_commit": "b0589ee",
+      "bytes": 55863,
+      "sha256": "c78d5dd8583755415f9202b197e0b9bf9eae6731fd7bc17ed225ea906340f369"
+    }
+  ],
+  "review_evidence_records": [
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/analysis.json",
+      "bytes": 6046,
+      "sha256": "9584b9c986e71c88a550c4a27d19e9a6be2648fe97b282d00e9e7ad069eff1b9"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/build-index.py",
+      "bytes": 8095,
+      "sha256": "66ff4df6fec2224800d5f4c321d7fd0b099af9a3c88ff6e4c74231071dc64927"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/documentation-validation-v1.json",
+      "bytes": 647,
+      "sha256": "c84210bc9acf51f6f5cd9620aba0482a762d6127cee151b7bd851445464c6e27"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/documentation-validation-v1.log",
+      "bytes": 836,
+      "sha256": "f50e144450b781fec683d9c053a3f35e9fde7c57530eada3f4b08304b9a8ced0"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/documentation-validation-v2.json",
+      "bytes": 647,
+      "sha256": "49fdb198e331f9b04887e0fcd918c15cc6602dd8f724830d79590ab21cbec106"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/documentation-validation-v2.log",
+      "bytes": 319,
+      "sha256": "951207caf1e4af9eef5e4a53a9db36e98315c85cfd1f16322652675dae914184"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/guide-parser-v1.json",
+      "bytes": 626,
+      "sha256": "c4aaed128f66bb49bf05180129884452359ee843a045dbb74e4509ab669384d9"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/guide-parser-v1.log",
+      "bytes": 143,
+      "sha256": "4d0a47ddc24b37201f8ac19075c407b135e0f86eafee9e0a32476c8a7c5b8330"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/host-cause-guide.ps1",
+      "bytes": 4717,
+      "sha256": "f857bee57810ac4ad6c7f5101b316cf8763baf4016c5999588aa3e7946550960"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/inputs/attachment.txt",
+      "bytes": 5743,
+      "sha256": "1cb3f08883a86c759d11c12cfb5c2ff20f3ce833cdb1f5e011a400492731d9a1"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/inputs/clock-host-admin-00f021d1-2b24-4c53-aaf9-325fbe81cdba/collection.json",
+      "bytes": 518,
+      "sha256": "385bebde51aacf8da1dee2c2c08cf4e129324eeae8e559bc3eb21781253c7669"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/inputs/clock-host-admin-00f021d1-2b24-4c53-aaf9-325fbe81cdba/configuration.log",
+      "bytes": 1433,
+      "sha256": "067151b27833abe67451978731c87e843d2184a862d104389cfca785451239ac"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/inputs/clock-host-admin-00f021d1-2b24-4c53-aaf9-325fbe81cdba/hashes.json",
+      "bytes": 1398,
+      "sha256": "953e2d100d35f0cb530ea29e26839b5b362decbe050143a6b5ea331586421298"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/inputs/clock-host-admin-00f021d1-2b24-4c53-aaf9-325fbe81cdba/services.json",
+      "bytes": 225,
+      "sha256": "38a04cd896ad39642083f4b538db860381c1910ea32123d652c38a258f6edbf1"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/inputs/clock-host-admin-00f021d1-2b24-4c53-aaf9-325fbe81cdba/source.log",
+      "bytes": 21,
+      "sha256": "64b01fdeeca5273d882f7dc7310ed8fc66a0cfe85c0d96f4a6d0742bc5ead693"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/inputs/clock-host-admin-00f021d1-2b24-4c53-aaf9-325fbe81cdba/status.log",
+      "bytes": 316,
+      "sha256": "4859868f9e8a3388872b04bd1529f0852b9d4d889ea60b25f650f3119e34e670"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/offline-review-v1.json",
+      "bytes": 625,
+      "sha256": "1c968dbd6f75d7af23feb3034bf3b9539f5ab98292a2ee2c38247529b94595b0"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/offline-review-v1.log",
+      "bytes": 102,
+      "sha256": "02c4fd125126297e1dcc8cbf9f71e28e13c6de304640548c676a581536e18f1c"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/parse-guide.py",
+      "bytes": 1495,
+      "sha256": "b1be72fb1522144961ffd4cf592b695fe49db196d1cb9874f08ed50d78597401"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/powershell-parser-raw.log",
+      "bytes": 448,
+      "sha256": "98e8fce66489dd63adc8540e31f127dc52b8b8105850b709a6a2f5b10d7c2d2c"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/review.py",
+      "bytes": 9362,
+      "sha256": "8db2ef5280848aaed87f3564981e76b64ea0792bd4bd53578b1d9e056f583733"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/run_attempt.py",
+      "bytes": 1244,
+      "sha256": "62df5fee98294644b7a3ebc2a0087ffa98f9be75fc4c26285681b39def88ac29"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/validate-v1.py",
+      "bytes": 3679,
+      "sha256": "f78078356a98d9abbd891d93b5e5218909d855ed0b6e1c2e47214df45a2a3878"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/validate.py",
+      "bytes": 3661,
+      "sha256": "e57fab329d4a464f38b46a4dab16693c46ac9b91181dfddbba48c6d840978c37"
+    },
+    {
+      "path": "261021/data/reports/20261109-host-admin-review/validation-result.json",
+      "bytes": 341,
+      "sha256": "a266f419bda32ffccf6b5cf195f10fd98447183fa671a476aff37acd2abb7146"
+    }
+  ],
+  "remaining": [
+    {
+      "priority": "P1",
+      "difficulty": "D3/Sol",
+      "task": "Host peer/status verbose last-error/new event records and service identity; root cause and sync responsibility."
+    },
+    {
+      "priority": "P1",
+      "difficulty": "D3/Sol",
+      "task": "Independent UTC/elapsed source dossier: identity/authenticity/uncertainty/dependencies; no accepted source yet."
+    },
+    {
+      "priority": "P1",
+      "difficulty": "D3/Sol",
+      "task": "After accepted source and permissions: real collector/host deadline/fixed workload; repair/impact/rollback; full clock qualification."
+    },
+    {
+      "priority": "P0 before fit",
+      "difficulty": "D3/Sol",
+      "task": "Exact T10 bytes/dependencies/unconsumed windows check immediately before permitted fit, after clock prerequisites."
+    },
+    {
+      "priority": "P1",
+      "difficulty": "D3/Sol",
+      "task": "T02/T11/T12/T13b actual same-candidate evidence and decision after all prerequisites."
+    },
+    {
+      "priority": "conditional",
+      "difficulty": "D3/Sol",
+      "task": "T03 phase/stack or tick11000 values/kernel writes only on new natural event material."
+    }
+  ],
+  "scope_and_limits": [
+    "No OS/clock settings, real DB/registry/current serving/future rejection changes; no fit/scoring/window consumption.",
+    "No new live trace/probe or attempt to reproduce T03/tick11000; absence of supplied material is not proof of nonrecurrence.",
+    "No source dossier directory in the conventional location; unprovided alternate paths not searched exhaustively.",
+    "Host configured peer is not successful sync. Current DNS/UDP/offset/startup cause unknown; old later sync-success events are not discarded.",
+    "Unqualified local UTC/monotonic in attempt records is not clock qualification or independently calibrated elapsed time.",
+    "Initial interactive reads/edits/Web calls were outside timing wrapper; not retroactively timed. Truncated exploratory tool output is not a complete local raw command log.",
+    "Capture-specific negative tests are not new product unit cases or acceptance of a reusable generic verifier.",
+    "PowerShell guide parse succeeded; administrator cause collection and user maintenance permission still absent.",
+    "Index generated without wrapping to avoid hashing its own still-open log. Final stage/commit/push receipts and staged.diff saved locally after index freeze, excluded to avoid self-reference."
+  ]
+}

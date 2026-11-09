@@ -4,6 +4,9 @@
 [証拠索引](reviews/20261109-admin-resources-checks.json)、[原本取得手順](clock-owner-admin-read.md)、[計画§11.6](../../261014/plan_mlops.md#remaining-work-latest)を参照。
 **採取区間のchronyd実体とPHC/UDP所有を確認した。時計資格・tick11000の内部原因・実fit開始条件は未達。**
 
+基点`b0589ee`後の追補：[Windows管理者runtime review](clock-host-runtime-review.md)で、下記で不足していたsource/configurationを取得・照合済み。
+以下の権限拒否/管理者query未実施は前回の履歴。現在の残件はpeer/last-error等による原因切り分け、独立源/同期責任/全資格である。
+
 ## 採取の完了と内容の結合
 
 ownerの`reader_exit_code=0`、resourcesの`inventory_exit=0/resources_exit=0`と、各log末尾の実完了行/errors0を照合した。

@@ -6,7 +6,12 @@
 未確認provider名やaddress、`independent=true`の自己申告で不足を埋めない。
 現時点の入力から特定製品/サービスの独立性や精度を認定することもできない。
 
-2026-11-09：[管理者PHC/UDPの照合](clock-resources-admin-review.md)で、指定採取区間のchronydがHyper-V PHCとlocal UDP323を所有すると確認した。
+2026-11-09 host追補：[管理者runtime review](clock-host-runtime-review.md)でhostのsource/configuration取得も完了。
+runtimeはNtpClient有効/Type=NTP/time.windows.com,0x9だが、状態はLI3/Local CMOS Clockと報告された。
+config flag/precision/root dispersionやquery exit0は真正性・外部UTC誤差・QPC校正の根拠ではない。
+peer/last-error等の原因診断と独立源の採用を分け、採用保留を維持する。
+
+2026-11-09（host追補前の履歴）：[管理者PHC/UDPの照合](clock-resources-admin-review.md)で、指定採取区間のchronydがHyper-V PHCとlocal UDP323を所有すると確認した。
 これは同期経路の実体照合で、独立源の真正性・UTC精度・elapsed不確かさを満たす資料ではない。
 hostのW32TimeはRunningでもstatusは同期未実行/Local CMOS Clockで、source/configurationは非管理者tokenに拒否された。
 独立源の採用は引き続き保留。追加資料の入口は[更新した入力一覧](clock-input-request.md)を参照し、同じPHC採取を反復しない。

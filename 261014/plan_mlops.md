@@ -532,7 +532,7 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 <a id="remaining-work-latest"></a>
 
-#### 2026-11-09 管理者PHC/UDP照合後の残課題
+#### 2026-11-09 Windows管理者runtime照合後の残課題
 
 基点`99f14cd`からの追加作業：追加管理者ログ/独立源資料はユーザーが未取得と回答。
 [次に必要な入力](../261021/docs/clock-input-request.md)へ提出項目・保存先・不確かさの根拠を具体化した。
@@ -570,7 +570,7 @@ ZIP成功は源認定・実資格・fit許可ではない。既存clock policy�
 
 | 優先度 | 難易度・担当 | 残課題と次の条件 |
 |---|---|---|
-| P1 | D3・Sol | 時計：前回initd setterの実exe/親/namespaceは照合済み。保存済みELFの[backend取得interfaceとSettimeofday CALL](../261021/docs/backend-time-path-review.md)も静的照合したが、新しいruntime応答/stackではない。2026-11-09の[指定管理者原本review](../261021/docs/clock-resources-admin-review.md)で採取区間のchronyd identity/PHC fd/UDP所有と直接保存の完了を確認済み。旧probeとdev不一致、timesyncdのPID/開始tick/exe SHA変更は過去traceへ持ち越さない。hostはW32Time Runningでもstatusは同期未実行/Local CMOS Clock。残りは管理者host runtime設定/同期責任、tick11000時内部値、backend/host時刻源・外部UTC差・同期責任、許可後の修復と時計資格。[資格計測設計v1](../261021/docs/clock-qualification-plan.md)と[offline進行率phase component](../261021/docs/clock-rate-review.md)を追加し、実装f26b334のCI482件/全system/artifact/cleanupまで受入済み。全campaignのpolicy/事前plan SHA結合・外部UTC/校正/identity/欠測を[offline照合](../261021/docs/clock-campaign-review.md)する実装f6b3cadをCI519件/全system/artifact/cleanupまで受入済み。数値/構造だけの成功でも資格はincompleteを保つ。[fake採取](../261021/docs/clock-fake-acquisition.md)で送信前intent/nonce/sequence、raw→identity/全JSON→offline CLI、負例/中断cleanupを実装。local28件の[初回索引](../261021/docs/reviews/20261105-clock-acquisition-checks.json)を保持し、[起動回収の追加索引](../261021/docs/reviews/20261105-clock-acquisition-startup-checks.json)で30件/起動時所有権移譲とmask復元/源予算を照合する。最終a5c1605の[CI549件/30件・artifact/hash/cleanup](../261021/docs/reviews/20261105-clock-acquisition-ci-checks.json)も受入済み。[fake QPC固定周期/phase deadline](../261021/docs/clock-fixed-schedule.md)を追加し、専用19件で遅延のcatch-up/観測延長拒否、欠測/中断と同phaseの既知違反保持、子process回収をlocal検証済み。[今回索引](../261021/docs/reviews/20261106-clock-scheduler-checks.json)へ初回16件と同phase負例の失敗/修正を別記する。実装c1c5dcbの[CI568件/専用19件・artifact/hash/cleanup](../261021/docs/reviews/20261106-clock-scheduler-ci-checks.json)まで受入済み。残りは[源選定review](../261021/docs/clock-source-readiness.md)に必要な独立UTC/elapsed参照と不確かさ根拠（未選定）、実採取器/host deadline/固定負荷、原本/実行真正性、同期責任review、別途許可後の修復/休止再開/全受入。非飽和traceを反復せず、過去の飽和/T03歴史的停止も未確定。initd全体を止めず、future拒否/clamp/retryの禁止は維持 |
+| P1 | D3・Sol | 時計：前回initd setterの実exe/親/namespaceは照合済み。保存済みELFの[backend取得interfaceとSettimeofday CALL](../261021/docs/backend-time-path-review.md)も静的照合したが、新しいruntime応答/stackではない。2026-11-09の[指定管理者原本review](../261021/docs/clock-resources-admin-review.md)で採取区間のchronyd identity/PHC fd/UDP所有と直接保存の完了を確認済み。旧probeとdev不一致、timesyncdのPID/開始tick/exe SHA変更は過去traceへ持ち越さない。hostは[管理者runtime review](../261021/docs/clock-host-runtime-review.md)でsource/configuration取得も完了。NtpClient有効/Type=NTP/time.windows.com,0x9だが、status/sourceはLI3/Local CMOS Clock。残りはpeer/last-error等による未同期原因・同期責任、tick11000時内部値、backend/host時刻源・外部UTC差・同期責任、許可後の修復と時計資格。[資格計測設計v1](../261021/docs/clock-qualification-plan.md)と[offline進行率phase component](../261021/docs/clock-rate-review.md)を追加し、実装f26b334のCI482件/全system/artifact/cleanupまで受入済み。全campaignのpolicy/事前plan SHA結合・外部UTC/校正/identity/欠測を[offline照合](../261021/docs/clock-campaign-review.md)する実装f6b3cadをCI519件/全system/artifact/cleanupまで受入済み。数値/構造だけの成功でも資格はincompleteを保つ。[fake採取](../261021/docs/clock-fake-acquisition.md)で送信前intent/nonce/sequence、raw→identity/全JSON→offline CLI、負例/中断cleanupを実装。local28件の[初回索引](../261021/docs/reviews/20261105-clock-acquisition-checks.json)を保持し、[起動回収の追加索引](../261021/docs/reviews/20261105-clock-acquisition-startup-checks.json)で30件/起動時所有権移譲とmask復元/源予算を照合する。最終a5c1605の[CI549件/30件・artifact/hash/cleanup](../261021/docs/reviews/20261105-clock-acquisition-ci-checks.json)も受入済み。[fake QPC固定周期/phase deadline](../261021/docs/clock-fixed-schedule.md)を追加し、専用19件で遅延のcatch-up/観測延長拒否、欠測/中断と同phaseの既知違反保持、子process回収をlocal検証済み。[今回索引](../261021/docs/reviews/20261106-clock-scheduler-checks.json)へ初回16件と同phase負例の失敗/修正を別記する。実装c1c5dcbの[CI568件/専用19件・artifact/hash/cleanup](../261021/docs/reviews/20261106-clock-scheduler-ci-checks.json)まで受入済み。残りは[源選定review](../261021/docs/clock-source-readiness.md)に必要な独立UTC/elapsed参照と不確かさ根拠（未選定）、実採取器/host deadline/固定負荷、原本/実行真正性、同期責任review、別途許可後の修復/休止再開/全受入。非飽和traceを反復せず、過去の飽和/T03歴史的停止も未確定。initd全体を止めず、future拒否/clamp/retryの禁止は維持 |
 | P0（実fit前） | D3・Sol | T10の正式snapshot/事前protocolは2026-11-08に静的受入済み。47原本/22,925,436行を重複除去した32,849 hourが独立再計数と全一致、schema3/47 SHA・stat/TZif/月別収支を照合した。[snapshot review](../261021/docs/t10-snapshot-review.md)。固定train29,919/validation1,464/final1,461、境界5 hour除外/label+3時間/選択8月1日02時、固定recipe/policy/source11件、local ledger/legacyを確認。SQL修正9147027の[CI570件/16 artifact/hash/cleanup](../261021/docs/reviews/20261108-t10-snapshot-checks.json)まで受入済み。fit直前に同じ原本・CSV/manifest/protocol/依存bytesと未消費窓を再照合し、時計資格等の前提が未達ならT11へ進まない。保存は消費予約やblind holdoutの保証ではない |
 | P1 | D3・Sol | T02実producerおよびT11/T12/T13b：同一の実candidate/artifactに精度・監視・復旧・metadata・運用測定を結合し採否を記録。T09/T10/時計資格等の前提を満たす範囲で順に進める |
 | P2（上流変更時） | D2・Sol review | MLflow noloadの発生箇所/通常import/厳格警告負例と現行publisher6件は確認済み。最新3.17.2にも同指定があり、修正releaseまたはloader変更時に個別再検証。それまではlock変更/警告抑制をしない。[調査と報告下書き](../261021/docs/mlflow-orm-compatibility.md)。upload-artifact保守は前回CI受入済み |
@@ -578,6 +578,16 @@ ZIP成功は源認定・実資格・fit許可ではない。既存clock policy�
 T09は2026-11-06に[10月原本取得/構造・右端2原本の独立照合](../261021/docs/t09-october-acquisition.md)を完了した（[索引](../261021/docs/reviews/20261106-t09-checks.json)）。原本47件が揃い、公開待ちを残件から除いた。2026-11-08にT10の正式集計/全manifest/protocol静的照合も受入済み。実fitは未実施。
 
 T14の証拠入口・task対応表・操作説明は最新CIへ追記済み。T06a OS補足とT07a CI接続を残件一覧へ再掲しない。旧checkpoint表は当時の記録として保持する。
+
+**2026-11-09・基点b0589eeのhost管理者runtime受入:** [新review](../261021/docs/clock-host-runtime-review.md)、[証拠索引](../261021/docs/reviews/20261109-host-admin-checks.json)。
+指定clock-host-admin-00f021d1原本6file/manifest5件のSHA、3query exit0、provider別34設定を照合した。
+前回未取得だったsource/configurationは残件から除く。設定peer=time.windows.com,0x9、NtpClient有効だが、LI3/階層0/最終正常同期未指定・Local CMOS Clockと報告。
+実UTC誤差や現原因は未測定で、過去DNS失敗/飽和/T03の原因へ遡及適用しない。host boot/service exe identity/取得bracketも今回原本にない。
+次はP1/D3/Solの[peer/verbose last-error・新イベント限定読取](../261021/docs/clock-owner-admin-read.md#host-w32time-cause-read)と、独立UTC/elapsedの真正性・不確かさreview。
+限定読取案内は構文のみ確認し、Windows管理者実採取待ち。basic query/PHC採取を新情報なしに繰り返さない。
+同期責任表と修復案・影響・切戻しの前提を整理したが、OS変更/保守は未許可・未実施。独立源/全資格、実collector/host deadline/固定負荷、T10直前P0→T02/T11/T12/T13bは前提待ちを維持。
+追加資料なしに解消できる別の計画上の実装条件は特定できず、受入済みsuite/CIやT09/T10原本集計は反復しない。
+診断12負例（再hash7）は今回captureのparser確認で、製品unit/実時計資格/新CIの受入ではない。
 
 **2026-11-09・基点464df19の新資料受入:** [管理者原本review](../261021/docs/clock-resources-admin-review.md)、[証拠索引](../261021/docs/reviews/20261109-admin-resources-checks.json)。
 owner/resources 2件のscript込みhash5/7件・実完了/exit0、同boot・開始tick/親/exe/hash/namespace/config、PHC fd3/rdev247:0、UDP323のfd5/6→inode3582/3583を照合した。

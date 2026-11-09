@@ -4331,3 +4331,45 @@ OS/時計設定・実DB/registry/現配信・future拒否、source/schema/writer
 final-validation-v1はexit0。原本11件とreview証拠53件のhash、原本/snapshot一致、診断23負例（rehashed19）、相対link219件、PowerShell案内blockと実parser対象の一致、変更範囲/diff checkを検証した。
 索引builderのlogを実行中の0byteで固定しないよう、wrapper終了後にhash一覧を更新し、最終検証自身のlog/metadataも追加する。初稿の原本数12は公開前のinventory照合で11へ訂正した。
 製品code変更なしのため製品suite/新しい実装CIの受入は追加していない。後続文書commitの自動CIを、この索引で追跡済みの新証拠としない。
+
+### 2026-11-09：基点b0589ee・Windows管理者runtime原本のreview
+
+添付4ea5431fのconsoleから保存先clock-host-admin-00f021d1-2b24-4c53-aaf9-325fbe81cdbaを特定。
+実directory原本6file、manifestに列挙された5fileのSHA、添付保存先/3query終了値、collection管理者/modeと実出力を照合した。
+source/configurationを含む3queryはnative exit0で、前回のWindows非管理者拒否から未取得だった部分は今回解消した。
+UTF8 BOM/CRLFを元bytesのままignored snapshotへ保持し、decode後の解析文字列のみ正規化した。manifestのUNCは既知parent/basenameへ照合し、任意pathを追っていない。
+
+`261021/.venv/bin/python 261021/data/reports/20261109-host-admin-review/run_attempt.py offline-review-v1 261021/.venv/bin/python 261021/data/reports/20261109-host-admin-review/review.py`はexit0。
+provider別に34設定を解析し、NtpClient Enabled1/InputProvider1/Type=NTP/time.windows.com,0x9、NtpServer Enabled0/InputProvider0を区別した。
+serviceはW32Time Running/Manual、vmictimesync Stopped/Manual。statusはLI3/階層0/参照ID0/最終正常同期未指定、sourceはLocal CMOS Clockでstatus欄とも一致。
+設定peerがあることと同期成功は同じではない。runtime設定値を取得できたが、現在のDNS/UDP/offset/起動後経過の原因は未取得である。
+status poll10=1024秒とSpecialPollInterval16384を同一視せず、UpdateInterval360000をpoll秒数と読まない。
+precision119.209ns/root dispersion0/LocalClockDispersion10を外部UTC誤差や校正不確かさとして採用しない。
+過去イベントのDNS失敗だけで現在原因を断定せず、後の受信/同期開始履歴も保持する。今回hostにboot/service identity/取得bracketが無い限界を記録し、過去WSL setterへ動的対応させない。
+
+offline診断12負例（member再hash7件）がすべて拒否された。hash不正/欠落/余剰/UNC/重複entry、query失敗/admin false/source不一致、client無効/provider差替え、status/JSON重複を確認。
+今回capture専用parserの診断であり、製品unit12件や実時計資格と呼ばない。原本は不変。
+clock-source-input-*標準保存先に新dossierは無く、未提示の別pathの不存在までは断定しない。
+新T03/tick11000の自然再発資料は提示されておらず、新trace/probeを追加しなかった。
+
+Microsoft公式のw32tm query/runtime/flag説明とCanonicalのWSL説明をWebで確認した。
+参照URLと限定した利用根拠は公開索引へ記録する。tool表示はローカル保存の生HTTP原本ではない。
+Windows/PHC/Mariner/Ubuntu/backendの責任表、修復案・影響・切戻しの前提をclock-host-runtime-review.mdへ整理した。
+basic query再採取を残件から外し、peer/verbose last-errorと既存の新Time-Serviceイベントだけを読む次の案内を追加した。
+案内はhost boot/OS版/service開始時刻/exe SHA、query前後のローカルUTC/Stopwatchも保存するが、独立源や実資格collectorとして扱わない。
+
+`.../run_attempt.py guide-parser-v1 261021/.venv/bin/python 261021/data/reports/20261109-host-admin-review/parse-guide.py`はexit0。
+前回実証済みの通常sandbox WSL interop拒否を繰り返さず、許可付きWindows PowerShellでParseInputだけを実行した。
+採取block自体や管理者shellは実行していない。追加の管理者実結果は未取得である。
+新しい失敗試行はこの2実行では無かった。初期の対話読取/Web参照/編集はwrapper外で、後から採取時刻を捏造せずtool履歴と区別する。
+
+全試行command/cwd/exit・未資格UTC/MONOTONIC・原本/snapshot/SHA・診断recipeはignoredなdata/reports/20261109-host-admin-review/に保存。
+公開索引はdocs/reviews/20261109-host-admin-checks.json。raw/添付/peerや端末情報を含む将来原本はGitへ含めない。
+今回完了したのはhost runtime原本reviewと残条件の具体化。独立源、原因の動的切り分け、修復/実collector/全資格は未完了。
+T09/T10静的受入は維持し、実fit/採点/窓消費、T02実producer/T11/T12/T13bは開始しない。追加資料なしに開始できる別の計画上の実装課題は特定できなかった。
+OS/時計設定・実DB/registry/現配信・future拒否、製品source/schema/writer/lock/workflowは変更しない。製品suite/受入済みCI/原本取得・集計を反復して新規進捗にはしない。
+
+documentation-validation-v1はexit1。Windows parserのrawにASCII成功markerと別encodingの準備progressが混在しており、全体をUTF8と仮定したvalidatorがUnicodeDecodeErrorとなった。
+raw bytes/log/validator初版を保持し、必要なASCII markerだけをbytesとして照合する形へ修正。文字化けを無視decodeして成功扱いにする修正ではない。PowerShellの構文確認自体は前段でexit0だった。
+documentation-validation-v2はexit0。原本6件・review証拠22件・基点資料14件のhash、snapshot一致、12負例（再hash7）、相対link233件、実parser対象block一致、対象範囲/diff checkを確認した。
+最終索引はwrapper終了後に再生成し、検証自身の終了済みlog/metadata/resultもhash一覧へ結合する。builderを自身の実行中logと循環させず、stage/commit/pushと最終差分のreceiptは索引freeze後のlocal記録に分ける。
