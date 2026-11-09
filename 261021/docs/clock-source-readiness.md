@@ -1,5 +1,9 @@
 # 独立UTC源・QPC校正の選定前review
 
+**2026-11-09 Web源追補:** ユーザー提示のtime.isとNICTを[用途・規約・不確かさでreview](clock-web-source-review.md)した。
+time.isは人の目視用と自動APIを区別し、NICTはJST5表示・終了済みHTTP配信・継続するNTPを区別する。
+NTPは調査候補だが、実sample/真正性/輸送誤差/独立elapsedの根拠は未取得。源採用・全資格・実fit保留は維持する。
+
 2026-11-05、基点`002718e`。今回の[合成採取](clock-fake-acquisition.md)を実採取へ置き換える前のD3/Sol判断。
 **採用できる源と校正readerは、まだ選定されていない。**
 利用可能な独立機器/記録、源の認証・精度根拠、Windows/WSLへ輸送する際の遅延境界が未提出である。

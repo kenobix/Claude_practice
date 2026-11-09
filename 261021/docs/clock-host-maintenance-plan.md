@@ -63,3 +63,25 @@ peerのNoAuth表示は独立UTC/elapsedの真正性や不確かさを満たす�
 [固定policyの通常60分・許可後の休止再開60分](clock-qualification-plan.md)の全観測で別途資格を判定する。
 保守後の良好値で過去のUTC逆行、tick11000/T03、p95、採否を遡及承認しない。
 実fit/採点/窓消費は、それぞれの前提を満たすまで保留のままにする。
+
+<a id="service-start-comparison"></a>
+
+## 案D：引数なしのservice起動1回を比較する場合（未許可・未実施）
+
+2026-11-09の[XML/COM review](clock-task-definition-review.md)を受けた追加の比較案。
+目的はtask_startedを渡さない起動後の寿命/同期eventを調べることで、過去の停止原因の再現・確定とは分ける。
+実行helperは未作成。案Dを次に選ぶ場合は、まず記録/停止条件付きのhelperを作成・構文検証し、
+具体的なscriptをreviewできる状態にしてから操作許可を求める。裸のコマンドを今実行しない。
+
+| 項目 | 事前に固定する条件 |
+|---|---|
+| 対象/操作 | WindowsのW32Timeへ、引数なしの`sc.exe start W32Time`を1回だけ。task実行/再resync/設定updateを混ぜない |
+| 開始条件 | ユーザーの別許可と作業時間帯を確認。host/build、service Stopped/PID0、Manual、設定/policy/trigger/task hashを新しい操作の直前に保存し、今回の基準から差があれば実行せずreviewへ戻る。既にRunningなら停止して試験を作らない |
+| 影響 | 自動同期によりWindows UTCがstep/slewする可能性。WSL/PHC/他アプリにも影響し得るため、重要な処理と同時実施しない。実DB/registry/配信へ操作命令は送らないが、OS時計経由の間接影響は否定しない |
+| 記録 | 新UUIDへintentを先に保存。native exit/stdout/stderr、local UTC/QPC、開始後PID/start/exe/hash、既存Time-Service eventの新RecordId、status/peers/configを保存。失敗/空file/欠測も保持する |
+| 観察/終了 | 最大20回・30秒間隔を上限とする予備観察案。各queryに個別timeout、観察失敗/停止/identity変化で次の操作を打たず終了。QPC等が未資格なので名目約10分を実時間保証にしない。正常値だけを拾う自動retryなし |
+| 操作後の状態 | 自動停止や元PIDへのkillは行わない。Runningが残る可能性を含めた起動許可が必要。終了時に状態を保存し、停止を求める場合は影響とidentity guardを固定して別許可を得る。task/log/起動種別は変更しない |
+| 切戻しの限界 | 永続設定を変えないためconfig復元操作はない。一方、起動/同期の履歴やUTC変更は取り消せず、手動で時計を逆に戻さない。元のStoppedへ戻す操作も今回案の自動処理に含めない |
+| 判定 | 継続Running/良好statusだけでは修復/全資格passedにしない。task_startedとの差を論じるには実際の起動引数/identityに結び付く両条件の資料が必要。過去taskのlaunch証拠が不足する限り、一条件観察に留める |
+
+この案を承認しない場合も、[外部参照候補の資料review](clock-web-source-review.md)はOS変更なしで進められる。

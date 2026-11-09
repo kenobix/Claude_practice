@@ -1,5 +1,8 @@
 # 1回のresync要求後の時刻設定・停止記録
 
+**後続追補:** [XML2件とCOM登録先のreview](clock-task-definition-review.md)でForceSynchronizeTimeの処理を具体化した。
+これは静的な現在設定の追加資料であり、以下の過去停止callerが確定したという更新ではない。
+
 2026-11-09、基点`d285aa9`。ユーザーが案Aを実行した実結果をreviewした。
 [証拠索引](reviews/20261109-resync-result-checks.json)、[保守案](clock-host-maintenance-plan.md)、
 [計画§11.6](../../261014/plan_mlops.md#remaining-work-latest)を参照する。

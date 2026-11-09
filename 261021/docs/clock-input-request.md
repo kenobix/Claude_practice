@@ -1,5 +1,12 @@
 # 時計調査を再開するために必要な入力
 
+**2026-11-09 task/Web追補:** 新しい[タスク定義XMLのreview](clock-task-definition-review.md)で、
+task_startedとForceSynchronizeTimeのCOM Action、現在の限定HKLM登録/DLL hashを確認した。
+同じXMLの再採取は不要。停止caller/引数の内部意味、実源の根拠は未確定。
+提示された[time.is/NICTの用途と制限](clock-web-source-review.md)を記録し、外部源候補が未提示という扱いは更新した。
+次の資料は新しい停止/起動責任の根拠、またはNICT等のsource/輸送/真正性/elapsedの受入根拠。
+基本queryやPHC/UDPを繰り返さず、service起動・設定変更は別の具体案/許可を必要とする。
+
 **2026-11-09 resync後追補:** ユーザーの1回要求について[原本・Operational eventをreview済み](clock-resync-result.md)。
 受信/同期開始/時刻設定（報告+2ms）/code0停止が同じ要求区間にあるが、事後queryは失敗し、現状態はStopped。
 同じhelperを再実行しない。次はtask起動形態/停止責任の根拠、新しい自然event、独立source資料、または別途許可された保守比較。

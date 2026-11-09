@@ -4429,3 +4429,51 @@ offline-review-v1はexit0。13原本/12hash/helper/6native記録、空JSON保持
 実コマンド/cwd/exit、未資格UTC/MONOTONIC、raw/log/XML/hashはdata/reports/20261109-resync-result-review/。初期対話読取はwrapper外であり、時刻や完全stdoutを後付けしない。公開要約はdocs/reviews/20261109-resync-result-checks.json。
 残件はtask起動形態/停止責任、独立UTC/elapsed/同期責任・全資格。今回時刻設定/停止を過去T03/tick11000の解決へ持ち越さず、実fit/採点/T02/T11/T12/T13bの保留を維持する。
 documentation-validation-v1はexit0。13原本/12manifest、5Operational event、review証拠36件のhash、相対link218件・scope/秘密scan/diff checkを確認。検証終了後に自身のlog/metadata/resultを索引へ結合する。stage/commit/pushとstaged.diffはfreeze後のlocal記録へ分ける。
+
+### 2026-11-09：基点67f4586・task XMLとWeb時計源のreview
+
+ユーザー提出のclock-task-definition-c6cba967-567c-4f62-98f3-60e64ab3f850を読取。
+SynchronizeTime.xml、ForceSynchronizeTime.xml、hashes.jsonの3原本をignored snapshotへ保存し、manifest2件のSHAを元bytesと照合した。
+XMLは実bytesがUTF8 BOM、宣言はUTF16。前回提示のSet-Content -Encoding UTF8による保存形式の不一致であり、ユーザーの誤操作ではない。
+厳密UTF8-sig復号後のUnicodeをparseし、原本宣言/bytes/hashは不変。再importはしない。
+
+`261021/.venv/bin/python 261021/data/reports/20261109-task-source-review/run_attempt.py offline-task-review-v1 261021/.venv/bin/python 261021/data/reports/20261109-task-source-review/review.py`はexit0。
+3file/manifest2件、URI/namespace/Actions/Triggers/Settings、10固定capture負例の拒否を確認した。製品unitや時計資格の試験ではない。
+wrapperのlocal UTCは03:18:11.564804→03:18:11.309856と0.254948秒逆行し、MONOTONICは192851787531165→192851958430333と正方向。
+新しいwrapper事実として残すが、setter traceやT03 phase/stackを新規取得したわけではなく、tick11000/過去原因へ帰属しない。
+
+SynchronizeTimeはLocalService、sc.exe start w32time task_started、WNF trigger1件/PT1M、maintenance P1D/P1DT1H。
+ForceSynchronizeTimeはExecではなくCOM handler、ClassId A31AD6C2-FF4C-43D4-8E90-7101023096F9/Data TimeSyncTask、WNF trigger2件。
+両者IgnoreNew/network必須/StopOnIdleEnd=true。triggerのdelay/maintenance deadlineをservice停止timeoutへ読み替えない。
+task idle終了条件をSCMサービス停止の証明とせず、現在XMLを過去launch/caller証拠にしない。採取UTC/QPC/host/build/動的identityは提出原本に無く、後付けしていない。
+
+run_attempt.pyのread-com-v1→read-com.pyは通常sandboxでinterop UtilBindVsockAnyPort socket failed1、exit1。
+同じ限定readのread-com-v2は許可付きでexit0。HKLMの当該CLSID InprocServer32だけを64/32bit viewで読取し、固定2 DLLの版/サイズ/hashを取得した。
+Registry64はTimeSyncTask.dll/ThreadingModel Both、Registry32はkey無し。OS報告10.0.26200.0、DLL版は両方10.0.26100.1。
+TimeSyncTask.dllは45056bytes/SHA995dc71eb07d6f6aa1e7bfec3abb5f5d0a9c9ec9788dd7019f4f09bc825da171、w32time.dllは745472bytes/SHA3b8a03d852a067710eeafef6642466bda86841502d93743656cb2f166179e00c。
+HKLM静的登録はLocalServiceの全overrideや過去module loadを証明せず、DLL activation/署名認証もしていない。失敗rawはv1.logに保持し、成功rawはcom-registration.rawへ保存。
+inspect-com-v1はexit0。mixed CLIXMLからJSON1件を厳密UTF8で抽出し、固定class/file/view/報告値の整合を確認した。
+
+Webでtime.isのabout/terms、NICT JST5/技術説明/公開NTP/開発者ガイド/HTTP終了告知、Microsoft sc start/COM/IdleSettings公式説明を読んだ。
+time.isの典型表示精度20〜100msはsampleの誤差上限ではなく、自動script利用は規約が禁止しAPIは別問い合わせ。自動収集や問い合わせを実施しない。
+NICT JST5は表示/時刻差確認用で、取得後にPC時計を基準に進むとの技術説明がある。browserを動作試験したとはしない。
+古いJSON(P)/HTTPS API資料を調査候補として読んだが、公式告知で2022-03-31に一般HTTP/HTTPS時刻配信終了と確認。
+同告知はJST5ページとNTPへの影響なしも明記しており、表示ページまで終了とする誤読を避けた。旧endpointへのqueryはしない。
+NICT NTPは調査候補で、利用者精度は回線に依存、開発者poll間隔は16秒以上。sourceの精度とclientの誤差を分け、真偽/要求対応/輸送境界/QPC自己校正回避/共有依存の不足を具体化した。
+Web toolの読取/要約URLはsource-notes.jsonに保存。time.is/accuracyはInternal Errorで根拠に使わず、task_started検索のcommunity Q&Aも実装の権威的根拠にしない。
+Webの生HTTP原本や初期対話readの完全raw/時刻を後付けせず、出力切れのあった読取も限界として記録した。
+
+clock-task-definition-review.mdとclock-web-source-review.mdを追加し、入力一覧/源review/前回結果/計画§11.6を更新。
+保守案Dは引数なしservice起動1回の開始条件・最大20回の観察案・影響・終了/切戻しの限界を具体化した未許可案。
+裸の起動命令は実行せず、helperも未作成。起動だけで自動同期し得るため別許可が必要で、追加resync/task/log/設定変更へ拡張しない。
+外部source候補の資料reviewは進んだが、源採用・実reader・host deadline/固定負荷/全資格は未了。
+他の前提を満たす独立した未実施受入は今回特定できず、T09/T10原本・合成suite/CIを反復して進捗にしない。
+OS/時計設定・service起動停止・task/log・実DB/registry/現配信・future拒否・製品source/schema/writer/lock/workflowは変更していない。
+実fit/採点/T02/T11/T12/T13bの保留は維持。全recipe/実コマンド/cwd/exit・未資格UTC/MONOTONIC/log/hashはdata/reports/20261109-task-source-review/、公開索引はdocs/reviews/20261109-task-source-checks.jsonへ保存する。
+work_log追記の初回apply_patchは期待行の完全一致に失敗し未変更。末尾へ追記する方法に修正し、失敗内容をpreparation-failures.jsonへ保存した。wrapper外の編集試行に時刻を後付けしない。
+documentation-validation-v1はexit0、3原本/manifest2件/基点7資料/review証拠29件、固定capture10負例と相対link246件を照合。
+その後の自己reviewで未追跡パスのassertに常にTrueになる不要な条件式が残っていたため、v1本文を保存して修正した。
+tracked差分のscope確認はv1でも有効だったが、未追跡の範囲確認はv2で実施する。v1のexitやlogを失敗へ書き換えない。
+documentation-validation-v2はexit0、未追跡の許容範囲、3原本/2hash、基点7資料、review証拠34件、相対link246件、秘密pattern/diff checkを確認した。
+最終索引はwrapper終了後にv2の終了済みlog/metadata/resultも結合し、以後のstage/commit/push receiptは循環参照を避けlocalへ分ける。
+製品source/workflowを変更していないため新しいsuite/CI受入は主張しない。

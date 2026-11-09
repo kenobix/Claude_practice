@@ -1,0 +1,573 @@
+{
+  "schema_version": 1,
+  "base_commit": "67f4586c66038dbdc468dfd3702278ed02572072",
+  "review_date_client": "2026-11-09",
+  "status": "TASK_DEFINITION_AND_WEB_SOURCE_REVIEW_COMPLETE_DYNAMIC_STOP_AND_CLOCK_QUALIFICATION_PENDING",
+  "review": {
+    "status": "STATIC_TASK_REVIEW_NOT_STOP_CAUSE_OR_CLOCK_QUALIFICATION",
+    "originals": [
+      {
+        "path": "261021/data/reports/clock-task-definition-c6cba967-567c-4f62-98f3-60e64ab3f850/ForceSynchronizeTime.xml",
+        "bytes": 1614,
+        "sha256": "2c23af7ecfc222d9deecc87786ce62b7d8ca42f73940ec958607f7880c7a4430"
+      },
+      {
+        "path": "261021/data/reports/clock-task-definition-c6cba967-567c-4f62-98f3-60e64ab3f850/SynchronizeTime.xml",
+        "bytes": 1620,
+        "sha256": "c8d78fbb63a0011bc145c1477886509d26e999c28b0e760c98817ac3905b4e1b"
+      },
+      {
+        "path": "261021/data/reports/clock-task-definition-c6cba967-567c-4f62-98f3-60e64ab3f850/hashes.json",
+        "bytes": 657,
+        "sha256": "83c5c8fe39a3fe77d71b2fb036c7296d560f8e18449bd9c62cd572cfc6c02c57"
+      }
+    ],
+    "tasks": {
+      "SynchronizeTime.xml": {
+        "bytes": 1620,
+        "sha256": "c8d78fbb63a0011bc145c1477886509d26e999c28b0e760c98817ac3905b4e1b",
+        "transport_encoding": "UTF-8 BOM",
+        "xml_declared_encoding": "UTF-16",
+        "parse_mode": "strict UTF-8-sig Unicode string; original unchanged",
+        "action": "<ns0:Actions xmlns:ns0=\"http://schemas.microsoft.com/windows/2004/02/mit/task\" Context=\"LocalService\">\n    <ns0:Exec>\n      <ns0:Command>%windir%\\system32\\sc.exe</ns0:Command>\n      <ns0:Arguments>start w32time task_started</ns0:Arguments>\n    </ns0:Exec>\n  </ns0:Actions>\n",
+        "triggers": "<ns0:Triggers xmlns:ns0=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n    <ns0:WnfStateChangeTrigger>\n      <ns0:Delay>PT1M</ns0:Delay>\n      <ns0:StateName>7508BCA339078B04</ns0:StateName>\n    </ns0:WnfStateChangeTrigger>\n  </ns0:Triggers>\n  ",
+        "settings": "<ns0:Settings xmlns:ns0=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n    <ns0:DisallowStartIfOnBatteries>false</ns0:DisallowStartIfOnBatteries>\n    <ns0:StopIfGoingOnBatteries>false</ns0:StopIfGoingOnBatteries>\n    <ns0:MultipleInstancesPolicy>IgnoreNew</ns0:MultipleInstancesPolicy>\n    <ns0:StartWhenAvailable>true</ns0:StartWhenAvailable>\n    <ns0:RunOnlyIfNetworkAvailable>true</ns0:RunOnlyIfNetworkAvailable>\n    <ns0:IdleSettings>\n      <ns0:StopOnIdleEnd>true</ns0:StopOnIdleEnd>\n      <ns0:RestartOnIdle>false</ns0:RestartOnIdle>\n    </ns0:IdleSettings>\n    <ns0:UseUnifiedSchedulingEngine>true</ns0:UseUnifiedSchedulingEngine>\n    <ns0:MaintenanceSettings>\n      <ns0:Period>P1D</ns0:Period>\n      <ns0:Deadline>P1DT1H</ns0:Deadline>\n    </ns0:MaintenanceSettings>\n  </ns0:Settings>\n  "
+      },
+      "ForceSynchronizeTime.xml": {
+        "bytes": 1614,
+        "sha256": "2c23af7ecfc222d9deecc87786ce62b7d8ca42f73940ec958607f7880c7a4430",
+        "transport_encoding": "UTF-8 BOM",
+        "xml_declared_encoding": "UTF-16",
+        "parse_mode": "strict UTF-8-sig Unicode string; original unchanged",
+        "action": "<ns0:Actions xmlns:ns0=\"http://schemas.microsoft.com/windows/2004/02/mit/task\" Context=\"LocalService\">\n    <ns0:ComHandler>\n      <ns0:ClassId>{A31AD6C2-FF4C-43D4-8E90-7101023096F9}</ns0:ClassId>\n      <ns0:Data>TimeSyncTask</ns0:Data>\n    </ns0:ComHandler>\n  </ns0:Actions>\n",
+        "triggers": "<ns0:Triggers xmlns:ns0=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n    <ns0:WnfStateChangeTrigger>\n      <ns0:Delay>PT1M</ns0:Delay>\n      <ns0:StateName>7510BCA32F018915</ns0:StateName>\n    </ns0:WnfStateChangeTrigger>\n    <ns0:WnfStateChangeTrigger>\n      <ns0:StateName>7524BCA33E06830D</ns0:StateName>\n      <ns0:Data>01</ns0:Data>\n    </ns0:WnfStateChangeTrigger>\n  </ns0:Triggers>\n  ",
+        "settings": "<ns0:Settings xmlns:ns0=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n    <ns0:DisallowStartIfOnBatteries>false</ns0:DisallowStartIfOnBatteries>\n    <ns0:StopIfGoingOnBatteries>false</ns0:StopIfGoingOnBatteries>\n    <ns0:MultipleInstancesPolicy>IgnoreNew</ns0:MultipleInstancesPolicy>\n    <ns0:RunOnlyIfNetworkAvailable>true</ns0:RunOnlyIfNetworkAvailable>\n    <ns0:IdleSettings>\n      <ns0:StopOnIdleEnd>true</ns0:StopOnIdleEnd>\n      <ns0:RestartOnIdle>false</ns0:RestartOnIdle>\n    </ns0:IdleSettings>\n    <ns0:UseUnifiedSchedulingEngine>true</ns0:UseUnifiedSchedulingEngine>\n  </ns0:Settings>\n  "
+      }
+    },
+    "negative_cases": [
+      {
+        "case": "hash_mismatch",
+        "result": "rejected",
+        "reason": "SHA"
+      },
+      {
+        "case": "missing_xml",
+        "result": "rejected",
+        "reason": "file set"
+      },
+      {
+        "case": "extra_file",
+        "result": "rejected",
+        "reason": "file set"
+      },
+      {
+        "case": "duplicate_manifest",
+        "result": "rejected",
+        "reason": "manifest member"
+      },
+      {
+        "case": "outside_parent",
+        "result": "rejected",
+        "reason": "UNC parent"
+      },
+      {
+        "case": "traversal",
+        "result": "rejected",
+        "reason": "manifest member"
+      },
+      {
+        "case": "wrong_algorithm",
+        "result": "rejected",
+        "reason": "manifest member"
+      },
+      {
+        "case": "malformed_xml_rehashed",
+        "result": "rejected",
+        "reason": "mismatched tag: line 43, column 2"
+      },
+      {
+        "case": "missing_actions_rehashed",
+        "result": "rejected",
+        "reason": "shape"
+      },
+      {
+        "case": "wrong_uri_rehashed",
+        "result": "rejected",
+        "reason": "URI"
+      }
+    ],
+    "limits": [
+      "No acquisition UTC/QPC, host/build, service identity or launch/stop trace in submitted export; not fabricated",
+      "Current task configuration is not proof of historical launch or service stop caller",
+      "UTF8 transport/UTF16 declaration mismatch preserved; no re-import or execution",
+      "No new process, PHC/UDP, service or time configuration operation"
+    ]
+  },
+  "current_static_com_read": {
+    "mode": "read-only-fixed-COM-registration-and-file",
+    "utc_before_local_unqualified": "2026-11-09T03:18:52.1415254Z",
+    "qpc_before": 10833598832162,
+    "qpc_frequency": 10000000,
+    "os_version": "10.0.26200.0",
+    "registrations": [
+      {
+        "threading_model": "Both",
+        "server": "C:\\WINDOWS\\system32\\TimeSyncTask.dll",
+        "view": "Registry64",
+        "present": true
+      },
+      {
+        "present": false,
+        "view": "Registry32"
+      }
+    ],
+    "files": [
+      {
+        "sha256": "995DC71EB07D6F6AA1E7BFEC3ABB5F5D0A9C9EC9788DD7019F4F09BC825DA171",
+        "name": "TimeSyncTask.dll",
+        "product_version": "10.0.26100.1",
+        "path": "C:\\WINDOWS\\system32\\TimeSyncTask.dll",
+        "length": 45056,
+        "file_version": "10.0.26100.1 (WinBuild.160101.0800)"
+      },
+      {
+        "sha256": "3B8A03D852A067710EEAFEF6642466BDA86841502D93743656CB2F166179E00C",
+        "name": "w32time.dll",
+        "product_version": "10.0.26100.1",
+        "path": "C:\\WINDOWS\\system32\\w32time.dll",
+        "length": 745472,
+        "file_version": "10.0.26100.1 (WinBuild.160101.0800)"
+      }
+    ],
+    "utc_after_local_unqualified": "2026-11-09T03:18:52.5493154Z",
+    "qpc_after": 10833602696302,
+    "limits": [
+      "Machine-wide Registry64 mapping only; no activation, no proof of historical loaded module or effective LocalService overrides",
+      "File SHA/version are current read values, not signature or publisher authenticity verification",
+      "No task_started internal branch or stop caller established"
+    ]
+  },
+  "web_document_review": {
+    "mode": "manual official web-document review; no real-clock samples",
+    "web_raw_html_saved": false,
+    "sources": [
+      {
+        "url": "https://time.is/about",
+        "use": "Publisher describes typical displayed precision 0.02-0.10 seconds; not a per-sample uncertainty guarantee."
+      },
+      {
+        "url": "https://time.is/terms_of_use",
+        "use": "Human use; automated refresh/scripts/apps forbidden; API requires provider contact. No scraper or API request implemented."
+      },
+      {
+        "url": "https://www.nict.go.jp/JST/JST5.html",
+        "use": "Display page disclaims accurate JST provision and warns of network-induced errors. HTML access is not evidence of successful browser time acquisition."
+      },
+      {
+        "url": "https://jjy.nict.go.jp/tsp/link/JST.html",
+        "use": "Historical display explanation: acquisition on load, then PC-clock-based progression; historical JSON(P)/HTTPS descriptions are not current service support."
+      },
+      {
+        "url": "https://jjy.nict.go.jp/httphttps-index.html",
+        "use": "Official notice: HTTP/HTTPS time-distribution service ended 2022-03-31, explicitly excluding JST5 clock-difference page and NTP from that impact. Legacy API descriptions do not establish current API support."
+      },
+      {
+        "url": "https://jjy.nict.go.jp/tsp/PubNtp/index.html",
+        "use": "Current documented NTP service ntp.nict.jp; user precision varies with internet path and is not guaranteed; server precision is not client precision."
+      },
+      {
+        "url": "https://jjy.nict.go.jp/tsp/PubNtp/clients.html",
+        "use": "NTP polling interval >=16 seconds; do not interpret as permission for high-rate browser scraping or qualification source acceptance."
+      },
+      {
+        "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc742126(v=ws.11)",
+        "use": "sc start forwards service arguments; does not define W32Time task_started internal stop semantics."
+      },
+      {
+        "url": "https://learn.microsoft.com/en-us/windows/win32/taskschd/comhandleraction-classid",
+        "use": "COM action ClassId identifies handler; null Execute/Arguments is not an empty action."
+      },
+      {
+        "url": "https://learn.microsoft.com/en-us/windows/win32/taskschd/idlesettings-stoponidleend",
+        "use": "Stops task on idle-end, not proof SCM stopped W32Time or of an idle transition during historical resync."
+      }
+    ],
+    "limitations": [
+      "time.is/accuracy web open failed Internal Error; not used as evidence",
+      "Searches for task_started yielded community Q&A; not accepted as authoritative implementation or dynamic stop evidence",
+      "Legacy NICT JSON(P) documentation was initially considered; later official termination notice prevents treating it as a current API",
+      "Browser rendering, dynamic endpoints, provider API access, UDP NTP samples and certificate chains were not tested",
+      "Web-tool excerpts may be cached; displayed date/current HTML is not local-host time calibration",
+      "Initial interactive reads had tool output truncation; not retrospectively described as complete raw-command captures"
+    ]
+  },
+  "base_references": [
+    {
+      "path": "261014/plan_mlops.md",
+      "commit": "67f4586c66038dbdc468dfd3702278ed02572072",
+      "bytes": 143562,
+      "sha256": "12c480f9159f918251f258fd4f6a717f2f186db60338466c0683d1f7910a13be",
+      "snapshot": "261021/data/reports/20261109-task-source-review/references/261014/plan_mlops.md"
+    },
+    {
+      "path": "261021/work_log.md",
+      "commit": "67f4586c66038dbdc468dfd3702278ed02572072",
+      "bytes": 558457,
+      "sha256": "de7150c6a82b9eeffe57a889a1c2eca772b9f198ec909176ed8c2849dcc63963",
+      "snapshot": "261021/data/reports/20261109-task-source-review/references/261021/work_log.md"
+    },
+    {
+      "path": "261021/docs/clock-resync-result.md",
+      "commit": "67f4586c66038dbdc468dfd3702278ed02572072",
+      "bytes": 6094,
+      "sha256": "8c5829f108142c408f882c0e20ea9d2cc584684ad33e116327297052ae4f96c4",
+      "snapshot": "261021/data/reports/20261109-task-source-review/references/261021/docs/clock-resync-result.md"
+    },
+    {
+      "path": "261021/docs/reviews/20261109-resync-result-checks.json",
+      "commit": "67f4586c66038dbdc468dfd3702278ed02572072",
+      "bytes": 24968,
+      "sha256": "1c384388fb8506385c2d9d6848a5203e8ae524b37850928b12f9a09a52d05ede",
+      "snapshot": "261021/data/reports/20261109-task-source-review/references/261021/docs/reviews/20261109-resync-result-checks.json"
+    },
+    {
+      "path": "261021/docs/clock-input-request.md",
+      "commit": "67f4586c66038dbdc468dfd3702278ed02572072",
+      "bytes": 9274,
+      "sha256": "cb1acea0e5efb3131e0dc735bcad3c6bbcbda4b90c4133fbd39bb7bcf94aadd5",
+      "snapshot": "261021/data/reports/20261109-task-source-review/references/261021/docs/clock-input-request.md"
+    },
+    {
+      "path": "261021/docs/clock-source-readiness.md",
+      "commit": "67f4586c66038dbdc468dfd3702278ed02572072",
+      "bytes": 7121,
+      "sha256": "8b9ad2cf54dce85075cab5d1afaf46ef010453b8cea7851ebeb5ae7281308ad9",
+      "snapshot": "261021/data/reports/20261109-task-source-review/references/261021/docs/clock-source-readiness.md"
+    },
+    {
+      "path": "261021/docs/clock-host-maintenance-plan.md",
+      "commit": "67f4586c66038dbdc468dfd3702278ed02572072",
+      "bytes": 6548,
+      "sha256": "8d03b545303bdfdeb3a222b80e624a1143983b29f0d41df83e995e8e48754747",
+      "snapshot": "261021/data/reports/20261109-task-source-review/references/261021/docs/clock-host-maintenance-plan.md"
+    }
+  ],
+  "attempts": [
+    {
+      "id": "offline-task-review-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-task-source-review/review.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T03:18:11.564804+00:00",
+      "end_utc_local_unqualified": "2026-11-09T03:18:11.309856+00:00",
+      "start_monotonic_ns": 192851787531165,
+      "end_monotonic_ns": 192851958430333,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-task-source-review/offline-task-review-v1.log",
+      "log_bytes": 166,
+      "log_sha256": "83f57b45af72db10214d003e796b57f8ddd96f1d4f302ee3a04c7072cf41d163"
+    },
+    {
+      "id": "read-com-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-task-source-review/read-com.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T03:18:36.905697+00:00",
+      "end_utc_local_unqualified": "2026-11-09T03:18:37.005653+00:00",
+      "start_monotonic_ns": 192877554246989,
+      "end_monotonic_ns": 192877654199233,
+      "exit_code": 1,
+      "log_path_ignored": "261021/data/reports/20261109-task-source-review/read-com-v1.log",
+      "log_bytes": 64,
+      "log_sha256": "0af7b21df9d5bbe10f6e65777c9c9f2491e4fe992fcdb63811d3bad6837ff71e"
+    },
+    {
+      "id": "read-com-v2",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-task-source-review/read-com.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T03:18:51.264962+00:00",
+      "end_utc_local_unqualified": "2026-11-09T03:18:52.483358+00:00",
+      "start_monotonic_ns": 192892526256882,
+      "end_monotonic_ns": 192893744655191,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-task-source-review/read-com-v2.log",
+      "log_bytes": 1660,
+      "log_sha256": "f0851aaad158080536ae37fbecfbf7ec3d87df826f790d362e3a5fb697148d33"
+    },
+    {
+      "id": "inspect-com-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-task-source-review/inspect-com.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T03:19:19.142251+00:00",
+      "end_utc_local_unqualified": "2026-11-09T03:19:19.192778+00:00",
+      "start_monotonic_ns": 192921150419942,
+      "end_monotonic_ns": 192921200797220,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-task-source-review/inspect-com-v1.log",
+      "log_bytes": 102,
+      "log_sha256": "67d324aec70de67dc74cc9d9bcb9b184c2abeb371c5388108c5751f43459c643"
+    },
+    {
+      "id": "documentation-validation-v1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-task-source-review/validate.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T03:25:07.725536+00:00",
+      "end_utc_local_unqualified": "2026-11-09T03:25:07.949050+00:00",
+      "start_monotonic_ns": 193278109773475,
+      "end_monotonic_ns": 193278333287321,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-task-source-review/documentation-validation-v1.log",
+      "log_bytes": 751,
+      "log_sha256": "d87fe3d0e129ca53fc97cab485eeea931fe7a8326cd94dc28290fa3aabf7beba"
+    },
+    {
+      "id": "documentation-validation-v2",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261109-task-source-review/validate.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "start_utc_local_unqualified": "2026-11-09T03:25:33.341106+00:00",
+      "end_utc_local_unqualified": "2026-11-09T03:25:33.571364+00:00",
+      "start_monotonic_ns": 193304454610921,
+      "end_monotonic_ns": 193304684855544,
+      "exit_code": 0,
+      "log_path_ignored": "261021/data/reports/20261109-task-source-review/documentation-validation-v2.log",
+      "log_bytes": 751,
+      "log_sha256": "4ebb8bb4ce473a836ff82daaef248dc90f62f96344eb2a7b7e24c22220194cfa"
+    }
+  ],
+  "review_evidence_files": [
+    {
+      "path": "261021/data/reports/20261109-task-source-review/analysis.json",
+      "bytes": 5688,
+      "sha256": "c66b6d93119765368853a13450c95e30111ac576243913cedb28fc86cfc1b30c"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/build-index.py",
+      "bytes": 3138,
+      "sha256": "5047f547975326bd9e5204942381bb92aca1ae47e6519b6c8083cb8d3da31ea0"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/com-registration.json",
+      "bytes": 1508,
+      "sha256": "c5b5efcdc83658a237d33e621ae1f0093b1032ff87cdb71844406cf63d92a7b3"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/com-registration.raw",
+      "bytes": 1659,
+      "sha256": "2ce33c105abd5814d3034f40bc109d6136c12f3b2897e05bb2a399deed6ffa2b"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/documentation-validation-v1.json",
+      "bytes": 649,
+      "sha256": "498d416508efd9c6139728605a4487291d360bb07cb7abe796e64397982cf10e"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/documentation-validation-v1.log",
+      "bytes": 751,
+      "sha256": "d87fe3d0e129ca53fc97cab485eeea931fe7a8326cd94dc28290fa3aabf7beba"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/documentation-validation-v2.json",
+      "bytes": 649,
+      "sha256": "ced466a4f9c39edb71aa77dc4d99fb6d2003f2546441ce3905c813de2787b858"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/documentation-validation-v2.log",
+      "bytes": 751,
+      "sha256": "4ebb8bb4ce473a836ff82daaef248dc90f62f96344eb2a7b7e24c22220194cfa"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/inputs/clock-task-definition-c6cba967-567c-4f62-98f3-60e64ab3f850/ForceSynchronizeTime.xml",
+      "bytes": 1614,
+      "sha256": "2c23af7ecfc222d9deecc87786ce62b7d8ca42f73940ec958607f7880c7a4430"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/inputs/clock-task-definition-c6cba967-567c-4f62-98f3-60e64ab3f850/SynchronizeTime.xml",
+      "bytes": 1620,
+      "sha256": "c8d78fbb63a0011bc145c1477886509d26e999c28b0e760c98817ac3905b4e1b"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/inputs/clock-task-definition-c6cba967-567c-4f62-98f3-60e64ab3f850/hashes.json",
+      "bytes": 657,
+      "sha256": "83c5c8fe39a3fe77d71b2fb036c7296d560f8e18449bd9c62cd572cfc6c02c57"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/inspect-com-v1.json",
+      "bytes": 626,
+      "sha256": "cba58f49a09e6fee2e9d079ea4d4c7d7fe6ca31e0139fb4796d37e22bccceae5"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/inspect-com-v1.log",
+      "bytes": 102,
+      "sha256": "67d324aec70de67dc74cc9d9bcb9b184c2abeb371c5388108c5751f43459c643"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/inspect-com.py",
+      "bytes": 1280,
+      "sha256": "a8c014826d74982aa6e04547a6785e170e0192cc9921a4585b07c4976b6bb0bd"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/offline-task-review-v1.json",
+      "bytes": 637,
+      "sha256": "8232549bdac555af5463e92787c759570cf62de3b50c76fc630f0fecbbe94131"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/offline-task-review-v1.log",
+      "bytes": 166,
+      "sha256": "83f57b45af72db10214d003e796b57f8ddd96f1d4f302ee3a04c7072cf41d163"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/preparation-failures.json",
+      "bytes": 407,
+      "sha256": "0351acc0b5d3933f3c3518a346b04483cda0f3fea97b7563a2c30bd9e3e7aa2a"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/read-com-v1.json",
+      "bytes": 616,
+      "sha256": "cecdf730da4027d1480ab888dc8662ea1e217d57a9ea737426c9247670f94866"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/read-com-v1.log",
+      "bytes": 64,
+      "sha256": "0af7b21df9d5bbe10f6e65777c9c9f2491e4fe992fcdb63811d3bad6837ff71e"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/read-com-v2.json",
+      "bytes": 618,
+      "sha256": "4f7a1d1bced4faa9939a2fa46a969f73f16fcebdbb390d0953c20b5e98de5049"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/read-com-v2.log",
+      "bytes": 1660,
+      "sha256": "f0851aaad158080536ae37fbecfbf7ec3d87df826f790d362e3a5fb697148d33"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/read-com.ps1",
+      "bytes": 1740,
+      "sha256": "53cdb48ab1d87d88bb0aab801fb99a31184284b880ca133ea37bd8d5d5feb798"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/read-com.py",
+      "bytes": 2267,
+      "sha256": "4c716f16cc014e4ad60d51e9d70ac90cfe1683a0cf5955ac124931b82dd2cc8b"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/references/261014/plan_mlops.md",
+      "bytes": 143562,
+      "sha256": "12c480f9159f918251f258fd4f6a717f2f186db60338466c0683d1f7910a13be"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/references/261021/docs/clock-host-maintenance-plan.md",
+      "bytes": 6548,
+      "sha256": "8d03b545303bdfdeb3a222b80e624a1143983b29f0d41df83e995e8e48754747"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/references/261021/docs/clock-input-request.md",
+      "bytes": 9274,
+      "sha256": "cb1acea0e5efb3131e0dc735bcad3c6bbcbda4b90c4133fbd39bb7bcf94aadd5"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/references/261021/docs/clock-resync-result.md",
+      "bytes": 6094,
+      "sha256": "8c5829f108142c408f882c0e20ea9d2cc584684ad33e116327297052ae4f96c4"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/references/261021/docs/clock-source-readiness.md",
+      "bytes": 7121,
+      "sha256": "8b9ad2cf54dce85075cab5d1afaf46ef010453b8cea7851ebeb5ae7281308ad9"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/references/261021/docs/reviews/20261109-resync-result-checks.json",
+      "bytes": 24968,
+      "sha256": "1c384388fb8506385c2d9d6848a5203e8ae524b37850928b12f9a09a52d05ede"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/references/261021/work_log.md",
+      "bytes": 558457,
+      "sha256": "de7150c6a82b9eeffe57a889a1c2eca772b9f198ec909176ed8c2849dcc63963"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/review.py",
+      "bytes": 5201,
+      "sha256": "4cae41ea3404db936f81cff395b8f7509bd69294e42fdaa64da5a9398536ec15"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/run_attempt.py",
+      "bytes": 1244,
+      "sha256": "62df5fee98294644b7a3ebc2a0087ffa98f9be75fc4c26285681b39def88ac29"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/source-notes.json",
+      "bytes": 3145,
+      "sha256": "472be153b16c333f36656f0e2f511e6eadade8abf7bd8c3297b20c9714620faf"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/validate-v1.py",
+      "bytes": 3222,
+      "sha256": "2e3e3243d7242a99161ee47b9c7616afa3b7ca13c2f23490c41e84f2dc905821"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/validate.py",
+      "bytes": 3284,
+      "sha256": "1b9b45cbd73f47bab4bf46b987a12fd633fb7280a47d000fbb5b4963309e7d5c"
+    },
+    {
+      "path": "261021/data/reports/20261109-task-source-review/validation-result.json",
+      "bytes": 815,
+      "sha256": "c5adacf2db8992cf1b7fccbc93a1df2c1107e415a078c214fec71593e15dede0"
+    }
+  ],
+  "product_source_or_workflow_changed": false,
+  "product_suite_or_new_ci_acceptance_claimed": false,
+  "originals_modified": false,
+  "service_or_clock_change_executed": false,
+  "real_fit_or_scoring_started": false,
+  "limits": [
+    "No administrator-export acquisition timing/host identity reconstructed",
+    "10 negatives are fixed-capture diagnostics, not product unit tests",
+    "Windows limited registry/file read does not identify historical stop caller or authenticate publisher",
+    "Local UTC reversed by 0.254948 seconds in one diagnostic wrapper, MONOTONIC increased; no new setter trace/T03 phase stack",
+    "All captured UTC/QPC/MONOTONIC values remain unqualified",
+    "Web tool excerpts/notes are not raw HTTP archive or live browser/service tests",
+    "No provider API inquiry, subscription, scraping or UDP NTP queries performed",
+    "No independent newly runnable plan acceptance condition identified beyond completed review; existing CI not repeated"
+  ],
+  "validation": {
+    "status": "passed",
+    "original_files": 3,
+    "manifest_members": 2,
+    "fixed_capture_negative_cases": 10,
+    "base_references": 7,
+    "verified_review_evidence_files": 34,
+    "relative_links_checked": 246,
+    "changed_scope_allowed": [
+      "261014/plan_mlops.md",
+      "261021/docs/clock-host-maintenance-plan.md",
+      "261021/docs/clock-input-request.md",
+      "261021/docs/clock-resync-result.md",
+      "261021/docs/clock-source-readiness.md",
+      "261021/docs/clock-task-definition-review.md",
+      "261021/docs/clock-web-source-review.md",
+      "261021/docs/reviews/20261109-task-source-checks.json",
+      "261021/work_log.md"
+    ],
+    "product_suite": "not rerun; documentation and fixed-capture review only",
+    "ci": "no workflow/source changes; no new CI acceptance claimed",
+    "clock_qualification": "incomplete"
+  }
+}
