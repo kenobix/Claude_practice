@@ -10,6 +10,7 @@
 - [8B/14Bベンチマーク](scripts/benchmark_ollama.py): `~/projects/ai-lab/benchmark_ollama.py` から内容を変更せずコピー。原本は変更していない。測定結果は[レポートの追記](desktop_ai_setup_report.md#11-qwen3-14bの取得確認と8b14bベンチマーク追記)を参照。
 - [OpenCode × Ollama実験記録](opencode_local_llm_test_20261109.md): 同じ計算アプリ課題を8B/14Bで比較。追加指示は8Bが1回、14Bが0回で、今回のUbuntu側の再確認では各5テスト成功。
 - [OpenCode実験の保存指示](codex_push_opencode_20261109.md): 対象ファイル、検査とGit反映の手順。
+- [OpenCode Go・無料モデルの追加検証](opencode_go_evaluation_20261109.md): GLM-5.3-Flash Freeは8テスト、Kimi K2.7 Code（Go）は5テスト成功。契約・設定の観測とCodex/Goの今後の運用方針を記録。
 
 ## 初回公開前の検証結果（当時の状態）
 
@@ -63,6 +64,8 @@ python3 261109/scripts/benchmark_ollama.py
 
 ## 追記：OpenCodeのコーディング実験
 
+本節はGo契約前の履歴。契約後の追加実験は次節と[Go・無料モデルの記録](opencode_go_evaluation_20261109.md)を参照。
+
 OpenCode画面の履歴では、8Bは初回の`python`不在で失敗し、追加指示1回で5テスト成功。14Bは最初から`python3`を使い、追加指示0回で5テスト成功した。両モデルとも変更ファイルを含む完全な最終報告は未達成。詳細と限界は[実験記録](opencode_local_llm_test_20261109.md)に保存した。
 
 公開用コードは[8Bのcalculator.py](opencode_samples/qwen3-8b/calculator.py)・[テスト](opencode_samples/qwen3-8b/test_calculator.py)、[14Bのcalculator.py](opencode_samples/qwen3-14b/calculator.py)・[テスト](opencode_samples/qwen3-14b/test_calculator.py)。元の実験フォルダーから4ファイルだけを内容を変えずにコピーし、`.git/`やキャッシュは含めていない。Python標準ライブラリだけで実行でき、OpenCode・Ollama・モデルの起動は不要。
@@ -78,8 +81,24 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -v
 
 無料クラウドモデルは未実行・未評価、OpenCode Goは未契約・未接続のまま。今回の作業で契約・導入・クラウドAPI接続は行っていない。
 
+## 追記：OpenCode Go・無料モデルの追加検証
+
+利用者の2026-11-09の追加実験では、GLM-5.3-Flash Freeは初回指示で生成と8テストに成功し、最終報告あり。Go契約後のKimi K2.7 Codeは`python`不在での失敗から追加指示なしで`python3`へ切り替え、5テストに成功し、最終報告あり。両方とも人間の追加指示は0回。8B/14Bの過去の履歴とは別の後続実験として保存する。
+
+公開コピーはGLMの[calculator.py](opencode_samples/glm-5.3-flash-free/calculator.py)・[test_calculator.py](opencode_samples/glm-5.3-flash-free/test_calculator.py)、Kimiの[calculator.py](opencode_samples/kimi-k2.7-code-go/calculator.py)・[test_calculator.py](opencode_samples/kimi-k2.7-code-go/test_calculator.py)。4ファイルだけを原本から内容を変えずにコピーした。標準Pythonだけで再検証でき、クラウドAPI接続や認証情報は不要。
+
+```bash
+cd ~/projects/Claude_practice/261109/opencode_samples/glm-5.3-flash-free
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -v
+cd ../kimi-k2.7-code-go
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -v
+```
+
+今回の保存作業では2026-11-09 21:50 JSTに元実験フォルダーでGLM 8件・Kimi 5件の成功を再確認した。原本は変更していない。契約・利用額・設定は利用者共有の観測として[追加検証記録](opencode_go_evaluation_20261109.md)に記載し、今回Consoleの設定確認・変更、追加課金、モデル取得、CodexからGoへの接続は行っていない。
+
 ## 残作業
 
-- OpenCode Goの契約条件を利用者が確認して契約・接続した後、同じ計算アプリ課題と複数の小タスクでローカル14B等と比較する。
-- 8B/14Bの品質比較、コンテキスト長や同時常駐条件を変えた測定。
+- 通常の開発中にモデルごとの成功と手戻りを記録する。専用ベンチマークの優先度は下げる。
+- 無料モデルの学習利用許可の現在値を再確認する。
+- 将来CodexからGoモデルを使う場合は、公式オプションと設定保持手順を調査し、既存設定を上書きせず追加する。
 - 外部媒体へのWindows/WSLバックアップ、デバイス暗号化の調査、CPU/GPUの継続負荷試験。

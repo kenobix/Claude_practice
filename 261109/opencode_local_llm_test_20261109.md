@@ -6,6 +6,8 @@
 - 関連記録：[`desktop_ai_setup_report.md`](desktop_ai_setup_report.md) および [`scripts/benchmark_ollama.py`](scripts/benchmark_ollama.py)
 - 情報源：利用者が提示したOpenCode画面とUbuntuターミナル出力。未実施の作業を完了扱いしない。
 
+本書はGo契約前の8B/14B実験と、その保存時点の履歴を保持する。Go契約後のGLM・Kimi追加実験、課金・プライバシー設定の観測、最新の運用方針は[追加検証記録](opencode_go_evaluation_20261109.md)を参照。
+
 ## 1. 検証の目的と現在地
 
 WSL上のOpenCodeからOllamaのローカルモデルを選択し、コードの作成、テスト実行、エラーからの復帰までを行えるか比較した。実験は既存GitHubリポジトリ外の独立したフォルダーで実施した。
