@@ -8,6 +8,8 @@
 - [Codexへの反映指示](codex_push_prompt.md): 検査対象と安全なGit操作の手順。
 - [Ollama Pythonサンプル](scripts/test_ollama.py): `~/projects/ai-lab/test_ollama.py` から内容を変更せずコピー。原本は変更していない。
 - [8B/14Bベンチマーク](scripts/benchmark_ollama.py): `~/projects/ai-lab/benchmark_ollama.py` から内容を変更せずコピー。原本は変更していない。測定結果は[レポートの追記](desktop_ai_setup_report.md#11-qwen3-14bの取得確認と8b14bベンチマーク追記)を参照。
+- [OpenCode × Ollama実験記録](opencode_local_llm_test_20261109.md): 同じ計算アプリ課題を8B/14Bで比較。追加指示は8Bが1回、14Bが0回で、今回のUbuntu側の再確認では各5テスト成功。
+- [OpenCode実験の保存指示](codex_push_opencode_20261109.md): 対象ファイル、検査とGit反映の手順。
 
 ## 初回公開前の検証結果（当時の状態）
 
@@ -59,7 +61,25 @@ python3 261109/scripts/benchmark_ollama.py
 
 更新作業ではスクリプトを実行せず、内容と構文、コピー元との一致を確認した。新たな推論・モデル取得・ベンチマークは実施していない。
 
+## 追記：OpenCodeのコーディング実験
+
+OpenCode画面の履歴では、8Bは初回の`python`不在で失敗し、追加指示1回で5テスト成功。14Bは最初から`python3`を使い、追加指示0回で5テスト成功した。両モデルとも変更ファイルを含む完全な最終報告は未達成。詳細と限界は[実験記録](opencode_local_llm_test_20261109.md)に保存した。
+
+公開用コードは[8Bのcalculator.py](opencode_samples/qwen3-8b/calculator.py)・[テスト](opencode_samples/qwen3-8b/test_calculator.py)、[14Bのcalculator.py](opencode_samples/qwen3-14b/calculator.py)・[テスト](opencode_samples/qwen3-14b/test_calculator.py)。元の実験フォルダーから4ファイルだけを内容を変えずにコピーし、`.git/`やキャッシュは含めていない。Python標準ライブラリだけで実行でき、OpenCode・Ollama・モデルの起動は不要。
+
+```bash
+cd ~/projects/Claude_practice/261109/opencode_samples/qwen3-8b
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -v
+cd ../qwen3-14b
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -v
+```
+
+2026-11-09 21:12 JSTにCodexから両方の元実験フォルダーで既存テストを再実行し、それぞれ5件成功。これはOpenCodeの実行履歴とは別の再確認で、生成タスクや速度ベンチマークは再実行していない。原本は変更せず、Pythonキャッシュの生成も抑止した。今回の文書に付随していた`Zone.Identifier` 2件はダウンロード属性のみのため削除し、公開対象から除外した。
+
+無料クラウドモデルは未実行・未評価、OpenCode Goは未契約・未接続のまま。今回の作業で契約・導入・クラウドAPI接続は行っていない。
+
 ## 残作業
 
+- OpenCode Goの契約条件を利用者が確認して契約・接続した後、同じ計算アプリ課題と複数の小タスクでローカル14B等と比較する。
 - 8B/14Bの品質比較、コンテキスト長や同時常駐条件を変えた測定。
 - 外部媒体へのWindows/WSLバックアップ、デバイス暗号化の調査、CPU/GPUの継続負荷試験。
