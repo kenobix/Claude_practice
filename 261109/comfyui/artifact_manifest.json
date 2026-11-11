@@ -1,0 +1,201 @@
+{
+  "record_date": "2026-11-11",
+  "source_locations": {
+    "images": "%LOCALAPPDATA%/Comfy-Desktop/ComfyUI-Shared/output",
+    "workflows": "%LOCALAPPDATA%/Comfy-Desktop/ComfyUI-Installs/ComfyUI/ComfyUI/user/default/workflows"
+  },
+  "provenance_notes": [
+    "All archived image and workflow files are byte-identical copies of existing local files.",
+    "PNG prompt/workflow text chunks are retained; no generation or metadata editing was performed.",
+    "Creation times are Windows CreationTimeUtc observations; filesystem timestamps are not timing benchmarks.",
+    "Runtime, VRAM, GPU-utilization and temperature observations are user-reported, not embedded PNG measurements.",
+    "The earliest Schnell PNG is a first-output candidate; no timing log-to-file identifier was supplied.",
+    "Saved canvas workflows can contain inactive template branches and post-generation seed control settings."
+  ],
+  "images": [
+    {
+      "file": "images/ComfyUI_00001_.png",
+      "source_filename": "ComfyUI_00001_.png",
+      "role": "schnell_first_output_candidate",
+      "bytes": 799097,
+      "sha256": "9bcffc303afd5dbbf69d9a730efa4e2cf16b7ef9f2ce31f6c6f52b8973c4515d",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "windows_creation_time_utc": "2026-11-10T21:23:44.4322227Z",
+      "source_last_write_time_jst": "2026-11-11T06:23:44.473948+09:00",
+      "png_chunk_types": [
+        "IDAT",
+        "IEND",
+        "IHDR",
+        "tEXt"
+      ],
+      "embedded_text_fields": [
+        "prompt",
+        "workflow"
+      ],
+      "model_files_from_save_image_ancestors": [
+        "ae.safetensors",
+        "clip_l.safetensors",
+        "flux1-schnell.safetensors",
+        "t5xxl_fp16.safetensors"
+      ],
+      "save_image_ancestor_node_count": 9,
+      "input_images_from_save_image_ancestors": []
+    },
+    {
+      "file": "images/ComfyUI_00005_.png",
+      "source_filename": "ComfyUI_00005_.png",
+      "role": "schnell_japanese_fixed_seed",
+      "bytes": 1409451,
+      "sha256": "8465530385cc5f043f28146c15efc237334d482846afef4f6f95f333e4ac5dc3",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "windows_creation_time_utc": "2026-11-10T21:38:26.3883002Z",
+      "source_last_write_time_jst": "2026-11-11T06:38:26.434551+09:00",
+      "png_chunk_types": [
+        "IDAT",
+        "IEND",
+        "IHDR",
+        "tEXt"
+      ],
+      "embedded_text_fields": [
+        "prompt",
+        "workflow"
+      ],
+      "model_files_from_save_image_ancestors": [
+        "ae.safetensors",
+        "clip_l.safetensors",
+        "flux1-schnell.safetensors",
+        "t5xxl_fp16.safetensors"
+      ],
+      "save_image_ancestor_node_count": 9,
+      "input_images_from_save_image_ancestors": []
+    },
+    {
+      "file": "images/ComfyUI_00006_.png",
+      "source_filename": "ComfyUI_00006_.png",
+      "role": "schnell_english_fixed_seed_and_edit_input",
+      "bytes": 912331,
+      "sha256": "69c4f92d2751cc815f633a670a6e7e0d6bd5cefcc970280408643ed8d5280e4c",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "windows_creation_time_utc": "2026-11-10T21:39:45.8607681Z",
+      "source_last_write_time_jst": "2026-11-11T06:39:45.900132+09:00",
+      "png_chunk_types": [
+        "IDAT",
+        "IEND",
+        "IHDR",
+        "tEXt"
+      ],
+      "embedded_text_fields": [
+        "prompt",
+        "workflow"
+      ],
+      "model_files_from_save_image_ancestors": [
+        "ae.safetensors",
+        "clip_l.safetensors",
+        "flux1-schnell.safetensors",
+        "t5xxl_fp16.safetensors"
+      ],
+      "save_image_ancestor_node_count": 9,
+      "input_images_from_save_image_ancestors": []
+    },
+    {
+      "file": "images/Flux2-Klein_00001_.png",
+      "source_filename": "Flux2-Klein_00001_.png",
+      "role": "klein_text_to_image",
+      "bytes": 686376,
+      "sha256": "3bd29e4ad62eca42ab79c790030e8a37c814b3ac86b1f134e6fc6bbdc7b8ad0a",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "windows_creation_time_utc": "2026-11-11T00:22:30.6820049Z",
+      "source_last_write_time_jst": "2026-11-11T09:22:30.719243+09:00",
+      "png_chunk_types": [
+        "IDAT",
+        "IEND",
+        "IHDR",
+        "tEXt"
+      ],
+      "embedded_text_fields": [
+        "prompt",
+        "workflow"
+      ],
+      "model_files_from_save_image_ancestors": [
+        "flux-2-klein-base-4b.safetensors",
+        "flux2-vae.safetensors",
+        "qwen_3_4b.safetensors"
+      ],
+      "save_image_ancestor_node_count": 16,
+      "input_images_from_save_image_ancestors": []
+    },
+    {
+      "file": "images/Flux2-Klein-4b-base_00001_.png",
+      "source_filename": "Flux2-Klein-4b-base_00001_.png",
+      "role": "klein_image_edit",
+      "bytes": 1171604,
+      "sha256": "0b6f4704d3e9091e3aa0953a3d057c069a7cdcdfdee99d8969808381e93b5020",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "windows_creation_time_utc": "2026-11-11T00:55:00.5501606Z",
+      "source_last_write_time_jst": "2026-11-11T09:55:00.593072+09:00",
+      "png_chunk_types": [
+        "IDAT",
+        "IEND",
+        "IHDR",
+        "tEXt"
+      ],
+      "embedded_text_fields": [
+        "prompt",
+        "workflow"
+      ],
+      "model_files_from_save_image_ancestors": [
+        "flux-2-klein-base-4b-fp8.safetensors",
+        "full_encoder_small_decoder.safetensors",
+        "qwen_3_4b.safetensors"
+      ],
+      "save_image_ancestor_node_count": 19,
+      "input_images_from_save_image_ancestors": [
+        "ComfyUI_00006_.png"
+      ]
+    }
+  ],
+  "workflows": [
+    {
+      "file": "workflows/flux_schnell_full_text_to_image.json",
+      "source_filename": "flux_schnell_full_text_to_image.json",
+      "bytes": 12233,
+      "sha256": "dc92dcd47e357920be7f041652b348a4a52fa686f2eade7ca6cfc8cd7c386233",
+      "format": "ComfyUI canvas workflow",
+      "node_count": 10,
+      "subgraph_count": 0
+    },
+    {
+      "file": "workflows/image_flux2_klein_text_to_image.json",
+      "source_filename": "image_flux2_klein_text_to_image.json",
+      "bytes": 41492,
+      "sha256": "1c18f9038aeedbb6eeb7dbcd196312b409a0cc16513d43fb06a5abde6b971c5c",
+      "format": "ComfyUI canvas workflow",
+      "node_count": 6,
+      "subgraph_count": 2
+    },
+    {
+      "file": "workflows/image_flux2_klein_image_edit_4b_base.json",
+      "source_filename": "image_flux2_klein_image_edit_4b_base.json",
+      "bytes": 57180,
+      "sha256": "6c5268808c3743373ef8cce0f97fea0ba89400f2e30af38e38bc7f2b613f1431",
+      "format": "ComfyUI canvas workflow",
+      "node_count": 7,
+      "subgraph_count": 2
+    }
+  ]
+}

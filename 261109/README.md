@@ -1,6 +1,7 @@
 # デスクトップPCのWSL AI開発環境
 
 2026-11-09の環境構築記録と、公開前に実施した読み取り中心の検証を保存する。
+2026-11-10〜11のComfyUIによる画像生成・画像編集の後続実験も、このディレクトリへ追記する。
 
 ## 保存ファイル
 
@@ -12,6 +13,7 @@
 - [OpenCode実験の保存指示](codex_push_opencode_20261109.md): 対象ファイル、検査とGit反映の手順。
 - [OpenCode Go・無料モデルの追加検証](opencode_go_evaluation_20261109.md): GLM-5.3-Flash Freeは8テスト、Kimi K2.7 Code（Go）は5テスト成功。契約・設定の観測とCodex/Goの今後の運用方針を記録。
 - [Codex CLIとOpenCode Goの連携手順](codex_opencode_go_setup.md): nvm/Node.js導入、`--keep-provider`、Go専用プロファイルと起動経路を記録。通常の`codex`はGPT-6 Luna、`codex-go`はKimi K2.7 Codeを選択。
+- [ComfyUI画像生成・画像編集の検証](comfyui_image_generation_evaluation_20261111.md): FLUX.1 Schnellの日英固定シード比較とFLUX.2 Klein 4Bの新規生成・色変更を記録。確認済みPNG5枚、保存ワークフロー3件、ファイルmanifestを保存。
 
 ## 初回公開前の検証結果（当時の状態）
 
@@ -107,6 +109,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -v
 
 ## 残作業
 
+- Wan 2.2 TI2V-5Bで約3秒の動画生成を初回検証し、成功後に約5秒へ進める。動画生成は未実施。
 - 通常の開発中にモデルごとの成功と手戻りを記録する。専用ベンチマークの優先度は下げる。
 - 無料モデルの学習利用許可の現在値を再確認する。
 - 従来のCodexとGoを併用し、既存設定を保持する。
