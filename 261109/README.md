@@ -3,6 +3,7 @@
 2026-11-09の環境構築記録と、公開前に実施した読み取り中心の検証を保存する。
 2026-11-10〜11のComfyUIによる画像生成・画像編集の後続実験も、このディレクトリへ追記する。
 2026-11-11に実施したWan 2.2の動画生成3回の結果は、2026-11-12に成果物を確認して追記した。
+2026-11-12のQwen Image 2.1 Turbo INT8による画像生成2回の結果も保存する。
 
 ## 保存ファイル
 
@@ -16,6 +17,7 @@
 - [Codex CLIとOpenCode Goの連携手順](codex_opencode_go_setup.md): nvm/Node.js導入、`--keep-provider`、Go専用プロファイルと起動経路を記録。通常の`codex`はGPT-6 Luna、`codex-go`はKimi K2.7 Codeを選択。
 - [ComfyUI画像生成・画像編集の検証](comfyui_image_generation_evaluation_20261111.md): FLUX.1 Schnellの日英固定シード比較とFLUX.2 Klein 4Bの新規生成・色変更を記録。確認済みPNG5枚、保存ワークフロー3件、ファイルmanifestを保存。
 - [Wan 2.2動画生成の検証](comfyui_video_generation_evaluation_20261111.md): Klein編集後のピンク色の車から約3秒・約5秒の動画を生成。生成時間42.15／22.18／34.27秒は利用者実測値。確認済みMP4 3本、保存ワークフロー1件、動画manifestを保存。
+- [Qwen Image 2.1 Turbo INT8の画像生成](comfyui_qwen_image_2_1_evaluation_20261112.md): 736×736と1024×1024のPNG生成を確認。生成時間17.16／3.13秒は利用者実測値で、速度差の理由・最大VRAMは未確認。PNG2枚、保存ワークフロー1件、今回のmanifestを保存。
 
 ## 初回公開前の検証結果（当時の状態）
 

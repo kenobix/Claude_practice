@@ -1,0 +1,190 @@
+{
+  "experiment_date": "2026-11-12",
+  "archive_date": "2026-11-12",
+  "source_locations": {
+    "images": "%LOCALAPPDATA%/Comfy-Desktop/ComfyUI-Shared/output",
+    "workflow": "%LOCALAPPDATA%/Comfy-Desktop/ComfyUI-Installs/ComfyUI/ComfyUI/user/default/workflows"
+  },
+  "verification": "Original bytes preserved; PNG chunk CRC, metadata, decoded JSON strings, and visual contents checked. No generation or model download performed.",
+  "generation_seconds_source": "User-reported measurements; not present in the PNG metadata and not remeasured.",
+  "images": [
+    {
+      "path": "comfyui/images/Qwen_image_2.1_00001.png",
+      "bytes": 655981,
+      "sha256": "3e5e357354fd7c5afe0e66132498586f0898db55d3b0b8e3621fab8b39055b20",
+      "source_last_write_jst": "2026-11-12T12:09:20.239426+09:00",
+      "width": 736,
+      "height": 736,
+      "bit_depth": 8,
+      "color_type": 6,
+      "physical_pixel_density": {
+        "x": 0,
+        "y": 1,
+        "unit": 0
+      },
+      "chunk_types": [
+        "IDAT",
+        "IEND",
+        "IHDR",
+        "pHYs",
+        "tEXt"
+      ],
+      "metadata_keys": [
+        "prompt",
+        "workflow"
+      ],
+      "experiment": 1,
+      "generation_seconds_user_reported": 17.16,
+      "prompt": "A small pastel pink vintage car parked in a minimalist studio.\nMany pink cosmos flowers are overflowing from the car's windows and covering its roof.\nSoft spring lighting, simple pale mint-green background.\nCute high-quality 3D illustration, detailed car body, gentle pastel colors.\nThree-quarter side view, centered composition.\nNo people, no text.",
+      "noise_seed": 531123706903762,
+      "refine_prompt": false,
+      "thinking_mode": false,
+      "steps_from_sigma_intervals": 8,
+      "sigmas": [
+        1.0,
+        0.978453,
+        0.95418,
+        0.926626,
+        0.89508,
+        0.845148,
+        0.704534,
+        0.414568,
+        0.0
+      ],
+      "graph_node_count": 19,
+      "selected_branch_ancestor_count": 16,
+      "optional_enhancer_nodes_not_selected": [
+        "459:471",
+        "459:473",
+        "459:475"
+      ],
+      "selected_models": {
+        "UNETLoader": {
+          "unet_name": "qwen_image_2.1_turbo_int8_convrot.safetensors",
+          "weight_dtype": "default"
+        },
+        "CLIPLoader": {
+          "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+          "type": "qwen_image",
+          "device": "default"
+        },
+        "VAELoader": {
+          "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+        }
+      },
+      "resolution_selector": {
+        "aspect_ratio": "1:1 (Square)",
+        "megapixels": 0.5,
+        "multiple": 8
+      },
+      "encoder_resolution": 1024,
+      "sampler": {
+        "sampler_name": "euler"
+      },
+      "cfg": 1.0,
+      "cache_node": {
+        "device": "auto",
+        "dtype": "default",
+        "model": [
+          "459:451",
+          0
+        ]
+      },
+      "png_canvas_frontend_version": "1.57.6"
+    },
+    {
+      "path": "comfyui/images/Qwen_image_2.1_00002.png",
+      "bytes": 1241780,
+      "sha256": "feab8a6247bab91bd173ed461d3409fc4d7fc362a2447e75532684d3b28c12e9",
+      "source_last_write_jst": "2026-11-12T12:11:09.685062+09:00",
+      "width": 1024,
+      "height": 1024,
+      "bit_depth": 8,
+      "color_type": 6,
+      "physical_pixel_density": {
+        "x": 0,
+        "y": 1,
+        "unit": 0
+      },
+      "chunk_types": [
+        "IDAT",
+        "IEND",
+        "IHDR",
+        "pHYs",
+        "tEXt"
+      ],
+      "metadata_keys": [
+        "prompt",
+        "workflow"
+      ],
+      "experiment": 2,
+      "generation_seconds_user_reported": 3.13,
+      "prompt": "A small pastel pink vintage car parked in a minimalist studio.\nMany pink cosmos flowers are overflowing from the car's windows and covering its roof.\nSoft spring lighting, simple pale mint-green background.\nCute high-quality 3D illustration, detailed car body, gentle pastel colors.\nThree-quarter side view, centered composition.\nNo people, no text.",
+      "noise_seed": 256648331129234,
+      "refine_prompt": false,
+      "thinking_mode": false,
+      "steps_from_sigma_intervals": 8,
+      "sigmas": [
+        1.0,
+        0.978453,
+        0.95418,
+        0.926626,
+        0.89508,
+        0.845148,
+        0.704534,
+        0.414568,
+        0.0
+      ],
+      "graph_node_count": 19,
+      "selected_branch_ancestor_count": 16,
+      "optional_enhancer_nodes_not_selected": [
+        "459:471",
+        "459:473",
+        "459:475"
+      ],
+      "selected_models": {
+        "UNETLoader": {
+          "unet_name": "qwen_image_2.1_turbo_int8_convrot.safetensors",
+          "weight_dtype": "default"
+        },
+        "CLIPLoader": {
+          "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+          "type": "qwen_image",
+          "device": "default"
+        },
+        "VAELoader": {
+          "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+        }
+      },
+      "resolution_selector": {
+        "aspect_ratio": "1:1 (Square)",
+        "megapixels": 1.0,
+        "multiple": 8
+      },
+      "encoder_resolution": 1024,
+      "sampler": {
+        "sampler_name": "euler"
+      },
+      "cfg": 1.0,
+      "cache_node": {
+        "device": "auto",
+        "dtype": "default",
+        "model": [
+          "459:451",
+          0
+        ]
+      },
+      "png_canvas_frontend_version": "1.57.6"
+    }
+  ],
+  "workflows": [
+    {
+      "path": "comfyui/workflows/image_qwen_image_2_1_turbo_t2i.json",
+      "bytes": 56934,
+      "sha256": "4b8261da999cc50a010e13a47d99b9e96d56e783569e0f295aad3664eefbaca1",
+      "source_last_write_jst": "2026-11-12T12:11:00.798950+09:00",
+      "note": "Existing saved canvas; ResolutionSelector 1.0 MP. Outer subgraph seed widget differs from executed RandomNoise seed; use PNG prompt values. Optional enhancer branch remains in original JSON.",
+      "frontend_version": "1.55.14"
+    }
+  ]
+}
