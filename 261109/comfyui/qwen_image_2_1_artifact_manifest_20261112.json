@@ -175,6 +175,183 @@
         ]
       },
       "png_canvas_frontend_version": "1.57.6"
+    },
+    {
+      "path": "comfyui/images/Qwen_image_2.1_00003.png",
+      "bytes": 1171739,
+      "sha256": "2205a4c45f9bafe8a0fad764cfbea2f8d62fceea1781e5f57f457009646b8f77",
+      "source_last_write_jst": "2026-11-12T13:47:00.303521+09:00",
+      "width": 1024,
+      "height": 1024,
+      "bit_depth": 8,
+      "color_type": 6,
+      "physical_pixel_density": {
+        "x": 0,
+        "y": 1,
+        "unit": 0
+      },
+      "chunk_types": [
+        "IDAT",
+        "IEND",
+        "IHDR",
+        "pHYs",
+        "tEXt"
+      ],
+      "metadata_keys": [
+        "prompt",
+        "workflow"
+      ],
+      "experiment": "A",
+      "task": "Japanese Text to Image",
+      "generation_seconds_user_reported": 22.85,
+      "prompt": "ミニマルなスタジオに停車している、小さなパステルピンク色のレトロカー。\n車の窓からたくさんのピンク色のコスモスがあふれ、屋根を覆っている。\n柔らかな春の日差し、シンプルで淡いミントグリーンの背景。\n高品質でかわいらしい3Dイラスト、精巧な車体、優しいパステルカラー。\n車の前面と側面が見える斜めの構図、中央配置。\n人物や文字は含めない。",
+      "noise_seed": 800126525653438,
+      "refine_prompt": false,
+      "thinking_mode": false,
+      "steps_from_sigma_intervals": 8,
+      "sigmas": [
+        1.0,
+        0.978453,
+        0.95418,
+        0.926626,
+        0.89508,
+        0.845148,
+        0.704534,
+        0.414568,
+        0.0
+      ],
+      "graph_node_count": 19,
+      "selected_branch_ancestor_count": 16,
+      "nodes_outside_selected_save_path": [
+        "459:471",
+        "459:473",
+        "459:475"
+      ],
+      "selected_models": {
+        "UNETLoader": {
+          "unet_name": "qwen_image_2.1_turbo_int8_convrot.safetensors",
+          "weight_dtype": "default"
+        },
+        "CLIPLoader": {
+          "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+          "type": "qwen_image",
+          "device": "default"
+        },
+        "VAELoader": {
+          "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+        }
+      },
+      "encoder_resolution": 1024,
+      "sampler": {
+        "sampler_name": "euler"
+      },
+      "cfg": 1.0,
+      "cache_node": {
+        "device": "auto",
+        "dtype": "default",
+        "model": [
+          "459:451",
+          0
+        ]
+      },
+      "png_canvas_frontend_version": "1.57.6",
+      "provenance": "Byte-identical copy of an existing generated PNG",
+      "resolution_selector": {
+        "aspect_ratio": "1:1 (Square)",
+        "megapixels": 1.0,
+        "multiple": 8
+      }
+    },
+    {
+      "path": "comfyui/images/Qwen_image_2.1_00004.png",
+      "bytes": 1253377,
+      "sha256": "eabd4bdda46b36e797b9b05ec3d0f93de1893904ca856d38a9f346edf9437d08",
+      "source_last_write_jst": "2026-11-12T17:32:07.183652+09:00",
+      "width": 1024,
+      "height": 1024,
+      "bit_depth": 8,
+      "color_type": 6,
+      "physical_pixel_density": {
+        "x": 0,
+        "y": 1,
+        "unit": 0
+      },
+      "chunk_types": [
+        "IDAT",
+        "IEND",
+        "IHDR",
+        "pHYs",
+        "tEXt"
+      ],
+      "metadata_keys": [
+        "prompt",
+        "workflow"
+      ],
+      "experiment": "B",
+      "task": "Reference-image color edit",
+      "generation_seconds_user_reported": 25.0,
+      "prompt": "Change only the car color from mint green to pastel pink.\nKeep the flowers, composition, camera angle, and background unchanged.",
+      "noise_seed": 891836227295375,
+      "refine_prompt": false,
+      "thinking_mode": false,
+      "steps_from_sigma_intervals": 8,
+      "sigmas": [
+        1.0,
+        0.978453,
+        0.95418,
+        0.926626,
+        0.89508,
+        0.845148,
+        0.704534,
+        0.414568,
+        0.0
+      ],
+      "graph_node_count": 22,
+      "selected_branch_ancestor_count": 16,
+      "nodes_outside_selected_save_path": [
+        "472",
+        "459:456",
+        "459:477",
+        "459:479",
+        "459:485",
+        "459:500"
+      ],
+      "selected_models": {
+        "UNETLoader": {
+          "unet_name": "qwen_image_2.1_turbo_int8_convrot.safetensors",
+          "weight_dtype": "default"
+        },
+        "CLIPLoader": {
+          "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+          "type": "qwen_image",
+          "device": "default"
+        },
+        "VAELoader": {
+          "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+        }
+      },
+      "encoder_resolution": 0,
+      "sampler": {
+        "sampler_name": "euler"
+      },
+      "cfg": 1.0,
+      "cache_node": {
+        "device": "auto",
+        "dtype": "default",
+        "model": [
+          "459:451",
+          0
+        ]
+      },
+      "png_canvas_frontend_version": "1.57.6",
+      "provenance": "Byte-identical copy of an existing generated PNG",
+      "input_image": "comfyui/images/ComfyUI_00006_.png",
+      "latent_switch_false_input": [
+        "459:474",
+        2
+      ],
+      "input_image_sha256": "69c4f92d2751cc815f633a670a6e7e0d6bd5cefcc970280408643ed8d5280e4c",
+      "input_matches_existing_comfy_input": true
     }
   ],
   "workflows": [
@@ -185,6 +362,29 @@
       "source_last_write_jst": "2026-11-12T12:11:00.798950+09:00",
       "note": "Existing saved canvas; ResolutionSelector 1.0 MP. Outer subgraph seed widget differs from executed RandomNoise seed; use PNG prompt values. Optional enhancer branch remains in original JSON.",
       "frontend_version": "1.55.14"
+    },
+    {
+      "path": "comfyui/workflows/image_qwen_image_2_1_turbo_t2i_japanese_20261112.json",
+      "bytes": 57216,
+      "sha256": "c4de5ceeeb2e3228075e839c9bf8d3ac342acafdb7c7354c846f444a867118a9",
+      "source_last_write_jst": "2026-11-12T13:51:13.278373+09:00",
+      "provenance": "Byte-identical copy of an existing separately saved Japanese workflow",
+      "source_basename": "image_qwen_image_2_1_turbo_t2i.json",
+      "note": "Archived under a new name to retain the prior English workflow snapshot. Use PNG prompt metadata for executed seed and settings."
+    },
+    {
+      "path": "comfyui/workflows/image_qwen_image_2_1_turbo_i2i_extracted_20261112.json",
+      "bytes": 66921,
+      "sha256": "6e469025e10ee9aceccf2253a9734348e1f5480e87fac3e7a83a4e2be56f9aea",
+      "provenance": "Exact extraction of the workflow text chunk from an existing PNG; not a separately saved source JSON and not a synthesized graph",
+      "source_png": "comfyui/images/Qwen_image_2.1_00004.png",
+      "source_metadata_key": "workflow",
+      "note": "Canvas RandomNoise widget is 424242/randomize; actual executed seed in PNG prompt is 891836227295375. Re-execution has not been tested."
     }
-  ]
+  ],
+  "additional_experiments_notes": {
+    "independently_saved_edit_json": "Not found in the inspected shared output and installed user workflow directories; embedded workflow extracted instead.",
+    "source_json_history": "Existing archived English workflow retained; changed Japanese source canvas copied using a new archive basename.",
+    "generation_times": "22.85 and 25.00 seconds are user-reported, not remeasured; PNGs contain no generation-duration logs."
+  }
 }

@@ -4,6 +4,7 @@
 2026-11-10〜11のComfyUIによる画像生成・画像編集の後続実験も、このディレクトリへ追記する。
 2026-11-11に実施したWan 2.2の動画生成3回の結果は、2026-11-12に成果物を確認して追記した。
 2026-11-12のQwen Image 2.1 Turbo INT8による画像生成2回の結果も保存する。
+同日の後続実験として、日本語画像生成と参照画像編集を追記し、利用者の好みに基づくモデル運用方針も記録した。
 
 ## 保存ファイル
 
@@ -18,6 +19,7 @@
 - [ComfyUI画像生成・画像編集の検証](comfyui_image_generation_evaluation_20261111.md): FLUX.1 Schnellの日英固定シード比較とFLUX.2 Klein 4Bの新規生成・色変更を記録。確認済みPNG5枚、保存ワークフロー3件、ファイルmanifestを保存。
 - [Wan 2.2動画生成の検証](comfyui_video_generation_evaluation_20261111.md): Klein編集後のピンク色の車から約3秒・約5秒の動画を生成。生成時間42.15／22.18／34.27秒は利用者実測値。確認済みMP4 3本、保存ワークフロー1件、動画manifestを保存。
 - [Qwen Image 2.1 Turbo INT8の画像生成](comfyui_qwen_image_2_1_evaluation_20261112.md): 736×736と1024×1024のPNG生成を確認。生成時間17.16／3.13秒は利用者実測値で、速度差の理由・最大VRAMは未確認。PNG2枚、保存ワークフロー1件、今回のmanifestを保存。
+- [Qwenの日本語生成・画像編集の追記](comfyui_qwen_image_2_1_evaluation_20261112.md#11-実験a日本語による画像生成追記): 日本語生成22.85秒、参照画像の色変更25.00秒（利用者実測）。PNG2枚、日本語の保存JSONコピー1件、編集PNGから抽出したJSON1件を追加し、既存manifestに由来を追記。以前の英語実験・成果物も保持。
 
 ## 初回公開前の検証結果（当時の状態）
 
@@ -110,6 +112,13 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -v
 2026-11-09、利用者からCodex CLIとPersonalワークスペースのGo連携完了が報告された。実機でnvm 0.41.0、Node.js 24.22.2、npm/npx 11.19.1、Codex CLI 0.167.0を確認。`--keep-provider`はOpenCode Consoleのセットアップ側のオプションで、通常モデルを維持する方式。
 
 `config.toml`の既定モデルは`gpt-6-luna`のまま、`go.config.toml`で`kimi-k2.7-code`と`opencode-go`を選ぶ構造を確認した。`~/.local/bin/codex-go`は`codex --profile go`を起動する。公開範囲をモデル選択・起動経路に絞った構造例を[連携手順](codex_opencode_go_setup.md)に保存した。今回、設定変更やモデルへの問い合わせは行っていない。
+
+## 追記：今後のモデル運用方針
+
+- 画像生成・編集は利用者の好みに合うQwen Image 2.1 Turboを主力とし、FLUX.2 Kleinも用途に応じて使い分ける。客観的な画質・速度の優劣は断定しない。
+- 動画はWan 2.2を基準とし、LTX系などを追加検証候補とする。
+- Hugging Faceの派生・量子化モデル、LoRA、Strataによるローカル大規模LLMは今後の候補。導入可否や性能は今回未検証。
+- 現時点でClaude Proは追加せず、Codex＋OpenCode Goを維持する。今回、契約・設定変更や追加の生成・モデル取得は行っていない。
 
 ## 残作業
 

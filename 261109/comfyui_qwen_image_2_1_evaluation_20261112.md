@@ -5,6 +5,8 @@
 - 情報源：利用者共有の実験条件・生成時間と、Windows内の既存PNG・保存済みワークフローJSONの読み取り確認。
 - 今回の保存作業では追加生成、モデル取得、ComfyUI更新、既存環境の設定変更を行っていない。Windows側の原本も変更していない。
 
+第1〜10節は英語プロンプト2回を保存した時点の記録を保持している。後続の日本語生成・参照画像編集と運用方針は第11〜15節に追記した。「日本語・画像編集は未検証」等の初回記述は、その時点の履歴である。
+
 ## 1. 実験目的
 
 RTX 5070 Ti 16GBでQwen Image 2.1 Turbo INT8 ConvRotによるText to Imageを試し、同じ英語プロンプトから736×736と1024×1024のPNGを生成する。生成成功、共有された処理時間、実画像の指示追従性を記録する。
@@ -184,3 +186,126 @@ PNGの実行グラフ同士の差は、ResolutionSelectorのmegapixelsとRandomN
 - 日本語、refine_prompt/thinking_modeを有効にした条件、画像編集、別シードの安定性は今回未検証。
 - 保存JSONの読み込み直後の再実行、実行環境・モデルハッシュの固定、画質の定量評価は未実施。
 - 既存のFLUX・Wanの記録と成果物は保持する。今回、新モデルのダウンロード、追加の画像生成、ComfyUIの更新は行っていない。
+
+## 11. 実験A：日本語による画像生成（追記）
+
+2026-11-12の追加実験。既存の`Qwen_image_2.1_00003.png`を確認し、主要な設定と日本語プロンプトをPNGの実行グラフから取得した。
+
+| 項目 | 結果・実行設定 |
+|---|---|
+| タスク | Text to Image、参照画像なし |
+| 解像度 | 1024×1024（PNG実寸） |
+| 生成時間 | **22.85秒（利用者の実測報告）** |
+| モデル / エンコーダー / VAE | 第3節と同じ3ファイル |
+| Sampler / CFG | euler / 1.0 |
+| ステップ | 第4節と同じManualSigmasの8区間 |
+| refine_prompt / thinking_mode | false / false |
+| Batch size / 負のプロンプト | 1 / 空文字 |
+| ResolutionSelector | 1:1、1.0 MP、multiple 8 |
+| 実行RandomNoiseシード | 800126525653438 |
+
+実行グラフのswitch=false側にある日本語プロンプト：
+
+```text
+ミニマルなスタジオに停車している、小さなパステルピンク色のレトロカー。
+車の窓からたくさんのピンク色のコスモスがあふれ、屋根を覆っている。
+柔らかな春の日差し、シンプルで淡いミントグリーンの背景。
+高品質でかわいらしい3Dイラスト、精巧な車体、優しいパステルカラー。
+車の前面と側面が見える斜めの構図、中央配置。
+人物や文字は含めない。
+```
+
+![日本語生成：屋根の花とピンクの車](comfyui/images/Qwen_image_2.1_00003.png)
+
+PNG生成に成功し、淡いピンクのレトロカー、ピンクの花、ミントグリーンの背景、斜めの構図を確認した。日本語の主要な指示は反映されている。一方、花は屋根に集中し、窓付近に見える花はあるものの、**窓から外へあふれる表現は不完全**だった。全指示への完全一致とは評価しない。
+
+先の英語実験とはシード・実行状態が異なる。日本語と英語の品質・速度の一般的な差を示す統制比較ではない。Schnellの日本語入力で車にならなかった既存の1例とも、プロンプト・モデル・設定が異なるため、言語能力の順位は付けない。
+
+## 12. 実験B：参照画像の車体をピンクへ編集（追記）
+
+出力`Qwen_image_2.1_00004.png`の実行グラフは、LoadImageで**`ComfyUI_00006_.png`**を参照していた。依頼の入力候補`ComfyUI_00006.png`とは末尾のアンダースコアが異なり、実ファイル名を優先する。
+
+Comfy共有input内の入力PNGと、既存の[保存画像](comfyui/images/ComfyUI_00006_.png)がバイト一致した。FLUX.1 Schnellの英語固定シードで生成し、FLUX.2 Kleinの編集にも使った同じミント色の車である。入力画像は重複コピーしていない。
+
+指示：
+
+```text
+Change only the car color from mint green to pastel pink.
+Keep the flowers, composition, camera angle, and background unchanged.
+```
+
+| 項目 | 結果・実行設定 |
+|---|---|
+| タスク | 参照画像によるImage Edit |
+| 出力解像度 | 1024×1024（PNG実寸） |
+| 生成時間 | **25.00秒（利用者の実測報告）** |
+| 拡散モデル | `qwen_image_2.1_turbo_int8_convrot.safetensors` |
+| テキストエンコーダー | `qwen3vl_8b_int8_convrot.safetensors`、type qwen_image |
+| VAE | `qwen_image_2.1_vae_bf16.safetensors` |
+| Sampler / CFG / ステップ | euler / 1.0 / ManualSigmasの8区間 |
+| refine_prompt / thinking_mode | false / false |
+| 負のプロンプト | 空文字 |
+| 実行RandomNoiseシード | 891836227295375 |
+
+参照画像とVAEを`TextEncodeQwenImage21`へ渡し、正・負のconditioningと出力2の潜在画像を使用する。潜在画像を選ぶ`ComfySwitchNode`はfalseで、TextEncodeQwenImage21側へ接続しており、EmptyLatentImage側ではなかった。同エンコーダーの`resolution=0`は記録値として保持し、出力の寸法は実PNGで確認した。
+
+| 入力画像 | Qwenでの編集結果 |
+|---|---|
+| ![入力：ミント色の車](comfyui/images/ComfyUI_00006_.png) | ![Qwen：ピンクへ編集](comfyui/images/Qwen_image_2.1_00004.png) |
+
+車体をパステルピンクへ変更でき、花の大まかな配置、背景、車の向き・構図は概ね維持された。ホイール周辺も元画像に近い色に見える。一方、車体の光沢や花・輪郭等の見え方には差があり、**車体以外の細部が完全に不変だったとは評価しない**。画素差分、色差、領域別の保持率は測定していない。
+
+PNGの提出グラフには22ノードがあり、switchの選択先から保存出力をたどる経路は16ノードだった。ImageCompareは保存結果を受け取る比較表示側であり、保存画像の生成経路とは区別した。プロンプト補強の枝もグラフには残るが、refine_prompt=falseで選択外となる。各ノードの実行ログやロード時間は未確認。
+
+## 13. QwenとFLUX.2 Kleinの編集比較（追記）
+
+同じミント色の入力画像を、同じ趣旨の英語指示でピンクへ変える実験として整理する。Kleinの当時の詳細は[画像編集記録の第7節](comfyui_image_generation_evaluation_20261111.md#7-flux2-klein-4bのimage-edit)を参照。
+
+| 比較項目 | Qwen Image 2.1 Turbo INT8 | FLUX.2 Klein base 4B FP8 |
+|---|---|---|
+| 車体の色変更 | パステルピンクへ変更成功 | ピンクへ変更成功 |
+| 花・背景・構図 | 大まかな配置・背景・向きを概ね維持。細部の完全固定は未評価 | 主要な構図を概ね維持。花の細かな配置やホイール周辺の色も変化 |
+| 見た目の観察 | 元画像に近い花の配置・ホイール周辺の色、ピンクの車体 | 花やホイール周辺にも色・形状の変化が見られる |
+| 利用者の好み | **今回のQwen画像の方が好みに合う**との利用者評価 | 用途に応じて使い分ける候補として保持 |
+| 生成時間（利用者実測） | 25.00秒 | 43.92秒 |
+| 入力 / 出力 | 同じ`ComfyUI_00006_.png` / 1024×1024 | 同じ入力 / 1024×1024 |
+| 拡散モデル | `qwen_image_2.1_turbo_int8_convrot.safetensors` | `flux-2-klein-base-4b-fp8.safetensors` |
+| エンコーダー / VAE | `qwen3vl_8b_int8_convrot.safetensors` / `qwen_image_2.1_vae_bf16.safetensors` | `qwen_3_4b.safetensors` / `full_encoder_small_decoder.safetensors` |
+| 設定 | 8区間、CFG 1.0、euler、ManualSigmas | 20 steps、CFG 5.0、euler、Flux2Scheduler |
+| 参照経路 | TextEncodeQwenImage21へ画像・VAEを入力し、conditioningと潜在画像を使用 | ImageScaleToTotalPixels → VAEEncode → ReferenceLatent |
+| 環境 | Windows 11、RTX 5070 Ti 16GB、RAM 32GB、ComfyUI Desktop | 同じPC構成。実行時のソフトウェア版の一致は未確認 |
+
+| Kleinの編集結果 | Qwenの編集結果 |
+|---|---|
+| ![Kleinによる編集](comfyui/images/Flux2-Klein-4b-base_00001_.png) | ![Qwenによる編集](comfyui/images/Qwen_image_2.1_00004.png) |
+
+モデル、量子化、エンコーダー、VAE、参照処理、ステップ、シード、ロード状態を揃えていない。各1回の生成時間と目視だけで、Qwenが客観的に高画質・高速とは断定しない。今回の採用判断は、**利用者の好みを重視した運用方針**として残す。
+
+## 14. 追加成果物と検査・再現上の注意
+
+| ファイル | 由来 | サイズ |
+|---|---|---:|
+| [Qwen_image_2.1_00003.png](comfyui/images/Qwen_image_2.1_00003.png) | 実在する日本語生成PNGのコピー | 1,171,739 bytes |
+| [Qwen_image_2.1_00004.png](comfyui/images/Qwen_image_2.1_00004.png) | 実在する編集PNGのコピー | 1,253,377 bytes |
+| [日本語生成用JSON](comfyui/workflows/image_qwen_image_2_1_turbo_t2i_japanese_20261112.json) | 独立して保存されていたJSONのコピー。既存の英語版を残すため公開名を変更 | 57,216 bytes |
+| [編集用JSON（PNGから抽出）](comfyui/workflows/image_qwen_image_2_1_turbo_i2i_extracted_20261112.json) | 編集PNGの`workflow`テキストをそのまま抽出。独立して保存されていたJSONではない | 66,921 bytes |
+
+追加成果物の合計は2,549,253 bytes（約2.43 MiB）。日本語JSONの実際の元ファイル名は`image_qwen_image_2_1_turbo_t2i.json`で、前回英語版を保存した後に内容が日本語へ変わっていた。新たな公開名でコピーし、以前の英語版JSONは上書きしていない。
+
+調査した共有outputとインストール配下のuserワークフロー保存先には、独立したQwen編集用JSONは見つからなかった。編集PNGには`prompt`と`workflow`があったため、後者の文字列を内容変更せずJSONへ抽出した。手作業でノードを補った再構築ではなく、PNGに埋め込まれていたキャンバスの保存である。未調査の別ディレクトリに保存ファイルが存在しないとまでは断定しない。
+
+PNGの元ファイルの最終更新日時は、Aが2026-11-12 13:47:00 JST、Bが17:32:07 JST。日本語の保存JSONは13:51:13 JSTだった。ファイル名・寸法・プロンプト・参照経路で対応づけ、時刻を生成所要時間の測定には使っていない。
+
+PNG2枚のCRC、全メタデータ、保存JSONと抽出JSON内の文字列を検査し、画像内容も目視した。秘密情報・個人情報・ユーザー固有の絶対パスは見つからなかった。PNGと日本語JSONは原本とバイト一致し、編集JSONもPNGの元テキストとバイト一致する。SHA256・設定・由来は[既存manifestへ追記](comfyui/qwen_image_2_1_artifact_manifest_20261112.json)し、以前の画像・ワークフローの項目は保持した。
+
+再現時は、日本語生成用の保存JSONと編集用の抽出JSONをそれぞれ読み込み、第11・12節のプロンプト・モデル・実行シード・参照画像を確認する。編集キャンバスの内部RandomNoise表示は`424242`、制御は`randomize`だが、実行グラフのシードは`891836227295375`。表示値と実行値を混同しない。固定条件で試す際は制御と値を確認する。保存・抽出JSONの再実行は今回未検証。
+
+生成時間22.85秒・25.00秒は利用者実測値を記録したもので、今回再測定していない。PNGに生成時間のログはなく、実行ID付きの時間ログとの照合もしていない。最大VRAM、GPU使用率・温度、モデルロードやキャッシュの寄与は未確認のまま。追加の生成・モデル取得・設定変更は行っていない。
+
+## 15. 今後のモデル運用方針（利用者の判断）
+
+- **画像生成・編集の主力をQwen Image 2.1 Turboとする。** 今回の画像が利用者の好みに合うことを採用理由とし、客観的な画質・速度の優越とは区別する。FLUX.2 Kleinは削除せず、用途や好みに応じて使い分ける選択肢として残す。
+- **動画生成はWan 2.2を基準**とする。既存の約3秒・約5秒の記録を保持し、LTX系などを今後の追加検証候補とする。本追記で新たな動画検証を実施したわけではない。
+- Hugging Faceの派生・量子化モデル、LoRA、Strataによるローカル大規模LLMを今後の候補として記録する。具体的な構成・導入可否・性能は今回調査・検証していない。
+- **現時点でClaude Proは追加しない。Codex＋OpenCode Goを維持する。** 今回は運用判断の記録のみで、契約や設定の変更は行っていない。
+- 次回の通常利用では、指示の取りこぼし、修正回数、生成時間、VRAM、好みに合う結果が得られたかを記録する。モデルの追加取得や新規生成は今回の作業範囲に含めない。
