@@ -4814,3 +4814,51 @@ project261021から以下を実施（環境変数`MLFLOW_DISABLE_AGENT_HINT=1`�
 最終suite・実装commitのGitHub Actions（artifact/cleanup含む）は確認後に追記する。
 [公開証拠索引](docs/reviews/20261115-operational-consumer-checks.json)は完了したreceipt/hashのみを参照する。
 合成CIの成功を実candidate運用受入・時計資格・本番SLOへ流用しない。
+
+### 2026-11-15：最終local suiteと実装公開の節目
+
+最終sourceのfull-suite-v2は**600件成功（489.901 test秒）**。
+先行full-suite-v1は598件成功（494.120 test秒）だがportable bundle v2前の中間結果であり、最終結果へ流用しない。
+932相対file/fragmentリンクと新旧配置の確認、compileall、diff checkも成功。
+配置checkのtest identity部分は統合時の590件inventoryを読むため、現在件数の根拠は600件のsuite結果を使う。
+
+通常sandboxのgit add/commitは.git/index.lockのread-onlyで拒否された。限定昇格したcommit-implementation-v2は
+work_log末尾の余分な空行でdiff checkが止まり、commitは作成されなかった。
+空行だけ修正して同じ14対象を再確認したv3で**b67902feb8daf9ce781dc34fd8e0a92ef1fe7f24**をcommit/push。
+stage全差分とscope/secret scan、git statusを確認し、無関係な未追跡3pathは含めていない。
+最初のCI discoveryは短縮SHAのfilterで空配列。完全SHAへ訂正し、
+[実装CI43640947101](https://github.com/kenobix/Claude_practice/actions/runs/43640947101)を特定した。
+GitHub appでjob/stepを読取確認し、gh watchの終了値と全原本log/artifactは終了後に保存する。
+
+事後reviewは格納pathと発行責任まで具体化した。immutable系列、durable intent、exact registry versionの
+eligibility headをcommitted最後に公開し、欠落/途中/旧headを全consumerが拒否する将来契約。
+offlineだけでは最新性を証明できず採否を出せない。writer/registry tag発行/現台帳への適用は行っていない。
+
+### 2026-11-15：実装commitのCI/artifact/cleanup受入
+
+**b67902f / CI43640947101の両job・全stepがsuccess**。unit logのcheckout完全SHAと
+600 tests（180.705 test秒）/compileall、新しいUTC負例の実行を照合した。
+通常合成system、paired MLflow/skops+DB復元と破損拒否、snapshot lock、request interruption、
+monitor read-only照合/persistence、旧REAL migration/restore、HTTP decision障害、Caddy normal/TERM/SIGKILL復旧を確認。
+GitHub connectorでjob/step/artifact情報とdecoded job logを保存。
+artifactのconnectorは一時file URLを返すため、local bytesの検算はgh apiによるZIP保存で行った。
+一時署名付きURLは保存/公開していない。
+
+artifact14131858623のZIPは235,013bytes、GitHub digestとSHA
+`fdb7be466cbd9f133c835956a7c50aafadce21d8ec586a602dece586d09d0b96`が一致。
+既存allowlist16memberが過不足なく存在し、内包archive/member SHAも一致。
+`verify_ci_artifact.py`を使い、新規一時cwdでarchiveだけを入力にした別processが
+warmup50除外/測定1000/応答1050/p95 **36.49398800001791ms（合成のみ）**を再計算し、CIのJSONと完全一致。
+gate not_evaluated / permission blocked / synthetic_onlyを保持。
+normal/TERMのCaddy summaryでcurrent Dockerfile build、protected container IDs不変、残resourceなし/errorなし。
+PG各container、HTTP server/group、system paired restore/workspaceのcleanup原本も照合した。
+
+最終reviewでは原本194fileのhash不変、source/test7fileが検証済み実装commitと一致することを再確認。
+公開索引・計画・文書を更新した後のcommitは証拠記録のcommitであり、実装CIで直接試験したSHAとは区別する。
+今回の受入はUTC拒否実装の範囲。事後review writer、実candidate全22caseの未達部分、警告の人によるリスク受容、
+T13bは残す。DockerのWSL連携が利用不能で、実candidate負例の新実行は0件。
+再fit/再選定/再測定/台帳reopen/証拠tag/採否/OS操作は0件。現配信は変更していない。
+
+最終相対リンク933件も問題なし。最終manifest検査で既存593 test identityの削除0・追加7・計600をASTでも確認。
+全194原本のbytes/SHA、保存済みCI/artifact/log/recipeのdescriptor、実装source一致と秘密情報除外を照合した。
+公開索引は生成時点までの完了receiptを保持し、この後のcommit/push自身のreceiptは同じignored試行directoryへ別保存する。

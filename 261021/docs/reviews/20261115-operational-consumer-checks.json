@@ -3,9 +3,353 @@
   "date_label": "2026-11-15 Asia/Tokyo; raw UTC unqualified",
   "requested_base": "9479201babd74d2ea318c33574044098cc9d8768",
   "actual_start": "e9e3bda0f572344d7023465bbf1f534d2eb473e3",
-  "status": "target_accepted_final_suite_and_ci_pending",
-  "implementation_commit": null,
-  "ci": null,
+  "status": "accepted_product_rejection_and_synthetic_regression_actual_trial_still_on_hold",
+  "implementation_commit": "b67902feb8daf9ce781dc34fd8e0a92ef1fe7f24",
+  "ci": {
+    "run_id": 43640947101,
+    "url": "https://github.com/kenobix/Claude_practice/actions/runs/43640947101",
+    "implementation_commit": "b67902feb8daf9ce781dc34fd8e0a92ef1fe7f24",
+    "status": "success",
+    "accepted": true,
+    "unit_tests": 600,
+    "unit_displayed_seconds": 180.705,
+    "jobs": [
+      {
+        "id": 132588165762,
+        "name": "tests",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 43640947101,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run python -m pip install -r requirements.lock",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run python -m pip install --no-deps --no-build-isolation -e '.[dev]'",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run python -m pip check",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Run python -m unittest discover -s tests -v",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Run python -m compileall -q src tests scripts",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          }
+        ]
+      },
+      {
+        "id": 132588166107,
+        "name": "synthetic-system",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 43640947101,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run python -m pip install -r requirements.lock",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run python -m pip install --no-deps --no-build-isolation -e '.[dev]'",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run python -m pip check",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Run isolated synthetic Docker system test",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Run disposable PostgreSQL snapshot-lock test",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Run disposable request interruption PostgreSQL test",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Run disposable PostgreSQL monitor reconciliation test",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Run legacy prediction precision migration and restore test",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          },
+          {
+            "name": "Run disposable PostgreSQL monitor persistence test",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 12
+          },
+          {
+            "name": "Run disposable MLflow HTTP decision fault test",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 13
+          },
+          {
+            "name": "Run disposable Caddy deployment recovery and TERM cleanup",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 14
+          },
+          {
+            "name": "Upload synthetic system test log",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 29
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 30
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 31
+          }
+        ]
+      }
+    ],
+    "artifact_id": 14131858623,
+    "artifact_zip_sha256": "fdb7be466cbd9f133c835956a7c50aafadce21d8ec586a602dece586d09d0b96",
+    "artifact_verification": {
+      "status": "passed",
+      "artifact_zip_sha256": "fdb7be466cbd9f133c835956a7c50aafadce21d8ec586a602dece586d09d0b96",
+      "artifact_members": {
+        "synthetic-system-ci.log": {
+          "bytes": 19113,
+          "sha256": "c2da787212acdfa9008a032df19bce2e4445b43cb1fca7d3d39ef062a50d2dee"
+        },
+        "monitor-inspection-postgres-ci.log": {
+          "bytes": 3933,
+          "sha256": "4c7ee05d3fa85de2d0f7520f7f829ca6434e317900e939abd2470cd9a32fed38"
+        },
+        "request-interruption-postgres-ci.log": {
+          "bytes": 459,
+          "sha256": "efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb"
+        },
+        "snapshot-postgres-ci.log": {
+          "bytes": 560,
+          "sha256": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9"
+        },
+        "prediction-migration-postgres-ci.log": {
+          "bytes": 2979,
+          "sha256": "764062532ea85578d8d18954f2383e21d10b8f6b7af0ac92860de8a9182a9514"
+        },
+        "monitor-persistence-postgres-ci.log": {
+          "bytes": 376,
+          "sha256": "8d5f8fdc9d453fbb706b8e1fd526a6bb35c5d8ebf058033591b7e2dfe4e5ddc9"
+        },
+        "capital-decision-http-ci.log": {
+          "bytes": 3855,
+          "sha256": "92a5f380f4df1494b2b960732c473550eda6b8e7a3bdbaa9d3317f560f387129"
+        },
+        "t08-ci/summary.json": {
+          "bytes": 2042,
+          "sha256": "8c2a39c949848bbaa3698e2f24904456f6b5552f0c1896bfb5f839477b0fe978"
+        },
+        "t08-ci/before.dump": {
+          "bytes": 8251,
+          "sha256": "dbc23c7b71552c6b1fbf8e7261177ec3fcb6f6ee7f29a8a73eaa9a1b602064ae"
+        },
+        "t08-ci/after.dump": {
+          "bytes": 8309,
+          "sha256": "2868432ba4558c9ac8e1ec8ff55cd8976dfc0e2aae8a5dc1d8b87575a91536f1"
+        },
+        "t16-ci/synthetic-measurement-evidence.zip": {
+          "bytes": 1531079,
+          "sha256": "a4dc4b840fe0a44dcf97aef1725ac48786f1db0b3d506262fb3647eb704dfa6f"
+        },
+        "t16-ci/archive-sha256.json": {
+          "bytes": 154,
+          "sha256": "75a7c1e4d4b489607977ac52372e42e6c1f2a8ef85e58df523f0b5645d61a0c4"
+        },
+        "t16-ci/recalculation.json": {
+          "bytes": 1440,
+          "sha256": "32d4bf29a31a33a3f0cea07a9518884023d8386c3ac5e100ae26dcd5fe899c9b"
+        },
+        "deployment-recovery-ci.log": {
+          "bytes": 23165,
+          "sha256": "52eaf92da0fbc0f4f543c0bb7ead526dbf1fcb924239143f34adecd828b167d1"
+        },
+        "t07a-ci/summary.json": {
+          "bytes": 1944,
+          "sha256": "4407e1cb2ab60b22994ad5abde4cd8ba42943871f199045f6fdfd8e786e6f62f"
+        },
+        "t07a-term-ci/summary.json": {
+          "bytes": 686,
+          "sha256": "dccd5c80235ee837713a9e6bffc200f19f5c21580482d86b8d70d3c2b8e21316"
+        }
+      },
+      "archive_only_recalculation": {
+        "archive_sha256": "a4dc4b840fe0a44dcf97aef1725ac48786f1db0b3d506262fb3647eb704dfa6f",
+        "attempt_id": "42a015d7-5010-48e4-8f35-aac66433df55",
+        "candidate_id": "3c3909ca88be5f388377855f3cfc0ec8722fe908e9c77cea571cff2efdbc0a0c",
+        "deployment_permission": "blocked",
+        "journal_verified_responses": 1050,
+        "limitations": [
+          "Synthetic evidence only; does not prove real-data performance, clock qualification, DB audit outside the saved journal, or deployment approval."
+        ],
+        "measured_errors": 0,
+        "measured_requests_recalculated": 1000,
+        "members": {
+          "payload/operational-ledger.json": {
+            "bytes": 1232,
+            "sha256": "8e4fb9fba386afe2cd81458b7dbbe36fbd8529c0c89f35022824658038d02024"
+          },
+          "payload/plan.json": {
+            "bytes": 5128,
+            "sha256": "db8a9e3d5c32f5d3a873b0cd7a34c6a3c6621128fa2b69d8b6f9baea48515204"
+          },
+          "payload/report.json": {
+            "bytes": 438453,
+            "sha256": "06081318f9a72ce9ce0635e9b77e6a2da80eff3517bb6a391ba2a81d3548070b"
+          },
+          "payload/request-journal.jsonl": {
+            "bytes": 1083825,
+            "sha256": "7b2b53eede926ef176801a1680d95c98ffdc552a6a16edb05da836b7794fd809"
+          }
+        },
+        "numeric_status": "passed",
+        "operational_gate": "not_evaluated",
+        "p95_ms": 36.49398800001791,
+        "request_id_sha256": "db0052f747ddb426fed8010026d94f36826800e73c971231c2f74457f7628ef2",
+        "status": "archive_recalculated",
+        "synthetic_only": true,
+        "warmup_requests_excluded": 50
+      },
+      "caddy_cleanup": {
+        "t07a-ci/summary.json": {
+          "status": "passed",
+          "cleanup_complete": true,
+          "resources_remaining": {
+            "containers": "",
+            "volumes": "",
+            "networks": "",
+            "images": ""
+          },
+          "current_Dockerfile_build": true
+        },
+        "t07a-term-ci/summary.json": {
+          "status": "failed",
+          "cleanup_complete": true,
+          "resources_remaining": {
+            "containers": "",
+            "volumes": "",
+            "networks": "",
+            "images": ""
+          },
+          "current_Dockerfile_build": true
+        }
+      },
+      "migration_cleanup": true,
+      "snapshot_and_monitor_cleanup": true,
+      "request_interruption_cleanup": true,
+      "http_cleanup": true,
+      "system_paired_restore_and_cleanup": true,
+      "scope": "synthetic regression only, no real candidate or clock acceptance"
+    },
+    "actual_candidate_acceptance": false
+  },
   "changes": [
     "Validate UTC format and nondecreasing order across every complete journal event.",
     "Require durable journal for evidence recording and publishing, keep legacy numeric diagnostic only.",
@@ -739,6 +1083,55 @@
       "sha256": "ca11cc5d6f263e0b8031967c6000185c5d4c4d96d0c4df25782791e2bfbbed5d"
     }
   ],
+  "implementation_source_matches_current": true,
+  "test_results": {
+    "consumer-target-v4.log": {
+      "tests": 67,
+      "displayed_test_seconds": 55.23,
+      "exit_code": 0,
+      "final_source": true
+    },
+    "deployment-target-v1.log": {
+      "tests": 22,
+      "displayed_test_seconds": 15.388,
+      "exit_code": 1,
+      "final_source": false
+    },
+    "full-suite-v1.log": {
+      "tests": 598,
+      "displayed_test_seconds": 494.12,
+      "exit_code": 0,
+      "final_source": false
+    },
+    "full-suite-v2.log": {
+      "tests": 600,
+      "displayed_test_seconds": 489.901,
+      "exit_code": 0,
+      "final_source": true
+    },
+    "target-v1.log": {
+      "tests": 45,
+      "displayed_test_seconds": 28.826,
+      "exit_code": 1,
+      "final_source": false
+    },
+    "target-v2.log": {
+      "tests": 45,
+      "displayed_test_seconds": 38.321,
+      "exit_code": 1,
+      "final_source": false
+    },
+    "target-v3.log": {
+      "tests": 45,
+      "displayed_test_seconds": 49.597,
+      "exit_code": 0,
+      "final_source": false
+    }
+  },
+  "external_verification_recipe": {
+    "path": "data/reports/20261114-file-consolidation/verify_ci_artifact.py",
+    "sha256": "9ada1095a7db549bef6c69ee873dfbbae6f1f235bdfed98179e18372b0b22a9f"
+  },
   "attempts": [
     {
       "receipt": "data/reports/20261115-operational-consumer/actual-rejection-v1.json",
@@ -759,6 +1152,134 @@
       "log_sha256": "2e75c9726801c96dd0b8cc1a0a4b3f46390f4f7b2f1672e3227bb8bd9ff11a7b"
     },
     {
+      "receipt": "data/reports/20261115-operational-consumer/ci-artifact-download-v1.json",
+      "receipt_sha256": "921e216db3e83cb0a00dd8c7814cfe84746a3c865e0b0b12afcc72c5976c31ce",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-operational-consumer/download_ci.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T21:14:21.487883+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T21:14:23.771407+00:00",
+      "monotonic_start_ns": 6851041460779,
+      "monotonic_end_ns": 6853324981296,
+      "log": "ci-artifact-download-v1.log",
+      "log_sha256": "ca661210783daddcf08b54d2a361e703568fb4e94707bfe82dbce16161ed8925"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/ci-artifact-verification-v1.json",
+      "receipt_sha256": "ad1d472620ca28ee631f2e866e1572c14a35d1f2fbc8c377a57508ae3cc2a4d9",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261114-file-consolidation/verify_ci_artifact.py",
+        "261021/data/reports/20261115-operational-consumer/ci-b67902f-artifact.zip",
+        "fdb7be466cbd9f133c835956a7c50aafadce21d8ec586a602dece586d09d0b96",
+        "261021/data/reports/20261115-operational-consumer/ci-verification.json"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T21:14:41.497475+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T21:14:44.575151+00:00",
+      "monotonic_start_ns": 6871051052264,
+      "monotonic_end_ns": 6874128727542,
+      "log": "ci-artifact-verification-v1.log",
+      "log_sha256": "975bced1460cdc8dc917bc423bf1ea033c8e88107f9695e44a737613866f56f5"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/ci-discovery-v1.json",
+      "receipt_sha256": "5af2e72941f591f53682c3a9b175a8533dc3acbfc6f28d3793cd73d6f343c2f5",
+      "command": [
+        "gh",
+        "run",
+        "list",
+        "--repo",
+        "kenobix/Claude_practice",
+        "--commit",
+        "b67902f",
+        "--workflow",
+        "bike-mlops-contracts.yml",
+        "--limit",
+        "3",
+        "--json",
+        "databaseId,headSha,status,conclusion,url"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T21:05:52.932721+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T21:05:54.551566+00:00",
+      "monotonic_start_ns": 6342486302334,
+      "monotonic_end_ns": 6344105140386,
+      "log": "ci-discovery-v1.log",
+      "log_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/ci-discovery-v2.json",
+      "receipt_sha256": "3959b1f92368405d368ec2e94daa82dcfa98eab74941f927f17e7374cab88cbb",
+      "command": [
+        "gh",
+        "run",
+        "list",
+        "--repo",
+        "kenobix/Claude_practice",
+        "--commit",
+        "b67902feb8daf9ce781dc34fd8e0a92ef1fe7f24",
+        "--workflow",
+        "bike-mlops-contracts.yml",
+        "--limit",
+        "3",
+        "--json",
+        "databaseId,headSha,status,conclusion,url"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T21:06:21.913173+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T21:06:23.556414+00:00",
+      "monotonic_start_ns": 6371466749472,
+      "monotonic_end_ns": 6373109983633,
+      "log": "ci-discovery-v2.log",
+      "log_sha256": "cc7b2814ec91a12818665798bb5c8ef5baf1b2b96647d6de5e34e4b5384a9efa"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/ci-unit-verification-v1.json",
+      "receipt_sha256": "80e6599062730d338fc953d19b2c9933ef9a997f44a24c631ec269e084647610",
+      "command": [
+        "python3",
+        "-"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T21:11:44.362090+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T21:11:44.426928+00:00",
+      "monotonic_start_ns": 6693915668792,
+      "monotonic_end_ns": 6693980505803,
+      "log": "ci-unit-verification-v1.log",
+      "log_sha256": "46ec06f401981097f339545bdf4f4fdb3326770f178d9461e9607467636497ff"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/ci-watch-v1.json",
+      "receipt_sha256": "ff731d369bebd75867a97985c9b52f036774dc810f51184c17d65fb9bcc331eb",
+      "command": [
+        "gh",
+        "run",
+        "watch",
+        "43640947101",
+        "--repo",
+        "kenobix/Claude_practice",
+        "--interval",
+        "30",
+        "--exit-status"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T21:08:25.004885+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T21:13:20.909593+00:00",
+      "monotonic_start_ns": 6494558490632,
+      "monotonic_end_ns": 6790463174770,
+      "log": "ci-watch-v1.log",
+      "log_sha256": "28098c32d136f3a6d409e5220c82ce31ee66a8f8d3fa32aac951bc4f606dc777"
+    },
+    {
       "receipt": "data/reports/20261115-operational-consumer/commit-implementation-v2.json",
       "receipt_sha256": "dd019d08ee3efac3c2fee3ceb2b418af90df321279cb5049d438e7707b6491c2",
       "command": [
@@ -773,6 +1294,22 @@
       "monotonic_end_ns": 6289918781695,
       "log": "commit-implementation-v2.log",
       "log_sha256": "6058a357b34b7811e365dfd8d52437d15681caddb90c1de0058b8753b57357b9"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/commit-implementation-v3.json",
+      "receipt_sha256": "2bee84bd39ac692ea42267c6065a4d210f8ea9f8244d7e168c5035ed60dab139",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-operational-consumer/commit_implementation_v3.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T21:05:18.048584+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T21:05:18.310764+00:00",
+      "monotonic_start_ns": 6307602193654,
+      "monotonic_end_ns": 6307864339184,
+      "log": "commit-implementation-v3.log",
+      "log_sha256": "7d901264c5657715514ede8dfcd1eac5bb27db64c685465941e9b68a6d6e2927"
     },
     {
       "receipt": "data/reports/20261115-operational-consumer/consumer-target-v4.json",
@@ -841,6 +1378,38 @@
       "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
+      "receipt": "data/reports/20261115-operational-consumer/final-links-v2.json",
+      "receipt_sha256": "f186a6200fb66dd8c3ea7afa78f77e831d082c7666cc2750ac73359c3b742f92",
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-file-consolidation/check_layout.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T21:17:26.950620+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T21:17:28.780640+00:00",
+      "monotonic_start_ns": 7036504204784,
+      "monotonic_end_ns": 7038334216633,
+      "log": "final-links-v2.log",
+      "log_sha256": "2e2d881e7e6277f96bb95cd6a7afdf69ccf66ce6aee205132eb21d22997f6f15"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/final-validation-v1.json",
+      "receipt_sha256": "7ffca87df09e4e29eea3612407afc2d3ee480db8ef236e18ba0c0d8e0981b642",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-operational-consumer/validate_final.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T21:16:55.456512+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T21:16:56.048235+00:00",
+      "monotonic_start_ns": 7005010096826,
+      "monotonic_end_ns": 7005601812703,
+      "log": "final-validation-v1.log",
+      "log_sha256": "6db7405a59932669f18ce6927e3c7658e4434fe3fd1727e03ca7dd347529dda2"
+    },
+    {
       "receipt": "data/reports/20261115-operational-consumer/full-suite-v1.json",
       "receipt_sha256": "2f1b9e679ccf930b45096d170a8d0809549dd0e25e3dfaf18adff8ed93249046",
       "command": [
@@ -864,6 +1433,29 @@
       "log_sha256": "9294259b404bd80d54a5d6c2ffa5a791e1b329b25b866c6208f106e7f3a0b92b"
     },
     {
+      "receipt": "data/reports/20261115-operational-consumer/full-suite-v2.json",
+      "receipt_sha256": "07b595c6c5dfb9e567b66a16cdb1345def6b91f9fa07b0b74fbcd8f3693587a4",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T21:00:01.601514+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T21:08:16.430207+00:00",
+      "monotonic_start_ns": 5991155099727,
+      "monotonic_end_ns": 6485983821345,
+      "log": "full-suite-v2.log",
+      "log_sha256": "32e71eee624c629db1320cc5dbe1927643c437555c5a9afd9fb96b86f7dcd06a"
+    },
+    {
       "receipt": "data/reports/20261115-operational-consumer/layout-links-v1.json",
       "receipt_sha256": "3cd16069af72934880bc19ec347ef50d23dc972930654c0323ad052db40e6ed9",
       "command": [
@@ -878,6 +1470,24 @@
       "monotonic_end_ns": 6227883595715,
       "log": "layout-links-v1.log",
       "log_sha256": "2d92abc9996e076532e3c6f81fd4146af2bec8f8ee5e1ef77c97ea6e4c78e532"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/push-implementation-v1.json",
+      "receipt_sha256": "d1eb8cdf2d39bf1cd2f5066745ccf463847dd0a32bd341d157ac8ca665262653",
+      "command": [
+        "git",
+        "push",
+        "origin",
+        "main"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T21:05:28.456918+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T21:05:33.391264+00:00",
+      "monotonic_start_ns": 6318010498147,
+      "monotonic_end_ns": 6322944860853,
+      "log": "push-implementation-v1.log",
+      "log_sha256": "44f4a86f3ca6233d1b22f615499005517571e77121a346c77cee803b19cada34"
     },
     {
       "receipt": "data/reports/20261115-operational-consumer/static-v1.json",
@@ -1039,13 +1649,108 @@
     },
     {
       "path": "data/reports/20261115-operational-consumer/build_index.py",
-      "bytes": 5226,
-      "sha256": "36ba70cb060bf299a67c8d6aa550c72d3c9757c8031914431e26a3370fd61414"
+      "bytes": 6702,
+      "sha256": "3e555043dc38963b3bf8e57b4c311da7348769b5ca5d6a2af96a57e7bb3f7d81"
     },
     {
       "path": "data/reports/20261115-operational-consumer/check_actual.py",
       "bytes": 3358,
       "sha256": "64167be3910e1ce030eeb2306daf9f453291fca6ed301496f1b12e4b017742bd"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-artifact-download-v1.json",
+      "bytes": 508,
+      "sha256": "921e216db3e83cb0a00dd8c7814cfe84746a3c865e0b0b12afcc72c5976c31ce"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-artifact-download-v1.log",
+      "bytes": 159,
+      "sha256": "ca661210783daddcf08b54d2a361e703568fb4e94707bfe82dbce16161ed8925"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-artifact-verification-v1.json",
+      "bytes": 764,
+      "sha256": "ad1d472620ca28ee631f2e866e1572c14a35d1f2fbc8c377a57508ae3cc2a4d9"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-artifact-verification-v1.log",
+      "bytes": 157,
+      "sha256": "975bced1460cdc8dc917bc423bf1ea033c8e88107f9695e44a737613866f56f5"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-artifacts-final.json",
+      "bytes": 843,
+      "sha256": "e2cb6c32deebc3444e2200cecf58884c28a137311d2a272d0b701b014a50f8b7"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-b67902f-artifact.zip",
+      "bytes": 235013,
+      "sha256": "fdb7be466cbd9f133c835956a7c50aafadce21d8ec586a602dece586d09d0b96"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-discovery-v1.json",
+      "bytes": 658,
+      "sha256": "5af2e72941f591f53682c3a9b175a8533dc3acbfc6f28d3793cd73d6f343c2f5"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-discovery-v1.log",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-discovery-v2.json",
+      "bytes": 691,
+      "sha256": "3959b1f92368405d368ec2e94daa82dcfa98eab74941f927f17e7374cab88cbb"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-discovery-v2.log",
+      "bytes": 197,
+      "sha256": "cc7b2814ec91a12818665798bb5c8ef5baf1b2b96647d6de5e34e4b5384a9efa"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-jobs-final.json",
+      "bytes": 5387,
+      "sha256": "eea445bbda971b9d608a23d70c27b3a32557ea42f8aefa8c0fd3eaf6686e0560"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-jobs-initial.json",
+      "bytes": 5098,
+      "sha256": "945d3913743514c08abfc307fc5559ac427209f1ca8aa543a182745e0d5272cd"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-system-job.log",
+      "bytes": 133061,
+      "sha256": "1add1dfd9abbb34cbf6eadf8a7ce6308987cc95316a9cf5f9a789f4831dc89f3"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-unit-job.log",
+      "bytes": 222607,
+      "sha256": "a6cade648aa312eda07bc40522ab009599b8f297904b3b46277a472f23fc937a"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-unit-verification-v1.json",
+      "bytes": 445,
+      "sha256": "80e6599062730d338fc953d19b2c9933ef9a997f44a24c631ec269e084647610"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-unit-verification-v1.log",
+      "bytes": 222,
+      "sha256": "46ec06f401981097f339545bdf4f4fdb3326770f178d9461e9607467636497ff"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-verification.json",
+      "bytes": 4883,
+      "sha256": "42c928c12078dfedaec66a45fe7c1791b6ec556ff72ca871e8b82d637a645bdb"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-watch-v1.json",
+      "bytes": 556,
+      "sha256": "ff731d369bebd75867a97985c9b52f036774dc810f51184c17d65fb9bcc331eb"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/ci-watch-v1.log",
+      "bytes": 14791,
+      "sha256": "28098c32d136f3a6d409e5220c82ce31ee66a8f8d3fa32aac951bc4f606dc777"
     },
     {
       "path": "data/reports/20261115-operational-consumer/commit-implementation-v2.json",
@@ -1056,6 +1761,21 @@
       "path": "data/reports/20261115-operational-consumer/commit-implementation-v2.log",
       "bytes": 859,
       "sha256": "6058a357b34b7811e365dfd8d52437d15681caddb90c1de0058b8753b57357b9"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/commit-implementation-v3.json",
+      "bytes": 522,
+      "sha256": "2bee84bd39ac692ea42267c6065a4d210f8ea9f8244d7e168c5035ed60dab139"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/commit-implementation-v3.log",
+      "bytes": 1726,
+      "sha256": "7d901264c5657715514ede8dfcd1eac5bb27db64c685465941e9b68a6d6e2927"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/commit_evidence.py",
+      "bytes": 1346,
+      "sha256": "586cfe56b8f8423d30ca68672121e1feade416e814ac4432b88f8f00fe1532bd"
     },
     {
       "path": "data/reports/20261115-operational-consumer/commit_implementation.py",
@@ -1098,6 +1818,31 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
+      "path": "data/reports/20261115-operational-consumer/download_ci.py",
+      "bytes": 893,
+      "sha256": "851e8bd7b56c417b31403e7dd26d2fafddc556866d6c1a50c3b30ca669371952"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/final-links-v2.json",
+      "bytes": 498,
+      "sha256": "f186a6200fb66dd8c3ea7afa78f77e831d082c7666cc2750ac73359c3b742f92"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/final-links-v2.log",
+      "bytes": 308,
+      "sha256": "2e2d881e7e6277f96bb95cd6a7afdf69ccf66ce6aee205132eb21d22997f6f15"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/final-validation-v1.json",
+      "bytes": 507,
+      "sha256": "7ffca87df09e4e29eea3612407afc2d3ee480db8ef236e18ba0c0d8e0981b642"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/final-validation-v1.log",
+      "bytes": 1447,
+      "sha256": "6db7405a59932669f18ce6927e3c7658e4434fe3fd1727e03ca7dd347529dda2"
+    },
+    {
       "path": "data/reports/20261115-operational-consumer/full-suite-v1.json",
       "bytes": 563,
       "sha256": "2f1b9e679ccf930b45096d170a8d0809549dd0e25e3dfaf18adff8ed93249046"
@@ -1106,6 +1851,26 @@
       "path": "data/reports/20261115-operational-consumer/full-suite-v1.log",
       "bytes": 141684,
       "sha256": "9294259b404bd80d54a5d6c2ffa5a791e1b329b25b866c6208f106e7f3a0b92b"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/full-suite-v2.json",
+      "bytes": 563,
+      "sha256": "07b595c6c5dfb9e567b66a16cdb1345def6b91f9fa07b0b74fbcd8f3693587a4"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/full-suite-v2.log",
+      "bytes": 142077,
+      "sha256": "32e71eee624c629db1320cc5dbe1927643c437555c5a9afd9fb96b86f7dcd06a"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/implementation-staged-v3.diff",
+      "bytes": 102402,
+      "sha256": "2468ed9930be825f68485682a2f676c41d5e0786383c29a86b89464ec07e7c17"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/implementation-staged.diff",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
       "path": "data/reports/20261115-operational-consumer/layout-links-v1.json",
@@ -1121,6 +1886,16 @@
       "path": "data/reports/20261115-operational-consumer/originals.json",
       "bytes": 37573,
       "sha256": "90cd2e2bc7231aa25c68f10c995f16b8b270d16badc2f59e4f7bb596689d4e29"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/push-implementation-v1.json",
+      "bytes": 469,
+      "sha256": "d1eb8cdf2d39bf1cd2f5066745ccf463847dd0a32bd341d157ac8ca665262653"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/push-implementation-v1.log",
+      "bytes": 76,
+      "sha256": "44f4a86f3ca6233d1b22f615499005517571e77121a346c77cee803b19cada34"
     },
     {
       "path": "data/reports/20261115-operational-consumer/review_warnings.py",
@@ -1173,6 +1948,11 @@
       "sha256": "4b5b5ef76ccfd372920230dc318ed2e7b01f0f766fbad607676fe8f16e11d442"
     },
     {
+      "path": "data/reports/20261115-operational-consumer/validate_final.py",
+      "bytes": 2403,
+      "sha256": "07ba300ab4320e9d88617da9cf9c1a3899daa51058c862032751725ff0f488e3"
+    },
+    {
       "path": "data/reports/20261115-operational-consumer/warning-baseline-read-v1.json",
       "bytes": 446,
       "sha256": "2dd12f5fefb6bbe24ab54cc8175ccc6fdb2ca003bb616bb857994a670298975b"
@@ -1215,6 +1995,8 @@
     "consumer-target-v4: all67 target tests passed with disposable fixtures.",
     "full-suite-v1 was started before portable v2 source edits; intermediate, never final acceptance.",
     "An unmatched Markdown apply_patch failed without changing a file; corrected against actual heading.",
+    "Initial sandbox git stage/commit refused read-only .git; scoped escalation then diff-check rejected an extra EOF blank line. Fixed whitespace only; commit-v3 succeeded.",
+    "Short-SHA CI discovery returned no runs; complete SHA matched the implementation push run.",
     "Docker WSL integration unavailable; no actual-candidate HTTP/PG/Caddy/migration fault attempts started.",
     "No invalidation writer, sidecar issuance, registry tag writes, approval, retry/reopen or measurement.",
     "No OS/clock/service/task/log/resync, future-check/threshold/bin/recipe or consumed-window changes.",

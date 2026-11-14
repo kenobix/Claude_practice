@@ -1162,6 +1162,11 @@ git pullだけでignored成果物は移らない。**別PCでの再測定も、�
 [今回の検証索引](reviews/20261115-operational-consumer-checks.json)にコマンド、失敗、原本hash、CIを保存する。
 時計研究は保留、validation/finalは消費済み。再fit・再選定・閾値変更はしない。
 
+実装commit **b67902f**の[CI43640947101](https://github.com/kenobix/Claude_practice/actions/runs/43640947101)で
+全600unit/compileallと全Docker/PG/HTTP/Caddy回帰が成功。artifact16member・archive/member SHA、
+archive-only別processの1,000 measured/50 warmup除外/1,050応答再計算、全cleanupを照合済み。
+local最終600件も成功。これは製品の拒否実装・合成回帰の受入であり、実運用保留や時計資格を解除しない。
+
 ### 証拠consumerの実装
 
 共通journal readerはhash連鎖とsequenceを確認した上で、scheduleを含む**全ての完全なevent**の
@@ -1187,6 +1192,9 @@ git pullだけでignored成果物は移らない。**別PCでの再測定も、�
 新readerが**940→941**で拒否し、linked recheckも拒否した。既知の1723→1724違反を取り消さない。
 実原本に対するこの確認は読取専用で、registry接続・予測・新attempt・台帳更新は0件。
 report/journal/plan/運用台帳のbytesは不変。raw completedは実行履歴としてそのまま保持する。
+今回の拒否は現checkoutの製品sourceで確認した。過去の専用project/source copyや起動中containerへ
+自動適用していない。旧snapshotのCLIを新consumerとして呼ばず、実行するsource revisionと入力aliasを
+改めて結合すること。現配信の更新や、保留中試行へのtag記録を行う許可は含まない。
 
 ### completed試行の事後不適格review：設計済み、writer未実装
 
@@ -1209,8 +1217,28 @@ raw ledger/report/journal/planを変更せず、completedをfailedへ書換え�
 ③同値再提出の扱いと競合/fork/破損/中断の保全、④全consumerの拒否、⑤未来review拒否、
 ⑥新attemptを作らないこと、⑦原本不在/差替/別candidate/旧head/応答喪失の拒否、
 ⑧使い捨てfixture→実装commit CI/artifact/cleanup確認。現実の台帳への適用は別途review後に判断する。
-review系列の格納path・registry headの発行/更新責任・portable offlineの最新性は残る設計判断であり、
-この文書だけで実装済み、無効化済み、あるいは再測定可能とはしない。
+格納・最新性については次の実装案を固定する。**設計上の予約であり、現registryへ新tagを発行しない。**
+
+- 正式原本と同じ専用projectの`data/evaluations/capital-bikeshare/operational-reviews/<candidate>/<attempt>/`
+  に`<8桁revision>-<document SHA>.json`を新規作成する。複数PCの個別系列を正本にせず、移設時は全系列を移し照合する。
+  document SHAはhashフィールドを除くcanonical bytesで計算し、previous SHAと対象attemptを内部にも保存する。
+- 発行責任は明示的なreview publisherとし、candidate/versionの既存lockに加えてreview系列のlockを取得。
+  原本・既存headの読取照合→durableなpublication intent→immutable review file→registry head公開→完了receiptの順に進める。
+  raw運用台帳に状態を書き戻さない。中断・応答喪失時のintentを削除して成功とせず、読戻し照合する回復操作を別に要求する。
+- 専用registryのexact versionに予約するheadは`capital_operational_eligibility_head_sha256`、
+  `capital_operational_eligibility_revision`、`capital_operational_eligibility_status`、
+  `capital_operational_eligibility_publication`。公開中は`publishing`、全tag読戻しと同一head確認後だけ`committed`。
+  複数tag更新はtransactionではないため、consumerは欠落・途中・不一致を全て使用禁止とする。
+  このheadを新bundle identityへ必須結合する将来改訂と、既存版の新規承認拒否を一緒に実装する。
+- 使用許可を判断するonline consumerは、発行前後のexact registry version/run/artifact/headを読戻し、
+  bundle内の全系列と一致しなければ拒否。最新headを取得できないoffline消費は算術診断だけに限定し、
+  配信承認/operational gate合格を発行しない。古いbundle単体は最新性の証拠にならない。
+- `ineligible`が1件でもある当該attemptは不可逆に証拠不適格。後の説明revisionが旧原本を有効へ戻すことはない。
+  statusやheadを単独で消したり別versionにコピーしたりしても、完全系列/必須head欠落として拒否する。
+  ownerの権限でregistryと全原本を同時にrollbackする攻撃まで防ぐ外部公証ではない、という信頼境界を保持する。
+
+この契約はwriterと全consumerを揃えて隔離検証するまで適用しない。
+現状を無効化済み、review済み再実行可、又は新規head公開済みと呼ばない。
 
 ### 実monitorの理由付き警告review
 
@@ -1363,6 +1391,10 @@ f1cc9ffの[CI41300378098](https://github.com/kenobix/Claude_practice/actions/run
 <a id="capital-deployment-evidence"></a>
 
 ## capital-deployment-evidence
+
+**2026-11-15改訂:** 現行bundleはschema/policy v2で、`reports.request_journal`の原本とUTC順序検査が必須。
+v1を新規承認へ使用しない。[変更点と既存原本の扱い](#operational-evidence-review-20261115)を優先する。
+以下の以前の日付の実装記録は当時の仕様・証拠として保持する。
 
 <a id="capital-deployment-evidence--capital配信証拠の束ね方と検証"></a>
 
