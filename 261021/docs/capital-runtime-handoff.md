@@ -1,5 +1,10 @@
 # 次のSol作業：同じ実候補の隔離runtime/producer受入
 
+2026-11-14追補：[実runtime受入](capital-runtime-acceptance.md)と[証拠索引](reviews/20261114-capital-runtime-checks.json)まで完了。
+現在PCの専用project capital-acceptance-20261114、registry5001/version1、DB55434、API8110。
+入力/候補/正式消費台帳は維持。data/evaluationsは専用directory＋consumption-ledger.jsonだけ正式台帳へのsymlinkへ変更済み。
+次は同じfrozen planの測定と対応復元・metadata。以下の開始前記録は当時の経緯として参照する。
+
 2026-11-14。T10直前照合とT11は[実候補評価](capital-first-evaluation.md)まで完了。
 [offline監視診断](capital-offline-monitoring.md)には警告がある。T02/T12全体は未完了で、T13b採否はblocked。
 [作業別の開始条件](product-completion-policy.md)に従い、時計研究は保留を維持する。

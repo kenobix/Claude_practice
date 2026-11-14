@@ -204,3 +204,8 @@ T09/T10の静的受入後も、独立時計源と時計資格が未達のため�
 bundleの数値が良好でも時計資格は`incomplete`。[今回の検証索引](docs/reviews/20261108-clock-bundle-checks.json)で試行/失敗/CI状態を区別する。
 
 合成raw bundleは修正後067d3ceの[CI588件・artifact/hash/cleanup](docs/reviews/20261108-clock-bundle-ci-checks.json)まで受入済み。時計資格と実fitの保留は変わりません。
+
+### 2026-11-14：実候補runtimeの受入
+
+[専用registry・API・監視の実行結果](docs/capital-runtime-acceptance.md)を追加。registry5001/version1、API8110は候補専用で配信blocked。
+実API1,461件とmonitor1,464窓のCSV/JSON/marker/PGを照合済み。運用測定・復旧・全producer採否は後続条件を確認する。

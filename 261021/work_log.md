@@ -4616,3 +4616,43 @@ blocked登録・DB seed・API/監査・monitor CLI/complete marker・50+1000測�
 実DB/registry/現配信、OS/service/task/log・future拒否は変更していない。新しいsuite/CIの受入は主張しない。
 monitor-doc-validation-v1は対象9fileのlink/秘密pattern/差分scope、24証拠hash、正式ledger不変と11source/config/lock bytesを確認してexit0。
 最終索引にはその検査recipe/receiptも追加し、全hashを再照合する。最後のcommit/push receiptはlocalへ保存する。
+
+
+## 2026-11-14：T02/T12の実API・monitor producer受入（基点c1a42cb）
+
+ユーザーは現在PCの専用環境で進めると指定。画像のAI-DESKTOP/f43ec6a/cleanとこのチャットのDESKTOP-J589D75を区別し、remote接続・再fit・窓再選定を行わない。
+最初のpwd/hostname/git status/log、scope資料/compose/source読取を実施。通常sandboxはnetlink/Docker socketを拒否したため、対象3portとDocker一覧を限定昇格read。
+5001/55434/8110は空き、既存5コンテナID/image/StartedAtを保存。全候補6file、固定pair、正式消費台帳、source/config/lock bytesを照合。
+新root data/reports/20261114-capital-runtime/へrun.py wrapper/事前plan/secret除外dispatchを保存し、全実行をlabel別log/receipt/UTC未資格境界/monotonic/SHA付きで記録。
+prepare-v1、compose config -q、現Dockerfileの別image build、network noneの全105lock版確認が成功。container Python3.12.11とhost3.12.3の差を明記。
+専用Compose project capital-acceptance-20261114のPG/artifact2volumeだけを新設。新規private.envは0600、既存.envを使わずnative出力のsecret混入もdispatchで除外。
+最初のregistry health接続はworker startup前にreset。専用MLflowログでstartup完了を確認してから読取再確認、health200/登録モデル0を確認。初回logも保存。
+register_capital_candidate.pyは同candidate e2df579…を専用5001へblocked/version1で登録しexit0。run7827b63cd9034ce7809367cf162e76e5。
+元skops SHA1e17fd…は不変、登録directory SHA13dbe8…はMLflow包装のhashとして区別。operational not_evaluated/deployment blockedを保持。
+seed_capital_staging.pyは正式CSV/manifest/registryと照合し専用55434へ32,849行を投入、exit0。api-stagingを8110へ起動、ready/version200。
+api_checks.pyで04-01 10時のoffline/API予測700.7861957728056、一致。同時再送2件と同一再送200、監査1行、変更入力409、通常deploy eligibility拒否が成功。
+API operation metadataはlegacy_unverifiable/approval_evidence=false。matched approvalと見なさず残す。
+
+事前replay-monitor-planを固定。finalと同じ1,461targetの実API replay（end10-01 03時/limit1461で末尾ラベル待機clockを含める）を実行、HTTP error0。
+これはruntime監査でありfinalを再選定へ再利用せず、追加10月target混入も全行で否定。参考p95は正式50+1000測定と分ける。
+実monitor CLIはregistry training reference、実DB feature/data-version/identityを検証し、run8c969ce1-b2dc-46cd-86ee-ce87d5e63f97の1,464窓をCSV/JSON/complete marker/PGへ保存。
+monitor-inspect CLIはPG REPEATABLE READ READ ONLY、全1,464行・file前後hash/marker/最新窓をmatched。DB REAL丸め/SQL NaN52件を型どおり確認。
+compare_monitor.pyは別processで全1,461API監査とfinal保存予測、全1,464窓のoffline件数/指標/PSI詳細/状態を比較してexit0。
+分布警告1,336/誤差警告234、最新165正解/MAE224.346232は維持。閾値/bins/recipe調整や因果の憶測をしない。
+monitor-inspect自身はmodel binding report_onlyなので、それだけをregistry真正性証明にせず上記API/登録reference照合を結合。
+
+runner9/publisher6/evidence15回帰成功。journal9の初回はsocket sandbox拒否3件で失敗、限定昇格した同9件が成功。T03自然再発ではない。
+通常同期表示NTP=yes/NTPSynchronized=yes、約3秒31点のUTC非逆行とmonotonic/perf_counter正方向を確認。精密校正/時計資格/過去原因解決ではない。
+helperの運用plan出力先が契約外で初回拒否。初回helper bytesと失敗logを保持し製品指定operational-plansへ修正。
+さらにwhole evaluations symlinkでは運用pathのproject内制約と合わないことを静的に確認し、測定開始前に自身のsymlinkだけ変更。
+専用data/evaluations directory＋consumption-ledger.jsonだけ正式元台帳へのsymlinkとし、同candidateの既存運用attemptなしを確認。
+新規planだけを元共有先から専用projectへbytes不変で移動。plan SHA326f8c…/file90338f…、正式消費台帳SHA c42de5…不変。
+運用attemptはまだ開始せず、_read_plan/訓練内168h/資源capture/0attemptを照合。次は同planの測定とpaired復元。
+資料探索中の非存在docker/mlflow.Dockerfile、capital-deployment-producers.md、capital_monitor_producer.py読取エラーも経緯として残す。実体はrgで確認し、製品不具合とは扱わない。
+
+今回の公開節目は実API/監視の部分受入。証拠索引20261114-capital-runtime-checks.jsonに110file/35attemptの原本hashと限界を固定。
+原本・秘密env・dump/volumeはGit対象外。製品source/schema/writer/lock/workflow無変更、全suite/新CI成功を主張しない。
+T02/T12全22case・運用gate・T13bは未完了。OS/時計/service/task/log・実registry/DB/現配信を変更しない。
+
+公開前の索引検算v1は作成中runtime-index-v1.logをhash対象へ入れたため不一致で失敗。初稿をrejected原本として保持し、索引作成logをallowlistから除いたv2へ修正。
+最終110原本hash/9対象fileの相対link・secret実値不在・diff checkを検算し成功。索引作成後の検算/commit/push receiptは別local証拠として残し、自己参照hashへ含めない。

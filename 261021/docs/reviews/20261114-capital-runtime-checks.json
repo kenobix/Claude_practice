@@ -1,0 +1,1507 @@
+{
+  "schema_version": 1,
+  "base_commit": "c1a42cbbdc76df46e61bad2b97fd3a9744374c21",
+  "status": "REAL_CAPITAL_API_MONITOR_ACCEPTED_PARTIAL_T02_T12",
+  "execution_source_commit": "767760d04fcb3a20659d4f7a6d5188fb9b8de65c",
+  "execution_host": "DESKTOP-J589D75",
+  "image": {
+    "status": "passed",
+    "image_id": "sha256:888539f1e5ffd2b8831e8346414cb44367feb1540e48172a1a5ee8c41218505c",
+    "python": "3.12.11 (main, Sep 30 2025, 00:40:22) [GCC 12.2.0]",
+    "locked_distributions_verified": 105,
+    "image_build_source": "767760d",
+    "no_network_during_version_check": true,
+    "host_python": "3.12.3",
+    "container_python_patch_differs_recorded": true
+  },
+  "registration": {
+    "model_name": "bike-demand-capital",
+    "model_version": "1",
+    "candidate_id": "e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b",
+    "candidate_artifact_sha256": "1e17fdb0d48c978dbf35c72125ca897bbe42882e24d3d647795ab0171bbf0ce2",
+    "registered_artifact_sha256": "13dbe8447e816b29ecf76c1cf4e173f679a50204ab8d9d682c113ed405810f8c",
+    "candidate_report_sha256": "74c0417ba661fd8b32d771349df092760fc7a7f8f3caf1d86b879df0031653cc",
+    "final_report_sha256": "8312ed9f22d9f93c1d55f736369ad5f2e66839626297b160800b5a49e9860893",
+    "operational_gate_status": "not_evaluated",
+    "deployment_permission": "blocked",
+    "staging_environment_file": "data/runtime-capital-staging/staging.env",
+    "tracking_uri": "http://127.0.0.1:5001"
+  },
+  "api_checks": {
+    "status": "passed",
+    "candidate_id": "e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b",
+    "ready": {
+      "deployment_operation": {
+        "status": "legacy_unverifiable",
+        "approval_evidence": false
+      },
+      "status": "ready",
+      "data_profile_id": "capital-bikeshare",
+      "target_contract_id": "capital-trip-starts-hourly-v1",
+      "model_name": "bike-demand-capital",
+      "model_version": "1",
+      "candidate_id": "e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b",
+      "deployment_permission": "blocked",
+      "quality_gate_status": "passed",
+      "timezone_database": {
+        "provider": "python-tzdata-package",
+        "package": "tzdata",
+        "package_version": "2026.5",
+        "zone_name": "America/New_York",
+        "zone_file_bytes": 1744,
+        "zone_file_sha256": "d7f2206b3a45989fc9ad63d558922532fa7352280d5f87176bf1db79cb1d1fa9"
+      }
+    },
+    "version": {
+      "deployment_operation": {
+        "status": "legacy_unverifiable",
+        "approval_evidence": false
+      },
+      "application_version": "0.1.0",
+      "data_profile_id": "capital-bikeshare",
+      "data_profile_status": "migration-only",
+      "target_contract_id": "capital-trip-starts-hourly-v1",
+      "model_name": "bike-demand-capital",
+      "model_version": "1",
+      "candidate_id": "e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b",
+      "deployment_permission": "blocked",
+      "artifact_sha256": "13dbe8447e816b29ecf76c1cf4e173f679a50204ab8d9d682c113ed405810f8c",
+      "quality_gate_status": "passed",
+      "feature_contract_version": "bike-demand-features-v1",
+      "timezone_database": {
+        "provider": "python-tzdata-package",
+        "package": "tzdata",
+        "package_version": "2026.5",
+        "zone_name": "America/New_York",
+        "zone_file_bytes": 1744,
+        "zone_file_sha256": "d7f2206b3a45989fc9ad63d558922532fa7352280d5f87176bf1db79cb1d1fa9"
+      }
+    },
+    "offline_api_prediction": 700.7861957728056,
+    "concurrent_statuses": [
+      200,
+      200
+    ],
+    "identical_retry_status": 200,
+    "changed_input_status": 409,
+    "audit_rows_for_request": 1,
+    "normal_deploy_rejected": "Capital model is not eligible for deployment; missing or non-passed gate tags: operational_gate_status, deployment_permission",
+    "operational_gate": "not_evaluated",
+    "deployment_permission": "blocked"
+  },
+  "monitor": {
+    "status": "passed",
+    "scope": "actual HTTP/PG/registered-training-reference monitor compared to offline arithmetic, no new selection",
+    "windows_compared": 1464,
+    "prediction_audits_compared": 1461,
+    "distribution_status_counts": {
+      "insufficient_data": 23,
+      "investigate_distribution_change": 1336,
+      "no_threshold_crossing": 105
+    },
+    "quality_status_counts": {
+      "insufficient_labels": 26,
+      "within_review_threshold": 1204,
+      "investigate_error_increase": 234
+    },
+    "latest": {
+      "window_end": "2026-10-01 02:00:00",
+      "window_start": "2026-09-24 02:00:00",
+      "prediction_count": 165,
+      "scored_count": 165,
+      "label_coverage": 1.0,
+      "mae": 224.34623238109265,
+      "rmse": 349.3506119057435,
+      "quality_status": "investigate_error_increase",
+      "psi": {
+        "lag_24": 0.1296665693882536,
+        "lag_168": 0.1701780156080062,
+        "hour": 0.0019335342190930247
+      },
+      "feature_missing_rates": {
+        "lag_24": 0.0,
+        "lag_168": 0.0
+      },
+      "distribution_status": "no_threshold_crossing",
+      "psi_algorithm": "psi-v2-constant-bins",
+      "psi_details": {
+        "lag_24": {
+          "algorithm": "psi-v2-constant-bins",
+          "reference_sha256": "42310c6a3e37d4a02e8b70696de55a8aba771194785b25772dfd0fdf9916d870",
+          "reference_status": "ready",
+          "reference_input_counts": {
+            "finite": 29888,
+            "missing": 31,
+            "nonfinite": 0,
+            "total": 29919
+          },
+          "current_input_counts": {
+            "total": 165,
+            "finite": 165,
+            "missing": 0,
+            "nonfinite": 0
+          },
+          "minimum_current_count": 24,
+          "status": "ready",
+          "psi": 0.1296665693882536,
+          "current_bin_counts": [
+            10,
+            12,
+            14,
+            11,
+            16,
+            10,
+            17,
+            24,
+            23,
+            28
+          ]
+        },
+        "lag_168": {
+          "algorithm": "psi-v2-constant-bins",
+          "reference_sha256": "b52f8ac2551915821a999f9be74217634821e3384681308608b6924316892e54",
+          "reference_status": "ready",
+          "reference_input_counts": {
+            "finite": 29744,
+            "missing": 175,
+            "nonfinite": 0,
+            "total": 29919
+          },
+          "current_input_counts": {
+            "total": 165,
+            "finite": 165,
+            "missing": 0,
+            "nonfinite": 0
+          },
+          "minimum_current_count": 24,
+          "status": "ready",
+          "psi": 0.1701780156080062,
+          "current_bin_counts": [
+            11,
+            13,
+            11,
+            9,
+            16,
+            12,
+            17,
+            18,
+            22,
+            36
+          ]
+        },
+        "hour": {
+          "algorithm": "psi-v2-constant-bins",
+          "reference_sha256": "69f6b290143262543f22d8a53dbd3c4c12fe0e247fad698b0192ac3a2b23feb8",
+          "reference_status": "ready",
+          "reference_input_counts": {
+            "finite": 29919,
+            "missing": 0,
+            "nonfinite": 0,
+            "total": 29919
+          },
+          "current_input_counts": {
+            "total": 165,
+            "finite": 165,
+            "missing": 0,
+            "nonfinite": 0
+          },
+          "minimum_current_count": 24,
+          "status": "ready",
+          "psi": 0.0019335342190930247,
+          "current_bin_counts": [
+            12,
+            13,
+            21,
+            14,
+            21,
+            14,
+            14,
+            21,
+            14,
+            21
+          ]
+        }
+      },
+      "training_reference_sha256": "f3cb436c3d002fef5427e8ddfd6138db0031f96cd05e339605b50c5377cac258"
+    },
+    "marker_status": "database_commit_succeeded",
+    "operational_gate": "not_evaluated",
+    "deployment_permission": "blocked"
+  },
+  "inspection": {
+    "schema_version": 1,
+    "kind": "monitor-run-inspection",
+    "policy_id": "monitor-run-reconciliation-v1",
+    "observed_at_utc": "2026-11-14T11:38:15.643263+00:00",
+    "monitor_run_id": "8c969ce1-b2dc-46cd-86ee-ce87d5e63f97",
+    "status": "matched",
+    "reason": "files_and_database_match",
+    "exit_code": 0,
+    "data_profile_id": "capital-bikeshare",
+    "target_contract_id": "capital-trip-starts-hourly-v1",
+    "model_name": "bike-demand-capital",
+    "model_version": "1",
+    "model_binding": "report_only",
+    "files": {
+      "csv": {
+        "state": "present",
+        "path": "/home/kenshin/work/claude_practice/261021/data/reports/20261114-capital-runtime/monitor.csv",
+        "bytes": 2718138,
+        "sha256": "5f6cd23538b0ebc802592f1c54a2f4fbbbe4b19ed1f632c7035191edbf4b54e3"
+      },
+      "summary": {
+        "state": "present",
+        "path": "/home/kenshin/work/claude_practice/261021/data/reports/20261114-capital-runtime/monitor.json",
+        "bytes": 6311,
+        "sha256": "fccf76afab52a7a1419d241bf70e62f314dd77883017f69c06ab09dadc2fd5d2"
+      },
+      "marker": {
+        "state": "present",
+        "path": "/home/kenshin/work/claude_practice/261021/data/reports/20261114-capital-runtime/monitor.complete.json",
+        "bytes": 379,
+        "sha256": "d3e916d2795021d1d816ffb452cb1565ad5f64c73c5aec232e70e10d294543b5"
+      }
+    },
+    "database": {
+      "backend": "postgresql",
+      "profile_status": "matched",
+      "row_count": 1464,
+      "snapshot": "postgresql_repeatable_read_only",
+      "numeric_storage": {
+        "label_coverage": "binary32",
+        "mae": "binary32",
+        "rmse": "binary32"
+      },
+      "missing_representations": {
+        "sql_null": 0,
+        "sql_nan_missing": 52
+      },
+      "binary32_examples": {
+        "label_coverage": {
+          "window_end": "2026-08-01 03:00:00",
+          "source_binary64": 0.0,
+          "expected_binary32": 0.0,
+          "observed": 0.0
+        },
+        "mae": {
+          "window_end": "2026-08-02 05:00:00",
+          "source_binary64": 44.256192038418895,
+          "expected_binary32": 44.25619125366211,
+          "observed": 44.25619
+        },
+        "rmse": {
+          "window_end": "2026-08-02 05:00:00",
+          "source_binary64": 56.461173823693464,
+          "expected_binary32": 56.46117401123047,
+          "observed": 56.461174
+        }
+      }
+    },
+    "checks": {
+      "file_snapshot": "passed",
+      "input_format": "passed",
+      "run_identity": "passed",
+      "file_hashes": "passed",
+      "database_profile": "passed",
+      "database_rows": "passed",
+      "latest_window": "passed"
+    },
+    "differences": [],
+    "difference_count": 0,
+    "differences_truncated": false,
+    "decision": "inspection_only_no_retry_or_approval",
+    "automatic_repair": false,
+    "automatic_promotion": false,
+    "later_commit_possible": false,
+    "limitations": [
+      "Inspection does not prove registry/model authenticity.",
+      "A later database commit may change a no-marker observation."
+    ]
+  },
+  "canonical_consumption_ledger_sha256": "c42de5e869d4765ac5f776ed098e98cbbed347c0dbe2c967016b14d64986b652",
+  "attempts": [
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "cli",
+        "replay",
+        "--model-version",
+        "1",
+        "--start",
+        "2026-08-01 03:00:00",
+        "--end",
+        "2026-10-01 03:00:00",
+        "--limit",
+        "1461",
+        "--api-url",
+        "http://127.0.0.1:8110",
+        "--timeout",
+        "10",
+        "--progress-every",
+        "250"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:33:42.994592+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:36:53.117328+00:00",
+      "monotonic_start_ns": 201180752196369,
+      "monotonic_end_ns": 201372739926408,
+      "log": "actual-api-replay-v1.log",
+      "log_sha256": "80b67dfbc31b97e529b16e9c9d472d5fb63c504d47ab35b1a839a612803d2ddf"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "cli",
+        "monitor",
+        "--model-version",
+        "1",
+        "--replay-id",
+        "df216153f825-2026080103-2026100103",
+        "--psi-version",
+        "psi-v2-constant-bins",
+        "--window-hours",
+        "168",
+        "--minimum-labels",
+        "24",
+        "--output",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-capital-runtime/monitor.csv"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:37:25.509512+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:38:00.379583+00:00",
+      "monotonic_start_ns": 201405607532651,
+      "monotonic_end_ns": 201440807535929,
+      "log": "actual-monitor-cli-v1.log",
+      "log_sha256": "2c78f4b1bb2836eb075c7955fa9963728ad3760565795bb5828fdaeefca322bf"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-capital-runtime/api_checks.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:33:17.965183+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:33:26.699291+00:00",
+      "monotonic_start_ns": 201155448584458,
+      "monotonic_end_ns": 201164456848777,
+      "log": "api-parity-audit-v1.log",
+      "log_sha256": "a9bbf1f8a1a377f1d530ec21c554a263c04e1153d922a20dbc8409ab07a9fe90"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "register"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:30:24.677390+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:30:58.253221+00:00",
+      "monotonic_start_ns": 200977120656460,
+      "monotonic_end_ns": 201013819438660,
+      "log": "blocked-registration-v1.log",
+      "log_sha256": "5e687089a6abd033aeb9cacecced88ff139b47041289f8dcf35b44e11c5bbfe5"
+    },
+    {
+      "command": [
+        "docker",
+        "compose",
+        "--env-file",
+        "261021/data/reports/20261114-capital-runtime/private.env",
+        "-f",
+        "261021/data/reports/20261114-capital-runtime/compose.yaml",
+        "config",
+        "-q"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:23:06.091565+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:23:06.394837+00:00",
+      "monotonic_start_ns": 200508665549677,
+      "monotonic_end_ns": 200508968823001,
+      "log": "compose-config-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "seed"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:31:21.778325+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:32:05.084694+00:00",
+      "monotonic_start_ns": 201037344546953,
+      "monotonic_end_ns": 201081914694194,
+      "log": "database-seed-v1.log",
+      "log_sha256": "8d7308b11a59571d8e811c06d95059f3547a73c7cc8dea0036f92bb63eb89ef1"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/rebind_evaluation_directory.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:39:53.450592+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:39:53.523158+00:00",
+      "monotonic_start_ns": 201554466361955,
+      "monotonic_end_ns": 201554538911046,
+      "log": "evaluation-directory-boundary-v1.log",
+      "log_sha256": "39a655f214e90c1811a2c29145d54be30adad47f562bc6689dc8629a4eec7ad9"
+    },
+    {
+      "command": [
+        "docker",
+        "ps",
+        "--format",
+        "{{.ID}} {{.Names}} {{.Image}} {{.Ports}}"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:23:05.883273+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:23:06.025302+00:00",
+      "monotonic_start_ns": 200508457261630,
+      "monotonic_end_ns": 200508599282819,
+      "log": "existing-services-v1.log",
+      "log_sha256": "b9612fede63ecdc8b7676250e4ffee1ce47595bbcd8138e87b539fb0ecc94ec9"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "plan"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:39:01.201269+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:39:09.891133+00:00",
+      "monotonic_start_ns": 201501947119916,
+      "monotonic_end_ns": 201510636964225,
+      "log": "freeze-operational-plan-canonical-path-v2.log",
+      "log_sha256": "3cc41c1f2a70f454754aad00b03c3bed47c4343fe1b5eb327873c86becd59d91"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "plan"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T11:38:25.286159+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:38:34.206352+00:00",
+      "monotonic_start_ns": 201465869490481,
+      "monotonic_end_ns": 201474789675289,
+      "log": "freeze-operational-plan-v1.log",
+      "log_sha256": "2c98efeacf42c0add2e3719462aae5ee48b595eea8fd1bbd7b325afe44385ebc"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/freeze_replay.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:25:01.537555+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:25:01.679216+00:00",
+      "monotonic_start_ns": 200632121669317,
+      "monotonic_end_ns": 200632263316772,
+      "log": "freeze-replay-monitor-v1.log",
+      "log_sha256": "9e95e7d6ee1078944cdbe80ed45e3f04b06820d97f3f0b4f460c82d4fb3bfc67"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-capital-runtime/check_frozen_plan.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:40:08.580115+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:40:11.716571+00:00",
+      "monotonic_start_ns": 201569595976898,
+      "monotonic_end_ns": 201572732321577,
+      "log": "frozen-plan-preflight-v1.log",
+      "log_sha256": "200d0a3ba61529978502c3265c913a7860a32573ec3160dbb6424dcf52aabf44"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/kenshin/work/claude_practice/261021/tests",
+        "-p",
+        "test_capital_deployment_evidence.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:28:48.913632+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:29:17.347469+00:00",
+      "monotonic_start_ns": 200875665890542,
+      "monotonic_end_ns": 200906079756603,
+      "log": "future-policy-regression-v1.log",
+      "log_sha256": "b5b7dcecdc5bfbb1ca8b7a28116d677db77250e61bad6c3f4f4ecbe33a8c165f"
+    },
+    {
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "900",
+        "docker",
+        "build",
+        "-t",
+        "capital-runtime-20261114:767760d",
+        "261021/data/reports/20261114-product-resume/project"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:23:06.461078+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:27:44.036786+00:00",
+      "monotonic_start_ns": 200509035065861,
+      "monotonic_end_ns": 200806829904087,
+      "log": "image-build-v1.log",
+      "log_sha256": "b8103144249b0cc80dd624842e7c99aaeffdf9f24299ecdba8204251f64dd90c"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/image_check.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:31:04.335198+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:31:07.862269+00:00",
+      "monotonic_start_ns": 201019901452606,
+      "monotonic_end_ns": 201023428490351,
+      "log": "image-lock-check-v1.log",
+      "log_sha256": "2a90b05beba6222c1cef3df3ac99b9c7f3cc8da41fc5f30f0cba55bd8cfdb4a6"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "compose",
+        "up",
+        "-d",
+        "--wait",
+        "--wait-timeout",
+        "90",
+        "postgres-staging",
+        "mlflow"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:28:32.397400+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:28:40.064103+00:00",
+      "monotonic_start_ns": 200857172745366,
+      "monotonic_end_ns": 200866816359070,
+      "log": "infrastructure-up-v1.log",
+      "log_sha256": "735549e1f7ba658d2220ec7d8751431deca9dc8bf7b4eaefd3b94b0d40d193a7"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/kenshin/work/claude_practice/261021/tests",
+        "-p",
+        "test_capital_measurement_runner.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:27:09.373873+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:27:46.208197+00:00",
+      "monotonic_start_ns": 200768164897863,
+      "monotonic_end_ns": 200809001286750,
+      "log": "measurement-timeout-regression-v1.log",
+      "log_sha256": "cf38b41e73e3947e642e50d246cff432d8597d3cbc24ef452528dee5f68b8dbd"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "compose",
+        "logs",
+        "--tail=70",
+        "mlflow"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:29:33.324711+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:29:33.760084+00:00",
+      "monotonic_start_ns": 200922056763396,
+      "monotonic_end_ns": 200924469898713,
+      "log": "mlflow-startup-diagnostics-v1.log",
+      "log_sha256": "0b3a639eea5fe246a05556f1defa0a04f89223b458da7a89603a88daf1b7e8e8"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "cli",
+        "monitor-inspect",
+        "--csv",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-capital-runtime/monitor.csv",
+        "--run-id",
+        "8c969ce1-b2dc-46cd-86ee-ce87d5e63f97"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:38:13.026713+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:38:17.185474+00:00",
+      "monotonic_start_ns": 201453454646318,
+      "monotonic_end_ns": 201457613389842,
+      "log": "monitor-inspect-v1.log",
+      "log_sha256": "f9c49547e6e765beb0a714d22219617cbe228290ece8c79f97a380488c0c19a0"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-capital-runtime/compare_monitor.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:38:17.252488+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:38:18.938981+00:00",
+      "monotonic_start_ns": 201457680414724,
+      "monotonic_end_ns": 201459366895915,
+      "log": "monitor-offline-api-comparison-v1.log",
+      "log_sha256": "bdda014dc057d372fa4fe42b3cb4ba46dd11743af1be40c815f6890533660948"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/execution_order_check.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:37:45.165462+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:37:48.721304+00:00",
+      "monotonic_start_ns": 201425263479942,
+      "monotonic_end_ns": 201428819326849,
+      "log": "ordinary-sync-and-short-order-v1.log",
+      "log_sha256": "2ed4d923f2c32b46ff75e7e5ca6ab58bf6ff1b6dcc1d03e702dfb5269c123a5d"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/prepare.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:22:52.392994+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:22:52.504926+00:00",
+      "monotonic_start_ns": 200493099621817,
+      "monotonic_end_ns": 200493211544273,
+      "log": "prepare-v1.log",
+      "log_sha256": "9e63f53407b094d24cbd0831e5485149bbb3822340b179a136a65c629ce27f6d"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-capital-runtime/coverage_plan.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:35:11.459389+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:35:13.700922+00:00",
+      "monotonic_start_ns": 201270191337472,
+      "monotonic_end_ns": 201272432855423,
+      "log": "readiness-case-inventory-v1.log",
+      "log_sha256": "7186d1811921fb53e7802fcec7cf49ff1ff39c3803ffbf6ba46e3fe94a0d908b"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/save_registration.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:31:36.163373+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:31:36.311736+00:00",
+      "monotonic_start_ns": 201052395423915,
+      "monotonic_end_ns": 201052543765109,
+      "log": "registration-receipt-v1.log",
+      "log_sha256": "f46b657442218579e0c2f5fcd0377997a9b44f4d1fa0932f4fa9b4ff161f9801"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-capital-runtime/registry_precheck.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:29:55.163206+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:30:04.911322+00:00",
+      "monotonic_start_ns": 200945873037633,
+      "monotonic_end_ns": 200957354564522,
+      "log": "registry-precheck-after-startup-v2.log",
+      "log_sha256": "02d438b51f8cc282fbcd767bdf6e10b3de642168f3e34557ab0a8103a0a6534c"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-capital-runtime/registry_precheck.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T11:28:58.788818+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:29:09.832027+00:00",
+      "monotonic_start_ns": 200885541103338,
+      "monotonic_end_ns": 200898564495858,
+      "log": "registry-precheck-v1.log",
+      "log_sha256": "196164e1e6be9ed85bb76418f0b0d45ebea63ed7903b483e197a9b7d83dc0aa9"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-capital-runtime/progress.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:35:28.538264+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:35:29.357372+00:00",
+      "monotonic_start_ns": 201287515530836,
+      "monotonic_end_ns": 201288334592038,
+      "log": "replay-progress-v1.log",
+      "log_sha256": "963a5637b040ea6024ff3a8c28317d97c3deec10e2acf149ac830d607d4e6e53"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/kenshin/work/claude_practice/261021/tests",
+        "-p",
+        "test_capital_request_journal.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:29:34.395816+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:30:15.909986+00:00",
+      "monotonic_start_ns": 200925105863283,
+      "monotonic_end_ns": 200968353227119,
+      "log": "request-interruption-regression-socket-v2.log",
+      "log_sha256": "22f7a5f0c9a3bc0917a427641d107cf1cef1136cd19d1a3753b8e8ca47af7a74"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/kenshin/work/claude_practice/261021/tests",
+        "-p",
+        "test_capital_request_journal.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T11:28:41.028739+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:28:48.751310+00:00",
+      "monotonic_start_ns": 200867781009001,
+      "monotonic_end_ns": 200875503557816,
+      "log": "request-interruption-regression-v1.log",
+      "log_sha256": "61b92a3091fac86963252023f6f6afb875226aa4ff5de600e9b442a345eca9c8"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/validate_runtime_docs.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T11:42:27.568129+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:42:27.948197+00:00",
+      "monotonic_start_ns": 201709072608124,
+      "monotonic_end_ns": 201709452670245,
+      "log": "runtime-evidence-validation-v1.log",
+      "log_sha256": "8cbc2ccdeb52254d33c6b3cc09627930a7d8bf42f18eda208d4206232e5d8488"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/service_inventory.py",
+        "before"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:25:28.816793+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:25:29.902637+00:00",
+      "monotonic_start_ns": 200661284763725,
+      "monotonic_end_ns": 200662370600709,
+      "log": "service-identity-before-v1.log",
+      "log_sha256": "9c86e72dd6452244a26c852f8c399d0a99b43ad758353e98c3838d59467672d1"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/service_inventory.py",
+        "live"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:34:06.741179+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:34:08.295355+00:00",
+      "monotonic_start_ns": 201204817763492,
+      "monotonic_end_ns": 201206371910787,
+      "log": "service-identity-live-v1.log",
+      "log_sha256": "c6e37ed6a4c6938daa16466ba397d4b6eaa847d18d81f9733e38b8dd85a27527"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "compose",
+        "up",
+        "-d",
+        "api-staging"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:32:43.000379+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:32:45.720027+00:00",
+      "monotonic_start_ns": 201120106902592,
+      "monotonic_end_ns": 201122826627239,
+      "log": "staging-api-up-v1.log",
+      "log_sha256": "592c53bcc83a1f7ae174f8b1b314c3c6f5f8cb40663c961a6c63779e51b95199"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/wait_ready.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:33:08.177099+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:33:08.359820+00:00",
+      "monotonic_start_ns": 201145660497607,
+      "monotonic_end_ns": 201145843209112,
+      "log": "staging-ready-v1.log",
+      "log_sha256": "d114e93a0945c6a2f2eca31c59395a7fa29c04106340ed026752da198bdbe0cd"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/kenshin/work/claude_practice/261021/tests",
+        "-p",
+        "test_capital_deployment_evidence_publisher.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:27:46.278488+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:28:00.658206+00:00",
+      "monotonic_start_ns": 200809071590623,
+      "monotonic_end_ns": 200823451302599,
+      "log": "strict-future-regression-v1.log",
+      "log_sha256": "2e2401f10b653eba8a4725fb63f4d0c7c0cbdd2fe83b117406d544fdd1d0c1bc"
+    }
+  ],
+  "evidence_files": [
+    {
+      "path": "data/reports/20261114-capital-runtime/actual-api-replay-v1.json",
+      "bytes": 775,
+      "sha256": "f819b44bdb965df5f87a616aadeab82c6575946466796caf6fce472a5aa1c09e"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/actual-api-replay-v1.log",
+      "bytes": 1198,
+      "sha256": "80b67dfbc31b97e529b16e9c9d472d5fb63c504d47ab35b1a839a612803d2ddf"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/actual-monitor-cli-v1.json",
+      "bytes": 852,
+      "sha256": "481ddbc7b755d30571019689f4d7956c210bb8e2f6d54c4d30ffd8d56ee62760"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/actual-monitor-cli-v1.log",
+      "bytes": 3812,
+      "sha256": "2c78f4b1bb2836eb075c7955fa9963728ad3760565795bb5828fdaeefca322bf"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/api-checks-result.json",
+      "bytes": 2318,
+      "sha256": "a9bbf1f8a1a377f1d530ec21c554a263c04e1153d922a20dbc8409ab07a9fe90"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/api-parity-audit-v1.json",
+      "bytes": 615,
+      "sha256": "06100226ee4195bcfc04e4f90b23d1ab2e25fbd963df20be9adcb20abf84587d"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/api-parity-audit-v1.log",
+      "bytes": 2318,
+      "sha256": "a9bbf1f8a1a377f1d530ec21c554a263c04e1153d922a20dbc8409ab07a9fe90"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/api_checks.py",
+      "bytes": 3958,
+      "sha256": "1c3dc24c8cb5ab8a7c502c38384bd3e873281a1cc0746309e39f8a65ef279a44"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/blocked-registration-v1.json",
+      "bytes": 520,
+      "sha256": "c96c7844c2a6d4c711048ae2424647c8e8f20a7405039a9c5eea3604b3aa40ec"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/blocked-registration-v1.log",
+      "bytes": 1093,
+      "sha256": "5e687089a6abd033aeb9cacecced88ff139b47041289f8dcf35b44e11c5bbfe5"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/check_frozen_plan.py",
+      "bytes": 1263,
+      "sha256": "efcdea43b459fcc45d88607220724531ab9ebd59a9e591d9978c70a538ff0f15"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/compare_monitor.py",
+      "bytes": 2575,
+      "sha256": "3c466672032c95ee0763444e7a0f0e8c04dbd48b293c23695a29eca1c0ef646b"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/compose-config-v1.json",
+      "bytes": 629,
+      "sha256": "17ad8678cedded8087f4b5ec63703f79c6224305586e71f0063fa141a77ceb8f"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/compose-config-v1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/compose.yaml",
+      "bytes": 2252,
+      "sha256": "6ef1f411ad454b0da45249864794805c741619d44293feb9040cac1245d3ec69"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/coverage_plan.py",
+      "bytes": 1178,
+      "sha256": "7ded4e3bb59badaf23ed51aeeda4d4712fd95c66b57de7557524f95df3b8efd3"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/database-seed-v1.json",
+      "bytes": 509,
+      "sha256": "4f81382e9b71ef842fbf72eadb639e2bc614f1adf6927d8172823a637def6a21"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/database-seed-v1.log",
+      "bytes": 822,
+      "sha256": "8d7308b11a59571d8e811c06d95059f3547a73c7cc8dea0036f92bb63eb89ef1"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/dispatch-before-plan-path-fix.py",
+      "bytes": 2549,
+      "sha256": "d9b42bece0ebd14e2f1e33d18fe6b7e96529aa57ac13835a8c21ff42ea86e066"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/dispatch.py",
+      "bytes": 2577,
+      "sha256": "bdf76df49826481d1df57f89c2e1aa5d1b0e066b498e0e92f522ecf9f8376bfc"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/evaluation-directory-binding-result.json",
+      "bytes": 1015,
+      "sha256": "39a655f214e90c1811a2c29145d54be30adad47f562bc6689dc8629a4eec7ad9"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/evaluation-directory-boundary-v1.json",
+      "bytes": 532,
+      "sha256": "087fe425d170424c674cf2b1c9d9b2be682e8eb84b9a22bda5315729aeb5ac2d"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/evaluation-directory-boundary-v1.log",
+      "bytes": 1015,
+      "sha256": "39a655f214e90c1811a2c29145d54be30adad47f562bc6689dc8629a4eec7ad9"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/execution-order-check.json",
+      "bytes": 5941,
+      "sha256": "2ed4d923f2c32b46ff75e7e5ca6ab58bf6ff1b6dcc1d03e702dfb5269c123a5d"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/execution_order_check.py",
+      "bytes": 1592,
+      "sha256": "74f01a74bcbe68af4debaefba7e8f38c5cb888492c2240ea747bfabe35f96704"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/existing-services-v1.json",
+      "bytes": 510,
+      "sha256": "97864a7a655949eb476d2c99f21191ff346c61aaf7a66881fc619d70a1743abf"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/existing-services-v1.log",
+      "bytes": 399,
+      "sha256": "b9612fede63ecdc8b7676250e4ffee1ce47595bbcd8138e87b539fb0ecc94ec9"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/freeze-operational-plan-canonical-path-v2.json",
+      "bytes": 534,
+      "sha256": "fd92e46d22c82751ed3731babbb5f2783bd29e3a5237d6db04194d2fd462485f"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/freeze-operational-plan-canonical-path-v2.log",
+      "bytes": 380,
+      "sha256": "3cc41c1f2a70f454754aad00b03c3bed47c4343fe1b5eb327873c86becd59d91"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/freeze-operational-plan-v1.json",
+      "bytes": 519,
+      "sha256": "566ada0edbdd67d7d6ab9c0bef9adb168bb6ae8e517bfc1a179ad64f3675e644"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/freeze-operational-plan-v1.log",
+      "bytes": 837,
+      "sha256": "2c98efeacf42c0add2e3719462aae5ee48b595eea8fd1bbd7b325afe44385ebc"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/freeze-replay-monitor-v1.json",
+      "bytes": 510,
+      "sha256": "e3b2f0af985e0992658a6192ca573d9e88f6003fc7981ba34ba5a16ac3be5e22"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/freeze-replay-monitor-v1.log",
+      "bytes": 1006,
+      "sha256": "9e95e7d6ee1078944cdbe80ed45e3f04b06820d97f3f0b4f460c82d4fb3bfc67"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/freeze_replay.py",
+      "bytes": 1138,
+      "sha256": "8cffc2502a04946606559a1cff09d67c7b954dff7b9870d208afe950db97dd4a"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/frozen-plan-check-result.json",
+      "bytes": 2921,
+      "sha256": "200d0a3ba61529978502c3265c913a7860a32573ec3160dbb6424dcf52aabf44"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/frozen-plan-preflight-v1.json",
+      "bytes": 627,
+      "sha256": "90981f72daa9bb3a8b599d4ae23c061f75c75b764a315264fa948da91fd9c7c6"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/frozen-plan-preflight-v1.log",
+      "bytes": 2921,
+      "sha256": "200d0a3ba61529978502c3265c913a7860a32573ec3160dbb6424dcf52aabf44"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/future-policy-regression-v1.json",
+      "bytes": 692,
+      "sha256": "46352a9c9ed1ea297f973bd11b0ee9b430c92bcf2b08dd93953b21d8d780cca8"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/future-policy-regression-v1.log",
+      "bytes": 3300,
+      "sha256": "b5b7dcecdc5bfbb1ca8b7a28116d677db77250e61bad6c3f4f4ecbe33a8c165f"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/image-build-v1.json",
+      "bytes": 622,
+      "sha256": "640775f40099a7fd900ff670dae2d9d2019b4c4dca93d4b97de1788a4efc0847"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/image-build-v1.log",
+      "bytes": 36232,
+      "sha256": "b8103144249b0cc80dd624842e7c99aaeffdf9f24299ecdba8204251f64dd90c"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/image-check-result.json",
+      "bytes": 376,
+      "sha256": "2a90b05beba6222c1cef3df3ac99b9c7f3cc8da41fc5f30f0cba55bd8cfdb4a6"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/image-lock-check-v1.json",
+      "bytes": 503,
+      "sha256": "8653dd5f0e08aa2dcab921c37140d0e951c5831f293c398aa53122e4e11d8d76"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/image-lock-check-v1.log",
+      "bytes": 376,
+      "sha256": "2a90b05beba6222c1cef3df3ac99b9c7f3cc8da41fc5f30f0cba55bd8cfdb4a6"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/image_check.py",
+      "bytes": 1266,
+      "sha256": "421388451d0ced5899f823f3657b8521dc8957c25a31e4c9c3a7cf38ee86dc7c"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/index-first-pass-active-log-rejected.json",
+      "bytes": 55549,
+      "sha256": "719ad71072f394c546041736309b4df459e7225719279a8a51f77c0af208dbb6"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/infrastructure-up-v1.json",
+      "bytes": 620,
+      "sha256": "5318e46d1e557de57ceb099a652d2a145cbb504a8d3186152cf94da75ba63891"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/infrastructure-up-v1.log",
+      "bytes": 1588,
+      "sha256": "735549e1f7ba658d2220ec7d8751431deca9dc8bf7b4eaefd3b94b0d40d193a7"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/measurement-timeout-regression-v1.json",
+      "bytes": 697,
+      "sha256": "46434d7d557cc17d7c1cf023e375449b972087c7e5197281c8692af83cd53ecd"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/measurement-timeout-regression-v1.log",
+      "bytes": 1701,
+      "sha256": "cf38b41e73e3947e642e50d246cff432d8597d3cbc24ef452528dee5f68b8dbd"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/mlflow-startup-diagnostics-v1.json",
+      "bytes": 568,
+      "sha256": "11eef12295f01ca2149502cb353c246ad8e4f20f990c885a0a0746f2901aaaa6"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/mlflow-startup-diagnostics-v1.log",
+      "bytes": 2615,
+      "sha256": "0b3a639eea5fe246a05556f1defa0a04f89223b458da7a89603a88daf1b7e8e8"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/monitor-comparison-result.json",
+      "bytes": 3684,
+      "sha256": "bdda014dc057d372fa4fe42b3cb4ba46dd11743af1be40c815f6890533660948"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/monitor-inspect-v1.json",
+      "bytes": 705,
+      "sha256": "c3e21df3bc95f6eea8ec97bc1caeec2561ee9e39eb5a5181a1a70ab07123e522"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/monitor-inspect-v1.log",
+      "bytes": 2887,
+      "sha256": "f9c49547e6e765beb0a714d22219617cbe228290ece8c79f97a380488c0c19a0"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/monitor-offline-api-comparison-v1.json",
+      "bytes": 634,
+      "sha256": "645a0226679ce1737ff829e36d72c4b347ae21e249b7b5ebd5388ddfbcea81e4"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/monitor-offline-api-comparison-v1.log",
+      "bytes": 3684,
+      "sha256": "bdda014dc057d372fa4fe42b3cb4ba46dd11743af1be40c815f6890533660948"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/monitor.complete.json",
+      "bytes": 379,
+      "sha256": "d3e916d2795021d1d816ffb452cb1565ad5f64c73c5aec232e70e10d294543b5"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/monitor.json",
+      "bytes": 6311,
+      "sha256": "fccf76afab52a7a1419d241bf70e62f314dd77883017f69c06ab09dadc2fd5d2"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/operational-plan.evidence.json",
+      "bytes": 4944,
+      "sha256": "90338f930668f1b327a92212ef56485e4c7a398897a4100742cd2dbeb7413e5e"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/ordinary-sync-and-short-order-v1.json",
+      "bytes": 526,
+      "sha256": "e81889f3d22c409a0d1c52f7b559391110d84d0f2aed2f532b88ec58eef7b397"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/ordinary-sync-and-short-order-v1.log",
+      "bytes": 5941,
+      "sha256": "2ed4d923f2c32b46ff75e7e5ca6ab58bf6ff1b6dcc1d03e702dfb5269c123a5d"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/paired_restore.py",
+      "bytes": 9421,
+      "sha256": "7d67f2fd0075aafbe934e0d6803d9b7cb14ee1c54f7be308cce9ccda65a21c1c"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/prepare-v1.json",
+      "bytes": 490,
+      "sha256": "3d45179878fab09c931fe3bb64aff6b690b5d233725a86681589293c190a8f85"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/prepare-v1.log",
+      "bytes": 919,
+      "sha256": "9e63f53407b094d24cbd0831e5485149bbb3822340b179a136a65c629ce27f6d"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/prepare.py",
+      "bytes": 4334,
+      "sha256": "e0df84e2a4d6bd8b5679ff9329b9134e993777aaed5a5997820d5273aa5c340f"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/progress.py",
+      "bytes": 387,
+      "sha256": "ce3e47f6ccc6868211dc22ce49b6c7de3f3e91828bcebcc8b614393c579e663a"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/readiness-case-inventory-v1.json",
+      "bytes": 626,
+      "sha256": "612dd8784ccc9519fbf042e617129a7f14ec80ec39cd8b1d45ebdddb6960ea90"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/readiness-case-inventory-v1.log",
+      "bytes": 54,
+      "sha256": "7186d1811921fb53e7802fcec7cf49ff1ff39c3803ffbf6ba46e3fe94a0d908b"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/readiness-coverage-plan.json",
+      "bytes": 3536,
+      "sha256": "d0aa77f8c84ec4787b34a064947482a88856b5d81cc1bc3aff5269ec812e3cae"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/rebind_evaluation_directory.py",
+      "bytes": 1980,
+      "sha256": "ef15bac822211b63969d039655b3c860db21ba739898399b7e3ff8d2714357f9"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/registration-receipt-v1.json",
+      "bytes": 513,
+      "sha256": "ae3da49b9a3131aa316689f8da3556e4e22baf62e3157e8afd28494b9adc3613"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/registration-receipt-v1.log",
+      "bytes": 718,
+      "sha256": "f46b657442218579e0c2f5fcd0377997a9b44f4d1fa0932f4fa9b4ff161f9801"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/registration-result.json",
+      "bytes": 742,
+      "sha256": "f28d5e50bc3c05277e43aa9e019fef0bb3c87d868770e0837def6de0a0a49b3b"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/registry-precheck-after-startup-v2.json",
+      "bytes": 637,
+      "sha256": "cbcee7409d5b3f22898cbc9b75e08a96cf250f8708f06d8be0cc6abcc27aee7c"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/registry-precheck-after-startup-v2.log",
+      "bytes": 131,
+      "sha256": "02d438b51f8cc282fbcd767bdf6e10b3de642168f3e34557ab0a8103a0a6534c"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/registry-precheck-result.json",
+      "bytes": 141,
+      "sha256": "e60f9337206933ef15c031534e4433839fa4ff811d72379bd9b1f2d5766995a2"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/registry-precheck-v1.json",
+      "bytes": 623,
+      "sha256": "e18efab96c66c0bf472101f168b6e7b9dac1ce6945eef6809addd68fa3a96189"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/registry-precheck-v1.log",
+      "bytes": 1895,
+      "sha256": "196164e1e6be9ed85bb76418f0b0d45ebea63ed7903b483e197a9b7d83dc0aa9"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/registry_precheck.py",
+      "bytes": 554,
+      "sha256": "6932cc1aaea997eb52ccf858832f645dd9366de9d3f7a99d3a2863ddb623e442"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/replay-monitor-plan.json",
+      "bytes": 1006,
+      "sha256": "9e95e7d6ee1078944cdbe80ed45e3f04b06820d97f3f0b4f460c82d4fb3bfc67"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/replay-progress-v1.json",
+      "bytes": 612,
+      "sha256": "0158541d19f0da2ff35e152123da3e6e8159b4fae303c414b471d02bb69249e7"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/replay-progress-v1.log",
+      "bytes": 74,
+      "sha256": "963a5637b040ea6024ff3a8c28317d97c3deec10e2acf149ac830d607d4e6e53"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/request-interruption-regression-socket-v2.json",
+      "bytes": 702,
+      "sha256": "70cb8cf2b5daff07a0dc420737eb83f00364bf9a6b5603e5cb270b97aeac5390"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/request-interruption-regression-socket-v2.log",
+      "bytes": 1869,
+      "sha256": "22f7a5f0c9a3bc0917a427641d107cf1cef1136cd19d1a3753b8e8ca47af7a74"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/request-interruption-regression-v1.json",
+      "bytes": 695,
+      "sha256": "7b66aeed2be0d91ced9c32c2fefff438796d416567361f7ea07ba277fe982051"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/request-interruption-regression-v1.log",
+      "bytes": 5932,
+      "sha256": "61b92a3091fac86963252023f6f6afb875226aa4ff5de600e9b442a345eca9c8"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/run.py",
+      "bytes": 949,
+      "sha256": "ab98ea1aa36a223360c08f6f7c924996134aaf776a52582a8b8f82f9c5035b20"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/runtime-evidence-validation-v1.json",
+      "bytes": 524,
+      "sha256": "bb04c994158ac9f1f42c2ada76c36779eae781a556ec67016abf4ad2b110435d"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/runtime-evidence-validation-v1.log",
+      "bytes": 525,
+      "sha256": "8cbc2ccdeb52254d33c6b3cc09627930a7d8bf42f18eda208d4206232e5d8488"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/runtime-plan.json",
+      "bytes": 919,
+      "sha256": "9e63f53407b094d24cbd0831e5485149bbb3822340b179a136a65c629ce27f6d"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/save_registration.py",
+      "bytes": 305,
+      "sha256": "5a7f15003caca29c7b7c630e2a001a1ab9d2e17be56b5855ae3fc85df0324165"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/service-identity-before-v1.json",
+      "bytes": 530,
+      "sha256": "aa3d98a79b6779b455bc5ceb36737eb62288579f4f6edb2b8d8cec8b9a83089f"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/service-identity-before-v1.log",
+      "bytes": 1338,
+      "sha256": "9c86e72dd6452244a26c852f8c399d0a99b43ad758353e98c3838d59467672d1"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/service-identity-live-v1.json",
+      "bytes": 526,
+      "sha256": "71ded8955b9baf722f0e990f3a7ff43c1559dfd4e565a009415f38dc5d39809a"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/service-identity-live-v1.log",
+      "bytes": 6538,
+      "sha256": "c6e37ed6a4c6938daa16466ba397d4b6eaa847d18d81f9733e38b8dd85a27527"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/service_inventory.py",
+      "bytes": 1708,
+      "sha256": "c3415d95f859a7d3deb094021e1956fcbfeaf2bc6140e26ecc208d7b63ff5bba"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/services-before.json",
+      "bytes": 1338,
+      "sha256": "9c86e72dd6452244a26c852f8c399d0a99b43ad758353e98c3838d59467672d1"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/services-live.json",
+      "bytes": 6538,
+      "sha256": "c6e37ed6a4c6938daa16466ba397d4b6eaa847d18d81f9733e38b8dd85a27527"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/staging-api-up-v1.json",
+      "bytes": 552,
+      "sha256": "adea9428f47550e854db982952cba6d526afbecaedc949591a04acac68b56faa"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/staging-api-up-v1.log",
+      "bytes": 642,
+      "sha256": "592c53bcc83a1f7ae174f8b1b314c3c6f5f8cb40663c961a6c63779e51b95199"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/staging-ready-v1.json",
+      "bytes": 499,
+      "sha256": "4e595639d9fd5e0de11c8e3b811a1c5dbd712d1dfc9fbe5f1e888dc87b018192"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/staging-ready-v1.log",
+      "bytes": 985,
+      "sha256": "d114e93a0945c6a2f2eca31c59395a7fa29c04106340ed026752da198bdbe0cd"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/staging-startup-readiness.json",
+      "bytes": 985,
+      "sha256": "d114e93a0945c6a2f2eca31c59395a7fa29c04106340ed026752da198bdbe0cd"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/strict-future-regression-v1.json",
+      "bytes": 702,
+      "sha256": "40df8a104145de22eb3118ad09d3c780e10191db121d280928bcfedadb56fc09"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/strict-future-regression-v1.log",
+      "bytes": 1966,
+      "sha256": "2e2401f10b653eba8a4725fb63f4d0c7c0cbdd2fe83b117406d544fdd1d0c1bc"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/validate_runtime_docs.py",
+      "bytes": 1307,
+      "sha256": "9375d5a619372059edb965ee2dc21907cec919485ff7202561627f8c8cac3167"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/wait_ready.py",
+      "bytes": 909,
+      "sha256": "6f47f3c23672ce11579de232afed3ff4e27ba934779381820608b15ab52fd76a"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/write_runtime_index.py",
+      "bytes": 2651,
+      "sha256": "9f9f6013f8f79a72e66591694712ffc70606e9abfdd575cee3a7bb653d050f1e"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/write_runtime_index_v2.py",
+      "bytes": 2728,
+      "sha256": "22f2c7ecefc06a7f8f05f4503f6aeda9aa939abfe1a7b0accc35571b48d14d66"
+    }
+  ],
+  "limits": [
+    "No fit or reselection; both evaluation windows remain consumed",
+    "Actual replay of historical data, not present public traffic",
+    "operational gate not_evaluated and deployment blocked",
+    "All 22 prerequisite cases are not yet evidenced for this candidate",
+    "Clock research on hold, UTC/elapsed unqualified; no OS or current-serving change",
+    "Only isolated registry/DB writes; private env/dumps excluded",
+    "No product source/schema/writer/lock/workflow change or new CI acceptance claimed"
+  ]
+}

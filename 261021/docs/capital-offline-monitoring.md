@@ -40,3 +40,6 @@ producer内で全窓の所属/到着済み正解数/MAEを別算術で確認し�
 後者はpandas/sklearn/製品monitor関数をimportせず、元CSVの件数からexact lagを作り、bisect histogramとmath.logを使った。
 両方成功。referenceの再作成やbins変更はしていない。[証拠索引](reviews/20261114-capital-monitor-checks.json)。
 次の作業は[実候補の隔離runtime手順](capital-runtime-handoff.md)を参照する。
+
+追補：[実API・監視受入](capital-runtime-acceptance.md)で独立したHTTP/DB producerを実行し、全1,464窓の一致を確認した。
+このoffline原本自体を実producerへ読み替えず、別run ID/CSV/marker/DBの証拠を保持する。

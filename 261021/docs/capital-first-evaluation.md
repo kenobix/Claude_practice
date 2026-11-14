@@ -51,3 +51,6 @@ staging登録は既存実registryへ行わず、専用環境のidentityと分離
 review/別承認と全実証が揃うまでT13b採否は未完了。時計研究を自動的に再開しない。
 
 追補：[保存済み予測の監視診断](capital-offline-monitoring.md)を完了。誤差警告234窓を含むため、全体精度の合格だけで採用せず、実producer証拠とともにreviewする。[次のruntime作業](capital-runtime-handoff.md)の入力確認は成功、運用実測は未実施。
+
+追補：同候補の[専用registry/実API・監視受入](capital-runtime-acceptance.md)を実施した。
+登録は別port5001のversion1、運用未評価/配信blockedのまま。上記の「未登録」は精度評価時点の記録。
