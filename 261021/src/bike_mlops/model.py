@@ -1,4 +1,10 @@
+"""Product components: model."""
 from __future__ import annotations
+
+
+# ========================================================================
+# model
+# ========================================================================
 
 from contextlib import nullcontext
 import hashlib
@@ -8,13 +14,13 @@ from pathlib import Path
 import numpy as np
 
 from bike_mlops.config import DATA_PROFILE_ID, DEFAULT_MLFLOW_URI, TARGET_CONTRACT_ID, RUNTIME_DIR
-from bike_mlops.deployment_gates import require_deployment_eligible
+from bike_mlops.deployment import require_deployment_eligible
 
 
 def _load_stage(stage):
     if not os.getenv("BIKE_DEPLOYMENT_DEADLINE_NS"):
         return nullcontext()
-    from bike_mlops.deployment_progress import deployment_stage
+    from bike_mlops.deployment_runtime import deployment_stage
     return deployment_stage(RUNTIME_DIR, stage)
 
 

@@ -1,0 +1,1999 @@
+{
+  "base_commit": "9479201babd74d2ea318c33574044098cc9d8768",
+  "modules": {
+    "bike_mlops.profiles": {
+      "path_before": "261021/src/bike_mlops/profiles.py",
+      "path_after": "261021/src/bike_mlops/config.py",
+      "module_after": "bike_mlops.config",
+      "renamed_bindings": {
+        "Path": "_profiles_Path",
+        "PROJECT_ROOT": "_profiles_PROJECT_ROOT",
+        "load_data_profile": "_profiles_load_data_profile"
+      }
+    },
+    "bike_mlops.timezones": {
+      "path_before": "261021/src/bike_mlops/timezones.py",
+      "path_after": "261021/src/bike_mlops/config.py",
+      "module_after": "bike_mlops.config",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.config": {
+      "path_before": "261021/src/bike_mlops/config.py",
+      "path_after": "261021/src/bike_mlops/config.py",
+      "module_after": "bike_mlops.config",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.data": {
+      "path_before": "261021/src/bike_mlops/data.py",
+      "path_after": "261021/src/bike_mlops/data.py",
+      "module_after": "bike_mlops.data",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.capital_data": {
+      "path_before": "261021/src/bike_mlops/capital_data.py",
+      "path_after": "261021/src/bike_mlops/data.py",
+      "module_after": "bike_mlops.data",
+      "renamed_bindings": {
+        "Path": "_data_Path",
+        "load_hourly": "_data_load_hourly",
+        "pd": "_data_pd",
+        "sha256_file": "_data_sha256_file"
+      }
+    },
+    "bike_mlops.features": {
+      "path_before": "261021/src/bike_mlops/features.py",
+      "path_after": "261021/src/bike_mlops/data.py",
+      "module_after": "bike_mlops.data",
+      "renamed_bindings": {
+        "datetime": "_features_datetime",
+        "LABEL_DELAY_HOURS": "_features_LABEL_DELAY_HOURS",
+        "pd": "_features_pd",
+        "_timestamp": "_features_timestamp"
+      }
+    },
+    "bike_mlops.db": {
+      "path_before": "261021/src/bike_mlops/db.py",
+      "path_after": "261021/src/bike_mlops/db.py",
+      "module_after": "bike_mlops.db",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.candidate_artifacts": {
+      "path_before": "261021/src/bike_mlops/candidate_artifacts.py",
+      "path_after": "261021/src/bike_mlops/evaluation.py",
+      "module_after": "bike_mlops.evaluation",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.evaluation_protocol": {
+      "path_before": "261021/src/bike_mlops/evaluation_protocol.py",
+      "path_after": "261021/src/bike_mlops/evaluation.py",
+      "module_after": "bike_mlops.evaluation",
+      "renamed_bindings": {
+        "Path": "_evaluation_protocol_Path",
+        "PROJECT_ROOT": "_evaluation_protocol_PROJECT_ROOT",
+        "json": "_evaluation_protocol_json",
+        "tempfile": "_evaluation_protocol_tempfile",
+        "hashlib": "_evaluation_protocol_hashlib",
+        "os": "_evaluation_protocol_os",
+        "pd": "_evaluation_protocol_pd",
+        "sha256_file": "_evaluation_protocol_sha256_file"
+      }
+    },
+    "bike_mlops.quality_gates": {
+      "path_before": "261021/src/bike_mlops/quality_gates.py",
+      "path_after": "261021/src/bike_mlops/evaluation.py",
+      "module_after": "bike_mlops.evaluation",
+      "renamed_bindings": {
+        "BOOTSTRAP_QUALITY_GATE_POLICY": "_quality_gates_BOOTSTRAP_QUALITY_GATE_POLICY",
+        "BOOTSTRAP_QUALITY_GATE_POLICY_SHA256": "_quality_gates_BOOTSTRAP_QUALITY_GATE_POLICY_SHA256"
+      }
+    },
+    "bike_mlops.model": {
+      "path_before": "261021/src/bike_mlops/model.py",
+      "path_after": "261021/src/bike_mlops/model.py",
+      "module_after": "bike_mlops.model",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.capital_deployment_evidence": {
+      "path_before": "261021/src/bike_mlops/capital_deployment_evidence.py",
+      "path_after": "261021/src/bike_mlops/deployment.py",
+      "module_after": "bike_mlops.deployment",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.capital_deployment_decisions": {
+      "path_before": "261021/src/bike_mlops/capital_deployment_decisions.py",
+      "path_after": "261021/src/bike_mlops/deployment.py",
+      "module_after": "bike_mlops.deployment",
+      "renamed_bindings": {
+        "datetime": "_deployment_decisions_datetime",
+        "timezone": "_deployment_decisions_timezone",
+        "load_data_profile": "_deployment_decisions_load_data_profile",
+        "binding": "_deployment_decisions_binding",
+        "utc_time": "_deployment_decisions_utc_time",
+        "re": "_deployment_decisions_re",
+        "REF_KEYS": "_deployment_decisions_REF_KEYS",
+        "BOOTSTRAP_QUALITY_GATE_POLICY": "_deployment_decisions_BOOTSTRAP_QUALITY_GATE_POLICY",
+        "json": "_deployment_decisions_json",
+        "BOOTSTRAP_QUALITY_GATE_POLICY_SHA256": "_deployment_decisions_BOOTSTRAP_QUALITY_GATE_POLICY_SHA256",
+        "hashlib": "_deployment_decisions_hashlib",
+        "verified_registered_evidence": "_deployment_decisions_verified_registered_evidence",
+        "math": "_deployment_decisions_math"
+      }
+    },
+    "bike_mlops.capital_deployment_evidence_publisher": {
+      "path_before": "261021/src/bike_mlops/capital_deployment_evidence_publisher.py",
+      "path_after": "261021/src/bike_mlops/deployment.py",
+      "module_after": "bike_mlops.deployment",
+      "renamed_bindings": {
+        "Path": "_deployment_evidence_publisher_Path",
+        "CASES": "_deployment_evidence_publisher_CASES",
+        "canonical_bytes": "_deployment_evidence_publisher_canonical_bytes",
+        "binding": "_deployment_evidence_publisher_binding",
+        "document": "_deployment_evidence_publisher_document",
+        "evidence_identity": "_deployment_evidence_publisher_evidence_identity",
+        "re": "_deployment_evidence_publisher_re",
+        "reference_tags": "_deployment_evidence_publisher_reference_tags",
+        "tempfile": "_deployment_evidence_publisher_tempfile",
+        "READINESS_POLICY": "_deployment_evidence_publisher_READINESS_POLICY",
+        "verified_registered_evidence": "_deployment_evidence_publisher_verified_registered_evidence",
+        "MODEL": "_deployment_evidence_publisher_MODEL",
+        "validate_bundle": "_deployment_evidence_publisher_validate_bundle"
+      }
+    },
+    "bike_mlops.deployment_gates": {
+      "path_before": "261021/src/bike_mlops/deployment_gates.py",
+      "path_after": "261021/src/bike_mlops/deployment.py",
+      "module_after": "bike_mlops.deployment",
+      "renamed_bindings": {
+        "BOOTSTRAP_QUALITY_GATE_POLICY": "_deployment_gates_BOOTSTRAP_QUALITY_GATE_POLICY",
+        "BOOTSTRAP_QUALITY_GATE_POLICY_SHA256": "_deployment_gates_BOOTSTRAP_QUALITY_GATE_POLICY_SHA256",
+        "verified_registered_evidence": "_deployment_gates_verified_registered_evidence",
+        "validate_capital_decision_tags": "_deployment_gates_validate_capital_decision_tags"
+      }
+    },
+    "bike_mlops.deployment_metadata": {
+      "path_before": "261021/src/bike_mlops/deployment_metadata.py",
+      "path_after": "261021/src/bike_mlops/deployment.py",
+      "module_after": "bike_mlops.deployment",
+      "renamed_bindings": {
+        "strict_json": "_deployment_metadata_strict_json",
+        "Path": "_deployment_metadata_Path",
+        "re": "_deployment_metadata_re",
+        "json": "_deployment_metadata_json"
+      }
+    },
+    "bike_mlops.deployment_inspection": {
+      "path_before": "261021/src/bike_mlops/deployment_inspection.py",
+      "path_after": "261021/src/bike_mlops/deployment.py",
+      "module_after": "bike_mlops.deployment",
+      "renamed_bindings": {
+        "strict_json": "_deployment_inspection_strict_json",
+        "Path": "_deployment_inspection_Path",
+        "os": "_deployment_inspection_os",
+        "sqlite3": "_deployment_inspection_sqlite3"
+      }
+    },
+    "bike_mlops.deployment_progress": {
+      "path_before": "261021/src/bike_mlops/deployment_progress.py",
+      "path_after": "261021/src/bike_mlops/deployment_runtime.py",
+      "module_after": "bike_mlops.deployment_runtime",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.deployment_process": {
+      "path_before": "261021/src/bike_mlops/deployment_process.py",
+      "path_after": "261021/src/bike_mlops/deployment_runtime.py",
+      "module_after": "bike_mlops.deployment_runtime",
+      "renamed_bindings": {
+        "Path": "_deployment_process_Path",
+        "json": "_deployment_process_json",
+        "DeploymentTimeout": "_deployment_process_DeploymentTimeout",
+        "time": "_deployment_process_time",
+        "sys": "_deployment_process_sys",
+        "contextmanager": "_deployment_process_contextmanager",
+        "os": "_deployment_process_os"
+      }
+    },
+    "bike_mlops.monitoring_psi_v2": {
+      "path_before": "261021/src/bike_mlops/monitoring_psi_v2.py",
+      "path_after": "261021/src/bike_mlops/monitoring.py",
+      "module_after": "bike_mlops.monitoring",
+      "renamed_bindings": {
+        "json": "_monitoring_psi_v2_json",
+        "np": "_monitoring_psi_v2_np"
+      }
+    },
+    "bike_mlops.monitoring_window": {
+      "path_before": "261021/src/bike_mlops/monitoring_window.py",
+      "path_after": "261021/src/bike_mlops/monitoring.py",
+      "module_after": "bike_mlops.monitoring",
+      "renamed_bindings": {
+        "json": "_monitoring_window_json",
+        "pd": "_monitoring_window_pd"
+      }
+    },
+    "bike_mlops.monitoring": {
+      "path_before": "261021/src/bike_mlops/monitoring.py",
+      "path_after": "261021/src/bike_mlops/monitoring.py",
+      "module_after": "bike_mlops.monitoring",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.monitor_persistence": {
+      "path_before": "261021/src/bike_mlops/monitor_persistence.py",
+      "path_after": "261021/src/bike_mlops/monitoring.py",
+      "module_after": "bike_mlops.monitoring",
+      "renamed_bindings": {
+        "json": "_monitor_persistence_json",
+        "hashlib": "_monitor_persistence_hashlib",
+        "Path": "_monitor_persistence_Path"
+      }
+    },
+    "bike_mlops.training_monitor_reference": {
+      "path_before": "261021/src/bike_mlops/training_monitor_reference.py",
+      "path_after": "261021/src/bike_mlops/monitoring.py",
+      "module_after": "bike_mlops.monitoring",
+      "renamed_bindings": {
+        "PSI_ALGORITHM_V2": "_training_monitor_reference_PSI_ALGORITHM_V2",
+        "hashlib": "_training_monitor_reference_hashlib",
+        "evaluate_psi_reference": "_training_monitor_reference_evaluate_psi_reference",
+        "math": "_training_monitor_reference_math",
+        "make_psi_reference": "_training_monitor_reference_make_psi_reference",
+        "Path": "_training_monitor_reference_Path",
+        "pd": "_training_monitor_reference_pd",
+        "tempfile": "_training_monitor_reference_tempfile"
+      }
+    },
+    "bike_mlops.monitor_inspection": {
+      "path_before": "261021/src/bike_mlops/monitor_inspection.py",
+      "path_after": "261021/src/bike_mlops/monitor_inspection.py",
+      "module_after": "bike_mlops.monitor_inspection",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.capital_request_journal": {
+      "path_before": "261021/src/bike_mlops/capital_request_journal.py",
+      "path_after": "261021/src/bike_mlops/operational.py",
+      "module_after": "bike_mlops.operational",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.operational_benchmark": {
+      "path_before": "261021/src/bike_mlops/operational_benchmark.py",
+      "path_after": "261021/src/bike_mlops/operational.py",
+      "module_after": "bike_mlops.operational",
+      "renamed_bindings": {
+        "Path": "_operational_benchmark_Path",
+        "json": "_operational_benchmark_json",
+        "hashlib": "_operational_benchmark_hashlib",
+        "datetime": "_operational_benchmark_datetime",
+        "timezone": "_operational_benchmark_timezone",
+        "time": "_operational_benchmark_time",
+        "timedelta": "_operational_benchmark_timedelta",
+        "math": "_operational_benchmark_math",
+        "os": "_operational_benchmark_os",
+        "uuid": "_operational_benchmark_uuid"
+      }
+    },
+    "bike_mlops.capital_operational_plan": {
+      "path_before": "261021/src/bike_mlops/capital_operational_plan.py",
+      "path_after": "261021/src/bike_mlops/operational.py",
+      "module_after": "bike_mlops.operational",
+      "renamed_bindings": {
+        "Path": "_operational_plan_Path",
+        "json": "_operational_plan_json",
+        "hashlib": "_operational_plan_hashlib",
+        "datetime": "_operational_plan_datetime",
+        "timezone": "_operational_plan_timezone",
+        "JOURNAL_POLICY": "_operational_plan_JOURNAL_POLICY",
+        "os": "_operational_plan_os",
+        "MEASURED_REQUESTS": "_operational_plan_MEASURED_REQUESTS",
+        "P95_LIMIT_MS": "_operational_plan_P95_LIMIT_MS",
+        "urlsplit": "_operational_plan_urlsplit",
+        "REQUEST_TIMEOUT_SECONDS": "_operational_plan_REQUEST_TIMEOUT_SECONDS",
+        "re": "_operational_plan_re",
+        "PROJECT_ROOT": "_operational_plan_PROJECT_ROOT",
+        "INPUT_WINDOW_HOURS": "_operational_plan_INPUT_WINDOW_HOURS",
+        "_validate_timezone_grid": "_operational_plan_validate_timezone_grid",
+        "WARMUP_REQUESTS": "_operational_plan_WARMUP_REQUESTS",
+        "pd": "_operational_plan_pd"
+      }
+    },
+    "bike_mlops.capital_operational_ledger": {
+      "path_before": "261021/src/bike_mlops/capital_operational_ledger.py",
+      "path_after": "261021/src/bike_mlops/operational.py",
+      "module_after": "bike_mlops.operational",
+      "renamed_bindings": {
+        "Path": "_operational_ledger_Path",
+        "json": "_operational_ledger_json",
+        "hashlib": "_operational_ledger_hashlib",
+        "datetime": "_operational_ledger_datetime",
+        "timezone": "_operational_ledger_timezone",
+        "os": "_operational_ledger_os",
+        "uuid": "_operational_ledger_uuid",
+        "re": "_operational_ledger_re",
+        "PROJECT_ROOT": "_operational_ledger_PROJECT_ROOT",
+        "tempfile": "_operational_ledger_tempfile",
+        "validate_operational_plan": "_operational_ledger_validate_operational_plan"
+      }
+    },
+    "bike_mlops.capital_benchmark_inputs": {
+      "path_before": "261021/src/bike_mlops/capital_benchmark_inputs.py",
+      "path_after": "261021/src/bike_mlops/operational_validation.py",
+      "module_after": "bike_mlops.operational_validation",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.capital_measurement_guard": {
+      "path_before": "261021/src/bike_mlops/capital_measurement_guard.py",
+      "path_after": "261021/src/bike_mlops/operational_validation.py",
+      "module_after": "bike_mlops.operational_validation",
+      "renamed_bindings": {
+        "hashlib": "_measurement_guard_hashlib",
+        "pd": "_measurement_guard_pd"
+      }
+    },
+    "bike_mlops.capital_benchmark_observer": {
+      "path_before": "261021/src/bike_mlops/capital_benchmark_observer.py",
+      "path_after": "261021/src/bike_mlops/operational_validation.py",
+      "module_after": "bike_mlops.operational_validation",
+      "renamed_bindings": {
+        "verify_prediction_audit_batch": "_benchmark_observer_verify_prediction_audit_batch"
+      }
+    },
+    "bike_mlops.capital_measurement_recheck": {
+      "path_before": "261021/src/bike_mlops/capital_measurement_recheck.py",
+      "path_after": "261021/src/bike_mlops/operational_validation.py",
+      "module_after": "bike_mlops.operational_validation",
+      "renamed_bindings": {
+        "hashlib": "_measurement_recheck_hashlib",
+        "pd": "_measurement_recheck_pd",
+        "re": "_measurement_recheck_re",
+        "math": "_measurement_recheck_math"
+      }
+    },
+    "bike_mlops.capital_operational_recovery": {
+      "path_before": "261021/src/bike_mlops/capital_operational_recovery.py",
+      "path_after": "261021/src/bike_mlops/operational_validation.py",
+      "module_after": "bike_mlops.operational_validation",
+      "renamed_bindings": {
+        "Path": "_operational_recovery_Path",
+        "hashlib": "_operational_recovery_hashlib",
+        "json": "_operational_recovery_json",
+        "contextmanager": "_operational_recovery_contextmanager",
+        "re": "_operational_recovery_re",
+        "uuid": "_operational_recovery_uuid"
+      }
+    },
+    "bike_mlops.capital_operational_registry": {
+      "path_before": "261021/src/bike_mlops/capital_operational_registry.py",
+      "path_after": "261021/src/bike_mlops/operational_validation.py",
+      "module_after": "bike_mlops.operational_validation",
+      "renamed_bindings": {
+        "Path": "_operational_registry_Path",
+        "hashlib": "_operational_registry_hashlib",
+        "contextmanager": "_operational_registry_contextmanager",
+        "re": "_operational_registry_re",
+        "recheck_measurement_records": "_operational_registry_recheck_measurement_records",
+        "uuid": "_operational_registry_uuid",
+        "stat": "_operational_registry_stat",
+        "ledger": "_operational_registry_ledger",
+        "PROJECT_ROOT": "_operational_registry_PROJECT_ROOT",
+        "os": "_operational_registry_os",
+        "fcntl": "_operational_registry_fcntl"
+      }
+    },
+    "bike_mlops.capital_measurement_evidence": {
+      "path_before": "261021/src/bike_mlops/capital_measurement_evidence.py",
+      "path_after": "261021/src/bike_mlops/operational_validation.py",
+      "module_after": "bike_mlops.operational_validation",
+      "renamed_bindings": {
+        "Path": "_measurement_evidence_Path",
+        "hashlib": "_measurement_evidence_hashlib",
+        "json": "_measurement_evidence_json",
+        "re": "_measurement_evidence_re",
+        "recheck_measurement_records": "_measurement_evidence_recheck_measurement_records",
+        "stat": "_measurement_evidence_stat",
+        "inspect_request_journal": "_measurement_evidence_inspect_request_journal",
+        "os": "_measurement_evidence_os",
+        "urlsplit": "_measurement_evidence_urlsplit"
+      }
+    },
+    "bike_mlops.capital_measurement_preflight": {
+      "path_before": "261021/src/bike_mlops/capital_measurement_preflight.py",
+      "path_after": "261021/src/bike_mlops/operational_runner.py",
+      "module_after": "bike_mlops.operational_runner",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.capital_measurement_runner": {
+      "path_before": "261021/src/bike_mlops/capital_measurement_runner.py",
+      "path_after": "261021/src/bike_mlops/operational_runner.py",
+      "module_after": "bike_mlops.operational_runner",
+      "renamed_bindings": {
+        "Path": "_measurement_runner_Path",
+        "verify_measurement_inputs": "_measurement_runner_verify_measurement_inputs"
+      }
+    },
+    "bike_mlops.capital_pending_audit": {
+      "path_before": "261021/src/bike_mlops/capital_pending_audit.py",
+      "path_after": "261021/src/bike_mlops/operational_runner.py",
+      "module_after": "bike_mlops.operational_runner",
+      "renamed_bindings": {
+        "_validate_staging_database": "_pending_audit_validate_staging_database"
+      }
+    },
+    "bike_mlops.capital_staging": {
+      "path_before": "261021/src/bike_mlops/capital_staging.py",
+      "path_after": "261021/src/bike_mlops/staging.py",
+      "module_after": "bike_mlops.staging",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.capital_staging_seed": {
+      "path_before": "261021/src/bike_mlops/capital_staging_seed.py",
+      "path_after": "261021/src/bike_mlops/staging.py",
+      "module_after": "bike_mlops.staging",
+      "renamed_bindings": {
+        "Path": "_staging_seed_Path",
+        "_registration_tags": "_staging_seed_registration_tags",
+        "validate_staging_model_tags": "_staging_seed_validate_staging_model_tags",
+        "sha256_file": "_staging_seed_sha256_file"
+      }
+    },
+    "bike_mlops.api": {
+      "path_before": "261021/src/bike_mlops/api.py",
+      "path_after": "261021/src/bike_mlops/api.py",
+      "module_after": "bike_mlops.api",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.staging_api": {
+      "path_before": "261021/src/bike_mlops/staging_api.py",
+      "path_after": "261021/src/bike_mlops/api.py",
+      "module_after": "bike_mlops.api",
+      "renamed_bindings": {
+        "datetime": "_staging_api_datetime",
+        "Database": "_staging_api_Database",
+        "timezone": "_staging_api_timezone",
+        "FastAPI": "_staging_api_FastAPI",
+        "asynccontextmanager": "_staging_api_asynccontextmanager",
+        "time": "_staging_api_time",
+        "os": "_staging_api_os",
+        "DATA_PROFILE_ID": "_staging_api_DATA_PROFILE_ID",
+        "TARGET_CONTRACT_ID": "_staging_api_TARGET_CONTRACT_ID",
+        "app": "_staging_api_app"
+      }
+    },
+    "bike_mlops.cli": {
+      "path_before": "261021/src/bike_mlops/cli.py",
+      "path_after": "261021/src/bike_mlops/cli.py",
+      "module_after": "bike_mlops.cli",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.clock_rate_review": {
+      "path_before": "261021/src/bike_mlops/clock_rate_review.py",
+      "path_after": "261021/src/bike_mlops/clock.py",
+      "module_after": "bike_mlops.clock",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.clock_campaign_review": {
+      "path_before": "261021/src/bike_mlops/clock_campaign_review.py",
+      "path_after": "261021/src/bike_mlops/clock.py",
+      "module_after": "bike_mlops.clock",
+      "renamed_bindings": {
+        "copy": "_clock_campaign_review_copy",
+        "json": "_clock_campaign_review_json",
+        "hashlib": "_clock_campaign_review_hashlib",
+        "POLICY_SHA256": "_clock_campaign_review_POLICY_SHA256",
+        "POLICY": "_clock_campaign_review_POLICY",
+        "review_clock_rate_phase": "_clock_campaign_review_review_clock_rate_phase",
+        "Fraction": "_clock_campaign_review_Fraction",
+        "_integer": "_clock_campaign_review_integer"
+      }
+    },
+    "bike_mlops.clock_campaign_capture": {
+      "path_before": "261021/src/bike_mlops/clock_campaign_capture.py",
+      "path_after": "261021/src/bike_mlops/clock.py",
+      "module_after": "bike_mlops.clock",
+      "renamed_bindings": {
+        "copy": "_clock_campaign_capture_copy",
+        "json": "_clock_campaign_capture_json",
+        "hashlib": "_clock_campaign_capture_hashlib",
+        "POLICY_SHA256": "_clock_campaign_capture_POLICY_SHA256",
+        "POLICY": "_clock_campaign_capture_POLICY",
+        "re": "_clock_campaign_capture_re",
+        "canonical_sha256": "_clock_campaign_capture_canonical_sha256",
+        "review_clock_campaign": "_clock_campaign_capture_review_clock_campaign"
+      }
+    },
+    "bike_mlops.clock_campaign_schedule": {
+      "path_before": "261021/src/bike_mlops/clock_campaign_schedule.py",
+      "path_after": "261021/src/bike_mlops/clock.py",
+      "module_after": "bike_mlops.clock",
+      "renamed_bindings": {
+        "copy": "_clock_campaign_schedule_copy",
+        "hashlib": "_clock_campaign_schedule_hashlib",
+        "BASE_FIELDS": "_clock_campaign_schedule_BASE_FIELDS",
+        "EXTRA_FIELDS": "_clock_campaign_schedule_EXTRA_FIELDS",
+        "canonical_sha256": "_clock_campaign_schedule_canonical_sha256",
+        "subprocess": "_clock_campaign_schedule_subprocess",
+        "secrets": "_clock_campaign_schedule_secrets",
+        "os": "_clock_campaign_schedule_os",
+        "signal": "_clock_campaign_schedule_signal"
+      }
+    },
+    "bike_mlops.clock_raw_bundle": {
+      "path_before": "261021/src/bike_mlops/clock_raw_bundle.py",
+      "path_after": "261021/src/bike_mlops/clock.py",
+      "module_after": "bike_mlops.clock",
+      "renamed_bindings": {
+        "hashlib": "_clock_raw_bundle_hashlib",
+        "_identity": "_clock_raw_bundle_identity",
+        "Path": "_clock_raw_bundle_Path",
+        "stat": "_clock_raw_bundle_stat",
+        "tempfile": "_clock_raw_bundle_tempfile",
+        "os": "_clock_raw_bundle_os",
+        "raw": "_clock_raw_bundle_raw"
+      }
+    },
+    "bike_mlops.clock_campaign_fake_reader": {
+      "path_before": "261021/src/bike_mlops/clock_campaign_fake_reader.py",
+      "path_after": "261021/src/bike_mlops/clock.py",
+      "module_after": "bike_mlops.clock",
+      "renamed_bindings": {
+        "fake_response": "_clock_campaign_fake_reader_fake_response",
+        "encode": "_clock_campaign_fake_reader_encode",
+        "time": "_clock_campaign_fake_reader_time",
+        "sys": "_clock_campaign_fake_reader_sys",
+        "FAULTS": "_clock_campaign_fake_reader_FAULTS",
+        "signal": "_clock_campaign_fake_reader_signal",
+        "decode": "_clock_campaign_fake_reader_decode"
+      }
+    },
+    "bike_mlops.training": {
+      "path_before": "261021/src/bike_mlops/training.py",
+      "path_after": "261021/src/bike_mlops/training.py",
+      "module_after": "bike_mlops.training",
+      "renamed_bindings": {}
+    },
+    "bike_mlops.__init__": {
+      "path_before": "261021/src/bike_mlops/__init__.py",
+      "path_after": "261021/src/bike_mlops/__init__.py",
+      "module_after": "bike_mlops.__init__",
+      "renamed_bindings": {}
+    },
+    "tests.test_features": {
+      "path_before": "261021/tests/test_features.py",
+      "path_after": "261021/tests/test_data.py",
+      "module_after": "tests.test_data",
+      "renamed_bindings": {}
+    },
+    "tests.test_data_profiles": {
+      "path_before": "261021/tests/test_data_profiles.py",
+      "path_after": "261021/tests/test_data.py",
+      "module_after": "tests.test_data",
+      "renamed_bindings": {
+        "unittest": "_data_profiles_unittest"
+      }
+    },
+    "tests.test_timezones": {
+      "path_before": "261021/tests/test_timezones.py",
+      "path_after": "261021/tests/test_data.py",
+      "module_after": "tests.test_data",
+      "renamed_bindings": {
+        "pd": "_timezones_pd",
+        "unittest": "_timezones_unittest"
+      }
+    },
+    "tests.test_storage": {
+      "path_before": "261021/tests/test_storage.py",
+      "path_after": "261021/tests/test_data.py",
+      "module_after": "tests.test_data",
+      "renamed_bindings": {
+        "pd": "_storage_pd",
+        "unittest": "_storage_unittest",
+        "Path": "_storage_Path",
+        "tempfile": "_storage_tempfile"
+      }
+    },
+    "tests.test_data_monitoring": {
+      "path_before": "261021/tests/test_data_monitoring.py",
+      "path_after": "261021/tests/test_data.py",
+      "module_after": "tests.test_data",
+      "renamed_bindings": {
+        "pd": "_data_monitoring_pd",
+        "unittest": "_data_monitoring_unittest",
+        "np": "_data_monitoring_np",
+        "Path": "_data_monitoring_Path",
+        "tempfile": "_data_monitoring_tempfile"
+      }
+    },
+    "tests.test_quality_gates": {
+      "path_before": "261021/tests/test_quality_gates.py",
+      "path_after": "261021/tests/test_data.py",
+      "module_after": "tests.test_data",
+      "renamed_bindings": {
+        "unittest": "_quality_gates_unittest"
+      }
+    },
+    "tests.test_evaluation_protocol": {
+      "path_before": "261021/tests/test_evaluation_protocol.py",
+      "path_after": "261021/tests/test_data.py",
+      "module_after": "tests.test_data",
+      "renamed_bindings": {
+        "pd": "_evaluation_protocol_pd",
+        "unittest": "_evaluation_protocol_unittest",
+        "patch": "_evaluation_protocol_patch",
+        "Path": "_evaluation_protocol_Path",
+        "json": "_evaluation_protocol_json",
+        "tempfile": "_evaluation_protocol_tempfile",
+        "load_data_profile": "_evaluation_protocol_load_data_profile",
+        "sys": "_evaluation_protocol_sys"
+      }
+    },
+    "tests.test_candidate_artifacts": {
+      "path_before": "261021/tests/test_candidate_artifacts.py",
+      "path_after": "261021/tests/test_data.py",
+      "module_after": "tests.test_data",
+      "renamed_bindings": {
+        "pd": "_candidate_artifacts_pd",
+        "feature_frame_for_dataset": "_candidate_artifacts_feature_frame_for_dataset",
+        "unittest": "_candidate_artifacts_unittest",
+        "np": "_candidate_artifacts_np",
+        "FEATURE_COLUMNS": "_candidate_artifacts_FEATURE_COLUMNS",
+        "patch": "_candidate_artifacts_patch",
+        "Path": "_candidate_artifacts_Path",
+        "json": "_candidate_artifacts_json",
+        "tempfile": "_candidate_artifacts_tempfile",
+        "hashlib": "_candidate_artifacts_hashlib",
+        "baseline_accuracy_gate": "_candidate_artifacts_baseline_accuracy_gate"
+      }
+    },
+    "tests.test_api": {
+      "path_before": "261021/tests/test_api.py",
+      "path_after": "261021/tests/test_api.py",
+      "module_after": "tests.test_api",
+      "renamed_bindings": {}
+    },
+    "tests.test_capital_staging": {
+      "path_before": "261021/tests/test_capital_staging.py",
+      "path_after": "261021/tests/test_api.py",
+      "module_after": "tests.test_api",
+      "renamed_bindings": {
+        "patch": "_capital_staging_patch",
+        "Path": "_capital_staging_Path",
+        "tempfile": "_capital_staging_tempfile",
+        "unittest": "_capital_staging_unittest",
+        "os": "_capital_staging_os"
+      }
+    },
+    "tests.test_capital_staging_seed": {
+      "path_before": "261021/tests/test_capital_staging_seed.py",
+      "path_after": "261021/tests/test_api.py",
+      "module_after": "tests.test_api",
+      "renamed_bindings": {
+        "patch": "_capital_staging_seed_patch",
+        "Path": "_capital_staging_seed_Path",
+        "tempfile": "_capital_staging_seed_tempfile",
+        "unittest": "_capital_staging_seed_unittest",
+        "os": "_capital_staging_seed_os",
+        "BOOTSTRAP_QUALITY_GATE_POLICY": "_capital_staging_seed_BOOTSTRAP_QUALITY_GATE_POLICY",
+        "BOOTSTRAP_QUALITY_GATE_POLICY_SHA256": "_capital_staging_seed_BOOTSTRAP_QUALITY_GATE_POLICY_SHA256",
+        "sha256_file": "_capital_staging_seed_sha256_file",
+        "SimpleNamespace": "_capital_staging_seed_SimpleNamespace"
+      }
+    },
+    "tests.test_monitoring_psi_v2": {
+      "path_before": "261021/tests/test_monitoring_psi_v2.py",
+      "path_after": "261021/tests/test_monitoring.py",
+      "module_after": "tests.test_monitoring",
+      "renamed_bindings": {}
+    },
+    "tests.test_monitoring_window": {
+      "path_before": "261021/tests/test_monitoring_window.py",
+      "path_after": "261021/tests/test_monitoring.py",
+      "module_after": "tests.test_monitoring",
+      "renamed_bindings": {
+        "json": "_monitoring_window_json",
+        "unittest": "_monitoring_window_unittest"
+      }
+    },
+    "tests.test_monitor_persistence": {
+      "path_before": "261021/tests/test_monitor_persistence.py",
+      "path_after": "261021/tests/test_monitoring.py",
+      "module_after": "tests.test_monitoring",
+      "renamed_bindings": {
+        "json": "_monitor_persistence_json",
+        "unittest": "_monitor_persistence_unittest",
+        "patch": "_monitor_persistence_patch",
+        "Path": "_monitor_persistence_Path",
+        "tempfile": "_monitor_persistence_tempfile",
+        "pd": "_monitor_persistence_pd"
+      }
+    },
+    "tests.test_training_monitor_reference": {
+      "path_before": "261021/tests/test_training_monitor_reference.py",
+      "path_after": "261021/tests/test_monitoring.py",
+      "module_after": "tests.test_monitoring",
+      "renamed_bindings": {
+        "json": "_training_monitor_reference_json",
+        "PSI_ALGORITHM_V2": "_training_monitor_reference_PSI_ALGORITHM_V2",
+        "population_stability_index": "_training_monitor_reference_population_stability_index",
+        "unittest": "_training_monitor_reference_unittest",
+        "copy": "_training_monitor_reference_copy",
+        "np": "_training_monitor_reference_np",
+        "make_psi_reference": "_training_monitor_reference_make_psi_reference",
+        "patch": "_training_monitor_reference_patch",
+        "stable_hash": "_training_monitor_reference_stable_hash",
+        "nullcontext": "_training_monitor_reference_nullcontext",
+        "Path": "_training_monitor_reference_Path",
+        "tempfile": "_training_monitor_reference_tempfile",
+        "pd": "_training_monitor_reference_pd",
+        "cli": "_training_monitor_reference_cli",
+        "SimpleNamespace": "_training_monitor_reference_SimpleNamespace",
+        "hashlib": "_training_monitor_reference_hashlib",
+        "Database": "_training_monitor_reference_Database"
+      }
+    },
+    "tests.test_monitor_inspection": {
+      "path_before": "261021/tests/test_monitor_inspection.py",
+      "path_after": "261021/tests/test_monitor_inspection.py",
+      "module_after": "tests.test_monitor_inspection",
+      "renamed_bindings": {}
+    },
+    "tests.test_monitor_inspection_postgres": {
+      "path_before": "261021/tests/test_monitor_inspection_postgres.py",
+      "path_after": "261021/tests/test_monitor_inspection.py",
+      "module_after": "tests.test_monitor_inspection",
+      "renamed_bindings": {
+        "patch": "_monitor_inspection_postgres_patch",
+        "json": "_monitor_inspection_postgres_json",
+        "unittest": "_monitor_inspection_postgres_unittest",
+        "math": "_monitor_inspection_postgres_math"
+      }
+    },
+    "tests.test_deployment_inspection": {
+      "path_before": "261021/tests/test_deployment_inspection.py",
+      "path_after": "261021/tests/test_deployment.py",
+      "module_after": "tests.test_deployment",
+      "renamed_bindings": {
+        "patch": "_deployment_inspection_patch",
+        "Path": "_deployment_inspection_Path",
+        "tempfile": "_deployment_inspection_tempfile",
+        "unittest": "_deployment_inspection_unittest"
+      }
+    },
+    "tests.test_deployment_metadata": {
+      "path_before": "261021/tests/test_deployment_metadata.py",
+      "path_after": "261021/tests/test_deployment.py",
+      "module_after": "tests.test_deployment",
+      "renamed_bindings": {
+        "patch": "_deployment_metadata_patch",
+        "Path": "_deployment_metadata_Path",
+        "tempfile": "_deployment_metadata_tempfile",
+        "unittest": "_deployment_metadata_unittest",
+        "json": "_deployment_metadata_json",
+        "Database": "_deployment_metadata_Database",
+        "os": "_deployment_metadata_os"
+      }
+    },
+    "tests.test_deployment_process": {
+      "path_before": "261021/tests/test_deployment_process.py",
+      "path_after": "261021/tests/test_deployment.py",
+      "module_after": "tests.test_deployment",
+      "renamed_bindings": {
+        "patch": "_deployment_process_patch",
+        "Path": "_deployment_process_Path",
+        "tempfile": "_deployment_process_tempfile",
+        "unittest": "_deployment_process_unittest",
+        "json": "_deployment_process_json",
+        "os": "_deployment_process_os"
+      }
+    },
+    "tests.test_deployment_progress": {
+      "path_before": "261021/tests/test_deployment_progress.py",
+      "path_after": "261021/tests/test_deployment.py",
+      "module_after": "tests.test_deployment",
+      "renamed_bindings": {
+        "patch": "_deployment_progress_patch",
+        "Path": "_deployment_progress_Path",
+        "tempfile": "_deployment_progress_tempfile",
+        "unittest": "_deployment_progress_unittest",
+        "json": "_deployment_progress_json",
+        "io": "_deployment_progress_io",
+        "DeploymentTimeout": "_deployment_progress_DeploymentTimeout",
+        "time": "_deployment_progress_time",
+        "subprocess": "_deployment_progress_subprocess",
+        "cli": "_deployment_progress_cli"
+      }
+    },
+    "tests.test_deployment_recovery": {
+      "path_before": "261021/tests/test_deployment_recovery.py",
+      "path_after": "261021/tests/test_deployment.py",
+      "module_after": "tests.test_deployment",
+      "renamed_bindings": {
+        "patch": "_deployment_recovery_patch",
+        "Path": "_deployment_recovery_Path",
+        "tempfile": "_deployment_recovery_tempfile",
+        "unittest": "_deployment_recovery_unittest",
+        "json": "_deployment_recovery_json",
+        "TARGET": "_deployment_recovery_TARGET",
+        "io": "_deployment_recovery_io",
+        "redirect_stdout": "_deployment_recovery_redirect_stdout",
+        "Database": "_deployment_recovery_Database",
+        "PROFILE": "_deployment_recovery_PROFILE",
+        "cli": "_deployment_recovery_cli"
+      }
+    },
+    "tests.test_capital_deployment_decisions": {
+      "path_before": "261021/tests/test_capital_deployment_decisions.py",
+      "path_after": "261021/tests/test_deployment.py",
+      "module_after": "tests.test_deployment",
+      "renamed_bindings": {
+        "patch": "_capital_deployment_decisions_patch",
+        "Path": "_capital_deployment_decisions_Path",
+        "tempfile": "_capital_deployment_decisions_tempfile",
+        "record_deployment_approval": "_capital_deployment_decisions_record_deployment_approval",
+        "require_deployment_eligible": "_capital_deployment_decisions_require_deployment_eligible",
+        "record_operational_review": "_capital_deployment_decisions_record_operational_review",
+        "unittest": "_capital_deployment_decisions_unittest",
+        "SimpleNamespace": "_capital_deployment_decisions_SimpleNamespace"
+      }
+    },
+    "tests.test_deployment_gates": {
+      "path_before": "261021/tests/test_deployment_gates.py",
+      "path_after": "261021/tests/test_deployment.py",
+      "module_after": "tests.test_deployment",
+      "renamed_bindings": {
+        "eligible_registry": "_deployment_gates_eligible_registry"
+      }
+    },
+    "tests.test_capital_deployment_evidence": {
+      "path_before": "261021/tests/test_capital_deployment_evidence.py",
+      "path_after": "261021/tests/test_deployment.py",
+      "module_after": "tests.test_deployment",
+      "renamed_bindings": {
+        "patch": "_capital_deployment_evidence_patch",
+        "Path": "_capital_deployment_evidence_Path",
+        "tempfile": "_capital_deployment_evidence_tempfile",
+        "record_deployment_approval": "_capital_deployment_evidence_record_deployment_approval",
+        "require_deployment_eligible": "_capital_deployment_evidence_require_deployment_eligible",
+        "record_operational_review": "_capital_deployment_evidence_record_operational_review",
+        "unittest": "_capital_deployment_evidence_unittest",
+        "json": "_capital_deployment_evidence_json",
+        "os": "_capital_deployment_evidence_os",
+        "SimpleNamespace": "_capital_deployment_evidence_SimpleNamespace",
+        "FakeRegistry": "_capital_deployment_evidence_FakeRegistry",
+        "fixture": "_capital_deployment_evidence_fixture"
+      }
+    },
+    "tests.test_capital_deployment_evidence_publisher": {
+      "path_before": "261021/tests/test_capital_deployment_evidence_publisher.py",
+      "path_after": "261021/tests/test_deployment.py",
+      "module_after": "tests.test_deployment",
+      "renamed_bindings": {
+        "patch": "_capital_deployment_evidence_publisher_patch",
+        "Path": "_capital_deployment_evidence_publisher_Path",
+        "tempfile": "_capital_deployment_evidence_publisher_tempfile",
+        "record_deployment_approval": "_capital_deployment_evidence_publisher_record_deployment_approval",
+        "require_deployment_eligible": "_capital_deployment_evidence_publisher_require_deployment_eligible",
+        "record_operational_review": "_capital_deployment_evidence_publisher_record_operational_review",
+        "unittest": "_capital_deployment_evidence_publisher_unittest",
+        "hashlib": "_capital_deployment_evidence_publisher_hashlib",
+        "os": "_capital_deployment_evidence_publisher_os",
+        "diagnose_decision_test": "_capital_deployment_evidence_publisher_diagnose_decision_test",
+        "FakeRegistry": "_capital_deployment_evidence_publisher_FakeRegistry",
+        "fixture": "_capital_deployment_evidence_publisher_fixture",
+        "copy": "_capital_deployment_evidence_publisher_copy",
+        "evidence": "_capital_deployment_evidence_publisher_evidence"
+      }
+    },
+    "tests.test_capital_decision_http": {
+      "path_before": "261021/tests/test_capital_decision_http.py",
+      "path_after": "261021/tests/test_deployment.py",
+      "module_after": "tests.test_deployment",
+      "renamed_bindings": {
+        "patch": "_capital_decision_http_patch",
+        "Path": "_capital_decision_http_Path",
+        "tempfile": "_capital_decision_http_tempfile",
+        "unittest": "_capital_decision_http_unittest",
+        "SimpleNamespace": "_capital_decision_http_SimpleNamespace",
+        "fixture": "_capital_decision_http_fixture"
+      }
+    },
+    "tests.test_operational_benchmark": {
+      "path_before": "261021/tests/test_operational_benchmark.py",
+      "path_after": "261021/tests/test_operational.py",
+      "module_after": "tests.test_operational",
+      "renamed_bindings": {}
+    },
+    "tests.test_capital_operational_plan": {
+      "path_before": "261021/tests/test_capital_operational_plan.py",
+      "path_after": "261021/tests/test_operational.py",
+      "module_after": "tests.test_operational",
+      "renamed_bindings": {
+        "patch": "_capital_operational_plan_patch",
+        "Path": "_capital_operational_plan_Path",
+        "tempfile": "_capital_operational_plan_tempfile",
+        "unittest": "_capital_operational_plan_unittest"
+      }
+    },
+    "tests.test_capital_operational_ledger": {
+      "path_before": "261021/tests/test_capital_operational_ledger.py",
+      "path_after": "261021/tests/test_operational.py",
+      "module_after": "tests.test_operational",
+      "renamed_bindings": {
+        "patch": "_capital_operational_ledger_patch",
+        "Path": "_capital_operational_ledger_Path",
+        "tempfile": "_capital_operational_ledger_tempfile",
+        "unittest": "_capital_operational_ledger_unittest",
+        "sys": "_capital_operational_ledger_sys",
+        "plans": "_capital_operational_ledger_plans"
+      }
+    },
+    "tests.test_capital_request_journal": {
+      "path_before": "261021/tests/test_capital_request_journal.py",
+      "path_after": "261021/tests/test_operational.py",
+      "module_after": "tests.test_operational",
+      "renamed_bindings": {
+        "patch": "_capital_request_journal_patch",
+        "Path": "_capital_request_journal_Path",
+        "CapitalBenchmarkObserver": "_capital_request_journal_CapitalBenchmarkObserver",
+        "unittest": "_capital_request_journal_unittest",
+        "sys": "_capital_request_journal_sys",
+        "os": "_capital_request_journal_os",
+        "plans": "_capital_request_journal_plans",
+        "json": "_capital_request_journal_json",
+        "subprocess": "_capital_request_journal_subprocess",
+        "select": "_capital_request_journal_select"
+      }
+    },
+    "tests.test_capital_benchmark_inputs": {
+      "path_before": "261021/tests/test_capital_benchmark_inputs.py",
+      "path_after": "261021/tests/test_measurement.py",
+      "module_after": "tests.test_measurement",
+      "renamed_bindings": {}
+    },
+    "tests.test_capital_measurement_guard": {
+      "path_before": "261021/tests/test_capital_measurement_guard.py",
+      "path_after": "261021/tests/test_measurement.py",
+      "module_after": "tests.test_measurement",
+      "renamed_bindings": {
+        "Path": "_capital_measurement_guard_Path",
+        "tempfile": "_capital_measurement_guard_tempfile",
+        "pd": "_capital_measurement_guard_pd",
+        "unittest": "_capital_measurement_guard_unittest"
+      }
+    },
+    "tests.test_capital_benchmark_observer": {
+      "path_before": "261021/tests/test_capital_benchmark_observer.py",
+      "path_after": "261021/tests/test_measurement.py",
+      "module_after": "tests.test_measurement",
+      "renamed_bindings": {
+        "patch": "_capital_benchmark_observer_patch",
+        "unittest": "_capital_benchmark_observer_unittest"
+      }
+    },
+    "tests.test_capital_measurement_preflight": {
+      "path_before": "261021/tests/test_capital_measurement_preflight.py",
+      "path_after": "261021/tests/test_measurement.py",
+      "module_after": "tests.test_measurement",
+      "renamed_bindings": {
+        "patch": "_capital_measurement_preflight_patch",
+        "Path": "_capital_measurement_preflight_Path",
+        "pd": "_capital_measurement_preflight_pd",
+        "unittest": "_capital_measurement_preflight_unittest",
+        "Mock": "_capital_measurement_preflight_Mock"
+      }
+    },
+    "tests.test_capital_measurement_runner": {
+      "path_before": "261021/tests/test_capital_measurement_runner.py",
+      "path_after": "261021/tests/test_measurement.py",
+      "module_after": "tests.test_measurement",
+      "renamed_bindings": {
+        "patch": "_capital_measurement_runner_patch",
+        "Path": "_capital_measurement_runner_Path",
+        "hashlib": "_capital_measurement_runner_hashlib",
+        "pd": "_capital_measurement_runner_pd",
+        "unittest": "_capital_measurement_runner_unittest",
+        "Mock": "_capital_measurement_runner_Mock",
+        "ledger": "_capital_measurement_runner_ledger",
+        "ExitStack": "_capital_measurement_runner_ExitStack"
+      }
+    },
+    "tests.test_capital_measurement_recheck": {
+      "path_before": "261021/tests/test_capital_measurement_recheck.py",
+      "path_after": "261021/tests/test_measurement.py",
+      "module_after": "tests.test_measurement",
+      "renamed_bindings": {
+        "patch": "_capital_measurement_recheck_patch",
+        "hashlib": "_capital_measurement_recheck_hashlib",
+        "pd": "_capital_measurement_recheck_pd",
+        "unittest": "_capital_measurement_recheck_unittest",
+        "ledger": "_capital_measurement_recheck_ledger",
+        "copy": "_capital_measurement_recheck_copy",
+        "json": "_capital_measurement_recheck_json",
+        "benchmark": "_capital_measurement_recheck_benchmark",
+        "ledger_tests": "_capital_measurement_recheck_ledger_tests"
+      }
+    },
+    "tests.test_capital_operational_registry": {
+      "path_before": "261021/tests/test_capital_operational_registry.py",
+      "path_after": "261021/tests/test_measurement.py",
+      "module_after": "tests.test_measurement",
+      "renamed_bindings": {
+        "unittest": "_capital_operational_registry_unittest",
+        "SimpleNamespace": "_capital_operational_registry_SimpleNamespace"
+      }
+    },
+    "tests.test_capital_operational_recovery": {
+      "path_before": "261021/tests/test_capital_operational_recovery.py",
+      "path_after": "261021/tests/test_measurement.py",
+      "module_after": "tests.test_measurement",
+      "renamed_bindings": {
+        "patch": "_capital_operational_recovery_patch",
+        "Path": "_capital_operational_recovery_Path",
+        "unittest": "_capital_operational_recovery_unittest",
+        "ledger": "_capital_operational_recovery_ledger",
+        "json": "_capital_operational_recovery_json",
+        "ledger_tests": "_capital_operational_recovery_ledger_tests",
+        "recovery": "_capital_operational_recovery_recovery",
+        "RequestJournal": "_capital_operational_recovery_RequestJournal"
+      }
+    },
+    "tests.test_capital_pending_audit": {
+      "path_before": "261021/tests/test_capital_pending_audit.py",
+      "path_after": "261021/tests/test_measurement.py",
+      "module_after": "tests.test_measurement",
+      "renamed_bindings": {
+        "patch": "_capital_pending_audit_patch",
+        "unittest": "_capital_pending_audit_unittest",
+        "Mock": "_capital_pending_audit_Mock",
+        "plans": "_capital_pending_audit_plans",
+        "ledger": "_capital_pending_audit_ledger",
+        "json": "_capital_pending_audit_json",
+        "ledger_tests": "_capital_pending_audit_ledger_tests",
+        "recovery": "_capital_pending_audit_recovery"
+      }
+    },
+    "tests.test_capital_measurement_evidence": {
+      "path_before": "261021/tests/test_capital_measurement_evidence.py",
+      "path_after": "261021/tests/test_measurement.py",
+      "module_after": "tests.test_measurement",
+      "renamed_bindings": {
+        "patch": "_capital_measurement_evidence_patch",
+        "Path": "_capital_measurement_evidence_Path",
+        "tempfile": "_capital_measurement_evidence_tempfile",
+        "hashlib": "_capital_measurement_evidence_hashlib",
+        "io": "_capital_measurement_evidence_io",
+        "sys": "_capital_measurement_evidence_sys",
+        "redirect_stdout": "_capital_measurement_evidence_redirect_stdout",
+        "unittest": "_capital_measurement_evidence_unittest",
+        "ExitStack": "_capital_measurement_evidence_ExitStack",
+        "json": "_capital_measurement_evidence_json",
+        "request_schedule": "_capital_measurement_evidence_request_schedule"
+      }
+    },
+    "tests.test_capital_synthetic_fixture": {
+      "path_before": "261021/tests/test_capital_synthetic_fixture.py",
+      "path_after": "261021/tests/test_system.py",
+      "module_after": "tests.test_system",
+      "renamed_bindings": {}
+    },
+    "tests.test_capital_system_harness": {
+      "path_before": "261021/tests/test_capital_system_harness.py",
+      "path_after": "261021/tests/test_system.py",
+      "module_after": "tests.test_system",
+      "renamed_bindings": {
+        "patch": "_capital_system_harness_patch",
+        "Path": "_capital_system_harness_Path",
+        "tempfile": "_capital_system_harness_tempfile",
+        "importlib": "_capital_system_harness_importlib",
+        "unittest": "_capital_system_harness_unittest"
+      }
+    },
+    "tests.test_capital_paired_restore": {
+      "path_before": "261021/tests/test_capital_paired_restore.py",
+      "path_after": "261021/tests/test_system.py",
+      "module_after": "tests.test_system",
+      "renamed_bindings": {
+        "patch": "_capital_paired_restore_patch",
+        "Path": "_capital_paired_restore_Path",
+        "tempfile": "_capital_paired_restore_tempfile",
+        "unittest": "_capital_paired_restore_unittest"
+      }
+    },
+    "tests.test_capital_pipeline": {
+      "path_before": "261021/tests/test_capital_pipeline.py",
+      "path_after": "261021/tests/test_system.py",
+      "module_after": "tests.test_system",
+      "renamed_bindings": {
+        "Path": "_capital_pipeline_Path",
+        "tempfile": "_capital_pipeline_tempfile",
+        "unittest": "_capital_pipeline_unittest",
+        "json": "_capital_pipeline_json"
+      }
+    },
+    "tests.test_deployment_recovery_system": {
+      "path_before": "261021/tests/test_deployment_recovery_system.py",
+      "path_after": "261021/tests/test_system.py",
+      "module_after": "tests.test_system",
+      "renamed_bindings": {
+        "patch": "_deployment_recovery_system_patch",
+        "Path": "_deployment_recovery_system_Path",
+        "tempfile": "_deployment_recovery_system_tempfile",
+        "unittest": "_deployment_recovery_system_unittest"
+      }
+    },
+    "tests.test_clock_rate_review": {
+      "path_before": "261021/tests/test_clock_rate_review.py",
+      "path_after": "261021/tests/test_clock.py",
+      "module_after": "tests.test_clock",
+      "renamed_bindings": {}
+    },
+    "tests.test_clock_campaign_review": {
+      "path_before": "261021/tests/test_clock_campaign_review.py",
+      "path_after": "261021/tests/test_clock.py",
+      "module_after": "tests.test_clock",
+      "renamed_bindings": {
+        "Path": "_clock_campaign_review_Path",
+        "io": "_clock_campaign_review_io",
+        "redirect_stderr": "_clock_campaign_review_redirect_stderr",
+        "subprocess": "_clock_campaign_review_subprocess",
+        "redirect_stdout": "_clock_campaign_review_redirect_stdout",
+        "copy": "_clock_campaign_review_copy",
+        "patch": "_clock_campaign_review_patch",
+        "json": "_clock_campaign_review_json",
+        "tempfile": "_clock_campaign_review_tempfile",
+        "hashlib": "_clock_campaign_review_hashlib",
+        "sys": "_clock_campaign_review_sys",
+        "os": "_clock_campaign_review_os",
+        "Fraction": "_clock_campaign_review_Fraction",
+        "cli": "_clock_campaign_review_cli",
+        "unittest": "_clock_campaign_review_unittest"
+      }
+    },
+    "tests.test_clock_campaign_capture": {
+      "path_before": "261021/tests/test_clock_campaign_capture.py",
+      "path_after": "261021/tests/test_clock.py",
+      "module_after": "tests.test_clock",
+      "renamed_bindings": {
+        "Path": "_clock_campaign_capture_Path",
+        "io": "_clock_campaign_capture_io",
+        "redirect_stderr": "_clock_campaign_capture_redirect_stderr",
+        "subprocess": "_clock_campaign_capture_subprocess",
+        "redirect_stdout": "_clock_campaign_capture_redirect_stdout",
+        "copy": "_clock_campaign_capture_copy",
+        "patch": "_clock_campaign_capture_patch",
+        "json": "_clock_campaign_capture_json",
+        "tempfile": "_clock_campaign_capture_tempfile",
+        "hashlib": "_clock_campaign_capture_hashlib",
+        "sys": "_clock_campaign_capture_sys",
+        "os": "_clock_campaign_capture_os",
+        "unittest": "_clock_campaign_capture_unittest",
+        "canonical_sha256": "_clock_campaign_capture_canonical_sha256"
+      }
+    },
+    "tests.test_clock_campaign_schedule": {
+      "path_before": "261021/tests/test_clock_campaign_schedule.py",
+      "path_after": "261021/tests/test_clock.py",
+      "module_after": "tests.test_clock",
+      "renamed_bindings": {
+        "Path": "_clock_campaign_schedule_Path",
+        "subprocess": "_clock_campaign_schedule_subprocess",
+        "patch": "_clock_campaign_schedule_patch",
+        "json": "_clock_campaign_schedule_json",
+        "tempfile": "_clock_campaign_schedule_tempfile",
+        "sys": "_clock_campaign_schedule_sys",
+        "os": "_clock_campaign_schedule_os",
+        "unittest": "_clock_campaign_schedule_unittest",
+        "time": "_clock_campaign_schedule_time",
+        "rewrite": "_clock_campaign_schedule_rewrite",
+        "shutil": "_clock_campaign_schedule_shutil",
+        "signal": "_clock_campaign_schedule_signal",
+        "PROJECT": "_clock_campaign_schedule_PROJECT"
+      }
+    },
+    "tests.test_clock_raw_bundle": {
+      "path_before": "261021/tests/test_clock_raw_bundle.py",
+      "path_after": "261021/tests/test_clock.py",
+      "module_after": "tests.test_clock",
+      "renamed_bindings": {
+        "Path": "_clock_raw_bundle_Path",
+        "io": "_clock_raw_bundle_io",
+        "subprocess": "_clock_raw_bundle_subprocess",
+        "patch": "_clock_raw_bundle_patch",
+        "json": "_clock_raw_bundle_json",
+        "tempfile": "_clock_raw_bundle_tempfile",
+        "hashlib": "_clock_raw_bundle_hashlib",
+        "sys": "_clock_raw_bundle_sys",
+        "os": "_clock_raw_bundle_os",
+        "cli": "_clock_raw_bundle_cli",
+        "unittest": "_clock_raw_bundle_unittest",
+        "samples": "_clock_raw_bundle_samples",
+        "rewrite": "_clock_raw_bundle_rewrite",
+        "shutil": "_clock_raw_bundle_shutil",
+        "signal": "_clock_raw_bundle_signal",
+        "PROJECT": "_clock_raw_bundle_PROJECT",
+        "raw": "_clock_raw_bundle_raw"
+      }
+    },
+    "tests.test_clock_resource_reader": {
+      "path_before": "261021/tests/test_clock_resource_reader.py",
+      "path_after": "261021/tests/test_clock.py",
+      "module_after": "tests.test_clock",
+      "renamed_bindings": {
+        "Path": "_clock_resource_reader_Path",
+        "subprocess": "_clock_resource_reader_subprocess",
+        "tempfile": "_clock_resource_reader_tempfile",
+        "os": "_clock_resource_reader_os",
+        "unittest": "_clock_resource_reader_unittest"
+      }
+    },
+    "tests.capital_deployment_fixture": {
+      "path_before": "261021/tests/capital_deployment_fixture.py",
+      "path_after": "261021/tests/support.py",
+      "module_after": "tests.support",
+      "renamed_bindings": {}
+    },
+    "tests.failure_diagnostics": {
+      "path_before": "261021/tests/failure_diagnostics.py",
+      "path_after": "261021/tests/support.py",
+      "module_after": "tests.support",
+      "renamed_bindings": {
+        "json": "_failure_diagnostics_json"
+      }
+    },
+    "tests.request_interruption_child": {
+      "path_before": "261021/tests/request_interruption_child.py",
+      "path_after": "261021/tests/request_interruption_child.py",
+      "module_after": "tests.request_interruption_child",
+      "renamed_bindings": {}
+    },
+    "tests.probe_decision_clock": {
+      "path_before": "261021/tests/probe_decision_clock.py",
+      "path_after": "261021/tests/probe_decision_clock.py",
+      "module_after": "tests.probe_decision_clock",
+      "renamed_bindings": {}
+    },
+    "scripts.prepare_capitalbikeshare": {
+      "path_before": "261021/scripts/prepare_capitalbikeshare.py",
+      "path_after": "261021/scripts/data_tools.py",
+      "module_after": "scripts.data_tools",
+      "renamed_bindings": {}
+    },
+    "scripts.create_capital_evaluation_protocol": {
+      "path_before": "261021/scripts/create_capital_evaluation_protocol.py",
+      "path_after": "261021/scripts/data_tools.py",
+      "module_after": "scripts.data_tools",
+      "renamed_bindings": {
+        "Path": "_create_capital_evaluation_protocol_Path",
+        "argparse": "_create_capital_evaluation_protocol_argparse",
+        "main": "_create_capital_evaluation_protocol_main",
+        "json": "_create_capital_evaluation_protocol_json"
+      }
+    },
+    "scripts.evaluate_capitalbikeshare_holdout": {
+      "path_before": "261021/scripts/evaluate_capitalbikeshare_holdout.py",
+      "path_after": "261021/scripts/data_tools.py",
+      "module_after": "scripts.data_tools",
+      "renamed_bindings": {
+        "Path": "_evaluate_capitalbikeshare_holdout_Path",
+        "argparse": "_evaluate_capitalbikeshare_holdout_argparse",
+        "main": "_evaluate_capitalbikeshare_holdout_main",
+        "json": "_evaluate_capitalbikeshare_holdout_json",
+        "PROJECT_ROOT": "_evaluate_capitalbikeshare_holdout_PROJECT_ROOT",
+        "hashlib": "_evaluate_capitalbikeshare_holdout_hashlib",
+        "os": "_evaluate_capitalbikeshare_holdout_os",
+        "pd": "_evaluate_capitalbikeshare_holdout_pd",
+        "sha256_file": "_evaluate_capitalbikeshare_holdout_sha256_file",
+        "DATA_PROFILE_ID": "_evaluate_capitalbikeshare_holdout_DATA_PROFILE_ID",
+        "MODEL_NAME": "_evaluate_capitalbikeshare_holdout_MODEL_NAME",
+        "TARGET_CONTRACT_ID": "_evaluate_capitalbikeshare_holdout_TARGET_CONTRACT_ID",
+        "load_registered_model": "_evaluate_capitalbikeshare_holdout_load_registered_model"
+      }
+    },
+    "scripts.evaluation_ledger": {
+      "path_before": "261021/scripts/evaluation_ledger.py",
+      "path_after": "261021/scripts/data_tools.py",
+      "module_after": "scripts.data_tools",
+      "renamed_bindings": {
+        "Path": "_evaluation_ledger_Path",
+        "argparse": "_evaluation_ledger_argparse",
+        "main": "_evaluation_ledger_main",
+        "json": "_evaluation_ledger_json"
+      }
+    },
+    "scripts.register_capital_candidate": {
+      "path_before": "261021/scripts/register_capital_candidate.py",
+      "path_after": "261021/scripts/runtime_tools.py",
+      "module_after": "scripts.runtime_tools",
+      "renamed_bindings": {}
+    },
+    "scripts.seed_capital_staging": {
+      "path_before": "261021/scripts/seed_capital_staging.py",
+      "path_after": "261021/scripts/runtime_tools.py",
+      "module_after": "scripts.runtime_tools",
+      "renamed_bindings": {
+        "Path": "_seed_capital_staging_Path",
+        "json": "_seed_capital_staging_json",
+        "argparse": "_seed_capital_staging_argparse",
+        "main": "_seed_capital_staging_main"
+      }
+    },
+    "scripts.prepare_capital_operational_plan": {
+      "path_before": "261021/scripts/prepare_capital_operational_plan.py",
+      "path_after": "261021/scripts/runtime_tools.py",
+      "module_after": "scripts.runtime_tools",
+      "renamed_bindings": {
+        "Path": "_prepare_capital_operational_plan_Path",
+        "json": "_prepare_capital_operational_plan_json",
+        "argparse": "_prepare_capital_operational_plan_argparse",
+        "main": "_prepare_capital_operational_plan_main",
+        "MODEL_NAME": "_prepare_capital_operational_plan_MODEL_NAME",
+        "os": "_prepare_capital_operational_plan_os",
+        "DATA_PROFILE_ID": "_prepare_capital_operational_plan_DATA_PROFILE_ID",
+        "verify_candidate_for_staging": "_prepare_capital_operational_plan_verify_candidate_for_staging"
+      }
+    },
+    "scripts.benchmark_capital_runtime": {
+      "path_before": "261021/scripts/benchmark_capital_runtime.py",
+      "path_after": "261021/scripts/runtime_tools.py",
+      "module_after": "scripts.runtime_tools",
+      "renamed_bindings": {
+        "Path": "_benchmark_capital_runtime_Path",
+        "json": "_benchmark_capital_runtime_json",
+        "argparse": "_benchmark_capital_runtime_argparse",
+        "main": "_benchmark_capital_runtime_main",
+        "DATA_PROFILE_ID": "_benchmark_capital_runtime_DATA_PROFILE_ID",
+        "TARGET_CONTRACT_ID": "_benchmark_capital_runtime_TARGET_CONTRACT_ID",
+        "Database": "_benchmark_capital_runtime_Database",
+        "check_candidate_training_window": "_benchmark_capital_runtime_check_candidate_training_window"
+      }
+    },
+    "scripts.recheck_capital_measurement": {
+      "path_before": "261021/scripts/recheck_capital_measurement.py",
+      "path_after": "261021/scripts/runtime_tools.py",
+      "module_after": "scripts.runtime_tools",
+      "renamed_bindings": {
+        "json": "_recheck_capital_measurement_json",
+        "argparse": "_recheck_capital_measurement_argparse",
+        "main": "_recheck_capital_measurement_main"
+      }
+    },
+    "scripts.record_capital_operational_evidence": {
+      "path_before": "261021/scripts/record_capital_operational_evidence.py",
+      "path_after": "261021/scripts/runtime_tools.py",
+      "module_after": "scripts.runtime_tools",
+      "renamed_bindings": {
+        "json": "_record_capital_operational_evidence_json",
+        "argparse": "_record_capital_operational_evidence_argparse",
+        "main": "_record_capital_operational_evidence_main"
+      }
+    },
+    "scripts.prepare_capital_deployment_evidence": {
+      "path_before": "261021/scripts/prepare_capital_deployment_evidence.py",
+      "path_after": "261021/scripts/runtime_tools.py",
+      "module_after": "scripts.runtime_tools",
+      "renamed_bindings": {
+        "Path": "_prepare_capital_deployment_evidence_Path",
+        "json": "_prepare_capital_deployment_evidence_json",
+        "argparse": "_prepare_capital_deployment_evidence_argparse",
+        "main": "_prepare_capital_deployment_evidence_main"
+      }
+    },
+    "scripts.record_capital_deployment_decision": {
+      "path_before": "261021/scripts/record_capital_deployment_decision.py",
+      "path_after": "261021/scripts/runtime_tools.py",
+      "module_after": "scripts.runtime_tools",
+      "renamed_bindings": {
+        "json": "_record_capital_deployment_decision_json",
+        "argparse": "_record_capital_deployment_decision_argparse",
+        "main": "_record_capital_deployment_decision_main",
+        "urlsplit": "_record_capital_deployment_decision_urlsplit",
+        "MODEL_NAME": "_record_capital_deployment_decision_MODEL_NAME",
+        "os": "_record_capital_deployment_decision_os",
+        "DATA_PROFILE_ID": "_record_capital_deployment_decision_DATA_PROFILE_ID"
+      }
+    },
+    "scripts.inspect_capital_operational_reports": {
+      "path_before": "261021/scripts/inspect_capital_operational_reports.py",
+      "path_after": "261021/scripts/runtime_tools.py",
+      "module_after": "scripts.runtime_tools",
+      "renamed_bindings": {
+        "json": "_inspect_capital_operational_reports_json",
+        "argparse": "_inspect_capital_operational_reports_argparse",
+        "main": "_inspect_capital_operational_reports_main"
+      }
+    },
+    "scripts.inspect_capital_pending_audit": {
+      "path_before": "261021/scripts/inspect_capital_pending_audit.py",
+      "path_after": "261021/scripts/runtime_tools.py",
+      "module_after": "scripts.runtime_tools",
+      "renamed_bindings": {
+        "json": "_inspect_capital_pending_audit_json",
+        "argparse": "_inspect_capital_pending_audit_argparse",
+        "main": "_inspect_capital_pending_audit_main",
+        "os": "_inspect_capital_pending_audit_os",
+        "DATA_PROFILE_ID": "_inspect_capital_pending_audit_DATA_PROFILE_ID",
+        "quote": "_inspect_capital_pending_audit_quote",
+        "TARGET_CONTRACT_ID": "_inspect_capital_pending_audit_TARGET_CONTRACT_ID",
+        "Database": "_inspect_capital_pending_audit_Database"
+      }
+    },
+    "scripts.operational_attempt_ledger": {
+      "path_before": "261021/scripts/operational_attempt_ledger.py",
+      "path_after": "261021/scripts/runtime_tools.py",
+      "module_after": "scripts.runtime_tools",
+      "renamed_bindings": {
+        "Path": "_operational_attempt_ledger_Path",
+        "json": "_operational_attempt_ledger_json",
+        "argparse": "_operational_attempt_ledger_argparse",
+        "main": "_operational_attempt_ledger_main"
+      }
+    },
+    "scripts.capture_fake_clock_campaign": {
+      "path_before": "261021/scripts/capture_fake_clock_campaign.py",
+      "path_after": "261021/scripts/clock_tools.py",
+      "module_after": "scripts.clock_tools",
+      "renamed_bindings": {}
+    },
+    "scripts.derive_clock_campaign": {
+      "path_before": "261021/scripts/derive_clock_campaign.py",
+      "path_after": "261021/scripts/clock_tools.py",
+      "module_after": "scripts.clock_tools",
+      "renamed_bindings": {
+        "Path": "_derive_clock_campaign_Path",
+        "argparse": "_derive_clock_campaign_argparse",
+        "main": "_derive_clock_campaign_main",
+        "sys": "_derive_clock_campaign_sys"
+      }
+    },
+    "scripts.review_clock_campaign": {
+      "path_before": "261021/scripts/review_clock_campaign.py",
+      "path_after": "261021/scripts/clock_tools.py",
+      "module_after": "scripts.clock_tools",
+      "renamed_bindings": {
+        "Path": "_review_clock_campaign_Path",
+        "argparse": "_review_clock_campaign_argparse",
+        "main": "_review_clock_campaign_main",
+        "sys": "_review_clock_campaign_sys"
+      }
+    },
+    "scripts.review_clock_rate_phase": {
+      "path_before": "261021/scripts/review_clock_rate_phase.py",
+      "path_after": "261021/scripts/clock_tools.py",
+      "module_after": "scripts.clock_tools",
+      "renamed_bindings": {
+        "Path": "_review_clock_rate_phase_Path",
+        "argparse": "_review_clock_rate_phase_argparse",
+        "main": "_review_clock_rate_phase_main",
+        "sys": "_review_clock_rate_phase_sys",
+        "json": "_review_clock_rate_phase_json",
+        "tempfile": "_review_clock_rate_phase_tempfile",
+        "_object": "_review_clock_rate_phase_object",
+        "hashlib": "_review_clock_rate_phase_hashlib",
+        "_reject_constant": "_review_clock_rate_phase_reject_constant",
+        "stat": "_review_clock_rate_phase_stat",
+        "os": "_review_clock_rate_phase_os"
+      }
+    },
+    "scripts.clock_raw_bundle": {
+      "path_before": "261021/scripts/clock_raw_bundle.py",
+      "path_after": "261021/scripts/clock_tools.py",
+      "module_after": "scripts.clock_tools",
+      "renamed_bindings": {
+        "Path": "_clock_raw_bundle_Path",
+        "argparse": "_clock_raw_bundle_argparse",
+        "main": "_clock_raw_bundle_main",
+        "sys": "_clock_raw_bundle_sys",
+        "signal": "_clock_raw_bundle_signal"
+      }
+    },
+    "scripts.diagnose_runtime_clocks": {
+      "path_before": "261021/scripts/diagnose_runtime_clocks.py",
+      "path_after": "261021/scripts/clock_tools.py",
+      "module_after": "scripts.clock_tools",
+      "renamed_bindings": {
+        "Path": "_diagnose_runtime_clocks_Path",
+        "argparse": "_diagnose_runtime_clocks_argparse",
+        "main": "_diagnose_runtime_clocks_main",
+        "json": "_diagnose_runtime_clocks_json"
+      }
+    },
+    "scripts.capital_system_harness": {
+      "path_before": "261021/scripts/capital_system_harness.py",
+      "path_after": "261021/scripts/system_harness.py",
+      "module_after": "scripts.system_harness",
+      "renamed_bindings": {}
+    },
+    "scripts.test_capital_synthetic_fixture": {
+      "path_before": "261021/scripts/test_capital_synthetic_fixture.py",
+      "path_after": "261021/scripts/system_harness.py",
+      "module_after": "scripts.system_harness",
+      "renamed_bindings": {
+        "Path": "_capital_synthetic_fixture_Path",
+        "argparse": "_capital_synthetic_fixture_argparse",
+        "main": "_capital_synthetic_fixture_main",
+        "json": "_capital_synthetic_fixture_json",
+        "tempfile": "_capital_synthetic_fixture_tempfile",
+        "sys": "_capital_synthetic_fixture_sys",
+        "signal": "_capital_synthetic_fixture_signal"
+      }
+    },
+    "scripts.capital_paired_restore": {
+      "path_before": "261021/scripts/capital_paired_restore.py",
+      "path_after": "261021/scripts/system_harness.py",
+      "module_after": "scripts.system_harness",
+      "renamed_bindings": {
+        "Path": "_paired_restore_Path",
+        "subprocess": "_paired_restore_subprocess",
+        "json": "_paired_restore_json",
+        "tempfile": "_paired_restore_tempfile",
+        "hashlib": "_paired_restore_hashlib",
+        "secrets": "_paired_restore_secrets",
+        "socket": "_paired_restore_socket",
+        "shutil": "_paired_restore_shutil"
+      }
+    },
+    "scripts.test_capital_snapshot_postgres": {
+      "path_before": "261021/scripts/test_capital_snapshot_postgres.py",
+      "path_after": "261021/scripts/storage_checks.py",
+      "module_after": "scripts.storage_checks",
+      "renamed_bindings": {}
+    },
+    "scripts.test_capital_request_interruption_postgres": {
+      "path_before": "261021/scripts/test_capital_request_interruption_postgres.py",
+      "path_after": "261021/scripts/storage_checks.py",
+      "module_after": "scripts.storage_checks",
+      "renamed_bindings": {
+        "patch": "_capital_request_interruption_postgres_patch",
+        "json": "_capital_request_interruption_postgres_json",
+        "main": "_capital_request_interruption_postgres_main",
+        "docker": "_capital_request_interruption_postgres_docker",
+        "time": "_capital_request_interruption_postgres_time",
+        "secrets": "_capital_request_interruption_postgres_secrets",
+        "os": "_capital_request_interruption_postgres_os"
+      }
+    },
+    "scripts.test_monitor_persistence_postgres": {
+      "path_before": "261021/scripts/test_monitor_persistence_postgres.py",
+      "path_after": "261021/scripts/storage_checks.py",
+      "module_after": "scripts.storage_checks",
+      "renamed_bindings": {
+        "patch": "_monitor_persistence_postgres_patch",
+        "json": "_monitor_persistence_postgres_json",
+        "main": "_monitor_persistence_postgres_main",
+        "docker": "_monitor_persistence_postgres_docker",
+        "time": "_monitor_persistence_postgres_time",
+        "secrets": "_monitor_persistence_postgres_secrets",
+        "subprocess": "_monitor_persistence_postgres_subprocess",
+        "os": "_monitor_persistence_postgres_os",
+        "Path": "_monitor_persistence_postgres_Path",
+        "sys": "_monitor_persistence_postgres_sys",
+        "uuid": "_monitor_persistence_postgres_uuid",
+        "tempfile": "_monitor_persistence_postgres_tempfile"
+      }
+    },
+    "scripts.test_monitor_inspection_postgres": {
+      "path_before": "261021/scripts/test_monitor_inspection_postgres.py",
+      "path_after": "261021/scripts/storage_checks.py",
+      "module_after": "scripts.storage_checks",
+      "renamed_bindings": {
+        "patch": "_monitor_inspection_postgres_patch",
+        "json": "_monitor_inspection_postgres_json",
+        "main": "_monitor_inspection_postgres_main",
+        "docker": "_monitor_inspection_postgres_docker",
+        "time": "_monitor_inspection_postgres_time",
+        "secrets": "_monitor_inspection_postgres_secrets",
+        "subprocess": "_monitor_inspection_postgres_subprocess",
+        "os": "_monitor_inspection_postgres_os",
+        "Path": "_monitor_inspection_postgres_Path",
+        "sys": "_monitor_inspection_postgres_sys"
+      }
+    },
+    "scripts.test_prediction_migration_postgres": {
+      "path_before": "261021/scripts/test_prediction_migration_postgres.py",
+      "path_after": "261021/scripts/storage_checks.py",
+      "module_after": "scripts.storage_checks",
+      "renamed_bindings": {
+        "patch": "_prediction_migration_postgres_patch",
+        "json": "_prediction_migration_postgres_json",
+        "main": "_prediction_migration_postgres_main",
+        "docker": "_prediction_migration_postgres_docker",
+        "time": "_prediction_migration_postgres_time",
+        "secrets": "_prediction_migration_postgres_secrets",
+        "subprocess": "_prediction_migration_postgres_subprocess",
+        "os": "_prediction_migration_postgres_os",
+        "Path": "_prediction_migration_postgres_Path",
+        "sys": "_prediction_migration_postgres_sys",
+        "sql": "_prediction_migration_postgres_sql",
+        "argparse": "_prediction_migration_postgres_argparse",
+        "Database": "_prediction_migration_postgres_Database",
+        "psycopg": "_prediction_migration_postgres_psycopg",
+        "selectors": "_prediction_migration_postgres_selectors",
+        "PROFILE": "_prediction_migration_postgres_PROFILE",
+        "hashlib": "_prediction_migration_postgres_hashlib",
+        "struct": "_prediction_migration_postgres_struct",
+        "TARGET": "_prediction_migration_postgres_TARGET",
+        "signal": "_prediction_migration_postgres_signal",
+        "unittest": "_prediction_migration_postgres_unittest",
+        "error": "_prediction_migration_postgres_error"
+      }
+    },
+    "scripts.test_monitor_inspection_sqlite_os": {
+      "path_before": "261021/scripts/test_monitor_inspection_sqlite_os.py",
+      "path_after": "261021/scripts/storage_checks.py",
+      "module_after": "scripts.storage_checks",
+      "renamed_bindings": {
+        "json": "_monitor_inspection_sqlite_os_json",
+        "main": "_monitor_inspection_sqlite_os_main",
+        "time": "_monitor_inspection_sqlite_os_time",
+        "os": "_monitor_inspection_sqlite_os_os",
+        "sys": "_monitor_inspection_sqlite_os_sys",
+        "hashlib": "_monitor_inspection_sqlite_os_hashlib"
+      }
+    },
+    "scripts.test_monitor_reconciliation_storage": {
+      "path_before": "261021/scripts/test_monitor_reconciliation_storage.py",
+      "path_after": "261021/scripts/storage_checks.py",
+      "module_after": "scripts.storage_checks",
+      "renamed_bindings": {
+        "json": "_monitor_reconciliation_storage_json",
+        "main": "_monitor_reconciliation_storage_main",
+        "docker": "_monitor_reconciliation_storage_docker",
+        "time": "_monitor_reconciliation_storage_time",
+        "secrets": "_monitor_reconciliation_storage_secrets",
+        "os": "_monitor_reconciliation_storage_os",
+        "Path": "_monitor_reconciliation_storage_Path",
+        "argparse": "_monitor_reconciliation_storage_argparse",
+        "Database": "_monitor_reconciliation_storage_Database",
+        "uuid": "_monitor_reconciliation_storage_uuid",
+        "persist_monitor_run": "_monitor_reconciliation_storage_persist_monitor_run",
+        "PROFILE": "_monitor_reconciliation_storage_PROFILE",
+        "tempfile": "_monitor_reconciliation_storage_tempfile",
+        "hashlib": "_monitor_reconciliation_storage_hashlib",
+        "struct": "_monitor_reconciliation_storage_struct",
+        "TARGET": "_monitor_reconciliation_storage_TARGET",
+        "normalized": "_monitor_reconciliation_storage_normalized",
+        "pd": "_monitor_reconciliation_storage_pd",
+        "math": "_monitor_reconciliation_storage_math",
+        "error": "_monitor_reconciliation_storage_error",
+        "sqlite3": "_monitor_reconciliation_storage_sqlite3"
+      }
+    },
+    "scripts.test_capital_decision_http": {
+      "path_before": "261021/scripts/test_capital_decision_http.py",
+      "path_after": "261021/scripts/runtime_checks.py",
+      "module_after": "scripts.runtime_checks",
+      "renamed_bindings": {
+        "http": "_capital_decision_http_http"
+      }
+    },
+    "scripts.test_deployment_recovery_system": {
+      "path_before": "261021/scripts/test_deployment_recovery_system.py",
+      "path_after": "261021/scripts/runtime_checks.py",
+      "module_after": "scripts.runtime_checks",
+      "renamed_bindings": {
+        "Path": "_deployment_recovery_system_Path",
+        "argparse": "_deployment_recovery_system_argparse",
+        "subprocess": "_deployment_recovery_system_subprocess",
+        "main": "_deployment_recovery_system_main",
+        "urlsplit": "_deployment_recovery_system_urlsplit",
+        "patch": "_deployment_recovery_system_patch",
+        "json": "_deployment_recovery_system_json",
+        "tempfile": "_deployment_recovery_system_tempfile",
+        "hashlib": "_deployment_recovery_system_hashlib",
+        "time": "_deployment_recovery_system_time",
+        "sys": "_deployment_recovery_system_sys",
+        "os": "_deployment_recovery_system_os",
+        "ROOT": "_deployment_recovery_system_ROOT",
+        "threading": "_deployment_recovery_system_threading",
+        "ThreadPoolExecutor": "_deployment_recovery_system_ThreadPoolExecutor",
+        "signal": "_deployment_recovery_system_signal"
+      }
+    },
+    "scripts.__init__": {
+      "path_before": "261021/scripts/__init__.py",
+      "path_after": "261021/scripts/__init__.py",
+      "module_after": "scripts.__init__",
+      "renamed_bindings": {}
+    }
+  },
+  "commands": {
+    "scripts/prepare_capitalbikeshare.py": "scripts/data_tools.py prepare",
+    "scripts/create_capital_evaluation_protocol.py": "scripts/data_tools.py protocol",
+    "scripts/evaluate_capitalbikeshare_holdout.py": "scripts/data_tools.py evaluate",
+    "scripts/evaluation_ledger.py": "scripts/data_tools.py evaluation-ledger",
+    "scripts/register_capital_candidate.py": "scripts/runtime_tools.py register",
+    "scripts/seed_capital_staging.py": "scripts/runtime_tools.py seed",
+    "scripts/prepare_capital_operational_plan.py": "scripts/runtime_tools.py plan",
+    "scripts/benchmark_capital_runtime.py": "scripts/runtime_tools.py benchmark",
+    "scripts/recheck_capital_measurement.py": "scripts/runtime_tools.py recheck",
+    "scripts/record_capital_operational_evidence.py": "scripts/runtime_tools.py record-operational",
+    "scripts/prepare_capital_deployment_evidence.py": "scripts/runtime_tools.py evidence",
+    "scripts/record_capital_deployment_decision.py": "scripts/runtime_tools.py decision",
+    "scripts/inspect_capital_operational_reports.py": "scripts/runtime_tools.py inspect",
+    "scripts/inspect_capital_pending_audit.py": "scripts/runtime_tools.py pending-audit",
+    "scripts/operational_attempt_ledger.py": "scripts/runtime_tools.py attempt-ledger",
+    "scripts/capture_fake_clock_campaign.py": "scripts/clock_tools.py capture-fake",
+    "scripts/derive_clock_campaign.py": "scripts/clock_tools.py derive",
+    "scripts/review_clock_campaign.py": "scripts/clock_tools.py review",
+    "scripts/review_clock_rate_phase.py": "scripts/clock_tools.py rate-review",
+    "scripts/clock_raw_bundle.py": "scripts/clock_tools.py bundle",
+    "scripts/diagnose_runtime_clocks.py": "scripts/clock_tools.py diagnose",
+    "scripts/capital_system_harness.py": "scripts/system_harness.py run",
+    "scripts/test_capital_synthetic_fixture.py": "scripts/system_harness.py fixture",
+    "scripts/test_capital_snapshot_postgres.py": "scripts/storage_checks.py snapshot",
+    "scripts/test_capital_request_interruption_postgres.py": "scripts/storage_checks.py interruption",
+    "scripts/test_monitor_inspection_postgres.py": "scripts/storage_checks.py monitor-inspection",
+    "scripts/test_monitor_persistence_postgres.py": "scripts/storage_checks.py monitor-persistence",
+    "scripts/test_prediction_migration_postgres.py": "scripts/storage_checks.py migration",
+    "scripts/test_monitor_inspection_sqlite_os.py": "scripts/storage_checks.py sqlite-os",
+    "scripts/test_monitor_reconciliation_storage.py": "scripts/storage_checks.py storage-probe",
+    "scripts/test_capital_decision_http.py": "scripts/runtime_checks.py decision-http",
+    "scripts/test_deployment_recovery_system.py": "scripts/runtime_checks.py deployment-recovery"
+  },
+  "documents": {
+    "261021/docs/architecture.md": {
+      "path_after": "261021/docs/architecture.md",
+      "anchor": "architecture"
+    },
+    "261021/docs/data-contract.md": {
+      "path_after": "261021/docs/architecture.md",
+      "anchor": "data-contract"
+    },
+    "261021/docs/data-profiles.md": {
+      "path_after": "261021/docs/architecture.md",
+      "anchor": "data-profiles"
+    },
+    "261021/docs/glossary.md": {
+      "path_after": "261021/docs/architecture.md",
+      "anchor": "glossary"
+    },
+    "261021/docs/runbook.md": {
+      "path_after": "261021/docs/runbook.md",
+      "anchor": "runbook"
+    },
+    "261021/docs/deployment-observability.md": {
+      "path_after": "261021/docs/runbook.md",
+      "anchor": "deployment-observability"
+    },
+    "261021/docs/deployment-recovery.md": {
+      "path_after": "261021/docs/runbook.md",
+      "anchor": "deployment-recovery"
+    },
+    "261021/docs/prediction-precision-migration.md": {
+      "path_after": "261021/docs/runbook.md",
+      "anchor": "prediction-precision-migration"
+    },
+    "261021/docs/mlflow-orm-compatibility.md": {
+      "path_after": "261021/docs/runbook.md",
+      "anchor": "mlflow-orm-compatibility"
+    },
+    "261021/docs/ci-artifact-maintenance.md": {
+      "path_after": "261021/docs/runbook.md",
+      "anchor": "ci-artifact-maintenance"
+    },
+    "261021/docs/product-completion-policy.md": {
+      "path_after": "261021/docs/capital.md",
+      "anchor": "product-completion-policy"
+    },
+    "261021/docs/capital-bootstrap-gate.md": {
+      "path_after": "261021/docs/capital.md",
+      "anchor": "capital-bootstrap-gate"
+    },
+    "261021/docs/t09-october-acquisition.md": {
+      "path_after": "261021/docs/capital.md",
+      "anchor": "t09-october-acquisition"
+    },
+    "261021/docs/t10-input-readiness.md": {
+      "path_after": "261021/docs/capital.md",
+      "anchor": "t10-input-readiness"
+    },
+    "261021/docs/t10-snapshot-review.md": {
+      "path_after": "261021/docs/capital.md",
+      "anchor": "t10-snapshot-review"
+    },
+    "261021/docs/capital-first-evaluation.md": {
+      "path_after": "261021/docs/capital.md",
+      "anchor": "capital-first-evaluation"
+    },
+    "261021/docs/monitor-investigation-and-next-data.md": {
+      "path_after": "261021/docs/capital.md",
+      "anchor": "monitor-investigation-and-next-data"
+    },
+    "261021/docs/capital-offline-monitoring.md": {
+      "path_after": "261021/docs/capital.md",
+      "anchor": "capital-offline-monitoring"
+    },
+    "261021/docs/capital-runtime-acceptance.md": {
+      "path_after": "261021/docs/capital.md",
+      "anchor": "capital-runtime-acceptance"
+    },
+    "261021/docs/capital-operational-hold.md": {
+      "path_after": "261021/docs/capital.md",
+      "anchor": "capital-operational-hold"
+    },
+    "261021/docs/capital-runtime-handoff.md": {
+      "path_after": "261021/docs/capital.md",
+      "anchor": "capital-runtime-handoff"
+    },
+    "261021/docs/capital-decision-http.md": {
+      "path_after": "261021/docs/capital.md",
+      "anchor": "capital-decision-http"
+    },
+    "261021/docs/capital-deployment-evidence.md": {
+      "path_after": "261021/docs/capital.md",
+      "anchor": "capital-deployment-evidence"
+    },
+    "261021/docs/training-monitor-reference.md": {
+      "path_after": "261021/docs/monitoring.md",
+      "anchor": "training-monitor-reference"
+    },
+    "261021/docs/monitoring-acceptance.md": {
+      "path_after": "261021/docs/monitoring.md",
+      "anchor": "monitoring-acceptance"
+    },
+    "261021/docs/monitor-reconciliation.md": {
+      "path_after": "261021/docs/monitoring.md",
+      "anchor": "monitor-reconciliation"
+    },
+    "261021/docs/measurement-interruption.md": {
+      "path_after": "261021/docs/monitoring.md",
+      "anchor": "measurement-interruption"
+    },
+    "261021/docs/measurement-evidence-archive.md": {
+      "path_after": "261021/docs/monitoring.md",
+      "anchor": "measurement-evidence-archive"
+    },
+    "261021/docs/evidence-guide.md": {
+      "path_after": "261021/docs/evidence.md",
+      "anchor": "evidence-guide"
+    },
+    "261021/docs/t06-luna-handoff.md": {
+      "path_after": "261021/docs/evidence.md",
+      "anchor": "t06-luna-handoff"
+    },
+    "261021/docs/t08-sol-handoff.md": {
+      "path_after": "261021/docs/evidence.md",
+      "anchor": "t08-sol-handoff"
+    },
+    "261021/docs/t15-luna-handoff.md": {
+      "path_after": "261021/docs/evidence.md",
+      "anchor": "t15-luna-handoff"
+    },
+    "261021/docs/t16-luna-handoff.md": {
+      "path_after": "261021/docs/evidence.md",
+      "anchor": "t16-luna-handoff"
+    },
+    "261021/docs/t17b-sol-handoff.md": {
+      "path_after": "261021/docs/evidence.md",
+      "anchor": "t17b-sol-handoff"
+    },
+    "261021/docs/reviews/20261028-r06-delta-review.md": {
+      "path_after": "261021/docs/evidence.md",
+      "anchor": "20261028-r06-delta-review"
+    },
+    "261021/docs/reviews/20261028-review.md": {
+      "path_after": "261021/docs/evidence.md",
+      "anchor": "20261028-review"
+    },
+    "261021/docs/reviews/20261028-staging-checkpoint-review.md": {
+      "path_after": "261021/docs/evidence.md",
+      "anchor": "20261028-staging-checkpoint-review"
+    },
+    "261021/docs/reviews/20261028-synthetic-staging-harness.md": {
+      "path_after": "261021/docs/evidence.md",
+      "anchor": "20261028-synthetic-staging-harness"
+    },
+    "261021/docs/reviews/20261030-checkpoint-review.md": {
+      "path_after": "261021/docs/evidence.md",
+      "anchor": "20261030-checkpoint-review"
+    },
+    "261021/docs/clock-owner-admin-read.md": {
+      "path_after": "261021/docs/clock-operations.md",
+      "anchor": "clock-owner-admin-read"
+    },
+    "261021/docs/clock-input-request.md": {
+      "path_after": "261021/docs/clock-operations.md",
+      "anchor": "clock-input-request"
+    },
+    "261021/docs/clock-qualification-plan.md": {
+      "path_after": "261021/docs/clock-operations.md",
+      "anchor": "clock-qualification-plan"
+    },
+    "261021/docs/clock-source-readiness.md": {
+      "path_after": "261021/docs/clock-operations.md",
+      "anchor": "clock-source-readiness"
+    },
+    "261021/docs/clock-host-maintenance-plan.md": {
+      "path_after": "261021/docs/clock-operations.md",
+      "anchor": "clock-host-maintenance-plan"
+    },
+    "261021/docs/clock-resync-result.md": {
+      "path_after": "261021/docs/clock-operations.md",
+      "anchor": "clock-resync-result"
+    },
+    "261021/docs/clock-host-runtime-review.md": {
+      "path_after": "261021/docs/clock-operations.md",
+      "anchor": "clock-host-runtime-review"
+    },
+    "261021/docs/clock-task-definition-review.md": {
+      "path_after": "261021/docs/clock-operations.md",
+      "anchor": "clock-task-definition-review"
+    },
+    "261021/docs/clock-web-source-review.md": {
+      "path_after": "261021/docs/clock-operations.md",
+      "anchor": "clock-web-source-review"
+    },
+    "261021/docs/clock-nict-method-review.md": {
+      "path_after": "261021/docs/clock-operations.md",
+      "anchor": "clock-nict-method-review"
+    },
+    "261021/docs/time-api-options.md": {
+      "path_after": "261021/docs/clock-operations.md",
+      "anchor": "time-api-options"
+    },
+    "261021/docs/clock-rate-review.md": {
+      "path_after": "261021/docs/clock-implementation.md",
+      "anchor": "clock-rate-review"
+    },
+    "261021/docs/clock-campaign-review.md": {
+      "path_after": "261021/docs/clock-implementation.md",
+      "anchor": "clock-campaign-review"
+    },
+    "261021/docs/clock-campaign-acquisition.md": {
+      "path_after": "261021/docs/clock-implementation.md",
+      "anchor": "clock-campaign-acquisition"
+    },
+    "261021/docs/clock-fake-acquisition.md": {
+      "path_after": "261021/docs/clock-implementation.md",
+      "anchor": "clock-fake-acquisition"
+    },
+    "261021/docs/clock-fixed-schedule.md": {
+      "path_after": "261021/docs/clock-implementation.md",
+      "anchor": "clock-fixed-schedule"
+    },
+    "261021/docs/clock-raw-bundle.md": {
+      "path_after": "261021/docs/clock-implementation.md",
+      "anchor": "clock-raw-bundle"
+    },
+    "261021/docs/chrony-runtime-control.md": {
+      "path_after": "261021/docs/clock-implementation.md",
+      "anchor": "chrony-runtime-control"
+    },
+    "261021/docs/backend-time-path-review.md": {
+      "path_after": "261021/docs/clock-history.md",
+      "anchor": "backend-time-path-review"
+    },
+    "261021/docs/chrony-control-analysis.md": {
+      "path_after": "261021/docs/clock-history.md",
+      "anchor": "chrony-control-analysis"
+    },
+    "261021/docs/clock-admin-log-review.md": {
+      "path_after": "261021/docs/clock-history.md",
+      "anchor": "clock-admin-log-review"
+    },
+    "261021/docs/clock-followup.md": {
+      "path_after": "261021/docs/clock-history.md",
+      "anchor": "clock-followup"
+    },
+    "261021/docs/clock-host-cause-review.md": {
+      "path_after": "261021/docs/clock-history.md",
+      "anchor": "clock-host-cause-review"
+    },
+    "261021/docs/clock-origin-investigation.md": {
+      "path_after": "261021/docs/clock-history.md",
+      "anchor": "clock-origin-investigation"
+    },
+    "261021/docs/clock-process-ownership.md": {
+      "path_after": "261021/docs/clock-history.md",
+      "anchor": "clock-process-ownership"
+    },
+    "261021/docs/clock-resources-admin-review.md": {
+      "path_after": "261021/docs/clock-history.md",
+      "anchor": "clock-resources-admin-review"
+    },
+    "261021/docs/initd-owner-correlation.md": {
+      "path_after": "261021/docs/clock-history.md",
+      "anchor": "initd-owner-correlation"
+    },
+    "261021/docs/interruption-clock-diagnostics.md": {
+      "path_after": "261021/docs/clock-history.md",
+      "anchor": "interruption-clock-diagnostics"
+    }
+  }
+}

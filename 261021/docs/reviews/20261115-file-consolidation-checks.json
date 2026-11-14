@@ -1,0 +1,738 @@
+{
+  "scope": "File consolidation only; no residual MLOps or clock research task advanced",
+  "base_commit": "9479201babd74d2ea318c33574044098cc9d8768",
+  "date_local": "2026-11-15 Asia/Tokyo",
+  "status": "local_passed_awaiting_implementation_CI",
+  "counts": {
+    "docs_markdown": {
+      "before": 67,
+      "after": 9
+    },
+    "src_python": {
+      "before": 52,
+      "after": 18
+    },
+    "tests_python": {
+      "before": 56,
+      "after": 12
+    },
+    "scripts_python": {
+      "before": 34,
+      "after": 7
+    }
+  },
+  "test_inventory": {
+    "before": 590,
+    "after": 591,
+    "removed_class_methods": [],
+    "added_class_methods": [
+      "ClockCaptureTests.test_preconsolidation_source_layout_replays_without_executing_saved_code"
+    ],
+    "discovery_errors": []
+  },
+  "definition_validation": {
+    "original_top_level_definitions": 563,
+    "missing": [],
+    "module_entry_guards": [
+      [
+        "bike_mlops.deployment_process",
+        "bike_mlops.deployment_runtime",
+        true
+      ],
+      [
+        "bike_mlops.capital_measurement_evidence",
+        "bike_mlops.operational_validation",
+        true
+      ],
+      [
+        "bike_mlops.cli",
+        "bike_mlops.cli",
+        true
+      ],
+      [
+        "bike_mlops.clock_campaign_fake_reader",
+        "bike_mlops.clock",
+        true
+      ]
+    ]
+  },
+  "layout_validation": {
+    "relative_links_checked": 923,
+    "link_issues": [],
+    "obsolete_imports": [],
+    "counts": {
+      "docs": 9,
+      "src": 18,
+      "tests": 12,
+      "scripts": 7
+    }
+  },
+  "baseline_snapshot": {
+    "manifest": "261021/data/reports/20261114-file-consolidation/baseline-files.json",
+    "sha256": "c3ac27e7828b7ef2ee2d9ca4fc0d3661580543800e83960491b4aa9b972ac6b3",
+    "source_of_recovery": "git base_commit or ignored before/ snapshot"
+  },
+  "artifacts": [
+    {
+      "path": "261021/src/bike_mlops/__init__.py",
+      "bytes": 336,
+      "sha256": "7024a2844c4ba74906d5dd4040489d3e6d9dab20fd2f704c8c11f11efcc2ee07"
+    },
+    {
+      "path": "261021/src/bike_mlops/api.py",
+      "bytes": 17891,
+      "sha256": "8cdfe8aab09097da582531103b7c74357305f23a249eec79a30b4532414b26c4"
+    },
+    {
+      "path": "261021/src/bike_mlops/cli.py",
+      "bytes": 60589,
+      "sha256": "6cdf4b9dfcc7652b69f3d228d4a0ff1a0320ba466c9279020a0e99dbe3b56c8d"
+    },
+    {
+      "path": "261021/src/bike_mlops/clock.py",
+      "bytes": 94729,
+      "sha256": "ae039a712cfe8041ad0b84d85ed5dcaf34fe2c8cd16fa05f0929a9a56a182026"
+    },
+    {
+      "path": "261021/src/bike_mlops/config.py",
+      "bytes": 7697,
+      "sha256": "64786d847cc2fa76f468ef865af51fced431a3ac708811f9101693f0c5eeaaea"
+    },
+    {
+      "path": "261021/src/bike_mlops/data.py",
+      "bytes": 23579,
+      "sha256": "685b176118391d01353c163b1ba1a135f242a247f36c2715f3df21e24f04e2a7"
+    },
+    {
+      "path": "261021/src/bike_mlops/db.py",
+      "bytes": 19383,
+      "sha256": "366a83cf12533f19fd229aeedd0f3d44735e834edededcbf96e47c67b2f72d35"
+    },
+    {
+      "path": "261021/src/bike_mlops/deployment.py",
+      "bytes": 70900,
+      "sha256": "3237f602b85438a9e4e5fdc7fc9f290cae707704b90f62bf6844be071c854f7c"
+    },
+    {
+      "path": "261021/src/bike_mlops/deployment_runtime.py",
+      "bytes": 15170,
+      "sha256": "20b8efdfdc7a024b29dc77984d3bb6581450f60c5dcd0ccb823d2f8a5ebe65f2"
+    },
+    {
+      "path": "261021/src/bike_mlops/evaluation.py",
+      "bytes": 44540,
+      "sha256": "b482f52fad4906b3c053b8bfd5a9e04619e07837707d462e65177d1adf2084aa"
+    },
+    {
+      "path": "261021/src/bike_mlops/model.py",
+      "bytes": 4669,
+      "sha256": "d684d8d508f44ce8a05ebfdf378cac575c87c6ad91865105b5b0fd7cb1080238"
+    },
+    {
+      "path": "261021/src/bike_mlops/monitor_inspection.py",
+      "bytes": 42181,
+      "sha256": "8458a936feff0f84a5bb1497248aea4bd76f078e1355fcf9d54c8952714d1335"
+    },
+    {
+      "path": "261021/src/bike_mlops/monitoring.py",
+      "bytes": 44605,
+      "sha256": "a328f72396a6bb68a3cc40e6266b62e846d1973cd0386060ebb2158e31942c6b"
+    },
+    {
+      "path": "261021/src/bike_mlops/operational.py",
+      "bytes": 74671,
+      "sha256": "091796e44610e30d9f28adf397d7ed924639a59f7eb4511de18f37b3525a9592"
+    },
+    {
+      "path": "261021/src/bike_mlops/operational_runner.py",
+      "bytes": 22809,
+      "sha256": "1882e4985225f3470abfbc1f1b4aeea47cc8a08575ec1b12e532ce43078b805d"
+    },
+    {
+      "path": "261021/src/bike_mlops/operational_validation.py",
+      "bytes": 89467,
+      "sha256": "02095fe0c7a4f29628a159a5daec4e0e33f568b30eb373556fa436fd50f347c8"
+    },
+    {
+      "path": "261021/src/bike_mlops/staging.py",
+      "bytes": 33934,
+      "sha256": "0325838502e3c0307d9de3919a67d46c8773f2e46bf24a2e111eca9a9a122005"
+    },
+    {
+      "path": "261021/src/bike_mlops/training.py",
+      "bytes": 43807,
+      "sha256": "4aa2b6b9f114743d4497c38138dde302e5b76f1394f503d79febbb8fdd90206c"
+    },
+    {
+      "path": "261021/tests/probe_decision_clock.py",
+      "bytes": 4320,
+      "sha256": "8e762bf8affff71d8f45b8ac08aa9b876349b611f364f113ebdfd2bc99f97c3a"
+    },
+    {
+      "path": "261021/tests/request_interruption_child.py",
+      "bytes": 4388,
+      "sha256": "ad8b1347d6512b6dd14e6cf27f3320abc0e24527523b627ff308b28142dc4f6d"
+    },
+    {
+      "path": "261021/tests/support.py",
+      "bytes": 17151,
+      "sha256": "758034fbda9232f787b59994843b1b31824c6fdefb70b8344043bad77fba7d07"
+    },
+    {
+      "path": "261021/tests/test_api.py",
+      "bytes": 45668,
+      "sha256": "c19c6ea7fffd7f89f0737416a4c497f4657a47c4245fe09916d5a5e67b8c8602"
+    },
+    {
+      "path": "261021/tests/test_clock.py",
+      "bytes": 118853,
+      "sha256": "ee735b54b4603b54d691f6aec3145f65682fa6098e376bcb9dc1905576712b88"
+    },
+    {
+      "path": "261021/tests/test_data.py",
+      "bytes": 63589,
+      "sha256": "4384b492d6d4368b71426fdb0368c8b115756007d147c0eb4671a40c8c748494"
+    },
+    {
+      "path": "261021/tests/test_deployment.py",
+      "bytes": 106199,
+      "sha256": "bef122f06b6e21b410ec76fc0371b24d0a497a9f5000e5a25551afc3a6397313"
+    },
+    {
+      "path": "261021/tests/test_measurement.py",
+      "bytes": 107819,
+      "sha256": "001c2270646cc78887b600142f1fe10b4392ec23086e026073b25195db2c71a1"
+    },
+    {
+      "path": "261021/tests/test_monitor_inspection.py",
+      "bytes": 45103,
+      "sha256": "ef3e20fa05cbec9d2800d9736bfc4aaf358013a3542383f7d9ad8fb2caeebf38"
+    },
+    {
+      "path": "261021/tests/test_monitoring.py",
+      "bytes": 58588,
+      "sha256": "472ba98556287775cec9126b9bc7296621a145573e9884a20ccd2787027979a5"
+    },
+    {
+      "path": "261021/tests/test_operational.py",
+      "bytes": 76978,
+      "sha256": "32a0d6f7ebaa8d641b84aab79330f05f8b8b6a0c00f49107e6e258a468e73cc2"
+    },
+    {
+      "path": "261021/tests/test_system.py",
+      "bytes": 42937,
+      "sha256": "adc9ead66df4c1af83ac7960d31058f80f11b125dbf21b8de43fce63c249b265"
+    },
+    {
+      "path": "261021/scripts/__init__.py",
+      "bytes": 320,
+      "sha256": "87ba848e0b88963efb7611d20ee614dc2983cb45ed06f26ff6393e0db1dad47f"
+    },
+    {
+      "path": "261021/scripts/clock_tools.py",
+      "bytes": 18461,
+      "sha256": "3b8584ea2fb0a87c2930fa4d7b0e1896ed1b6a02f23535bb87f9492d7db6f9ab"
+    },
+    {
+      "path": "261021/scripts/data_tools.py",
+      "bytes": 63098,
+      "sha256": "a9233f8fd40257e25f4b8889241b079aaa57a3b71c54f5730571d2cab71e5c19"
+    },
+    {
+      "path": "261021/scripts/runtime_checks.py",
+      "bytes": 60029,
+      "sha256": "69960863dc2d697e72aff3e2adc6bc1af678332b13509399c25deec9bedc121d"
+    },
+    {
+      "path": "261021/scripts/runtime_tools.py",
+      "bytes": 25463,
+      "sha256": "678f6b631273ecca1745fb1cf1a55b229d65dad7a8d52806408342fff8e43b58"
+    },
+    {
+      "path": "261021/scripts/storage_checks.py",
+      "bytes": 113605,
+      "sha256": "9594cffff24750ff49795a0fc0a5903bfdc0aafcdf23817ba5d996fd1c67a8ac"
+    },
+    {
+      "path": "261021/scripts/system_harness.py",
+      "bytes": 79914,
+      "sha256": "4b0c485e35b46560a2a36b6d6407d608bd0a23838a7eb981b12c4a1920b2fea0"
+    },
+    {
+      "path": "261021/docs/README.md",
+      "bytes": 12014,
+      "sha256": "e6debc947f3f08ac2cc6af08666760686ad2c93ef433cd8030cc21e462a754e2"
+    },
+    {
+      "path": "261021/docs/architecture.md",
+      "bytes": 60163,
+      "sha256": "03bbcd994baa18b940c9c47f28c0a23dfe60fa406bb26bdb909a95d994633c5c"
+    },
+    {
+      "path": "261021/docs/capital.md",
+      "bytes": 138524,
+      "sha256": "4e1f099fd907c36915e1a2628b437ce7550a5c9bf8b65b8574b0c4fd5a208f08"
+    },
+    {
+      "path": "261021/docs/clock-history.md",
+      "bytes": 98952,
+      "sha256": "ce96b750ac68a6acc6dbb5345e8dc61c3e1a80a19576bb57cbb9807caeba8d1b"
+    },
+    {
+      "path": "261021/docs/clock-implementation.md",
+      "bytes": 61961,
+      "sha256": "5a17c7cb9c60df025ea419f2a145ecde048efe88302e05b6cdb24e2b75137b67"
+    },
+    {
+      "path": "261021/docs/clock-operations.md",
+      "bytes": 109634,
+      "sha256": "df0c461aafa11e8b409f63ffb8f0fb657e33e7048727cd45408e7932a6debed6"
+    },
+    {
+      "path": "261021/docs/evidence.md",
+      "bytes": 127033,
+      "sha256": "fefcfc62d98c7e40ad46e2bddbae93bf1b26cc89a55bc43deda11ed4dbebb295"
+    },
+    {
+      "path": "261021/docs/monitoring.md",
+      "bytes": 64164,
+      "sha256": "4246a253fd9162e43c0e90d6092b9ad7acca764f66c930a155b74bdf92d9704c"
+    },
+    {
+      "path": "261021/docs/runbook.md",
+      "bytes": 81575,
+      "sha256": "908f57dd6252898b53ec84c20ec423776762996ce06d996ca8d6cf447e756cc5"
+    },
+    {
+      "path": "261021/configs/file-layout.json",
+      "bytes": 89641,
+      "sha256": "e3c8fc2fe663f60fc8f82060ff914042628cb4149a5a974a41f3341af7a3e785"
+    },
+    {
+      "path": ".github/workflows/bike-mlops-contracts.yml",
+      "bytes": 8410,
+      "sha256": "72c2eba097d2c059db393166eea2b976488a7a16faf4819bd628f8964b6ec7de"
+    },
+    {
+      "path": "261021/compose.capital-staging.yaml",
+      "bytes": 1736,
+      "sha256": "8c583ea0c19e9adfa23a39d0d656c7154813b0a0ea68f43fb51e4b26df7aecc1"
+    },
+    {
+      "path": "261021/README.md",
+      "bytes": 27723,
+      "sha256": "5c9d47ba7ad391af19f3cea03c4987313bdc033a9db39fbf2632893a28ca8f1f"
+    },
+    {
+      "path": "261021/work_log.md",
+      "bytes": 598350,
+      "sha256": "3615bdc2fb59d72215155181be6d5ee18516b3c1b8389ff3bb7a44d61cca3552"
+    },
+    {
+      "path": "261014/plan_mlops.md",
+      "bytes": 151336,
+      "sha256": "f2b5622acd1b29d8e77384d0cf686078a6275790ad207799f14b226b45a42713"
+    },
+    {
+      "path": "README.md",
+      "bytes": 7068,
+      "sha256": "0c13c3b9cc618e3b10591225eb3419f1666dd1adc57bf1483a6bd194b1228fdf"
+    }
+  ],
+  "attempts": [
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/archive-export-test-v2.json",
+      "receipt_sha256": "388dfba3301660407b6683caca8cf1f90025b6818c92d034cf4e8ed49ba47177",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_measurement.py",
+        "-k",
+        "export_success",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T19:32:22.267319+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:32:29.721438+00:00",
+      "monotonic_start_ns": 731820912659,
+      "monotonic_end_ns": 739275008098,
+      "log": "261021/data/reports/20261114-file-consolidation/archive-export-test-v2.log",
+      "log_sha256": "feb009dc4689a14027bfd2bf74f19903bfa0ecad0edaef5bc9592ec32c82b911"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/archive-export-test-v3.json",
+      "receipt_sha256": "c41241f5bd1546d3be0abbe25285605cd854eab27d7041a846210f02567ddddc",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_measurement.py",
+        "-k",
+        "export_success",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T19:33:29.580968+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:33:38.332848+00:00",
+      "monotonic_start_ns": 799134552083,
+      "monotonic_end_ns": 807886430239,
+      "log": "261021/data/reports/20261114-file-consolidation/archive-export-test-v3.log",
+      "log_sha256": "34b80f0aaa035ac725b57fba44584655b9af96c8a833224fbe86d624494c43c6"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/baseline-v1.json",
+      "receipt_sha256": "4791fee89cbe94095e2c54e9898b3929af8bb7b4866fb4880eb9d248a8adfa67",
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-file-consolidation/baseline.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T12:27:12.943444+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T12:27:13.117839+00:00",
+      "monotonic_start_ns": 204399832314977,
+      "monotonic_end_ns": 204400006702594,
+      "log": "261021/data/reports/20261114-file-consolidation/baseline-v1.log",
+      "log_sha256": "4bf383c826c62ed865d94cb7d93d563cf150e0312e534a7971da4a34208841e7"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/focused-tests-v3.json",
+      "receipt_sha256": "94d739fcc7082c34665bdcd8585463ec17e7c1dad42641c42435639daa78101d",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_deployment.py",
+        "-k",
+        "DeploymentEvidencePublisherTests",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T19:33:28.235223+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:33:37.543846+00:00",
+      "monotonic_start_ns": 797788801179,
+      "monotonic_end_ns": 807097416740,
+      "log": "261021/data/reports/20261114-file-consolidation/focused-tests-v3.log",
+      "log_sha256": "72947f7842aa94942e849b565db6b5ff11b3753310aa90e74e511753becb4bb4"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/full-suite-final-v2.json",
+      "receipt_sha256": "6683c2d5fc1c033eafb63d6a7b6954678345faccf7fc84a8d0c8c36bd87bf88a",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T19:40:14.484472+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:48:48.780646+00:00",
+      "monotonic_start_ns": 1204038114905,
+      "monotonic_end_ns": 1718334232898,
+      "log": "261021/data/reports/20261114-file-consolidation/full-suite-final-v2.log",
+      "log_sha256": "46c4d2ab8c3e16d23575b0c3967d79e922b14c223f229c587fb58a32422dd2b9"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/full-suite-resume-v1.json",
+      "receipt_sha256": "8bbca9ea0535bc0a899556dc24d6dab474eca95c76bd2a44084aa11f1eb303be",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T19:25:11.673844+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:34:07.788295+00:00",
+      "monotonic_start_ns": 301227450097,
+      "monotonic_end_ns": 837341872274,
+      "log": "261021/data/reports/20261114-file-consolidation/full-suite-resume-v1.log",
+      "log_sha256": "374e9db3caf5ddaaa08e80a5a375576c9d66feeb3cbf92b161ee333cf0daaf6d"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/legacy-raw-v1.json",
+      "receipt_sha256": "c1e5f81a2a5bad595b1cccf80595525118cc499f19e727d1500c403326705b0e",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_clock.py",
+        "-k",
+        "preconsolidation",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T19:29:00.428051+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:29:12.958773+00:00",
+      "monotonic_start_ns": 529981639209,
+      "monotonic_end_ns": 542512349741,
+      "log": "261021/data/reports/20261114-file-consolidation/legacy-raw-v1.log",
+      "log_sha256": "80f3f996279ed5837d5347fd1001c8ee0689bd6db9db9703e409709aeb0e8658"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/merge-docs-v1.json",
+      "receipt_sha256": "0ad887cc6073ee553e9abc79019abfff546892f7586c4383e82338bf269bd087",
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-file-consolidation/merge_docs.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T12:38:39.237508+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T12:38:41.169583+00:00",
+      "monotonic_start_ns": 205088521971319,
+      "monotonic_end_ns": 205090454035513,
+      "log": "261021/data/reports/20261114-file-consolidation/merge-docs-v1.log",
+      "log_sha256": "99ad46770413600f1aeffae003b0f6844f1051bbc2b948d13a6370c1a4c7dc2a"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/merge-python-v2.json",
+      "receipt_sha256": "f2e8de74270dc33ff34780422266e2f686083fa23247dfdbfe152652923dd460",
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-file-consolidation/merge_python_v2.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T12:33:46.500586+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T12:33:48.534575+00:00",
+      "monotonic_start_ns": 204794406555218,
+      "monotonic_end_ns": 204796440532867,
+      "log": "261021/data/reports/20261114-file-consolidation/merge-python-v2.log",
+      "log_sha256": "71f75a596b82ef21044b0082c0ef0d9518eb2e4666a7b885422a6a12149e4c66"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/merge-python-v3.json",
+      "receipt_sha256": "4e968d1c1e18b5565730938d37eb0c8a53f7659a62e6c716b620649630fef52d",
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-file-consolidation/merge_python_v3.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T12:34:48.516328+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T12:34:55.235816+00:00",
+      "monotonic_start_ns": 204856615865510,
+      "monotonic_end_ns": 204863335369903,
+      "log": "261021/data/reports/20261114-file-consolidation/merge-python-v3.log",
+      "log_sha256": "169d3fc7e96433b811352622424b8f810ff1fd4c4d383043d4ac15e403a04781"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/merge-python-v4.json",
+      "receipt_sha256": "afe5d85ddda5baa7c26ff36638b407a3f692049b32621c88fd899cafd189e25a",
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-file-consolidation/merge_python_v4.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T12:36:22.687022+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T12:36:29.122966+00:00",
+      "monotonic_start_ns": 204951044483327,
+      "monotonic_end_ns": 204957480418171,
+      "log": "261021/data/reports/20261114-file-consolidation/merge-python-v4.log",
+      "log_sha256": "abb4c55353b2d4fe53fd10399e2dc12d8df049e41440d983414437c50dfafdae"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/merge-python-v5.json",
+      "receipt_sha256": "30559c6dbb8c7bd3230c99c5004cea966fc4e8b1261056ef721afcdb3663a802",
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-file-consolidation/merge_python_v5.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T12:37:08.099004+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T12:37:14.336939+00:00",
+      "monotonic_start_ns": 204996457194519,
+      "monotonic_end_ns": 205002695106026,
+      "log": "261021/data/reports/20261114-file-consolidation/merge-python-v5.log",
+      "log_sha256": "169d3fc7e96433b811352622424b8f810ff1fd4c4d383043d4ac15e403a04781"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/publisher-tests-v2.json",
+      "receipt_sha256": "cade6bd10b94f98628db1d5c493da39e9358ea7f674493f45b50cebfb77fbc0d",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_deployment.py",
+        "-k",
+        "DeploymentEvidencePublisherTests",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T19:32:20.935639+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:32:24.700908+00:00",
+      "monotonic_start_ns": 730489235471,
+      "monotonic_end_ns": 734254480217,
+      "log": "261021/data/reports/20261114-file-consolidation/publisher-tests-v2.log",
+      "log_sha256": "453f62902cf64c49c9a9a88f951417fb4714ac159ce1083d0c44ca9881434256"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/static-checks-final-v3.json",
+      "receipt_sha256": "9d391a8f3d4301d5abe77fa279ef45dec99d8da5b91108253ce5fc5c90f70346",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261114-file-consolidation/static_checks.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T19:46:03.690716+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:46:14.105477+00:00",
+      "monotonic_start_ns": 1553244296397,
+      "monotonic_end_ns": 1563659052713,
+      "log": "261021/data/reports/20261114-file-consolidation/static-checks-final-v3.log",
+      "log_sha256": "8e2e018d3744ddbb848af23ff66178b3448aae27fdb60ffb4e4936e698fbe60b"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/static-checks-v1.json",
+      "receipt_sha256": "98363b71a3d0cc7e090e349e23334425478d3f1fe3bae2cbb36472e460b871b1",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261114-file-consolidation/static_checks.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T19:31:39.937170+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:31:40.260661+00:00",
+      "monotonic_start_ns": 689490768692,
+      "monotonic_end_ns": 689814237314,
+      "log": "261021/data/reports/20261114-file-consolidation/static-checks-v1.log",
+      "log_sha256": "64b899ca4239b1aeee35dd46ef6fa904ec5a726a9f31ccd4a0361b17f6aa8ab6"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/static-checks-v2.json",
+      "receipt_sha256": "779d206a15b8955c4ddaef55cce7853e9c3593b3d3cfab7e3db5d96ec9dc17f0",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261114-file-consolidation/static_checks.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T19:31:49.694776+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:32:01.692484+00:00",
+      "monotonic_start_ns": 699248371485,
+      "monotonic_end_ns": 711246061216,
+      "log": "261021/data/reports/20261114-file-consolidation/static-checks-v2.log",
+      "log_sha256": "8e2e018d3744ddbb848af23ff66178b3448aae27fdb60ffb4e4936e698fbe60b"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/synthetic-prepare-v1.json",
+      "receipt_sha256": "207f449006f263b1d8948d6fa024bfe5d3a749c128ad34ea6e220dae897d4d58",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "300",
+        ".venv/bin/python",
+        "scripts/system_harness.py",
+        "run",
+        "--prepare-synthetic"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T19:30:04.320353+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:30:12.657664+00:00",
+      "monotonic_start_ns": 593873938957,
+      "monotonic_end_ns": 602211249270,
+      "log": "261021/data/reports/20261114-file-consolidation/synthetic-prepare-v1.log",
+      "log_sha256": "be7e9c552fe616d7d3970a84c3057da2d38eb19b6b6ce70bc6b23a56306e49ad"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/system-tests-v2.json",
+      "receipt_sha256": "5c445915dcff3baa6ded4b0d44ab88695ebbfee5a242573115e1679863dd2d06",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_system.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T19:29:40.019960+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:29:44.662500+00:00",
+      "monotonic_start_ns": 569573542119,
+      "monotonic_end_ns": 574216084961,
+      "log": "261021/data/reports/20261114-file-consolidation/system-tests-v2.log",
+      "log_sha256": "e72811f14d33e55e9bc3df34903169e1ed6aa67078712bd2f50aa4d529af5c34"
+    }
+  ],
+  "uncompleted_attempts": [
+    {
+      "log": "261021/data/reports/20261114-file-consolidation/full-suite-v1.log",
+      "sha256": "264c0d7e13e788fd02e81606dc11f15aca6b90d0dac09ccbb0bc63a75df39dfe",
+      "outcome": "interrupted or lost session; no final receipt, NUL bytes; not a successful run"
+    },
+    {
+      "name": "merge_python v1",
+      "outcome": "interrupted slow transformation; no final receipt; preserved helper/logs"
+    }
+  ],
+  "corrections": [
+    "Script action propagation through dynamic helper/worker/safety subprocess calls",
+    "Restored deployment_runtime and operational_validation __main__ worker/verifier entries",
+    "Role-specific mock PROJECT_ROOT, patch.multiple and reflective function names",
+    "Dotted standard-library import alias preserves parent module",
+    "Current two-file synthetic source manifest and exact legacy six/seven-member read compatibility",
+    "Compose !override parsed as YAML nodes by validation helper; product YAML unchanged for this failure",
+    "Explicit historical work_log anchor; updated active Python CLI and doc references"
+  ],
+  "boundaries": {
+    "frozen_consumption_ledger_sha256": "c42de5e869d4765ac5f776ed098e98cbbed347c0dbe2c967016b14d64986b652",
+    "actual_candidate_refit": false,
+    "actual_operational_rerun": false,
+    "actual_registry_or_database_or_serving_modified": false,
+    "clock_research_resumed": false,
+    "old_review_json_rewritten": false,
+    "unrelated_untracked_included": false
+  },
+  "limits": [
+    "Past path/hash fields and literal command history remain historical; new CLI paths are in file-layout.json",
+    "Synthetic/CI results do not release operational hold, qualify clocks, approve deployment or complete product residual tasks",
+    "Only installed current synthetic source bytes may be exported; archived source is never executed",
+    "Raw local timestamps are unqualified observations; no precision-clock claim"
+  ],
+  "ci": {
+    "status": "pending exact implementation commit; not accepted yet"
+  }
+}

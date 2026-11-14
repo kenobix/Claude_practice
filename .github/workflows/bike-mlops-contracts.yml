@@ -61,7 +61,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p data/reports
-          timeout --signal=TERM --kill-after=10 1200 python scripts/capital_system_harness.py \
+          timeout --signal=TERM --kill-after=10 1200 python scripts/system_harness.py run \
             --run-synthetic-system --verify-paired-restore --evidence-dir data/reports/t16-ci 2>&1 \
             | tee data/reports/synthetic-system-ci.log
       - name: Run disposable PostgreSQL snapshot-lock test
@@ -72,7 +72,7 @@ jobs:
           MLFLOW_DISABLE_AGENT_HINT: "1"
         run: |
           set -o pipefail
-          timeout --signal=TERM 300 python scripts/test_capital_snapshot_postgres.py 2>&1 \
+          timeout --signal=TERM 300 python scripts/storage_checks.py snapshot 2>&1 \
             | tee data/reports/snapshot-postgres-ci.log
       - name: Run disposable request interruption PostgreSQL test
         if: >-
@@ -82,7 +82,7 @@ jobs:
           MLFLOW_DISABLE_AGENT_HINT: "1"
         run: |
           set -o pipefail
-          timeout --signal=TERM --kill-after=10 180 python scripts/test_capital_request_interruption_postgres.py 2>&1 \
+          timeout --signal=TERM --kill-after=10 180 python scripts/storage_checks.py interruption 2>&1 \
             | tee data/reports/request-interruption-postgres-ci.log
       - name: Run disposable PostgreSQL monitor reconciliation test
         if: >-
@@ -93,7 +93,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p data/reports
-          timeout --signal=TERM --kill-after=10 180 python scripts/test_monitor_inspection_postgres.py --run-disposable 2>&1 \
+          timeout --signal=TERM --kill-after=10 180 python scripts/storage_checks.py monitor-inspection --run-disposable 2>&1 \
             | tee data/reports/monitor-inspection-postgres-ci.log
       - name: Run legacy prediction precision migration and restore test
         if: >-
@@ -104,7 +104,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p data/reports
-          timeout --signal=TERM --kill-after=10 180 python scripts/test_prediction_migration_postgres.py \
+          timeout --signal=TERM --kill-after=10 180 python scripts/storage_checks.py migration \
             --run-disposable --evidence-dir data/reports/t08-ci 2>&1 \
             | tee data/reports/prediction-migration-postgres-ci.log
       - name: Run disposable PostgreSQL monitor persistence test
@@ -116,7 +116,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p data/reports
-          timeout --signal=TERM --kill-after=10 300 python scripts/test_monitor_persistence_postgres.py 2>&1 \
+          timeout --signal=TERM --kill-after=10 300 python scripts/storage_checks.py monitor-persistence 2>&1 \
             | tee data/reports/monitor-persistence-postgres-ci.log
       - name: Run disposable MLflow HTTP decision fault test
         if: >-
@@ -127,7 +127,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p data/reports
-          timeout --signal=TERM --kill-after=10 180 python scripts/test_capital_decision_http.py \
+          timeout --signal=TERM --kill-after=10 180 python scripts/runtime_checks.py decision-http \
             --run-disposable --evidence-dir data/reports/t13-http-ci 2>&1 \
             | tee data/reports/capital-decision-http-ci.log
       - name: Run disposable Caddy deployment recovery and TERM cleanup
@@ -141,11 +141,11 @@ jobs:
           mkdir -p data/reports
           timeout --signal=TERM --kill-after=10 180 docker pull caddy:2.10.2-alpine 2>&1 \
             | tee data/reports/deployment-recovery-ci.log
-          timeout --signal=TERM --kill-after=30 900 python scripts/test_deployment_recovery_system.py \
+          timeout --signal=TERM --kill-after=30 900 python scripts/runtime_checks.py deployment-recovery \
             --run-disposable --evidence-dir data/reports/t07a-ci 2>&1 \
             | tee -a data/reports/deployment-recovery-ci.log
           set +e
-          timeout --signal=TERM --kill-after=30 900 python scripts/test_deployment_recovery_system.py \
+          timeout --signal=TERM --kill-after=30 900 python scripts/runtime_checks.py deployment-recovery \
             --run-disposable --term-after-startup --evidence-dir data/reports/t07a-term-ci 2>&1 \
             | tee -a data/reports/deployment-recovery-ci.log
           result=$?

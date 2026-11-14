@@ -1,4 +1,10 @@
+"""Product components: cli."""
 from __future__ import annotations
+
+
+# ========================================================================
+# cli
+# ========================================================================
 
 import argparse
 import getpass
@@ -17,31 +23,17 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from bike_mlops.config import (
-    DATA_PROFILE,
-    DATA_PROFILE_ID,
-    DATASET_MANIFEST,
-    DATASET_ARCHIVE,
-    DEFAULT_DATASET,
-    DEFAULT_DATABASE_URL,
-    DEFAULT_MLFLOW_URI,
-    FEATURE_CONTRACT_VERSION,
-    MODEL_NAME,
-    PROJECT_ROOT,
-    REPORT_DIR,
-    RUNTIME_DIR,
-    TARGET_CONTRACT_ID,
-)
+from bike_mlops.config import DATA_PROFILE, DATA_PROFILE_ID, DATASET_MANIFEST, DATASET_ARCHIVE, DEFAULT_DATASET, DEFAULT_DATABASE_URL, DEFAULT_MLFLOW_URI, FEATURE_CONTRACT_VERSION, MODEL_NAME, PROJECT_ROOT, REPORT_DIR, RUNTIME_DIR, TARGET_CONTRACT_ID
 from bike_mlops.data import audit_hourly, download_dataset, load_hourly, sha256_file
 from bike_mlops.db import Database, canonical_time, stable_hash
-from bike_mlops.deployment_gates import require_deployment_eligible
-from bike_mlops.deployment_metadata import operation_identity
-from bike_mlops.deployment_process import remaining_seconds, run_operation, interruption_guard
-from bike_mlops.deployment_progress import DeploymentTimeout, deployment_stage
-from bike_mlops.features import FEATURE_COLUMNS, available_observation_frame, feature_frame_for_dataset
+from bike_mlops.deployment import require_deployment_eligible
+from bike_mlops.deployment import operation_identity
+from bike_mlops.deployment_runtime import remaining_seconds, run_operation, interruption_guard
+from bike_mlops.deployment_runtime import DeploymentTimeout, deployment_stage
+from bike_mlops.data import FEATURE_COLUMNS, available_observation_frame, feature_frame_for_dataset
 from bike_mlops.monitoring import score_monitor_windows
-from bike_mlops.monitor_persistence import persist_monitor_run
-from bike_mlops.monitoring_window import resolve_monitor_window
+from bike_mlops.monitoring import persist_monitor_run
+from bike_mlops.monitoring import resolve_monitor_window
 
 
 def command_monitor_inspect(args) -> None:
@@ -81,7 +73,7 @@ def _load_profile_hourly(data_path: Path) -> pd.DataFrame:
         manifest = json.loads(DATASET_MANIFEST.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
         raise ValueError(f"Could not read the active Capital source manifest: {error}") from error
-    from bike_mlops.capital_data import validate_capital_manifest
+    from bike_mlops.data import validate_capital_manifest
 
     manifest, frame = validate_capital_manifest(manifest, data_path)
     if manifest["processing"]["contract_version"] != TARGET_CONTRACT_ID:
@@ -100,8 +92,7 @@ def _seed_observations(database: Database, data_path: Path) -> tuple[int, str, p
 def command_data_download(args) -> None:
     if DATA_PROFILE_ID != "uci-bike-sharing":
         raise ValueError(
-            "The built-in downloader is only for UCI. Capital data must first be prepared from monthly archives "
-            "with scripts/prepare_capitalbikeshare.py and a matching manifest."
+            'The built-in downloader is only for UCI. Capital data must first be prepared from monthly archives with scripts/data_tools.py and a matching manifest.'
         )
     _print(download_dataset(args.archive, args.csv, args.manifest))
 
@@ -325,12 +316,12 @@ def command_replay(args) -> None:
 
 
 def _read_feature_values(value: str) -> dict:
-    from bike_mlops.capital_deployment_evidence import strict_json
+    from bike_mlops.deployment import strict_json
     return strict_json(value)
 
 
 def command_monitor(args) -> None:
-    from bike_mlops.monitoring_psi_v2 import PSI_ALGORITHM_V2
+    from bike_mlops.monitoring import PSI_ALGORITHM_V2
     capital = DATA_PROFILE_ID == "capital-bikeshare"
     psi_version = getattr(args, "psi_version", None)
     if capital and psi_version != PSI_ALGORITHM_V2:
@@ -388,7 +379,7 @@ def command_monitor(args) -> None:
     client = _model_registry_client()
     score_options = {}
     if capital:
-        from bike_mlops.training_monitor_reference import registered_training_reference
+        from bike_mlops.monitoring import registered_training_reference
         manifest_path = getattr(args, "manifest", None) or args.csv.with_name("manifest.json")
         frozen, selection, registry_tags = registered_training_reference(
             client, version, data_sha256=data_hash, manifest_path=manifest_path, frame=frame,
@@ -1039,7 +1030,7 @@ def command_deploy_recover(args) -> None:
 
 
 def command_deploy_inspect(args) -> None:
-    from bike_mlops.deployment_inspection import inspect_state
+    from bike_mlops.deployment import inspect_state
 
     result = inspect_state(RUNTIME_DIR / "deployment-state.json",
                            os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL), DATA_PROFILE_ID, TARGET_CONTRACT_ID)

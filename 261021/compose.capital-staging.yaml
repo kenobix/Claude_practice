@@ -24,7 +24,7 @@ services:
 
   api-staging:
     build: .
-    command: ["uvicorn", "bike_mlops.staging_api:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "bike_mlops.api:_staging_api_app", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       DATABASE_URL: postgresql://bike_app:${APP_DB_PASSWORD:?set APP_DB_PASSWORD in .env}@postgres-staging:5432/bikeops
       MLFLOW_TRACKING_URI: http://mlflow:5000

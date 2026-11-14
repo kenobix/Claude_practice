@@ -1,4 +1,10 @@
+"""Product components: api."""
 from __future__ import annotations
+
+
+# ========================================================================
+# api
+# ========================================================================
 
 import json
 import math
@@ -12,20 +18,12 @@ from fastapi import APIRouter, FastAPI, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 
 from bike_mlops import __version__
-from bike_mlops.config import (
-    DATA_PROFILE,
-    DATA_PROFILE_ID,
-    DEFAULT_DATABASE_URL,
-    FEATURE_CONTRACT_VERSION,
-    LABEL_DELAY_HOURS,
-    MODEL_NAME,
-    TARGET_CONTRACT_ID,
-)
+from bike_mlops.config import DATA_PROFILE, DATA_PROFILE_ID, DEFAULT_DATABASE_URL, FEATURE_CONTRACT_VERSION, LABEL_DELAY_HOURS, MODEL_NAME, TARGET_CONTRACT_ID
 from bike_mlops.db import Database, RequestConflict, canonical_time, stable_hash
-from bike_mlops.deployment_metadata import inspect_api_operation
-from bike_mlops.features import FEATURE_COLUMNS, build_feature_row
+from bike_mlops.deployment import inspect_api_operation
+from bike_mlops.data import FEATURE_COLUMNS, build_feature_row
 from bike_mlops.model import load_registered_model, predict_non_negative
-from bike_mlops.timezones import load_pinned_timezone, timezone_data_identity
+from bike_mlops.config import load_pinned_timezone, timezone_data_identity
 
 
 class PredictionRequest(BaseModel):
@@ -339,3 +337,66 @@ def _prediction_response(record: dict) -> dict:
 
 
 app.include_router(api_router)
+
+
+# ========================================================================
+# staging_api
+# ========================================================================
+
+"""ASGI entry point for the Capital candidate-only staging service."""
+
+
+
+import os as _staging_api_os
+import time as _staging_api_time
+from contextlib import asynccontextmanager as _staging_api_asynccontextmanager
+from datetime import datetime as _staging_api_datetime, timezone as _staging_api_timezone
+
+from bike_mlops import api as runtime_api
+from bike_mlops.staging import load_staging_registered_model
+from bike_mlops.config import DATA_PROFILE_ID as _staging_api_DATA_PROFILE_ID, TARGET_CONTRACT_ID as _staging_api_TARGET_CONTRACT_ID
+from bike_mlops.db import Database as _staging_api_Database
+from fastapi import FastAPI as _staging_api_FastAPI
+
+
+def _staging_runtime_model():
+    model_version = _staging_api_os.getenv("CAPITAL_STAGING_MODEL_VERSION")
+    if not model_version:
+        return None, None, None, None, "CAPITAL_STAGING_MODEL_VERSION is not set"
+    deadline = _staging_api_time.monotonic() + 45
+    last_error = None
+    while _staging_api_time.monotonic() < deadline:
+        try:
+            model, version, artifact_hash, quality_gate, error = load_staging_registered_model()
+            return model, version, artifact_hash, quality_gate, error
+        except Exception as error:  # keep API startup diagnosable while MLflow finishes starting
+            last_error = error
+            _staging_api_time.sleep(2)
+    return None, model_version, None, None, f"Could not load pinned staging candidate: {last_error}"
+
+
+@_staging_api_asynccontextmanager
+async def _staging_lifespan(app):
+    database = _staging_api_Database(
+        _staging_api_os.getenv("DATABASE_URL", ""), _staging_api_DATA_PROFILE_ID, _staging_api_TARGET_CONTRACT_ID
+    )
+    database.initialize()
+    model, version, artifact_hash, quality_gate, model_error = _staging_runtime_model()
+    app.state.database = database
+    app.state.model = model
+    app.state.model_version = version
+    app.state.artifact_hash = artifact_hash
+    app.state.model_quality_gate = quality_gate
+    app.state.model_error = model_error
+    app.state.candidate_id = _staging_api_os.getenv("CAPITAL_STAGING_CANDIDATE_ID")
+    app.state.started_at = _staging_api_datetime.now(_staging_api_timezone.utc).isoformat()
+    yield
+
+
+_staging_api_app = _staging_api_FastAPI(
+    title="Bike Demand Candidate Staging API",
+    version=runtime_api.__version__,
+    description="Isolated Capital candidate validation endpoint; deployment permission remains blocked.",
+    lifespan=_staging_lifespan,
+)
+_staging_api_app.include_router(runtime_api.api_router)

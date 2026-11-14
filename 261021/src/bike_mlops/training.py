@@ -1,4 +1,10 @@
+"""Product components: training."""
 from __future__ import annotations
+
+
+# ========================================================================
+# training
+# ========================================================================
 
 import importlib.metadata
 import hashlib
@@ -17,27 +23,15 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.pipeline import Pipeline
 
-from bike_mlops.config import (
-    DATA_PROFILE,
-    DATA_PROFILE_ID,
-    DATASET_MANIFEST,
-    DATASET_URL,
-    DEFAULT_DATASET,
-    DEFAULT_MLFLOW_URI,
-    FEATURE_CONTRACT_VERSION,
-    MODEL_NAME,
-    PROJECT_ROOT,
-    TARGET_CONTRACT_ID,
-    LABEL_DELAY_HOURS,
-)
+from bike_mlops.config import DATA_PROFILE, DATA_PROFILE_ID, DATASET_MANIFEST, DATASET_URL, DEFAULT_DATASET, DEFAULT_MLFLOW_URI, FEATURE_CONTRACT_VERSION, MODEL_NAME, PROJECT_ROOT, TARGET_CONTRACT_ID, LABEL_DELAY_HOURS
 from bike_mlops.data import load_hourly, sha256_file
-from bike_mlops.capital_data import validate_capital_manifest
-from bike_mlops.candidate_artifacts import persist_candidate_bundle, source_tree_inventory
-from bike_mlops.evaluation_protocol import begin_evaluation, finish_evaluation, read_protocol
-from bike_mlops.features import FEATURE_COLUMNS, feature_frame_for_dataset
+from bike_mlops.data import validate_capital_manifest
+from bike_mlops.evaluation import persist_candidate_bundle, source_tree_inventory
+from bike_mlops.evaluation import begin_evaluation, finish_evaluation, read_protocol
+from bike_mlops.data import FEATURE_COLUMNS, feature_frame_for_dataset
 from bike_mlops.model import directory_sha256, load_registered_model
-from bike_mlops.quality_gates import baseline_accuracy_gate
-from bike_mlops.timezones import timezone_data_identity
+from bike_mlops.evaluation import baseline_accuracy_gate
+from bike_mlops.config import timezone_data_identity
 
 SPLITS = {
     "train_end": pd.Timestamp("2012-01-01 00:00:00"),
@@ -835,7 +829,7 @@ def train_candidate(
         raise ValueError("Candidate evaluation must remain unregistered until deployment gates are implemented")
     protocol = read_protocol(evaluation_protocol_path)
     if DATA_PROFILE_ID == "capital-bikeshare":
-        from bike_mlops.training_monitor_reference import validate_frozen_monitor_policy
+        from bike_mlops.monitoring import validate_frozen_monitor_policy
         validate_frozen_monitor_policy(protocol)
     if protocol.get("incumbent") is None and incumbent_version is not None:
         raise ValueError("Baseline-only bootstrap protocol must not be paired with an incumbent version")

@@ -1,5 +1,13 @@
-"""Read-only reconciliation of one monitor run in SQLite or PostgreSQL."""
+"""Product components: monitor_inspection."""
 from __future__ import annotations
+
+
+# ========================================================================
+# monitor_inspection
+# ========================================================================
+
+"""Read-only reconciliation of one monitor run in SQLite or PostgreSQL."""
+
 
 import ast
 import csv
@@ -16,7 +24,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from threading import RLock
 
-from bike_mlops.capital_deployment_evidence import strict_json
+from bike_mlops.deployment import strict_json
 
 POLICY_ID = "monitor-run-reconciliation-v1"
 LIMITS = {"csv": 128 * 1024 * 1024, "summary": 16 * 1024 * 1024, "marker": 64 * 1024}

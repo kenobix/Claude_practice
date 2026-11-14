@@ -1,5 +1,13 @@
-"""Bounded natural-clock probe using only FakeRegistry and a temporary lock root."""
+"""Contract and regression tests: probe_decision_clock."""
 from __future__ import annotations
+
+
+# ========================================================================
+# probe_decision_clock
+# ========================================================================
+
+"""Bounded natural-clock probe using only FakeRegistry and a temporary lock root."""
+
 
 import argparse
 from datetime import datetime, timezone
@@ -12,10 +20,10 @@ import traceback
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from failure_diagnostics import FailureTrace, trace_decision_clocks
-from test_capital_deployment_decisions import eligible_registry, FakeRegistry
-from bike_mlops import capital_operational_registry as registry
-from bike_mlops.capital_deployment_decisions import record_operational_review, record_deployment_approval
+from support import FailureTrace, trace_decision_clocks
+from test_deployment import eligible_registry, FakeRegistry
+from bike_mlops import operational_validation as registry
+from bike_mlops.deployment import record_operational_review, record_deployment_approval
 
 
 def main():
@@ -32,7 +40,7 @@ def main():
     status = "no_rejection_in_bounded_observation"
     outcome = None
     with tempfile.TemporaryDirectory(prefix="natural-clock-fake-registry-") as root:
-        with patch.object(registry, "PROJECT_ROOT", Path(root)), trace_decision_clocks(trace):
+        with patch.object(registry, '_operational_registry_PROJECT_ROOT', Path(root)), trace_decision_clocks(trace):
             for index in range(args.samples):
                 client = FakeRegistry(template.tags, body=template.body)
                 trace.emit("probe_iteration", index=index)

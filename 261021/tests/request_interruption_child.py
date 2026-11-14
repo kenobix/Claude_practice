@@ -1,5 +1,13 @@
-"""Disposable child for signal diagnosis; never called by the product CLI."""
+"""Contract and regression tests: request_interruption_child."""
 from __future__ import annotations
+
+
+# ========================================================================
+# request_interruption_child
+# ========================================================================
+
+"""Disposable child for signal diagnosis; never called by the product CLI."""
+
 
 import faulthandler
 import json
@@ -9,7 +17,7 @@ import sys
 import time
 from unittest.mock import patch
 
-from failure_diagnostics import FailureTrace
+from support import FailureTrace
 
 
 def main():
@@ -18,9 +26,9 @@ def main():
     trace.emit("child_started", mode=mode)
     stacks = (Path(directory) / "child-stacks.txt").open("x")
     faulthandler.enable(file=stacks, all_threads=True)
-    from bike_mlops import capital_operational_ledger as ledger
-    from bike_mlops.capital_request_journal import RequestJournal
-    from bike_mlops.capital_measurement_runner import _termination_as_interrupt
+    from bike_mlops import operational as ledger
+    from bike_mlops.operational import RequestJournal
+    from bike_mlops.operational_runner import _termination_as_interrupt
 
     original_write = ledger._write_ledger
     original_interrupt = ledger.MeasurementAttempt._interrupt_without_report
@@ -41,7 +49,7 @@ def main():
 
     code = 0
     try:
-        with (patch.object(ledger, "PROJECT_ROOT", Path(root)), patch.object(ledger, "_write_ledger", write),
+        with (patch.object(ledger, '_operational_ledger_PROJECT_ROOT', Path(root)), patch.object(ledger, "_write_ledger", write),
               patch.object(ledger.MeasurementAttempt, "_interrupt_without_report", interrupt),
               _termination_as_interrupt()):
             handler = signal.getsignal(signal.SIGTERM)
