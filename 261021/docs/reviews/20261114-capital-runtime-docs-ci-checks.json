@@ -1,0 +1,169 @@
+{
+  "kind": "automatic_documentation_push_CI_review",
+  "commit": "9a1f4333d87d6e57c8fb8c36b5df478c1052074d",
+  "run_id": 43591445767,
+  "url": "https://github.com/kenobix/Claude_practice/actions/runs/43591445767",
+  "all_jobs_and_steps": "success",
+  "unit_tests": 590,
+  "unit_seconds_displayed": 205.336,
+  "artifact_id": 14112901259,
+  "artifact_sha256": "4bf21be5d902dcc6dcb7a6c6ea887ad3170751dc5d2889924be980d736bd4b70",
+  "artifact_members": {
+    "synthetic-system-ci.log": {
+      "sha256": "45b33ade350e9afe9f2242b0dce2b69c1fedd9716dc1bdc53b73ec4062320bc7",
+      "bytes": 19117
+    },
+    "snapshot-postgres-ci.log": {
+      "sha256": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9",
+      "bytes": 560
+    },
+    "request-interruption-postgres-ci.log": {
+      "sha256": "efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb",
+      "bytes": 459
+    },
+    "monitor-inspection-postgres-ci.log": {
+      "sha256": "cd2602b7fa3e3305668b529b94493114f10d48dbe14c1d47fb09ef3a511fb33c",
+      "bytes": 3933
+    },
+    "prediction-migration-postgres-ci.log": {
+      "sha256": "4015d4616690c8c34b41b799572ec328054811d7dba7574f38fe0c9abd004e93",
+      "bytes": 2979
+    },
+    "monitor-persistence-postgres-ci.log": {
+      "sha256": "8d5f8fdc9d453fbb706b8e1fd526a6bb35c5d8ebf058033591b7e2dfe4e5ddc9",
+      "bytes": 376
+    },
+    "capital-decision-http-ci.log": {
+      "sha256": "83967809c8b45fa0a18aebc802708ee1290c90f361d911cb459cbf5cc74644d4",
+      "bytes": 3855
+    },
+    "t08-ci/summary.json": {
+      "sha256": "a42c3af85c29ce86ed2f20ec5c1e9e5588c95ab962a018ff39193eda176b4e2f",
+      "bytes": 2042
+    },
+    "t08-ci/before.dump": {
+      "sha256": "060ca0f8452b0d258b1c2739485d8e00781a27291c5a5b8667cb8e29245d6d1a",
+      "bytes": 8251
+    },
+    "t08-ci/after.dump": {
+      "sha256": "bb83762c91639764f95c4467b16f754cd7566bd7e5f197c69403e6fbabf1a00a",
+      "bytes": 8309
+    },
+    "t16-ci/synthetic-measurement-evidence.zip": {
+      "sha256": "727a255c7eef4f0a0d5b36b300e28f22b5738bb24d318b76c99a2538451b9ff3",
+      "bytes": 1530797
+    },
+    "t16-ci/archive-sha256.json": {
+      "sha256": "bbdfc9e3f42d9eb03095ed493b3ba63ae0254d2848aa2de95ae76af6ae638675",
+      "bytes": 154
+    },
+    "t16-ci/recalculation.json": {
+      "sha256": "b15d5f4b600b7d8f7c9f7868802c86bd4f96b312c35bfa6cc5ef4a51c960c77c",
+      "bytes": 1440
+    },
+    "deployment-recovery-ci.log": {
+      "sha256": "33c77ace9cf12e69a57fd451e4f8238569ced7df58f1d694777c9060ee365457",
+      "bytes": 22704
+    },
+    "t07a-ci/summary.json": {
+      "sha256": "7fcc82b1ddb05e0725ec7d90919796c6e66f5469fe60070ae33aefc455c75868",
+      "bytes": 1944
+    },
+    "t07a-term-ci/summary.json": {
+      "sha256": "f53daaca03e7c5950d50392725c8ef4170f6d005fd716bced8005211bc362755",
+      "bytes": 686
+    }
+  },
+  "archive_only_recalculation": {
+    "status": "archive_recalculated",
+    "synthetic_only": true,
+    "candidate_id": "72ae8672d1b1be6ae2276ce94908728cde5addc8fd7f0ac647a18997eb304965",
+    "attempt_id": "0b649daf-cf75-4260-922d-a822f1331b32",
+    "archive_sha256": "727a255c7eef4f0a0d5b36b300e28f22b5738bb24d318b76c99a2538451b9ff3",
+    "members": {
+      "payload/plan.json": {
+        "sha256": "fce8e4a94ad351c94872cc6a7b673cd4a23ec9d20119e98cc04d2d73848546b2",
+        "bytes": 5128
+      },
+      "payload/report.json": {
+        "sha256": "74e39bc54ccc56d23a9111eb51bc629f1a46a87e58afcbeccb8c42df2cefa305",
+        "bytes": 438316
+      },
+      "payload/operational-ledger.json": {
+        "sha256": "9c04c7bf46c247bcd600ef60532fcb52e0ad639b742d11a6d61a0c15ce770ec1",
+        "bytes": 1232
+      },
+      "payload/request-journal.jsonl": {
+        "sha256": "4204f633006ac3af4c4dba9c07fdab05d2854dd9e73833d0440777b4e4b7ff92",
+        "bytes": 1083680
+      }
+    },
+    "warmup_requests_excluded": 50,
+    "measured_requests_recalculated": 1000,
+    "measured_errors": 0,
+    "p95_ms": 36.10401800000318,
+    "numeric_status": "passed",
+    "request_id_sha256": "4d83d53a0302c82cf12c7f326afcbde23ca515a0004c785c6dd6468956474537",
+    "journal_verified_responses": 1050,
+    "operational_gate": "not_evaluated",
+    "deployment_permission": "blocked",
+    "limitations": [
+      "Synthetic evidence only; does not prove real-data performance, clock qualification, DB audit outside the saved journal, or deployment approval."
+    ]
+  },
+  "cleanup": {
+    "synthetic_system": true,
+    "t07a_normal": true,
+    "t07a_TERM": true,
+    "other_fixture_steps": "success including cleanup-bearing scripts"
+  },
+  "scope": "Existing synthetic CI, no product implementation change. Does not replace real candidate evidence or release operational UTC hold.",
+  "evidence_files": [
+    {
+      "path": "data/reports/20261114-capital-runtime/ci-9a1f433/inspection.json",
+      "bytes": 4684,
+      "sha256": "e23d52268321428371691c8e6e98f3849d42b8bb51e49d0bf9cd4405397fe63a"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/ci-9a1f433-plugin-metadata.json",
+      "bytes": 8008,
+      "sha256": "f603a352bfd09d226188374bcda7fd4d16822a9c6c82b6ee4b8c6de35c02acdd"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/ci-9a1f433/artifact.zip",
+      "bytes": 234756,
+      "sha256": "4bf21be5d902dcc6dcb7a6c6ea887ad3170751dc5d2889924be980d736bd4b70"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/ci-9a1f433/jobs.log",
+      "bytes": 486830,
+      "sha256": "7956a6b59387dd924408819d0cbc8280d3389ea19223c3ab8ff3e32bedb4cce0"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/inspect_docs_ci.py",
+      "bytes": 3649,
+      "sha256": "1697038b4a724cfc92f5ee614bfb33d899ffef1541f86437e446571563ba974b"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/publish-runtime-ci-artifact-v1.json",
+      "bytes": 518,
+      "sha256": "ea6efb1988650a3c680f925b80d68cc7cc633d13014722133cb2019346d315d2"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/publish-runtime-ci-artifact-v1.log",
+      "bytes": 4684,
+      "sha256": "e23d52268321428371691c8e6e98f3849d42b8bb51e49d0bf9cd4405397fe63a"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/publish-runtime-ci-state-v1.json",
+      "bytes": 646,
+      "sha256": "59c1837d200f413184328b5ab04409ef60827a8f7a5403e6025bb8f435914ff3"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/publish-runtime-ci-state-v1.log",
+      "bytes": 486,
+      "sha256": "5093439468fb80cd5a53e4db19c5e122311272a64268578d5b1fe125afcb50cc"
+    }
+  ],
+  "real_Capital_operational_acceptance": "on_hold_UTC_order_violation_not_replaced_by_synthetic_CI"
+}

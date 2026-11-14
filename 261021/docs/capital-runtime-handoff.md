@@ -3,7 +3,10 @@
 2026-11-14追補：[実runtime受入](capital-runtime-acceptance.md)と[証拠索引](reviews/20261114-capital-runtime-checks.json)まで完了。
 現在PCの専用project capital-acceptance-20261114、registry5001/version1、DB55434、API8110。
 入力/候補/正式消費台帳は維持。data/evaluationsは専用directory＋consumption-ledger.jsonだけ正式台帳へのsymlinkへ変更済み。
-次は同じfrozen planの測定と対応復元・metadata。以下の開始前記録は当時の経緯として参照する。
+最新：[運用保留・部分復元と残件](capital-operational-hold.md)、[最終索引](reviews/20261114-capital-operational-restore-checks.json)。
+同planの測定は1回完了したがjournalのUTC逆行により受入保留、対応復元は別volumeで部分受入済み。
+次はconsumerのUTC順序拒否、completed事後不適格の履歴保持review設計、独立した不足caseの実証。
+現台帳のまま別PCで再測定したり、証拠tagを記録したりしない。以下の開始前記録は当時の経緯として参照する。
 
 2026-11-14。T10直前照合とT11は[実候補評価](capital-first-evaluation.md)まで完了。
 [offline監視診断](capital-offline-monitoring.md)には警告がある。T02/T12全体は未完了で、T13b採否はblocked。

@@ -1,0 +1,1034 @@
+{
+  "schema_version": 1,
+  "base_commit": "9a1f4333d87d6e57c8fb8c36b5df478c1052074d",
+  "status": "ACTUAL_API_MONITOR_AND_PARTIAL_RESTORE_ACCEPTED_OPERATIONAL_TRIAL_ON_HOLD",
+  "prior_index": {
+    "path": "docs/reviews/20261114-capital-runtime-checks.json",
+    "sha256": "3b08a84772192a7a533b0af7ad34aea395aefcc6b465211505156417d14605d7",
+    "original_evidence_files_reverified": 110
+  },
+  "execution_source_commit": "767760d04fcb3a20659d4f7a6d5188fb9b8de65c",
+  "operational": {
+    "status": "STOP_CLOCK_ORDER_VIOLATION",
+    "attempt_id": "918ccaf6-d342-41aa-8ce1-e3b52f31f213",
+    "measured_requests": 1000,
+    "warmup_requests": 50,
+    "errors": 0,
+    "retries": 0,
+    "p95_ms": 84.04970800620504,
+    "numeric_status": "passed",
+    "journal_events": 2101,
+    "journal_chain": "matched",
+    "journal_utc_nondecreasing": false,
+    "audit_rows_verified": 1050,
+    "request_id_sha256": "9c722aa4a8f9a001c3fe3e8283470486269df34d49cedd909ad0f54445d739e4",
+    "plan_file_sha256": "90338f930668f1b327a92212ef56485e4c7a398897a4100742cd2dbeb7413e5e",
+    "report_sha256": "1cb0fb7d6a34de11ec8b808197fd4cb0b074704a507dec0b4290188673dc61ad",
+    "journal_sha256": "e1817aedafe30b11730231b456f7657f6c93c9bc14691c6d9dcaf59cef497509",
+    "ledger_sha256": "bfaf247498de0f8b9fe106611208224dded3ff338e9b8399fafe6d1b9d98fbc7",
+    "operational_gate": "not_evaluated",
+    "deployment_permission": "blocked",
+    "scope": "stdlib independent saved-record/hash/sequence/audit comparison, uncalibrated local measurement"
+  },
+  "acceptance_hold": {
+    "status": "measurement_acceptance_on_hold_clock_order_violation",
+    "attempt_id": "918ccaf6-d342-41aa-8ce1-e3b52f31f213",
+    "journal_sha256": "e1817aedafe30b11730231b456f7657f6c93c9bc14691c6d9dcaf59cef497509",
+    "violations": [
+      {
+        "before": {
+          "sequence": 940,
+          "event": "response_verified",
+          "request_id": "capital-op:918ccaf6-d342-41aa-8ce1-e3b52f31f213:measured:0419",
+          "recorded_at_utc": "2026-11-14T11:45:21.888190+00:00"
+        },
+        "after": {
+          "sequence": 941,
+          "event": "sending",
+          "request_id": "capital-op:918ccaf6-d342-41aa-8ce1-e3b52f31f213:measured:0420",
+          "recorded_at_utc": "2026-11-14T11:45:21.846610+00:00"
+        },
+        "backward_seconds": 0.04158
+      },
+      {
+        "before": {
+          "sequence": 1723,
+          "event": "sending",
+          "request_id": "capital-op:918ccaf6-d342-41aa-8ce1-e3b52f31f213:measured:0811",
+          "recorded_at_utc": "2026-11-14T11:45:51.801170+00:00"
+        },
+        "after": {
+          "sequence": 1724,
+          "event": "response_verified",
+          "request_id": "capital-op:918ccaf6-d342-41aa-8ce1-e3b52f31f213:measured:0811",
+          "recorded_at_utc": "2026-11-14T11:45:51.799001+00:00"
+        },
+        "backward_seconds": 0.002169
+      }
+    ],
+    "raw_measurement_status": "passed_numeric_only",
+    "operational_gate_status": "not_evaluated",
+    "deployment_permission": "blocked",
+    "decision": "Do not record this trial as accepted operational evidence. No retry/reopen/clamp/resync. Keep report and ledger bytes unchanged.",
+    "cause": "not_investigated_clock_research_on_hold",
+    "independent_followup": "Quiescent same-candidate DB/artifact restore may proceed as partial recovery evidence, without latency or approval claims."
+  },
+  "paired_restore": {
+    "status": "passed_partial_recovery",
+    "plan": {
+      "kind": "actual-candidate-quiescent-paired-restore",
+      "source_project": "capital-acceptance-20261114",
+      "restore_project": "capital-restore-20261114",
+      "ports": [
+        41453,
+        54811,
+        45147
+      ],
+      "scope": [
+        "exact registry/audit table/sequence/schema manifests",
+        "artifact tree full hashes",
+        "separate volumes",
+        "pinned API ready/version",
+        "persisted retry and new matching prediction",
+        "corrupt restored skops rejected before deserialization"
+      ],
+      "not_tested": [
+        "legacy REAL migration on this candidate",
+        "two distinct approved versions",
+        "Caddy switching",
+        "interrupted production deployment",
+        "full T13b restore prerequisite"
+      ],
+      "no_actual_serving_change": true
+    },
+    "database_manifests_matched": true,
+    "audit_counts": {
+      "data_profile_metadata": 1,
+      "deployments": 0,
+      "monitor_windows": 1464,
+      "observations": 32849,
+      "predictions": 2512
+    },
+    "registry_table_count": 65,
+    "artifact_file_count": 8,
+    "artifact_tree": {
+      "1/7827b63cd9034ce7809367cf162e76e5/artifacts/evidence/candidate-report.json": {
+        "bytes": 21634,
+        "sha256": "74c0417ba661fd8b32d771349df092760fc7a7f8f3caf1d86b879df0031653cc"
+      },
+      "1/7827b63cd9034ce7809367cf162e76e5/artifacts/evidence/final-evaluation.json": {
+        "bytes": 5030,
+        "sha256": "8312ed9f22d9f93c1d55f736369ad5f2e66839626297b160800b5a49e9860893"
+      },
+      "1/7827b63cd9034ce7809367cf162e76e5/artifacts/evidence/monitor-reference.json": {
+        "bytes": 3299,
+        "sha256": "81e2d05934105a2cd5fcf21d5ba8f2f7fb95807ee5b4aeadbe83dcc559f589e6"
+      },
+      "1/models/m-e1fce6ad85ca4ae1be8a3a3aac1cef13/artifacts/MLmodel": {
+        "bytes": 750,
+        "sha256": "3d2ffdaf30af5c79449b07484c3bb05979a7461e187decffd79492a53c625ca8"
+      },
+      "1/models/m-e1fce6ad85ca4ae1be8a3a3aac1cef13/artifacts/conda.yaml": {
+        "bytes": 224,
+        "sha256": "03fd401c5fe83b340fbe80864a7937b6005dff0fa9c399526a2d0773248ed734"
+      },
+      "1/models/m-e1fce6ad85ca4ae1be8a3a3aac1cef13/artifacts/model.skops": {
+        "bytes": 1382989,
+        "sha256": "bd5764e19f97674366495c24cf12d348ee5f8a9aaf8f8e0078c042679f18fb82"
+      },
+      "1/models/m-e1fce6ad85ca4ae1be8a3a3aac1cef13/artifacts/python_env.yaml": {
+        "bytes": 122,
+        "sha256": "07dd118cae4e271f060700f6aa69d3011654477338476d2ec9d6daa7c4ea845a"
+      },
+      "1/models/m-e1fce6ad85ca4ae1be8a3a3aac1cef13/artifacts/requirements.txt": {
+        "bytes": 103,
+        "sha256": "77954e99a834212d751ced904796d24a4445fdfe237191b8c1ce84c79c6ff001"
+      }
+    },
+    "dump_sha256": {
+      "registry": "53a1d3771c564b0d0cadadf1d82f363b78457dea4f9295f286d8b02290838641",
+      "audit": "254caca5d3c7ed8078dcc5862b6f47869e2939393f80eb5f487bb14358c57030"
+    },
+    "separate_volumes": {
+      "source": [
+        "capital-acceptance-20261114_mlflow-artifacts",
+        "capital-acceptance-20261114_postgres-data"
+      ],
+      "restored": [
+        "capital-restore-20261114_mlflow-artifacts",
+        "capital-restore-20261114_postgres-data"
+      ]
+    },
+    "corrupt_loader_rejection": {
+      "corrupt_restored_skops_rejected_before_deserialization": true
+    },
+    "restored_resources_removed": true,
+    "source_resumed": true
+  },
+  "final_state": {
+    "status": "passed_partial_runtime_with_operational_hold",
+    "ready": {
+      "deployment_operation": {
+        "status": "legacy_unverifiable",
+        "approval_evidence": false
+      },
+      "status": "ready",
+      "data_profile_id": "capital-bikeshare",
+      "target_contract_id": "capital-trip-starts-hourly-v1",
+      "model_name": "bike-demand-capital",
+      "model_version": "1",
+      "candidate_id": "e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b",
+      "deployment_permission": "blocked",
+      "quality_gate_status": "passed",
+      "timezone_database": {
+        "provider": "python-tzdata-package",
+        "package": "tzdata",
+        "package_version": "2026.5",
+        "zone_name": "America/New_York",
+        "zone_file_bytes": 1744,
+        "zone_file_sha256": "d7f2206b3a45989fc9ad63d558922532fa7352280d5f87176bf1db79cb1d1fa9"
+      }
+    },
+    "version": {
+      "deployment_operation": {
+        "status": "legacy_unverifiable",
+        "approval_evidence": false
+      },
+      "application_version": "0.1.0",
+      "data_profile_id": "capital-bikeshare",
+      "data_profile_status": "migration-only",
+      "target_contract_id": "capital-trip-starts-hourly-v1",
+      "model_name": "bike-demand-capital",
+      "model_version": "1",
+      "candidate_id": "e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b",
+      "deployment_permission": "blocked",
+      "artifact_sha256": "13dbe8447e816b29ecf76c1cf4e173f679a50204ab8d9d682c113ed405810f8c",
+      "quality_gate_status": "passed",
+      "feature_contract_version": "bike-demand-features-v1",
+      "timezone_database": {
+        "provider": "python-tzdata-package",
+        "package": "tzdata",
+        "package_version": "2026.5",
+        "zone_name": "America/New_York",
+        "zone_file_bytes": 1744,
+        "zone_file_sha256": "d7f2206b3a45989fc9ad63d558922532fa7352280d5f87176bf1db79cb1d1fa9"
+      }
+    },
+    "db_counts": {
+      "observations": 32849,
+      "predictions": 2512,
+      "monitor_windows": 1464,
+      "deployments": 0
+    },
+    "registry_gate_tags": {
+      "operational_gate_status": "not_evaluated",
+      "deployment_permission": "blocked",
+      "candidate_id": "e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b",
+      "artifact_sha256": "13dbe8447e816b29ecf76c1cf4e173f679a50204ab8d9d682c113ed405810f8c"
+    },
+    "held_trial_not_recorded_in_registry": true,
+    "normal_deploy_rejection": "Capital model is not eligible for deployment; missing or non-passed gate tags: operational_gate_status, deployment_permission",
+    "restore_status": "passed_partial_recovery",
+    "restored_resources_removed": true,
+    "corrupt_loader_rejection": {
+      "corrupt_restored_skops_rejected_before_deserialization": true
+    },
+    "formal_ledger_unchanged": true,
+    "clock_qualification": "not_established_on_hold"
+  },
+  "remaining": {
+    "kind": "actual-candidate-prerequisite-gap-inventory",
+    "not_an_attestation": true,
+    "required_cases": {
+      "monitoring": {
+        "training_reference_bound": {
+          "expected": "matched",
+          "evidence_observed": [
+            "monitor.json",
+            "monitor-inspect-v1.log"
+          ],
+          "state": "observed_pending_contract_review",
+          "limitation": "Category attestation and full candidate-bound bundle still absent."
+        },
+        "psi_v2_constant_shift": {
+          "expected": "detected",
+          "evidence_observed": [],
+          "state": "missing",
+          "limitation": "Actual training reference is not constant; synthetic constant-shift CI is not reused as this candidate producer evidence."
+        },
+        "distribution_error_separation": {
+          "expected": "distinguished",
+          "evidence_observed": [
+            "monitor.csv",
+            "monitor-comparison-result.json"
+          ],
+          "state": "observed_pending_contract_review",
+          "limitation": "Category attestation and full candidate-bound bundle still absent."
+        },
+        "delayed_missing_duplicate_labels": {
+          "expected": "handled",
+          "evidence_observed": [],
+          "state": "partial",
+          "limitation": "Delayed arrivals verified; separate missing/duplicate real-producer negative cases remain."
+        },
+        "insufficient_labels_and_unset_reference": {
+          "expected": "explicit",
+          "evidence_observed": [],
+          "state": "partial",
+          "limitation": "Insufficient labels explicit; unset reference negative case not exercised for actual candidate."
+        },
+        "monitor_persistence_reconciliation": {
+          "expected": "matched",
+          "evidence_observed": [
+            "monitor-inspect-v1.log"
+          ],
+          "state": "observed_pending_contract_review",
+          "limitation": "Category attestation and full candidate-bound bundle still absent."
+        }
+      },
+      "recovery": {
+        "concurrent_request_retry": {
+          "expected": "committed_once",
+          "evidence_observed": [
+            "api-checks-result.json"
+          ],
+          "state": "observed_pending_contract_review",
+          "limitation": "Category attestation and full candidate-bound bundle still absent."
+        },
+        "changed_input_conflict": {
+          "expected": "409",
+          "evidence_observed": [
+            "api-checks-result.json"
+          ],
+          "state": "observed_pending_contract_review",
+          "limitation": "Category attestation and full candidate-bound bundle still absent."
+        },
+        "version_switch_preserves_saved_prediction": {
+          "expected": "preserved",
+          "evidence_observed": [],
+          "state": "missing",
+          "limitation": "Restore kept same version1. Two distinct-version switch not performed."
+        },
+        "audit_write_failure": {
+          "expected": "503",
+          "evidence_observed": [],
+          "state": "missing",
+          "limitation": "Actual-candidate write-failure/503 injection not performed."
+        },
+        "bad_artifact_and_ready": {
+          "expected": "rejected",
+          "evidence_observed": [],
+          "state": "partial",
+          "limitation": "Corrupt restored skops rejected by actual loader; corresponding HTTP readiness rejection not exercised."
+        },
+        "api_stop": {
+          "expected": "detected",
+          "evidence_observed": [],
+          "state": "missing",
+          "limitation": "One observation happened after source resume (running=true, connection reset); not proof of stopped API."
+        },
+        "caddy_switch_and_rollback": {
+          "expected": "recovered",
+          "evidence_observed": [],
+          "state": "missing",
+          "limitation": "No Caddy bound to this blocked candidate; current live Caddy untouched."
+        },
+        "interrupted_deployment": {
+          "expected": "recovered",
+          "evidence_observed": [],
+          "state": "missing",
+          "limitation": "No actual-candidate interrupted deploy test."
+        }
+      },
+      "restore": {
+        "database_artifact_snapshot_binding": {
+          "expected": "matched",
+          "evidence_observed": [
+            "paired-restore-result.json"
+          ],
+          "state": "observed_pending_contract_review",
+          "limitation": "Category attestation and full candidate-bound bundle still absent."
+        },
+        "separate_volume_restore": {
+          "expected": "restored",
+          "evidence_observed": [
+            "paired-restore-result.json"
+          ],
+          "state": "observed_pending_contract_review",
+          "limitation": "Category attestation and full candidate-bound bundle still absent."
+        },
+        "restored_version_prediction_audit": {
+          "expected": "matched",
+          "evidence_observed": [
+            "paired-restore-result.json"
+          ],
+          "state": "observed_pending_contract_review",
+          "limitation": "Category attestation and full candidate-bound bundle still absent."
+        },
+        "legacy_real_double_migration": {
+          "expected": "matched",
+          "evidence_observed": [],
+          "state": "missing",
+          "limitation": "Existing synthetic CI not reused as actual-candidate migration evidence."
+        }
+      },
+      "metadata": {
+        "entry_runtime_database_identity": {
+          "expected": "matched",
+          "evidence_observed": [],
+          "state": "partial",
+          "limitation": "Staging API/DB/registry identity matched; approved entry/operation binding remains absent."
+        },
+        "approval_operation_metadata": {
+          "expected": "matched",
+          "evidence_observed": [],
+          "state": "missing",
+          "limitation": "legacy_unverifiable / approval_evidence=false is not matched approval."
+        },
+        "unloadable_version": {
+          "expected": "excluded",
+          "evidence_observed": [],
+          "state": "partial",
+          "limitation": "Corrupt restored artifact rejected; full entry/version exclusion case not evidenced."
+        },
+        "timeout_stage_outcome": {
+          "expected": "explicit",
+          "evidence_observed": [],
+          "state": "missing",
+          "limitation": "Existing synthetic regression not reused as actual candidate timeout producer."
+        }
+      }
+    },
+    "observed_case_areas": 8,
+    "operational_acceptance": "on_hold_due_to_journal_UTC_reversal",
+    "measurement_attempt": "918ccaf6-d342-41aa-8ce1-e3b52f31f213",
+    "raw_execution_status": "completed",
+    "raw_numeric_status": "passed",
+    "operational_gate": "not_evaluated",
+    "deployment_permission": "blocked",
+    "next_priorities": [
+      {
+        "priority": "P1",
+        "difficulty": "D3 Sol",
+        "task": "Add/read-review fail-closed journal UTC ordering in evidence consumers; do not record held trial or weaken future check."
+      },
+      {
+        "priority": "P1",
+        "difficulty": "D3 Sol",
+        "task": "Design append-only invalidation/review for completed-but-inadmissible trial; current retry review rejects completed. Do not edit/delete/reset ledger or run new attempt."
+      },
+      {
+        "priority": "P1",
+        "difficulty": "D3 Sol",
+        "task": "Fill independent missing/partial real-candidate recovery/metadata/monitor negative cases in owned fixtures."
+      },
+      {
+        "priority": "P1",
+        "difficulty": "D3 Sol",
+        "task": "Review 1336 distribution and 234 error warnings with saved real-producer evidence, no retuning consumed windows."
+      },
+      {
+        "priority": "P1 after evidence",
+        "difficulty": "D3 Sol + separate human approval",
+        "task": "T13b final decision only after valid operational and all prerequisite evidence."
+      }
+    ],
+    "clock_research": "on_hold_no_new_capture_or_root_cause_analysis",
+    "different_pc_is_not_automatically_qualified": true
+  },
+  "attempts": [
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "measure"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:44:37.479134+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:46:12.086317+00:00",
+      "monotonic_start_ns": 201839187232079,
+      "monotonic_end_ns": 201933954793810,
+      "log": "actual-operational-measurement-v1.log",
+      "log_sha256": "782ae2d9210f7479d41854154fee196930e79f90880f3ffec42f74a1c0defb00"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-capital-runtime/paired_restore.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:48:30.572781+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:49:42.011105+00:00",
+      "monotonic_start_ns": 202072638546522,
+      "monotonic_end_ns": 202144116650253,
+      "log": "actual-paired-restore-v1.log",
+      "log_sha256": "c9076f1d09c286983fc3929a9df8c9f6fc0d29b016a42caba9fff229e2a47dde"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-capital-runtime/final_gap_inventory_v2.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:53:56.103776+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:53:57.021721+00:00",
+      "monotonic_start_ns": 202398563134344,
+      "monotonic_end_ns": 202399481057606,
+      "log": "final-gap-inventory-v2.log",
+      "log_sha256": "269c55882bd93fb9ad820a4721adbcce5d68b42eb2e49e780d1b5d6c09a05877"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-capital-runtime/final_runtime_check.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:50:40.998086+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:50:44.083649+00:00",
+      "monotonic_start_ns": 202203157639547,
+      "monotonic_end_ns": 202206243200392,
+      "log": "final-runtime-state-v1.log",
+      "log_sha256": "0bf989391a82c73a1686f164e09a81d542205ba2ce7dae41e4c804b84a9438ec"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/record_clock_order_failure.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:48:25.281057+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:48:25.424319+00:00",
+      "monotonic_start_ns": 202067346829416,
+      "monotonic_end_ns": 202067490081161,
+      "log": "operational-acceptance-hold-v1.log",
+      "log_sha256": "e946fce4b574bef69d24dba672b95effe98eb663d0767e95313d26fc0bb02e78"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-capital-runtime/export_operational_audit.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:47:41.564511+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:47:42.066720+00:00",
+      "monotonic_start_ns": 202023576615380,
+      "monotonic_end_ns": 202024078828722,
+      "log": "operational-audit-snapshot-v1.log",
+      "log_sha256": "ee2224ae2d2156db8bf56aaecbb8c88b44f1e5607863eb36322c77e564bc271e"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/dispatch.py",
+        "python",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project/scripts/recheck_capital_measurement.py",
+        "--candidate-id",
+        "e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b",
+        "--attempt-id",
+        "918ccaf6-d342-41aa-8ce1-e3b52f31f213"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:46:43.161251+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:46:46.235937+00:00",
+      "monotonic_start_ns": 201965086164215,
+      "monotonic_end_ns": 201968160828689,
+      "log": "operational-linked-recheck-v1.log",
+      "log_sha256": "020dc04daff73a8a2cdffd8a58fbd42feac7f2e5210709081f32f87d7cb1b76f"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/audit_operational_stdlib.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T11:47:49.834862+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:47:50.154899+00:00",
+      "monotonic_start_ns": 202031846976053,
+      "monotonic_end_ns": 202032167002591,
+      "log": "operational-stdlib-audit-v1.log",
+      "log_sha256": "2348c1ff48e9fa4fd77ba45e3e738916e3cbc177714d51a4e8449a2d917055fb"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/observe_planned_api_stop.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:49:58.545491+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:49:59.296297+00:00",
+      "monotonic_start_ns": 202160693726686,
+      "monotonic_end_ns": 202161444508869,
+      "log": "planned-api-stop-observation-v1.log",
+      "log_sha256": "730cf1cbd446eae7ed15b4c1822f50424dd6f90ed087e2623d52af373c0f104a"
+    },
+    {
+      "command": [
+        "git",
+        "fetch",
+        "origin"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:43:48.237808+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:43:52.669202+00:00",
+      "monotonic_start_ns": 201789800214666,
+      "monotonic_end_ns": 201794334451664,
+      "log": "publish-fetch-v1.log",
+      "log_sha256": "6219127f5e4ba21131e9fdbe80595c50c57c8d8d85da658bd96a225894c7d89a"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/publish_rebase.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:44:16.761234+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:44:21.852814+00:00",
+      "monotonic_start_ns": 201818426486014,
+      "monotonic_end_ns": 201823518065304,
+      "log": "publish-rebase-v2.log",
+      "log_sha256": "16ff2e1c71f77db805df919e3747e716c297c599a6016fa41db9fea252ebe0ae"
+    },
+    {
+      "command": [
+        "git",
+        "log",
+        "--name-status",
+        "--oneline",
+        "c1a42cb..origin/main"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:43:52.740715+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:43:52.755667+00:00",
+      "monotonic_start_ns": 201794405993269,
+      "monotonic_end_ns": 201794420913014,
+      "log": "publish-remote-review-v1.log",
+      "log_sha256": "ec4c5d655e3ecb817edd6fbc5a8161653407d8e9ef20afa4ca808c7ab2884879"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/publish_checkpoint.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T11:43:19.205778+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:43:22.935760+00:00",
+      "monotonic_start_ns": 201760690748098,
+      "monotonic_end_ns": 201764498176409,
+      "log": "publish-runtime-v1.log",
+      "log_sha256": "74ca3514173b0ba555fc6061cc5885d7de868627a902dde94df82f58fda7d3df"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/validate_runtime_docs.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:42:41.554361+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:42:41.702798+00:00",
+      "monotonic_start_ns": 201723058863627,
+      "monotonic_end_ns": 201723207257853,
+      "log": "runtime-evidence-validation-v2.log",
+      "log_sha256": "65eb4302100d186c15d22f634cda360bf2ffa10f3119bfe712564b9e6270643e"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/write_runtime_index.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:40:11.777010+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:40:11.858068+00:00",
+      "monotonic_start_ns": 201572792756218,
+      "monotonic_end_ns": 201572873815317,
+      "log": "runtime-index-v1.log",
+      "log_sha256": "741a3d151a048e9c47cec8e7431879312acaf39daa162a77b727ba13ffe6f4f2"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/write_runtime_index_v2.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:42:41.315410+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:42:41.414324+00:00",
+      "monotonic_start_ns": 201722819897175,
+      "monotonic_end_ns": 201722918793294,
+      "log": "runtime-index-v2.log",
+      "log_sha256": "63ec1107dfa14ace2825eec5ff9132668a28ab25c2c0edc51e7f9cf351814adf"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-capital-runtime/service_inventory.py",
+        "final"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:50:44.148373+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:50:44.881287+00:00",
+      "monotonic_start_ns": 202206307915282,
+      "monotonic_end_ns": 202207040829916,
+      "log": "service-identity-final-v1.log",
+      "log_sha256": "9386aae1c41178f39e8b49d9517caf8933e375a444e831a13e8ef10f9045208e"
+    }
+  ],
+  "evidence_files": [
+    {
+      "path": "data/reports/20261114-capital-runtime/actual-operational-measurement-v1.json",
+      "bytes": 529,
+      "sha256": "509047c55e25c866bae4e57d000ebf9003edf9bb916dc2862fc1403849f7e426"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/actual-operational-measurement-v1.log",
+      "bytes": 387,
+      "sha256": "782ae2d9210f7479d41854154fee196930e79f90880f3ffec42f74a1c0defb00"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/actual-paired-restore-v1.json",
+      "bytes": 624,
+      "sha256": "4985cb3dcd66c1e36f51ea2ca7687266540231737b83328b2f75e3aa2204771d"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/actual-paired-restore-v1.log",
+      "bytes": 28564,
+      "sha256": "c9076f1d09c286983fc3929a9df8c9f6fc0d29b016a42caba9fff229e2a47dde"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/audit_operational_stdlib.py",
+      "bytes": 4862,
+      "sha256": "8ccbc75c0cbeba5875817b839779854078549371b9628ccd8055a2d1625943da"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/export_operational_audit.py",
+      "bytes": 1020,
+      "sha256": "31a4231fcf8b6aee8ae43f311b17dfdbeeb9ab5b8e8bd5b93336bd0f807bfd83"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/final-gap-inventory-v1.json",
+      "bytes": 7599,
+      "sha256": "477f04eaba208d8992084a899f7661af771b1410202bf9861349bb7e8a30ac2a"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/final-gap-inventory-v1.log",
+      "bytes": 146,
+      "sha256": "b6b5a4255888987891bd73734ca40fda1529ed0dc5725b0be4ee5ca710a21304"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/final-gap-inventory-v2.json",
+      "bytes": 630,
+      "sha256": "3a959548351bc205dba1f706a2e40f2b147bb286b751672a07c9921161137775"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/final-gap-inventory-v2.log",
+      "bytes": 146,
+      "sha256": "269c55882bd93fb9ad820a4721adbcce5d68b42eb2e49e780d1b5d6c09a05877"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/final-gap-inventory.json",
+      "bytes": 7654,
+      "sha256": "758093b57f5f479440a6535313f4b2af8fe4193c501817f8f8c15a639bf62ac7"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/final-runtime-result.json",
+      "bytes": 2747,
+      "sha256": "0bf989391a82c73a1686f164e09a81d542205ba2ce7dae41e4c804b84a9438ec"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/final-runtime-state-v1.json",
+      "bytes": 627,
+      "sha256": "13756dacf7adfa68b9285ca6771b5d4eb79800565f05dd3d08f030445a1d14c8"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/final-runtime-state-v1.log",
+      "bytes": 2747,
+      "sha256": "0bf989391a82c73a1686f164e09a81d542205ba2ce7dae41e4c804b84a9438ec"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/final_gap_inventory.py",
+      "bytes": 4576,
+      "sha256": "11e09683eca9661970f5c7c697c79cd648473dca943b78250bdbfd76f2ee7073"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/final_gap_inventory_v2.py",
+      "bytes": 4781,
+      "sha256": "2b0569bf6dfaf0fdb82bf27627cca49cc3bc27aea46c48896655580e6f883e09"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/final_runtime_check.py",
+      "bytes": 2773,
+      "sha256": "f3513f6c80d05d058a22d5078b8dff02311019b0067ba58f396d6c786ea13856"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/observe_planned_api_stop.py",
+      "bytes": 951,
+      "sha256": "f03b472383cbc67db76addea3f1b94260b1fe46bc87b998917a52829f6292cf5"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/operational-acceptance-hold-v1.json",
+      "bytes": 529,
+      "sha256": "65d992e629df80a905c1ddc7d79e4132022f60e55c1cbe11efef3e6cefba3c54"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/operational-acceptance-hold-v1.log",
+      "bytes": 1755,
+      "sha256": "e946fce4b574bef69d24dba672b95effe98eb663d0767e95313d26fc0bb02e78"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/operational-acceptance-hold.json",
+      "bytes": 1755,
+      "sha256": "e946fce4b574bef69d24dba672b95effe98eb663d0767e95313d26fc0bb02e78"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/operational-audit-snapshot-v1.json",
+      "bytes": 639,
+      "sha256": "d6ab2a7f8d0db007d0b76924dbd9f4f263383cbeccb32febc86b1a91d631f952"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/operational-audit-snapshot-v1.log",
+      "bytes": 111,
+      "sha256": "ee2224ae2d2156db8bf56aaecbb8c88b44f1e5607863eb36322c77e564bc271e"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/operational-audit-snapshot.json",
+      "bytes": 1185904,
+      "sha256": "a34658ca4d78a5447dc6321107186a46307198f93f01e6d3a3cdfe9b7e9e366f"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/operational-linked-recheck-v1.json",
+      "bytes": 815,
+      "sha256": "e7227b84e1d9d8ed97a0e6501836d0516645ed613db8cde4a3781f327e6af1ac"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/operational-linked-recheck-v1.log",
+      "bytes": 781,
+      "sha256": "020dc04daff73a8a2cdffd8a58fbd42feac7f2e5210709081f32f87d7cb1b76f"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/operational-stdlib-audit-result.json",
+      "bytes": 1001,
+      "sha256": "6aa70a5b020c853a17d7cf85ac72eff4066c0157091294442835d5cca640c6b5"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/operational-stdlib-audit-v1.json",
+      "bytes": 524,
+      "sha256": "2cfb029114d3db1d9286798b9e602c16e7f04261a9120a313d2d7217d5db1a00"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/operational-stdlib-audit-v1.log",
+      "bytes": 1425,
+      "sha256": "2348c1ff48e9fa4fd77ba45e3e738916e3cbc177714d51a4e8449a2d917055fb"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/paired-restore-plan.json",
+      "bytes": 732,
+      "sha256": "38edac977c5d8ef60c8fa1b3861334812c1d364960783c4929e589aca7eadfb0"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/paired-restore-result.json",
+      "bytes": 28564,
+      "sha256": "c9076f1d09c286983fc3929a9df8c9f6fc0d29b016a42caba9fff229e2a47dde"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/planned-api-stop-observation-v1.json",
+      "bytes": 528,
+      "sha256": "09c82cd854a47ce63b234dabfd5ba47e943e762e8bf5afc75706471e29612724"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/planned-api-stop-observation-v1.log",
+      "bytes": 329,
+      "sha256": "730cf1cbd446eae7ed15b4c1822f50424dd6f90ed087e2623d52af373c0f104a"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/planned-api-stop-observation.json",
+      "bytes": 329,
+      "sha256": "730cf1cbd446eae7ed15b4c1822f50424dd6f90ed087e2623d52af373c0f104a"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/publish-fetch-v1.json",
+      "bytes": 456,
+      "sha256": "c3dbff8600133acd9e740e53e08f0d1fb0840910cecbfe69bb0ddac7cdb402e8"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/publish-fetch-v1.log",
+      "bytes": 87,
+      "sha256": "6219127f5e4ba21131e9fdbe80595c50c57c8d8d85da658bd96a225894c7d89a"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/publish-rebase-v2.json",
+      "bytes": 504,
+      "sha256": "a15896814f90a1436bfbdf0ccc3afb069574eef18416489a32e0fde6008571cd"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/publish-rebase-v2.log",
+      "bytes": 358,
+      "sha256": "16ff2e1c71f77db805df919e3747e716c297c599a6016fa41db9fea252ebe0ae"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/publish-remote-review-v1.json",
+      "bytes": 514,
+      "sha256": "2d4c270100fa9fc86dfb4b681ef37d23842ad444a3f8448e9390304c3befb75b"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/publish-remote-review-v1.log",
+      "bytes": 632,
+      "sha256": "ec4c5d655e3ecb817edd6fbc5a8161653407d8e9ef20afa4ca808c7ab2884879"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/publish-runtime-staged.diff",
+      "bytes": 79168,
+      "sha256": "7b40d196088919e8d121ba59170a86b32182b170c9b649629f9d0461fe20b40c"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/publish-runtime-v1.json",
+      "bytes": 509,
+      "sha256": "405a1267b63d9fb98ffe9045f20c606b1eb9e526c972333cb354041e635670cd"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/publish-runtime-v1.log",
+      "bytes": 3075,
+      "sha256": "74ca3514173b0ba555fc6061cc5885d7de868627a902dde94df82f58fda7d3df"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/publish_checkpoint.py",
+      "bytes": 1299,
+      "sha256": "8014da7a1d0db0e84c4f5e6c604b0e563685cba3ecf4401e6a91b5b9e4c9a1e5"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/publish_rebase.py",
+      "bytes": 901,
+      "sha256": "2d875972cefabb21905002848de4001bc32707241e59e306a09a69a26922f554"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/record_clock_order_failure.py",
+      "bytes": 1570,
+      "sha256": "87848943bf2c1707f67d1ff27e2f78aca4b70ca5fa09cfbf7645da454ad7d24a"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/restore-compose.yaml",
+      "bytes": 2253,
+      "sha256": "0b9e8ef64ee3e929e6ba6815525b92e3d7fd86d1be3e370043d27f1acc5a6bb7"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/restore-corrupt-loader-check.py",
+      "bytes": 493,
+      "sha256": "a077bce348dd4e046798db2d6b010a2923442b86001621cb5bc2254d5df89143"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/runtime-evidence-validation-v2.json",
+      "bytes": 524,
+      "sha256": "160f3b19c50bc310f5c672f525d354a13f138024deed86dec355ca18d22e8020"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/runtime-evidence-validation-v2.log",
+      "bytes": 152,
+      "sha256": "65eb4302100d186c15d22f634cda360bf2ffa10f3119bfe712564b9e6270643e"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/runtime-index-v1.json",
+      "bytes": 508,
+      "sha256": "1ff52c7c394ba82eb95cd52fed9d44e8fdb98f1c2ff2e3cc71f94edc030ebd67"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/runtime-index-v1.log",
+      "bytes": 126,
+      "sha256": "741a3d151a048e9c47cec8e7431879312acaf39daa162a77b727ba13ffe6f4f2"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/runtime-index-v2.json",
+      "bytes": 511,
+      "sha256": "469478322d7a3f9be7368bc2b99d112f9ce633d74e995fc9dafb4b90d1331da2"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/runtime-index-v2.log",
+      "bytes": 126,
+      "sha256": "63ec1107dfa14ace2825eec5ff9132668a28ab25c2c0edc51e7f9cf351814adf"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/service-identity-final-v1.json",
+      "bytes": 528,
+      "sha256": "1527d282606b649bed4c8c42e3f58baa4f0a1f21abb6c0aace99941400e3182b"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/service-identity-final-v1.log",
+      "bytes": 6539,
+      "sha256": "9386aae1c41178f39e8b49d9517caf8933e375a444e831a13e8ef10f9045208e"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/services-final.json",
+      "bytes": 6539,
+      "sha256": "9386aae1c41178f39e8b49d9517caf8933e375a444e831a13e8ef10f9045208e"
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/write_final_index.py",
+      "bytes": 4648,
+      "sha256": "2be9c7e874afb6fcfb72d3104744466de1efb988da00fb01e568ff53353a691e"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/project/data/evaluations/capital-bikeshare/operational-plans/runtime-20261114.json",
+      "bytes": 4944,
+      "sha256": "90338f930668f1b327a92212ef56485e4c7a398897a4100742cd2dbeb7413e5e"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/project/data/evaluations/capital-bikeshare/operational-attempts.json",
+      "bytes": 1227,
+      "sha256": "bfaf247498de0f8b9fe106611208224dded3ff338e9b8399fafe6d1b9d98fbc7"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/project/data/reports/capital-bikeshare/operational-918ccaf6-d342-41aa-8ce1-e3b52f31f213.json",
+      "bytes": 437737,
+      "sha256": "1cb0fb7d6a34de11ec8b808197fd4cb0b074704a507dec0b4290188673dc61ad"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/project/data/reports/capital-bikeshare/operational-918ccaf6-d342-41aa-8ce1-e3b52f31f213.requests.jsonl",
+      "bytes": 1083245,
+      "sha256": "e1817aedafe30b11730231b456f7657f6c93c9bc14691c6d9dcaf59cef497509"
+    }
+  ],
+  "private_backup_descriptors": [
+    {
+      "path": "data/reports/20261114-capital-runtime/paired-backup/audit.dump",
+      "bytes": 604878,
+      "sha256": "254caca5d3c7ed8078dcc5862b6f47869e2939393f80eb5f487bb14358c57030",
+      "raw_contents_not_published": true
+    },
+    {
+      "path": "data/reports/20261114-capital-runtime/paired-backup/registry.dump",
+      "bytes": 146706,
+      "sha256": "53a1d3771c564b0d0cadadf1d82f363b78457dea4f9295f286d8b02290838641",
+      "raw_contents_not_published": true
+    }
+  ],
+  "limits": [
+    "No second measurement, retry, ledger reopen, evidence registry record or approval",
+    "Raw completed/measurement passed is execution/numeric status; independent UTC order audit rejected operational acceptance",
+    "No clock research/OS/service/task/log/resync or future-check changes",
+    "No fit/reselection or consumed-window ledger mutation",
+    "Restore is same-version partial recovery, not all 22 prerequisite cases",
+    "No product source/schema/writer/lock/workflow changes or new CI acceptance claimed",
+    "No synthetic results reused as actual candidate proof"
+  ]
+}

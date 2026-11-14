@@ -431,3 +431,7 @@ export 0は保存完了のみ、review 1は違反、2は不足/数値成功で�
 
 [専用registry・API・監視の実行結果](capital-runtime-acceptance.md)を追加。registry5001/version1、API8110は候補専用で配信blocked。
 実API1,461件とmonitor1,464窓のCSV/JSON/marker/PGを照合済み。運用測定・復旧・全producer採否は後続条件を確認する。
+
+追補：[測定保留と部分復元の最終記録](capital-operational-hold.md)。50+1000/エラー0/p95 84.05msは数値上の結果のみで、
+全journalのUTC逆行2件を検出し運用受入を保留。同artifactの別volume対応復元と一時resource cleanupは成功。
+運用gateはnot_evaluated、配信blocked。再測定/台帳reopen/時計研究を自動で行わない。

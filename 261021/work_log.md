@@ -4656,3 +4656,46 @@ T02/T12全22case・運用gate・T13bは未完了。OS/時計/service/task/log・
 
 公開前の索引検算v1は作成中runtime-index-v1.logをhash対象へ入れたため不一致で失敗。初稿をrejected原本として保持し、索引作成logをallowlistから除いたv2へ修正。
 最終110原本hash/9対象fileの相対link・secret実値不在・diff checkを検算し成功。索引作成後の検算/commit/push receiptは別local証拠として残し、自己参照hashへ含めない。
+
+
+## 2026-11-14：実運用試行の事後保留、同artifactの対応復元（基点9a1f433）
+
+先行API/監視の公開は最初048b394でcommitしたがremoteのa847063先行更新によりpush拒否。fetchして261109とroot READMEだけの非重複を確認。
+未公開commitだけをrebaseし9対象bytes不変を確認、9a1f433として通常push成功。失敗・fetch・review・rebaseのreceiptを保持。force pushなし。
+検証済みfrozen plan326f8c…/file90338f…に従い、同candidate/version1/登録artifact13dbe8…の測定を1回だけ開始。
+attempt918ccaf6-d342-41aa-8ce1-e3b52f31f213。runnerはcompleted/measurement passed、暖機50/逐次1000/error0/retry0/p95 84.04970800620504ms。
+DB snapshot観測32,849、監査1,050行/source hash/各prediction一致、durable journal2,101eventを確認。operational gate not_evaluated/deployment blockedを維持。
+linked recheck CLIはreport SHA1cb0fb…/plan/ledger/journalに結合し同p95でexit0。
+
+別processで専用PGをREPEATABLE READ READ ONLY/profile確認後に監査snapshot1,050行をexport。
+標準json/hashlib/math/datetimeだけの独立auditでplan/report/ledger/hash、全journal連鎖、全1,050要求の順序/target/HTTP/latency/DB監査とp95を検算。
+数値とhashは一致したが、journal UTCがsequence940→941で41.580ms、1723→1724で2.169ms逆行しexit1。
+**実運用受入は保留**。operator判断operational-acceptance-hold.jsonと原本hashを保存し、raw completed/数値passedを承認状態に読み替えない。
+record_completed_operational_evidence/registryのcapital_operational_* tag記録は実施せず、final readで同tag未登録を確認。
+失敗後の測定・reopen・自動retry・clamp・resyncは行わない。約3秒の事前確認成功を約95秒の区間全体へ外挿しない。
+追加daemon/PHC/独立源採取や原因分析はせず、時計研究保留を維持。今回のUTC順序観測を過去T03/tick11000へ遡及適用しない。
+source読取で、既存journal consumerが今回のUTC順序を受入条件へ結合していないこと、retry reviewがcompletedを拒否することを確認。
+後続Sol課題としてfail-closed readerと原本保持の事後不適格review契約を追加。現ledgerの状態書換え/削除/分岐で回避しない。
+
+時計に依存する運用主張とは分離し、事前のpaired_restore.py計画で所有確認済み専用API/MLflowだけ静止。
+PGのregistry/audit両DBの全table/sequence/column manifestとartifact8fileをsnapshot、収集中のsource manifest不変を照合。
+別project capital-restore-20261114/空きport/別2volumeへpg_restore+artifact copyし、全DB manifest/全file hash一致。
+復元先skopsだけを意図的に破損し実load_staging_registered_modelがdeserialize前のSHA不一致で拒否することを確認、復元先copyをbackup bytesへ戻す。
+復元先ready200、同candidate/version/artifact/profile、既存request再送と新ID予測700.7861957728056/新監査が一致。
+restored container/volume/network cleanupを確認し、元専用stackを再開。旧REAL移行/二版/Caddy切替/承認operationの全case受入とはしない。
+API停止probeは観測時点でsource再開後running=true/connection resetとなりapi_stop_detected=false。タイミングの近接で停止を確定せず、case合格へ使わず再試行もしない。
+最終read-only確認はready200、観測32,849/予測2,512/monitor1,464/deployments0、blocked/not_evaluated、運用証拠tagなし。
+既存5コンテナID/image/StartedAt、正式消費台帳c42de5…も不変。
+
+final-gap-inventoryで全22caseを整理。観測8領域review待ち、部分5、未実証9。最初の一覧summaryは未実証の明示map8件だけを数え、定数shiftのimplicit1件がsummaryから抜けた。
+v1script/JSON/logを保持し、v2は全caseとmap数22の一致をassertして未実証9に修正。合成CIや今回の部分成功でcategory attestation/bundleを捏造しない。
+最終索引20261114-capital-operational-restore-checks.jsonは先行110原本を再照合し、新62file/17receipt、private dump2本のhash/サイズ、raw運用4原本を追加。
+秘密env/dump/artifact bytesは公開せずignored領域で保持。新索引作成後の検算/commit/pushは自己hash対象から外してlocalへ残す。
+製品source/schema/writer/lock/workflowは変更していない。必要な39回帰は先行節目で成功済みで、新しい理由のない全suite/CI反復は行わない。
+残件はreader拒否と事後review契約、独立不足case、警告理由付きreview、valid運用証拠後のT13b。今ユーザーが実行する追加コマンドはない。
+
+公開前の最終検算で先行110＋追加62原本・private dump2本、対象8file、全22caseの8/5/9内訳・link・秘密実値不在・diff checkが成功。
+9a1f433文書pushで自動起動したCI43591445767は全590unit/全job/step成功。GitHub接続ツールでjob/artifactを確認し、ローカル保存はCLIを使用。
+artifact ZIP SHA4bf21be…/16member hash、T16の4原本をarchiveだけから別processで再計算、system/T07a normal/TERM cleanupを確認。
+索引20261114-capital-runtime-docs-ci-checks.jsonへ別記。新しい製品実装の受入ではなく既存合成CIであり、実運用保留の解除や実candidate不足caseへ流用しない。
+最後の文書commitの自動CIをこの先行runの結果と混同しない。

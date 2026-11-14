@@ -1,5 +1,8 @@
 # Capital実候補の隔離runtime受入（2026-11-14）
 
+追補：[運用試行の保留と部分復元](capital-operational-hold.md)まで進んだ。運用数値は条件内だったが、
+全journalのUTC逆行を検出したため採用せず、再測定も行っていない。以下は先行API/監視の節目の記録。
+
 同じ評価済み候補を専用MLflowへblocked登録し、実HTTP予測・PostgreSQL監査・monitor CLIを通した。
 **API/監視の今回の受入は成功。T02/T12全体とT13b採否は未完了**。
 [今回の証拠索引](reviews/20261114-capital-runtime-checks.json)、[実精度評価](capital-first-evaluation.md)、
