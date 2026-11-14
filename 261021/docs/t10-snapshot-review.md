@@ -1,5 +1,7 @@
 # T10：固定原本の正式snapshot・事前protocolのreview
 
+**2026-11-14方針改訂:** [製品作業の開始・停止条件](product-completion-policy.md)を優先する。時計研究は再開指示まで保留、資格未合格と過去の失敗は保持する。以下の以前の日付の一律fit禁止/時計資料の追加依頼は当時の記録であり、現在の開始条件ではない。
+
 2026-11-08更新。[T09の取得](t09-october-acquisition.md)後、固定済みの47原本で正式CSV/manifestを独立照合し、事前protocolを固定した。
 学習・採点・candidate作成は開始していない。SQL改善9147027の[CI・正式pair/protocol索引](reviews/20261108-t10-snapshot-checks.json)まで受入済み。
 合成CI、実原本のデータ検査、実候補の学習/採点、実時計資格を別々に扱う。
@@ -127,7 +129,7 @@ legacy/default消費台帳の重複拒否を維持し、保存しても消費開
 他checkoutも含む未消費の保証や実行真正性は、local hashの一致だけでは得られない。
 
 原本fileの連続/min/maxは出版社の欠落ゼロを証明しない。
-時計資格・独立源/校正dossier・修復/保守・必須producer等が未達の間、実fit/採点/実運用gate/採否は開始しない。
+現在の開始条件は[作業別方針](product-completion-policy.md)へ変更した。履歴fit/精度評価に全時計資格を要求しない。運用測定・採否にはそれぞれの実証が必要。
 確認できた範囲と残件は[計画§11.6](../../261014/plan_mlops.md#remaining-work-latest)を正規の一覧とする。
 
 実装9147027/[CI42447659584](https://github.com/kenobix/Claude_practice/actions/runs/42447659584)の全570件/対象pipeline10件は成功した。

@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "date_client": "2026-11-14",
+  "base_commit": "d5c0ebfe57b63f793e09f300856a7c0bc45d5c41",
+  "status": "POLICY_REVISED_ISOLATED_EXECUTION_PREPARATION",
+  "clock_qualification": "not_established_research_on_hold",
+  "constraints": [
+    "No OS/service/task/log/clock changes",
+    "No real DB/registry/serving changes",
+    "Strict future rejection unchanged",
+    "Frozen data/protocol/recipe/accuracy gates unchanged"
+  ],
+  "known_original_venv_mismatches": [
+    {
+      "package": "setuptools",
+      "expected": "68.1.2",
+      "actual": null
+    },
+    {
+      "package": "wheel",
+      "expected": "0.42.0",
+      "actual": null
+    }
+  ],
+  "desktop": {
+    "current_host": "DESKTOP-J589D75",
+    "documented_desktop_connected": false,
+    "endpoint_supplied": false
+  },
+  "attempts": [
+    {
+      "command": [
+        "261021/.venv/bin/python",
+        "-c",
+        "import importlib.metadata as m,json,platform,pathlib,re,sys; root=pathlib.Path(\"261021\"); x=json.loads((root/\"docs/reviews/20261108-t10-snapshot-checks.json\").read_text()); print(\"frozen_sources\",json.dumps(x[\"saved_product_sources\"],indent=2)); print(\"context\",json.dumps(x[\"protocol_source_context\"],indent=2)); mismatch=[]\nfor line in (root/\"requirements.lock\").read_text().splitlines():\n if \"==\" not in line or line.startswith(\"#\"): continue\n name,wanted=line.split(\"==\");\n try: actual=m.version(name)\n except m.PackageNotFoundError: actual=None\n if actual!=wanted: mismatch.append(dict(package=name,wanted=wanted,actual=actual))\nprint(json.dumps(dict(python=sys.version,platform=platform.platform(),hostname=platform.node(),lock_mismatches=mismatch),indent=2))\nfor p in (root/\"data/evaluations/consumption-ledger.json\",root/\"configs/evaluation-legacy-windows.json\"):\n print(str(p),p.read_text() if p.is_file() else \"ABSENT\")"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:44:30.248243+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:44:30.581445+00:00",
+      "monotonic_start_ns": 198034615184322,
+      "monotonic_end_ns": 198034948376669,
+      "log": "environment-v1.log",
+      "log_sha256": "a9000df70076519f39de2f96fc5bd371999cf36a02b1ad564e5fda913de6a731"
+    },
+    {
+      "command": [
+        "python3",
+        "-c",
+        "import json,pathlib; r=pathlib.Path(\"261021\"); p=json.loads((r/\"data/derived/capital-bootstrap-a5b76d0f89d6433287007f3414d2208b/protocol.json\").read_text()); print(json.dumps(p,indent=2)); x=json.loads((r/\"docs/reviews/20261108-t10-snapshot-checks.json\").read_text()); print(\"INDEX KEYS\",list(x)); print(\"PROJECT PATH\",pathlib.Path.home().joinpath(\"projects/Claude_practice\").is_dir())"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:44:09.822281+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:44:09.900275+00:00",
+      "monotonic_start_ns": 198014189368105,
+      "monotonic_end_ns": 198014267206214,
+      "log": "input-discovery-v1.log",
+      "log_sha256": "1eba0de5ca82bd10ecf1cec15c55b650ac61bb3b853e4d86a589b9e2575d3fb0"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-product-resume/validate_docs.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:47:12.786721+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:47:13.009113+00:00",
+      "monotonic_start_ns": 198207997325198,
+      "monotonic_end_ns": 198208219707503,
+      "log": "policy-doc-validation-v1.log",
+      "log_sha256": "77feced36f80b567246450dbe3da053bb1c3cae59302438cd49909b4b5ac221e"
+    },
+    {
+      "command": [
+        "python3",
+        "-c",
+        "import pathlib,shutil,subprocess,json; print(json.dumps(dict(disk_free=shutil.disk_usage(\"261021/data/reports\").free,desktop_documented_path_exists=pathlib.Path.home().joinpath(\"projects/Claude_practice\").is_dir(),ssh_target_provided=False))); subprocess.run([\"du\",\"-sh\",\"261021/.venv\"],check=True)"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:46:22.715293+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:46:24.025762+00:00",
+      "monotonic_start_ns": 198154091114283,
+      "monotonic_end_ns": 198155401558436,
+      "log": "sandbox-capacity-v1.log",
+      "log_sha256": "ab57c14ea245213bae2fd4dee02226acbaacb9f13d160add16160cd6b13c5018"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "data/reports/20261114-product-resume/environment-v1.json",
+      "bytes": 1429,
+      "sha256": "168dfbb841015b06209c6c74be4af9f26e2d60eecadd5d7ccb999990a250f3d2"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/environment-v1.log",
+      "bytes": 6878,
+      "sha256": "a9000df70076519f39de2f96fc5bd371999cf36a02b1ad564e5fda913de6a731"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/input-discovery-v1.json",
+      "bytes": 850,
+      "sha256": "ae12d52dea22880fe6af770014ffc18302f075a0360115cdd801a65f2be80eb9"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/input-discovery-v1.log",
+      "bytes": 5024,
+      "sha256": "1eba0de5ca82bd10ecf1cec15c55b650ac61bb3b853e4d86a589b9e2575d3fb0"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/policy-doc-validation-v1.json",
+      "bytes": 509,
+      "sha256": "98a817c71c6bed54c8aa19bf3c6c2bf60e4e9e4902164b2f5d93d8989fa2f910"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/policy-doc-validation-v1.log",
+      "bytes": 443,
+      "sha256": "77feced36f80b567246450dbe3da053bb1c3cae59302438cd49909b4b5ac221e"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/run.py",
+      "bytes": 949,
+      "sha256": "ab98ea1aa36a223360c08f6f7c924996134aaf776a52582a8b8f82f9c5035b20"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/sandbox-capacity-v1.json",
+      "bytes": 762,
+      "sha256": "f1791e74d5d70248891fff3fe41bc73f496640afdca1f6ef00afa1cf9b4f6f17"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/sandbox-capacity-v1.log",
+      "bytes": 117,
+      "sha256": "ab57c14ea245213bae2fd4dee02226acbaacb9f13d160add16160cd6b13c5018"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/validate_docs.py",
+      "bytes": 1103,
+      "sha256": "748b07d7050fe0556b06c12ecc55535a00e3a4634147f96a83a41cd82843285e"
+    }
+  ],
+  "limitations": [
+    "Initial exploratory tool reads preceded attempt wrapper; no fabricated timestamps/raw output",
+    "Web pages read via tool, not captured HTTP originals; three endpoint tool reads failed without HTTP status",
+    "No actual model fit/scoring performed at this checkpoint",
+    "Documentation change only; no new product test or CI acceptance claimed"
+  ]
+}

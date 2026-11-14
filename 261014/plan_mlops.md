@@ -532,6 +532,25 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 <a id="remaining-work-latest"></a>
 
+#### 2026-11-14：時計研究を保留し、製品作業の開始条件を分離
+
+ユーザー承認により[作業別の開始・停止条件](../261021/docs/product-completion-policy.md)を採用する。
+時計の内部原因/独立源選定/精密校正/全campaignは再開指示まで保留。未解決履歴と資格未合格を保持する。
+以下が現在の残件。下の2026-11-09以前の表と索引は当時の状態であり、一律のfit禁止を現在へ適用しない。
+
+| 優先度 | 難易度・担当 | 残課題と開始条件 |
+|---|---|---|
+| P0（fit前） | D3・Sol | T10直前：固定47原本・CSV/manifest/protocol・11 source/lock・依存版・消費状態を照合。専用環境を準備し、単一の消費台帳を宣言。時計の全資格は不要 |
+| P1 | D3・Sol | T11：固定recipeで一度だけvalidation、合格時だけ同artifactでfinal。どちらもMAE厳密改善/RMSE以下。失敗・不合格後は同じ窓を再利用しない |
+| P1 | D3・Sol | T02実producer/T12：同candidateの監視・DB/予測・復旧/metadataと運用証拠を隔離環境で取得。応答時間は実行先/通常の同期状態・短区間確認が必要。本番SLO・時計資格へ昇格しない |
+| P1（証拠後） | D3・Sol | T13b：全実証と理由付きreview/別承認が揃った後の採否。未来拒否を維持。現registry/現配信の変更は今回の範囲外 |
+| 保留 | D3・Sol | 時計調査・修復比較・独立UTC/elapsed源/全campaign。新たな採取/問い合わせ/サービス操作は再開指示まで行わない |
+| P2（上流変更時） | D2・Sol review | MLflow noload互換性：関連する上流変更がある場合だけ再検証。lock更新/警告抑制で回避しない |
+
+デスクトップ未接続時も、履歴fitに必要な前提を満たした現在hostの専用環境で進めてよい。
+別PCだから正常とは扱わない。指定Web APIは公開仕様だけを低優先度でreviewし、時計資格や開始許可の証拠にしない。
+
+
 #### 2026-11-09 NICT取得方法review後の残課題
 
 最新追加（基点`114af9d`）：[NICTの頻度・認証・不確かさ/因果bracket方法](../261021/docs/clock-nict-method-review.md)、

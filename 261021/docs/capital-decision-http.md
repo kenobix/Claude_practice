@@ -1,5 +1,7 @@
 # T13a: 合成証拠を使うMLflow HTTP決定の障害受入
 
+**2026-11-14方針改訂:** [製品作業の開始・停止条件](product-completion-policy.md)を優先する。時計研究は再開指示まで保留、資格未合格と過去の失敗は保持する。以下の以前の日付の一律fit禁止/時計資料の追加依頼は当時の記録であり、現在の開始条件ではない。
+
 既存のSQLite直接接続試験に加え、実MLflow server/REST clientと障害proxyを使う。実Capital候補の採否、実データの性能、認証された人の独立承認、HTTPでのartifact取得の証拠にはしない。artifact本文は一時file storeから読む。モデルsourceは学習済みモデルではない。
 
 ## 実行と安全境界

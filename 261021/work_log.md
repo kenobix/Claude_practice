@@ -4524,3 +4524,27 @@ push-review-v1はexit1、remote先行更新によるfetch-first拒否。fetch-re
 対象は261109/とroot READMEで今回7fileと非重複。rebase-review-v1はexit0で先行変更を保持し、元5c163faと載せ直し後の7file bytesが完全一致することを確認した。
 この出版前失敗/取得/rebase receiptのhashと終了値も索引へ追記。原本reviewの基点114af9dや既存24証拠を新parentへ書き換えない。
 最終記録を同じ未公開commitへamendして通常pushする。amend/pushの最終receiptは循環参照を避けlocalへ保存し、force pushは行わない。
+
+## 2026-11-14：時計研究を保留し製品作業を再開（基点d5c0ebf）
+
+ユーザーが時計内部原因・独立源選定・精密校正・全campaignの保留を承認した。
+product-completion-policy.mdで履歴fit/精度、監視/復旧、elapsed測定、採否の開始・停止条件を分離。
+旧来の全時計資格を一律前提にせず、固定データ時点・未消費窓・厳密future拒否と運用/採否の証拠を維持する。
+§11.6、T10手順/正式snapshot、Capital gate/decision、README/runbook、時計入力案内へ現在方針を明示。
+過去索引/失敗と資格未達を保持し、古いstatusをpassedへ変更していない。
+
+HEAD=d5c0ebf、無関係な未追跡3pathを保持。261109のデスクトップ記録は読んだが、現在hostはDESKTOP-J589D75/kernel6.6.87.2であり別環境。
+記録上の~/projects/Claude_practiceは当前hostに存在せず、接続先も提示されていない。SSH鍵/IP探索やリモート接続設定は行わない。
+接続に依存しない履歴評価を現在hostの専用source/venv/outputへ隔離して準備する。
+既存venvの全lock版をmetadata照合し、setuptools==68.1.2とwheel==0.42.0のみ未導入、その他は一致。
+元venvを変更せず専用コピー先で揃える。現消費台帳は不存在、legacyの旧Capital/UCI窓を保持。
+今回の未消費確認はlocal保存範囲であり、他checkout全ての未実行を保証しない。
+
+指定のWeb4ページと公式FAQ/schema/開発者資料を読んだ。結果はtime-api-options.md。
+UTC endpointのWeb tool読取各1回は全てInternal Errorでstatus/JSON未取得。サービス停止とは断定しない。
+API提供仕様はあるが、採用/真正性/校正済みとはしない。記事内Time検索は該当なし。source選定や追加queryへ拡張しない。
+対話の初期読取で存在しないtrain_candidate.py、capital_evaluation.pyを推測して指定しexit2となった。
+rg --filesで実際のtraining.py/cli.pyを見つけて読んだ。初期出力の一部は上限で切れ、必要部分を絞って再読した。
+これらwrapper導入前の読取には時刻/完全rawを後付けしない。
+後続の全試行はdata/reports/20261114-product-resume/run.pyでcommand/cwd/exit/log/hashと未資格UTC/MONOTONICを保存する。
+本段階は文書の方針改訂で、source/schema/writer/lock/workflow・実DB/registry/現配信・OS/service/task/log設定は未変更。

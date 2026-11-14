@@ -1,5 +1,7 @@
 # T09取得監査とT10開始手順
 
+**2026-11-14方針改訂:** [製品作業の開始・停止条件](product-completion-policy.md)を優先する。時計研究は再開指示まで保留、資格未合格と過去の失敗は保持する。以下の以前の日付の一律fit禁止/時計資料の追加依頼は当時の記録であり、現在の開始条件ではない。
+
 **2026-11-08の現在状態:** [T09の10月原本取得・構造/右端境界検査](t09-october-acquisition.md)は完了。
 固定した202212〜202610の47原本で正式CSV/manifest schema3を作り、全32,849 hourを独立照合した。
 [正式snapshotと事前protocol](t10-snapshot-review.md)は固定済み。train29,919/validation1,464/final1,461、境界5 hourは除外する。
@@ -100,7 +102,7 @@ MLFLOW_DISABLE_AGENT_HINT=1 \
 | 消費 | 保存時の重複拒否を確認し、fit直前に消費台帳の開始記録。失敗・中断した窓も無断再利用しない |
 
 入力準備時の1464/1461は日時算術による想定だった。2026-11-08には正式CSV/manifestから29,919/1,464/1,461を固定し、標準datetimeだけの別processでも照合した。
-protocol作成だけでT11や運用合格を開始しない。計画の時計資格・必須証拠等の依存条件を満たし、
+protocol作成だけでT11や運用合格を開始しない。[改訂した作業別の条件](product-completion-policy.md)を満たし、
 T10のレビューが完了してから一度だけcandidate fitへ進む。validation不合格時は同じ窓で調整し直さない。
 
 時計資格の前提は[修復後の受入設計v1](clock-qualification-plan.md)を参照する。

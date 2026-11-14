@@ -1,5 +1,7 @@
 # 実行・運用手順
 
+**2026-11-14現在:** 時計研究は保留。[製品作業の開始条件](product-completion-policy.md)へ改訂し、履歴学習/精度評価と時計依存の運用測定を分離した。過去の時計資格は未合格のまま。日付付きの旧停止条件は当時の履歴として読む。
+
 配信中の段階表示、Docker timeout時の未確定状態、読取専用の`deploy inspect`は[配信処理の診断](deployment-observability.md)を参照してください。
 合成Capitalの実MLflow/skops/DBを別volumeへ復元する追加試験は[配信復旧](deployment-recovery.md)を参照してください。現配信を障害対象にしない手順です。
 
