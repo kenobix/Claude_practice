@@ -542,7 +542,7 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 |---|---|---|
 | 完了 | D3・Sol | T10直前：固定47原本・CSV/manifest/protocol・11 source/lock・105依存版・未消費を確認。専用環境と単一の正式消費台帳を使用。[実評価記録](../261021/docs/capital-first-evaluation.md) |
 | 完了 | D3・Sol | T11：validation1,464行/final1,461行を各1 attemptで完了。同artifact・再fitなし、両精度gate合格。MAE137.392476/143.693098。両窓は消費済み、再選定へ再利用しない。運用gateはnot_evaluated、配信blocked |
-| P1 | D3・Sol | T02実producer/T12：同candidateの監視・DB/予測・復旧/metadataと運用証拠を隔離環境で取得。応答時間は実行先/通常の同期状態・短区間確認が必要。本番SLO・時計資格へ昇格しない |
+| P1 | D3・Sol | T02実producer/T12：次は[同candidateの隔離runtime受入](../261021/docs/capital-runtime-handoff.md)。offline監視1,464窓/PSI4,392件を別processで検算済みだが、分布警告1,336/誤差警告234を要review。既定入力は専用projectだけ固定pairへ結合し、学習済み168hのCLI入力確認/未到着ラベル拒否まで完了。HTTP/DB監査・registry binding・復旧/metadata・運用測定は未実施。応答時間には通常の同期状態/短区間確認が必要。時計研究は保留 |
 | P1（証拠後） | D3・Sol | T13b：全実証と理由付きreview/別承認が揃った後の採否。未来拒否を維持。現registry/現配信の変更は今回の範囲外 |
 | 保留 | D3・Sol | 時計調査・修復比較・独立UTC/elapsed源/全campaign。新たな採取/問い合わせ/サービス操作は再開指示まで行わない |
 | P2（上流変更時） | D2・Sol review | MLflow noload互換性：関連する上流変更がある場合だけ再検証。lock更新/警告抑制で回避しない |

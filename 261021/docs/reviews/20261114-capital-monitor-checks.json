@@ -1,0 +1,486 @@
+{
+  "schema_version": 1,
+  "date_client": "2026-11-14",
+  "base_commit": "2972052",
+  "status": "OFFLINE_MONITOR_AND_ACTUAL_CANDIDATE_INPUT_PRECHECK_ACCEPTED_NOT_RUNTIME_ACCEPTANCE",
+  "monitor": {
+    "kind": "offline_monitor_diagnostic_only",
+    "status": "computed_and_independently_checked",
+    "candidate_id": "e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b",
+    "artifact_sha256": "1e17fdb0d48c978dbf35c72125ca897bbe42882e24d3d647795ab0171bbf0ce2",
+    "plan_sha256": "d5509b719b49ca66d52c741c53e4d3d6bdc0d34be2acd8651c7423604815c8b6",
+    "source_final_report_sha256": "8312ed9f22d9f93c1d55f736369ad5f2e66839626297b160800b5a49e9860893",
+    "source_prediction_rows_sha256": "fe57cbf5f74624843c10cd9d6775910537fe2a656cd87ea4f5eac6bafe98e818",
+    "reference_file_sha256": "81e2d05934105a2cd5fcf21d5ba8f2f7fb95807ee5b4aeadbe83dcc559f589e6",
+    "reference_sha256": "f3cb436c3d002fef5427e8ddfd6138db0031f96cd05e339605b50c5377cac258",
+    "rows": 1461,
+    "windows": 1464,
+    "independent_window_count_and_mae_checks": 1464,
+    "csv_sha256": "d78f77111882e7297591fbe798ca88d6de3ff70113ececbfa316d2fe799d66ee",
+    "distribution_status_counts": {
+      "investigate_distribution_change": 1336,
+      "no_threshold_crossing": 105,
+      "insufficient_data": 23
+    },
+    "quality_status_counts": {
+      "within_review_threshold": 1204,
+      "investigate_error_increase": 234,
+      "insufficient_labels": 26
+    },
+    "first_distribution_warning": "2026-08-02 02:00:00",
+    "first_error_warning": "2026-08-02 20:00:00",
+    "first_error_evaluable": "2026-08-02 05:00:00",
+    "first_distribution_evaluable": "2026-08-02 02:00:00",
+    "maximum_psi_by_feature": {
+      "lag_24": 0.665503325672504,
+      "lag_168": 1.729054409975067,
+      "hour": 0.10814470414753408
+    },
+    "last_window": {
+      "window_end": "2026-10-01 02:00:00",
+      "window_start": "2026-09-24 02:00:00",
+      "prediction_count": 165,
+      "scored_count": 165,
+      "label_coverage": 1.0,
+      "mae": 224.34623238109268,
+      "rmse": 349.35061190574356,
+      "quality_status": "investigate_error_increase",
+      "psi": {
+        "lag_24": 0.1296665693882536,
+        "lag_168": 0.1701780156080062,
+        "hour": 0.0019335342190930247
+      },
+      "feature_missing_rates": {
+        "lag_24": 0.0,
+        "lag_168": 0.0
+      },
+      "distribution_status": "no_threshold_crossing",
+      "psi_algorithm": "psi-v2-constant-bins",
+      "training_reference_sha256": "f3cb436c3d002fef5427e8ddfd6138db0031f96cd05e339605b50c5377cac258"
+    },
+    "claims": {
+      "db_prediction_audit": false,
+      "registry_binding": false,
+      "http_producer": false,
+      "persistence_complete_marker": false,
+      "operational_gate": "not_evaluated",
+      "deployment_permission": "blocked",
+      "clock_qualification": "not_established_on_hold"
+    },
+    "limits": [
+      "Diagnostic replay of already scored same-candidate final predictions, not another selection attempt. No new candidate predict/fit.",
+      "No registry/API/DB persistence path; does not complete T02/T12 producer acceptance.",
+      "Window after last final target is included only until last label availability; predictions then age out of the moving window."
+    ]
+  },
+  "independent_monitor_audit": {
+    "status": "SEPARATE_STDLIB_PROCESS_OFFLINE_MONITOR_AUDIT_PASSED",
+    "windows": 1464,
+    "feature_psi_checks": 4392,
+    "method": "stdlib datetime/csv/math/bisect histogram; original count-derived exact lags; no pandas/sklearn/production monitoring import",
+    "csv_sha256": "d78f77111882e7297591fbe798ca88d6de3ff70113ececbfa316d2fe799d66ee",
+    "summary_sha256": "4c7a8d77b57483c07756195fea79f1607af620b68d516b23b854aeed5bc4e5c8",
+    "production_monitor_acceptance": false,
+    "clock_qualification": "not_established_on_hold"
+  },
+  "error_diagnosis": {
+    "kind": "post_evaluation_diagnostic_no_new_selection",
+    "latest_window": {
+      "start_exclusive": "2026-09-24 02:00:00",
+      "end_inclusive": "2026-10-01 02:00:00",
+      "rows": 165,
+      "candidate_mae": 224.34623238109268,
+      "baseline_mae": 274.08484848484846,
+      "actual_mean": 901.0
+    },
+    "daily_latest_window": {
+      "2026-09-24": {
+        "rows": 21,
+        "candidate_mae": 146.8869063194456,
+        "baseline_mae": 181.52380952380952,
+        "actual_mean": 1142.1904761904761
+      },
+      "2026-09-25": {
+        "rows": 24,
+        "candidate_mae": 129.64221107736665,
+        "baseline_mae": 171.125,
+        "actual_mean": 1061.3333333333333
+      },
+      "2026-09-26": {
+        "rows": 24,
+        "candidate_mae": 347.4573455967675,
+        "baseline_mae": 623.125,
+        "actual_mean": 633.7083333333334
+      },
+      "2026-09-27": {
+        "rows": 24,
+        "candidate_mae": 330.66761477233973,
+        "baseline_mae": 241.58333333333334,
+        "actual_mean": 536.7083333333334
+      },
+      "2026-09-28": {
+        "rows": 24,
+        "candidate_mae": 277.2543270110927,
+        "baseline_mae": 498.125,
+        "actual_mean": 885.6666666666666
+      },
+      "2026-09-29": {
+        "rows": 24,
+        "candidate_mae": 202.5484573043751,
+        "baseline_mae": 141.16666666666666,
+        "actual_mean": 1020.9166666666666
+      },
+      "2026-09-30": {
+        "rows": 24,
+        "candidate_mae": 126.2843488285555,
+        "baseline_mae": 50.375,
+        "actual_mean": 1056.625
+      }
+    },
+    "validation_error_investigation_threshold": 171.7405951323998,
+    "first_distribution_warning": "2026-08-02 02:00:00",
+    "first_error_warning": "2026-08-02 20:00:00",
+    "source_final_rows_sha256": "fe57cbf5f74624843c10cd9d6775910537fe2a656cd87ea4f5eac6bafe98e818",
+    "monitor_summary_sha256": "4c7a8d77b57483c07756195fea79f1607af620b68d516b23b854aeed5bc4e5c8",
+    "prohibited_actions_taken": false,
+    "interpretation_limits": [
+      "Descriptive diagnosis only; no weather/event causes can be established from these saved forecasts.",
+      "Overall precision gate remains the frozen gate; no new posthoc rejection/acceptance threshold.",
+      "Warnings require manual review with real producer evidence; cannot be erased by new bins or retuning on consumed windows."
+    ]
+  },
+  "input_alias": {
+    "status": "ISOLATED_DEFAULT_INPUT_ALIAS_BOUND_TO_EXACT_FROZEN_PAIR",
+    "original_defaults_unchanged": {
+      "data/derived/capitalbikeshare-next/hourly.csv": "cc4b39c67db286d30300cc6fb10a0f37e942eb337a7bd964795bbdd891762a96",
+      "data/derived/capitalbikeshare-next/manifest.json": "972f18d68609c6427ea6552bea920880dcf4412c5f8b9be9a82e710a4602bf45"
+    },
+    "isolated_alias": "261021/data/reports/20261114-product-resume/project/data/derived/capitalbikeshare-next",
+    "target": "261021/data/derived/capital-bootstrap-a5b76d0f89d6433287007f3414d2208b",
+    "source_config_modified": false,
+    "canonical_consumption_ledger_unchanged": true
+  },
+  "canonical_ledger_sha256": "c42de5e869d4765ac5f776ed098e98cbbed347c0dbe2c967016b14d64986b652",
+  "source_config_schema_writer_lock_workflow_changed": false,
+  "new_ci_acceptance_claimed": false,
+  "attempts": [
+    {
+      "command": [
+        "env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "DATA_PROFILE_ID=capital-bikeshare",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "OMP_NUM_THREADS=2",
+        "OPENBLAS_NUM_THREADS=2",
+        "PYTHONPATH=/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project/src",
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "300",
+        "261021/data/reports/20261114-product-resume/venv/bin/python",
+        "261021/data/reports/20261114-product-resume/offline_monitor.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:00:00.298734+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:01:12.237556+00:00",
+      "monotonic_start_ns": 199026481206099,
+      "monotonic_end_ns": 199104047354380,
+      "log": "offline-monitor-v1.log",
+      "log_sha256": "4c7a8d77b57483c07756195fea79f1607af620b68d516b23b854aeed5bc4e5c8",
+      "expected_exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-product-resume/diagnose_offline_monitor.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:02:03.259559+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:02:03.415117+00:00",
+      "monotonic_start_ns": 199158877088411,
+      "monotonic_end_ns": 199159032633681,
+      "log": "offline-monitor-diagnosis-v1.log",
+      "log_sha256": "b589f6a1332b9de887b0e7ac73b84f2f8eacd8a0c68169e344192c10addf7329",
+      "expected_exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-product-resume/audit_offline_monitor.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:02:57.085737+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:02:59.080455+00:00",
+      "monotonic_start_ns": 199216487911135,
+      "monotonic_end_ns": 199218482619444,
+      "log": "offline-monitor-audit-v1.log",
+      "log_sha256": "71b9195b8bba5c92d8bdcddedcd1a5e2a0bb87be93d85d111941e799ab50e0e7",
+      "expected_exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-product-resume/prepare_benchmark_alias.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:04:21.178722+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:04:21.261460+00:00",
+      "monotonic_start_ns": 199306252505000,
+      "monotonic_end_ns": 199306335231910,
+      "log": "prepare-benchmark-alias-v1.log",
+      "log_sha256": "8814a7eb9b570392f1deded2c31b70c0655081bcb404c13b3a230689be760c42",
+      "expected_exit_code": 0
+    },
+    {
+      "command": [
+        "env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "DATA_PROFILE_ID=capital-bikeshare",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "OMP_NUM_THREADS=2",
+        "OPENBLAS_NUM_THREADS=2",
+        "PYTHONPATH=/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project/src",
+        "261021/data/reports/20261114-product-resume/venv/bin/python",
+        "261021/data/reports/20261114-product-resume/project/scripts/benchmark_capital_runtime.py",
+        "--check-input-only",
+        "--candidate-id",
+        "e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b",
+        "--selection-report",
+        "261021/data/reports/20261114-product-resume/project/data/candidates/e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b/candidate-report.json",
+        "--final-report",
+        "261021/data/reports/20261114-product-resume/project/data/reports/capital-bikeshare/final-evaluation.json",
+        "--start",
+        "2026-04-01 00:00:00",
+        "--end",
+        "2026-04-08 00:00:00"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:04:21.333437+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:04:25.750343+00:00",
+      "monotonic_start_ns": 199306407227720,
+      "monotonic_end_ns": 199310824115112,
+      "log": "benchmark-input-only-v1.log",
+      "log_sha256": "bedfc8402f29554dac8d8d9fd19cd89a87b2e2e2eb13508fd64d8717f4ee91c2",
+      "expected_exit_code": 0
+    },
+    {
+      "command": [
+        "env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "DATA_PROFILE_ID=capital-bikeshare",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "OMP_NUM_THREADS=2",
+        "OPENBLAS_NUM_THREADS=2",
+        "PYTHONPATH=/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project/src",
+        "261021/data/reports/20261114-product-resume/venv/bin/python",
+        "261021/data/reports/20261114-product-resume/project/scripts/benchmark_capital_runtime.py",
+        "--check-input-only",
+        "--candidate-id",
+        "e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b",
+        "--selection-report",
+        "261021/data/reports/20261114-product-resume/project/data/candidates/e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b/candidate-report.json",
+        "--final-report",
+        "261021/data/reports/20261114-product-resume/project/data/reports/capital-bikeshare/final-evaluation.json",
+        "--start",
+        "2026-05-25 00:00:00",
+        "--end",
+        "2026-06-01 00:00:00"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T11:04:48.911684+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:04:53.018988+00:00",
+      "monotonic_start_ns": 199335822427796,
+      "monotonic_end_ns": 199339929725989,
+      "log": "benchmark-input-unavailable-label-negative-v1.log",
+      "log_sha256": "0008e750a255374c935f35d468369f20330f577a83944f6928d936227cce0fde",
+      "expected_exit_code": 1
+    },
+    {
+      "command": [
+        "bash",
+        "-c",
+        "set -e; git status --short; git add -- 261014/plan_mlops.md 261021/README.md 261021/docs/evidence-guide.md 261021/work_log.md 261021/docs/capital-first-evaluation.md 261021/docs/reviews/20261114-capital-evaluation-checks.json; git diff --cached --check; git diff --cached > 261021/data/reports/20261114-product-resume/evaluation-staged.diff; git diff --cached --stat; git commit -m \"Record first Capital candidate validation and final accuracy evaluation\"; git push origin main"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:59:09.122360+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:59:11.707199+00:00",
+      "monotonic_start_ns": 198971456841132,
+      "monotonic_end_ns": 198975833819703,
+      "log": "evaluation-publish-v1.log",
+      "log_sha256": "20f053d2241964d6c8331508ca06ade0f37a66bf7ea7b843d0a052dad9aa05fb",
+      "expected_exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-product-resume/validate_monitor_docs.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T11:07:39.508984+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T11:07:39.680155+00:00",
+      "monotonic_start_ns": 199517536662256,
+      "monotonic_end_ns": 199517707828635,
+      "log": "monitor-doc-validation-v1.log",
+      "log_sha256": "cc38ef841d548c45663d4f66af5cec85a45b815d6bc56612ba8c949f2999d0bd",
+      "expected_exit_code": 0
+    }
+  ],
+  "evidence": [
+    {
+      "path": "data/reports/20261114-product-resume/offline-monitor-plan.json",
+      "bytes": 995,
+      "sha256": "d5509b719b49ca66d52c741c53e4d3d6bdc0d34be2acd8651c7423604815c8b6"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/offline_monitor.py",
+      "bytes": 5071,
+      "sha256": "a8a9af917527ec28abdcee8316acfb34cbbac935b989999e1976ecdd24191f56"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/offline-monitor-windows.csv",
+      "bytes": 2663944,
+      "sha256": "d78f77111882e7297591fbe798ca88d6de3ff70113ececbfa316d2fe799d66ee"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/offline-monitor-summary.json",
+      "bytes": 2924,
+      "sha256": "4c7a8d77b57483c07756195fea79f1607af620b68d516b23b854aeed5bc4e5c8"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/diagnose_offline_monitor.py",
+      "bytes": 2284,
+      "sha256": "8e21e3696635f66b0d1f6347d71041b7b9c518c6aafc0af6eff6d55e5f6dd036"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/offline-monitor-diagnosis.json",
+      "bytes": 2226,
+      "sha256": "b589f6a1332b9de887b0e7ac73b84f2f8eacd8a0c68169e344192c10addf7329"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/audit_offline_monitor.py",
+      "bytes": 3583,
+      "sha256": "8cd47c70d3d7177f4019073a6ca774d75f8cc1651d6e37aa0227521ebd61e2b8"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/offline-monitor-audit-result.json",
+      "bytes": 526,
+      "sha256": "71b9195b8bba5c92d8bdcddedcd1a5e2a0bb87be93d85d111941e799ab50e0e7"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prepare_benchmark_alias.py",
+      "bytes": 1743,
+      "sha256": "0a46cb5a1e64152933142a138b92fb376981e73aa2361efa529f3f5c46e7ae73"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/benchmark-alias-result.json",
+      "bytes": 639,
+      "sha256": "8814a7eb9b570392f1deded2c31b70c0655081bcb404c13b3a230689be760c42"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/build_monitor_index.py",
+      "bytes": 2582,
+      "sha256": "9efa5d57bf8a8dd3706d63ce6d30d3ed00a63ac4b7733848bfd3461824172460"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/validate_monitor_docs.py",
+      "bytes": 2032,
+      "sha256": "7d2d3b3057a31c772f486a0d8ed206e352b88a762b3c798d7bfca8b93dd020a1"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/offline-monitor-v1.json",
+      "bytes": 914,
+      "sha256": "ad387aadbc6e7f8cffdbc3a63cf5d264c6eb318b8adf469460437135b6b6aa8a"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/offline-monitor-v1.log",
+      "bytes": 2924,
+      "sha256": "4c7a8d77b57483c07756195fea79f1607af620b68d516b23b854aeed5bc4e5c8"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/offline-monitor-diagnosis-v1.json",
+      "bytes": 524,
+      "sha256": "92296e8b4d527b8651bc98cc053b2f4a0281bb9f0f6a6507aae2a8b9a1992995"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/offline-monitor-diagnosis-v1.log",
+      "bytes": 2226,
+      "sha256": "b589f6a1332b9de887b0e7ac73b84f2f8eacd8a0c68169e344192c10addf7329"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/offline-monitor-audit-v1.json",
+      "bytes": 517,
+      "sha256": "0c345ec1f2e7ec2322130f60bd044a8ef98cfb2e5a79d16e96e59bce268528d0"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/offline-monitor-audit-v1.log",
+      "bytes": 526,
+      "sha256": "71b9195b8bba5c92d8bdcddedcd1a5e2a0bb87be93d85d111941e799ab50e0e7"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prepare-benchmark-alias-v1.json",
+      "bytes": 521,
+      "sha256": "d36db6c242508445ab9b53500171aafe5819936ec64a3918e7610d231903efc5"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prepare-benchmark-alias-v1.log",
+      "bytes": 639,
+      "sha256": "8814a7eb9b570392f1deded2c31b70c0655081bcb404c13b3a230689be760c42"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/benchmark-input-only-v1.json",
+      "bytes": 1399,
+      "sha256": "08fdc88c8b31692644ba3a879726977fe2a5b3c71910dd5da85147597558e5b4"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/benchmark-input-only-v1.log",
+      "bytes": 950,
+      "sha256": "bedfc8402f29554dac8d8d9fd19cd89a87b2e2e2eb13508fd64d8717f4ee91c2"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/benchmark-input-unavailable-label-negative-v1.json",
+      "bytes": 1421,
+      "sha256": "c22eb19759b95b6b960cc5ac99f57b1404ef3a54631b8cae354771919a8bc54b"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/benchmark-input-unavailable-label-negative-v1.log",
+      "bytes": 1180,
+      "sha256": "0008e750a255374c935f35d468369f20330f577a83944f6928d936227cce0fde"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/evaluation-publish-v1.json",
+      "bytes": 932,
+      "sha256": "4a9d1fce338e343891a784aca442ea8788c7c317cdbe6cfca1bb9fd863c097a8"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/evaluation-publish-v1.log",
+      "bytes": 1095,
+      "sha256": "20f053d2241964d6c8331508ca06ade0f37a66bf7ea7b843d0a052dad9aa05fb"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/monitor-doc-validation-v1.json",
+      "bytes": 518,
+      "sha256": "3445495bcba252f9d3244753b72a1d12c8d088cc3366dc51bb5475d46bee4852"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/monitor-doc-validation-v1.log",
+      "bytes": 154,
+      "sha256": "cc38ef841d548c45663d4f66af5cec85a45b815d6bc56612ba8c949f2999d0bd"
+    }
+  ],
+  "limits": [
+    "No runtime stack, registry binding, HTTP/DB prediction audit, persistence marker or operational benchmark was run",
+    "No T02/T12/T13b completion, clock qualification or current-serving change",
+    "Monitor diagnostics reuse saved same-candidate final evidence, not another selection attempt"
+  ]
+}

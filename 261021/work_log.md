@@ -4582,3 +4582,37 @@ operational_gate=not_evaluated、deployment=blocked、時計資格未合格/研�
 結果の入口はdocs/capital-first-evaluation.md、索引はdocs/reviews/20261114-capital-evaluation-checks.json。
 文書/索引検査evaluation-doc-validation-v1は対象6fileのlink・差分scope・秘密pattern、68証拠fileと22試行のhashを照合してexit0。
 索引の後続更新時も原本hashを再照合する。commit/push receiptは自己参照を避けlocalへ保存する。
+
+### 同日：実候補のoffline監視診断とT12入力準備
+
+実候補評価の6fileを2972052でcommit/push。以後、candidate/source/config/lockを変更せず後段診断を行った。
+事前offline-monitor-plan.jsonを保存し、既存score_monitor_windows/PSI v2を使って保存final予測を再生した。
+train-only reference/168h開左閉右/最低24正解/label+3h/MAE×1.25/PSI≥0.2を維持。
+新しいcandidate fit/predict/採点・選定はなく、finalの保存行をmonitor診断へ利用した。finalを別候補の選定へ再利用していない。
+offline-monitor-v1はexit0、1,464窓。分布警告1,336/警告なし105/母数不足23、誤差警告234/境界内1,204/正解不足26。
+初回分布警告08-02 02時、誤差の評価可能時点05時、初回誤差警告20時。
+最後10-01 02時窓は予測165/正解165、MAE224.346232、警告境界171.740595超過。
+windowを進めて末尾ラベルを待ったため古い3予測が外れることを明示し、168時間を168正解と同一視しない。
+診断v1で同窓baseline MAE274.084848、09-26/27/28の日別候補MAE347.46/330.67/277.25、09-27/29/30はbaselineより悪いと確認した。
+全体精度合格だけで採用しない。天候等の因果は未特定、後付けの閾値/bins/recipe変更はしない。
+別processの標準csv/datetime/math/bisectで全1,464窓の件数・MAE/RMSE/品質状態、4,392 feature PSI/分布状態を元件数から再計算しexit0。
+これはDB/HTTP/registry binding/complete markerを通さないoffline診断で、T02/T12の実producer受入は未完了。
+実データを用いた数値だが、監視CLI実保存や運用性能の証拠へ昇格しない。
+
+T12次工程の読取で、seed/benchmarkはprofile既定capitalbikeshare-nextのpairを検査すると確認。
+元checkoutは旧CSV SHA cc4b39…/manifest972f18…を保持しており、今回snapshotとは違う。
+元pair/source/configを変更せず、今回作成した専用project/data/derivedのsymlinkだけを自身で確認してunlink。
+同pathをdirectoryへ置き換え、固定snapshot名とcapitalbikeshare-next aliasだけを正式pairへ結合した。
+元default pairの前後SHAは不変。正式消費台帳の共有も保持。候補snapshot/source identityにdataは含まず、artifact/reportを変更しない。
+既存benchmark CLI --check-input-onlyで04-01〜04-08の168時間が訓練行/締切/候補reportに一致しexit0。
+負例05-25〜06-01は5/31 22時がnon-training hourとしてexit1。予定した拒否で、成功へretryしない。
+両コマンドは測定を開始せず、DB/registry/APIへ接続しない入力確認経路。
+全command/exit/log/hash、aliasの解決先/元hashは同ignored rootへ保存。
+
+次のSol向けにcapital-runtime-handoff.mdへ、同candidate/台帳を維持した移設、専用port/projectの衝突回避、
+blocked登録・DB seed・API/監査・monitor CLI/complete marker・50+1000測定・復旧/metadata・採否の順序を具体化した。
+デスクトップ接続先は未提示。次のOS/通常同期読取は運用開始条件の範囲だけとし、保留した時計研究を再開しない。
+今回の節目は実精度とoffline監視・入力確認まで。実runtime stack/HTTP監査/復旧・運用測定はまだ開始せず、T02/T12/T13bは残件。
+実DB/registry/現配信、OS/service/task/log・future拒否は変更していない。新しいsuite/CIの受入は主張しない。
+monitor-doc-validation-v1は対象9fileのlink/秘密pattern/差分scope、24証拠hash、正式ledger不変と11source/config/lock bytesを確認してexit0。
+最終索引にはその検査recipe/receiptも追加し、全hashを再照合する。最後のcommit/push receiptはlocalへ保存する。

@@ -49,3 +49,5 @@ UTCは実行境界の順序を確認した未資格値で、実行秒数/性能�
 次は同candidate/artifactのT02実producer/T12監視・予測監査・復旧・metadata・運用測定。
 staging登録は既存実registryへ行わず、専用環境のidentityと分離を確認してからblocked状態で行う。
 review/別承認と全実証が揃うまでT13b採否は未完了。時計研究を自動的に再開しない。
+
+追補：[保存済み予測の監視診断](capital-offline-monitoring.md)を完了。誤差警告234窓を含むため、全体精度の合格だけで採用せず、実producer証拠とともにreviewする。[次のruntime作業](capital-runtime-handoff.md)の入力確認は成功、運用実測は未実施。

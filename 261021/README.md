@@ -2,7 +2,7 @@
 
 **2026-11-14現在:** 時計研究は保留。[製品作業の開始条件](docs/product-completion-policy.md)へ改訂し、履歴学習/精度評価と時計依存の運用測定を分離した。過去の時計資格は未合格のまま。日付付きの旧停止条件は当時の履歴として読む。
 
-[Capital実候補の初回評価](docs/capital-first-evaluation.md)を完了しました。validation/finalともMAE・RMSE基準に合格し、MAEは137.39/143.69件です。候補は未登録、運用測定・採否は未完了で配信はblockedです。両評価窓は消費済みです。
+[Capital実候補の初回評価](docs/capital-first-evaluation.md)を完了しました。validation/finalともMAE・RMSE基準に合格し、MAEは137.39/143.69件です。候補は未登録、運用測定・採否は未完了で配信はblockedです。両評価窓は消費済みです。[offline監視診断](docs/capital-offline-monitoring.md)で分布・誤差警告があり、実producer受入と警告reviewを[次の手順](docs/capital-runtime-handoff.md)に残しています。
 
 `261014/plan_mlops.md`に沿った、UCI Bike Sharingを現行データとするMLOps学習プロジェクトです。Capital Bikeshareは別targetとして扱う移行専用profileを追加中です。単にモデルを学習するだけでなく、特徴量の時点制約、モデル登録、版固定の予測API、手動承認・差し戻し、遅延ラベルを使う監視までを一続きにします。
 
