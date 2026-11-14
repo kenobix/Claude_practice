@@ -20,6 +20,7 @@
 製品18本、tests12本、補助Python7本へ統合した。元モジュールのstate/mock境界を維持するため、
 同名の補助bindingには役割prefixを付けた。runtimeで旧ソースをexecする仕組みや旧名stubは置いていない。
 Python import・テストの参照・CLI/Compose/CIを新配置へ更新した。
+`storage_checks.py`は選択した試験で必要な設定だけを読み、inactiveなmigrationの設定を他の試験へ混ぜない。
 完全な旧→新module/export/command対応は[configs/file-layout.json](../configs/file-layout.json)を参照。
 
 | 補助CLI | コマンド |

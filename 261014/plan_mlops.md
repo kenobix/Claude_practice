@@ -382,7 +382,7 @@ registry URIの進捗補足: Capital staging登録・loader・seed・preflight�
 
 **現在の残件は[最新の残課題](#remaining-work-latest)を参照。以下の過去checkpointは当時の実施状況として保持する。**
 
-2026-11-15の[ファイル統合](../261021/docs/README.md)により、文書67→9本、Python製品52→18・tests56→12・scripts34→7本へ用途別に整理した。[旧→新対応表](../261021/configs/file-layout.json)で旧名を検索できる。元67文書の判断と過去証拠JSON/hashは履歴として保持し、README・現行CLI/Compose/CIの参照を更新した。今回は構成整理と回帰検証だけを行い、下記の製品残件・運用受入保留・時計研究保留は据え置く。最終localは旧590件保持＋旧source layout互換1件の全591件が成功。実装commitのCIは別途確認する。[検証索引](../261021/docs/reviews/20261115-file-consolidation-checks.json)で最終test/CIの確認範囲を示す。
+2026-11-15の[ファイル統合](../261021/docs/README.md)により、文書67→9本、Python製品52→18・tests56→12・scripts34→7本へ用途別に整理した。[旧→新対応表](../261021/configs/file-layout.json)で旧名を検索できる。元67文書の判断と過去証拠JSON/hashは履歴として保持し、README・現行CLI/Compose/CIの参照を更新した。今回は構成整理と回帰検証だけを行い、下記の製品残件・運用受入保留・時計研究保留は据え置く。最終localは旧590件保持＋旧source layout互換1件の全591件が成功。初回aa8a61fのCIは591unit成功/snapshot profile409失敗を記録。import時の設定汚染を修正し、対象50件と593件discoveryを確認した。最終593件と実PGは追補実装commitのCIで確認する。[検証索引](../261021/docs/reviews/20261115-file-consolidation-checks.json)で最終test/CIの確認範囲を示す。
 
 本節を残作業の正規一覧とする。前回checkpoint記録10dfb8fから070b033までの28コミット・65ファイルを確認した結果と、[差分レビュー](../261021/docs/evidence.md#20261030-checkpoint-review)・[証拠JSON](../261021/docs/reviews/20261030-checkpoint-evidence.json)を根拠にする。R01〜R10は目的のIDとして維持し、以下のT番号を実際の作業単位にする。11.4/11.5の旧順番やチェック数より本節が優先する。
 

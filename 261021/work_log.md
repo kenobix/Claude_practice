@@ -4731,3 +4731,13 @@ artifact ZIP SHA4bf21be…/16member hash、T16の4原本をarchiveだけから�
 最終全suiteと実装commitのCIは確認中。成功した事実だけを[今回の検証索引](docs/reviews/20261115-file-consolidation-checks.json)へ追記する。合成CIや構成整理をT02/T12/T13b・時計資格の完了へ流用しない。
 
 最終ローカル全suiteは`full-suite-final-v2`で591件/509.142表示秒・exit 0。旧590件の欠落0と旧raw互換1件を確認した。静的最終v3も成功。ステージ後の新規fileを含む`git diff --cached --check`で見つかったhelper呼出5行の末尾空白を除去し、再確認した（通常の未ステージdiffでは未追跡fileの空白を検査できない点も記録）。新旧module入口、旧67文書anchor、923相対file/fragment、obsolete import 0、公開対象54text fileのcredential patternなしを確認した。root/plan/README/Compose/workflowも対象へ明示stageし、無関係な未追跡3pathとignored原本は含めない。実装commitのCIはこれから確認し、local成功でCI完了を先取りしない。
+
+### 実装aa8a61fのCIで見つかった設定読取順と修正
+
+aa8a61fのCI [43634214356](https://github.com/kenobix/Claude_practice/actions/runs/43634214356)は全591 unitとcompileall、合成system/対応復元/残りのPG・HTTP/Caddy normal/TERMまで成功したが、snapshot-lockだけHTTP409で失敗した。失敗runの全log・16 memberのartifact ZIPを保存した（ZIP SHA `96cf92b8f94c9b1cfa2d41b631e70efe4b65ed19a4e465ab4251e1aad00c0452`）。snapshotの専用container回収も原本logに記録されている。このrunを全体成功や最終受入と呼ばない。
+
+原因は`storage_checks.py`へ統合したmigration試験がmodule import時にUCI環境を設定してAPI/configを先にimportし、snapshot自身のCapital設定より前の値が固定されたこと。新しい別process回帰で修正前のprofile上書きを再現（`import-boundary-before-fix`、exit 1）した。inactive commandの製品importとmigration固有env設定を選択されたmain内の初期化へ移し、snapshotは従来どおりCapital env設定後に初めてAPI/configを読む。移行や監視の期待profile、HTTP成功値、lock/timeout/拒否条件は変えていない。統合した2つの例外guardにもaliasの不一致があり、元の例外型を保ち詳細を漏らさない回帰を追加した。
+
+修正後の`test_system.py`50件は成功し、全体のdiscoveryは593件（旧590＋互換/設定分離/例外診断の3件）・import error 0。静的再検査も成功した。製品sourceやwriter/schemaは今回の追補で変更していないため、local全suite591件の先行成功と、追補対象50件の成功を分けて記録する。最終593件の全suiteと実PGは新しい実装commitのCIで確認する。
+
+localのsnapshot試行は`docker context show`でexit 1となり、Dockerコンテナ作成前に停止した。チャット内で同コマンドを読取確認したところ、WSLにDockerコマンドが統合されていない旨の出力だった。設定・サービスは変更せず、実PGの成功とは記録しない。`snapshot-import-fix`の失敗receiptも保持し、CIへ渡す。新情報なしに同じDocker失敗を反復しない。

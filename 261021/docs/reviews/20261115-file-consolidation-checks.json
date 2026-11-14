@@ -2,7 +2,7 @@
   "scope": "File consolidation only; no residual MLOps or clock research task advanced",
   "base_commit": "9479201babd74d2ea318c33574044098cc9d8768",
   "date_local": "2026-11-15 Asia/Tokyo",
-  "status": "local_passed_awaiting_implementation_CI",
+  "status": "local_import_fix_checked_awaiting_exact_CI",
   "counts": {
     "docs_markdown": {
       "before": 67,
@@ -23,10 +23,12 @@
   },
   "test_inventory": {
     "before": 590,
-    "after": 591,
+    "after": 593,
     "removed_class_methods": [],
     "added_class_methods": [
-      "ClockCaptureTests.test_preconsolidation_source_layout_replays_without_executing_saved_code"
+      "ClockCaptureTests.test_preconsolidation_source_layout_replays_without_executing_saved_code",
+      "StorageCommandIsolationTests.test_storage_entry_errors_keep_original_type_and_hide_exception_details",
+      "StorageCommandIsolationTests.test_storage_tool_import_preserves_profile_and_defers_product_configuration"
     ],
     "discovery_errors": []
   },
@@ -220,8 +222,8 @@
     },
     {
       "path": "261021/tests/test_system.py",
-      "bytes": 42937,
-      "sha256": "adc9ead66df4c1af83ac7960d31058f80f11b125dbf21b8de43fce63c249b265"
+      "bytes": 44917,
+      "sha256": "28ed212f95604b1d5ff34afca9abe1ba45ff93e0b5afd3f3f50653653ad4f9fe"
     },
     {
       "path": "261021/scripts/__init__.py",
@@ -250,8 +252,8 @@
     },
     {
       "path": "261021/scripts/storage_checks.py",
-      "bytes": 113605,
-      "sha256": "9594cffff24750ff49795a0fc0a5903bfdc0aafcdf23817ba5d996fd1c67a8ac"
+      "bytes": 114317,
+      "sha256": "09b3441782ac950f810b2b66846071f3550374fb66ab652d9222511b7516ac74"
     },
     {
       "path": "261021/scripts/system_harness.py",
@@ -260,8 +262,8 @@
     },
     {
       "path": "261021/docs/README.md",
-      "bytes": 12014,
-      "sha256": "e6debc947f3f08ac2cc6af08666760686ad2c93ef433cd8030cc21e462a754e2"
+      "bytes": 12153,
+      "sha256": "f13bd0b173fee033197b0bdbe0497e004f4d793fd42949f22fcde2c002f46972"
     },
     {
       "path": "261021/docs/architecture.md",
@@ -325,13 +327,13 @@
     },
     {
       "path": "261021/work_log.md",
-      "bytes": 598350,
-      "sha256": "3615bdc2fb59d72215155181be6d5ee18516b3c1b8389ff3bb7a44d61cca3552"
+      "bytes": 600582,
+      "sha256": "d59620594ad6a4e22fcaec98c894adff4c98bcff43dc7a8ee2a96d353f8adbbb"
     },
     {
       "path": "261014/plan_mlops.md",
-      "bytes": 151336,
-      "sha256": "f2b5622acd1b29d8e77384d0cf686078a6275790ad207799f14b226b45a42713"
+      "bytes": 151517,
+      "sha256": "89dd947e1533790539d803fc36effa7428a57cdbf426fbdd40cad84e613ee7f3"
     },
     {
       "path": "README.md",
@@ -474,6 +476,52 @@
       "log_sha256": "374e9db3caf5ddaaa08e80a5a375576c9d66feeb3cbf92b161ee333cf0daaf6d"
     },
     {
+      "receipt": "261021/data/reports/20261114-file-consolidation/implementation-ci-watch-v1.json",
+      "receipt_sha256": "0292c806515401104334bd1998aaa27abe1847d0b8b62ad55194f8d381c6b61a",
+      "command": [
+        "gh",
+        "run",
+        "watch",
+        "43634214356",
+        "--exit-status",
+        "--interval",
+        "20"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T19:51:02.697713+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:55:50.976154+00:00",
+      "monotonic_start_ns": 1852251293355,
+      "monotonic_end_ns": 2140529729775,
+      "log": "261021/data/reports/20261114-file-consolidation/implementation-ci-watch-v1.log",
+      "log_sha256": "db0da75d127654c7a29e5eaa02edc76de0c76da1e3e9cd9e11320b0bf913b0fb"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/import-boundary-before-fix.json",
+      "receipt_sha256": "79bdee5d6f73cab7be37084506f22a3071921eef7928dc1a1ffc87b98f0dde70",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_system.py",
+        "-k",
+        "StorageCommandIsolationTests",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T19:58:09.128999+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:58:16.135519+00:00",
+      "monotonic_start_ns": 2278682584849,
+      "monotonic_end_ns": 2285689096868,
+      "log": "261021/data/reports/20261114-file-consolidation/import-boundary-before-fix.log",
+      "log_sha256": "a335fc7728403edc4dfd96417e8f45e58027195e8c91525e3d64b549c9940d0d"
+    },
+    {
       "receipt": "261021/data/reports/20261114-file-consolidation/legacy-raw-v1.json",
       "receipt_sha256": "c1e5f81a2a5bad595b1cccf80595525118cc499f19e727d1500c403326705b0e",
       "command": [
@@ -604,6 +652,27 @@
       "log_sha256": "453f62902cf64c49c9a9a88f951417fb4714ac159ce1083d0c44ca9881434256"
     },
     {
+      "receipt": "261021/data/reports/20261114-file-consolidation/snapshot-import-fix.json",
+      "receipt_sha256": "aac8b9ea5d0d6a21946706dadd843a612eaea74f30794adc0f1b3517e59462f3",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "300",
+        ".venv/bin/python",
+        "scripts/storage_checks.py",
+        "snapshot"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T19:58:52.519637+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:58:54.062709+00:00",
+      "monotonic_start_ns": 2322073220751,
+      "monotonic_end_ns": 2323616285114,
+      "log": "261021/data/reports/20261114-file-consolidation/snapshot-import-fix.log",
+      "log_sha256": "06bd153aad187c75594ec377672d40522a7eba9b9250ee5950631b4ae05e2816"
+    },
+    {
       "receipt": "261021/data/reports/20261114-file-consolidation/static-checks-final-v3.json",
       "receipt_sha256": "9d391a8f3d4301d5abe77fa279ef45dec99d8da5b91108253ce5fc5c90f70346",
       "command": [
@@ -617,6 +686,22 @@
       "monotonic_start_ns": 1553244296397,
       "monotonic_end_ns": 1563659052713,
       "log": "261021/data/reports/20261114-file-consolidation/static-checks-final-v3.log",
+      "log_sha256": "8e2e018d3744ddbb848af23ff66178b3448aae27fdb60ffb4e4936e698fbe60b"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/static-checks-import-fix.json",
+      "receipt_sha256": "e938015f00300087624cb949caf5c6aa9a2e147b57b83ab50488060612a281da",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261114-file-consolidation/static_checks.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T19:59:47.227733+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:59:59.488346+00:00",
+      "monotonic_start_ns": 2376781366954,
+      "monotonic_end_ns": 2389041923632,
+      "log": "261021/data/reports/20261114-file-consolidation/static-checks-import-fix.log",
       "log_sha256": "8e2e018d3744ddbb848af23ff66178b3448aae27fdb60ffb4e4936e698fbe60b"
     },
     {
@@ -672,6 +757,52 @@
       "monotonic_end_ns": 602211249270,
       "log": "261021/data/reports/20261114-file-consolidation/synthetic-prepare-v1.log",
       "log_sha256": "be7e9c552fe616d7d3970a84c3057da2d38eb19b6b6ce70bc6b23a56306e49ad"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/system-tests-import-fix-final.json",
+      "receipt_sha256": "67aeef3613b478965dfc1fc863a5493da1963ab9eb580526190ed18baee180bc",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_system.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T19:59:45.953390+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:59:57.790858+00:00",
+      "monotonic_start_ns": 2375507074182,
+      "monotonic_end_ns": 2387344431630,
+      "log": "261021/data/reports/20261114-file-consolidation/system-tests-import-fix-final.log",
+      "log_sha256": "683b60a8ba7cf0ae2523446d3bd237f67c0a2846b3e83d7930eeac5279143589"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/system-tests-import-fix.json",
+      "receipt_sha256": "3acb97b00af388eb82ded779503b3afafd467f4f91aacdff3f4f102d47808f5f",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_system.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T19:58:46.720095+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T19:58:53.126103+00:00",
+      "monotonic_start_ns": 2316273686115,
+      "monotonic_end_ns": 2322679682200,
+      "log": "261021/data/reports/20261114-file-consolidation/system-tests-import-fix.log",
+      "log_sha256": "a2975e40dbbc3ca3598660910f073a3a95fe1eacbdb05f80df7b6e6562f9d086"
     },
     {
       "receipt": "261021/data/reports/20261114-file-consolidation/system-tests-v2.json",
@@ -733,6 +864,30 @@
     "Raw local timestamps are unqualified observations; no precision-clock claim"
   ],
   "ci": {
-    "status": "pending exact implementation commit; not accepted yet"
+    "status": "initial_failed_corrected_commit_pending",
+    "initial_run": {
+      "id": 43634214356,
+      "head_sha": "aa8a61f27277752e6622f63e3ccc492349d5db5b",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/43634214356",
+      "conclusion": "failure",
+      "unit_tests_passed": 591,
+      "failed_step": "disposable PostgreSQL snapshot-lock",
+      "observed_error": "HTTP409 from UCI configuration imported before snapshot set its Capital environment",
+      "snapshot_container_cleanup_observed": true,
+      "jobs": {
+        "path": "261021/data/reports/20261114-file-consolidation/ci-aa8a61f-jobs.json",
+        "sha256": "0b828c166c020f248c0f2627bc72c9431eae0512d4361d524e16edf5351d67b5"
+      },
+      "log": {
+        "path": "261021/data/reports/20261114-file-consolidation/ci-aa8a61f.log",
+        "sha256": "eb5383da673aadff046fffc9f0589bb6449cf38222df29788062eaab3b326fa4"
+      },
+      "artifact": {
+        "id": 14129716504,
+        "path": "261021/data/reports/20261114-file-consolidation/ci-aa8a61f-artifact.zip",
+        "sha256": "96cf92b8f94c9b1cfa2d41b631e70efe4b65ed19a4e465ab4251e1aad00c0452",
+        "members": 16
+      }
+    }
   }
 }

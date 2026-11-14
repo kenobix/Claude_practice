@@ -672,9 +672,12 @@ import psycopg
 from psycopg import sql
 from psycopg.rows import dict_row
 
-from bike_mlops import monitor_inspection as inspection
-from bike_mlops.db import Database
-from bike_mlops.monitoring import persist_monitor_run, MonitorPersistenceError
+def _load_monitor_inspection_dependencies():
+    # Load only when this command is selected; snapshot selects its own profile first.
+    global inspection, Database, persist_monitor_run, MonitorPersistenceError
+    from bike_mlops import monitor_inspection as inspection
+    from bike_mlops.db import Database
+    from bike_mlops.monitoring import persist_monitor_run, MonitorPersistenceError
 _monitor_inspection_postgres_docker = _monitor_persistence_postgres_docker
 
 PROFILE, TARGET = 'capital-bikeshare', 'capital-trip-starts-hourly-v1'
@@ -1101,6 +1104,7 @@ class PostgresInspectionAcceptance(unittest.TestCase):
 
 
 def _monitor_inspection_postgres_main():
+    _load_monitor_inspection_dependencies()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run-disposable', action='store_true', required=True)
     parser.parse_args()
@@ -1193,12 +1197,16 @@ import unittest as _prediction_migration_postgres_unittest
 from unittest.mock import patch as _prediction_migration_postgres_patch
 import psycopg as _prediction_migration_postgres_psycopg
 from psycopg import sql as _prediction_migration_postgres_sql
-# Standalone fixture configuration must not inherit the user's active profile.
-_prediction_migration_postgres_os.environ.update(DATA_PROFILE_ID='uci-bike-sharing', FEATURE_CONTRACT_VERSION='bike-demand-features-v1', MLFLOW_MODEL_NAME='bike-demand')
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from bike_mlops import api
-from bike_mlops.db import Database as _prediction_migration_postgres_Database, SCHEMA, RequestConflict, stable_hash
+def _load_migration_dependencies():
+    # Migration's UCI configuration is private to its selected CLI process.
+    global api, _prediction_migration_postgres_Database, SCHEMA, RequestConflict, stable_hash
+    _prediction_migration_postgres_os.environ.update(
+        DATA_PROFILE_ID='uci-bike-sharing', FEATURE_CONTRACT_VERSION='bike-demand-features-v1',
+        MLFLOW_MODEL_NAME='bike-demand')
+    from bike_mlops import api
+    from bike_mlops.db import Database as _prediction_migration_postgres_Database, SCHEMA, RequestConflict, stable_hash
 _prediction_migration_postgres_docker = _monitor_persistence_postgres_docker
 _prediction_migration_postgres_PROFILE, _prediction_migration_postgres_TARGET = ('uci-bike-sharing', 'uci-bike-sharing-cnt-dataset-local-hour')
 VALUES = (1 / 3, 415.72473, 15.189926280821982, 0.0)
@@ -1442,6 +1450,7 @@ pause()
         self.observations['backup_restore'] = checks
 
 def _prediction_migration_postgres_main():
+    _load_migration_dependencies()
     parser = _prediction_migration_postgres_argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run-disposable', action='store_true', required=True)
     parser.add_argument('--evidence-dir', type=_prediction_migration_postgres_Path, required=True)
@@ -1519,7 +1528,7 @@ def _entry_test_prediction_migration_postgres():
         raise SystemExit(_prediction_migration_postgres_main())
     except KeyboardInterrupt:
         raise SystemExit('T08 interrupted; owned-resource cleanup attempted') from None
-    except Exception as error:
+    except Exception as _prediction_migration_postgres_error:
         raise SystemExit(f'T08 failed ({type(_prediction_migration_postgres_error).__name__}); owned-resource cleanup attempted') from None
 
 
@@ -1611,8 +1620,10 @@ from pathlib import Path as _monitor_reconciliation_storage_Path
 
 import pandas as _monitor_reconciliation_storage_pd
 
-from bike_mlops.db import Database as _monitor_reconciliation_storage_Database
-from bike_mlops.monitoring import persist_monitor_run as _monitor_reconciliation_storage_persist_monitor_run
+def _load_storage_probe_dependencies():
+    global _monitor_reconciliation_storage_Database, _monitor_reconciliation_storage_persist_monitor_run
+    from bike_mlops.db import Database as _monitor_reconciliation_storage_Database
+    from bike_mlops.monitoring import persist_monitor_run as _monitor_reconciliation_storage_persist_monitor_run
 _monitor_reconciliation_storage_docker = _monitor_persistence_postgres_docker
 
 
@@ -1773,6 +1784,7 @@ def postgres_probe(root):
 
 
 def _monitor_reconciliation_storage_main():
+    _load_storage_probe_dependencies()
     parser = _monitor_reconciliation_storage_argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-disposable", action="store_true", help="Run synthetic SQLite and owned PostgreSQL probes")
     args = parser.parse_args()
@@ -1791,7 +1803,7 @@ def _monitor_reconciliation_storage_main():
 def _entry_test_monitor_reconciliation_storage():
     try:
         _monitor_reconciliation_storage_main()
-    except Exception as error:
+    except Exception as _monitor_reconciliation_storage_error:
         # DSNs and randomly generated credentials must not appear in diagnostic output.
         raise SystemExit(f"Storage probe failed ({type(_monitor_reconciliation_storage_error).__name__}); owned-resource cleanup was attempted") from None
 

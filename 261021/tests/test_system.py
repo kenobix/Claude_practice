@@ -752,6 +752,39 @@ class DeploymentFixtureSafetyTests(_deployment_recovery_system_unittest.TestCase
         self.assertFalse(summary["cleanup_complete"])
 
 
+
+class StorageCommandIsolationTests(unittest.TestCase):
+    def test_storage_tool_import_preserves_profile_and_defers_product_configuration(self):
+        # Inactive migration code must not preconfigure the snapshot/API fixture.
+        import os
+        project = Path(__file__).resolve().parents[1]
+        environment = dict(os.environ, DATA_PROFILE_ID="capital-bikeshare",
+                           FEATURE_CONTRACT_VERSION="caller-contract", MLFLOW_MODEL_NAME="caller-model")
+        code = """
+import os, sys
+expected = tuple(os.environ[key] for key in ('DATA_PROFILE_ID','FEATURE_CONTRACT_VERSION','MLFLOW_MODEL_NAME'))
+import scripts.storage_checks
+actual = tuple(os.environ[key] for key in ('DATA_PROFILE_ID','FEATURE_CONTRACT_VERSION','MLFLOW_MODEL_NAME'))
+assert actual == expected, 'Import changed the caller profile'
+assert 'bike_mlops.config' not in sys.modules, 'Inactive command initialized product configuration'
+"""
+        result = subprocess.run([sys.executable, "-c", code], cwd=project, env=environment,
+                                capture_output=True, text=True, timeout=20)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_storage_entry_errors_keep_original_type_and_hide_exception_details(self):
+        from scripts import storage_checks as checks
+        for entry, target in ((checks._entry_test_prediction_migration_postgres,
+                               "_prediction_migration_postgres_main"),
+                              (checks._entry_test_monitor_reconciliation_storage,
+                               "_monitor_reconciliation_storage_main")):
+            with self.subTest(target=target), patch.object(checks, target, side_effect=ValueError("private-fixture-detail")):
+                with self.assertRaises(SystemExit) as caught:
+                    entry()
+                self.assertIn("ValueError", str(caught.exception))
+                self.assertNotIn("private-fixture-detail", str(caught.exception))
+
+
 if __name__ == "__main__":
     import unittest as _unittest_entry
     _unittest_entry.main()
