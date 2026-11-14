@@ -1,0 +1,1055 @@
+{
+  "schema_version": 1,
+  "date_client": "2026-11-14",
+  "status": "REAL_CAPITAL_VALIDATION_AND_FINAL_ACCURACY_ACCEPTED_OPERATIONAL_PENDING",
+  "base_commit": "d5c0ebfe57b63f793e09f300856a7c0bc45d5c41",
+  "execution_source_commit": "767760d04fcb3a20659d4f7a6d5188fb9b8de65c",
+  "scope": "Historical fixed Capital snapshot; 1 candidate fit, 1 validation, 1 final with no candidate refit. No registry/DB/serving/OS operations.",
+  "prefit": {
+    "status": "PREFIT_ACCEPTED_HISTORICAL_ONLY",
+    "project": "261021/data/reports/20261114-product-resume/project",
+    "source_commit": "767760d04fcb3a20659d4f7a6d5188fb9b8de65c",
+    "source_files_verified": 11,
+    "lock_distributions_verified": 105,
+    "versions": {
+      "aiohappyeyeballs": "2.7.1",
+      "aiohttp": "3.14.5",
+      "aiosignal": "1.4.0",
+      "alembic": "1.20.0",
+      "annotated-doc": "0.0.5",
+      "annotated-types": "0.8.0",
+      "anyio": "4.15.1",
+      "attrs": "26.1.0",
+      "blinker": "1.9.0",
+      "cachetools": "7.2.4",
+      "certifi": "2026.10.19",
+      "cffi": "2.1.1",
+      "charset-normalizer": "3.5.2",
+      "click": "8.5.0",
+      "cloudpickle": "3.1.2",
+      "contourpy": "1.4.0",
+      "cryptography": "50.0.2",
+      "cycler": "0.12.1",
+      "databricks-sdk": "0.154.0",
+      "docker": "7.2.0",
+      "fastapi": "0.156.3",
+      "flask-cors": "6.0.5",
+      "Flask": "3.1.3",
+      "fonttools": "4.67.0",
+      "frozenlist": "1.8.0",
+      "gitdb": "4.0.12",
+      "GitPython": "3.2.1",
+      "google-auth": "2.62.0",
+      "graphene": "3.4.3",
+      "graphql-core": "3.2.13",
+      "graphql-relay": "3.2.0",
+      "gunicorn": "26.2.0",
+      "h11": "0.16.0",
+      "httpcore": "1.0.9",
+      "httpcore2": "2.16.0",
+      "httptools": "0.9.0",
+      "httpx": "0.28.1",
+      "httpx2": "2.16.0",
+      "huey": "3.4.0",
+      "idna": "3.20",
+      "importlib_metadata": "9.0.1",
+      "iniconfig": "2.3.1",
+      "itsdangerous": "2.2.0",
+      "Jinja2": "3.1.6",
+      "joblib": "1.6.0",
+      "kiwisolver": "1.5.1",
+      "Mako": "1.4.3",
+      "MarkupSafe": "3.0.4",
+      "matplotlib": "3.11.2",
+      "mlflow-skinny": "3.17.1",
+      "mlflow-tracing": "3.17.1",
+      "mlflow": "3.17.1",
+      "multidict": "7.1.0",
+      "narwhals": "2.27.1",
+      "numpy": "2.5.1",
+      "opentelemetry-api": "1.45.1",
+      "opentelemetry-proto": "1.45.1",
+      "opentelemetry-sdk": "1.45.1",
+      "opentelemetry-semantic-conventions": "0.66b1",
+      "packaging": "26.3",
+      "pandas": "3.0.5",
+      "pillow": "13.0.0",
+      "pluggy": "1.7.0",
+      "prettytable": "3.18.0",
+      "propcache": "0.5.4",
+      "protobuf": "7.36.2",
+      "psycopg-binary": "3.3.6",
+      "psycopg": "3.3.6",
+      "pyarrow": "25.0.1",
+      "pyasn1": "0.6.4",
+      "pyasn1_modules": "0.4.2",
+      "pycparser": "3.11",
+      "pydantic": "2.14.1",
+      "pydantic_core": "2.50.1",
+      "Pygments": "2.21.0",
+      "pyparsing": "3.3.3",
+      "pytest": "8.4.2",
+      "python-dateutil": "2.9.0.post0",
+      "python-dotenv": "1.2.4",
+      "PyYAML": "6.0.3",
+      "requests": "2.34.2",
+      "scikit-learn": "1.9.0",
+      "scipy": "1.18.1",
+      "setuptools": "68.1.2",
+      "six": "1.17.0",
+      "skops": "0.16.0",
+      "smmap": "5.0.3",
+      "SQLAlchemy": "2.1.5",
+      "sqlparse": "0.6.0",
+      "starlette": "1.9.0",
+      "threadpoolctl": "3.7.0",
+      "tzdata": "2026.5",
+      "truststore": "0.10.5",
+      "typing-inspection": "0.4.4",
+      "typing_extensions": "4.16.0",
+      "urllib3": "2.8.0",
+      "uvicorn": "0.54.0",
+      "uvloop": "0.23.0",
+      "watchfiles": "1.3.0",
+      "wcwidth": "0.9.3",
+      "websockets": "17.3",
+      "Werkzeug": "3.1.9",
+      "wheel": "0.42.0",
+      "yarl": "1.25.1",
+      "zipp": "4.1.1"
+    },
+    "raw_archives": 47,
+    "input_stats_unchanged": true,
+    "csv_sha256": "df216153f825904d3cc06f4b20d4be9f3de8e9270b971ea6a11590b13dea87c0",
+    "manifest_sha256": "721ee82537ddc4118f222b395d9b671e5d20a20b73cbdf84d5dad6b057b7edce",
+    "protocol_file_sha256": "6cfb89a6a226209e2139abb64d40f9b3f7cdd72d781501d886c51ac18f59fcda",
+    "protocol_sha256": "925fc86ff297bba922318c45bff95623e38471a09cec8c365f235ed84f112714",
+    "ledger": "261021/data/evaluations/consumption-ledger.json",
+    "ledger_before_sha256": null,
+    "split_counts": {
+      "train": 29919,
+      "validation": 1464,
+      "reserved_evaluation": 1461,
+      "train_validation_overlap": 0,
+      "validation_evaluation_overlap": 0
+    },
+    "hostname": "DESKTOP-J589D75",
+    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+    "clock_qualification": "not_established_on_hold",
+    "limits": [
+      "No scores or fit. Local ledger/candidate search only, not authenticated global unused proof.",
+      "No OS/clock/service or DB/registry/serving mutations.",
+      "Archive hash/schema checked, not raw reaggregation."
+    ]
+  },
+  "validation": {
+    "status": "VALIDATION_INDEPENDENT_NUMERIC_AND_HASH_AUDIT_PASSED",
+    "candidate_id": "e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b",
+    "artifact_sha256": "1e17fdb0d48c978dbf35c72125ca897bbe42882e24d3d647795ab0171bbf0ce2",
+    "rows": 1464,
+    "metrics": {
+      "candidate": {
+        "mae": 137.39247610591983,
+        "rmse": 237.54909459435225
+      },
+      "baseline": {
+        "mae": 226.00341530054644,
+        "rmse": 361.9753325759127
+      }
+    },
+    "ledger_sha256": "3cd1041bec2289a0fbf79b733706a3733c7b06019ee054907200c5ee23339363",
+    "bundle_file_hashes": {
+      "monitor-reference.json": "81e2d05934105a2cd5fcf21d5ba8f2f7fb95807ee5b4aeadbe83dcc559f589e6",
+      "validation-predictions.csv": "375029be0d137ec92124354ef5959c03a745ffa6b4605479ee649e45a1f13fb6",
+      "model.skops": "1e17fdb0d48c978dbf35c72125ca897bbe42882e24d3d647795ab0171bbf0ce2",
+      "candidate-report.json": "74c0417ba661fd8b32d771349df092760fc7a7f8f3caf1d86b879df0031653cc",
+      "evaluation-protocol.json": "6cfb89a6a226209e2139abb64d40f9b3f7cdd72d781501d886c51ac18f59fcda",
+      "source-snapshot.tar.gz": "1f43156b65ac59ebed9e683b5517d0ce20205aae5e06f3fa91be84f3b354d786"
+    },
+    "reserved_final_not_started": true,
+    "utc_order_in_recorded_boundaries": true,
+    "clock_qualification": "not_established"
+  },
+  "final": {
+    "status": "FINAL_INDEPENDENT_NUMERIC_ROW_SEGMENT_AND_LEDGER_AUDIT_PASSED",
+    "candidate_id": "e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b",
+    "artifact_sha256": "1e17fdb0d48c978dbf35c72125ca897bbe42882e24d3d647795ab0171bbf0ce2",
+    "selection_report_sha256": "74c0417ba661fd8b32d771349df092760fc7a7f8f3caf1d86b879df0031653cc",
+    "final_report_sha256": "8312ed9f22d9f93c1d55f736369ad5f2e66839626297b160800b5a49e9860893",
+    "final_rows_sha256": "fe57cbf5f74624843c10cd9d6775910537fe2a656cd87ea4f5eac6bafe98e818",
+    "rows": 1461,
+    "metrics": {
+      "candidate": {
+        "mae": 143.69309754326616,
+        "rmse": 247.60889858423562
+      },
+      "historical_baseline": {
+        "mae": 228.6892539356605,
+        "rmse": 371.0522147411864
+      }
+    },
+    "ledger_sha256": "c42de5e869d4765ac5f776ed098e98cbbed347c0dbe2c967016b14d64986b652",
+    "ledger_attempts": {
+      "validation_selection": "50a887c2-9cf3-44a0-84a4-7b785a555a28",
+      "reserved_final_evaluation": "efd024dd-105e-4a86-9b0c-a30ae7491043"
+    },
+    "one_attempt_per_window": true,
+    "model_fit_performed_during_final": false,
+    "operational_gate_status": "not_evaluated",
+    "deployment_permission": "blocked",
+    "clock_qualification": "not_established_on_hold"
+  },
+  "regressions": {
+    "protocol": 10,
+    "quality_gate": 3,
+    "training_monitor_reference": 26,
+    "total": 39,
+    "full_suite_repeated": false,
+    "source_schema_writer_lock_workflow_changed": false,
+    "new_ci_acceptance_claimed": false
+  },
+  "boundaries": {
+    "clock_research": "on_hold_until_user_restart",
+    "clock_qualification": "not_established",
+    "operational_gate_status": "not_evaluated",
+    "deployment_permission": "blocked",
+    "real_registry_modified": false,
+    "real_db_modified": false,
+    "current_serving_modified": false,
+    "os_service_task_log_settings_modified": false,
+    "raw_trips_or_credentials_published": false
+  },
+  "attempts": [
+    {
+      "command": [
+        "cp",
+        "--reflink=auto",
+        "-a",
+        "261021/.venv",
+        "261021/data/reports/20261114-product-resume/venv"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:49:10.364262+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:49:50.561388+00:00",
+      "monotonic_start_ns": 198332972093464,
+      "monotonic_end_ns": 198377101475908,
+      "log": "copy-venv-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "261021/.venv/bin/python",
+        "-c",
+        "import importlib.metadata as m,json,platform,pathlib,re,sys; root=pathlib.Path(\"261021\"); x=json.loads((root/\"docs/reviews/20261108-t10-snapshot-checks.json\").read_text()); print(\"frozen_sources\",json.dumps(x[\"saved_product_sources\"],indent=2)); print(\"context\",json.dumps(x[\"protocol_source_context\"],indent=2)); mismatch=[]\nfor line in (root/\"requirements.lock\").read_text().splitlines():\n if \"==\" not in line or line.startswith(\"#\"): continue\n name,wanted=line.split(\"==\");\n try: actual=m.version(name)\n except m.PackageNotFoundError: actual=None\n if actual!=wanted: mismatch.append(dict(package=name,wanted=wanted,actual=actual))\nprint(json.dumps(dict(python=sys.version,platform=platform.platform(),hostname=platform.node(),lock_mismatches=mismatch),indent=2))\nfor p in (root/\"data/evaluations/consumption-ledger.json\",root/\"configs/evaluation-legacy-windows.json\"):\n print(str(p),p.read_text() if p.is_file() else \"ABSENT\")"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:44:30.248243+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:44:30.581445+00:00",
+      "monotonic_start_ns": 198034615184322,
+      "monotonic_end_ns": 198034948376669,
+      "log": "environment-v1.log",
+      "log_sha256": "a9000df70076519f39de2f96fc5bd371999cf36a02b1ad564e5fda913de6a731"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-product-resume/validate_evaluation_docs.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:58:24.652524+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:58:24.974288+00:00",
+      "monotonic_start_ns": 198924935617637,
+      "monotonic_end_ns": 198925257343968,
+      "log": "evaluation-doc-validation-v1.log",
+      "log_sha256": "616eddf134ce13f8bcc4e316c2da0e51ad164ad93e76293712cbf01e694ca56c"
+    },
+    {
+      "command": [
+        "git",
+        "fetch",
+        "origin"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:48:11.225070+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:48:45.671423+00:00",
+      "monotonic_start_ns": 198270220875744,
+      "monotonic_end_ns": 198306367362350,
+      "log": "fetch-v1.log",
+      "log_sha256": "a3730b0b36dcabacd25f32900d4696e319c0dd5138f58f900be4304a3f93bbee"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-product-resume/audit_final.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:55:47.953460+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:55:48.211233+00:00",
+      "monotonic_start_ns": 198756837767088,
+      "monotonic_end_ns": 198757095534565,
+      "log": "final-audit-v1.log",
+      "log_sha256": "9b52122015278e066fca3d779fc1fd49855e46a26627c914635b4bd935bbaf49"
+    },
+    {
+      "command": [
+        "env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "DATA_PROFILE_ID=capital-bikeshare",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "OMP_NUM_THREADS=2",
+        "OPENBLAS_NUM_THREADS=2",
+        "PYTHONPATH=/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project/src",
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "300",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/venv/bin/python",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project/scripts/evaluate_capitalbikeshare_holdout.py",
+        "--csv",
+        "/home/kenshin/work/claude_practice/261021/data/derived/capital-bootstrap-a5b76d0f89d6433287007f3414d2208b/hourly.csv",
+        "--source-manifest",
+        "/home/kenshin/work/claude_practice/261021/data/derived/capital-bootstrap-a5b76d0f89d6433287007f3414d2208b/manifest.json",
+        "--selection-report",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project/data/candidates/e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b/candidate-report.json",
+        "--output",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project/data/reports/capital-bikeshare/final-evaluation.json"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:53:48.833573+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:54:03.275435+00:00",
+      "monotonic_start_ns": 198630178369502,
+      "monotonic_end_ns": 198646512720626,
+      "log": "final-once-v1.log",
+      "log_sha256": "72215ce6e6c2c1d663074e00d6e23fa1b8ef5bb44f696adf74004e6b0dea22fc"
+    },
+    {
+      "command": [
+        "python3",
+        "-c",
+        "import json,pathlib; r=pathlib.Path(\"261021\"); p=json.loads((r/\"data/derived/capital-bootstrap-a5b76d0f89d6433287007f3414d2208b/protocol.json\").read_text()); print(json.dumps(p,indent=2)); x=json.loads((r/\"docs/reviews/20261108-t10-snapshot-checks.json\").read_text()); print(\"INDEX KEYS\",list(x)); print(\"PROJECT PATH\",pathlib.Path.home().joinpath(\"projects/Claude_practice\").is_dir())"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:44:09.822281+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:44:09.900275+00:00",
+      "monotonic_start_ns": 198014189368105,
+      "monotonic_end_ns": 198014267206214,
+      "log": "input-discovery-v1.log",
+      "log_sha256": "1eba0de5ca82bd10ecf1cec15c55b650ac61bb3b853e4d86a589b9e2575d3fb0"
+    },
+    {
+      "command": [
+        "261021/data/reports/20261114-product-resume/venv/bin/python",
+        "-m",
+        "pip",
+        "install",
+        "--disable-pip-version-check",
+        "--no-deps",
+        "--retries",
+        "0",
+        "--timeout",
+        "15",
+        "setuptools==68.1.2",
+        "wheel==0.42.0"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T10:50:01.267531+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:50:02.516457+00:00",
+      "monotonic_start_ns": 198387807488489,
+      "monotonic_end_ns": 198389056388361,
+      "log": "isolated-build-tools-v1.log",
+      "log_sha256": "296d8788d42d4949ccd121bae6e324fc64f65a7c0c6d36cd51631370c08572d8"
+    },
+    {
+      "command": [
+        "261021/data/reports/20261114-product-resume/venv/bin/python",
+        "-m",
+        "pip",
+        "--isolated",
+        "install",
+        "--index-url",
+        "https://pypi.org/simple",
+        "--no-cache-dir",
+        "--disable-pip-version-check",
+        "--no-deps",
+        "--retries",
+        "0",
+        "--timeout",
+        "15",
+        "setuptools==68.1.2",
+        "wheel==0.42.0"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:50:25.983663+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:50:30.459049+00:00",
+      "monotonic_start_ns": 198414245503388,
+      "monotonic_end_ns": 198418720889196,
+      "log": "isolated-build-tools-v2.log",
+      "log_sha256": "a43375d32dee821b1491f3f5c16f050c8a36cd4f90b567a0aceeb03b69fa0735"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-product-resume/validate_docs.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:47:12.786721+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:47:13.009113+00:00",
+      "monotonic_start_ns": 198207997325198,
+      "monotonic_end_ns": 198208219707503,
+      "log": "policy-doc-validation-v1.log",
+      "log_sha256": "77feced36f80b567246450dbe3da053bb1c3cae59302438cd49909b4b5ac221e"
+    },
+    {
+      "command": [
+        "bash",
+        "-c",
+        "set -e; git diff -- 261021/README.md 261021/docs/capital-bootstrap-gate.md 261021/docs/capital-decision-http.md 261021/docs/clock-input-request.md 261021/docs/clock-source-readiness.md 261021/work_log.md; git add -- 261014/plan_mlops.md 261021/README.md 261021/docs/capital-bootstrap-gate.md 261021/docs/capital-decision-http.md 261021/docs/clock-input-request.md 261021/docs/clock-source-readiness.md 261021/docs/runbook.md 261021/docs/t10-input-readiness.md 261021/docs/t10-snapshot-review.md 261021/work_log.md 261021/docs/product-completion-policy.md 261021/docs/time-api-options.md 261021/docs/reviews/20261114-product-resume-checks.json; git diff --cached --check; git diff --cached --stat; git commit -m \"Separate historical ML evaluation from deferred clock qualification\"; git push origin main"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T10:47:48.834863+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:47:55.597480+00:00",
+      "monotonic_start_ns": 198245813343866,
+      "monotonic_end_ns": 198252575949388,
+      "log": "policy-publish-v1.log",
+      "log_sha256": "6a147e4a8cd489ea20f3cc8a10b73ea2a577584888145f56ae4a300faab3d1a4"
+    },
+    {
+      "command": [
+        "bash",
+        "-c",
+        "set -e; git diff 1006e78 HEAD -- 261014 261021; git status --short; git push origin main; git rev-parse HEAD"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:49:09.019450+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:49:16.814864+00:00",
+      "monotonic_start_ns": 198331627210776,
+      "monotonic_end_ns": 198339422617830,
+      "log": "policy-push-v2.log",
+      "log_sha256": "6911b64d333b4ff2b0805bb4a1fe75568ebee319c8dbbd4bd861525cfa771e69"
+    },
+    {
+      "command": [
+        "git",
+        "rebase",
+        "origin/main"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:48:55.224434+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:48:55.452906+00:00",
+      "monotonic_start_ns": 198317832204694,
+      "monotonic_end_ns": 198318060651909,
+      "log": "policy-rebase-v1.log",
+      "log_sha256": "81afa9a2bc044101b5442904ff94bf7a97bb3cd6dbe8c6f993f71820655c2e41"
+    },
+    {
+      "command": [
+        "env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "DATA_PROFILE_ID=capital-bikeshare",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "OMP_NUM_THREADS=2",
+        "OPENBLAS_NUM_THREADS=2",
+        "PYTHONPATH=/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project/src",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_evaluation_protocol.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:51:32.856462+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:51:40.501218+00:00",
+      "monotonic_start_ns": 198484866807899,
+      "monotonic_end_ns": 198492511552536,
+      "log": "prefit-regression-1.log",
+      "log_sha256": "82ce0af161515eb8750594e0a733c48137f888af004f57c9c1b303d29fad4d4f"
+    },
+    {
+      "command": [
+        "env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "DATA_PROFILE_ID=capital-bikeshare",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "OMP_NUM_THREADS=2",
+        "OPENBLAS_NUM_THREADS=2",
+        "PYTHONPATH=/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project/src",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_quality_gates.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:51:32.860384+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:51:34.012543+00:00",
+      "monotonic_start_ns": 198484870802635,
+      "monotonic_end_ns": 198486022883580,
+      "log": "prefit-regression-2.log",
+      "log_sha256": "ed59dc1ce8544b0df7014b44723b447335b7d8bb1d06b54df7fc2918f3138914"
+    },
+    {
+      "command": [
+        "env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "DATA_PROFILE_ID=capital-bikeshare",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "OMP_NUM_THREADS=2",
+        "OPENBLAS_NUM_THREADS=2",
+        "PYTHONPATH=/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project/src",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_training_monitor_reference.py",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:51:32.865233+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:51:48.665753+00:00",
+      "monotonic_start_ns": 198484875575611,
+      "monotonic_end_ns": 198502669165396,
+      "log": "prefit-regression-3.log",
+      "log_sha256": "66d74c80f61004dd3f799f6ea104b1e479fcbc32df15a7cbd0c68ff8b054d1cd"
+    },
+    {
+      "command": [
+        "env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "DATA_PROFILE_ID=capital-bikeshare",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "OMP_NUM_THREADS=2",
+        "OPENBLAS_NUM_THREADS=2",
+        "PYTHONPATH=/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project/src",
+        "261021/data/reports/20261114-product-resume/venv/bin/python",
+        "261021/data/reports/20261114-product-resume/prefit.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:51:18.299301+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:51:34.426934+00:00",
+      "monotonic_start_ns": 198470309656386,
+      "monotonic_end_ns": 198486437271939,
+      "log": "prefit-v1.log",
+      "log_sha256": "d086e5a4e76df7d92cf8ce9034fbaa14fe205285ef5b982fdef29744fdaa8d58"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-product-resume/prepare_trial.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T10:49:52.681541+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:49:55.748928+00:00",
+      "monotonic_start_ns": 198379221489568,
+      "monotonic_end_ns": 198382288861649,
+      "log": "prepare-trial-v1.log",
+      "log_sha256": "86ce94fb28791a13dfdbbc8ab2941fde9ab1a8537ef2729b4bf4722b0592a952"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-product-resume/prepare_trial.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:50:27.532991+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:50:30.061877+00:00",
+      "monotonic_start_ns": 198415794824295,
+      "monotonic_end_ns": 198418323704289,
+      "log": "prepare-trial-v2.log",
+      "log_sha256": "a0573a01b627dcad5f77f660bfb98cf501e5d63d6200c54d7614aa268dc1d0a5"
+    },
+    {
+      "command": [
+        "python3",
+        "-c",
+        "import pathlib,shutil,subprocess,json; print(json.dumps(dict(disk_free=shutil.disk_usage(\"261021/data/reports\").free,desktop_documented_path_exists=pathlib.Path.home().joinpath(\"projects/Claude_practice\").is_dir(),ssh_target_provided=False))); subprocess.run([\"du\",\"-sh\",\"261021/.venv\"],check=True)"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:46:22.715293+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:46:24.025762+00:00",
+      "monotonic_start_ns": 198154091114283,
+      "monotonic_end_ns": 198155401558436,
+      "log": "sandbox-capacity-v1.log",
+      "log_sha256": "ab57c14ea245213bae2fd4dee02226acbaacb9f13d160add16160cd6b13c5018"
+    },
+    {
+      "command": [
+        "env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "DATA_PROFILE_ID=capital-bikeshare",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "OMP_NUM_THREADS=2",
+        "OPENBLAS_NUM_THREADS=2",
+        "PYTHONPATH=/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project/src",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/venv/bin/python",
+        "-c",
+        "from pathlib import Path; from bike_mlops.capital_staging import verify_candidate_for_staging; import json; r=verify_candidate_for_staging(Path(\"data/candidates/e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b/candidate-report.json\"),Path(\"data/reports/capital-bikeshare/final-evaluation.json\")); print(json.dumps({k:str(v) for k,v in r.items() if k not in (\"selection\",\"final\")},indent=2))"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:55:48.480351+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:55:51.636842+00:00",
+      "monotonic_start_ns": 198757364663013,
+      "monotonic_end_ns": 198760521138778,
+      "log": "staging-readonly-verification-v1.log",
+      "log_sha256": "cf5b7703cc7ec76f03a638b65304c175ba3b87f82b5e6bdab44561488c6972bb"
+    },
+    {
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-product-resume/audit_validation.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:53:30.205686+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:53:30.400986+00:00",
+      "monotonic_start_ns": 198609678576728,
+      "monotonic_end_ns": 198609873877213,
+      "log": "validation-audit-v1.log",
+      "log_sha256": "cc60ddaf383196164cdbc1fcc48276d8e57f1894b4c1876e79723082318a8e33"
+    },
+    {
+      "command": [
+        "env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "DATA_PROFILE_ID=capital-bikeshare",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "OMP_NUM_THREADS=2",
+        "OPENBLAS_NUM_THREADS=2",
+        "PYTHONPATH=/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/project/src",
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10",
+        "300",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/venv/bin/python",
+        "-m",
+        "bike_mlops.cli",
+        "candidate",
+        "--csv",
+        "/home/kenshin/work/claude_practice/261021/data/derived/capital-bootstrap-a5b76d0f89d6433287007f3414d2208b/hourly.csv",
+        "--source-manifest",
+        "/home/kenshin/work/claude_practice/261021/data/derived/capital-bootstrap-a5b76d0f89d6433287007f3414d2208b/manifest.json",
+        "--evaluation-protocol",
+        "/home/kenshin/work/claude_practice/261021/data/derived/capital-bootstrap-a5b76d0f89d6433287007f3414d2208b/protocol.json",
+        "--no-register",
+        "--output",
+        "/home/kenshin/work/claude_practice/261021/data/reports/20261114-product-resume/validation-run.json"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T10:52:34.292480+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T10:52:45.024556+00:00",
+      "monotonic_start_ns": 198550169948124,
+      "monotonic_end_ns": 198562594563163,
+      "log": "validation-once-v1.log",
+      "log_sha256": "a518c29e48be0711c9ec5c856f8c446ca9d74fca1500390aa227d66703dbe36b"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "data/evaluations/consumption-ledger.json",
+      "bytes": 2668,
+      "sha256": "c42de5e869d4765ac5f776ed098e98cbbed347c0dbe2c967016b14d64986b652"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/audit_final.py",
+      "bytes": 4327,
+      "sha256": "7d3ffa9ec5820882634e09e345f1a2ca450e810770ff185ad425efabf523fc41"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/audit_validation.py",
+      "bytes": 3260,
+      "sha256": "0a43adb35692aeeb22247dc387f67b7bafd3db637db320079ac1e737a36b9fb9"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/build_evaluation_index.py",
+      "bytes": 3262,
+      "sha256": "1bbccf1bebd09280eb223c12487c28093c1f5553fd4408d5cc4e3cb8b001223f"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/copy-venv-v1.json",
+      "bytes": 532,
+      "sha256": "1d42ac221df0414da91a59f9d4a2febe7f9cdf2746f56a83a969227f5fe12d5d"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/copy-venv-v1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/environment-v1.json",
+      "bytes": 1429,
+      "sha256": "168dfbb841015b06209c6c74be4af9f26e2d60eecadd5d7ccb999990a250f3d2"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/environment-v1.log",
+      "bytes": 6878,
+      "sha256": "a9000df70076519f39de2f96fc5bd371999cf36a02b1ad564e5fda913de6a731"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/evaluation-doc-validation-v1.json",
+      "bytes": 524,
+      "sha256": "0f3f0fb7ae2e895db8fbf3ae47777fab16019e5c0b605e3adc1d745ceef08c01"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/evaluation-doc-validation-v1.log",
+      "bytes": 82,
+      "sha256": "616eddf134ce13f8bcc4e316c2da0e51ad164ad93e76293712cbf01e694ca56c"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/fetch-v1.json",
+      "bytes": 448,
+      "sha256": "20a173cc52de98158495cd1c200e308a77f9af5e55e3ff047bf15c698708bff0"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/fetch-v1.log",
+      "bytes": 87,
+      "sha256": "a3730b0b36dcabacd25f32900d4696e319c0dd5138f58f900be4304a3f93bbee"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/final-audit-result.json",
+      "bytes": 1233,
+      "sha256": "9b52122015278e066fca3d779fc1fd49855e46a26627c914635b4bd935bbaf49"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/final-audit-v1.json",
+      "bytes": 497,
+      "sha256": "cd11ec78527d264c3e9a1adf53c4c53fe16d03bff39629e1fa49693cacc3e30c"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/final-audit-v1.log",
+      "bytes": 1233,
+      "sha256": "9b52122015278e066fca3d779fc1fd49855e46a26627c914635b4bd935bbaf49"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/final-once-v1.json",
+      "bytes": 1688,
+      "sha256": "938f95b02f86178145154049168815a0675b9778fa2f1e3299a16291ebda10c6"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/final-once-v1.log",
+      "bytes": 5103,
+      "sha256": "72215ce6e6c2c1d663074e00d6e23fa1b8ef5bb44f696adf74004e6b0dea22fc"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/final-plan.json",
+      "bytes": 635,
+      "sha256": "6758037d41aae10fbc9b80bc95d96168e9842eac876b10a22708ea97db500b4a"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/input-discovery-v1.json",
+      "bytes": 850,
+      "sha256": "ae12d52dea22880fe6af770014ffc18302f075a0360115cdd801a65f2be80eb9"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/input-discovery-v1.log",
+      "bytes": 5024,
+      "sha256": "1eba0de5ca82bd10ecf1cec15c55b650ac61bb3b853e4d86a589b9e2575d3fb0"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/isolated-build-tools-v1.json",
+      "bytes": 680,
+      "sha256": "ec9817eb193bd16e67954ed4b819d0e14f592cda95d764d687325b1a0f4d7161"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/isolated-build-tools-v1.log",
+      "bytes": 431,
+      "sha256": "296d8788d42d4949ccd121bae6e324fc64f65a7c0c6d36cd51631370c08572d8"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/isolated-build-tools-v2.json",
+      "bytes": 770,
+      "sha256": "74084d87576d5c16bbbf8827985c125a21f362d9d1741c009a8ff65448f49062"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/isolated-build-tools-v2.log",
+      "bytes": 551,
+      "sha256": "a43375d32dee821b1491f3f5c16f050c8a36cd4f90b567a0aceeb03b69fa0735"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/policy-doc-validation-v1.json",
+      "bytes": 509,
+      "sha256": "98a817c71c6bed54c8aa19bf3c6c2bf60e4e9e4902164b2f5d93d8989fa2f910"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/policy-doc-validation-v1.log",
+      "bytes": 443,
+      "sha256": "77feced36f80b567246450dbe3da053bb1c3cae59302438cd49909b4b5ac221e"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/policy-publish-v1.json",
+      "bytes": 1253,
+      "sha256": "01d1c7c4af0db2525764db9bf00b15ac17784f51f6a8d3e9df706cde1f719511"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/policy-publish-v1.log",
+      "bytes": 10243,
+      "sha256": "6a147e4a8cd489ea20f3cc8a10b73ea2a577584888145f56ae4a300faab3d1a4"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/policy-push-v2.json",
+      "bytes": 554,
+      "sha256": "196d3aea0ccb9cc1390a126f788c9ac45f904f8d59eaca99d36d03b32aeec85d"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/policy-push-v2.log",
+      "bytes": 212,
+      "sha256": "6911b64d333b4ff2b0805bb4a1fe75568ebee319c8dbbd4bd861525cfa771e69"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/policy-rebase-v1.json",
+      "bytes": 462,
+      "sha256": "84a14ea370883ba86330367b77692793c8f7bf099070b631e649c73e5617e96c"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/policy-rebase-v1.log",
+      "bytes": 69,
+      "sha256": "81afa9a2bc044101b5442904ff94bf7a97bb3cd6dbe8c6f993f71820655c2e41"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prefit-regression-1.json",
+      "bytes": 982,
+      "sha256": "1c55fa89895cb34c6dc8bcb5f6d39709ccd96684e9d7d68050797fa6b562aa78"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prefit-regression-1.log",
+      "bytes": 2819,
+      "sha256": "82ce0af161515eb8750594e0a733c48137f888af004f57c9c1b303d29fad4d4f"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prefit-regression-2.json",
+      "bytes": 976,
+      "sha256": "09b090ac04fe2cb9fc8cc402a3c5ff4b2eb050d0f9a70270e8bc3a8cc368fa7e"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prefit-regression-2.log",
+      "bytes": 582,
+      "sha256": "ed59dc1ce8544b0df7014b44723b447335b7d8bb1d06b54df7fc2918f3138914"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prefit-regression-3.json",
+      "bytes": 989,
+      "sha256": "d321a02f4cc1b01c9b0508f8ce867710b46377a9f93d0ff0582f6aab8a0e9282"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prefit-regression-3.log",
+      "bytes": 5858,
+      "sha256": "66d74c80f61004dd3f799f6ea104b1e479fcbc32df15a7cbd0c68ff8b054d1cd"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prefit-result.json",
+      "bytes": 4143,
+      "sha256": "a78005cbb6a81102a023812ad4c12ad58b651056db7e92e1dd819a8943ccb38f"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prefit-v1.json",
+      "bytes": 826,
+      "sha256": "f7a043bb2a77ab20a391e9650aa963791fd86a8b7fef4793354179f8a9c49bd2"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prefit-v1.log",
+      "bytes": 1616,
+      "sha256": "d086e5a4e76df7d92cf8ce9034fbaa14fe205285ef5b982fdef29744fdaa8d58"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prefit.py",
+      "bytes": 4317,
+      "sha256": "7177376c63533a4d940bcba39262d43448f8bcfd31d2c6632afa1103ad908937"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prepare-trial-v1.json",
+      "bytes": 501,
+      "sha256": "65405f289a0c8c54910047adb73df94b42c8064da28807e667e7d5bfed4cc058"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prepare-trial-v1.log",
+      "bytes": 411,
+      "sha256": "86ce94fb28791a13dfdbbc8ab2941fde9ab1a8537ef2729b4bf4722b0592a952"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prepare-trial-v2.json",
+      "bytes": 501,
+      "sha256": "624d08d57682cfa3cf2965ce2d13d4a1c8a2006fdb9a12c3e5127bed13f2abf3"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prepare-trial-v2.log",
+      "bytes": 533,
+      "sha256": "a0573a01b627dcad5f77f660bfb98cf501e5d63d6200c54d7614aa268dc1d0a5"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prepare_trial-v1-failed.py",
+      "bytes": 1503,
+      "sha256": "1830bdb99bec97ddf0a843a9f9469352268d86ace4670f18f939801e6b58564a"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/prepare_trial.py",
+      "bytes": 1557,
+      "sha256": "c2e485e1783c91d7de7699e6bcbb7c2dde4e7445211d6fd53e0b8fb32add555e"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/project/data/candidates/e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b/candidate-report.json",
+      "bytes": 21634,
+      "sha256": "74c0417ba661fd8b32d771349df092760fc7a7f8f3caf1d86b879df0031653cc"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/project/data/candidates/e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b/evaluation-protocol.json",
+      "bytes": 4554,
+      "sha256": "6cfb89a6a226209e2139abb64d40f9b3f7cdd72d781501d886c51ac18f59fcda"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/project/data/candidates/e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b/model.skops",
+      "bytes": 1382989,
+      "sha256": "1e17fdb0d48c978dbf35c72125ca897bbe42882e24d3d647795ab0171bbf0ce2"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/project/data/candidates/e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b/monitor-reference.json",
+      "bytes": 3299,
+      "sha256": "81e2d05934105a2cd5fcf21d5ba8f2f7fb95807ee5b4aeadbe83dcc559f589e6"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/project/data/candidates/e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b/source-snapshot.tar.gz",
+      "bytes": 1419236,
+      "sha256": "1f43156b65ac59ebed9e683b5517d0ce20205aae5e06f3fa91be84f3b354d786"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/project/data/candidates/e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b/validation-predictions.csv",
+      "bytes": 98786,
+      "sha256": "375029be0d137ec92124354ef5959c03a745ffa6b4605479ee649e45a1f13fb6"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/project/data/reports/capital-bikeshare/final-evaluation.json",
+      "bytes": 5030,
+      "sha256": "8312ed9f22d9f93c1d55f736369ad5f2e66839626297b160800b5a49e9860893"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/project/data/reports/capital-bikeshare/final-evaluation.predictions.csv",
+      "bytes": 98555,
+      "sha256": "fe57cbf5f74624843c10cd9d6775910537fe2a656cd87ea4f5eac6bafe98e818"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/run.py",
+      "bytes": 949,
+      "sha256": "ab98ea1aa36a223360c08f6f7c924996134aaf776a52582a8b8f82f9c5035b20"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/sandbox-capacity-v1.json",
+      "bytes": 762,
+      "sha256": "f1791e74d5d70248891fff3fe41bc73f496640afdca1f6ef00afa1cf9b4f6f17"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/sandbox-capacity-v1.log",
+      "bytes": 117,
+      "sha256": "ab57c14ea245213bae2fd4dee02226acbaacb9f13d160add16160cd6b13c5018"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/staging-readonly-verification-v1.json",
+      "bytes": 1307,
+      "sha256": "6fd56b20e9e75a72ce535ae96aebdc1792031236d61589cdc318a2fb7c59d657"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/staging-readonly-verification-v1.log",
+      "bytes": 1246,
+      "sha256": "cf5b7703cc7ec76f03a638b65304c175ba3b87f82b5e6bdab44561488c6972bb"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/trial-layout.json",
+      "bytes": 533,
+      "sha256": "a0573a01b627dcad5f77f660bfb98cf501e5d63d6200c54d7614aa268dc1d0a5"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/validate_docs.py",
+      "bytes": 1103,
+      "sha256": "748b07d7050fe0556b06c12ecc55535a00e3a4634147f96a83a41cd82843285e"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/validate_evaluation_docs.py",
+      "bytes": 1613,
+      "sha256": "b9c7d4864d5204599ea4f4b72a8d7e32a75d0ab55f0762647932ceee9692efd8"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/validation-audit-result.json",
+      "bytes": 1288,
+      "sha256": "cc60ddaf383196164cdbc1fcc48276d8e57f1894b4c1876e79723082318a8e33"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/validation-audit-v1.json",
+      "bytes": 507,
+      "sha256": "945c68341fc379f79f1aa04f44c2a59af6b7c25f99cb4d368a9b9c92f94c1e8f"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/validation-audit-v1.log",
+      "bytes": 1288,
+      "sha256": "cc60ddaf383196164cdbc1fcc48276d8e57f1894b4c1876e79723082318a8e33"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/validation-once-v1.json",
+      "bytes": 1516,
+      "sha256": "13872ec170e0cf8140c2a81ceedb4d7d5ea335f6e951db4c991055fdd7188ac2"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/validation-once-v1.log",
+      "bytes": 15466,
+      "sha256": "a518c29e48be0711c9ec5c856f8c446ca9d74fca1500390aa227d66703dbe36b"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/validation-plan.json",
+      "bytes": 1276,
+      "sha256": "37ff88944f7fbffc48d88d75de7c130336f5ac0913559ce97d28142330459019"
+    },
+    {
+      "path": "data/reports/20261114-product-resume/validation-run.json",
+      "bytes": 15347,
+      "sha256": "9561d06ec60b065fd3b4b6bbd93f78f16290bec156aac17d94b9e5b9b49e493d"
+    }
+  ],
+  "remaining": [
+    "T02 actual same-artifact producer evidence",
+    "T12 monitor/prediction audit/recovery/metadata and operational measurement in isolated environment",
+    "T13b evidence review and separate human approval; no current registry/serving changes",
+    "Desktop access/transfer of frozen evidence and consumption ledger; do not refit consumed windows"
+  ],
+  "limits": [
+    "No globally authenticated proof of unused windows in every checkout; local canonical ledger and candidate/legacy evidence checked",
+    "UTC/monotonic values are unqualified; interval values not reported as precision time/performance",
+    "Originals held locally under gitignore; public index hashes do not distribute raw data or prove execution authenticity",
+    "Initial exploratory reads predated wrapper, included missing guessed paths and truncated output; no reconstructed timestamps",
+    "Web tool API endpoint attempts failed without HTTP status, not proof of service unavailability"
+  ]
+}

@@ -4548,3 +4548,37 @@ rg --filesで実際のtraining.py/cli.pyを見つけて読んだ。初期出力�
 これらwrapper導入前の読取には時刻/完全rawを後付けしない。
 後続の全試行はdata/reports/20261114-product-resume/run.pyでcommand/cwd/exit/log/hashと未資格UTC/MONOTONICを保存する。
 本段階は文書の方針改訂で、source/schema/writer/lock/workflow・実DB/registry/現配信・OS/service/task/log設定は未変更。
+
+### 同日：T10直前確認とT11実candidateの一度限り評価
+
+policy commitの初回pushはremote先行更新でfetch-first拒否。fetchで261109の別作業5commitを確認し、非重複のままrebase。
+対象13fileのbytesを載せ直し前1006e78と比較して変更なし、767760dを通常push済み。force pushなし。
+専用sourceへ同commitの298fileをコピー。初回prepare-trial-v1は既存の追跡data/reportsがあるためdata.mkdirでFileExistsError。
+コピー済みsourceと失敗recipe/logを保持し、exist_ok付きで完成したv2を別試行にした。実fit前の準備失敗で窓は未消費。
+専用venvへcp --reflink=auto -aでコピー。build tools install-v1は通常sandboxで候補版を取得できずexit1。
+公開PyPIを明示する--isolated/no-cacheの許可付きv2でsetuptools68.1.2/wheel0.42.0のみ専用venvへ導入、元venvは未変更。
+この準備retryは実評価のretryではない。OS/service/実DB/registry/現配信を変更していない。
+
+prefit-v1は105 lock版/pip check・11 source/config/lock・固定CSV/manifest/protocol・47 ZIP SHA/stat・schema3/TZif・件数・legacy/未消費を照合してexit0。
+原本再集計や既評価窓の採点は行わず、当前host専用rootに隔離し、環境をenv -i/PYTHONPATHで明示した。
+OMP/OPENBLAS threads=2は資源上限として実行前に固定。recipe/評価窓を変更しない。
+同環境のprotocol10/gate3/training reference26、計39既存test成功。全suite/新CIの受入を主張しない。
+
+validation-plan.json保存後、既存CLI candidate --csv ... --source-manifest ... --evaluation-protocol ... --no-register --output validation-run.jsonを一度だけ実行。
+消費台帳は専用project/data/evaluationsから元のdata/evaluationsを共有し、台帳を分岐/初期化していない。
+validation-once-v1 exit0、train29,919、validation1,464。候補MAE137.392476/RMSE237.549095、baseline226.003415/361.975333でgate passed。
+candidate=e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b、model SHA=1e17fdb0d48c978dbf35c72125ca897bbe42882e24d3d647795ab0171bbf0ce2。
+標準csv/mathの別processで全validation行/label時刻/MAE/RMSE/hash/ledger/記録境界のUTC順序を検算、exit0。
+
+final-plan.json保存後、選定済みの同artifactを既存evaluate_capitalbikeshare_holdout.pyへ渡し、一度だけfinal評価。
+final-once-v1 exit0、1,461行、candidate再fitなし。MAE143.693098/RMSE247.608899、baseline228.689254/371.052215でgate passed。
+final-audit-v1は標準csv/mathで全行の日時/label+3h/固定CSV正解/指標と4segment・model/report/行別CSV・ledger hashを照合、exit0。
+verify_candidate_for_stagingも読取だけで成功。registryへの登録関数は呼ばない。
+正式ledgerはvalidation/finalの2record、どちらもcompleted/1 attempt。**両窓消費済み**。再fit/同窓再選定は行わない。
+operational_gate=not_evaluated、deployment=blocked、時計資格未合格/研究保留を保持。
+全command/cwd/exitとlog/hash、未資格UTC/MONOTONIC、前後入力値は同ignored rootへ保存。
+専用source/venv/model/行別証拠は後続作業に必要なので削除せずGit対象外で保持する。raw IDや認証情報は公開索引へ含めない。
+記録境界のUTC順序確認を時計精密資格や過去失敗の解決へ昇格せず、wrapper秒数を物理性能として報告しない。
+結果の入口はdocs/capital-first-evaluation.md、索引はdocs/reviews/20261114-capital-evaluation-checks.json。
+文書/索引検査evaluation-doc-validation-v1は対象6fileのlink・差分scope・秘密pattern、68証拠fileと22試行のhashを照合してexit0。
+索引の後続更新時も原本hashを再照合する。commit/push receiptは自己参照を避けlocalへ保存する。

@@ -540,8 +540,8 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 | 優先度 | 難易度・担当 | 残課題と開始条件 |
 |---|---|---|
-| P0（fit前） | D3・Sol | T10直前：固定47原本・CSV/manifest/protocol・11 source/lock・依存版・消費状態を照合。専用環境を準備し、単一の消費台帳を宣言。時計の全資格は不要 |
-| P1 | D3・Sol | T11：固定recipeで一度だけvalidation、合格時だけ同artifactでfinal。どちらもMAE厳密改善/RMSE以下。失敗・不合格後は同じ窓を再利用しない |
+| 完了 | D3・Sol | T10直前：固定47原本・CSV/manifest/protocol・11 source/lock・105依存版・未消費を確認。専用環境と単一の正式消費台帳を使用。[実評価記録](../261021/docs/capital-first-evaluation.md) |
+| 完了 | D3・Sol | T11：validation1,464行/final1,461行を各1 attemptで完了。同artifact・再fitなし、両精度gate合格。MAE137.392476/143.693098。両窓は消費済み、再選定へ再利用しない。運用gateはnot_evaluated、配信blocked |
 | P1 | D3・Sol | T02実producer/T12：同candidateの監視・DB/予測・復旧/metadataと運用証拠を隔離環境で取得。応答時間は実行先/通常の同期状態・短区間確認が必要。本番SLO・時計資格へ昇格しない |
 | P1（証拠後） | D3・Sol | T13b：全実証と理由付きreview/別承認が揃った後の採否。未来拒否を維持。現registry/現配信の変更は今回の範囲外 |
 | 保留 | D3・Sol | 時計調査・修復比較・独立UTC/elapsed源/全campaign。新たな採取/問い合わせ/サービス操作は再開指示まで行わない |

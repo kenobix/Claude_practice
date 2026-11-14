@@ -1,5 +1,7 @@
 # 証拠の入口と5分の説明手順（T14・初版）
 
+**2026-11-14:** [Capital実候補のvalidation/final結果](capital-first-evaluation.md)と[実行/検算索引](reviews/20261114-capital-evaluation-checks.json)を追加。両窓消費済み、精度gate合格。運用gateと最終採否は未完了、時計研究は保留。
+
 現在の優先度は[計画§11.6の最新残件](../../261014/plan_mlops.md#remaining-work-latest)、コマンド・失敗・仮説の履歴は[作業log](../work_log.md)を正規の入口とする。
 レビューJSONはその時点のsnapshotなので、後続のCI確認JSONと区別する。記録だけの後続commitを、先行CIで試験した実装commitとは呼ばない。
 
