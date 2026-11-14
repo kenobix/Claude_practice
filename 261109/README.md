@@ -1,129 +1,56 @@
-# デスクトップPCのWSL AI開発環境
+# デスクトップAI環境・実験記録
 
-2026-11-09の環境構築記録と、公開前に実施した読み取り中心の検証を保存する。
-2026-11-10〜11のComfyUIによる画像生成・画像編集の後続実験も、このディレクトリへ追記する。
-2026-11-11に実施したWan 2.2の動画生成3回の結果は、2026-11-12に成果物を確認して追記した。
-2026-11-12のQwen Image 2.1 Turbo INT8による画像生成2回の結果も保存する。
-同日の後続実験として、日本語画像生成と参照画像編集を追記し、利用者の好みに基づくモデル運用方針も記録した。
+2026-11-09〜12の環境構築、開発AIツール、ComfyUIの画像・動画実験を種類別にまとめた索引。
+2026-11-14にMarkdownを10本から6本へ整理した。各記録の実測値・実験条件・当時の未完了状態は保持し、過去の文書と今回の測定を混同しない。
 
-## 保存ファイル
+## 種類別の記録
 
-- [環境構築レポート](desktop_ai_setup_report.md): 導入手順、当時の観測値、未完了課題。
-- [Codexへの反映指示](codex_push_prompt.md): 検査対象と安全なGit操作の手順。
-- [Ollama Pythonサンプル](scripts/test_ollama.py): `~/projects/ai-lab/test_ollama.py` から内容を変更せずコピー。原本は変更していない。
-- [8B/14Bベンチマーク](scripts/benchmark_ollama.py): `~/projects/ai-lab/benchmark_ollama.py` から内容を変更せずコピー。原本は変更していない。測定結果は[レポートの追記](desktop_ai_setup_report.md#11-qwen3-14bの取得確認と8b14bベンチマーク追記)を参照。
-- [OpenCode × Ollama実験記録](opencode_local_llm_test_20261109.md): 同じ計算アプリ課題を8B/14Bで比較。追加指示は8Bが1回、14Bが0回で、今回のUbuntu側の再確認では各5テスト成功。
-- [OpenCode実験の保存指示](codex_push_opencode_20261109.md): 対象ファイル、検査とGit反映の手順。
-- [OpenCode Go・無料モデルの追加検証](opencode_go_evaluation_20261109.md): GLM-5.3-Flash Freeは8テスト、Kimi K2.7 Code（Go）は5テスト成功。契約・設定の観測とCodex/Goの今後の運用方針を記録。
-- [Codex CLIとOpenCode Goの連携手順](codex_opencode_go_setup.md): nvm/Node.js導入、`--keep-provider`、Go専用プロファイルと起動経路を記録。通常の`codex`はGPT-6 Luna、`codex-go`はKimi K2.7 Codeを選択。
-- [ComfyUI画像生成・画像編集の検証](comfyui_image_generation_evaluation_20261111.md): FLUX.1 Schnellの日英固定シード比較とFLUX.2 Klein 4Bの新規生成・色変更を記録。確認済みPNG5枚、保存ワークフロー3件、ファイルmanifestを保存。
-- [Wan 2.2動画生成の検証](comfyui_video_generation_evaluation_20261111.md): Klein編集後のピンク色の車から約3秒・約5秒の動画を生成。生成時間42.15／22.18／34.27秒は利用者実測値。確認済みMP4 3本、保存ワークフロー1件、動画manifestを保存。
-- [Qwen Image 2.1 Turbo INT8の画像生成](comfyui_qwen_image_2_1_evaluation_20261112.md): 736×736と1024×1024のPNG生成を確認。生成時間17.16／3.13秒は利用者実測値で、速度差の理由・最大VRAMは未確認。PNG2枚、保存ワークフロー1件、今回のmanifestを保存。
-- [Qwenの日本語生成・画像編集の追記](comfyui_qwen_image_2_1_evaluation_20261112.md#11-実験a日本語による画像生成追記): 日本語生成22.85秒、参照画像の色変更25.00秒（利用者実測）。PNG2枚、日本語の保存JSONコピー1件、編集PNGから抽出したJSON1件を追加し、既存manifestに由来を追記。以前の英語実験・成果物も保持。
+| 種類 | ファイル | 内容 |
+|---|---|---|
+| 環境構築・ローカルLLM | [environment.md](environment.md) | Windows・WSL・RTX 5070 Ti・PyTorch・Docker・Ollama、Qwen3 8B/14Bの測定、サンプルの実行方法 |
+| 開発AIツール | [coding_tools.md](coding_tools.md) | OpenCode＋Ollama、無料GLM・GoのKimi、Codex CLIとGoの連携、コードの再検証・操作メモ |
+| 画像生成・編集 | [image_experiments.md](image_experiments.md) | FLUX.1 Schnell・FLUX.2 Klein、Qwen Image 2.1 Turboの英語・日本語・参照画像編集と比較 |
+| 動画生成 | [video_experiments.md](video_experiments.md) | Wan 2.2 TI2V-5Bの約3秒・約5秒の生成、課題と再現手順 |
+| 公開手順の履歴 | [publishing_history.md](publishing_history.md) | 当時のCodexへの依頼文、旧ファイル名と統合先の対応表、今回の整理履歴 |
 
-## 初回公開前の検証結果（当時の状態）
+## 主な結果
 
-以下は初回公開前の観測を保持したもの。後続の14B取得確認と測定結果は「追記」を参照。
-
-| 確認対象 | 2026-11-09の再確認結果 |
+| 対象 | 記録済みの結果 |
 |---|---|
-| Windows | `DisplayVersion` は26H2、OSビルド26300.9711 |
-| WSL / Ubuntu | WSL 3.0.3.0、Ubuntu-24.04はWSL2で稼働。Ubuntu 24.04.5 LTS、カーネル6.18.54.1-microsoft-standard-WSL2 |
-| 開発ツール | Git 2.43.0、Python 3.12.3、GitHub CLI 2.45.0、zstd 1.5.5 |
-| GPU | `nvidia-smi` でRTX 5070 Ti、16,303 MiBを認識。KMD 617.42、CUDA UMD 13.4 |
-| ai-labの仮想環境 | インストール済みメタデータはPyTorch 2.14.1+cu130、NumPy 2.5.4、ollama 0.6.3 |
-| Docker | Desktop 4.98.0、Engine/CLI 29.9.2、Compose v5.6.1。デーモンへの照会成功 |
-| Ollama | 0.40.15、systemdサービスactive。モデル一覧に`qwen3:8b`あり。`ollama ps`ではロード中モデルなし |
-| Qwen3 14B | モデル一覧に`qwen3:14b`なし。ダウンロード完了・起動・GPU割当・速度は未確認のまま |
-| Git | 作業開始時は`main`の`114af9d`。`git fetch origin`と`git pull --ff-only origin main`で同期済みを確認 |
+| Qwen3 8B / 14B | ウォーム後各3回の平均131.0 / 78.9 tokens/s、API総時間1.99 / 3.28秒。14Bの日本語応答・100% GPUは別ログで確認 |
+| OpenCodeの計算アプリ | 8B・14B・Kimi各5テスト、GLM 8テスト成功。追加指示は8Bが1回、他は0回 |
+| FLUX | Schnellの日英固定シード比較、Kleinの新規生成と色変更を保存。編集43.92秒 |
+| Qwen Image 2.1 Turbo | 英語736×736が17.16秒、英語1024×1024が3.13秒、日本語生成22.85秒、編集25.00秒 |
+| Wan 2.2 | 49 / 49 / 81フレーム、16fps。生成時間42.15 / 22.18 / 34.27秒 |
 
-再確認したバージョンはレポートと一致した。レポートのPyTorch CUDA計算、Docker hello-world、Qwen3 8BのGPU推論・速度は過去の共有結果であり、今回は再実行していない。生成速度の平均値127.85 tokens/sは記載された2値の算術平均と一致する。CPU・メモリ・SSD等の実機構成、Windowsの認証・保護・暗号化状態、初期設定の履歴も今回は再検証していない。
+生成時間は各実験時の利用者報告。今回の整理では再測定していない。異なるモデル・条件の時間やテスト数から性能の順位を決めない。
+日本語画像生成では窓からあふれる花の表現が不完全。画像編集・動画生成でも細部や背景の完全固定は達成したと評価しない。
 
-通常のサンドボックス内ではGPUアクセスや名前解決が制限されるため、WSL・GPU・稼働サービスとGitのネットワーク操作は許可されたサンドボックス外で確認した。インストール、設定変更、モデル取得、推論、ベンチマークは実施していない。
+## 成果物
 
-## サンプルの使い方
+| 保存先 | 内容 |
+|---|---|
+| [scripts/](scripts/) | OllamaのPython呼び出しと8B/14Bベンチマーク。実行方法は[環境構築の操作メモ](environment.md#environment-readme) |
+| [opencode_samples/](opencode_samples/) | 8B・14B・GLM・Kimi別の計算アプリとテスト。実行方法は[開発AIツールの操作メモ](coding_tools.md#coding-readme) |
+| [comfyui/images/](comfyui/images/) | FLUX・Qwenの確認済みPNG。編集元は重複コピーせず共用 |
+| [comfyui/videos/](comfyui/videos/) | WanのMP4 3本 |
+| [comfyui/workflows/](comfyui/workflows/) | 保存済みJSONのコピーと、編集PNGから抽出したJSON。由来は各記録・manifestで区別 |
+| [FLUX manifest](comfyui/artifact_manifest.json) | PNG・JSONのサイズ、SHA256、対応関係 |
+| [Qwen manifest](comfyui/qwen_image_2_1_artifact_manifest_20261112.json) | 英語・日本語・編集のPNG・JSONと、抽出した編集ワークフローの由来 |
+| [Wan manifest](comfyui/video_artifact_manifest_20261111.json) | 動画の寸法、フレーム数、設定、SHA256 |
 
-必要なものは、Python、Python用`ollama`パッケージ（元環境は0.6.3）、起動済みのローカルOllama、および取得済みの`qwen3:8b`。元環境では`~/projects/ai-lab/.venv`を使用した。
+モデル本体、仮想環境、キャッシュ、認証情報は保存しない。今回の整理は文書とリンクだけを対象にし、成果物や元のWindows/WSL環境は変更していない。
 
-```bash
-cd ~/projects/Claude_practice
-~/projects/ai-lab/.venv/bin/python 261109/scripts/test_ollama.py
-```
-
-このコマンドはQwen3 8Bをロードして推論するため、今回の公開前検証では実行していない。サンプル自体は`ollama.chat`による問い合わせと回答表示のみで、認証情報、個人情報、絶対パス、ファイル書き込みを含まない。接続先を変更する環境変数等は設定せず、ローカルのOllamaで利用する。
-
-仮想環境、モデル本体、キャッシュは保存しない。文書に付随していた`Zone.Identifier` 2件はWindowsのダウンロード属性のみで、成果物ではないため削除した。
-
-## 追記：Qwen3 14Bとベンチマーク
-
-2026-11-09に共有された実測ログで、8B/14Bそれぞれウォームアップ後3回の計測が正常に終了している。平均生成速度は8Bが131.0 tokens/s、14Bが78.9 tokens/s、平均総時間はそれぞれ1.99秒、3.28秒。初回8B測定（127.85 tokens/s）とは別の測定として保存する。
-
-更新時の`ollama list`では`qwen3:14b`（ID `bdbd181c33f2`、9.3 GB）を確認した。その後共有された対話ログには、取得完了の`success`、日本語の質問に対する日本語応答、`ollama ps`の`100% GPU`が記録されているため、取得・日本語応答・GPU動作を確認済みに更新した。対話時のロード中サイズは9.7 GB、コンテキスト長は4096。更新作業開始時の`ollama ps`にロード中モデルがなかった観測とは区別する。
-
-対話ログは`Thinking...`を含み、`think=False`のベンチマークとは別の実行。GPUメモリ10,622 / 16,303 MiBは対話後のGPU全体の観測値であり、モデル単体の使用量やベンチマーク中のピークではない。追加ログの抜粋と確認範囲はレポート第11節を参照。
-
-ベンチマークはPython標準ライブラリのみを使い、`http://127.0.0.1:11434/api/generate`へ問い合わせる。Python用`ollama`パッケージは不要だが、起動済みOllama、取得済みの両モデル、PATH上の`ollama`コマンドが必要。各モデルの測定後に`ollama stop`でそのモデルをアンロードする。
-
-```bash
-cd ~/projects/Claude_practice
-python3 261109/scripts/benchmark_ollama.py
-```
-
-更新作業ではスクリプトを実行せず、内容と構文、コピー元との一致を確認した。新たな推論・モデル取得・ベンチマークは実施していない。
-
-## 追記：OpenCodeのコーディング実験
-
-本節はGo契約前の履歴。契約後の追加実験は次節と[Go・無料モデルの記録](opencode_go_evaluation_20261109.md)を参照。
-
-OpenCode画面の履歴では、8Bは初回の`python`不在で失敗し、追加指示1回で5テスト成功。14Bは最初から`python3`を使い、追加指示0回で5テスト成功した。両モデルとも変更ファイルを含む完全な最終報告は未達成。詳細と限界は[実験記録](opencode_local_llm_test_20261109.md)に保存した。
-
-公開用コードは[8Bのcalculator.py](opencode_samples/qwen3-8b/calculator.py)・[テスト](opencode_samples/qwen3-8b/test_calculator.py)、[14Bのcalculator.py](opencode_samples/qwen3-14b/calculator.py)・[テスト](opencode_samples/qwen3-14b/test_calculator.py)。元の実験フォルダーから4ファイルだけを内容を変えずにコピーし、`.git/`やキャッシュは含めていない。Python標準ライブラリだけで実行でき、OpenCode・Ollama・モデルの起動は不要。
-
-```bash
-cd ~/projects/Claude_practice/261109/opencode_samples/qwen3-8b
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -v
-cd ../qwen3-14b
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -v
-```
-
-2026-11-09 21:12 JSTにCodexから両方の元実験フォルダーで既存テストを再実行し、それぞれ5件成功。これはOpenCodeの実行履歴とは別の再確認で、生成タスクや速度ベンチマークは再実行していない。原本は変更せず、Pythonキャッシュの生成も抑止した。今回の文書に付随していた`Zone.Identifier` 2件はダウンロード属性のみのため削除し、公開対象から除外した。
-
-無料クラウドモデルは未実行・未評価、OpenCode Goは未契約・未接続のまま。今回の作業で契約・導入・クラウドAPI接続は行っていない。
-
-## 追記：OpenCode Go・無料モデルの追加検証
-
-本節はCodexからGoへ接続する前の検証履歴。後続の連携完了は次節と[連携手順](codex_opencode_go_setup.md)を参照。
-
-利用者の2026-11-09の追加実験では、GLM-5.3-Flash Freeは初回指示で生成と8テストに成功し、最終報告あり。Go契約後のKimi K2.7 Codeは`python`不在での失敗から追加指示なしで`python3`へ切り替え、5テストに成功し、最終報告あり。両方とも人間の追加指示は0回。8B/14Bの過去の履歴とは別の後続実験として保存する。
-
-公開コピーはGLMの[calculator.py](opencode_samples/glm-5.3-flash-free/calculator.py)・[test_calculator.py](opencode_samples/glm-5.3-flash-free/test_calculator.py)、Kimiの[calculator.py](opencode_samples/kimi-k2.7-code-go/calculator.py)・[test_calculator.py](opencode_samples/kimi-k2.7-code-go/test_calculator.py)。4ファイルだけを原本から内容を変えずにコピーした。標準Pythonだけで再検証でき、クラウドAPI接続や認証情報は不要。
-
-```bash
-cd ~/projects/Claude_practice/261109/opencode_samples/glm-5.3-flash-free
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -v
-cd ../kimi-k2.7-code-go
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -v
-```
-
-今回の保存作業では2026-11-09 21:50 JSTに元実験フォルダーでGLM 8件・Kimi 5件の成功を再確認した。原本は変更していない。契約・利用額・設定は利用者共有の観測として[追加検証記録](opencode_go_evaluation_20261109.md)に記載し、今回Consoleの設定確認・変更、追加課金、モデル取得、CodexからGoへの接続は行っていない。
-
-## 追記：Codex CLIとOpenCode Goの連携
-
-2026-11-09、利用者からCodex CLIとPersonalワークスペースのGo連携完了が報告された。実機でnvm 0.41.0、Node.js 24.22.2、npm/npx 11.19.1、Codex CLI 0.167.0を確認。`--keep-provider`はOpenCode Consoleのセットアップ側のオプションで、通常モデルを維持する方式。
-
-`config.toml`の既定モデルは`gpt-6-luna`のまま、`go.config.toml`で`kimi-k2.7-code`と`opencode-go`を選ぶ構造を確認した。`~/.local/bin/codex-go`は`codex --profile go`を起動する。公開範囲をモデル選択・起動経路に絞った構造例を[連携手順](codex_opencode_go_setup.md)に保存した。今回、設定変更やモデルへの問い合わせは行っていない。
-
-## 追記：今後のモデル運用方針
+## 今後のモデル運用方針
 
 - 画像生成・編集は利用者の好みに合うQwen Image 2.1 Turboを主力とし、FLUX.2 Kleinも用途に応じて使い分ける。客観的な画質・速度の優劣は断定しない。
 - 動画はWan 2.2を基準とし、LTX系などを追加検証候補とする。
-- Hugging Faceの派生・量子化モデル、LoRA、Strataによるローカル大規模LLMは今後の候補。導入可否や性能は今回未検証。
-- 現時点でClaude Proは追加せず、Codex＋OpenCode Goを維持する。今回、契約・設定変更や追加の生成・モデル取得は行っていない。
+- Hugging Faceの派生・量子化モデル、LoRA、Strataによるローカル大規模LLMは今後の候補。導入可否や性能は未検証。
+- 現時点でClaude Proは追加せず、Codex＋OpenCode Goを維持する。
 
 ## 残作業
 
-- Wan 2.2 TI2V-5Bで約3秒の動画生成を初回検証し、成功後に約5秒へ進める。動画生成は未実施。
-  - 上記は画像実験記録時点の予定。2026-11-11に約3秒を2回・約5秒を1回生成済みで、[動画実験記録](comfyui_video_generation_evaluation_20261111.md)へ追記した。次は固定シードで車体・背景の維持とVRAMを確認する。
+- 同じ入力・固定シードで画像編集や動画の車体・背景維持を確認し、生成時間とVRAMを記録する。Wanの約3秒・約5秒生成自体は実施済み。
 - 通常の開発中にモデルごとの成功と手戻りを記録する。専用ベンチマークの優先度は下げる。
 - 無料モデルの学習利用許可の現在値を再確認する。
 - 従来のCodexとGoを併用し、既存設定を保持する。
