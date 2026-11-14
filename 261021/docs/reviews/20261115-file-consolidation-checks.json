@@ -2,7 +2,7 @@
   "scope": "File consolidation only; no residual MLOps or clock research task advanced",
   "base_commit": "9479201babd74d2ea318c33574044098cc9d8768",
   "date_local": "2026-11-15 Asia/Tokyo",
-  "status": "local_import_fix_checked_awaiting_exact_CI",
+  "status": "accepted",
   "counts": {
     "docs_markdown": {
       "before": 67,
@@ -59,7 +59,7 @@
     ]
   },
   "layout_validation": {
-    "relative_links_checked": 923,
+    "relative_links_checked": 925,
     "link_issues": [],
     "obsolete_imports": [],
     "counts": {
@@ -262,8 +262,8 @@
     },
     {
       "path": "261021/docs/README.md",
-      "bytes": 12153,
-      "sha256": "f13bd0b173fee033197b0bdbe0497e004f4d793fd42949f22fcde2c002f46972"
+      "bytes": 12303,
+      "sha256": "945664e948e858f4006ec54d47b9656450d75269b29581c6a14394aefce3ae69"
     },
     {
       "path": "261021/docs/architecture.md",
@@ -327,13 +327,13 @@
     },
     {
       "path": "261021/work_log.md",
-      "bytes": 600582,
-      "sha256": "d59620594ad6a4e22fcaec98c894adff4c98bcff43dc7a8ee2a96d353f8adbbb"
+      "bytes": 602580,
+      "sha256": "a223d0b1e0bdf1478928d5b7f295c876a8af5767de9c409ce0a2ac46393e7992"
     },
     {
       "path": "261014/plan_mlops.md",
-      "bytes": 151517,
-      "sha256": "89dd947e1533790539d803fc36effa7428a57cdbf426fbdd40cad84e613ee7f3"
+      "bytes": 151714,
+      "sha256": "dfe7114ee143d1f1c18e4e18cc02802d9deccbebfe974a3fb6358979986f4e9e"
     },
     {
       "path": "README.md",
@@ -407,6 +407,25 @@
       "monotonic_end_ns": 204400006702594,
       "log": "261021/data/reports/20261114-file-consolidation/baseline-v1.log",
       "log_sha256": "4bf383c826c62ed865d94cb7d93d563cf150e0312e534a7971da4a34208841e7"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/final-ci-artifact-verification.json",
+      "receipt_sha256": "6dac4f723abdb6998639e9402ed02a0d11e7c48d3203f8a41856a49dd1e8580a",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261114-file-consolidation/verify_ci_artifact.py",
+        "261021/data/reports/20261114-file-consolidation/ci-ec7f50e-artifact.zip",
+        "8cd735bfdbb616c72c63f3653f3b65cc464dd2daad9dea06d095c117b5059f4d",
+        "261021/data/reports/20261114-file-consolidation/ci-ec7f50e-verification.json"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T20:09:25.648639+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T20:09:29.003322+00:00",
+      "monotonic_start_ns": 2955202219768,
+      "monotonic_end_ns": 2958556903122,
+      "log": "261021/data/reports/20261114-file-consolidation/final-ci-artifact-verification.log",
+      "log_sha256": "f7de56835e1a42a52d1e1931fceffb9e56f50e97e09e6bcdb89276af36d1cd98"
     },
     {
       "receipt": "261021/data/reports/20261114-file-consolidation/focused-tests-v3.json",
@@ -495,6 +514,27 @@
       "monotonic_end_ns": 2140529729775,
       "log": "261021/data/reports/20261114-file-consolidation/implementation-ci-watch-v1.log",
       "log_sha256": "db0da75d127654c7a29e5eaa02edc76de0c76da1e3e9cd9e11320b0bf913b0fb"
+    },
+    {
+      "receipt": "261021/data/reports/20261114-file-consolidation/implementation-ci-watch-v2.json",
+      "receipt_sha256": "0065ac4c25a0e932f7ecd6c3ef4802fc71af45d57a08f9f5b43660afbec5a6d5",
+      "command": [
+        "gh",
+        "run",
+        "watch",
+        "43635329160",
+        "--exit-status",
+        "--interval",
+        "20"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T20:03:04.642856+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T20:08:16.751658+00:00",
+      "monotonic_start_ns": 2574196444025,
+      "monotonic_end_ns": 2886305709266,
+      "log": "261021/data/reports/20261114-file-consolidation/implementation-ci-watch-v2.log",
+      "log_sha256": "d38ecc64bca8403ec0643517ceb35c69cebef8d3eca7cd62054462bb104b694f"
     },
     {
       "receipt": "261021/data/reports/20261114-file-consolidation/import-boundary-before-fix.json",
@@ -864,7 +904,7 @@
     "Raw local timestamps are unqualified observations; no precision-clock claim"
   ],
   "ci": {
-    "status": "initial_failed_corrected_commit_pending",
+    "status": "accepted",
     "initial_run": {
       "id": 43634214356,
       "head_sha": "aa8a61f27277752e6622f63e3ccc492349d5db5b",
@@ -888,6 +928,272 @@
         "sha256": "96cf92b8f94c9b1cfa2d41b631e70efe4b65ed19a4e465ab4251e1aad00c0452",
         "members": 16
       }
+    },
+    "accepted_run": {
+      "id": 43635329160,
+      "head_sha": "ec7f50e5764f65daf81fab881474a29a1e68f7fb",
+      "url": "https://github.com/kenobix/Claude_practice/actions/runs/43635329160",
+      "conclusion": "success",
+      "unit_tests": 593,
+      "unit_display_seconds": 204.076,
+      "both_jobs_all_steps_success": true,
+      "jobs": {
+        "path": "261021/data/reports/20261114-file-consolidation/ci-ec7f50e-jobs.json",
+        "sha256": "a1598badd20f9c8b44ebeec04446de6a09d11155339692eb9376a664d0307802"
+      },
+      "log": {
+        "path": "261021/data/reports/20261114-file-consolidation/ci-ec7f50e.log",
+        "sha256": "097529ebd2e9c574f459875abe66e097dbfbe147cfe657af003bfd6b843dd2c8"
+      },
+      "artifact": {
+        "id": 14130222048,
+        "path": "261021/data/reports/20261114-file-consolidation/ci-ec7f50e-artifact.zip",
+        "sha256": "8cd735bfdbb616c72c63f3653f3b65cc464dd2daad9dea06d095c117b5059f4d",
+        "members": {
+          "synthetic-system-ci.log": {
+            "bytes": 19036,
+            "sha256": "d727c744cc699e9aeba582f54cfefb56254161049100f0f0cb20b5580089ade1"
+          },
+          "request-interruption-postgres-ci.log": {
+            "bytes": 459,
+            "sha256": "efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb"
+          },
+          "snapshot-postgres-ci.log": {
+            "bytes": 560,
+            "sha256": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9"
+          },
+          "monitor-inspection-postgres-ci.log": {
+            "bytes": 3933,
+            "sha256": "fa302da29cd822afaadd9573e561698c8edc2156a9ce842eb7da7ae73792face"
+          },
+          "prediction-migration-postgres-ci.log": {
+            "bytes": 2979,
+            "sha256": "5cce5eca4ba65ae77f52284e667a6fb855c93f7f754e936816e453922dc5fbba"
+          },
+          "monitor-persistence-postgres-ci.log": {
+            "bytes": 376,
+            "sha256": "8d5f8fdc9d453fbb706b8e1fd526a6bb35c5d8ebf058033591b7e2dfe4e5ddc9"
+          },
+          "capital-decision-http-ci.log": {
+            "bytes": 3855,
+            "sha256": "8cb7fefaba59b051d6b497af6c0e930e247506f27cf6cda9d2092a4ec9740a50"
+          },
+          "t08-ci/summary.json": {
+            "bytes": 2042,
+            "sha256": "a40308553209800922854d9de3086fb12df9e276c7ce8b5decef954ce6e5b8e7"
+          },
+          "t08-ci/before.dump": {
+            "bytes": 8251,
+            "sha256": "02d9b862baa7cf2724ab7538b6f5658a3d963f39ffe86581ad07fb1f5b0419c0"
+          },
+          "t08-ci/after.dump": {
+            "bytes": 8309,
+            "sha256": "9f240ad9b69daa7a624570634ebef2b2433d3a784ed6dd5bba85fd782afa2c88"
+          },
+          "t16-ci/synthetic-measurement-evidence.zip": {
+            "bytes": 1531229,
+            "sha256": "6c59068cd9adf85b587801e637162ef646b383b80cdb6e866df01025519f2d2f"
+          },
+          "t16-ci/archive-sha256.json": {
+            "bytes": 154,
+            "sha256": "587013994127f2214a0561f1ee2aad26f21bc688d2e0ad1916c8f9788ecee15f"
+          },
+          "t16-ci/recalculation.json": {
+            "bytes": 1440,
+            "sha256": "ce60441e4d4f9ea0cbded0b48793f5698a8ebc82b732697a16c007eb5ab0acd6"
+          },
+          "deployment-recovery-ci.log": {
+            "bytes": 23196,
+            "sha256": "afc04e34e8c507964d3278013a4d5fb1fd805d3cb18272b8819307ce66b91e40"
+          },
+          "t07a-ci/summary.json": {
+            "bytes": 1944,
+            "sha256": "4c764e3a1d67dcdb435fd16edae8505368045053df01e936acc02212622f3240"
+          },
+          "t07a-term-ci/summary.json": {
+            "bytes": 686,
+            "sha256": "c8e181df53d28c828433a7e7496c7e4319cd5334b2858e5c926cfe2ab8d51fa0"
+          }
+        }
+      },
+      "verification": {
+        "path": "261021/data/reports/20261114-file-consolidation/ci-ec7f50e-verification.json",
+        "sha256": "dcc86d6b08e3806e58d459487fab8bf3b52f6c64f21492e53f84a03e86c45749",
+        "status": "passed",
+        "artifact_zip_sha256": "8cd735bfdbb616c72c63f3653f3b65cc464dd2daad9dea06d095c117b5059f4d",
+        "artifact_members": {
+          "synthetic-system-ci.log": {
+            "bytes": 19036,
+            "sha256": "d727c744cc699e9aeba582f54cfefb56254161049100f0f0cb20b5580089ade1"
+          },
+          "request-interruption-postgres-ci.log": {
+            "bytes": 459,
+            "sha256": "efc3e69e0730518515761e87e00939480ac1a29c5a17e64450aa25f70da458eb"
+          },
+          "snapshot-postgres-ci.log": {
+            "bytes": 560,
+            "sha256": "88a52392a9ee19dc2bfba9a6656152563a29a68c465dfa5b09530e381bdb5da9"
+          },
+          "monitor-inspection-postgres-ci.log": {
+            "bytes": 3933,
+            "sha256": "fa302da29cd822afaadd9573e561698c8edc2156a9ce842eb7da7ae73792face"
+          },
+          "prediction-migration-postgres-ci.log": {
+            "bytes": 2979,
+            "sha256": "5cce5eca4ba65ae77f52284e667a6fb855c93f7f754e936816e453922dc5fbba"
+          },
+          "monitor-persistence-postgres-ci.log": {
+            "bytes": 376,
+            "sha256": "8d5f8fdc9d453fbb706b8e1fd526a6bb35c5d8ebf058033591b7e2dfe4e5ddc9"
+          },
+          "capital-decision-http-ci.log": {
+            "bytes": 3855,
+            "sha256": "8cb7fefaba59b051d6b497af6c0e930e247506f27cf6cda9d2092a4ec9740a50"
+          },
+          "t08-ci/summary.json": {
+            "bytes": 2042,
+            "sha256": "a40308553209800922854d9de3086fb12df9e276c7ce8b5decef954ce6e5b8e7"
+          },
+          "t08-ci/before.dump": {
+            "bytes": 8251,
+            "sha256": "02d9b862baa7cf2724ab7538b6f5658a3d963f39ffe86581ad07fb1f5b0419c0"
+          },
+          "t08-ci/after.dump": {
+            "bytes": 8309,
+            "sha256": "9f240ad9b69daa7a624570634ebef2b2433d3a784ed6dd5bba85fd782afa2c88"
+          },
+          "t16-ci/synthetic-measurement-evidence.zip": {
+            "bytes": 1531229,
+            "sha256": "6c59068cd9adf85b587801e637162ef646b383b80cdb6e866df01025519f2d2f"
+          },
+          "t16-ci/archive-sha256.json": {
+            "bytes": 154,
+            "sha256": "587013994127f2214a0561f1ee2aad26f21bc688d2e0ad1916c8f9788ecee15f"
+          },
+          "t16-ci/recalculation.json": {
+            "bytes": 1440,
+            "sha256": "ce60441e4d4f9ea0cbded0b48793f5698a8ebc82b732697a16c007eb5ab0acd6"
+          },
+          "deployment-recovery-ci.log": {
+            "bytes": 23196,
+            "sha256": "afc04e34e8c507964d3278013a4d5fb1fd805d3cb18272b8819307ce66b91e40"
+          },
+          "t07a-ci/summary.json": {
+            "bytes": 1944,
+            "sha256": "4c764e3a1d67dcdb435fd16edae8505368045053df01e936acc02212622f3240"
+          },
+          "t07a-term-ci/summary.json": {
+            "bytes": 686,
+            "sha256": "c8e181df53d28c828433a7e7496c7e4319cd5334b2858e5c926cfe2ab8d51fa0"
+          }
+        },
+        "archive_only_recalculation": {
+          "archive_sha256": "6c59068cd9adf85b587801e637162ef646b383b80cdb6e866df01025519f2d2f",
+          "attempt_id": "32c575e8-7753-4f2e-aa42-fd099895733e",
+          "candidate_id": "d495f69b463c880f8fe3b83cb9d95cf165df44a8bad37394a5798c35fc045452",
+          "deployment_permission": "blocked",
+          "journal_verified_responses": 1050,
+          "limitations": [
+            "Synthetic evidence only; does not prove real-data performance, clock qualification, DB audit outside the saved journal, or deployment approval."
+          ],
+          "measured_errors": 0,
+          "measured_requests_recalculated": 1000,
+          "members": {
+            "payload/operational-ledger.json": {
+              "bytes": 1232,
+              "sha256": "18d071ecaaf9daade6b9ff6bf514ef0770a6879bf22df1743f97196b97281f62"
+            },
+            "payload/plan.json": {
+              "bytes": 5113,
+              "sha256": "00fd2973950a1aa4d985099dd22479e624f374477b16adb06d716d7202af5c92"
+            },
+            "payload/report.json": {
+              "bytes": 438535,
+              "sha256": "0cfa4524f0bc98b2840cc745ad7f8f914c566b39e16c4c50b5b408e92a1c4de5"
+            },
+            "payload/request-journal.jsonl": {
+              "bytes": 1083908,
+              "sha256": "388abede5889efa35a844aca2a821cfd88661b56c3f8010c1266a939f2eacc44"
+            }
+          },
+          "numeric_status": "passed",
+          "operational_gate": "not_evaluated",
+          "p95_ms": 21.62143600000377,
+          "request_id_sha256": "9f3b9ee5eb67f2206cc657cf433e0b2def39cdd4224fade2c31782587c8d75d1",
+          "status": "archive_recalculated",
+          "synthetic_only": true,
+          "warmup_requests_excluded": 50
+        },
+        "caddy_cleanup": {
+          "t07a-ci/summary.json": {
+            "status": "passed",
+            "cleanup_complete": true,
+            "resources_remaining": {
+              "containers": "",
+              "volumes": "",
+              "networks": "",
+              "images": ""
+            },
+            "current_Dockerfile_build": true
+          },
+          "t07a-term-ci/summary.json": {
+            "status": "failed",
+            "cleanup_complete": true,
+            "resources_remaining": {
+              "containers": "",
+              "volumes": "",
+              "networks": "",
+              "images": ""
+            },
+            "current_Dockerfile_build": true
+          }
+        },
+        "migration_cleanup": true,
+        "snapshot_and_monitor_cleanup": true,
+        "request_interruption_cleanup": true,
+        "http_cleanup": true,
+        "system_paired_restore_and_cleanup": true,
+        "scope": "synthetic regression only, no real candidate or clock acceptance"
+      },
+      "current_python_bytes_equal_tested_commit": [
+        "261021/src/bike_mlops/training.py",
+        "261021/src/bike_mlops/operational_runner.py",
+        "261021/src/bike_mlops/model.py",
+        "261021/src/bike_mlops/config.py",
+        "261021/src/bike_mlops/deployment_runtime.py",
+        "261021/src/bike_mlops/operational_validation.py",
+        "261021/src/bike_mlops/deployment.py",
+        "261021/src/bike_mlops/__init__.py",
+        "261021/src/bike_mlops/cli.py",
+        "261021/src/bike_mlops/clock.py",
+        "261021/src/bike_mlops/db.py",
+        "261021/src/bike_mlops/evaluation.py",
+        "261021/src/bike_mlops/monitor_inspection.py",
+        "261021/src/bike_mlops/operational.py",
+        "261021/src/bike_mlops/data.py",
+        "261021/src/bike_mlops/monitoring.py",
+        "261021/src/bike_mlops/staging.py",
+        "261021/src/bike_mlops/api.py",
+        "261021/tests/test_monitoring.py",
+        "261021/tests/test_deployment.py",
+        "261021/tests/request_interruption_child.py",
+        "261021/tests/test_clock.py",
+        "261021/tests/test_system.py",
+        "261021/tests/probe_decision_clock.py",
+        "261021/tests/test_monitor_inspection.py",
+        "261021/tests/test_operational.py",
+        "261021/tests/support.py",
+        "261021/tests/test_measurement.py",
+        "261021/tests/test_data.py",
+        "261021/tests/test_api.py",
+        "261021/scripts/runtime_tools.py",
+        "261021/scripts/system_harness.py",
+        "261021/scripts/__init__.py",
+        "261021/scripts/storage_checks.py",
+        "261021/scripts/runtime_checks.py",
+        "261021/scripts/clock_tools.py",
+        "261021/scripts/data_tools.py"
+      ]
     }
   }
 }

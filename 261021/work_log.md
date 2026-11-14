@@ -4741,3 +4741,13 @@ aa8a61fのCI [43634214356](https://github.com/kenobix/Claude_practice/actions/ru
 修正後の`test_system.py`50件は成功し、全体のdiscoveryは593件（旧590＋互換/設定分離/例外診断の3件）・import error 0。静的再検査も成功した。製品sourceやwriter/schemaは今回の追補で変更していないため、local全suite591件の先行成功と、追補対象50件の成功を分けて記録する。最終593件の全suiteと実PGは新しい実装commitのCIで確認する。
 
 localのsnapshot試行は`docker context show`でexit 1となり、Dockerコンテナ作成前に停止した。チャット内で同コマンドを読取確認したところ、WSLにDockerコマンドが統合されていない旨の出力だった。設定・サービスは変更せず、実PGの成功とは記録しない。`snapshot-import-fix`の失敗receiptも保持し、CIへ渡す。新情報なしに同じDocker失敗を反復しない。
+
+### 最終実装ec7f50eのCI・artifact・cleanup受入
+
+修正実装`ec7f50e5764f65daf81fab881474a29a1e68f7fb`の[CI 43635329160](https://github.com/kenobix/Claude_practice/actions/runs/43635329160)は両job・全step成功。全593 unit/204.076表示秒とcompileall、snapshot-lock、request interruption、monitor inspection25件、migration9件、monitor persistence、MLflow HTTP障害、合成system/MLflow-skops/対応DB別volume復元、Caddy normal/TERM/SIGKILLが成功した。GitHub接続ツールで正確なhead SHAのjobとartifact metadataを確認し、CLIで原本bytes/logを保存した。
+
+artifact `14130222048`のZIP SHA `8cd735bfdbb616c72c63f3653f3b65cc464dd2daad9dea06d095c117b5059f4d`がGitHub digestと一致。allowlist16 memberの全SHA/bytes、内側4原本のhashを検算し、元のplan/report/ledger/journalの保存先へアクセスしない別processへarchiveだけを渡して、暖機50除外・計測1,000・journal確定1,050・p95を再計算しCI保存値と完全一致した。これは合成fixtureの検算であり実候補性能・本番SLO・時計資格の証明ではない。
+
+T07a normal/TERMのsummaryでcurrent Dockerfile build・protected ID不変・残resourceなし・cleanupを確認し、system対応復元/破損skops拒否/workspace回収、snapshot/PG monitor/HTTP等の後片付けも照合した。検算は`final-ci-artifact-verification`/exit 0、原本と結果hashは[検証索引](docs/reviews/20261115-file-consolidation-checks.json)へ保存した。初回CI失敗とlocal Docker未統合の試行を削除・成功化していない。
+
+文書9本・製品Python18本・tests12本・scripts7本の整理と参照更新を完了する。今回は製品の残課題や実運用の保留は進めていない。最後は文書/計画/検証索引だけの記録commitとし、その自動CIを先行ec7f50eの受入と混同しない。再fit・実測再試行・実DB/registry/配信・OS/時計設定の変更はない。
