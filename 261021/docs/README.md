@@ -4,6 +4,8 @@
 過去reviewのJSON、保存済み候補・原本・消費台帳は変更していない。過去ログの旧path/hashは当時の記録で、
 必要ならGitの整理前commit `9479201`で原本を確認できる。時計研究・運用受入保留は解除していない。
 整理後の全593テスト・隔離Docker/PG/復旧CIとartifact検算は[検証索引](reviews/20261115-file-consolidation-checks.json)を参照。
+整理後の製品変更は[UTC順序拒否・事後review契約・警告review](capital.md#operational-evidence-review-20261115)と
+[検証索引](reviews/20261115-operational-consumer-checks.json)へ記録する。整理時点のCIと今回のCIを混同しない。
 
 | 文書 | 内容 |
 |---|---|

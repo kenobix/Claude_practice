@@ -63,8 +63,9 @@ CASES = {
         "timeout_stage_outcome": "explicit",
     },
 }
-READINESS_POLICY = {"policy_id": "capital-deployment-evidence-v1", "schema_version": 1,
-                    "required_cases": CASES, "uncertain_evidence_allowed": False}
+READINESS_POLICY = {"policy_id": "capital-deployment-evidence-v2", "schema_version": 2,
+                    "required_cases": CASES, "uncertain_evidence_allowed": False,
+                    "request_journal": "required_raw_hash_bound_all_events_utc_nondecreasing"}
 BINDING_KEYS = (
     "data_profile_id", "target_contract_id", "feature_contract_version",
     "quality_gate", "validation_gate_status", "final_accuracy_gate_status",
@@ -269,22 +270,23 @@ def validate_bundle(bundle: dict, tags: dict, version: str, run_id: str) -> dict
     from bike_mlops.evaluation import candidate_identity
     from bike_mlops.operational_validation import recheck_measurement_records
     from bike_mlops.operational_validation import _validate_completed_evidence
+    from bike_mlops.operational_validation import verify_portable_journal
     from bike_mlops.evaluation import validate_protocol
     from bike_mlops.evaluation import baseline_accuracy_gate
 
     if len(canonical_bytes(bundle)) > MAX_BUNDLE_BYTES:
         raise ValueError("Deployment evidence bundle is too large")
     identity = evidence_identity(tags, version, run_id)
-    if (type(bundle.get("schema_version")) is not int or bundle.get("schema_version") != 1
+    if (type(bundle.get("schema_version")) is not int or bundle.get("schema_version") != 2
             or bundle.get("kind") != "capital-deployment-evidence"
             or canonical_bytes(bundle.get("policy")) != canonical_bytes(READINESS_POLICY)
             or bundle.get("identity") != identity):
         raise ValueError("Deployment evidence policy or exact registered identity differs")
     reports = bundle.get("reports")
-    names = {"candidate", "final", "protocol", "plan", "operational", "validation_rows", "final_rows", *CASES}
+    names = {"candidate", "final", "protocol", "plan", "operational", "request_journal", "validation_rows", "final_rows", *CASES}
     if not isinstance(reports, dict) or set(reports) != names:
         raise ValueError("Deployment evidence is missing required report bodies")
-    parsed = {name: unpack(reports[name], csv=name.endswith("_rows")) for name in names}
+    parsed = {name: unpack(reports[name], csv=name.endswith("_rows") or name == "request_journal") for name in names}
     for name, key in (("candidate", "candidate_report_sha256"), ("final", "final_report_sha256"),
                       ("plan", "capital_operational_plan_file_sha256"),
                       ("operational", "capital_operational_report_sha256")):
@@ -361,6 +363,9 @@ def validate_bundle(bundle: dict, tags: dict, version: str, run_id: str) -> dict
         raise ValueError("Operational plan differs from candidate training identity")
     numeric = recheck_measurement_records(plan, report, attempt_id=identity["capital_operational_attempt_id"],
                                           plan_file_sha256=identity["capital_operational_plan_file_sha256"])
+    verify_portable_journal(parsed["request_journal"].encode("utf-8"), identity["candidate_id"],
+        identity["capital_operational_attempt_id"], plan, report,
+        identity["capital_operational_plan_file_sha256"])
     recorded = _validate_completed_evidence(plan, report, reports["operational"]["sha256"],
                                             identity["capital_operational_attempt_id"],
                                             identity["capital_operational_plan_file_sha256"])
@@ -845,7 +850,7 @@ def publish_deployment_evidence(candidate_id: str, attempt_id: str, final_path: 
                 raise ValueError("Ledger-linked operational report differs")
             if recovery._report_error(report, attempt, candidate_id, plan, linked=True):
                 raise ValueError("Operational report does not match its attempt")
-            recovery.verify_completed_journal(attempt, candidate_id, plan, report)
+            recovery.verify_completed_journal(attempt, candidate_id, plan, report, require_journal=True)
             selection_path = PROJECT_ROOT / "data/candidates" / candidate_id / "candidate-report.json"
             verified = verify_candidate_for_staging(selection_path, final_path)
             final_path = verified["final_report_path"]
@@ -869,6 +874,7 @@ def publish_deployment_evidence(candidate_id: str, attempt_id: str, final_path: 
                     "validation_rows": selection_path.parent / "validation-predictions.csv",
                     "final_rows": PROJECT_ROOT / verified["final"]["evaluation_window"]["row_level_predictions"],
                     "plan": PROJECT_ROOT / attempt["plan_path"], "operational": report_path,
+                    "request_journal": report_path.with_suffix(".requests.jsonl"),
                     **prerequisite_paths,
                 }
                 bodies, resolved_paths = {}, {}
@@ -880,7 +886,7 @@ def publish_deployment_evidence(candidate_id: str, attempt_id: str, final_path: 
                         raise ValueError("Deployment evidence inputs must be regular project data files")
                     bodies[name] = _deployment_evidence_publisher_document(resolved.read_bytes())
                     resolved_paths[name] = resolved
-                bundle = {"schema_version": 1, "kind": "capital-deployment-evidence",
+                bundle = {"schema_version": 2, "kind": "capital-deployment-evidence",
                           "policy": _deployment_evidence_publisher_READINESS_POLICY, "identity": identity, "reports": bodies}
                 _deployment_evidence_publisher_validate_bundle(bundle, tags, version, registered.run_id)
                 for name, path in resolved_paths.items():

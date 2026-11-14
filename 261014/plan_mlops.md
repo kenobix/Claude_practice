@@ -545,9 +545,9 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 | 完了 | D3・Sol | T10直前：固定47原本・CSV/manifest/protocol・11 source/lock・105依存版・未消費を確認。専用環境と単一の正式消費台帳を使用。[実評価記録](../261021/docs/capital.md#capital-first-evaluation) |
 | 完了 | D3・Sol | T11：validation1,464行/final1,461行を各1 attemptで完了。同artifact・再fitなし、両精度gate合格。MAE137.392476/143.693098。両窓は消費済み、再選定へ再利用しない。運用gateはnot_evaluated、配信blocked |
 | P1 | D3・Sol | T02/T12不足case：実API1,461件/monitor1,464窓/対応復元は部分受入。[最終runtime記録](../261021/docs/capital.md#capital-operational-hold)。全22caseは実観測8領域review待ち・部分5・未実証9。実candidateで監視負例、audit503/破損ready、二版/Caddy/中断復旧、旧REAL移行、承認operation/timeout metadataを補う。現配信に適用せず合成CIを流用しない |
-| P1 | D3・Sol | 運用consumerの拒否：50+1000/エラー0/p95 84.049708msは数値条件のみ合格。別検算でjournal UTC逆行2件（41.580ms/2.169ms）が判明し受入保留。hash整合でもUTC逆行を証拠consumerが拒否する製品側の結合/負例を整備。再測定/registry証拠tag記録はせず、future拒否・時計研究保留を維持 |
-| P1 | D3・Sol | 事後不適格試行の履歴保持review：raw runner/台帳はcompletedのまま、別の保留判断を保持。現retry reviewはcompletedを拒否するため、原本を壊さない無効化/review契約が必要。別PCを含め新attemptを勝手に開始せず、台帳削除/状態改ざん/分岐で回避しない |
-| P1 | D3・Sol | 警告review：実monitorでも分布1,336/誤差234窓。最新165正解/MAE224.346232、baselineより悪い日もある。閾値/bins/recipe/消費済み窓を変更せず理由付きreviewを作る。全体精度合格だけで採用しない |
+| 実装・対象検証済み（最終CI追跡） | D3・Sol | 運用consumerのUTC拒否：共通readerで全eventのUTCを確認。hashを再結合した逆行/不正時刻をlocal recheck/recorder/archive CLIで拒否。配信bundle v2へraw journalを必須化し、remote受信/承認も検査する。実原本も940→941で拒否、原本・completed台帳不変。今回の[仕様・索引](../261021/docs/capital.md#operational-evidence-review-20261115)参照。実装commitのCI/artifact/cleanup確認までは最終CI受入としない |
+| P1 | D3・Sol | 事後不適格試行の履歴保持review：原本binding/別追記系列/無効化/競合/未来拒否/全consumer/再試行と分離する契約を設計済み。**writer・consumer結合・head最新性/保存責任の実装は残る**。raw completedと既存保留を保持、新attempt/台帳改変/自動reopenは禁止 |
+| 技術review済み・採否判断待ち | D3・Sol | 警告1,336/234窓の全母数/既存閾値/保存MAE・RMSEを独立再計算。lag24/168が分布警告源、誤差は38窓と196窓の2連続区間。最新MAE224.346232>固定閾値171.740595、PSI非警告と両立。7日窓ではbaselineに優るが暦日17/61日は劣る。原因・人のリスク受容は未確定。閾値/recipe/消費窓を変更せず説明を保存、承認へ代用しない |
 | P1（証拠後） | D3・Sol | T13b：全実証と理由付きreview/別承認が揃った後の採否。未来拒否を維持。現registry/現配信の変更は今回の範囲外 |
 | 保留 | D3・Sol | 時計調査・修復比較・独立UTC/elapsed源/全campaign。新たな採取/問い合わせ/サービス操作は再開指示まで行わない |
 | P2（上流変更時） | D2・Sol review | MLflow noload互換性：関連する上流変更がある場合だけ再検証。lock更新/警告抑制で回避しない |

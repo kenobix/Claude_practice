@@ -1,5 +1,9 @@
 # 監視・照合・運用測定の契約
 
+2026-11-15追補：journal全eventのUTC順序をconsumerで検査し、欠落/不正/逆行を拒否する。
+運用証拠の記録・配信bundle v2にはjournal原本が必要。[適用範囲・legacy・事後review・実警告の結論](capital.md#operational-evidence-review-20261115)を参照。
+raw completedや数値p95合格だけで運用受入にしない。時計研究・再測定は保留のまま。
+
 [文書一覧・統合対応表](README.md)。2026-11-15に用途別へ統合。過去の結論・未解決事項・原本hashは保持。
 
 各節の日付・「未完了」は執筆時点の記録を含みます。現在の状態は[プロジェクトREADME](../README.md)と[計画書の最新残件](../../261014/plan_mlops.md#remaining-work-latest)を優先してください。再実行用の入口は新配置へ更新し、当時の原文・コマンド・hashはGit `9479201`、work_log、review JSONに保持しています。

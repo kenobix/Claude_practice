@@ -1,0 +1,1229 @@
+{
+  "kind": "operational-consumer-utc-order-review",
+  "date_label": "2026-11-15 Asia/Tokyo; raw UTC unqualified",
+  "requested_base": "9479201babd74d2ea318c33574044098cc9d8768",
+  "actual_start": "e9e3bda0f572344d7023465bbf1f534d2eb473e3",
+  "status": "target_accepted_final_suite_and_ci_pending",
+  "implementation_commit": null,
+  "ci": null,
+  "changes": [
+    "Validate UTC format and nondecreasing order across every complete journal event.",
+    "Require durable journal for evidence recording and publishing, keep legacy numeric diagnostic only.",
+    "Deployment evidence bundle/policy v2 carries raw hash-bound journal; receivers verify independently.",
+    "Design append-only completed-attempt eligibility review without modifying raw ledger or permitting retry.",
+    "Review saved actual monitor warning counts and existing final prediction arithmetic without new selection."
+  ],
+  "actual_saved_evidence_check": {
+    "status": "rejected_as_expected",
+    "scope": "saved_actual_evidence_read_only_no_new_measurement",
+    "candidate_id": "e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b",
+    "attempt_id": "918ccaf6-d342-41aa-8ce1-e3b52f31f213",
+    "event_count": 2101,
+    "event_hash_chain": "matched",
+    "files": {
+      "261021/data/reports/20261114-product-resume/project/data/evaluations/capital-bikeshare/operational-attempts.json": "bfaf247498de0f8b9fe106611208224dded3ff338e9b8399fafe6d1b9d98fbc7",
+      "261021/data/reports/20261114-product-resume/project/data/evaluations/capital-bikeshare/operational-plans/runtime-20261114.json": "90338f930668f1b327a92212ef56485e4c7a398897a4100742cd2dbeb7413e5e",
+      "261021/data/reports/20261114-product-resume/project/data/reports/capital-bikeshare/operational-918ccaf6-d342-41aa-8ce1-e3b52f31f213.json": "1cb0fb7d6a34de11ec8b808197fd4cb0b074704a507dec0b4290188673dc61ad",
+      "261021/data/reports/20261114-product-resume/project/data/reports/capital-bikeshare/operational-918ccaf6-d342-41aa-8ce1-e3b52f31f213.requests.jsonl": "e1817aedafe30b11730231b456f7657f6c93c9bc14691c6d9dcaf59cef497509"
+    },
+    "consumers": {
+      "journal_reader": "Journal UTC order reversed at sequence 940->941",
+      "linked_recheck": "Durable request journal is incomplete or differs from the report"
+    },
+    "inspection_status": "invalid",
+    "originals_unchanged": true,
+    "raw_attempt_status": "completed",
+    "operational_gate": "not_evaluated",
+    "deployment_permission": "blocked",
+    "registry_calls": 0,
+    "requests_sent": 0,
+    "new_attempts": 0
+  },
+  "warning_review": {
+    "status": "review_required_no_approval",
+    "scope": "saved_actual_monitor_output_and_existing_final_prediction_arithmetic",
+    "not_new_evaluation_or_producer_execution": true,
+    "candidate_id": "e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b",
+    "registered_artifact_sha256": "13dbe8447e816b29ecf76c1cf4e173f679a50204ab8d9d682c113ed405810f8c",
+    "monitor_run_id": "8c969ce1-b2dc-46cd-86ee-ce87d5e63f97",
+    "window_count": 1464,
+    "distinct_predictions": 1461,
+    "error_threshold_mae": 171.7405951323998,
+    "thresholds": {
+      "minimum_label_count": 24,
+      "error_investigation_ratio": 1.25,
+      "psi_investigation_value": 0.2,
+      "window_hours": 168
+    },
+    "counts": {
+      "distribution": {
+        "insufficient_data": 23,
+        "investigate_distribution_change": 1336,
+        "no_threshold_crossing": 105
+      },
+      "quality": {
+        "insufficient_labels": 26,
+        "within_review_threshold": 1204,
+        "investigate_error_increase": 234
+      },
+      "joint": {
+        "insufficient_data / insufficient_labels": 23,
+        "investigate_distribution_change / insufficient_labels": 3,
+        "investigate_distribution_change / within_review_threshold": 1126,
+        "investigate_distribution_change / investigate_error_increase": 207,
+        "no_threshold_crossing / within_review_threshold": 78,
+        "no_threshold_crossing / investigate_error_increase": 27
+      }
+    },
+    "feature_warning_windows": {
+      "lag_24": 1032,
+      "lag_168": 1150
+    },
+    "feature_max_psi": {
+      "lag_24": 0.665503325672504,
+      "lag_168": 1.729054409975067,
+      "hour": 0.10814470414753408
+    },
+    "feature_max_missing_rate": {
+      "lag_24": 0.0,
+      "lag_168": 0.0
+    },
+    "error_warning_runs": [
+      {
+        "first_window_end": "2026-08-02 20:00:00",
+        "last_window_end": "2026-08-04 09:00:00",
+        "windows": 38
+      },
+      {
+        "first_window_end": "2026-09-22 23:00:00",
+        "last_window_end": "2026-10-01 02:00:00",
+        "windows": 196
+      }
+    ],
+    "first_error_warning": {
+      "window_end": "2026-08-02 20:00:00",
+      "scored_count": 39,
+      "mae": 184.73975426709237,
+      "baseline_mae": 338.8974358974359
+    },
+    "last_error_warning": {
+      "window_end": "2026-10-01 02:00:00",
+      "scored_count": 165,
+      "mae": 224.34623238109268,
+      "baseline_mae": 274.08484848484846
+    },
+    "worst_error_warning": {
+      "window_end": "2026-09-29 04:00:00",
+      "scored_count": 165,
+      "mae": 265.45980245488227,
+      "baseline_mae": 353.93333333333334
+    },
+    "scorable_windows_candidate_worse_than_baseline": 0,
+    "daily_baseline_comparison": [
+      {
+        "day": "2026-08-01",
+        "rows": 21,
+        "candidate_mae": 48.322690433074776,
+        "baseline_mae": 277.76190476190476,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-02",
+        "rows": 24,
+        "candidate_mae": 393.3627103845127,
+        "baseline_mae": 506.5833333333333,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-03",
+        "rows": 24,
+        "candidate_mae": 104.84669319335529,
+        "baseline_mae": 542.7083333333334,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-04",
+        "rows": 24,
+        "candidate_mae": 63.181927892500994,
+        "baseline_mae": 106.95833333333333,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-05",
+        "rows": 24,
+        "candidate_mae": 119.75734437688708,
+        "baseline_mae": 98.41666666666667,
+        "candidate_worse": true
+      },
+      {
+        "day": "2026-08-06",
+        "rows": 24,
+        "candidate_mae": 100.07409408572312,
+        "baseline_mae": 163.29166666666666,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-07",
+        "rows": 24,
+        "candidate_mae": 46.03937577758875,
+        "baseline_mae": 153.25,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-08",
+        "rows": 24,
+        "candidate_mae": 81.79574736312681,
+        "baseline_mae": 258.875,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-09",
+        "rows": 24,
+        "candidate_mae": 105.52485799544986,
+        "baseline_mae": 112.66666666666667,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-10",
+        "rows": 24,
+        "candidate_mae": 160.5555492560667,
+        "baseline_mae": 324.0,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-11",
+        "rows": 24,
+        "candidate_mae": 100.63077853658852,
+        "baseline_mae": 241.125,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-12",
+        "rows": 24,
+        "candidate_mae": 125.02496637643152,
+        "baseline_mae": 77.95833333333333,
+        "candidate_worse": true
+      },
+      {
+        "day": "2026-08-13",
+        "rows": 24,
+        "candidate_mae": 66.10898828783068,
+        "baseline_mae": 43.5,
+        "candidate_worse": true
+      },
+      {
+        "day": "2026-08-14",
+        "rows": 24,
+        "candidate_mae": 47.378862905091715,
+        "baseline_mae": 117.5,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-15",
+        "rows": 24,
+        "candidate_mae": 69.72998583243104,
+        "baseline_mae": 284.5416666666667,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-16",
+        "rows": 24,
+        "candidate_mae": 279.2144867224766,
+        "baseline_mae": 401.75,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-17",
+        "rows": 24,
+        "candidate_mae": 172.01709169917777,
+        "baseline_mae": 373.0,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-18",
+        "rows": 24,
+        "candidate_mae": 75.93660604121499,
+        "baseline_mae": 122.70833333333333,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-19",
+        "rows": 24,
+        "candidate_mae": 41.93132721886772,
+        "baseline_mae": 37.083333333333336,
+        "candidate_worse": true
+      },
+      {
+        "day": "2026-08-20",
+        "rows": 24,
+        "candidate_mae": 193.06138697764484,
+        "baseline_mae": 207.29166666666666,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-21",
+        "rows": 24,
+        "candidate_mae": 143.94585626463058,
+        "baseline_mae": 273.0,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-22",
+        "rows": 24,
+        "candidate_mae": 121.77681140951603,
+        "baseline_mae": 292.75,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-23",
+        "rows": 24,
+        "candidate_mae": 250.44485571317455,
+        "baseline_mae": 168.83333333333334,
+        "candidate_worse": true
+      },
+      {
+        "day": "2026-08-24",
+        "rows": 24,
+        "candidate_mae": 85.02852543853986,
+        "baseline_mae": 401.75,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-25",
+        "rows": 24,
+        "candidate_mae": 104.01825547427488,
+        "baseline_mae": 128.875,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-26",
+        "rows": 24,
+        "candidate_mae": 68.47074097562295,
+        "baseline_mae": 42.041666666666664,
+        "candidate_worse": true
+      },
+      {
+        "day": "2026-08-27",
+        "rows": 24,
+        "candidate_mae": 81.31614170089817,
+        "baseline_mae": 43.541666666666664,
+        "candidate_worse": true
+      },
+      {
+        "day": "2026-08-28",
+        "rows": 24,
+        "candidate_mae": 86.80950914585814,
+        "baseline_mae": 163.75,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-29",
+        "rows": 24,
+        "candidate_mae": 158.0215478928408,
+        "baseline_mae": 326.5833333333333,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-30",
+        "rows": 24,
+        "candidate_mae": 123.45422109486101,
+        "baseline_mae": 214.54166666666666,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-08-31",
+        "rows": 24,
+        "candidate_mae": 95.5168953756646,
+        "baseline_mae": 486.4583333333333,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-01",
+        "rows": 24,
+        "candidate_mae": 89.51242836988412,
+        "baseline_mae": 118.91666666666667,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-02",
+        "rows": 24,
+        "candidate_mae": 87.0794979641738,
+        "baseline_mae": 84.29166666666667,
+        "candidate_worse": true
+      },
+      {
+        "day": "2026-09-03",
+        "rows": 24,
+        "candidate_mae": 68.649314825756,
+        "baseline_mae": 91.95833333333333,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-04",
+        "rows": 24,
+        "candidate_mae": 178.04213833821518,
+        "baseline_mae": 282.5416666666667,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-05",
+        "rows": 24,
+        "candidate_mae": 91.84988912302794,
+        "baseline_mae": 234.25,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-06",
+        "rows": 24,
+        "candidate_mae": 133.82703456151313,
+        "baseline_mae": 84.79166666666667,
+        "candidate_worse": true
+      },
+      {
+        "day": "2026-09-07",
+        "rows": 24,
+        "candidate_mae": 342.07804911408726,
+        "baseline_mae": 141.625,
+        "candidate_worse": true
+      },
+      {
+        "day": "2026-09-08",
+        "rows": 24,
+        "candidate_mae": 142.2817392384578,
+        "baseline_mae": 440.3333333333333,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-09",
+        "rows": 24,
+        "candidate_mae": 106.02608022989847,
+        "baseline_mae": 80.04166666666667,
+        "candidate_worse": true
+      },
+      {
+        "day": "2026-09-10",
+        "rows": 24,
+        "candidate_mae": 101.74438414087653,
+        "baseline_mae": 40.791666666666664,
+        "candidate_worse": true
+      },
+      {
+        "day": "2026-09-11",
+        "rows": 24,
+        "candidate_mae": 165.27604741720162,
+        "baseline_mae": 233.79166666666666,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-12",
+        "rows": 24,
+        "candidate_mae": 95.8530779415276,
+        "baseline_mae": 328.9583333333333,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-13",
+        "rows": 24,
+        "candidate_mae": 105.36416233566469,
+        "baseline_mae": 165.29166666666666,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-14",
+        "rows": 24,
+        "candidate_mae": 309.2900064209505,
+        "baseline_mae": 524.75,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-15",
+        "rows": 24,
+        "candidate_mae": 90.94642890510693,
+        "baseline_mae": 100.58333333333333,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-16",
+        "rows": 24,
+        "candidate_mae": 94.19465370660016,
+        "baseline_mae": 35.166666666666664,
+        "candidate_worse": true
+      },
+      {
+        "day": "2026-09-17",
+        "rows": 24,
+        "candidate_mae": 54.40969505080295,
+        "baseline_mae": 82.125,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-18",
+        "rows": 24,
+        "candidate_mae": 94.38268433608435,
+        "baseline_mae": 154.20833333333334,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-19",
+        "rows": 24,
+        "candidate_mae": 153.8509427900287,
+        "baseline_mae": 375.3333333333333,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-20",
+        "rows": 24,
+        "candidate_mae": 117.46199379398512,
+        "baseline_mae": 299.3333333333333,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-21",
+        "rows": 24,
+        "candidate_mae": 261.6658567730672,
+        "baseline_mae": 432.7083333333333,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-22",
+        "rows": 24,
+        "candidate_mae": 482.51071262480974,
+        "baseline_mae": 307.7916666666667,
+        "candidate_worse": true
+      },
+      {
+        "day": "2026-09-23",
+        "rows": 24,
+        "candidate_mae": 129.75105239407276,
+        "baseline_mae": 432.5833333333333,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-24",
+        "rows": 24,
+        "candidate_mae": 130.15664242224835,
+        "baseline_mae": 165.41666666666666,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-25",
+        "rows": 24,
+        "candidate_mae": 129.64221107736665,
+        "baseline_mae": 171.125,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-26",
+        "rows": 24,
+        "candidate_mae": 347.4573455967675,
+        "baseline_mae": 623.125,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-27",
+        "rows": 24,
+        "candidate_mae": 330.66761477233973,
+        "baseline_mae": 241.58333333333334,
+        "candidate_worse": true
+      },
+      {
+        "day": "2026-09-28",
+        "rows": 24,
+        "candidate_mae": 277.2543270110927,
+        "baseline_mae": 498.125,
+        "candidate_worse": false
+      },
+      {
+        "day": "2026-09-29",
+        "rows": 24,
+        "candidate_mae": 202.5484573043751,
+        "baseline_mae": 141.16666666666666,
+        "candidate_worse": true
+      },
+      {
+        "day": "2026-09-30",
+        "rows": 24,
+        "candidate_mae": 126.2843488285555,
+        "baseline_mae": 50.375,
+        "candidate_worse": true
+      }
+    ],
+    "latest": {
+      "window_end": "2026-10-01 02:00:00",
+      "window_start": "2026-09-24 02:00:00",
+      "prediction_count": 165,
+      "scored_count": 165,
+      "label_coverage": 1.0,
+      "mae": 224.34623238109265,
+      "rmse": 349.3506119057435,
+      "quality_status": "investigate_error_increase",
+      "psi": {
+        "lag_24": 0.1296665693882536,
+        "lag_168": 0.1701780156080062,
+        "hour": 0.0019335342190930247
+      },
+      "feature_missing_rates": {
+        "lag_24": 0.0,
+        "lag_168": 0.0
+      },
+      "distribution_status": "no_threshold_crossing",
+      "psi_algorithm": "psi-v2-constant-bins",
+      "psi_details": {
+        "lag_24": {
+          "algorithm": "psi-v2-constant-bins",
+          "reference_sha256": "42310c6a3e37d4a02e8b70696de55a8aba771194785b25772dfd0fdf9916d870",
+          "reference_status": "ready",
+          "reference_input_counts": {
+            "finite": 29888,
+            "missing": 31,
+            "nonfinite": 0,
+            "total": 29919
+          },
+          "current_input_counts": {
+            "total": 165,
+            "finite": 165,
+            "missing": 0,
+            "nonfinite": 0
+          },
+          "minimum_current_count": 24,
+          "status": "ready",
+          "psi": 0.1296665693882536,
+          "current_bin_counts": [
+            10,
+            12,
+            14,
+            11,
+            16,
+            10,
+            17,
+            24,
+            23,
+            28
+          ]
+        },
+        "lag_168": {
+          "algorithm": "psi-v2-constant-bins",
+          "reference_sha256": "b52f8ac2551915821a999f9be74217634821e3384681308608b6924316892e54",
+          "reference_status": "ready",
+          "reference_input_counts": {
+            "finite": 29744,
+            "missing": 175,
+            "nonfinite": 0,
+            "total": 29919
+          },
+          "current_input_counts": {
+            "total": 165,
+            "finite": 165,
+            "missing": 0,
+            "nonfinite": 0
+          },
+          "minimum_current_count": 24,
+          "status": "ready",
+          "psi": 0.1701780156080062,
+          "current_bin_counts": [
+            11,
+            13,
+            11,
+            9,
+            16,
+            12,
+            17,
+            18,
+            22,
+            36
+          ]
+        },
+        "hour": {
+          "algorithm": "psi-v2-constant-bins",
+          "reference_sha256": "69f6b290143262543f22d8a53dbd3c4c12fe0e247fad698b0192ac3a2b23feb8",
+          "reference_status": "ready",
+          "reference_input_counts": {
+            "finite": 29919,
+            "missing": 0,
+            "nonfinite": 0,
+            "total": 29919
+          },
+          "current_input_counts": {
+            "total": 165,
+            "finite": 165,
+            "missing": 0,
+            "nonfinite": 0
+          },
+          "minimum_current_count": 24,
+          "status": "ready",
+          "psi": 0.0019335342190930247,
+          "current_bin_counts": [
+            12,
+            13,
+            21,
+            14,
+            21,
+            14,
+            14,
+            21,
+            14,
+            21
+          ]
+        }
+      },
+      "training_reference_sha256": "f3cb436c3d002fef5427e8ddfd6138db0031f96cd05e339605b50c5377cac258"
+    },
+    "input_files": {
+      "data/reports/20261114-capital-runtime/monitor.csv": {
+        "sha256": "5f6cd23538b0ebc802592f1c54a2f4fbbbe4b19ed1f632c7035191edbf4b54e3",
+        "bytes": 2718138
+      },
+      "data/reports/20261114-capital-runtime/monitor.json": {
+        "sha256": "fccf76afab52a7a1419d241bf70e62f314dd77883017f69c06ab09dadc2fd5d2",
+        "bytes": 6311
+      },
+      "data/reports/20261114-capital-runtime/monitor.complete.json": {
+        "sha256": "d3e916d2795021d1d816ffb452cb1565ad5f64c73c5aec232e70e10d294543b5",
+        "bytes": 379
+      },
+      "data/reports/20261114-capital-runtime/monitor-comparison-result.json": {
+        "sha256": "bdda014dc057d372fa4fe42b3cb4ba46dd11743af1be40c815f6890533660948",
+        "bytes": 3684
+      },
+      "data/reports/20261114-product-resume/project/data/candidates/e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b/monitor-reference.json": {
+        "sha256": "81e2d05934105a2cd5fcf21d5ba8f2f7fb95807ee5b4aeadbe83dcc559f589e6",
+        "bytes": 3299
+      },
+      "data/reports/20261114-product-resume/project/data/reports/capital-bikeshare/final-evaluation.predictions.csv": {
+        "sha256": "fe57cbf5f74624843c10cd9d6775910537fe2a656cd87ea4f5eac6bafe98e818",
+        "bytes": 98555
+      }
+    },
+    "originals_unchanged": true,
+    "operational_gate": "not_evaluated",
+    "deployment_permission": "blocked",
+    "limitations": [
+      "Rolling windows overlap; warning counts are not independent incidents or labels.",
+      "Saved API/offline parity is inherited, not rerun. DB is not queried by this review.",
+      "PSI is a distribution signal, not causal proof of model deterioration.",
+      "Final labels are already consumed; no training, reselection, threshold or bin changes permitted."
+    ]
+  },
+  "original_file_count_verified_unchanged": 194,
+  "protected_original_manifest": {
+    "path": "data/reports/20261115-operational-consumer/originals.json",
+    "sha256": "90cd2e2bc7231aa25c68f10c995f16b8b270d16badc2f59e4f7bb596689d4e29"
+  },
+  "source_files": [
+    {
+      "path": "src/bike_mlops/deployment.py",
+      "sha256": "d9d43027a6c6610e9af0d89c08519dbdbcb259c038d9aebf717173753b0b081c"
+    },
+    {
+      "path": "src/bike_mlops/operational.py",
+      "sha256": "6c98950f41a3025b30f3897a08df9a1606b1e45ef92d89287c552a38ba0c5918"
+    },
+    {
+      "path": "src/bike_mlops/operational_validation.py",
+      "sha256": "77c2b095dfa9e849cf7235ba0c1b03e8051695795e234c8f7b6f7b5a708a9f0d"
+    },
+    {
+      "path": "tests/support.py",
+      "sha256": "dde4036d8425f1274a945d81e736561fcd2bca980a7077f712c9700f994fd6e5"
+    },
+    {
+      "path": "tests/test_deployment.py",
+      "sha256": "0ec469e6168ca7ae3baa71c61af624be85b189116c29a4c31a9803f9a5f42d58"
+    },
+    {
+      "path": "tests/test_measurement.py",
+      "sha256": "e80d140aa5c3ab2433e5fb8cfcb68de294832e569463bd7d4ca444501645bf40"
+    },
+    {
+      "path": "tests/test_operational.py",
+      "sha256": "ca11cc5d6f263e0b8031967c6000185c5d4c4d96d0c4df25782791e2bfbbed5d"
+    }
+  ],
+  "attempts": [
+    {
+      "receipt": "data/reports/20261115-operational-consumer/actual-rejection-v1.json",
+      "receipt_sha256": "be24a06377c30a3c302abe317830742965ea945e8df7ed41cb9de7a22b502748",
+      "command": [
+        "env",
+        "PYTHONPATH=src",
+        ".venv/bin/python",
+        "data/reports/20261115-operational-consumer/check_actual.py"
+      ],
+      "cwd": "261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T20:54:06.068298+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T20:54:10.762647+00:00",
+      "monotonic_start_ns": 5635621890160,
+      "monotonic_end_ns": 5640316234836,
+      "log": "actual-rejection-v1.log",
+      "log_sha256": "2e75c9726801c96dd0b8cc1a0a4b3f46390f4f7b2f1672e3227bb8bd9ff11a7b"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/commit-implementation-v2.json",
+      "receipt_sha256": "dd019d08ee3efac3c2fee3ceb2b418af90df321279cb5049d438e7707b6491c2",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-operational-consumer/commit_implementation.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T21:05:00.000031+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T21:05:00.365204+00:00",
+      "monotonic_start_ns": 6289553610438,
+      "monotonic_end_ns": 6289918781695,
+      "log": "commit-implementation-v2.log",
+      "log_sha256": "6058a357b34b7811e365dfd8d52437d15681caddb90c1de0058b8753b57357b9"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/consumer-target-v4.json",
+      "receipt_sha256": "2f248b9c05557099ae4d2d5ab85645c936543acc57559c9ca77c61219259a4d5",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "PYTHONPATH=src:tests",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "test_operational.RequestJournalTests",
+        "test_measurement.MeasurementRecheckTests",
+        "test_measurement.CapitalMeasurementEvidenceTests",
+        "test_deployment.CompleteDeploymentEvidenceTests",
+        "test_deployment.DeploymentEvidencePublisherTests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T20:58:25.527115+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T20:59:23.639939+00:00",
+      "monotonic_start_ns": 5895080691178,
+      "monotonic_end_ns": 5953193511810,
+      "log": "consumer-target-v4.log",
+      "log_sha256": "9db4e34dc9cdddb3fed67d352babf3d0c5ab813d23b34e6dae326b080d896ffb"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/deployment-target-v1.json",
+      "receipt_sha256": "7b4e0eec4feb0337779ad0f586a2be3c834311bafe2ad1ac7546af37d82c60ee",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "PYTHONPATH=src:tests",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "test_deployment.CompleteDeploymentEvidenceTests",
+        "test_deployment.DeploymentEvidencePublisherTests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T20:57:32.393447+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T20:57:50.500909+00:00",
+      "monotonic_start_ns": 5841947026864,
+      "monotonic_end_ns": 5860054481896,
+      "log": "deployment-target-v1.log",
+      "log_sha256": "6add3d035ccce975fd1659750bfbfe34a4346ebaec552a8beb2a7fc9266656f0"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/diff-check-v1.json",
+      "receipt_sha256": "4e2776753b16dbc0981d43fb42c5b70acf0b7370b191b86cbcd810315986b63d",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "cwd": "261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T21:01:47.921689+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T21:01:47.950170+00:00",
+      "monotonic_start_ns": 6097475269212,
+      "monotonic_end_ns": 6097503745583,
+      "log": "diff-check-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/full-suite-v1.json",
+      "receipt_sha256": "2f1b9e679ccf930b45096d170a8d0809549dd0e25e3dfaf18adff8ed93249046",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T20:53:34.791679+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T21:01:53.200522+00:00",
+      "monotonic_start_ns": 5604345256727,
+      "monotonic_end_ns": 6102754162474,
+      "log": "full-suite-v1.log",
+      "log_sha256": "9294259b404bd80d54a5d6c2ffa5a791e1b329b25b866c6208f106e7f3a0b92b"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/layout-links-v1.json",
+      "receipt_sha256": "3cd16069af72934880bc19ec347ef50d23dc972930654c0323ad052db40e6ed9",
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-file-consolidation/check_layout.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T21:03:56.417878+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T21:03:58.330022+00:00",
+      "monotonic_start_ns": 6225971462981,
+      "monotonic_end_ns": 6227883595715,
+      "log": "layout-links-v1.log",
+      "log_sha256": "2d92abc9996e076532e3c6f81fd4146af2bec8f8ee5e1ef77c97ea6e4c78e532"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/static-v1.json",
+      "receipt_sha256": "1b9f63e0e1fafa5cd32d3017872bc28bc211de85a0ac5381aff464617286b033",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "src",
+        "tests",
+        "scripts"
+      ],
+      "cwd": "261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T21:01:47.766946+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T21:01:47.856166+00:00",
+      "monotonic_start_ns": 6097320532657,
+      "monotonic_end_ns": 6097409742942,
+      "log": "static-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/target-v1.json",
+      "receipt_sha256": "773c8d1be066cd31700e2483d6865ce400feee8103729e9a35edaeb1b9e6835e",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "PYTHONPATH=261021/src:261021/tests",
+        "261021/.venv/bin/python",
+        "-m",
+        "unittest",
+        "test_operational.RequestJournalTests",
+        "test_measurement.MeasurementRecheckTests",
+        "test_measurement.CapitalMeasurementEvidenceTests",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T20:51:48.128317+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T20:52:20.980884+00:00",
+      "monotonic_start_ns": 5497681900090,
+      "monotonic_end_ns": 5530534461182,
+      "log": "target-v1.log",
+      "log_sha256": "0d169d9ce9f739bcc02fd33502fff86d0244b80a4671f057f6f902e46484f99d"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/target-v2.json",
+      "receipt_sha256": "22310ed48f874be75b85b10b5b2496cc55047ce57e8b3322d69c378f6f154021",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "PYTHONPATH=261021/src:261021/tests",
+        "261021/.venv/bin/python",
+        "-m",
+        "unittest",
+        "test_operational.RequestJournalTests",
+        "test_measurement.MeasurementRecheckTests",
+        "test_measurement.CapitalMeasurementEvidenceTests",
+        "-v"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-14T20:52:34.115366+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T20:53:15.074382+00:00",
+      "monotonic_start_ns": 5543668950437,
+      "monotonic_end_ns": 5584627962226,
+      "log": "target-v2.log",
+      "log_sha256": "9326b70d36096a20cd7f04c4955c3c6f3bf5ab15f3a2128b5c4aa25613e60b9d"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/target-v3.json",
+      "receipt_sha256": "fcdcbe87e83493ea6f7a96f795e55a57dfde108cd6018c8ee8ea004135b49f5d",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "PYTHONPATH=src:tests",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "test_operational.RequestJournalTests",
+        "test_measurement.MeasurementRecheckTests",
+        "test_measurement.CapitalMeasurementEvidenceTests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T20:53:26.074763+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T20:54:18.377343+00:00",
+      "monotonic_start_ns": 5595628353712,
+      "monotonic_end_ns": 5647930963446,
+      "log": "target-v3.log",
+      "log_sha256": "4b5b5ef76ccfd372920230dc318ed2e7b01f0f766fbad607676fe8f16e11d442"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/warning-baseline-read-v1.json",
+      "receipt_sha256": "2dd12f5fefb6bbe24ab54cc8175ccc6fdb2ca003bb616bb857994a670298975b",
+      "command": [
+        "python3",
+        "-"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T20:52:54.818353+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T20:52:54.926153+00:00",
+      "monotonic_start_ns": 5564371938310,
+      "monotonic_end_ns": 5564479734194,
+      "log": "warning-baseline-read-v1.log",
+      "log_sha256": "a3b161f5146344973bb97861ba88900a6352a596aa0fc957b8c3d1feee0f4a80"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/warning-input-read-v1.json",
+      "receipt_sha256": "c29e9b82596040d37ff1f7b0f05be6dee234efab4367c807da26f2dbb481f2af",
+      "command": [
+        "python3",
+        "-"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T20:51:57.777963+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T20:51:57.879720+00:00",
+      "monotonic_start_ns": 5507331539045,
+      "monotonic_end_ns": 5507433290947,
+      "log": "warning-input-read-v1.log",
+      "log_sha256": "ac65a76a30d10fa905a91a86d71fff73331ceb01335ca6d5a3bfd3b6ab95949a"
+    },
+    {
+      "receipt": "data/reports/20261115-operational-consumer/warning-review-v1.json",
+      "receipt_sha256": "a34216eb0a55204e4433a12a33aa55bc410bc52376d0b68de713b03240f835d2",
+      "command": [
+        ".venv/bin/python",
+        "data/reports/20261115-operational-consumer/review_warnings.py"
+      ],
+      "cwd": "261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-14T20:55:30.065623+00:00",
+      "ended_at_utc_unqualified": "2026-11-14T20:55:30.638429+00:00",
+      "monotonic_start_ns": 5719619234725,
+      "monotonic_end_ns": 5720192163906,
+      "log": "warning-review-v1.log",
+      "log_sha256": "a647362f997059ebd5ae1c13265c871d2336e6ffde616fdf652ecfdc5f913806"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "data/reports/20261115-operational-consumer/actual-rejection-v1.json",
+      "bytes": 547,
+      "sha256": "be24a06377c30a3c302abe317830742965ea945e8df7ed41cb9de7a22b502748"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/actual-rejection-v1.log",
+      "bytes": 1712,
+      "sha256": "2e75c9726801c96dd0b8cc1a0a4b3f46390f4f7b2f1672e3227bb8bd9ff11a7b"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/actual-rejection.json",
+      "bytes": 1712,
+      "sha256": "2e75c9726801c96dd0b8cc1a0a4b3f46390f4f7b2f1672e3227bb8bd9ff11a7b"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/build_index.py",
+      "bytes": 5226,
+      "sha256": "36ba70cb060bf299a67c8d6aa550c72d3c9757c8031914431e26a3370fd61414"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/check_actual.py",
+      "bytes": 3358,
+      "sha256": "64167be3910e1ce030eeb2306daf9f453291fca6ed301496f1b12e4b017742bd"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/commit-implementation-v2.json",
+      "bytes": 519,
+      "sha256": "dd019d08ee3efac3c2fee3ceb2b418af90df321279cb5049d438e7707b6491c2"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/commit-implementation-v2.log",
+      "bytes": 859,
+      "sha256": "6058a357b34b7811e365dfd8d52437d15681caddb90c1de0058b8753b57357b9"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/commit_implementation.py",
+      "bytes": 1636,
+      "sha256": "57c740684040b8443a7db0d14b6d45696274aa18a8ff60970d416091734f27b4"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/commit_implementation_v3.py",
+      "bytes": 1669,
+      "sha256": "01dc86b260f413a05cc1193d4a230d087509d508692695b036e4ee8ae6895873"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/consumer-target-v4.json",
+      "bytes": 816,
+      "sha256": "2f248b9c05557099ae4d2d5ab85645c936543acc57559c9ca77c61219259a4d5"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/consumer-target-v4.log",
+      "bytes": 12525,
+      "sha256": "9db4e34dc9cdddb3fed67d352babf3d0c5ab813d23b34e6dae326b080d896ffb"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/deployment-target-v1.json",
+      "bytes": 670,
+      "sha256": "7b4e0eec4feb0337779ad0f586a2be3c834311bafe2ad1ac7546af37d82c60ee"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/deployment-target-v1.log",
+      "bytes": 5171,
+      "sha256": "6add3d035ccce975fd1659750bfbfe34a4346ebaec552a8beb2a7fc9266656f0"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/diff-check-v1.json",
+      "bytes": 456,
+      "sha256": "4e2776753b16dbc0981d43fb42c5b70acf0b7370b191b86cbcd810315986b63d"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/diff-check-v1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/full-suite-v1.json",
+      "bytes": 563,
+      "sha256": "2f1b9e679ccf930b45096d170a8d0809549dd0e25e3dfaf18adff8ed93249046"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/full-suite-v1.log",
+      "bytes": 141684,
+      "sha256": "9294259b404bd80d54a5d6c2ffa5a791e1b329b25b866c6208f106e7f3a0b92b"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/layout-links-v1.json",
+      "bytes": 499,
+      "sha256": "3cd16069af72934880bc19ec347ef50d23dc972930654c0323ad052db40e6ed9"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/layout-links-v1.log",
+      "bytes": 308,
+      "sha256": "2d92abc9996e076532e3c6f81fd4146af2bec8f8ee5e1ef77c97ea6e4c78e532"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/originals.json",
+      "bytes": 37573,
+      "sha256": "90cd2e2bc7231aa25c68f10c995f16b8b270d16badc2f59e4f7bb596689d4e29"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/review_warnings.py",
+      "bytes": 7982,
+      "sha256": "fd114166555f5f7a5a5d8354070d299f693f26fc11c88f92609b20c14ae6c080"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/run.py",
+      "bytes": 1029,
+      "sha256": "950bdd279a849a257fbfecf196473b79c5768abcf41cd4f14d1de4613fa6919c"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/static-v1.json",
+      "bytes": 515,
+      "sha256": "1b9f63e0e1fafa5cd32d3017872bc28bc211de85a0ac5381aff464617286b033"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/static-v1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/target-v1.json",
+      "bytes": 710,
+      "sha256": "773c8d1be066cd31700e2483d6865ce400feee8103729e9a35edaeb1b9e6835e"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/target-v1.log",
+      "bytes": 13786,
+      "sha256": "0d169d9ce9f739bcc02fd33502fff86d0244b80a4671f057f6f902e46484f99d"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/target-v2.json",
+      "bytes": 710,
+      "sha256": "22310ed48f874be75b85b10b5b2496cc55047ce57e8b3322d69c378f6f154021"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/target-v2.log",
+      "bytes": 9863,
+      "sha256": "9326b70d36096a20cd7f04c4955c3c6f3bf5ab15f3a2128b5c4aa25613e60b9d"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/target-v3.json",
+      "bytes": 696,
+      "sha256": "fcdcbe87e83493ea6f7a96f795e55a57dfde108cd6018c8ee8ea004135b49f5d"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/target-v3.log",
+      "bytes": 8296,
+      "sha256": "4b5b5ef76ccfd372920230dc318ed2e7b01f0f766fbad607676fe8f16e11d442"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/warning-baseline-read-v1.json",
+      "bytes": 446,
+      "sha256": "2dd12f5fefb6bbe24ab54cc8175ccc6fdb2ca003bb616bb857994a670298975b"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/warning-baseline-read-v1.log",
+      "bytes": 1466,
+      "sha256": "a3b161f5146344973bb97861ba88900a6352a596aa0fc957b8c3d1feee0f4a80"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/warning-input-read-v1.json",
+      "bytes": 443,
+      "sha256": "c29e9b82596040d37ff1f7b0f05be6dee234efab4367c807da26f2dbb481f2af"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/warning-input-read-v1.log",
+      "bytes": 10003,
+      "sha256": "ac65a76a30d10fa905a91a86d71fff73331ceb01335ca6d5a3bfd3b6ab95949a"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/warning-review-v1.json",
+      "bytes": 515,
+      "sha256": "a34216eb0a55204e4433a12a33aa55bc410bc52376d0b68de713b03240f835d2"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/warning-review-v1.log",
+      "bytes": 5238,
+      "sha256": "a647362f997059ebd5ae1c13265c871d2336e6ffde616fdf652ecfdc5f913806"
+    },
+    {
+      "path": "data/reports/20261115-operational-consumer/warning-review.json",
+      "bytes": 17633,
+      "sha256": "93dc7803197bb44327865b58d56d97df7b708fdfbbe684a084c8c3320815efa0"
+    }
+  ],
+  "failures_and_limits": [
+    "target-v1: 5 errors: loopback socket sandbox refusal and 2 wrong-cwd scripts imports. Preserved.",
+    "target-v2: sandbox lifted but wrong-cwd caused 2 scripts import errors. Corrected cwd target-v3 passes45.",
+    "deployment-target-v1: 1 assertion expected numeric p95 rejection; new journal guard fired first. Numeric recheck precedes journal check in final; both remain mandatory.",
+    "consumer-target-v4: all67 target tests passed with disposable fixtures.",
+    "full-suite-v1 was started before portable v2 source edits; intermediate, never final acceptance.",
+    "An unmatched Markdown apply_patch failed without changing a file; corrected against actual heading.",
+    "Docker WSL integration unavailable; no actual-candidate HTTP/PG/Caddy/migration fault attempts started.",
+    "No invalidation writer, sidecar issuance, registry tag writes, approval, retry/reopen or measurement.",
+    "No OS/clock/service/task/log/resync, future-check/threshold/bin/recipe or consumed-window changes.",
+    "Synthetic CI does not prove real-candidate acceptance, production SLO or clock qualification."
+  ],
+  "remaining": [
+    "Review ledger/head storage and freshness responsibility; implement append-only invalidation with all consumers and negative tests.",
+    "Dedicated real-candidate monitor negatives, audit503, corrupt HTTP readiness, two-version/Caddy/interrupted recovery, legacy REAL migration and metadata cases.",
+    "Human risk review of distribution/error warnings and independent final approval after all valid evidence exists.",
+    "No new operational attempt until separate explicit authorization and implementation of reviewed retry contract."
+  ]
+}

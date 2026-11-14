@@ -18,7 +18,7 @@ import pandas as pd
 
 from bike_mlops.deployment import CASES, READINESS_POLICY, READINESS_POLICY_SHA256, canonical_bytes, document, evidence_identity, prerequisite_identity, reference_tags
 from bike_mlops.evaluation import candidate_identity
-from bike_mlops.operational import PLAN_POLICY, _digest
+from bike_mlops.operational import PLAN_POLICY, JOURNAL_POLICY, _digest, _hash, request_schedule
 from bike_mlops.operational_validation import _validate_completed_evidence
 from bike_mlops.evaluation import BOOTSTRAP_QUALITY_GATE_POLICY as POLICY, BOOTSTRAP_QUALITY_GATE_POLICY_SHA256 as POLICY_SHA, BOOTSTRAP_SELECTION_RULE, protocol_sha256
 from bike_mlops.evaluation import baseline_accuracy_gate
@@ -153,12 +153,28 @@ def _fixture():
         "snapshot": {"status": "verified", "observation_count": 744},
         "deployment_permission": {"status": "blocked"}, "resource_context": resources(), "measurements": measurements,
     }
+    events = []
+    def append_event(value):
+        body = {**value, "sequence": len(events), "previous_sha256": events[-1]["event_sha256"] if events else None,
+                "recorded_at_utc": "2024-02-01T00:00:00+00:00"}
+        events.append({**body, "event_sha256": _hash(body)})
+    schedule = request_schedule(attempt, plan)
+    append_event({"event": "schedule", "schema_version": 1, "attempt_id": attempt, "candidate_id": cid,
+                  "plan_sha256": plan["plan_sha256"], "plan_file_sha256": _sha(plan_bytes),
+                  "policy": JOURNAL_POLICY, "requests": schedule})
+    for row in measurements:
+        append_event({"event": "sending", "request_id": row["request_id"]})
+        append_event({"event": "response_verified", "request_id": row["request_id"],
+                      "http_status": 200, "latency_ms": row["latency_ms"], "error_type": None})
+    journal_bytes = b"".join(canonical_bytes(event) for event in events)
+    report["request_journal"] = {"file_name": f"operational-{attempt}.requests.jsonl", "sha256": _sha(journal_bytes),
+                                 "events": len(events), "write_and_fsync_ms": 0, "policy_id": JOURNAL_POLICY["policy_id"]}
     report_bytes = canonical_bytes(report)
     tags.update(_validate_completed_evidence(plan, report, _sha(report_bytes), attempt, _sha(plan_bytes)))
     full_identity = evidence_identity(tags, "2", "synthetic-run")
     documents = {name: document(body) for name, body in {
         "candidate": selection_bytes, "final": final_bytes, "protocol": protocol_bytes, "plan": plan_bytes,
-        "operational": report_bytes, "validation_rows": validation_rows, "final_rows": final_rows,
+        "operational": report_bytes, "request_journal": journal_bytes, "validation_rows": validation_rows, "final_rows": final_rows,
     }.items()}
     for category, cases in CASES.items():
         checks = {case_id: document(canonical_bytes({
@@ -172,7 +188,7 @@ def _fixture():
             "started_at_utc": "2024-02-01T00:00:00+00:00", "completed_at_utc": "2024-02-01T01:00:00+00:00",
             "checks": checks,
         }))
-    bundle = {"schema_version": 1, "kind": "capital-deployment-evidence", "policy": READINESS_POLICY,
+    bundle = {"schema_version": 2, "kind": "capital-deployment-evidence", "policy": READINESS_POLICY,
               "identity": full_identity, "reports": documents}
     body = canonical_bytes(bundle)
     tags.update(reference_tags(body, "synthetic-run"))

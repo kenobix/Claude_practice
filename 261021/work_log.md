@@ -4751,3 +4751,66 @@ artifact `14130222048`のZIP SHA `8cd735bfdbb616c72c63f3653f3b65cc464dd2daad9dea
 T07a normal/TERMのsummaryでcurrent Dockerfile build・protected ID不変・残resourceなし・cleanupを確認し、system対応復元/破損skops拒否/workspace回収、snapshot/PG monitor/HTTP等の後片付けも照合した。検算は`final-ci-artifact-verification`/exit 0、原本と結果hashは[検証索引](docs/reviews/20261115-file-consolidation-checks.json)へ保存した。初回CI失敗とlocal Docker未統合の試行を削除・成功化していない。
 
 文書9本・製品Python18本・tests12本・scripts7本の整理と参照更新を完了する。今回は製品の残課題や実運用の保留は進めていない。最後は文書/計画/検証索引だけの記録commitとし、その自動CIを先行ec7f50eの受入と混同しない。再fit・実測再試行・実DB/registry/配信・OS/時計設定の変更はない。
+# 2026-11-15：UTC逆行journalのconsumer拒否・completed事後review設計・実警告review
+
+依頼基点9479201、実開始HEAD e9e3bda。aa8a61f/ec7f50e/e9e3bdaのファイル統合を保持し、
+旧capital-operational-hold/runtime-handoffはdocs/capital.md内の同名anchorで読んだ。
+開始時git statusは無関係な260701/charts、260701/logs、260905画像の未追跡3pathだけ。これらは対象外。
+時計研究・OS/サービス操作・現DB/registry/配信・消費済み窓・再fit・再測定は今回も対象外。
+
+## 検出・実装
+
+- 旧readerはevent hash/sequence/要求順だけを検査し、recorded_at_utcを検証していなかった。
+  operational.pyの共通readerへ全complete eventのUTC形式/実在日時/非逆行の検査を追加。
+  同時刻は許容、1µs逆行も拒否。unknown outcome/要求間/torn prefixも検査。writerの原本生成や既存policyは書換えない。
+- linked recheck/recorder/publisher/T16 verifierの共通経路で拒否。
+  さらにdeployment.validate_bundleはjournalを持たず数値しか再検算しない抜け道があったため、
+  bundle/policy v2へraw request_journalを必須化。publisherが原本を同梱し、remote consumerも全eventを検査。
+  v1は現行承認として拒否、既存registryは変更しない。legacyの数値診断は維持、recorder/publisherではlegacyを拒否。
+- 新規7testと既存legacy test補強。hashをjournal→report→ledger/manifest/remote bundle identityまで再結合して、
+  local/remote/別CLI processで拒否し、タグ書込/client構築が起きないことを確認。
+- completed事後不適格の別append-only review契約をdocs/capital.mdへ設計。
+  原本binding、系列hash、競合/破損/future拒否、head最新性、全consumer、retryと分離した契約。
+  writer/sidecarの発行/台帳reopen/新attemptは未実装・未実行で、残件として保持。
+
+## 実原本の読取照合と警告review
+
+全コマンド/exit/UTC（未資格）/MONOTONIC/log SHAはignoredの
+`data/reports/20261115-operational-consumer/run.py`のlabel別receiptへ保存。
+開始時に原本194fileのbytes/SHAをoriginals.jsonへ固定し、索引生成時にも全件不変を確認。
+
+- `PYTHONPATH=src .venv/bin/python data/reports/20261115-operational-consumer/check_actual.py`：
+  実2,101eventのhash連鎖/固定plan/report/ledger bindingが一致しながら、新readerが940→941でValueError。
+  read-only linked recheckも拒否、inspectionはinvalid。原本/plan/ledger不変、network/tag/要求/new attempt=0。
+  既知1723→1724の第2違反も過去hold原本に保持。時計の原因を調査したり過去T03へ帰属させたりしない。
+- `.venv/bin/python data/reports/20261115-operational-consumer/review_warnings.py`：
+  monitor CSV/JSON/marker、candidate training referenceのSHAを照合。
+  保存済みfinal1,461予測行から、1,464窓の予測/到着済み正解数/MAE/RMSE/既存閾値による状態を独立再計算。
+  これは既存予測の説明用算術で、新採点窓/再選定/新producer実行ではない。実DBは照会していない。
+  分布1,336窓（lag24で1,032・lag168で1,150、hour0）、誤差234窓（38＋196の2連続区間）と一致。
+  誤差閾値171.740595、最新224.346232、最新baseline274.084848。
+  7日窓1,438件はbaselineより良いが暦日17/61日は劣り、警告は取り消さない。
+  原因未確定・人のリスク受容待ち。閾値/bins/recipe/運用gate/配信permissionは変更しない。
+- `command -v docker`はWindows側CLI shimを示すが、`docker context show`は
+  "The command 'docker' could not be found in this WSL 2 distro"でexit1。
+  WSL integrationを変更/起動せず、実candidate HTTP/PG/Caddy/旧REALの負例は未開始とした。
+
+## 試験と失敗の保持
+
+project261021から以下を実施（環境変数`MLFLOW_DISABLE_AGENT_HINT=1`）。
+
+- target-v1：repo rootからPYTHONPATH=261021/src:261021/testsで実行し45件中5error。
+  socketのsandbox拒否3（signal subcaseあり）と、scripts packageが見えない実行cwd誤り2。
+- target-v2：限定sandbox解除でsocket問題は解消したが、cwdは未訂正で2import error。両試行を保持。
+- target-v3：261021でPYTHONPATH=src:tests、RequestJournalTests/MeasurementRecheckTests/
+  CapitalMeasurementEvidenceTestsの**45件成功**。
+- deployment-target-v1：CompleteDeploymentEvidenceTests/DeploymentEvidencePublisherTestsの22件中1failure。
+  旧p95改ざん負例の期待p95より先にjournal照合で拒否したため。数値検算→journal→tag/承認の順に整理し、両方を必須のまま維持。
+- consumer-target-v4：上記5class計**67件成功（55.230 test秒）**。
+- full-suite-v1はportable v2編集前に開始した中間sourceで、最終受入へ流用しない。
+  final sourceのfull-suite-v2を別に実行。進行中のlogを完了証拠にしない。
+- compileall/diff check成功。Markdownの最初のapply_patchは見出し不一致で失敗し無変更、実見出しで修正。
+
+最終suite・実装commitのGitHub Actions（artifact/cleanup含む）は確認後に追記する。
+[公開証拠索引](docs/reviews/20261115-operational-consumer-checks.json)は完了したreceipt/hashのみを参照する。
+合成CIの成功を実candidate運用受入・時計資格・本番SLOへ流用しない。

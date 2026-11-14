@@ -778,7 +778,7 @@ class MeasurementRecheckTests(_capital_measurement_recheck_unittest.TestCase):
                        "operational_plan_file_sha256": self.file_sha})
         self.assertEqual(self.check(report)["numeric_status"], "passed")
 
-    def test_ledger_link_and_hash_are_checked_without_rewriting_evidence(self):
+    def completed_measurement_fixture(self):
         with self.fixture.attempt() as lease:
             lease.mark_requests_started()
             report = _capital_measurement_recheck_copy.deepcopy(self.report)
@@ -799,9 +799,13 @@ class MeasurementRecheckTests(_capital_measurement_recheck_unittest.TestCase):
             path = self.fixture.report_dir / f"operational-{lease.attempt_id}.json"
             path.write_text(_capital_measurement_recheck_json.dumps(report))
             lease.finish(status="completed", report_path=path)
-        before = (path.read_bytes(), self.fixture.ledger_path.read_bytes())
         args = dict(candidate_id=self.fixture.candidate, attempt_id=lease.attempt_id,
                     ledger_path=self.fixture.ledger_path, lock_dir=self.fixture.lock_dir)
+        return args, path, journal.path
+
+    def test_ledger_link_and_hash_are_checked_without_rewriting_evidence(self):
+        args, path, _ = self.completed_measurement_fixture()
+        before = (path.read_bytes(), self.fixture.ledger_path.read_bytes())
         with _capital_measurement_recheck_patch.object(recovery, "PROJECT_ROOT", self.fixture.root):
             result = recheck_linked_measurement(**args)
             self.assertEqual(result["ledger_binding"], "matched")
@@ -813,6 +817,44 @@ class MeasurementRecheckTests(_capital_measurement_recheck_unittest.TestCase):
             path.write_text(path.read_text() + " ")
             with self.assertRaisesRegex(ValueError, "different SHA-256"):
                 recheck_linked_measurement(**args)
+
+    def test_rehashed_backwards_journal_blocks_recheck_and_registry_before_client(self):
+        from bike_mlops.operational import _hash
+        from bike_mlops import operational_validation as registry
+        args, path, journal_path = self.completed_measurement_fixture()
+        events = [_capital_measurement_recheck_json.loads(line) for line in journal_path.read_bytes().splitlines()]
+        previous = None
+        for index, event in enumerate(events):
+            event.pop("event_sha256")
+            event["recorded_at_utc"] = ("2024-01-01T00:00:00.000000Z" if index == 941
+                                         else "2024-01-01T00:00:00.000001Z")
+            event["previous_sha256"] = previous
+            previous = event["event_sha256"] = _hash(event)
+        journal_path.write_bytes(b"".join((_capital_measurement_recheck_json.dumps(event) + "\n").encode() for event in events))
+        report = _capital_measurement_recheck_json.loads(path.read_bytes())
+        report["request_journal"]["sha256"] = _capital_measurement_recheck_hashlib.sha256(journal_path.read_bytes()).hexdigest()
+        path.write_text(_capital_measurement_recheck_json.dumps(report))
+        state = _capital_measurement_recheck_json.loads(self.fixture.ledger_path.read_bytes())
+        state["records"][0]["attempts"][0]["report"]["sha256"] = _capital_measurement_recheck_hashlib.sha256(path.read_bytes()).hexdigest()
+        self.fixture.ledger_path.write_text(_capital_measurement_recheck_json.dumps(state))
+        before = {p: p.read_bytes() for p in (path, journal_path, self.fixture.ledger_path)}
+        with (_capital_measurement_recheck_patch.object(recovery, "PROJECT_ROOT", self.fixture.root),
+              _capital_measurement_recheck_patch.object(registry, "_operational_registry_PROJECT_ROOT", self.fixture.root),
+              _capital_measurement_recheck_patch.object(registry, "DATA_PROFILE_ID", "capital-bikeshare"),
+              _capital_measurement_recheck_patch.object(registry, "MODEL_NAME", "bike-demand-capital"),
+              _capital_measurement_recheck_patch.object(_capital_measurement_recheck_ledger, "DEFAULT_LEDGER", self.fixture.ledger_path),
+              _capital_measurement_recheck_patch.object(_capital_measurement_recheck_ledger, "DEFAULT_LOCK_DIR", self.fixture.lock_dir),
+              _capital_measurement_recheck_patch("mlflow.tracking.MlflowClient") as client,
+              _capital_measurement_recheck_patch.object(registry, "_write_operational_evidence_tags") as writer):
+            with self.assertRaisesRegex(ValueError, "journal"):
+                recheck_linked_measurement(**args)
+            with self.assertRaisesRegex(ValueError, "journal"):
+                registry.record_completed_operational_evidence(args["candidate_id"], args["attempt_id"])
+            self.assertTrue(recovery.inspect_operational_reports(args["candidate_id"],
+                ledger_path=self.fixture.ledger_path, lock_dir=self.fixture.lock_dir)["attempts"][0]["unresolved"])
+            client.assert_not_called()
+            writer.assert_not_called()
+        self.assertEqual(before, {p: p.read_bytes() for p in before})
 
 
 # ========================================================================
@@ -1574,6 +1616,32 @@ class CapitalMeasurementEvidenceTests(_capital_measurement_evidence_unittest.Tes
         self._write_archive(self._rebind_report(report))
         with self.assertRaisesRegex(ValueError, "journal latency"):
             verify_archive_process(self.archive)
+
+    def test_archive_cli_rejects_utc_reversal_with_all_hashes_rebound(self):
+        events = [_capital_measurement_evidence_json.loads(line) for line in self.journal_raw.splitlines()]
+        previous = None
+        for index, event in enumerate(events):
+            event.pop("event_sha256")
+            if index == 1724:
+                event["recorded_at_utc"] = "2026-11-01T23:59:59.999999Z"
+            event["previous_sha256"] = previous
+            previous = event["event_sha256"] = _hash(event)
+        raw = b"".join((_capital_measurement_evidence_json.dumps(event) + "\n").encode() for event in events)
+        payloads = {**self.payloads, "payload/request-journal.jsonl": raw}
+        report = _capital_measurement_evidence_json.loads(self.report_raw)
+        report["request_journal"]["sha256"] = _capital_measurement_evidence_hashlib.sha256(raw).hexdigest()
+        self._write_archive(self._rebind_report(report, payloads))
+        before = self.archive.read_bytes()
+        with self.assertRaisesRegex(ValueError, "UTC order reversed at sequence 1723->1724"):
+            verify_archive_process(self.archive)
+        proc = subprocess.run([_capital_measurement_evidence_sys.executable, "-m", "bike_mlops.operational_validation",
+            "--verify-archive", str(self.archive)], capture_output=True, text=True, timeout=30,
+            env={"PATH": str(_capital_measurement_evidence_Path(_capital_measurement_evidence_sys.executable).parent),
+                 "PYTHONPATH": str(_capital_measurement_evidence_Path(__file__).resolve().parents[1] / "src")})
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("UTC order reversed", proc.stderr)
+        self.assertNotIn('"verification_status": "passed"', proc.stdout)
+        self.assertEqual(before, self.archive.read_bytes())
 
     def test_warmup_cannot_be_counted_as_measured(self):
         report = _capital_measurement_evidence_json.loads(self.report_raw)

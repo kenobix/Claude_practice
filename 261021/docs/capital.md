@@ -1066,6 +1066,9 @@ MLflow UIはこのPCの[専用実験run](http://127.0.0.1:5001/#/experiments/1/r
 
 ## capital-operational-hold
 
+**2026-11-15追補:** [consumerのUTC拒否・事後review契約・警告review](#operational-evidence-review-20261115)へ進んだ。
+以下の2026-11-14記録と原本は保持する。新測定・証拠tag・採否は実施していない。
+
 <a id="capital-operational-hold--実候補の運用測定保留と部分復元（2026-11-14）"></a>
 
 ### 実候補の運用測定保留と部分復元（2026-11-14）
@@ -1150,6 +1153,85 @@ git pullだけでignored成果物は移らない。**別PCでの再測定も、�
 
 先行文書commit9a1f433の[自動CI検算](reviews/20261114-capital-runtime-docs-ci-checks.json)は590unit/全job成功、
 16 artifact memberとarchive-only再計算/cleanupを確認。既存合成CIの結果であり、今回の実運用保留を解除しない。
+
+<a id="operational-evidence-review-20261115"></a>
+
+## 2026-11-15：UTC順序の拒否と事後review
+
+基点9479201以降のファイル統合（e9e3bda）を保持した変更。
+[今回の検証索引](reviews/20261115-operational-consumer-checks.json)にコマンド、失敗、原本hash、CIを保存する。
+時計研究は保留、validation/finalは消費済み。再fit・再選定・閾値変更はしない。
+
+### 証拠consumerの実装
+
+共通journal readerはhash連鎖とsequenceを確認した上で、scheduleを含む**全ての完全なevent**の
+`recorded_at_utc`を確認する。UTCのISO日時（`Z`又は`+00:00`、秒以下は最大6桁）が必要。
+欠落・不正日付・naive・他offset・1µsでも逆行した場合はValueErrorで拒否する。
+同時刻は時計分解能の範囲として認めるが、時計資格やelapsedの正確さを証明しない。
+要求内だけでなく要求間、暖機/測定間、unknown outcomeも検査し、torn tailは成功にしない。
+不正な既知prefixにtorn tailを追加しても逆行を隠せない。原本の修復・clamp・retryは行わない。
+
+- linked recheck、運用証拠tag recorder、deployment evidence publisher、T16 archive-only verifierが同じreaderを使う。
+  recorder/publisherはjournalのないlegacy planを新しい証拠として記録しない。
+  legacyの保存数値だけを読む診断は残るが、承認や運用受入にはならない。
+- **配信bundle schema/policyをv2**（`capital-deployment-evidence-v2`）へ改訂。
+  `reports.request_journal`に原本JSONLの本文/SHAを必須化し、reportのjournal descriptor、固定schedule、
+  1,050応答、各latencyと照合する。受信側も一時directoryで独立に全eventのUTCを検査する。
+  数値検算・22case・別承認・future拒否も引き続き必要。v1を現行承認へ暗黙変換しない。
+  既存registryのtagや過去bundleは変更しない。将来移行する場合も原本を含むv2の別生成と再reviewが必要。
+- hashをjournal→report→ledger/manifest/bundle/registry identityまで再計算した負例で、
+  local recheck/記録前の拒否、archiveの別CLI process、remote bundle受信/承認入口の拒否を確認する。
+  合成fixtureの成功は実candidate受入の証拠にしない。
+
+保存済み実attempt `918ccaf6-d342-41aa-8ce1-e3b52f31f213`は全2,101eventのhash連鎖が正しいが、
+新readerが**940→941**で拒否し、linked recheckも拒否した。既知の1723→1724違反を取り消さない。
+実原本に対するこの確認は読取専用で、registry接続・予測・新attempt・台帳更新は0件。
+report/journal/plan/運用台帳のbytesは不変。raw completedは実行履歴としてそのまま保持する。
+
+### completed試行の事後不適格review：設計済み、writer未実装
+
+**今回実施したのは契約設計。台帳を無効化/reopenするCLIや、新attempt開始許可は未実装・未実行。**
+実行状態（completed等）と証拠の適格性を分け、後者を別の追記専用review系列へ保存する。
+raw ledger/report/journal/planを変更せず、completedをfailedへ書換えない。
+
+| 項目 | 必須の契約 |
+|---|---|
+| identity | schema/policy ID、candidate、attempt、profile/target、登録artifact/model SHA、固定planの内容SHA/file SHA、report/journal SHA。全て原本から照合し、他attemptへの転用を拒否 |
+| 原本binding | review開始時の運用台帳全体SHA＋対象record/attemptのcanonical SHA、正式消費台帳SHAを保存。後続の正当なappendで台帳全体SHAが変わっても過去snapshotと対象attemptを照合し、履歴を再hashして書換えない |
+| review | reviewer、理由、UTC（future拒否）、実装/source revision、検査器/policy、欠陥code、参照証拠の相対path/bytes/SHA、UTC違反のsequence対等。UTCはseriesの順番を決める代わりに使わない |
+| 系列 | candidate/attemptごとにrevision、previous-review SHA、今回document SHAを結合。新規fileのO_EXCL、協調lock、file/親directory fsync。既存reviewの上書き、fork、欠番、重複key、symlink、競合appendは拒否/未確定として保全 |
+| 適格性 | `ineligible`又は`on_hold`。どちらも運用証拠/配信/採否への使用禁止。unknown/欠落/破損/競合/未読込でもfail closed。数値passedやraw completedで上書きしない |
+| consumers | ローカルrecorder/publisher/recheckとportable bundle/最終採否が、同じreview履歴/最新headを結合して照合する。任意flagや古いbundleだけで無効化を迂回できないよう、headの保存/読取責任とTOCTOUも実装前に固定する |
+| 再試行 | reviewの保存はretry許可と独立。`next_plan`/reopen/自動UUID生成を含めない。今回の不適格journalを後の好都合なreviewで有効へ戻さない。新attemptは別途明示承認と実装済みretry契約・固定入力・履歴照合が揃うまで禁止 |
+| 認証・限界 | 人名/ローカルhashは本人認証や改ざん不能な外部署名ではない。所有者以外による変更・履歴head隠蔽への信頼境界を文書化し、実採否の別承認を置き換えない |
+
+次の実装受入は、①正常なcompletedを一度ineligibleとして保存、②保存前後の全原本hash不変、
+③同値再提出の扱いと競合/fork/破損/中断の保全、④全consumerの拒否、⑤未来review拒否、
+⑥新attemptを作らないこと、⑦原本不在/差替/別candidate/旧head/応答喪失の拒否、
+⑧使い捨てfixture→実装commit CI/artifact/cleanup確認。現実の台帳への適用は別途review後に判断する。
+review系列の格納path・registry headの発行/更新責任・portable offlineの最新性は残る設計判断であり、
+この文書だけで実装済み、無効化済み、あるいは再測定可能とはしない。
+
+### 実monitorの理由付き警告review
+
+保存済みmonitor CSV/JSON/complete markerのSHAとrun ID、登録training referenceと候補結合を確認。
+既存finalの行別予測とラベル到着時刻を使い、全1,464窓の母数・MAE/RMSE・既存閾値による状態を再計算し、
+前回の実API/offline一致記録と照合した。DB再接続・新予測・新しい採点窓・選定は行っていない。
+
+| 観測 | 理由と判断 |
+|---|---|
+| 分布1,336、非警告105、母数不足23窓 | PSI>=0.2はlag24で1,032窓、lag168で1,150窓（重複あり）、hourでは0窓。最大は0.665503/1.729054/0.108145。training-only参照からlag需要値の分布が変化した信号。季節等が原因だとは確定できない |
+| 誤差234、閾値内1,204、正解不足26窓 | validation MAE137.392476×1.25=**171.740595**を超えた窓。8/2 20時〜8/4 9時の38窓と9/22 23時〜10/1 2時の196窓。最初の警告は39正解、立上がりの短い母数を含む |
+| 分布だけ1,126、両方207、誤差だけ27窓 | 分布変化と誤差増大は別の信号。分布警告3窓は正解不足で誤差判定不能。PSIが下がっただけで誤差警告を解消扱いにしない |
+| 最新165正解/MAE224.346232 | PSIは全feature0.2未満でも誤差は閾値超。同行のbaseline MAE274.084848より良いが、validation時の誤差水準に比べ悪化している |
+| baselineとの比較 | 採点可能な7日窓1,438件では候補MAEがbaselineより悪い窓は0。一方、暦日61日のうち17日は候補が悪い。9/22は候補482.510713対baseline307.791667。全体合格だけで個別リスクを否定しない |
+| 欠測と窓の数え方 | lag24/168の今回窓内欠測率は最大0。23/26は立上がりのfeature母数24/到着済み正解24未満。168時間を1時間ずつ進める重複窓であり、1,336/234件を独立障害数や異なる正解数と解釈しない |
+
+**技術reviewの結論:** 警告は既存ルールと整合し、誤警報と判断して消す根拠はない。
+需要lagの分布変化と9月末の局所的誤差悪化、17日のbaseline劣後を未解決リスクとして採否reviewへ渡す。
+原因はこの集計だけでは特定できず、閾値/bins/recipeを消費済み窓に合わせて変更しない。
+この説明は新しいproducer attestationでも人の最終受容判断でもない。運用gate not_evaluated / 配信blockedを保持する。
+全日比較と入力SHA・検算recipeは検証索引から辿れる。
 
 <a id="capital-runtime-handoff"></a>
 

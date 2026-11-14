@@ -13,6 +13,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import stat
 import time
 import uuid
@@ -179,7 +180,7 @@ def inspect_request_journal(path: Path, *, attempt_id: str, candidate_id: str,
     torn = bool(lines and not lines[-1].endswith(b"\n"))
     if torn:
         lines.pop()
-    previous, events = None, []
+    previous, previous_utc, events = None, None, []
     def unique_object(pairs):
         result = {}
         for key, value in pairs:
@@ -192,6 +193,20 @@ def inspect_request_journal(path: Path, *, attempt_id: str, candidate_id: str,
         digest = body.pop("event_sha256", None)
         if body.get("sequence") != index or body.get("previous_sha256") != previous or digest != _hash(body):
             raise ValueError("Journal event hash or sequence mismatch")
+        # Hash integrity does not establish temporal validity. Inspect every event,
+        # including the schedule and unknown outcomes, across request boundaries.
+        # Equality is allowed at the clock's resolution; even 1us backwards fails.
+        stamp = body.get("recorded_at_utc")
+        if (not isinstance(stamp, str) or not re.fullmatch(
+                r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{1,6})?(?:Z|\+00:00)", stamp)):
+            raise ValueError(f"Journal UTC timestamp is missing or invalid at sequence {index}")
+        try:
+            current_utc = datetime.fromisoformat(stamp)
+        except ValueError as error:
+            raise ValueError(f"Journal UTC timestamp is invalid at sequence {index}") from error
+        if previous_utc is not None and current_utc < previous_utc:
+            raise ValueError(f"Journal UTC order reversed at sequence {index - 1}->{index}")
+        previous_utc = current_utc
         previous = digest
         events.append(body)
     schedule = request_schedule(attempt_id, plan)
@@ -226,6 +241,7 @@ def inspect_request_journal(path: Path, *, attempt_id: str, candidate_id: str,
             raise ValueError("Invalid journal transition")
     return {"status": "torn_tail" if torn else "readable", "sha256": hashlib.sha256(raw).hexdigest(),
             "events": len(events), "requests": states,
+            "utc_order": "nondecreasing_all_complete_events",
             "verified_latencies_ms": {event["request_id"]: event["latency_ms"] for event in events[1:]
                                       if event["event"] == "response_verified"},
             "counts": {state: list(states.values()).count(state) for state in set(states.values())},

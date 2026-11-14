@@ -599,21 +599,42 @@ def inspect_attempt_journal(attempt: dict, candidate_id: str, plan: dict | None)
         return {"status": "invalid", "interpretation": "no_request_outcome_can_be_inferred"}
 
 
-def verify_completed_journal(attempt: dict, candidate_id: str, plan: dict, report: dict) -> None:
+def verify_completed_journal(attempt: dict, candidate_id: str, plan: dict, report: dict, *,
+                             require_journal: bool = False) -> None:
     """Bind local report publication/recheck to all durable, verified request times."""
     if "request_journal" not in plan["policy"]:
+        if require_journal:
+            raise ValueError("Operational evidence requires a durable request journal")
         return  # Historical numeric inspection is allowed; new execution rejects old plans.
     journal = inspect_attempt_journal(attempt, candidate_id, plan)
+    _verify_report_journal(journal, attempt["attempt_id"], report)
+
+
+def _verify_report_journal(journal: dict, attempt_id: str, report: dict) -> None:
     descriptor = report.get("request_journal")
     rows = report.get("measurements")
     if (journal["status"] != "readable" or journal["counts"].get("response_verified") != 1050
             or not isinstance(descriptor, dict)
-            or descriptor.get("file_name") != f"operational-{attempt['attempt_id']}.requests.jsonl"
+            or descriptor.get("file_name") != f"operational-{attempt_id}.requests.jsonl"
             or descriptor.get("sha256") != journal.get("sha256")
             or not isinstance(rows, list) or len(rows) != 1050
             or any(not isinstance(row, dict)
                    or journal["verified_latencies_ms"].get(row.get("request_id")) != row.get("latency_ms") for row in rows)):
         raise ValueError("Durable request journal is incomplete or differs from the report")
+
+
+def verify_portable_journal(raw: bytes, candidate_id: str, attempt_id: str, plan: dict, report: dict,
+                            plan_file_sha256: str) -> None:
+    """Recheck the saved journal body independently of publisher/local registry state."""
+    import tempfile
+    if "request_journal" not in plan.get("policy", {}) or len(raw) > 8 * 1024 * 1024:
+        raise ValueError("Portable deployment evidence requires a bounded request journal")
+    with tempfile.TemporaryDirectory(prefix="capital-journal-verify-") as directory:
+        path = _operational_recovery_Path(directory) / "journal.jsonl"
+        path.write_bytes(raw)
+        journal = inspect_request_journal(path, attempt_id=attempt_id, candidate_id=candidate_id,
+                                         plan=plan, plan_file_sha256=plan_file_sha256)
+    _verify_report_journal(journal, attempt_id, report)
 
 
 def _read_report(path: _operational_recovery_Path) -> tuple[dict | None, str | None, str | None]:
@@ -1022,7 +1043,7 @@ def record_completed_operational_evidence(candidate_id: str, attempt_id: str) ->
             issue = recovery._report_error(report, attempt, candidate_id, plan, linked=True)
             if issue:
                 raise ValueError("Ledger-linked report does not match the attempt: " + issue)
-            recovery.verify_completed_journal(attempt, candidate_id, plan, report)
+            recovery.verify_completed_journal(attempt, candidate_id, plan, report, require_journal=True)
             numeric = _operational_registry_recheck_measurement_records(plan, report, attempt_id=attempt_id,
                                                   plan_file_sha256=attempt["plan_file_sha256"])
             if numeric.get("numeric_status") != report["operational_gate"].get("measurement_status"):

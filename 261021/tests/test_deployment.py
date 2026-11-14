@@ -1205,6 +1205,46 @@ class CompleteDeploymentEvidenceTests(_capital_deployment_evidence_unittest.Test
         with self.assertRaisesRegex(ValueError, "not eligible"):
             self.check()
 
+    def test_remote_bundle_requires_raw_journal_and_rejects_legacy_policy(self):
+        for mode in ("missing_journal", "legacy"):
+            with self.subTest(mode=mode):
+                bundle = copy.deepcopy(self.bundle)
+                if mode == "missing_journal":
+                    del bundle["reports"]["request_journal"]
+                else:
+                    bundle["schema_version"] = 1
+                    bundle["policy"] = {"policy_id": "capital-deployment-evidence-v1", "schema_version": 1,
+                                        "required_cases": evidence.CASES, "uncertain_evidence_allowed": False}
+                with self.assertRaises(ValueError):
+                    evidence.validate_bundle(bundle, self.tags, "2", "synthetic-run")
+
+    def test_remote_consumer_rejects_backwards_utc_even_with_all_hashes_rebound(self):
+        from bike_mlops.operational import _hash
+        import hashlib
+        bundle = copy.deepcopy(self.bundle)
+        events = [_capital_deployment_evidence_json.loads(line) for line in bundle["reports"]["request_journal"]["content"].splitlines()]
+        previous = None
+        for index, event in enumerate(events):
+            event.pop("event_sha256")
+            if index == 941:
+                event["recorded_at_utc"] = "2024-01-31T23:59:59.999999Z"
+            event["previous_sha256"] = previous
+            previous = event["event_sha256"] = _hash(event)
+        raw = b"".join(evidence.canonical_bytes(event) for event in events)
+        bundle["reports"]["request_journal"] = evidence.document(raw)
+        report = _capital_deployment_evidence_json.loads(bundle["reports"]["operational"]["content"])
+        report["request_journal"]["sha256"] = hashlib.sha256(raw).hexdigest()
+        bundle["reports"]["operational"] = evidence.document(evidence.canonical_bytes(report))
+        self.client.tags["capital_operational_report_sha256"] = bundle["reports"]["operational"]["sha256"]
+        bundle["identity"] = evidence.evidence_identity(self.client.tags, "2", "synthetic-run")
+        self.replace_bundle(bundle)
+        before = copy.deepcopy(self.client.tags)
+        with self.assertRaisesRegex(ValueError, "UTC order reversed at sequence 940->941"):
+            evidence.validate_bundle(bundle, self.client.tags, "2", "synthetic-run")
+        with self.assertRaisesRegex(ValueError, "UTC order reversed"):
+            _capital_deployment_evidence_record_operational_review(self.client, "2", "reviewer-a", "passed", "must refuse")
+        self.assertEqual(before, self.client.tags)
+
     def test_all_bound_tag_mutations_and_invalid_numbers_are_rejected_after_approval(self):
         self.approve()
         original = dict(self.client.tags)

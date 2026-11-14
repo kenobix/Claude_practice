@@ -1142,6 +1142,76 @@ class RequestJournalTests(_capital_request_journal_unittest.TestCase):
             self.assertEqual(observer.exchanges, [])
         self.assertTrue(journal.poisoned)
 
+    def test_rehashed_utc_reversals_at_all_event_boundaries_are_rejected(self):
+        from bike_mlops.operational import _hash
+        with self.fixture.attempt() as attempt:
+            journal = self.journal(attempt)
+            for payload in journal.schedule[:2]:
+                journal.sending(payload)
+                journal.outcome(payload, http_status=200, latency_ms=1.0, error=None)
+        original = journal.path.read_bytes()
+        for boundary in range(1, 5):
+            with self.subTest(boundary=boundary):
+                events = [_capital_request_journal_json.loads(line) for line in original.splitlines()]
+                previous = None
+                for index, event in enumerate(events):
+                    event.pop("event_sha256")
+                    event["recorded_at_utc"] = ("2024-01-01T00:00:00.000000Z" if index == boundary
+                                                 else "2024-01-01T00:00:00.000001+00:00")
+                    event["previous_sha256"] = previous
+                    previous = event["event_sha256"] = _hash(event)
+                raw = b"".join((_capital_request_journal_json.dumps(event) + "\n").encode() for event in events)
+                journal.path.write_bytes(raw)
+                with self.assertRaisesRegex(ValueError, f"UTC order reversed at sequence {boundary - 1}->{boundary}"):
+                    self.inspect(journal, attempt)
+                self.assertEqual(journal.path.read_bytes(), raw)
+
+    def test_invalid_or_missing_utc_rejected_but_equal_instants_are_valid(self):
+        from bike_mlops.operational import _hash
+        with self.fixture.attempt() as attempt:
+            journal = self.journal(attempt)
+        header = _capital_request_journal_json.loads(journal.path.read_bytes())
+        for stamp in (None, 42, "bad", "2024-01-01T00:00:00", "2024-01-01T01:00:00+01:00",
+                      "2024-02-30T00:00:00Z", "2024-01-01T00:00:00.0000001Z", "2024-01-01T00:00:00-00:00"):
+            with self.subTest(stamp=stamp):
+                event = {**header, "recorded_at_utc": stamp}
+                event.pop("event_sha256")
+                event["event_sha256"] = _hash(event)
+                journal.path.write_text(_capital_request_journal_json.dumps(event) + "\n")
+                with self.assertRaisesRegex(ValueError, "UTC timestamp"):
+                    self.inspect(journal, attempt)
+        header.pop("recorded_at_utc")
+        header.pop("event_sha256")
+        header["event_sha256"] = _hash(header)
+        journal.path.write_text(_capital_request_journal_json.dumps(header) + "\n")
+        with self.assertRaisesRegex(ValueError, "UTC timestamp"):
+            self.inspect(journal, attempt)
+
+    def test_unknown_outcome_utc_and_torn_prefix_do_not_hide_reversal(self):
+        from bike_mlops.operational import _hash
+        with self.fixture.attempt() as attempt:
+            journal = self.journal(attempt)
+            journal.sending(journal.schedule[0])
+            journal.outcome(journal.schedule[0], http_status=None, latency_ms=1, error="timeout")
+        events = [_capital_request_journal_json.loads(line) for line in journal.path.read_bytes().splitlines()]
+        for reversed_time in (False, True):
+            previous = None
+            for index, event in enumerate(events):
+                event.pop("event_sha256")
+                event["recorded_at_utc"] = ("2024-01-01T00:00:00Z" if reversed_time and index == 2
+                                             else "2024-01-01T00:00:00.000001+00:00")
+                event["previous_sha256"] = previous
+                previous = event["event_sha256"] = _hash(event)
+            raw = b"".join((_capital_request_journal_json.dumps(event) + "\n").encode() for event in events)
+            journal.path.write_bytes(raw)
+            if not reversed_time:
+                self.assertEqual(self.inspect(journal, attempt)["utc_order"], "nondecreasing_all_complete_events")
+            else:
+                for tail in (b"", b'{"torn":'):
+                    journal.path.write_bytes(raw + tail)
+                    with self.assertRaisesRegex(ValueError, "UTC order reversed"):
+                        self.inspect(journal, attempt)
+
     def test_foreign_payload_symlink_identity_and_overwrite_are_refused(self):
         with self.fixture.attempt() as attempt:
             journal = self.journal(attempt)
@@ -1159,6 +1229,9 @@ class RequestJournalTests(_capital_request_journal_unittest.TestCase):
         legacy["policy"].pop("request_journal")
         legacy["plan_sha256"] = _capital_request_journal_plans._digest(legacy)
         _capital_request_journal_plans.validate_operational_plan(legacy, allow_legacy=True)
+        recovery.verify_completed_journal({}, self.fixture.candidate, legacy, {})
+        with self.assertRaisesRegex(ValueError, "requires a durable request journal"):
+            recovery.verify_completed_journal({}, self.fixture.candidate, legacy, {}, require_journal=True)
         self.fixture.plan_path.write_text(_capital_request_journal_json.dumps(legacy))
         with self.assertRaisesRegex(ValueError, "policy"):
             with self.fixture.attempt(): pass
