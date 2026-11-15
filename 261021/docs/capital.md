@@ -1694,6 +1694,8 @@ v1〜v5の失敗も保持。通常のlocal Dockerfile buildはPyPIの読取timeo
 
 <a id="operational-review-input-archive-20261115"></a>
 
+最新の実候補追加確認と停止条件は[2026-11-15 runtime追補](#runtime-followup-20261115)を参照。
+
 ## 正式入力の参照・review全系列保存・独立原本回復（2026-11-15追補）
 
 基点`3482f6e`からの製品契約。前節の「移設契約未実装」「event/repair原本回復未実装」「全系列archive未実装」は、
@@ -1797,3 +1799,67 @@ artifact14150975862は234,537 bytes、SHA256 `0c03cc31ce7f43c22074e01a79f74f1a67
 local全suiteの途中source651件には既存future拒否1 error、measurement全体にはtimeout/未特定FAILがある。
 失敗を残し、CI成功をこのPCの時計資格やその失敗原因の解決へ流用しない。
 実候補の運用保留、live未確認、partial5/missing5、category未発行と別承認待ちは継続する。
+
+<a id="runtime-followup-20261115"></a>
+
+## 実候補の監視負例・復元カテゴリ・実適用の前提（基点b8644fa）
+
+[検証索引](reviews/20261115-runtime-followup-checks.json)。製品source、固定policy、評価窓、元の台帳・registryを変更していない。
+再fit・再測定・new operational attempt・reopenは0件。以下の専用コピー試験は新しい運用測定attemptではない。
+
+### 今回完了した範囲
+
+- 同candidate/artifactの保存済みsnapshotを、新しい専用PostgreSQL/MLflowへ復元した。CLIは現source、MLflow serverは保存済み固定依存imageを使用した。API/Caddy/既存8サービスは起動・停止していない。
+- コピー内のcandidate報告書のvalidation MAEだけを`null`にした場合、実monitor CLIは`candidate report SHA-256 mismatch`でexit2。コピーregistryの報告書SHAだけも再結合した場合は`candidate, manifest, data, or artifact identity differs`でexit2。CSV/JSON/complete marker未生成、コピー監査DB全manifest不変。元candidate ID、raw skops、登録artifact、CSV、正式台帳は不変。
+- この2件は**凍結済み候補へのMAE欠損注入を拒否した証拠**。別candidate identityを作り直した「正規のMAE未設定候補」の受入、欠測ラベル、constant-reference検知を実証したことにはしない。
+- 所有projectのcontainer/volume/networkを削除し、元8containerのID/image/開始時刻/状態が不変であることを確認した。194保護原本のbytes/SHAも不変。
+- 復元カテゴリ4ケースは、以前の実snapshot producerのdump/全artifact tree/復元前後DB manifest/別volume/保存予測/監査assertion/移行assertionを照合した。元producer sourceと結果のhashは過去の検証索引へ結合し、candidate identityを再計算した。今回再実行せず、`restore-prerequisite.json`を作成した。別processの既存consumerで受入、必須case欠落・異なるartifact・case本文hash破損の3負例を拒否。
+- 移行はコピー内2,514行を意図的にREALへ落としてからDOUBLE PRECISIONへ移した試験であり、**既存binary32値の保持**だけを証明する。失われた精度の復元ではない。復元報告の時刻は元producerの開始/完了端点で、精密校正や連続した運用計測を主張しない。
+- `restore`のみ確定。registryへ報告/tagを発行しておらず、全bundleの採用・運用gate・配信許可・T13b採否は保留。従来22caseの集計は**復元4件category確認・観測8領域・部分5・未実証5**。古い12/5/5の索引は当時の記録として保持する。
+
+### 部分5・未実証5の依存関係
+
+| case | 現時点で不足するもの・停止理由 |
+|---|---|
+| delayed_missing_duplicate_labels | 遅延と重複CSV拒否は既存証拠あり。CLIはラベルを固定CSVから読むため、DB観測を消しても欠測ラベル試験にはならない。CSV/manifestやcandidate identityを作り直したfixtureは実候補の同一性を保たない。欠測を含む別producer入力を認める契約のreviewが必要。 |
+| insufficient_labels_and_unset_reference | 少数ラベルの明示と参照path欠落拒否に加え、今回MAE欠損の二段階拒否を追加。正規のMAE未設定報告へ変更するとcandidate identityが変わるため、その分岐の同候補実証とはしない。 |
+| caddy_switch_and_rollback | 同版・blocked二slotの切替/切戻しは実証済み。異なる適格二版と正当な配信操作の前提が無い。 |
+| entry_runtime_database_identity | candidate/artifactの一致はあるが承認operationの結合は無い。legacy_unverifiableを承認済みに読み替えない。 |
+| unloadable_version | 破損artifactのreadiness503はある。承認された配信経路から不正版を除外する全体試験は未達。 |
+| psi_v2_constant_shift | 実候補の凍結reference3特徴は非定数。定数referenceを捏造せず、汎用機能の合成検証と実候補caseの適用条件を別途reviewする。 |
+| version_switch_preserves_saved_prediction | 異なる適格二版が無い。単純な版番号変更はartifact directory SHAも変える。同版routingやhash緩和で代用しない。 |
+| interrupted_deployment | 承認された実候補promoteを開始できない。実配信の中断は行わず、合成CIの結果も流用しない。 |
+| approval_operation_metadata | 全bundle・有効な運用証拠・別承認が無い。承認tagを手作業で足して試験を成立させない。 |
+| timeout_stage_outcome | 実候補の正当な配信operationを開始する前提が無い。開始前gate拒否を処理途中timeoutへ読み替えない。 |
+
+上記には、候補固有の受入と汎用機能の受入の適用範囲、初回配信前に承認済みoperationを要求する順序のreviewが必要なものがある。
+現policyを自動変更したり、該当caseを無断で免除したりしない。新しい独立データ・追加候補・試験専用承認を認める場合も、既存の消費窓・閾値・candidate証拠とは分けた計画と承認が必要。
+
+### 実適用・live head照合を再開するための具体案（未実行）
+
+正式5入力のcanonical path/hash/bytes/device/inode/mtime/ctimeと現36sourceを読取確認済み。参照設定は発行していない。
+元PostgreSQL/MLflow/APIはExited255で、停止済みregistryへ同じ接続失敗を繰り返していない。
+snapshotコピーのhead一致では元registryの最新性を証明できない。
+
+起動案のための限定inspectでは、PGは`b0962998d3ff` / image `sha256:f3bd19c606e442c3d7bdfa8002e03fe260a1023351e0ea4598032022b68dd6e3`、
+MLflowは`f543c219ad1f` / image `sha256:888539f1e5ffd2b8831e8346414cb44367feb1540e48172a1a5ee8c41218505c`だった。
+元volumeは`capital-acceptance-20261114_postgres-data`と`capital-acceptance-20261114_mlflow-artifacts`、
+公開先はlocalhost55434/5001。両方停止中であり、別の新projectを元liveの代用にはしない。
+これは採取時点のidentityで、許可後に同一性と空きportを再確認する。
+
+1. ユーザー判断が必要なのは、元の専用`capital-acceptance-20261114-postgres-staging-1`と`capital-acceptance-20261114-mlflow-1`の**起動/終了を限定許可するか**。API/UCI/Caddyには触れない。これは現状の「既存サービスを起動・停止しない」制約の変更に当たる。
+2. 許可後も、最初にcontainer ID・image・volume・ポート55434/5001・既存設定を読取照合する。新規build/recreate/up全体起動はせず、対象の既存2containerだけを扱う。イメージ/volume相違、ポート競合、現在状態の変化があれば停止する。
+3. 起動はDB recovery/WAL/ログやMLflow startup migrationなどの書込みを伴い得る。従って**単なる読取許可では実施不可**。起動前backupとschema差分確認、許容書込み範囲を別途合意する。GET照合に限定してもこの起動影響は消えない。
+4. 起動後はretryを増やさず、短いdeadline内でversion/run/candidate/artifact・全tag SHA・committed head/fence・全history・正式5入力・両消費窓を照合する。変更検知・future拒否・UTC異常時は設定発行を中止する。
+5. 前提が揃った場合に限り、現checkoutへprivate参照設定を新規発行する別の明示操作へ進む。元台帳の複製・初期化はしない。旧path前提が残る他CLIも個別に確認する。参照設定発行だけでadverse review、gate/tag、配信許可を発行しない。
+6. 終了時は許可された2containerを元の停止状態へ戻す案とするが、DB/ログへの起動書込みは巻き戻せない。失敗時にvolume削除や原本restoreを自動実行しない。参照設定の失敗原本も削除しない。
+
+### 保存ログから確定できたローカル失敗の範囲
+
+前回のFAIL後にも複数testが完了しているため、FAILそのものがprocessを停止させたわけではない。
+exit124はsuite外側の240秒timeoutで、monotonic差は240.136817945秒。
+個別testの時間・実行stack・失敗assertionのtracebackは保存されておらず、最後に表示されたsymlink testのdeadlockとも、T03とも断定できない。
+独立したfull-suiteのfuture拒否や後日のCI653件成功は、その原因の証明にならない。
+
+原因は未特定として残す。次に新しい理由で該当testを実行する際は、`addFailure/addError`直後のtraceback flush、cleanup前の所有fixture保存、test開始/終了のmonotonic、timeout前のfaulthandler stackを採取する。
+今回それだけを理由に受入済みsuiteを再実行したり、timeoutを延ばしたりしていない。

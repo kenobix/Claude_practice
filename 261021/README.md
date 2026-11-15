@@ -1,3 +1,5 @@
+2026-11-15最新：[実候補の追加監視負例・復元カテゴリ・残る開始条件](docs/capital.md#runtime-followup-20261115)。MAE欠損2件の拒否とcleanupを確認し、復元4ケースだけをcategory証拠へ整理。最終採否と運用保留は継続。
+
 2026-11-15追補：[正式入力参照・review全系列保存と原本回復](docs/capital.md#operational-review-input-archive-20261115)。実装cb05e72はCI全653件・artifact/cleanupまで受入。実candidateの運用保留・実採否未達は継続。
 
 # 需要予測モデルを継続運用するMLOps基盤

@@ -937,3 +937,9 @@ event本文が失われた場合、原本を推定・上書きせず保留する
 `--export-review-archive`とmoduleの`--verify-review-archive --expected-sha256`はoffline検算専用。
 `--restore-review-archive`は独立保管SHA/現在inventory/現在registry SHAとreview metadataを要し、破損元を保持したoverlayだけを追記する。
 これらは実適用・配信許可・運用再測定の承認ではない。今回の実原本・実registryへ実行しない。
+
+### 実候補の残caseと停止中registryの扱い
+
+[基点b8644faのruntime追補](capital.md#runtime-followup-20261115)に、実施可能な監視負例、復元categoryの範囲、正式入力への実適用前提を記載した。
+元PG/MLflowの起動はstartup書込を伴い得るため、読取許可だけで行わない。API/UCI/Caddyは対象外。
+現在のrestore報告だけで全bundleの採用・risk受容・配信承認・再測定を行わない。

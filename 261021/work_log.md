@@ -5072,3 +5072,26 @@ diff check/変更差分の秘密値scanも成功した。この検算結果を�
 - 最終確認後は計画・README・仕様・本ログ・今回証拠JSONの5対象だけを記録commit/pushする。索引は生成済みreceiptのcutoffを持ち、索引生成/最終commit/push自身は自己hash循環を避けignored後続証跡に保持する。
 - final-integrity-v1は索引144保存物/49receiptのSHA、最終source=cb05e72、保護194原本、source36file別process参照/台帳コピー0、回復後archive13member、12/5/5とcategory0、local exit1/124の保持を検算。相対リンク958・旧import0も成功。local中断試行の一時fixture全回収は確認できておらず、CIのresource cleanup完了へ読み替えない。
 - 最終索引cutoffは151保存物/52receipt。final-integrity-v2で全SHAを再確認した。以降の検算receipt・最終差分・commit/push receiptは同ignored保存先の後続証跡であり、このcutoffへ遡及追加しない。
+
+## 2026-11-15 基点b8644fa：P1依存関係・実候補監視負例・復元category
+
+- 最新依頼は全P1解決だが、既存サービス起動停止・実原本/正式台帳/実DB/registry変更・再測定/new attempt/reopenは禁止。時計研究も保留。残件を合格扱いにせず、許可内の独立条件を進めた。HEAD b8644fa、追跡差分なし、無関係未追跡3パスを保持。
+- `git status --short`/`git log -3 --oneline`/`rg --files -g AGENTS.md`と計画§11.6、ログ末尾、capital/input-archive節、最新索引を読取。sourceはCLIの監視データ経路、registered_training_reference/candidate_identity、category validator、既存inspection testを確認。
+- 保存先`data/reports/20261115-runtime-followup/`。run.pyがcommand/cwd/exit/UTC未資格値/monotonic/log SHAを非上書き保存。初期readとhelper作成も本節に記録し、helper source/hashを索引へ収録する。private env/compose/container logsは0600でignoredに保持し、内容は公開しない。
+- docker-state-v1は通常sandboxのsocket拒否exit1。権限付き同読取v2は元8containerすべてExited255。既存サービスを起動しない。元registryの既知refused queryを反復しない。
+- helper-compile-v1成功後、`timeout --signal=TERM --kill-after=15 300 .venv/bin/python data/reports/20261115-runtime-followup/monitor_faults.py`を新project `capital-neg-ee9ba49da6fb`で実行。保存済みpaired-backupからPG/MLflowだけ復元。CLIは現source、MLflowは既存固定依存image。API/Caddy/new operational attemptは開始していない。
+- monitor-faults-v1成功：コピー報告書のvalidation MAEをnullにするとcandidate report SHA不一致exit2、コピーregistryの報告書SHAも変更するとcandidate identity不一致exit2。報告書だけを欠損させた2負例で、正規candidateのvalidation/final再採点はない。CSV/JSON/marker未作成、監査DB全manifest不変。candidate ID/raw skops/登録artifact/CSV/元原本は変更なし。
+- 所有projectのcontainer/volume/network残数0、元8containerのID/image/開始時刻/状態は不変。外側harnessのmonotonic約76.15秒で完了。UTC表示差をelapsedへ代用しない。MLflow agent hintが親helperに表示されたが、tracing開発指示には使わず、子monitorではMLFLOW_DISABLE_AGENT_HINT=1を使用した。
+- restore-review-v1はhelper作成時に261021 cwdへ更に261021を付けた誤pathでfile作成/実行できずexit2。実原本変更なし。正しい絶対pathへhelperを作成しv2成功。
+- 保存済み実producerのrestore4caseをreview。dump2本・全artifact tree・復元前後DB manifest・別volume・ready/version/保存結果・監査assertion・コピー2,514行のREAL移行assertionを照合。正式source/結果は過去索引に結合。`restore-prerequisite.json`を新規保存。既存consumer受入と、case欠落/異なるartifact/壊れたcase hashの3負例拒否を確認した。過去producerは今回再実行していない。
+- category-chain-v1は参照索引に20261114-capital-runtime-checks.jsonを含めなかったためpaired_restore.pyの歴史的descriptorを見つけられずexit1。該当hashは当該古い索引と194原本manifestに元から存在した。新しいhashで過去を書き換えず、古い索引を追加して別processのv2で7source/結果のhash結合・candidate identity再計算・4case受入を確認。v1失敗も保持。
+- restore categoryのhashはdf0e74fce630da6d276bb1e030f1f74656770fac73087dcf297b33042cc70764。復元4件category確認、観測8領域、部分5、未実証5。registryへtag/reportを発行しておらず、運用gate not_evaluated/配信blocked/唯一のUTC逆行試行の保留を維持。
+- input-failure-review-v1：正式5入力のcanonical path/bytes/SHA/device/inode/mtime/ctimeと現36sourceを読取確認。元消費台帳aliasが同じcanonical fileを指すことを確認したがNOFOLLOWは緩和せず、private参照設定は未発行。元live headは停止中のため未確認。
+- 保存済みlocal FAILは7assertion候補のどれかを特定するtracebackがなく、FAIL後にも複数testが成功していた。exit124は外側240秒budget、monotonic240.136817945秒。last visible symlink testのdeadlock/T03/UTC原因は確定できない。旧full-suiteのfuture拒否や後続CI成功を原因特定へ流用せず、受入済みsuiteを反復しない。
+- 監視CLIは固定CSVからlabelを読む。DBの観測削除は欠測labelを作らず、CSV再生成/MAE報告書の正規化はcandidate IDを変える。constant referenceも実候補の3非定数referenceへ同一性を保って注入できない。これらの適用範囲と初回承認/配信metadataの順序は別reviewが必要。policyや合格条件を無断変更せず、部分caseを勝手に閉じない。
+- capital.mdに元PG/MLflow2containerだけの限定起動案、startup DB書込/backup/schema確認/停止条件/切戻しの限界を記載した。現在の禁止を変更する許可が必要で未実行。別承認・有効運用証拠・異なる適格二版の不足を同版routing/合成で埋めない。
+- 製品source/tests/scripts/CIを変更していないため、既存653件suite/実装CIを理由なく再実行しない。今回の検証は新しい専用監視負例、復元category consumer/hash chain、原本保持、文書/証拠整合を対象とする。
+- startup-plan-inventory-v1は対象元PG/MLflowだけの限定inspect。image digest・volume・localhost55434/5001を記録し、どちらも停止状態。Config.Env/資格情報は取得せず、起動・設定変更なし。
+- layout-v1は963相対リンク・欠落0/旧import0、docs9/src18/tests12/scripts7を維持。diff-check-v1も成功。最終証拠索引は生成済みの全receipt/log/公開しないprivateファイルのdescriptorを含むcutoffを設け、生成・検算・commit/push自身の後続receiptは同保存先へ残す。
+- integrity-v1は索引生成中のbuild-index-v2.logをcutoffへ含めたため、終了後のlog SHA差を検出してexit1。原本改変ではなく索引生成helperの自己収録不備。旧helperをbuild_index-v2.pyへ保全し、receipt未完了の生成logを除外する修正を行った。失敗logを消さず、新しい索引を生成して全descriptorを再検証する。
+- integrity-v2成功：最終cutoff53保存物/16receiptの全SHA・194原本不変・復元4case・製品source/tests/scripts/CI不変・private値非公開・初回失敗保持を確認。後続検算/commit/push receiptは同ignored保存先に残す。今回の対象は計画/README/capital/runbook/ログ/新証拠索引の6ファイルだけ。
