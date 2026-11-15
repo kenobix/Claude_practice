@@ -5062,3 +5062,13 @@ diff check/変更差分の秘密値scanも成功した。この検算結果を�
 - final-measurement-regression-v1（途中source）は外側240秒でexit124。途中で既存inspectionの1件がFAILを出したが、timeout前にtracebackが出力されず正確なassertion・原本を回収できていない。この失敗をUTC原因と断定しない。独立した限定fixture診断v1/v2ではlinked/orphanが正常、v2はjournal含む4原本を保全しUTC逆行0を確認。過去のFAILへ遡及適用しない。外側timeoutの延長で解決扱いにしない。
 - 最終sourceは別途review/input/archiveの全対象とCIで確認する。上記651件を最終sourceの全成功としては記録しない。時計研究は引き続き保留、実運用試行の保留も維持。
 - 最終review/input/archive対象のfinal-target-v3は**50件/99.874表示秒・exit0**。追加19件を含み、製品sourceは以後固定する。先の限定実行依頼文では49件と見積もったが、実際の収集数は50件だった。compile/diff成功、958相対リンク/旧import0・docs/src/tests/scripts=9/18/12/7、保護194原本不変を確認。最終全653件とDocker artifact/cleanupは実装commitのCIで確認する。
+- 実装cb05e726feadc3b9b6c8857b6639edf67402f20fを対象10ファイルだけcommit/push。無関係3パスは除外、全diff/staged diffを保存。CI43685531001のunit jobは全653件/216.116表示秒とcompileall成功。Docker jobは完了・artifact確認待ちで、まだ全体受入済みとはしない。
+- current-source-binding-v1：現在の36 source/config/依存fileを新しい使い捨てcheckoutへpin。5正式入力は同じcanonical合成fixtureを参照しコピー0、元lock共有、registry tag書込0、元5ファイル不変。別processで**コピーした現sourceがimportされたこと**を確認し、全history読取とadverse consumer拒否を検証。実candidateへの移設ではない。
+- restored-archive-v1：eventとrepairの破損元8fileを保持した回復済み系列を再exportし、13member/2eventを別processで成功。SHA b6faacf6702cb25a11cf7b7a5e6e236db4c09226fb331352db0b57a7832b77ce。回復control込みの可搬性だけであり、再回復・live最新性・実採否は主張しない。
+- existing-container-state-v1：現時点の元UCI/Capital8containerはいずれもExited255。起動/停止せず、既知のrefused queryも反復しない。元live registryのhead照合は未実施として残す。今回のlocal追加試験でDocker resourceは作成していない。
+
+- CI43685531001は実装cb05e72の全653件/216.116表示秒・両job全step成功。artifact14150975862は234,537 bytes、SHA0c03cc31ce7f43c22074e01a79f74f1a678424e4d3e7f728d36d6cbf2cb93fbe。16 member/内包hashと、ZIPだけを渡す別processの1,000要求・暖機50除外・1,050応答/p95 28.726118ms再計算、PG/HTTP/Caddy/TERM/対応復元のcleanup・保護ID不変を確認。合成数値を実候補や本番SLOへ流用しない。最終3sourceはCI commitと同bytes。
+- P1の入力参照・独立event/repair回復とP2の全系列可搬保存は隔離実装/CIまで受入。実適用/live head、部分5・未実証5のruntime、category発行、risk受容/T13bは未完了。前提未達の採否や承認は進めない。実候補の唯一のUTC逆行試行を有効化せず、再測定/new attempt/reopen/時計研究禁止を維持する。
+- 最終確認後は計画・README・仕様・本ログ・今回証拠JSONの5対象だけを記録commit/pushする。索引は生成済みreceiptのcutoffを持ち、索引生成/最終commit/push自身は自己hash循環を避けignored後続証跡に保持する。
+- final-integrity-v1は索引144保存物/49receiptのSHA、最終source=cb05e72、保護194原本、source36file別process参照/台帳コピー0、回復後archive13member、12/5/5とcategory0、local exit1/124の保持を検算。相対リンク958・旧import0も成功。local中断試行の一時fixture全回収は確認できておらず、CIのresource cleanup完了へ読み替えない。
+- 最終索引cutoffは151保存物/52receipt。final-integrity-v2で全SHAを再確認した。以降の検算receipt・最終差分・commit/push receiptは同ignored保存先の後続証跡であり、このcutoffへ遡及追加しない。

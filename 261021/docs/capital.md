@@ -1787,3 +1787,13 @@ registered tags、gate、配信許可、運用台帳、消費台帳には書込�
 
 この制約下で全P1をpassedにすることはできない。時計研究を再開せずに後日独立した測定を認めるか、
 配信承認を伴わない学習成果の範囲で完了とするかは、証拠と限界を示した上で別途ユーザーが判断する。
+
+
+今回の隔離実装は`cb05e72`の[CI43685531001](https://github.com/kenobix/Claude_practice/actions/runs/43685531001)で
+全653 unit（216.116表示秒）・全job/step、固定16 artifactのSHA/内包hash/ZIP-only数値再検算/cleanupまで受入。
+artifact14150975862は234,537 bytes、SHA256 `0c03cc31ce7f43c22074e01a79f74f1a678424e4d3e7f728d36d6cbf2cb93fbe`。
+最終local対象50件/99.874表示秒も成功。現source36fileをコピーした別processでcanonical合成5入力の参照（台帳コピー0）とadverse拒否を確認した。
+破損event/repair/回復controlを含む13memberの別process検算も成功したが、再回復は未対応のまま。
+local全suiteの途中source651件には既存future拒否1 error、measurement全体にはtimeout/未特定FAILがある。
+失敗を残し、CI成功をこのPCの時計資格やその失敗原因の解決へ流用しない。
+実候補の運用保留、live未確認、partial5/missing5、category未発行と別承認待ちは継続する。
