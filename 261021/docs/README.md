@@ -1,3 +1,5 @@
+最新契約：[正式入力参照・全review系列archive・独立原本回復](capital.md#operational-review-input-archive-20261115)、[検証索引](reviews/20261115-review-archive-checks.json)。
+
 # 文書一覧とファイル統合の対応表
 
 2026-11-15：Markdown 67本を用途別8冊＋この索引へ統合。元の内容は各冊の旧ファイル名の節へ収録した。

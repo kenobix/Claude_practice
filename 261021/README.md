@@ -1,3 +1,5 @@
+2026-11-15追補：[正式入力参照・review全系列保存と原本回復](docs/capital.md#operational-review-input-archive-20261115)。実candidateの運用保留・実採否未達は継続。
+
 # 需要予測モデルを継続運用するMLOps基盤
 
 **2026-11-14現在:** 時計研究は保留。[製品作業の開始条件](docs/capital.md#product-completion-policy)へ改訂し、履歴学習/精度評価と時計依存の運用測定を分離した。過去の時計資格は未合格のまま。日付付きの旧停止条件は当時の履歴として読む。

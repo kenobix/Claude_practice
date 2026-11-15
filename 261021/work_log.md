@@ -5040,3 +5040,25 @@ diff check/変更差分の秘密値scanも成功した。この検算結果を�
 - 実装865362dのCI43666552694は全634件/249.949表示秒、両job全step成功。artifact14142284724は234,614 bytes、SHA d4cdcc4ca6cb9bb948274fb370001a9f66445aa8c28a6963ce98ce091d51f94e。16 member/内包hash、別processへZIPだけ渡す数値再計算（1,000 measured/暖機50除外/1,050応答/p95 28.65152700002227ms）、PG/HTTP/Caddy/paired restore/TERM cleanupと保護ID不変を確認。合成数値を実candidateへ流用しない。3製品/test sourceが実装commitと同bytesであることも照合。
 - 最終の計画・README・文書索引にscopeと残件を反映。P1回復とpreflightは隔離実装/CIまで完了、実source/正式入力の移設とlive head最新性は未確認。破損event/repairの独立原本回復とreview全系列の可搬保存も残る。唯一の実運用試行がUTC逆行で保留であり、今回new attempt/再測定/reopenは禁止なので、警告risk受容やT13b合格まで全P1完了とはしない。
 - 最終整合：相対リンク951件/旧module import0、docs/source/tests/scripts=9/18/12/7を維持。証拠索引の全descriptor/receipt SHA、製品sourceと受入済み865362dの同一性、保護194原本、paired-backupの全artifact/dump、22caseの12/5/5を検算した。今回の6専用projectは最終読取でもcontainer/volume/network残数0。最終commit/pushのreceipt自体は自己hash循環を避け、ignored原本に保存して索引のcutoffと区別する。
+
+
+## 2026-11-15 基点3482f6e：正式入力参照・全系列archive・独立原本回復
+
+- HEAD3482f6e、追跡差分なしから開始。無関係な未追跡3パスは保持。docs/source/tests/scriptsの統合配置を維持。
+- 依頼は全P1の解決だが、実原本/台帳/DB/registry/配信の変更、再fit/再選定/閾値変更/再測定/new attempt/reopenは禁止。時計研究も保留。有効な運用証拠・適格二版・別承認に依存する採否をpassedにしない。
+- 証跡保存：`data/reports/20261115-review-archive/`。run.pyは全command/cwd/exit/UTC未資格値/monotonic/log SHAを非上書きreceiptへ保存。全編集helperと失敗logも保持する。
+- 実装：現sourceのconsumer/config/依存closureと、canonicalな正式5入力のdevice/inode/mtime_ns/ctime_ns/bytes/SHAをpinしたprivate参照設定。台帳をコピー/初期化せず、元candidate/台帳/versionのlockを使う。root祖先もFDでNOFOLLOWにする。実原本への参照設定は発行していない。
+- review全系列archive：全物理history・修復記録・保全元・原本snapshot・referenceの閉包/manifest/hashを保存。別processがZIP+独立SHAだけで全系列を再検算。snapshotは検算fixtureであって正式消費台帳として利用しない。既知秘密/外部URL/絶対path、重複/欠落/余剰/traversal/symlinkを拒否。
+- 独立archive原本回復：現在inventory/全tag SHA/committed head・原本・全referenceを照合し、破損event/repairを上書きせず単一controlにexact bytesを追記。consumerは保全元も毎回検査。未来拒否/UTC拒否/sticky ineligible/gate blockedを維持。control自身の破損・多段回復は停止。archiveの独立保管真正性はcaller指定SHAだけで自動証明できず、operatorの保管経路reviewが必要。
+- 初回archive-target-v1は41件中12 error：raw text検査のregex閉じ括弧不備。検査を単純なURI列挙と絶対path検査に分けて修正。v2は41件成功。秘密・path検査を削除する回避ではない。
+- inputs-target-v1は4件中1 failure：unlink→再生成でfilesystemが同inodeを再利用したため、device/inodeだけのpinでは置換を区別しなかった。mtime/ctimeもpinしv2の4件成功。実原本は変更せずfixtureだけの操作。
+- final-target-v1はsource closure条件の括弧編集ミスでimport SyntaxError。修正後v2は47件/69.351表示秒成功。追加のrevision上限負例1件/2.576秒も成功。途中sourceの成功を最終CI成功へ読み替えない。
+- synthetic-archive-v1：2event・破損receipt/repairを含む合成系列を別processへZIP+SHAだけ渡して成功。実candidateや運用性能の証拠ではない。SHAと原本はignored保存先へ保持。
+- 既存runtime22caseは原本を再実行せず技術review。12観測はsnapshot同candidate/artifact・監査・HTTP/移行保持精度・復元volume/cleanup・monitor母数/警告数の範囲で支持。部分5・未実証5・正式category0を維持。194保護原本はSHA/bytes不変。既存CSV・frozen referenceや消費窓を変更しない。
+- Docker通常読取はsocket permission deniedを保存し、許可付きversion読取は29.9.2。今回は承認前提を満たさない配信faultを作らず、既存containerを起動/停止せず、新しいruntime試行も開始しない。
+- 全suiteは既知のsandbox socket制約を避け、使い捨てfixtureのみで実行。外側900秒は試験件数追加に対するsuite budgetで、個別のSIGTERM/timeout/future拒否条件は延長・緩和しない。
+- 追加hardening：JSONのescape/埋込URL・秘密keyと、回復control中のdecoded historyも検査。opaque ZIP comment/extra/trailing bytesを拒否し、各専用負例が成功。archive SHAは6be2ace05ca80679c66ec72c87dd958fd4375edafe89831c13f43165d4fab1e4、最終readerのsmokeでも2event/12member・offline onlyを確認。
+- full-suite-v1（途中source）は651件/654.857表示秒で1 error。既存test_deploymentの承認時刻がfutureとして拒否された。原本にtimestamp06:18:50.449580、observed06:18:49.352211、ahead1,097,369µs/monotonicを保持。製品のfuture拒否は正しく維持し、原因の管理元調査やOS操作、成功するまでのrerunはしない。今回変更していない承認sourceの自然拒否であり、時計資格や解決の証拠にしない。
+- final-measurement-regression-v1（途中source）は外側240秒でexit124。途中で既存inspectionの1件がFAILを出したが、timeout前にtracebackが出力されず正確なassertion・原本を回収できていない。この失敗をUTC原因と断定しない。独立した限定fixture診断v1/v2ではlinked/orphanが正常、v2はjournal含む4原本を保全しUTC逆行0を確認。過去のFAILへ遡及適用しない。外側timeoutの延長で解決扱いにしない。
+- 最終sourceは別途review/input/archiveの全対象とCIで確認する。上記651件を最終sourceの全成功としては記録しない。時計研究は引き続き保留、実運用試行の保留も維持。
+- 最終review/input/archive対象のfinal-target-v3は**50件/99.874表示秒・exit0**。追加19件を含み、製品sourceは以後固定する。先の限定実行依頼文では49件と見積もったが、実際の収集数は50件だった。compile/diff成功、958相対リンク/旧import0・docs/src/tests/scripts=9/18/12/7、保護194原本不変を確認。最終全653件とDocker artifact/cleanupは実装commitのCIで確認する。

@@ -1690,3 +1690,100 @@ v1〜v5の失敗も保持。通常のlocal Dockerfile buildはPyPIの読取timeo
 それだけでUTC逆行の不適格証拠を有効化することはできない。
 唯一の運用試行は保留で、再測定・新attempt・reopenは禁止されているため、
 **今回の制約下でT13bの合格・配信承認まで全P1を完了することはできない**。
+
+
+<a id="operational-review-input-archive-20261115"></a>
+
+## 正式入力の参照・review全系列保存・独立原本回復（2026-11-15追補）
+
+基点`3482f6e`からの製品契約。前節の「移設契約未実装」「event/repair原本回復未実装」「全系列archive未実装」は、
+この節の隔離実装・検証状況で補う。実候補への適用、元live registryの最新性、運用保留の解除を意味しない。
+[今回の証拠索引](reviews/20261115-review-archive-checks.json)と[作業ログ](../work_log.md)を参照する。
+
+### 現sourceから同じ正式入力を参照する
+
+`eligibility-review --bind-inputs MANIFEST`は、新checkoutへ**参照設定だけ**をO_EXCL/fsyncで保存する。
+設定場所は`data/evaluations/capital-bikeshare/operational-inputs/CANDIDATE-ATTEMPT.json`。
+元の台帳・plan・report・journalをコピー/初期化/変更せず、旧checkoutのsymlinkも変更しない。
+従来のsymlinkを許可する代わりに、operatorが指定したcanonical rootへ各directory componentをNOFOLLOWで開く。
+
+入力manifestの契約:
+
+- `bindings`：論理相対pathをkeyに、`root`（canonical絶対path）、`target`（data内相対path）、
+  `sha256`、`bytes`、`device`、`inode`、`mtime_ns`、`ctime_ns`を指定する。
+  正式運用台帳・正式消費台帳・plan・report・journalの**5入力に完全一致**すること。
+  この設定はhost固有のprivateファイルであり、Gitや公開archiveへ含めない。
+- `expected_source_files`：現在checkoutのsrc/scripts/configsの実行source/configとpyproject.toml/requirements.lockの相対path→SHA。
+  consumer・CLI・依存2ファイルを必須にし、余剰/不足sourceやsymlinkも拒否する。bytecode directoryは対象外。
+  これは現在のreview readerのbytes照合であり、旧学習sourceの由来を書き換えるものではない。
+- `expected_registry_sha256`：明示読取した当該registryの全tag比較値。
+  正式入力・両消費窓・全history・live committed headを二度照合し、変化した場合は設定を発行しない。
+  historyが未発行ならcontrol tagも無いことが必要で、初回reviewは別の明示操作になる。
+
+以後のStore/共通local consumerは参照設定を読み、同じ正式入力のidentityとbytes、現在sourceを毎回確認する。
+元candidate/台帳/versionのlock namespaceを共有し、移設先に別の正式台帳やcandidate lockを作って競合を回避しない。
+正式入力の正当な追記もpin不一致として停止するため、実適用の際は別途reviewした移設計画が必要。
+sourceや参照設定が処理中に変わる、別inodeへ置換される、rootの親がsymlinkである場合も停止する。
+`application_authorized=false / new_attempts=0 / retry_permission=false`を維持する。
+
+現行の`recheck`等にある参照設定以外の旧pathも、実運用への移設時には個別に確認する。
+この契約だけで全MLOps commandの自動移設、元live head確認済み、または実候補へ適用済みとは主張しない。
+
+### review全系列を別processへ渡す
+
+```bash
+# 隔離fixture専用。実候補への発行・回復を自動実行しない。
+DATA_PROFILE_ID=capital-bikeshare .venv/bin/python scripts/runtime_tools.py eligibility-review \
+  --candidate-id "$CANDIDATE" --attempt-id "$ATTEMPT" --export-review-archive "$ARCHIVE"
+.venv/bin/python -m bike_mlops.operational_validation \
+  --verify-review-archive "$ARCHIVE" --expected-sha256 "$SEPARATELY_RETAINED_SHA"
+```
+
+ZIPはmanifest、全物理event/intent/receipt/repair、残した途中破損bytes、原本snapshot・全referenceの閉包を持つ。
+回復済み系列なら回復controlと保全元も含む。lockは含めない。
+単なる全file SHA検査に加え、別processの一時領域で系列の順序・event SHA・snapshot/原本・repair代替値・全reference・headを再検算する。
+この一時snapshotは検算用であり、新しい正式消費台帳として利用しない。
+結果は`offline_full_series_verified`、`live_freshness_verified=false / application_authorized=false`。
+運用数値を採用したり、UTC逆行のraw journalを有効にしたりする結果ではない。
+
+ZIPは最大32MiB、member単体8MiB、650件まで。historyは既存8MiB/501件/100event上限も維持。
+member重複・欠落・余剰・traversal・symlink・暗号化・manifest不一致を拒否し、展開先pathをarchiveから直接実行しない。
+既知の秘密field/外部URL/絶対pathを拒否し、UTF-8以外の保全原本は公開可能と推定しない。
+任意の秘密を完全自動判定できる保証はないため、原本の公開reviewは別途必要。
+既存出力を上書きせず、書込中断のpartial出力には成功receipt/SHAを発行しない。
+
+### 独立原本からevent・repairを明示回復する
+
+`--restore-review-archive ARCHIVE`は、破損**前**に独立保管したSHA付きarchive、現在inventory、
+現在registry全tag SHA、reviewer/reason/UTC/source commitを必須にする。
+「破損後に作ったarchiveの自己申告SHA」では独立保管の真正性を証明できない。保管者/採取経路の確認はoperatorの責任境界に残る。
+
+完全なarchive系列と現在のcommitted live headが一致し、原本・全referenceも同じ場合だけ、
+`recovery-00000000.json`へexact archived bytesと保全元descriptorを追記する。
+破損event/repair/intent/receiptを削除・上書きせず、欠落fileも元pathへ生成しない。
+consumerは保全元が不変であることを確認してから代替bytesを読み、従来の全系列検証を再度通す。
+registered tags、gate、配信許可、運用台帳、消費台帳には書込まない。
+回復後のadverse追記でもsticky ineligibleを維持し、保全元の変更・欠落先の再生成を拒否する。
+
+古いarchive/別candidate/異なるsource/新しいhistory/未知member/変化したlive head/競合/future reviewを拒否する。
+一つの回復controlに限定し、control自身の破損・回復controlを含むarchiveからの再回復は明示的に停止する。
+その場合は独立原本を保持したまま、新しい保全先と履歴継承を別途reviewする。自動resetや成功までretryしない。
+独立registry管理者による全体の整合した巻戻しは、このローカルhash契約で検出できる保証を持たない。
+
+### runtime観測12領域のreviewと停止理由
+
+保存済み実candidate snapshotの12観測について、candidate/artifact、HTTP結果・監査行、復元volume、
+旧REALの保持精度、monitor母数/警告数、cleanupを保存原本から照合した。
+**観測12は技術review済み、部分5・未実証5は維持**。正式category attestationは0件。
+一部のsummaryの完了表示だけで、必要な全producer/段階/承認が揃ったと扱わない。
+
+- audit503・破損ready・API停止・旧REAL移行・同版routingは、記録された専用コピー環境の範囲で支持する。
+- 実candidateのPSI3特徴のreferenceは非定数。別の合成定数referenceを実candidateに結合し直さない。
+- missing-label/MAE未設定の残条件は、frozen CSV/referenceの別の拒否試験では代用しない。
+- 異なる適格二版・製品promote中断・承認済みoperation/timeout metadataには、有効な採用前提が必要。
+  同版二slotやblocked stagingを承認済み配信の証拠にしない。
+- 唯一の運用試行はUTC逆行で保留。再測定・new attempt・reopenは禁止のため、有効な運用証拠を新たに作れない。
+  人の警告risk受容だけでこの欠陥は解消しない。前提未達のT13b採否・承認は進めない。
+
+この制約下で全P1をpassedにすることはできない。時計研究を再開せずに後日独立した測定を認めるか、
+配信承認を伴わない学習成果の範囲で完了とするかは、証拠と限界を示した上で別途ユーザーが判断する。

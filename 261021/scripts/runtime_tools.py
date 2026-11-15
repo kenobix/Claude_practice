@@ -491,6 +491,10 @@ def _entry_eligibility_review():
     mode.add_argument("--inventory", action="store_true")
     mode.add_argument("--diagnose", action="store_true")
     mode.add_argument("--preflight", type=Path, metavar="MANIFEST")
+    mode.add_argument("--bind-inputs", type=Path, metavar="MANIFEST")
+    mode.add_argument("--export-review-archive", type=Path)
+    mode.add_argument("--restore-review-archive", type=Path)
+    parser.add_argument("--expected-archive-sha256")
     mode.add_argument("--repair-metadata", metavar="MEMBER")
     mode.add_argument("--recover-orphan", action="store_true")
     parser.add_argument("--expected-inventory")
@@ -510,14 +514,19 @@ def _entry_eligibility_review():
         parser.error("Explicit publication recovery requires --publish-review and --expected-head")
     if (args.publish_review and not args.resume or args.recover_orphan) and not all((args.disposition,args.reviewer,args.reason,args.source_commit)):
         parser.error("Review publication requires disposition, reviewer, reason and source commit")
-    if (args.repair_metadata or args.recover_orphan) and not all((args.expected_inventory,args.reviewer,args.reason,args.source_commit)):
+    if (args.repair_metadata or args.recover_orphan or args.restore_review_archive) and not all((args.expected_inventory,args.reviewer,args.reason,args.source_commit)):
         parser.error("Recovery requires inventory token and explicit review metadata")
     if args.recover_orphan and (args.disposition not in {"on_hold","ineligible"} or not args.expected_registry_sha256):
         parser.error("Orphan recovery requires an adverse disposition and registry snapshot SHA")
+    if args.restore_review_archive and not all((args.expected_archive_sha256, args.expected_registry_sha256)):
+        parser.error("Archive restoration requires independently retained archive SHA and registry snapshot SHA")
     store = EligibilityReviewStore(PROJECT_ROOT,args.candidate_id,args.attempt_id)
     try:
         if args.inventory:
             print(json.dumps({"status":"inventory_only",**store.inventory(),"new_attempts":0,"retry_permission":False},sort_keys=True))
+            return
+        if args.export_review_archive:
+            print(json.dumps(store.export_archive(args.export_review_archive), sort_keys=True))
             return
         if args.inspect:
             result = store.read()
@@ -533,10 +542,22 @@ def _entry_eligibility_review():
                 if args.diagnose:
                     print(json.dumps(store.diagnose(client),sort_keys=True))
                     return
+                if args.bind_inputs:
+                    from bike_mlops.operational_validation import _elig_json
+                    result = store.bind_inputs(client, **_elig_json(args.bind_inputs.read_bytes()))
+                    print(json.dumps(result, sort_keys=True))
+                    return
                 if args.preflight:
                     manifest=json.loads(args.preflight.read_bytes())
                     result=store.preflight(client,**manifest)
                     print(json.dumps(result,sort_keys=True))
+                    return
+                if args.restore_review_archive:
+                    result = store.restore_archive(client, archive=args.restore_review_archive,
+                        expected_archive_sha256=args.expected_archive_sha256, expected_inventory=args.expected_inventory,
+                        expected_registry_sha256=args.expected_registry_sha256, reviewer=args.reviewer, reason=args.reason,
+                        source_commit=args.source_commit, reviewed_at_utc=args.reviewed_at_utc or datetime.now(timezone.utc).isoformat())
+                    print(json.dumps(result, sort_keys=True))
                     return
                 if args.repair_metadata:
                     result = store.repair_metadata(client,target=args.repair_metadata,expected_inventory=args.expected_inventory,

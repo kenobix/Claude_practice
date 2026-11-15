@@ -1,0 +1,1695 @@
+{
+  "kind": "formal-input-review-series-archive-recovery-checks",
+  "base_commit": "3482f6e24c294dac6e2daf85750b977545c0ccd9",
+  "status": "local_verification_ci_pending_real_candidate_hold_preserved",
+  "implementation_commit": null,
+  "ci": null,
+  "source_files": [
+    {
+      "path": "src/bike_mlops/operational_validation.py",
+      "sha256": "693bba52dfde7d770f29d73d1280c1445b1e5547cf15c43f6afea06ad4d23660"
+    },
+    {
+      "path": "scripts/runtime_tools.py",
+      "sha256": "06b2b217650aaa791fda8cfef88e9abbf8f07c18b8e71d0cf6cd4d0491caa59e"
+    },
+    {
+      "path": "tests/test_measurement.py",
+      "sha256": "ceb38ce25a98cbbe9dbeaaa894d7d97363bcc80dc8302b8bd109df2680668cb3"
+    }
+  ],
+  "baseline_test_count": 634,
+  "current_test_count": 653,
+  "added_tests": [
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_archive_restoration_control_revision_is_bounded_and_linked_to_history"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_archive_restore_cli_requires_independent_pin_and_never_sets_registry_tags"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_archive_restore_corrupt_event_and_repair_preserves_raw_bytes_and_gate"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_archive_restore_lock_disk_interrupt_and_control_corruption_fail_closed"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_archive_restore_missing_event_and_subsequent_adverse_append"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_archive_restore_never_resets_newer_unknown_or_changed_sources"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_archive_restore_sha_inventory_future_and_live_rollback_refused"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_formal_input_reference_existing_history_and_archive_use_same_canonical_bytes"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_formal_input_reference_no_ledger_copy_no_symlink_and_original_lock_namespace"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_formal_input_reference_rejects_symlink_ancestor_and_does_not_modify_alias"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_formal_input_reference_requires_full_consumer_source_closure"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_formal_input_reference_source_mutation_unknown_binding_and_registry_change_refused"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_review_archive_decoded_embedded_external_urls_and_keys_are_not_hidden"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_review_archive_no_overwrite_and_source_race_refused"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_review_archive_opaque_comments_extra_metadata_and_trailing_payload_are_rejected"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_review_archive_secret_external_or_absolute_path_rejected_without_output"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_review_series_archive_only_cli_and_originals_remain_unchanged"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_review_series_archive_rehashed_semantic_forgery_is_rejected"
+    ],
+    [
+      "261021/tests/test_measurement.py",
+      "OperationalEligibilityReviewTests",
+      "test_review_series_archive_rejects_zip_duplicate_extra_missing_traversal_symlink"
+    ]
+  ],
+  "removed_tests": [],
+  "protected_originals_unchanged": 194,
+  "protected_original_manifest": {
+    "path": "data/reports/20261115-operational-review/originals.json",
+    "sha256": "69cf96f14e8be4b7b9e2312613ee502c137582d26528757993d26ca3b05a0e89"
+  },
+  "tests": {
+    "archive-target-v1.log": {
+      "count": 41,
+      "displayed_seconds": 31.491,
+      "exit_code": 1
+    },
+    "archive-target-v2.log": {
+      "count": 41,
+      "displayed_seconds": 62.734,
+      "exit_code": 0
+    },
+    "archive-text-target-v1.log": {
+      "count": 1,
+      "displayed_seconds": 0.272,
+      "exit_code": 0
+    },
+    "final-target-v1.log": {
+      "count": 1,
+      "displayed_seconds": 0.001,
+      "exit_code": 1
+    },
+    "final-target-v2.log": {
+      "count": 47,
+      "displayed_seconds": 69.351,
+      "exit_code": 0
+    },
+    "final-target-v3.log": {
+      "count": 50,
+      "displayed_seconds": 99.874,
+      "exit_code": 0
+    },
+    "full-suite-v1.log": {
+      "count": 651,
+      "displayed_seconds": 654.857,
+      "exit_code": 1
+    },
+    "inputs-target-v1.log": {
+      "count": 4,
+      "displayed_seconds": 4.585,
+      "exit_code": 1
+    },
+    "inputs-target-v2.log": {
+      "count": 4,
+      "displayed_seconds": 4.546,
+      "exit_code": 0
+    },
+    "target-bounds-v1.log": {
+      "count": 1,
+      "displayed_seconds": 2.576,
+      "exit_code": 0
+    },
+    "zip-metadata-target-v1.log": {
+      "count": 1,
+      "displayed_seconds": 4.094,
+      "exit_code": 0
+    }
+  },
+  "attempts": [
+    {
+      "path": "data/reports/20261115-review-archive/archive-target-v1.json",
+      "sha256": "1bfc475ec8c98a9aa4c7d93a9ba1e3f91edc78f8b96aecdd1428ed60255e7a47",
+      "command": [
+        "bash",
+        "-c",
+        "cd 261021 && MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m unittest discover -s tests -p test_measurement.py -k OperationalEligibilityReviewTests -v"
+      ],
+      "cwd": ".",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-15T06:04:41.214430+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:05:16.286753+00:00",
+      "monotonic_start_ns": 29765094207074,
+      "monotonic_end_ns": 29802186023168,
+      "log": "archive-target-v1.log",
+      "log_sha256": "e8679589fce6c3496f3dc34a72013773194c1b537712767bacc05e5acc6028be"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/archive-target-v2.json",
+      "sha256": "eec8a70efec29ead378e6e973005159db020d1ac5de2e072e89ec6afce985fcd",
+      "command": [
+        "bash",
+        "-c",
+        "cd 261021 && MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m unittest discover -s tests -p test_measurement.py -k OperationalEligibilityReviewTests -v"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:05:32.473292+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:06:35.101971+00:00",
+      "monotonic_start_ns": 29818372580913,
+      "monotonic_end_ns": 29885141149677,
+      "log": "archive-target-v2.log",
+      "log_sha256": "e52212e367e3a5545bcf0ea107293f6662cf8d6c847e7d472cf159bf4e5ff258"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/archive-text-target-v1.json",
+      "sha256": "d1056c78764bcffe2f67ab3c2e7406242a332eaf6ece2fc39a1099539528827e",
+      "command": [
+        "bash",
+        "-c",
+        "cd 261021 && MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m unittest discover -s tests -p test_measurement.py -k review_archive_decoded -v"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:17:54.255277+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:17:58.352284+00:00",
+      "monotonic_start_ns": 30602785275274,
+      "monotonic_end_ns": 30606882275055,
+      "log": "archive-text-target-v1.log",
+      "log_sha256": "56757424fab70b086722a9850a101219ff178c59b7f9cec66319ab8a46b702f3"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/baseline-read.json",
+      "sha256": "010210e4b617ae9986128c0f84027441af3da390585dc243036f568af63de488",
+      "command": [
+        "python3",
+        "-c",
+        "import subprocess; print(subprocess.check_output([\"git\",\"status\",\"--short\"],text=True)); print(subprocess.check_output([\"git\",\"rev-parse\",\"HEAD\"],text=True))"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:01:46.406609+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:01:46.485381+00:00",
+      "monotonic_start_ns": 29581691913279,
+      "monotonic_end_ns": 29581770634218,
+      "log": "baseline-read.log",
+      "log_sha256": "eb031d3d29c99927430796eda211f1734d47522d47953b3b009b15bd5bc66616"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/build-index-v1.json",
+      "sha256": "312942e4d5ba03ed42b2d18f7ce6c9e4f9b69df57229a7ec695a2616b15b2531",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/build_index.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:20:07.948015+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:20:09.311425+00:00",
+      "monotonic_start_ns": 30743414983631,
+      "monotonic_end_ns": 30744778373490,
+      "log": "build-index-v1.log",
+      "log_sha256": "c9b7597d14b71ced852599dab8eef5e2ff7d8c9049c09a1dc5e4d22825287f69"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/build-index-v2.json",
+      "sha256": "4a2cc879ee1502856c274f2a65ab27d9e4b05910da6f5b387a2cb71306093a89",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/build_index.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:24:53.428700+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:24:54.117258+00:00",
+      "monotonic_start_ns": 31045517163791,
+      "monotonic_end_ns": 31046205714581,
+      "log": "build-index-v2.log",
+      "log_sha256": "424881099bf5bc18d829557bfaa0659903c16fc91d556c49b90f93dadd655c65"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/compile-diff-v1.json",
+      "sha256": "17a90fe6f1bc0834e2bfefadba2be801181122c7d97aee817380d520ffaf01c8",
+      "command": [
+        "bash",
+        "-c",
+        "cd 261021 && .venv/bin/python -m compileall -q src tests scripts && git diff --check"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:14:00.226277+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:14:00.331169+00:00",
+      "monotonic_start_ns": 30354034106724,
+      "monotonic_end_ns": 30354138987835,
+      "log": "compile-diff-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/compile-final-v1.json",
+      "sha256": "36dc4a2808ebff9ec81ef2689746ec5f769f05bfa3245c551dd4aeba677373c6",
+      "command": [
+        "bash",
+        "-c",
+        "cd 261021 && .venv/bin/python -m compileall -q src tests scripts && git diff --check"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:21:55.017050+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:21:55.195001+00:00",
+      "monotonic_start_ns": 30856947171749,
+      "monotonic_end_ns": 30857125116581,
+      "log": "compile-final-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/diagnose-inspection-fixture-v1.json",
+      "sha256": "8ec7090953408c2dd5d174cee645dd4c59b22975add150ebd83e36b218534e76",
+      "command": [
+        "bash",
+        "-c",
+        "cd 261021 && PYTHONPATH=tests .venv/bin/python -c 'import json; from test_measurement import OperationalRecoveryInspectionTests; t=OperationalRecoveryInspectionTests(methodName=\"runTest\"); t.setUp();\ntry:\n lease,p=t.completed(); print(json.dumps(t.inspect(),indent=2))\nfinally:t.doCleanups()'"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:23:04.935407+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:23:13.658244+00:00",
+      "monotonic_start_ns": 30932022309902,
+      "monotonic_end_ns": 30940745145985,
+      "log": "diagnose-inspection-fixture-v1.log",
+      "log_sha256": "f08563efd1b9f5769e7bc32194a8646dcdcbb63d30661a2acc6d1f4acaf15d5f"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/diagnose-inspection-fixture-v2.json",
+      "sha256": "087d29b89a40836cbd77f7aaacad18b3797105bd9fc8f7d5e8ae090a40bf3d9f",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261115-review-archive/diagnose_inspection.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:23:48.120511+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:23:56.081040+00:00",
+      "monotonic_start_ns": 30977074263742,
+      "monotonic_end_ns": 30985034775611,
+      "log": "diagnose-inspection-fixture-v2.log",
+      "log_sha256": "ed67f5a18145ec14414cda73e57497281f9852b671e479097ebf85ecd8d253aa"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/docker-read-escalated-v1.json",
+      "sha256": "1270be7bf2c4d6a6034b71c5bf3dff155ce17940fb0f24ce5b070a9912469106",
+      "command": [
+        "docker",
+        "version",
+        "--format",
+        "{{.Server.Version}}"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:11:16.248745+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:11:16.368786+00:00",
+      "monotonic_start_ns": 30182050819180,
+      "monotonic_end_ns": 30182170854239,
+      "log": "docker-read-escalated-v1.log",
+      "log_sha256": "3795a4b1e2c6937a65f1be5ac40e8c7998963c6077c5cb1d19874a2d2474db02"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/docker-read-v1.json",
+      "sha256": "de1a11dc1c7da75359898d8c43d0258789614e845f5406af62f9e8be2451fbf0",
+      "command": [
+        "docker",
+        "version",
+        "--format",
+        "{{.Server.Version}}"
+      ],
+      "cwd": ".",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-15T06:10:47.060446+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:10:47.128587+00:00",
+      "monotonic_start_ns": 30150265921154,
+      "monotonic_end_ns": 30150334051259,
+      "log": "docker-read-v1.log",
+      "log_sha256": "865580de498032587fbb5f8aa143097940fa95abf2f333ac33e2b94348923ca2"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/edit-archive-v1.json",
+      "sha256": "e5d6c23ea23f36606c4eff593e88fd2ded6fe8b92d3d9c30bd221dc21bc8c009",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/edit_archive.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:03:31.700066+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:03:31.778812+00:00",
+      "monotonic_start_ns": 29691132896954,
+      "monotonic_end_ns": 29691211633241,
+      "log": "edit-archive-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/edit-cli-v1.json",
+      "sha256": "513a63cbca9556bfe82590c0130244a8c5d8734a31d1bc134eb3b7df8b17e3a6",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/edit_cli.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:04:59.909799+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:04:59.966457+00:00",
+      "monotonic_start_ns": 29783789564987,
+      "monotonic_end_ns": 29783846212440,
+      "log": "edit-cli-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/edit-inputs-v1.json",
+      "sha256": "ce9984ffcce607f5fdae6beafba78c6582276485613136542c4d4626cb7a50e4",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/edit_inputs.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:07:51.948988+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:07:52.015150+00:00",
+      "monotonic_start_ns": 29965061704226,
+      "monotonic_end_ns": 29965127775186,
+      "log": "edit-inputs-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/edit-tests-v1.json",
+      "sha256": "808e2e7e1ff56a2ba0dc5b141d80ab0949a1fda5012f60f717ab45cc6b4654d4",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/edit_tests.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:04:41.064640+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:04:41.129402+00:00",
+      "monotonic_start_ns": 29764944436890,
+      "monotonic_end_ns": 29765009170551,
+      "log": "edit-tests-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/final-archive-smoke-v1.json",
+      "sha256": "7f7cd825d72f611f742a6233ecfee8848efaf2e54337dce5bc81a9a1203321fa",
+      "command": [
+        "261021/.venv/bin/python",
+        "-c",
+        "from pathlib import Path; import hashlib,json; from bike_mlops.operational_validation import verify_review_archive; p=Path(\"261021/data/reports/20261115-review-archive/synthetic-review-series.zip\"); print(json.dumps(verify_review_archive(p,expected_sha256=hashlib.sha256(p.read_bytes()).hexdigest()),sort_keys=True))"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:21:48.325112+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:21:54.941070+00:00",
+      "monotonic_start_ns": 30850255234537,
+      "monotonic_end_ns": 30856871181681,
+      "log": "final-archive-smoke-v1.log",
+      "log_sha256": "9c61c23bf790ce22ef8049215d275c4a1d3cac06168dbc490f9d087a40cfed8b"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/final-measurement-regression-v1.json",
+      "sha256": "f7f1b8c9242b92dad119f74e5bcb1466fd9d88d9ac5ee08bcc51945c9e357140",
+      "command": [
+        "bash",
+        "-c",
+        "cd 261021 && MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 240 .venv/bin/python -m unittest discover -s tests -p test_measurement.py -v"
+      ],
+      "cwd": ".",
+      "exit_code": 124,
+      "started_at_utc_unqualified": "2026-11-15T06:18:25.325106+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:22:11.829397+00:00",
+      "monotonic_start_ns": 30635510855450,
+      "monotonic_end_ns": 30875647673395,
+      "log": "final-measurement-regression-v1.log",
+      "log_sha256": "591f05e233521fa013c5ead3b7fa4ae872f7fb27b010f30fe8b01c35852e832d"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/final-target-v1.json",
+      "sha256": "927ee07a800e0f91df8ca7c2c265143ee65d6d087109b5615791172ef60adb67",
+      "command": [
+        "bash",
+        "-c",
+        "cd 261021 && MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 180 .venv/bin/python -m unittest discover -s tests -p test_measurement.py -k OperationalEligibilityReviewTests -v"
+      ],
+      "cwd": ".",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-15T06:10:34.229019+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:10:35.294090+00:00",
+      "monotonic_start_ns": 30136909438733,
+      "monotonic_end_ns": 30137974489724,
+      "log": "final-target-v1.log",
+      "log_sha256": "a034b1e858366855dc97bffeaf6ab1721b8c71357563a927185ddcc8d42fc34c"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/final-target-v2.json",
+      "sha256": "460e1011f7892b753edce94af2ad560a946b0c285b7f063eaacd5c9e95d35271",
+      "command": [
+        "bash",
+        "-c",
+        "cd 261021 && MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 180 .venv/bin/python -m unittest discover -s tests -p test_measurement.py -k OperationalEligibilityReviewTests -v"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:11:25.600362+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:12:35.506613+00:00",
+      "monotonic_start_ns": 30191402429872,
+      "monotonic_end_ns": 30264367844283,
+      "log": "final-target-v2.log",
+      "log_sha256": "93c6bf9ab2d1581946b039e6503dde271caf3463f463e2b61d601a58f2cad004"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/final-target-v3.json",
+      "sha256": "ba9f8cb297820ada2d88f452dd55fcb83ec1fba603e65ea45ce4dc06c71a9a36",
+      "command": [
+        "bash",
+        "-c",
+        "cd 261021 && MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 180 .venv/bin/python -m unittest discover -s tests -p test_measurement.py -k OperationalEligibilityReviewTests -v"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:24:52.168014+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:26:29.005788+00:00",
+      "monotonic_start_ns": 31044256497303,
+      "monotonic_end_ns": 31147847300702,
+      "log": "final-target-v3.log",
+      "log_sha256": "9f9e8ef767267e313ff3e405c84da1f8b46f1376d760d1e1fbe79377b7efe4b1"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/fix-archive-v2.json",
+      "sha256": "e47591bceed88d9a110d489b348aef6223414a960354008e9bdd108569615105",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/fix_archive_v2.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:05:32.342072+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:05:32.398934+00:00",
+      "monotonic_start_ns": 29818241358987,
+      "monotonic_end_ns": 29818298219722,
+      "log": "fix-archive-v2.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/fix-inode-pin-v1.json",
+      "sha256": "75964b63b19d437ecff538a049c2df03f0dffe402f77c5b265b7629516db64e1",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/fix_inode_pin.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:09:22.578252+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:09:22.643009+00:00",
+      "monotonic_start_ns": 30062376543796,
+      "monotonic_end_ns": 30062441288679,
+      "log": "fix-inode-pin-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/fix-inputs-tests-v1.json",
+      "sha256": "a5b6aa03a5befa476bdb9888b3bb41797256bebbf9a06dc8861a2a1a054b90cc",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/fix_inputs_tests.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:08:50.585135+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:08:50.642156+00:00",
+      "monotonic_start_ns": 30027176807167,
+      "monotonic_end_ns": 30027233813743,
+      "log": "fix-inputs-tests-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/full-suite-v1.json",
+      "sha256": "5ea973b577ce7c9dea9aa4184dee6999c98d909318f57d44378c3f8129cdf722",
+      "command": [
+        "bash",
+        "-c",
+        "cd 261021 && MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 900 .venv/bin/python -m unittest discover -s tests -v"
+      ],
+      "cwd": ".",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-15T06:13:19.274814+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:23:41.809797+00:00",
+      "monotonic_start_ns": 30311333931865,
+      "monotonic_end_ns": 30970763561730,
+      "log": "full-suite-v1.log",
+      "log_sha256": "4e1bcda96b6779f12b4ebdaf89e8e535ce98b974f384a915c0f188a852d1a96d"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/harden-archive-text-v1.json",
+      "sha256": "2880d47a86b2babc1f370b0b58b97141580ef71c55053a148593184cbd7a0d33",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/harden_archive_text.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:17:54.047531+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:17:54.127411+00:00",
+      "monotonic_start_ns": 30602577530441,
+      "monotonic_end_ns": 30602657408531,
+      "log": "harden-archive-text-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/harden-contracts-v1.json",
+      "sha256": "0b685d212d3cb5beb3685d7ea2a32b6916e0a37e133dba9172f0f8929f3bf4d7",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/harden_contracts.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:10:34.089790+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:10:34.156205+00:00",
+      "monotonic_start_ns": 30136770202238,
+      "monotonic_end_ns": 30136836605295,
+      "log": "harden-contracts-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/harden-recovery-bounds-v1.json",
+      "sha256": "8c69d6f2ac3682d9228952a198477226ab98b37c7e6f05032c8dd8e8d7d1533b",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/harden_recovery_bounds.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:12:34.075166+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:12:34.128816+00:00",
+      "monotonic_start_ns": 30262936407671,
+      "monotonic_end_ns": 30262990044960,
+      "log": "harden-recovery-bounds-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/harden-zip-metadata-v1.json",
+      "sha256": "c1b8ad8bc5482c6302b2c1763b369baf6e7b90f7cfc4fb7d1daa9975a70bb2d6",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/harden_zip_metadata.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:19:22.074682+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:19:22.184306+00:00",
+      "monotonic_start_ns": 30695533822166,
+      "monotonic_end_ns": 30695643451618,
+      "log": "harden-zip-metadata-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/inputs-target-v1.json",
+      "sha256": "738a7b48626ca347743c54032394ba25b0b0312a823a78408ea29945fbaecaab",
+      "command": [
+        "bash",
+        "-c",
+        "cd 261021 && MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m unittest discover -s tests -p test_measurement.py -k formal_input_reference -v"
+      ],
+      "cwd": ".",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-15T06:08:50.713097+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:08:57.441597+00:00",
+      "monotonic_start_ns": 30027304780211,
+      "monotonic_end_ns": 30035150328283,
+      "log": "inputs-target-v1.log",
+      "log_sha256": "36c3dab359419dd57c62c7613f582a2c04deb08289b810f6b70ca2693e84446e"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/inputs-target-v2.json",
+      "sha256": "03e2ef7bb5da8e1e1b49f5934ef26a455024b3f8008cb654aebdb6bc392a327d",
+      "command": [
+        "bash",
+        "-c",
+        "cd 261021 && MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m unittest discover -s tests -p test_measurement.py -k formal_input_reference -v"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:09:22.713208+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:09:30.276879+00:00",
+      "monotonic_start_ns": 30062511489775,
+      "monotonic_end_ns": 30070075146538,
+      "log": "inputs-target-v2.log",
+      "log_sha256": "87314a48d20847a33f0e16e3f8efde2e817fe1f7041cb725a5e384ad83271f05"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/layout-v1.json",
+      "sha256": "66490ae7857087b32b29f9e1b08118e919c494074a9c382087cf50982edfe585",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/check_layout.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:20:09.531621+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:20:13.998432+00:00",
+      "monotonic_start_ns": 30744998580100,
+      "monotonic_end_ns": 30749465369576,
+      "log": "layout-v1.log",
+      "log_sha256": "6b60b18b8ebedaabe095a0db8d990bbf429fc1414d2b2a32f73d2fd88d3d476b"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/precommit-layout-v1.json",
+      "sha256": "02aeee7e6b20343b667b119312932fed8880816848146f63b8588100e8c6c918",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/check_layout.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:26:15.917444+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:26:18.669774+00:00",
+      "monotonic_start_ns": 31133223762804,
+      "monotonic_end_ns": 31135976076562,
+      "log": "precommit-layout-v1.log",
+      "log_sha256": "6b60b18b8ebedaabe095a0db8d990bbf429fc1414d2b2a32f73d2fd88d3d476b"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/review-existing-runtime-v1.json",
+      "sha256": "b391eb634825feb5b3c2c4a9ff37897a9d88b5c9a9d04901af7682cb01b15854",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/review_runtime_observations.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:14:46.593412+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:14:46.723333+00:00",
+      "monotonic_start_ns": 30403557810528,
+      "monotonic_end_ns": 30403687730507,
+      "log": "review-existing-runtime-v1.log",
+      "log_sha256": "1c2570557ce139ae0fc46b822c3f232e0723cc1e7113c204d7e4536dfb5dce10"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/synthetic-archive-v1.json",
+      "sha256": "f93302628aa8ea5340fcdceb104d93ca28588629f6a53f12cf3fc800c1ca9e54",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261115-review-archive/export_example.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:13:51.575418+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:14:00.153528+00:00",
+      "monotonic_start_ns": 30345383252431,
+      "monotonic_end_ns": 30353961355683,
+      "log": "synthetic-archive-v1.log",
+      "log_sha256": "b05f3407902c408f24872013cdd210767b16ee3163631d35cfb6f15af9bea01e"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/target-bounds-v1.json",
+      "sha256": "279ed2ab9b9cf62ccbaf7bc286756920e8ffd1f03508574e6c30f47f40ca1215",
+      "command": [
+        "bash",
+        "-c",
+        "cd 261021 && MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m unittest discover -s tests -p test_measurement.py -k restoration_control_revision -v"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:12:59.026061+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:13:04.717447+00:00",
+      "monotonic_start_ns": 30289642237338,
+      "monotonic_end_ns": 30295333597175,
+      "log": "target-bounds-v1.log",
+      "log_sha256": "301e56ed8c0885495a9963fd17c02644666353aeb0911b6cf5347c89b84f5fa9"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/write-docs-v1.json",
+      "sha256": "6c268245c6158b1d501bc603f249af53b9f14461a985b7c52b15c1bd771955b1",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-review-archive/write_docs.py"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:16:44.641832+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:16:44.707297+00:00",
+      "monotonic_start_ns": 30528148846378,
+      "monotonic_end_ns": 30528214309844,
+      "log": "write-docs-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-review-archive/zip-metadata-target-v1.json",
+      "sha256": "f1d129aa3ea574bcc36c180414a53c28dc76a2d5f6b482cdad9ac6a720758905",
+      "command": [
+        "bash",
+        "-c",
+        "cd 261021 && MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m unittest discover -s tests -p test_measurement.py -k review_archive_opaque -v"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T06:19:22.298539+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T06:19:31.074670+00:00",
+      "monotonic_start_ns": 30695757675935,
+      "monotonic_end_ns": 30704533799948,
+      "log": "zip-metadata-target-v1.log",
+      "log_sha256": "d9466d9eeb53e197da862cb0cb3b1dbcd14b0948cda7a0600b98d51bf7f11b09"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "data/reports/20261115-review-archive/archive-target-v1.json",
+      "sha256": "1bfc475ec8c98a9aa4c7d93a9ba1e3f91edc78f8b96aecdd1428ed60255e7a47",
+      "bytes": 597
+    },
+    {
+      "path": "data/reports/20261115-review-archive/archive-target-v1.log",
+      "sha256": "e8679589fce6c3496f3dc34a72013773194c1b537712767bacc05e5acc6028be",
+      "bytes": 41398
+    },
+    {
+      "path": "data/reports/20261115-review-archive/archive-target-v2.json",
+      "sha256": "eec8a70efec29ead378e6e973005159db020d1ac5de2e072e89ec6afce985fcd",
+      "bytes": 597
+    },
+    {
+      "path": "data/reports/20261115-review-archive/archive-target-v2.log",
+      "sha256": "e52212e367e3a5545bcf0ea107293f6662cf8d6c847e7d472cf159bf4e5ff258",
+      "bytes": 9977
+    },
+    {
+      "path": "data/reports/20261115-review-archive/archive-text-target-v1.json",
+      "sha256": "d1056c78764bcffe2f67ab3c2e7406242a332eaf6ece2fc39a1099539528827e",
+      "bytes": 591
+    },
+    {
+      "path": "data/reports/20261115-review-archive/archive-text-target-v1.log",
+      "sha256": "56757424fab70b086722a9850a101219ff178c59b7f9cec66319ab8a46b702f3",
+      "bytes": 307
+    },
+    {
+      "path": "data/reports/20261115-review-archive/baseline-read.json",
+      "sha256": "010210e4b617ae9986128c0f84027441af3da390585dc243036f568af63de488",
+      "bytes": 615
+    },
+    {
+      "path": "data/reports/20261115-review-archive/baseline-read.log",
+      "sha256": "eb031d3d29c99927430796eda211f1734d47522d47953b3b009b15bd5bc66616",
+      "bytes": 138
+    },
+    {
+      "path": "data/reports/20261115-review-archive/build-index-v1.json",
+      "sha256": "312942e4d5ba03ed42b2d18f7ce6c9e4f9b69df57229a7ec695a2616b15b2531",
+      "bytes": 495
+    },
+    {
+      "path": "data/reports/20261115-review-archive/build-index-v1.log",
+      "sha256": "c9b7597d14b71ced852599dab8eef5e2ff7d8c9049c09a1dc5e4d22825287f69",
+      "bytes": 114
+    },
+    {
+      "path": "data/reports/20261115-review-archive/build-index-v2.json",
+      "sha256": "4a2cc879ee1502856c274f2a65ab27d9e4b05910da6f5b387a2cb71306093a89",
+      "bytes": 495
+    },
+    {
+      "path": "data/reports/20261115-review-archive/build-index-v2.log",
+      "sha256": "424881099bf5bc18d829557bfaa0659903c16fc91d556c49b90f93dadd655c65",
+      "bytes": 114
+    },
+    {
+      "path": "data/reports/20261115-review-archive/build_index.py",
+      "sha256": "06631f970ba35f1e96a935545d1a4d0470b4e48309cdb0e333cc0f2c73f76a46",
+      "bytes": 4587
+    },
+    {
+      "path": "data/reports/20261115-review-archive/check_layout.py",
+      "sha256": "d04a96daf1c1f70c59a4ca5dc9ceddc3ecb8dc5018ca771b891a5acdf8ca71a2",
+      "bytes": 2320
+    },
+    {
+      "path": "data/reports/20261115-review-archive/commit_implementation.py",
+      "sha256": "0f4292522df18ccea34e55e9ec502736cdace7cb43d41108f8ead70843e4cf96",
+      "bytes": 2074
+    },
+    {
+      "path": "data/reports/20261115-review-archive/compile-diff-v1.json",
+      "sha256": "17a90fe6f1bc0834e2bfefadba2be801181122c7d97aee817380d520ffaf01c8",
+      "bytes": 529
+    },
+    {
+      "path": "data/reports/20261115-review-archive/compile-diff-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "data/reports/20261115-review-archive/compile-final-v1.json",
+      "sha256": "36dc4a2808ebff9ec81ef2689746ec5f769f05bfa3245c551dd4aeba677373c6",
+      "bytes": 530
+    },
+    {
+      "path": "data/reports/20261115-review-archive/compile-final-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "data/reports/20261115-review-archive/diagnose-inspection-fixture-v1.json",
+      "sha256": "8ec7090953408c2dd5d174cee645dd4c59b22975add150ebd83e36b218534e76",
+      "bytes": 757
+    },
+    {
+      "path": "data/reports/20261115-review-archive/diagnose-inspection-fixture-v1.log",
+      "sha256": "f08563efd1b9f5769e7bc32194a8646dcdcbb63d30661a2acc6d1f4acaf15d5f",
+      "bytes": 186042
+    },
+    {
+      "path": "data/reports/20261115-review-archive/diagnose-inspection-fixture-v2.json",
+      "sha256": "087d29b89a40836cbd77f7aaacad18b3797105bd9fc8f7d5e8ae090a40bf3d9f",
+      "bytes": 535
+    },
+    {
+      "path": "data/reports/20261115-review-archive/diagnose-inspection-fixture-v2.log",
+      "sha256": "ed67f5a18145ec14414cda73e57497281f9852b671e479097ebf85ecd8d253aa",
+      "bytes": 1403
+    },
+    {
+      "path": "data/reports/20261115-review-archive/diagnose_inspection.py",
+      "sha256": "329af138cc75594e21a4fb00f9719218b31340494e2b55564a93cf86181daae5",
+      "bytes": 1784
+    },
+    {
+      "path": "data/reports/20261115-review-archive/docker-read-escalated-v1.json",
+      "sha256": "1270be7bf2c4d6a6034b71c5bf3dff155ce17940fb0f24ce5b070a9912469106",
+      "bytes": 496
+    },
+    {
+      "path": "data/reports/20261115-review-archive/docker-read-escalated-v1.log",
+      "sha256": "3795a4b1e2c6937a65f1be5ac40e8c7998963c6077c5cb1d19874a2d2474db02",
+      "bytes": 7
+    },
+    {
+      "path": "data/reports/20261115-review-archive/docker-read-v1.json",
+      "sha256": "de1a11dc1c7da75359898d8c43d0258789614e845f5406af62f9e8be2451fbf0",
+      "bytes": 486
+    },
+    {
+      "path": "data/reports/20261115-review-archive/docker-read-v1.log",
+      "sha256": "865580de498032587fbb5f8aa143097940fa95abf2f333ac33e2b94348923ca2",
+      "bytes": 92
+    },
+    {
+      "path": "data/reports/20261115-review-archive/edit-archive-v1.json",
+      "sha256": "e5d6c23ea23f36606c4eff593e88fd2ded6fe8b92d3d9c30bd221dc21bc8c009",
+      "bytes": 497
+    },
+    {
+      "path": "data/reports/20261115-review-archive/edit-archive-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "data/reports/20261115-review-archive/edit-cli-v1.json",
+      "sha256": "513a63cbca9556bfe82590c0130244a8c5d8734a31d1bc134eb3b7df8b17e3a6",
+      "bytes": 489
+    },
+    {
+      "path": "data/reports/20261115-review-archive/edit-cli-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "data/reports/20261115-review-archive/edit-inputs-v1.json",
+      "sha256": "ce9984ffcce607f5fdae6beafba78c6582276485613136542c4d4626cb7a50e4",
+      "bytes": 495
+    },
+    {
+      "path": "data/reports/20261115-review-archive/edit-inputs-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "data/reports/20261115-review-archive/edit-tests-v1.json",
+      "sha256": "808e2e7e1ff56a2ba0dc5b141d80ab0949a1fda5012f60f717ab45cc6b4654d4",
+      "bytes": 493
+    },
+    {
+      "path": "data/reports/20261115-review-archive/edit-tests-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "data/reports/20261115-review-archive/edit_archive.py",
+      "sha256": "4fffffb8e8e108be3c69833fe9ecb64f73841398cb82a131fc33f2509b449c98",
+      "bytes": 18588
+    },
+    {
+      "path": "data/reports/20261115-review-archive/edit_cli.py",
+      "sha256": "72298490bc8b95cc1480c323d7f162b5b323a9ad2bc1bea9d2381decd0021460",
+      "bytes": 2030
+    },
+    {
+      "path": "data/reports/20261115-review-archive/edit_inputs.py",
+      "sha256": "13b70c3d16907832c7d0cb9d8af9a36b7f9c8f2ba608606ad280d50fa5ac8ffb",
+      "bytes": 11971
+    },
+    {
+      "path": "data/reports/20261115-review-archive/edit_tests.py",
+      "sha256": "14957dc3e76271c731ec21b90ad4bea807963160463c2dff0bf87f6907a8473b",
+      "bytes": 11923
+    },
+    {
+      "path": "data/reports/20261115-review-archive/export_example.py",
+      "sha256": "9a5f89863ea571934b86d486ada3c5f50db37bc88039767c878d6ee2b5158862",
+      "bytes": 1784
+    },
+    {
+      "path": "data/reports/20261115-review-archive/final-archive-smoke-v1.json",
+      "sha256": "7f7cd825d72f611f742a6233ecfee8848efaf2e54337dce5bc81a9a1203321fa",
+      "bytes": 789
+    },
+    {
+      "path": "data/reports/20261115-review-archive/final-archive-smoke-v1.log",
+      "sha256": "9c61c23bf790ce22ef8049215d275c4a1d3cac06168dbc490f9d087a40cfed8b",
+      "bytes": 560
+    },
+    {
+      "path": "data/reports/20261115-review-archive/final-measurement-regression-v1.json",
+      "sha256": "f7f1b8c9242b92dad119f74e5bcb1466fd9d88d9ac5ee08bcc51945c9e357140",
+      "bytes": 618
+    },
+    {
+      "path": "data/reports/20261115-review-archive/final-measurement-regression-v1.log",
+      "sha256": "591f05e233521fa013c5ead3b7fa4ae872f7fb27b010f30fe8b01c35852e832d",
+      "bytes": 27213
+    },
+    {
+      "path": "data/reports/20261115-review-archive/final-target-v1.json",
+      "sha256": "927ee07a800e0f91df8ca7c2c265143ee65d6d087109b5615791172ef60adb67",
+      "bytes": 637
+    },
+    {
+      "path": "data/reports/20261115-review-archive/final-target-v1.log",
+      "sha256": "a034b1e858366855dc97bffeaf6ab1721b8c71357563a927185ddcc8d42fc34c",
+      "bytes": 1249
+    },
+    {
+      "path": "data/reports/20261115-review-archive/final-target-v2.json",
+      "sha256": "460e1011f7892b753edce94af2ad560a946b0c285b7f063eaacd5c9e95d35271",
+      "bytes": 637
+    },
+    {
+      "path": "data/reports/20261115-review-archive/final-target-v2.log",
+      "sha256": "93c6bf9ab2d1581946b039e6503dde271caf3463f463e2b61d601a58f2cad004",
+      "bytes": 12482
+    },
+    {
+      "path": "data/reports/20261115-review-archive/final-target-v3.json",
+      "sha256": "ba9f8cb297820ada2d88f452dd55fcb83ec1fba603e65ea45ce4dc06c71a9a36",
+      "bytes": 637
+    },
+    {
+      "path": "data/reports/20261115-review-archive/final-target-v3.log",
+      "sha256": "9f9e8ef767267e313ff3e405c84da1f8b46f1376d760d1e1fbe79377b7efe4b1",
+      "bytes": 13132
+    },
+    {
+      "path": "data/reports/20261115-review-archive/fix-archive-v2.json",
+      "sha256": "e47591bceed88d9a110d489b348aef6223414a960354008e9bdd108569615105",
+      "bytes": 498
+    },
+    {
+      "path": "data/reports/20261115-review-archive/fix-archive-v2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "data/reports/20261115-review-archive/fix-inode-pin-v1.json",
+      "sha256": "75964b63b19d437ecff538a049c2df03f0dffe402f77c5b265b7629516db64e1",
+      "bytes": 499
+    },
+    {
+      "path": "data/reports/20261115-review-archive/fix-inode-pin-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "data/reports/20261115-review-archive/fix-inputs-tests-v1.json",
+      "sha256": "a5b6aa03a5befa476bdb9888b3bb41797256bebbf9a06dc8861a2a1a054b90cc",
+      "bytes": 505
+    },
+    {
+      "path": "data/reports/20261115-review-archive/fix-inputs-tests-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "data/reports/20261115-review-archive/fix_archive_v2.py",
+      "sha256": "87819b4e559f82919f2b857ef330f45e9a56911d0afb8b1d40fc839b9b9c3f65",
+      "bytes": 672
+    },
+    {
+      "path": "data/reports/20261115-review-archive/fix_inode_pin.py",
+      "sha256": "a777da08e916354919b1a201da63dfd3b0479cce579cba3f97e624b44badd677",
+      "bytes": 1394
+    },
+    {
+      "path": "data/reports/20261115-review-archive/fix_inputs_tests.py",
+      "sha256": "0f6ab8b5c4f8152e35807f9ddb9b7d6c746e34c3bb1094980d01989dc355131a",
+      "bytes": 6856
+    },
+    {
+      "path": "data/reports/20261115-review-archive/full-suite-v1.json",
+      "sha256": "5ea973b577ce7c9dea9aa4184dee6999c98d909318f57d44378c3f8129cdf722",
+      "bytes": 575
+    },
+    {
+      "path": "data/reports/20261115-review-archive/full-suite-v1.log",
+      "sha256": "4e1bcda96b6779f12b4ebdaf89e8e535ce98b974f384a915c0f188a852d1a96d",
+      "bytes": 156780
+    },
+    {
+      "path": "data/reports/20261115-review-archive/harden-archive-text-v1.json",
+      "sha256": "2880d47a86b2babc1f370b0b58b97141580ef71c55053a148593184cbd7a0d33",
+      "bytes": 511
+    },
+    {
+      "path": "data/reports/20261115-review-archive/harden-archive-text-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "data/reports/20261115-review-archive/harden-contracts-v1.json",
+      "sha256": "0b685d212d3cb5beb3685d7ea2a32b6916e0a37e133dba9172f0f8929f3bf4d7",
+      "bytes": 505
+    },
+    {
+      "path": "data/reports/20261115-review-archive/harden-contracts-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "data/reports/20261115-review-archive/harden-recovery-bounds-v1.json",
+      "sha256": "8c69d6f2ac3682d9228952a198477226ab98b37c7e6f05032c8dd8e8d7d1533b",
+      "bytes": 517
+    },
+    {
+      "path": "data/reports/20261115-review-archive/harden-recovery-bounds-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "data/reports/20261115-review-archive/harden-zip-metadata-v1.json",
+      "sha256": "c1b8ad8bc5482c6302b2c1763b369baf6e7b90f7cfc4fb7d1daa9975a70bb2d6",
+      "bytes": 511
+    },
+    {
+      "path": "data/reports/20261115-review-archive/harden-zip-metadata-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "data/reports/20261115-review-archive/harden_archive_text.py",
+      "sha256": "cec272b81f4402195ac32801e8c75de15940e84756ab942b6e4f246133b5d483",
+      "bytes": 2596
+    },
+    {
+      "path": "data/reports/20261115-review-archive/harden_contracts.py",
+      "sha256": "63b83eda56018afe9012a79a8698dca274966a3acaf137217adb5d0c653c683e",
+      "bytes": 5341
+    },
+    {
+      "path": "data/reports/20261115-review-archive/harden_recovery_bounds.py",
+      "sha256": "d55327137d8cc4815864cf8da8d3de1c0ee5dbb5e2a6503edf33f2d7595b58b4",
+      "bytes": 1194
+    },
+    {
+      "path": "data/reports/20261115-review-archive/harden_zip_metadata.py",
+      "sha256": "42a0b869969e5b3da546b2b80f24dad1a75fa22a39331c0900218d721a9d4b30",
+      "bytes": 2150
+    },
+    {
+      "path": "data/reports/20261115-review-archive/inputs-target-v1.json",
+      "sha256": "738a7b48626ca347743c54032394ba25b0b0312a823a78408ea29945fbaecaab",
+      "bytes": 585
+    },
+    {
+      "path": "data/reports/20261115-review-archive/inputs-target-v1.log",
+      "sha256": "36c3dab359419dd57c62c7613f582a2c04deb08289b810f6b70ca2693e84446e",
+      "bytes": 1685
+    },
+    {
+      "path": "data/reports/20261115-review-archive/inputs-target-v2.json",
+      "sha256": "03e2ef7bb5da8e1e1b49f5934ef26a455024b3f8008cb654aebdb6bc392a327d",
+      "bytes": 585
+    },
+    {
+      "path": "data/reports/20261115-review-archive/inputs-target-v2.log",
+      "sha256": "87314a48d20847a33f0e16e3f8efde2e817fe1f7041cb725a5e384ad83271f05",
+      "bytes": 1000
+    },
+    {
+      "path": "data/reports/20261115-review-archive/inspection-diagnostic-attempts.json",
+      "sha256": "9450a5099c4cbd4016d557c7beb7d6960865e97ff8f496f86f997aa3d82f6baf",
+      "bytes": 1215
+    },
+    {
+      "path": "data/reports/20261115-review-archive/inspection-diagnostic-operational-f7c29fa8-da8d-4be7-95b3-f31154f8dd7b-failure.json",
+      "sha256": "39699d4226ae52cc1e13485e8a791e84d758aade65657bd4607820861f606367",
+      "bytes": 853
+    },
+    {
+      "path": "data/reports/20261115-review-archive/inspection-diagnostic-operational-f7c29fa8-da8d-4be7-95b3-f31154f8dd7b.json",
+      "sha256": "c84bccda67855003c784497bbee19359cd40e03e62de3d45bcc435d1f0c52f54",
+      "bytes": 859
+    },
+    {
+      "path": "data/reports/20261115-review-archive/inspection-diagnostic-operational-f7c29fa8-da8d-4be7-95b3-f31154f8dd7b.requests.jsonl",
+      "sha256": "8dd7042fb072022d1d4e6d0ce5017861553ee456a82db09cab3a5727adcbaa76",
+      "bytes": 1068555
+    },
+    {
+      "path": "data/reports/20261115-review-archive/inspection-diagnostic-result.json",
+      "sha256": "7220e273a63852d0194d0864e95b2cb0671bf474e0393aeb632653ce874797e4",
+      "bytes": 1575
+    },
+    {
+      "path": "data/reports/20261115-review-archive/layout-v1.json",
+      "sha256": "66490ae7857087b32b29f9e1b08118e919c494074a9c382087cf50982edfe585",
+      "bytes": 491
+    },
+    {
+      "path": "data/reports/20261115-review-archive/layout-v1.log",
+      "sha256": "6b60b18b8ebedaabe095a0db8d990bbf429fc1414d2b2a32f73d2fd88d3d476b",
+      "bytes": 231
+    },
+    {
+      "path": "data/reports/20261115-review-archive/layout-validation.json",
+      "sha256": "7a02a8459239814412b2053eee5b823847cc871763a054c1cbd6a46d06281108",
+      "bytes": 166
+    },
+    {
+      "path": "data/reports/20261115-review-archive/precommit-layout-v1.json",
+      "sha256": "02aeee7e6b20343b667b119312932fed8880816848146f63b8588100e8c6c918",
+      "bytes": 501
+    },
+    {
+      "path": "data/reports/20261115-review-archive/precommit-layout-v1.log",
+      "sha256": "6b60b18b8ebedaabe095a0db8d990bbf429fc1414d2b2a32f73d2fd88d3d476b",
+      "bytes": 231
+    },
+    {
+      "path": "data/reports/20261115-review-archive/review-existing-runtime-v1.json",
+      "sha256": "b391eb634825feb5b3c2c4a9ff37897a9d88b5c9a9d04901af7682cb01b15854",
+      "bytes": 523
+    },
+    {
+      "path": "data/reports/20261115-review-archive/review-existing-runtime-v1.log",
+      "sha256": "1c2570557ce139ae0fc46b822c3f232e0723cc1e7113c204d7e4536dfb5dce10",
+      "bytes": 112
+    },
+    {
+      "path": "data/reports/20261115-review-archive/review_runtime_observations.py",
+      "sha256": "9f5cd6987d8a738d24bc4da961b2f6c9e3daae71635c2e16e7abef2e8ed0d2bb",
+      "bytes": 4907
+    },
+    {
+      "path": "data/reports/20261115-review-archive/run.py",
+      "sha256": "950bdd279a849a257fbfecf196473b79c5768abcf41cd4f14d1de4613fa6919c",
+      "bytes": 1029
+    },
+    {
+      "path": "data/reports/20261115-review-archive/runtime-observation-review.json",
+      "sha256": "d2a826e203117917ba7b94557857c0b23c75d329788b8b70a620c3ccd5c0a0ee",
+      "bytes": 12520
+    },
+    {
+      "path": "data/reports/20261115-review-archive/source-review.diff",
+      "sha256": "af4795d98e07a39c858b57b5ec2c003d1c1555c7ae79660ee26e99710f758b85",
+      "bytes": 45584
+    },
+    {
+      "path": "data/reports/20261115-review-archive/synthetic-archive-v1.json",
+      "sha256": "f93302628aa8ea5340fcdceb104d93ca28588629f6a53f12cf3fc800c1ca9e54",
+      "bytes": 520
+    },
+    {
+      "path": "data/reports/20261115-review-archive/synthetic-archive-v1.log",
+      "sha256": "b05f3407902c408f24872013cdd210767b16ee3163631d35cfb6f15af9bea01e",
+      "bytes": 175
+    },
+    {
+      "path": "data/reports/20261115-review-archive/synthetic-review-archive-result.json",
+      "sha256": "21da2a709dc8fc57ee74782ec6a4063ffc313841ecbc48d06977a163cc11ac0c",
+      "bytes": 1312
+    },
+    {
+      "path": "data/reports/20261115-review-archive/synthetic-review-separate-process.log",
+      "sha256": "9c61c23bf790ce22ef8049215d275c4a1d3cac06168dbc490f9d087a40cfed8b",
+      "bytes": 560
+    },
+    {
+      "path": "data/reports/20261115-review-archive/synthetic-review-series.zip",
+      "sha256": "6be2ace05ca80679c66ec72c87dd958fd4375edafe89831c13f43165d4fab1e4",
+      "bytes": 1411018
+    },
+    {
+      "path": "data/reports/20261115-review-archive/target-bounds-v1.json",
+      "sha256": "279ed2ab9b9cf62ccbaf7bc286756920e8ffd1f03508574e6c30f47f40ca1215",
+      "bytes": 591
+    },
+    {
+      "path": "data/reports/20261115-review-archive/target-bounds-v1.log",
+      "sha256": "301e56ed8c0885495a9963fd17c02644666353aeb0911b6cf5347c89b84f5fa9",
+      "bytes": 307
+    },
+    {
+      "path": "data/reports/20261115-review-archive/write-docs-v1.json",
+      "sha256": "6c268245c6158b1d501bc603f249af53b9f14461a985b7c52b15c1bd771955b1",
+      "bytes": 493
+    },
+    {
+      "path": "data/reports/20261115-review-archive/write-docs-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "data/reports/20261115-review-archive/write_docs.py",
+      "sha256": "40c5a5a9364af484c7c116421f7f24f864917d57bc1bba0eafb09af31172fa19",
+      "bytes": 15270
+    },
+    {
+      "path": "data/reports/20261115-review-archive/zip-metadata-target-v1.json",
+      "sha256": "f1d129aa3ea574bcc36c180414a53c28dc76a2d5f6b482cdad9ac6a720758905",
+      "bytes": 590
+    },
+    {
+      "path": "data/reports/20261115-review-archive/zip-metadata-target-v1.log",
+      "sha256": "d9466d9eeb53e197da862cb0cb3b1dbcd14b0948cda7a0600b98d51bf7f11b09",
+      "bytes": 327
+    }
+  ],
+  "synthetic_review_archive": {
+    "scope": "synthetic review contract only, not actual candidate or runtime acceptance",
+    "export": {
+      "status": "full_series_exported",
+      "archive_sha256": "6be2ace05ca80679c66ec72c87dd958fd4375edafe89831c13f43165d4fab1e4",
+      "bytes": 1411018,
+      "head": {
+        "capital_operational_eligibility_head_sha256": "ea81423e266573a1793d20da3cf0f485fc8d01fbf3e276cd4cf023a98d82bcf9",
+        "capital_operational_eligibility_revision": "1",
+        "capital_operational_eligibility_status": "ineligible",
+        "capital_operational_eligibility_publication": "committed"
+      },
+      "live_freshness_verified": false,
+      "application_authorized": false
+    },
+    "separate_process": {
+      "application_authorized": false,
+      "archive_sha256": "6be2ace05ca80679c66ec72c87dd958fd4375edafe89831c13f43165d4fab1e4",
+      "events": 2,
+      "head": {
+        "capital_operational_eligibility_head_sha256": "ea81423e266573a1793d20da3cf0f485fc8d01fbf3e276cd4cf023a98d82bcf9",
+        "capital_operational_eligibility_publication": "committed",
+        "capital_operational_eligibility_revision": "1",
+        "capital_operational_eligibility_status": "ineligible"
+      },
+      "live_freshness_verified": false,
+      "members": 12,
+      "new_attempts": 0,
+      "retry_permission": false,
+      "status": "offline_full_series_verified"
+    }
+  },
+  "runtime_observation_review": {
+    "kind": "capital-runtime-observation-technical-review",
+    "candidate_id": "e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b",
+    "artifact_sha256": "13dbe8447e816b29ecf76c1cf4e173f679a50204ab8d9d682c113ed405810f8c",
+    "status": "partial_observations_reviewed_not_category_acceptance",
+    "counts": {
+      "observations_reviewed_with_scope_limits": 12,
+      "partial": 5,
+      "missing": 5
+    },
+    "source_files": [
+      {
+        "path": "data/reports/20261114-capital-runtime/registration-result.json",
+        "bytes": 742,
+        "sha256": "f28d5e50bc3c05277e43aa9e019fef0bb3c87d868770e0837def6de0a0a49b3b"
+      },
+      {
+        "path": "data/reports/20261114-capital-runtime/api-checks-result.json",
+        "bytes": 2318,
+        "sha256": "a9bbf1f8a1a377f1d530ec21c554a263c04e1153d922a20dbc8409ab07a9fe90"
+      },
+      {
+        "path": "data/reports/20261114-capital-runtime/monitor-comparison-result.json",
+        "bytes": 3684,
+        "sha256": "bdda014dc057d372fa4fe42b3cb4ba46dd11743af1be40c815f6890533660948"
+      },
+      {
+        "path": "data/reports/20261114-capital-runtime/paired-restore-result.json",
+        "bytes": 28564,
+        "sha256": "c9076f1d09c286983fc3929a9df8c9f6fc0d29b016a42caba9fff229e2a47dde"
+      },
+      {
+        "path": "data/reports/20261115-review-recovery/capital-neg-fc8ae60ae879-result.json",
+        "bytes": 4582,
+        "sha256": "d9100eb8cb6213fd4f47e819cd7ea94a3ac13d50b7b962ce2cfff7a515d893c4"
+      },
+      {
+        "path": "data/reports/20261115-review-recovery/capital-neg-054e5a2b685c-result.json",
+        "bytes": 3456,
+        "sha256": "7f16381936a30e5fac5c61e415e49e6f138616fe9de56c39bb153c04b1ca2f97"
+      },
+      {
+        "path": "data/reports/20261115-review-recovery/runtime-gap-inventory.json",
+        "bytes": 8708,
+        "sha256": "03539262e97348ee66ab9dc91ba373f2140a01d43734b6e000d720c604dd64e5"
+      }
+    ],
+    "cases": [
+      {
+        "category": "monitoring",
+        "case_id": "training_reference_bound",
+        "state": "observation_reviewed_with_scope_limits",
+        "expected_outcome": "matched",
+        "evidence_references": [
+          "monitor.json",
+          "monitor-inspect-v1.log"
+        ],
+        "limitation": "Category attestation and full candidate-bound bundle still absent.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "monitoring",
+        "case_id": "psi_v2_constant_shift",
+        "state": "missing",
+        "expected_outcome": "detected",
+        "evidence_references": [],
+        "limitation": "Actual training reference is not constant; synthetic constant-shift CI is not reused as this candidate producer evidence.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "monitoring",
+        "case_id": "distribution_error_separation",
+        "state": "observation_reviewed_with_scope_limits",
+        "expected_outcome": "distinguished",
+        "evidence_references": [
+          "monitor.csv",
+          "monitor-comparison-result.json"
+        ],
+        "limitation": "Category attestation and full candidate-bound bundle still absent.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "monitoring",
+        "case_id": "delayed_missing_duplicate_labels",
+        "state": "partial",
+        "expected_outcome": "handled",
+        "evidence_references": [
+          "capital-neg-d78bf7ffc7aa-result.json",
+          "monitor_duplicate_timestamp"
+        ],
+        "limitation": "Delayed arrivals verified; separate missing/duplicate real-producer negative cases remain. New actual candidate-copy CLI rejects duplicate source timestamps/source hash change/missing reference path with no output or DB change; missing-label and unset-MAE-specific real-producer cases remain distinct.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "monitoring",
+        "case_id": "insufficient_labels_and_unset_reference",
+        "state": "partial",
+        "expected_outcome": "explicit",
+        "evidence_references": [
+          "capital-neg-d78bf7ffc7aa-result.json",
+          "monitor_missing_frozen_reference"
+        ],
+        "limitation": "Insufficient labels explicit; unset reference negative case not exercised for actual candidate. New actual candidate-copy CLI rejects duplicate source timestamps/source hash change/missing reference path with no output or DB change; missing-label and unset-MAE-specific real-producer cases remain distinct.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "monitoring",
+        "case_id": "monitor_persistence_reconciliation",
+        "state": "observation_reviewed_with_scope_limits",
+        "expected_outcome": "matched",
+        "evidence_references": [
+          "monitor-inspect-v1.log"
+        ],
+        "limitation": "Category attestation and full candidate-bound bundle still absent.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "recovery",
+        "case_id": "concurrent_request_retry",
+        "state": "observation_reviewed_with_scope_limits",
+        "expected_outcome": "committed_once",
+        "evidence_references": [
+          "api-checks-result.json"
+        ],
+        "limitation": "Category attestation and full candidate-bound bundle still absent.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "recovery",
+        "case_id": "changed_input_conflict",
+        "state": "observation_reviewed_with_scope_limits",
+        "expected_outcome": "409",
+        "evidence_references": [
+          "api-checks-result.json"
+        ],
+        "limitation": "Category attestation and full candidate-bound bundle still absent.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "recovery",
+        "case_id": "version_switch_preserves_saved_prediction",
+        "state": "missing",
+        "expected_outcome": "preserved",
+        "evidence_references": [],
+        "limitation": "Restore kept same version1. Two distinct-version switch not performed.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "recovery",
+        "case_id": "audit_write_failure",
+        "state": "observation_reviewed_with_scope_limits",
+        "expected_outcome": "503",
+        "evidence_references": [
+          "capital-neg-fc8ae60ae879-result.json",
+          "audit_write_failure"
+        ],
+        "limitation": "Same-candidate snapshot-copy observation; category attestation not issued. Legacy precision migration uses intentionally downgraded copied rows, preserves binary32 values only.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "recovery",
+        "case_id": "bad_artifact_and_ready",
+        "state": "observation_reviewed_with_scope_limits",
+        "expected_outcome": "rejected",
+        "evidence_references": [
+          "capital-neg-fc8ae60ae879-result.json",
+          "bad_artifact_http_ready"
+        ],
+        "limitation": "Same-candidate snapshot-copy observation; category attestation not issued. Legacy precision migration uses intentionally downgraded copied rows, preserves binary32 values only.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "recovery",
+        "case_id": "api_stop",
+        "state": "observation_reviewed_with_scope_limits",
+        "expected_outcome": "detected",
+        "evidence_references": [
+          "capital-neg-054e5a2b685c-result.json",
+          "stopped_api_detected"
+        ],
+        "limitation": "Same-candidate snapshot-copy observation; category attestation not issued. Legacy precision migration uses intentionally downgraded copied rows, preserves binary32 values only.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "recovery",
+        "case_id": "caddy_switch_and_rollback",
+        "state": "partial",
+        "expected_outcome": "recovered",
+        "evidence_references": [
+          "capital-neg-054e5a2b685c-result.json",
+          "blocked_caddy_switch_stop_rollback"
+        ],
+        "limitation": "Real Caddy switch/stop502/rollback200 for same candidate and same version1 in two blocked staging slots. Not two approved versions or production promotion.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "recovery",
+        "case_id": "interrupted_deployment",
+        "state": "missing",
+        "expected_outcome": "recovered",
+        "evidence_references": [],
+        "limitation": "No actual-candidate interrupted deploy test.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "restore",
+        "case_id": "database_artifact_snapshot_binding",
+        "state": "observation_reviewed_with_scope_limits",
+        "expected_outcome": "matched",
+        "evidence_references": [
+          "paired-restore-result.json"
+        ],
+        "limitation": "Category attestation and full candidate-bound bundle still absent.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "restore",
+        "case_id": "separate_volume_restore",
+        "state": "observation_reviewed_with_scope_limits",
+        "expected_outcome": "restored",
+        "evidence_references": [
+          "paired-restore-result.json"
+        ],
+        "limitation": "Category attestation and full candidate-bound bundle still absent.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "restore",
+        "case_id": "restored_version_prediction_audit",
+        "state": "observation_reviewed_with_scope_limits",
+        "expected_outcome": "matched",
+        "evidence_references": [
+          "paired-restore-result.json"
+        ],
+        "limitation": "Category attestation and full candidate-bound bundle still absent.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "restore",
+        "case_id": "legacy_real_double_migration",
+        "state": "observation_reviewed_with_scope_limits",
+        "expected_outcome": "matched",
+        "evidence_references": [
+          "capital-neg-054e5a2b685c-result.json",
+          "legacy_real_migration"
+        ],
+        "limitation": "Same-candidate snapshot-copy observation; category attestation not issued. Legacy precision migration uses intentionally downgraded copied rows, preserves binary32 values only.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "metadata",
+        "case_id": "entry_runtime_database_identity",
+        "state": "partial",
+        "expected_outcome": "matched",
+        "evidence_references": [
+          "capital-neg-054e5a2b685c-result.json",
+          "entry_metadata"
+        ],
+        "limitation": "Candidate/artifact match through own real Caddy; approved operation remains legacy_unverifiable/approval_evidence=false.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "metadata",
+        "case_id": "approval_operation_metadata",
+        "state": "missing",
+        "expected_outcome": "matched",
+        "evidence_references": [],
+        "limitation": "legacy_unverifiable / approval_evidence=false is not matched approval.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "metadata",
+        "case_id": "unloadable_version",
+        "state": "partial",
+        "expected_outcome": "excluded",
+        "evidence_references": [],
+        "limitation": "Corrupt restored artifact rejected; full entry/version exclusion case not evidenced.",
+        "formal_prerequisite_attestation": false
+      },
+      {
+        "category": "metadata",
+        "case_id": "timeout_stage_outcome",
+        "state": "missing",
+        "expected_outcome": "explicit",
+        "evidence_references": [],
+        "limitation": "Existing synthetic regression not reused as actual candidate timeout producer.",
+        "formal_prerequisite_attestation": false
+      }
+    ],
+    "category_reports_issued": 0,
+    "real_registry_writes": 0,
+    "operational_gate": "not_evaluated",
+    "deployment_permission": "blocked",
+    "protected_originals_unchanged": 194,
+    "blockers": [
+      "Only operational attempt has two UTC reversals; no replacement attempt or reopening authorized.",
+      "No pair of distinct eligible approved versions exists under current constraints.",
+      "The three actual PSI references are nonconstant; a synthetic constant-shift result is not this candidate producer.",
+      "Missing-label/unset-MAE fault cases must preserve immutable source/reference contracts; not established by other refusal cases.",
+      "API/ledger approved-operation and timeout binding require a legitimate approved deployment; staging legacy_unverifiable is insufficient.",
+      "T13b risk acceptance and approval require separate human authorization and valid evidence, not this technical report."
+    ]
+  },
+  "scope": [
+    "Immutable local reference to the same five formal inputs; full consumer/dependency pin and original lock namespace, NOFOLLOW through ancestors.",
+    "Bounded complete review archive and separate-process offline verification; no formal ledger reinitialization.",
+    "Explicit independently pinned exact original archive restoration, preserving corrupt event/repair bytes and all gates.",
+    "Existing actual-candidate observation review only; no new operational attempt or deployed approval."
+  ],
+  "limits": [
+    "Archive independent pre-corruption custody and source manifest authority are operator trust boundaries; no external signing or privileged anti-rollback proof.",
+    "Recovery is one overlay; corrupt recovery control or nested recovery requires a separately reviewed preservation plan.",
+    "No current source/reference contract applied to real candidate, no original live registry freshness proof.",
+    "Category observations: reviewed 12, partial 5, missing 5. No prerequisite category attestations issued.",
+    "Operational UTC-reversed trial remains on hold. Remeasurement, new attempt, reopen, refit, thresholds and clock research prohibited.",
+    "No human warning-risk acceptance or T13b approval. Synthetic tests and blocked same-version routing cannot substitute."
+  ]
+}

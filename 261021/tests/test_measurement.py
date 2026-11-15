@@ -2374,6 +2374,332 @@ s.publish(Client(),expected_head=x['head'],reviewer='synthetic-child',reason='Pr
         self.assertEqual(len(result["events"]),2)
         with self.assertRaises(ValueError):self.require(result,tags=self.client.tags)
 
+    def series_archive(self, *, repaired=False):
+        first = self.publish("on_hold")
+        self.publish("ineligible", first["events"][0]["sha256"])
+        if repaired:
+            (self.directory / "receipt-00000001.json").write_bytes(b'{"torn":')
+            self.repair("receipt-00000001.json")
+        archive = self.fixture.root / "series.zip"
+        result = self.store.export_archive(archive)
+        return archive, result["archive_sha256"]
+
+    def restore_series(self, archive, digest, **updates):
+        args = dict(archive=archive, expected_archive_sha256=digest,
+                    expected_inventory=self.store.inventory()["sha256"],
+                    expected_registry_sha256=registry._elig_sha(registry._elig_bytes(self.client.tags)),
+                    reviewer="synthetic-archive-custodian", reason="Explicit exact-byte recovery from separately pinned archive",
+                    reviewed_at_utc="2024-02-03T00:00:00Z", source_commit="a" * 40)
+        args.update(updates)
+        return self.store.restore_archive(self.client, **args)
+
+    def rewrite_series_zip(self, archive, change, *, extra=(), duplicate=None, symlink=None):
+        with zipfile.ZipFile(archive) as bundle:
+            data = {i.filename: bundle.read(i) for i in bundle.infolist()}
+        change(data)
+        with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_STORED) as bundle:
+            for name, raw in data.items():
+                if name == symlink:
+                    info = zipfile.ZipInfo(name); info.create_system = 3; info.external_attr = 0o120777 << 16
+                    bundle.writestr(info, raw)
+                else: bundle.writestr(name, raw)
+            for name in extra: bundle.writestr(name, b"extra")
+            if duplicate: bundle.writestr(duplicate, data[duplicate])
+        return hashlib.sha256(archive.read_bytes()).hexdigest()
+
+    def test_review_series_archive_only_cli_and_originals_remain_unchanged(self):
+        archive, digest = self.series_archive(repaired=True)
+        before = {p.name: p.read_bytes() for p in self.directory.iterdir()}
+        with tempfile.TemporaryDirectory(prefix="archive-only-receiver-") as directory:
+            import shutil
+            copied = Path(directory) / "only-input.zip"; shutil.copyfile(archive, copied)
+            # Receiver has only ZIP+independent digest, no registry or source tree.
+            result = subprocess.run([sys.executable, "-m", "bike_mlops.operational_validation",
+                "--verify-review-archive", str(copied), "--expected-sha256", digest],
+                cwd=directory, capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            summary = json.loads(result.stdout.strip().splitlines()[-1])
+            self.assertEqual(summary["events"], 2)
+            self.assertFalse(summary["live_freshness_verified"])
+            self.assertFalse(summary["application_authorized"])
+            self.assertEqual(summary["head"][registry.ELIGIBILITY_KEYS[2]], "ineligible")
+        self.assertEqual(before, {p.name: p.read_bytes() for p in self.directory.iterdir()})
+        self.assertEqual(self.originals, {p: p.read_bytes() for p in self.originals})
+
+    def test_archive_restore_corrupt_event_and_repair_preserves_raw_bytes_and_gate(self):
+        archive, digest = self.series_archive(repaired=True)
+        expected = self.store.read()
+        event = next(self.directory.glob("00000000-*.json"))
+        repair = self.directory / "repair-receipt-00000001.json.json"
+        event.write_bytes(b'{broken-event'); repair.write_bytes(b'{broken-repair')
+        before = {p.name: p.read_bytes() for p in self.directory.iterdir()}
+        writes = list(self.client.writes)
+        with self.assertRaises(ValueError): self.store.read()
+        result = self.restore_series(archive, digest)
+        self.assertEqual(result["status"], "archive_restoration_preserved_originals")
+        self.assertEqual(self.store.read(), expected)
+        self.assertEqual(writes, self.client.writes)
+        self.assertEqual(self.client.tags["deployment_permission"], "blocked")
+        self.assertEqual(self.client.tags["operational_gate_status"], "not_evaluated")
+        for name, raw in before.items(): self.assertEqual((self.directory / name).read_bytes(), raw)
+        with self.assertRaises(ValueError): self.require(self.store.read(), tags=self.client.tags)
+        self.assertEqual(self.originals, {p: p.read_bytes() for p in self.originals})
+
+    def test_archive_restore_missing_event_and_subsequent_adverse_append(self):
+        archive, digest = self.series_archive()
+        expected = self.store.read(); event = next(self.directory.glob("00000000-*.json")); event.unlink()
+        self.restore_series(archive, digest)
+        self.assertEqual(self.store.read(), expected); self.assertFalse(event.exists())
+        newest = self.publish("on_hold", expected["events"][-1]["sha256"], reviewed_at_utc="2024-02-04T00:00:00Z")
+        self.assertEqual(len(newest["events"]), 3)
+        self.assertEqual(self.store.read(), newest)
+        self.assertEqual(registry.eligibility_head(newest)[registry.ELIGIBILITY_KEYS[2]], "ineligible")
+        # A physical replacement of the previously absent original is ambiguous.
+        event.write_text("{}")
+        with self.assertRaises(ValueError): self.store.read()
+
+    def test_archive_restore_sha_inventory_future_and_live_rollback_refused(self):
+        archive, digest = self.series_archive()
+        first = next(self.directory.glob("00000000-*.json")); first.write_bytes(b"torn")
+        before = self.store.inventory()
+        for updates in ({"expected_archive_sha256": "0" * 64}, {"expected_inventory": "0" * 64},
+                        {"expected_registry_sha256": "0" * 64}, {"reviewed_at_utc": "2999-01-01T00:00:00Z"}):
+            with self.subTest(updates=updates):
+                with self.assertRaises(ValueError): self.restore_series(archive, digest, **updates)
+                self.assertEqual(self.store.inventory(), before)
+        self.client.tags[registry.ELIGIBILITY_KEYS[1]] = "0"
+        with self.assertRaises(ValueError): self.restore_series(archive, digest)
+        self.assertEqual(self.store.inventory(), before)
+
+    def test_archive_restore_never_resets_newer_unknown_or_changed_sources(self):
+        archive, digest = self.series_archive()
+        event = next(self.directory.glob("00000000-*.json")); event.write_bytes(b"torn")
+        unknown = self.directory / ("00000002-" + "0" * 64 + ".json"); unknown.write_text("{}")
+        with self.assertRaises(ValueError): self.restore_series(archive, digest)
+        unknown.unlink()
+        original = self.consumption.read_bytes(); self.consumption.write_bytes(original + b" ")
+        with self.assertRaises(ValueError): self.restore_series(archive, digest)
+        self.consumption.write_bytes(original)
+        self.restore_series(archive, digest)
+        event.write_bytes(b"changed-corruption")
+        with self.assertRaises(ValueError): self.store.read()
+
+    def test_archive_restore_lock_disk_interrupt_and_control_corruption_fail_closed(self):
+        from bike_mlops.operational import _exclusive_lock
+        archive, digest = self.series_archive(); event = next(self.directory.glob("00000000-*.json")); event.write_bytes(b"torn")
+        before = self.store.inventory()
+        with _exclusive_lock(self.fixture.lock_dir / f"{self.fixture.candidate}.lock"):
+            with self.assertRaises(BlockingIOError): self.restore_series(archive, digest)
+        with patch.object(registry, "_elig_write", side_effect=KeyboardInterrupt):
+            with self.assertRaises(KeyboardInterrupt): self.restore_series(archive, digest)
+        self.assertEqual(self.store.inventory(), before)
+        self.restore_series(archive, digest)
+        (self.directory / registry.REVIEW_RESTORATION).write_bytes(b"torn-control")
+        with self.assertRaises(ValueError): self.store.read()
+        with self.assertRaises(ValueError): self.restore_series(archive, digest)
+        self.assertEqual(event.read_bytes(), b"torn")
+
+    def test_review_series_archive_rejects_zip_duplicate_extra_missing_traversal_symlink(self):
+        archive, _ = self.series_archive()
+        raw = archive.read_bytes()
+        cases = [dict(extra=("data/extra.json",)), dict(extra=("../escape.json",)),
+                 dict(duplicate="manifest.json"), dict(symlink="manifest.json"),
+                 dict(change=lambda d: d.pop(next(n for n in d if n.endswith(".jsonl"))))]
+        for updates in cases:
+            with self.subTest(updates=updates):
+                archive.write_bytes(raw)
+                digest = self.rewrite_series_zip(archive, updates.pop("change", lambda _: None), **updates)
+                with self.assertRaises((ValueError, OSError)):
+                    registry.verify_review_archive(archive, expected_sha256=digest)
+        self.assertFalse((self.fixture.root / "escape.json").exists())
+
+    def test_review_series_archive_rehashed_semantic_forgery_is_rejected(self):
+        archive, _ = self.series_archive()
+        def tamper(data):
+            name = next(n for n in data if n.endswith("receipt-00000001.json"))
+            value = json.loads(data[name]); value["run_id"] = "foreign"
+            data[name] = registry._elig_bytes(value)
+            manifest = json.loads(data["manifest.json"])
+            manifest["members"][name] = registry._elig_descriptor(data[name])
+            data["manifest.json"] = registry._elig_bytes(manifest)
+        digest = self.rewrite_series_zip(archive, tamper)
+        with self.assertRaises(ValueError): registry.verify_review_archive(archive, expected_sha256=digest)
+
+    def test_review_archive_secret_external_or_absolute_path_rejected_without_output(self):
+        self.publish("on_hold")
+        ref = self.fixture.root / "data/evaluations/secret-case.json"
+        for body in ({"password": "synthetic"}, {"source": "https://external.invalid/x"}, {"path": "/private/local"}):
+            with self.subTest(body=body):
+                ref.write_text(json.dumps(body))
+                # Deliberately change a bound reference: fail closed, no output.
+                capsule = self.store.read()
+                event = capsule["events"][-1]
+                event["references"].append({"path": ref.relative_to(self.fixture.root).as_posix(), **registry._elig_descriptor(ref.read_bytes())})
+                event["sha256"] = registry._elig_sha(registry._elig_bytes({k:v for k,v in event.items() if k != "sha256"}))
+                with patch.object(self.store, "read", return_value=capsule):
+                    with self.assertRaises(ValueError): self.store.export_archive(self.fixture.root / "unsafe.zip")
+                self.assertFalse((self.fixture.root / "unsafe.zip").exists())
+
+    def test_review_archive_no_overwrite_and_source_race_refused(self):
+        archive, digest = self.series_archive()
+        with self.assertRaises(FileExistsError): self.store.export_archive(archive)
+        self.assertEqual(hashlib.sha256(archive.read_bytes()).hexdigest(), digest)
+        original = self.store.inventory
+        count = [0]
+        def changed():
+            count[0] += 1
+            result = original()
+            if count[0] > 1: return {**result, "sha256": "0" * 64}
+            return result
+        with patch.object(self.store, "inventory", side_effect=changed):
+            with self.assertRaises(ValueError): self.store.export_archive(self.fixture.root / "raced.zip")
+        self.assertFalse((self.fixture.root / "raced.zip").exists())
+
+    def relocated_review_store(self, *, history=False):
+        import shutil
+        if history: self.publish("ineligible")
+        new_root = self.fixture.root / "current-checkout"; new_root.mkdir()
+        manifest = {}
+        for name in ("src/bike_mlops/operational_validation.py", "scripts/runtime_tools.py", "pyproject.toml", "requirements.lock"):
+            path = new_root / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_text("synthetic pinned bytes")
+            manifest[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+        new_store = registry.EligibilityReviewStore(new_root, self.fixture.candidate, self.args["attempt_id"],
+            lock_relative=self.store.lock_relative)
+        if history:
+            directory = new_root / new_store.relative
+            directory.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(self.directory, directory)
+        bindings = {}
+        for path, raw in self.originals.items():
+            logical = path.relative_to(self.fixture.root).as_posix(); info = path.stat()
+            bindings[logical] = {"root": str(self.fixture.root), "target": logical, "device": info.st_dev,
+                "inode": info.st_ino, "mtime_ns": info.st_mtime_ns, "ctime_ns": info.st_ctime_ns, **registry._elig_descriptor(raw)}
+        args = dict(bindings=bindings, expected_source_files=manifest,
+            expected_registry_sha256=registry._elig_sha(registry._elig_bytes(self.client.tags)))
+        return new_store, args
+
+    def test_formal_input_reference_no_ledger_copy_no_symlink_and_original_lock_namespace(self):
+        from bike_mlops.operational import _exclusive_lock
+        store, args = self.relocated_review_store()
+        writes = list(self.client.writes)
+        result = store.bind_inputs(self.client, **args)
+        self.assertEqual(result["status"], "formal_input_reference_installed")
+        self.assertFalse(result["application_authorized"])
+        self.assertEqual(writes, self.client.writes)
+        for path in self.originals:
+            self.assertFalse((store.root / path.relative_to(self.fixture.root)).exists())
+        with _exclusive_lock(self.fixture.lock_dir / f"{self.fixture.candidate}.lock"):
+            with self.assertRaises(BlockingIOError):
+                store.publish(self.client, expected_head=None, reviewer="synthetic", reason="adverse explicit review",
+                    reviewed_at_utc="2024-02-03T00:00:00Z", source_commit="a" * 40,
+                    disposition="ineligible", defect_code="synthetic")
+        capsule = store.publish(self.client, expected_head=None, reviewer="synthetic", reason="adverse explicit review",
+                    reviewed_at_utc="2024-02-03T00:00:00Z", source_commit="a" * 40,
+                    disposition="ineligible", defect_code="synthetic")
+        self.assertEqual(store.read(), capsule)
+        self.assertEqual(self.originals, {p: p.read_bytes() for p in self.originals})
+        with self.assertRaises(ValueError): store.bind_inputs(self.client, **args)
+
+    def test_formal_input_reference_existing_history_and_archive_use_same_canonical_bytes(self):
+        store, args = self.relocated_review_store(history=True)
+        store.bind_inputs(self.client, **args)
+        self.assertEqual(store.read(), self.store.read())
+        with self.assertRaises(ValueError):
+            registry.local_eligibility_review(store.root, self.fixture.candidate, self.args["attempt_id"])
+        archive = store.root / "relocated-series.zip"; digest = store.export_archive(archive)["archive_sha256"]
+        result = registry.verify_review_archive(archive, expected_sha256=digest)
+        self.assertFalse(result["application_authorized"])
+        self.assertEqual(self.originals, {p: p.read_bytes() for p in self.originals})
+        # Same bytes at another inode are not the same formal ledger.
+        raw = self.consumption.read_bytes(); self.consumption.unlink(); self.consumption.write_bytes(raw)
+        with self.assertRaises(ValueError): store.read()
+
+    def test_formal_input_reference_source_mutation_unknown_binding_and_registry_change_refused(self):
+        store, args = self.relocated_review_store()
+        bad = {**args, "bindings": dict(args["bindings"])}
+        bad["bindings"].pop(next(iter(bad["bindings"])))
+        with self.assertRaises(ValueError): store.bind_inputs(self.client, **bad)
+        self.assertFalse((store.root / store.input_relative).exists())
+        args["expected_registry_sha256"] = "0" * 64
+        with self.assertRaises(ValueError): store.bind_inputs(self.client, **args)
+        self.assertFalse((store.root / store.input_relative).exists())
+        args["expected_registry_sha256"] = registry._elig_sha(registry._elig_bytes(self.client.tags))
+        store.bind_inputs(self.client, **args)
+        (store.root / "requirements.lock").write_text("changed dependencies")
+        with self.assertRaises(ValueError): store._read_source(store.ledger_relative)
+
+    def test_formal_input_reference_rejects_symlink_ancestor_and_does_not_modify_alias(self):
+        store, args = self.relocated_review_store()
+        alias = store.root / "old-inputs"; alias.symlink_to(self.fixture.root, target_is_directory=True)
+        for item in args["bindings"].values(): item["root"] = str(alias)
+        with self.assertRaises(OSError): store.bind_inputs(self.client, **args)
+        self.assertTrue(alias.is_symlink())
+        self.assertFalse((store.root / store.input_relative).exists())
+
+    def test_formal_input_reference_requires_full_consumer_source_closure(self):
+        store, args = self.relocated_review_store()
+        extra = store.root / "src/bike_mlops/unpinned.py"; extra.write_text("synthetic extra import")
+        with self.assertRaises(ValueError): store.bind_inputs(self.client, **args)
+        self.assertFalse((store.root / store.input_relative).exists())
+        args["expected_source_files"][extra.relative_to(store.root).as_posix()] = hashlib.sha256(extra.read_bytes()).hexdigest()
+        store.bind_inputs(self.client, **args)
+        self.assertEqual(store._read_source(store.ledger_relative), self.fixture.ledger_path.read_bytes())
+
+    def test_archive_restore_cli_requires_independent_pin_and_never_sets_registry_tags(self):
+        import scripts.runtime_tools as script
+        archive, digest = self.series_archive()
+        event = next(self.directory.glob("00000000-*.json")); event.write_bytes(b"torn")
+        args = ["eligibility-review", "--candidate-id", self.fixture.candidate, "--attempt-id", self.args["attempt_id"],
+                "--restore-review-archive", str(archive), "--expected-inventory", self.store.inventory()["sha256"],
+                "--expected-registry-sha256", registry._elig_sha(registry._elig_bytes(self.client.tags)),
+                "--reviewer", "synthetic", "--reason", "Explicit original recovery", "--source-commit", "a" * 40,
+                "--reviewed-at-utc", "2024-02-03T00:00:00Z"]
+        with patch("bike_mlops.config.PROJECT_ROOT", self.fixture.root), patch("bike_mlops.config.DATA_PROFILE_ID", "capital-bikeshare"), \
+             patch.dict("os.environ", {"MLFLOW_TRACKING_URI": "http://127.0.0.1:5001", "MLFLOW_REGISTRY_URI": "http://127.0.0.1:5001"}), \
+             patch("mlflow.tracking.MlflowClient", return_value=self.client):
+            with patch("sys.argv", args):
+                with self.assertRaises(SystemExit): script._entry_eligibility_review()
+            before = list(self.client.writes)
+            with patch("sys.argv", [*args, "--expected-archive-sha256", digest]), redirect_stdout(io.StringIO()) as output:
+                script._entry_eligibility_review()
+            self.assertEqual(json.loads(output.getvalue())["status"], "archive_restoration_preserved_originals")
+            self.assertEqual(self.client.writes, before)
+
+    def test_archive_restoration_control_revision_is_bounded_and_linked_to_history(self):
+        archive, digest = self.series_archive()
+        next(self.directory.glob("00000000-*.json")).write_bytes(b"torn")
+        self.restore_series(archive, digest)
+        control = self.directory / registry.REVIEW_RESTORATION
+        value = json.loads(control.read_bytes())
+        for revision in ("1000000000", "2", "-1", "01"):
+            with self.subTest(revision=revision):
+                value["head"][registry.ELIGIBILITY_KEYS[1]] = revision
+                control.write_bytes(registry._elig_bytes(value))
+                with self.assertRaises(ValueError): self.store.read()
+
+    def test_review_archive_decoded_embedded_external_urls_and_keys_are_not_hidden(self):
+        for raw in (b'{"note":"See https:\\u002f\\u002fexternal.invalid/path"}',
+                    b'{"pa\\u0073sword":"synthetic"}',
+                    b'{"note":"File \\u002fprivate/local"}'):
+            with self.subTest(raw=raw):
+                with self.assertRaises(ValueError): registry._elig_archive_safe(raw, "data/ref.json")
+
+    def test_review_archive_opaque_comments_extra_metadata_and_trailing_payload_are_rejected(self):
+        archive, _ = self.series_archive(); original = archive.read_bytes()
+        variants = []
+        with zipfile.ZipFile(archive, "a") as bundle: bundle.comment = b"opaque-private-data"
+        variants.append(archive.read_bytes())
+        archive.write_bytes(original)
+        with zipfile.ZipFile(archive) as bundle: members = [(i.filename, bundle.read(i)) for i in bundle.infolist()]
+        with zipfile.ZipFile(archive, "w") as bundle:
+            for name, raw in members:
+                info = zipfile.ZipInfo(name); info.comment = b"opaque-member-metadata"
+                bundle.writestr(info, raw)
+        variants.extend([archive.read_bytes(), original + b"opaque-trailing-data"])
+        for raw in variants:
+            archive.write_bytes(raw)
+            with self.assertRaises(ValueError): registry.verify_review_archive(archive, expected_sha256=hashlib.sha256(raw).hexdigest())
+
     def test_real_disposable_sqlite_mlflow_preserves_head_and_adverse_history(self):
         from mlflow.tracking import MlflowClient
         uri=f"sqlite:///{self.fixture.root/'eligibility-registry.db'}"

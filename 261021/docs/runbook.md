@@ -927,3 +927,13 @@ fenceだけ残った場合の`--recover-orphan`は理由付きの不利なreview
 event本文が失われた場合、原本を推定・上書きせず保留する。
 実候補へ適用する前に`--preflight MANIFEST`で旧source・正式alias・全historyを照合する。
 これらの操作によって再測定、new attempt、reopen、配信許可の変更は行わない。
+
+
+### 正式入力参照とreview全系列の原本回復
+
+最新の[入力参照・全系列archive・明示回復契約](capital.md#operational-review-input-archive-20261115)を参照。
+`eligibility-review --bind-inputs MANIFEST`はcanonicalな正式5入力へのprivate参照設定だけを作る。
+台帳をコピー/初期化せず、NOFOLLOW、元lock、sourceとinode/時刻/hashのpinを維持する。
+`--export-review-archive`とmoduleの`--verify-review-archive --expected-sha256`はoffline検算専用。
+`--restore-review-archive`は独立保管SHA/現在inventory/現在registry SHAとreview metadataを要し、破損元を保持したoverlayだけを追記する。
+これらは実適用・配信許可・運用再測定の承認ではない。今回の実原本・実registryへ実行しない。
