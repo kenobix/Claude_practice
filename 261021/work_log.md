@@ -5004,3 +5004,25 @@ README/文書索引/計画/仕様/本ログ/証拠JSONだけを最終記録commi
 最終追記後のfinal-layout-v2は943リンク/欠落0/旧import0、final-evidence-consistency-v1は
 113保存物・35receiptのSHAと194原本不変、現製品source=CI実装SHA、CI後のsource変更0を確認してexit0。
 diff check/変更差分の秘密値scanも成功した。この検算結果を含めて索引を最終生成し、6対象だけをcommit/pushする。
+
+## 2026-11-15 基点a978adf：review回復・実適用前照合・隔離runtime負例
+
+- 今回の依頼：P1残件を優先。実原本/正式消費台帳/実DB/registry/配信を変更せず、fit・再測定・新attempt・reopen・時計調査を禁止したまま進める。
+- 開始HEAD a978adf、追跡差分なし。既存の無関係な未追跡3パスを保持。docs/source/tests/scripts統合構成を維持。
+- 保存先：`data/reports/20261115-review-recovery/`。run.pyがcommand/cwd/exit/UTC未資格値/monotonic/log SHAを別receiptへ保存。編集helperも保存する。
+- Docker読取：通常sandboxはpermission denied（docker-read-v1 exit1）。限定した権限外読取はServer29.9.2（docker-read-escalated-v1 exit0）。設定変更せず、新しい専用project/volumeだけを対象とする。
+- 実装：inventory/diagnose、intact eventからの決定的metadata repair（破損元fileは不変、別sidecar）、exact inventory/registry SHAによるadverse-only orphan recovery。未知/破損eventは推定せず拒否。NOFOLLOW・O_EXCL/fsync・既存writer lock・future拒否を維持。
+- preflight：source manifest、明示canonical alias、原本/消費窓/全history/live headのread-only照合。alias照合はwriterのsymlink許可ではない。application_authorized=falseを返す。
+- 途中の失敗：最初の編集helperを261021 cwdから起動したため相対path不一致、root .venv参照も誤り。ファイル変更は対象編集に限定して正しいcwdで再実行。前回のverify_final_indexを原本専用検査と誤って使い、新source SHA差でexit1。原本変更の証拠ではなく、今回の専用検査へ分離する。
+- recovery-target-v1は新test挿入前の既存20件成功で、新機能の受入には使わない。v2は26件成功。v3は28件中1 error：data直下fileの親directory `data`を相対path検査が拒否した。directory traversalを許可せずdataそのもののdirectory読取を追加。v4は新負例込み30件成功。
+- full-suite-v1はsandbox内の既存TestClient caseで進まず、今回所有するPIDだけSIGTERMで停止（receipt -15）。T03再発や時計原因とは断定せず、socketを利用できる権限でtimeout600/kill-after10付きv2へ移した。中間sourceの試行を最終受入へ流用しない。
+- runtime専用imageは現Dockerfileと固定lockから構築。保存済みpaired-backupだけから新専用環境へ復元し、現在のsource配信や既存専用stackを停止しない。新候補評価や運用測定のattemptではない。
+- P1をすべて完了とは扱わない：承認済み配信metadata/実採否には有効な運用証拠と別承認が必要。UTC逆行の唯一の運用試行は保留のまま。今回の制約下でそれを合格へ変更できない。
+- full-suite-v2はroot cwdによる`No module named scripts`6件で294件/159.648表示秒、exit1。必要な261021 cwdへ修正しv3を実行。製品sourceのimportを緩めない。
+- 通常Dockerfile build-v1はfiles.pythonhosted.orgのMLflow wheel受信timeoutでexit1（約420 monotonic秒）。lock/Dockerfile/timeout設定を変更せず、保存済み専用image888539fから現sourceをCOPYするnetwork=noneの代替buildが成功。通常Dockerfile build成功には読み替えない。
+- docker-inventoryで既存UCI/Capitalの8containerが開始前からExited255と確認。起動し直さず状態を保持。actual-preflight-v1の元registry5001への読取はconnection refused、SDK retry0・単一失敗を保存。以後は新しいsnapshotコピーとの照合と区別する。
+- runtime-negatives-v1は保存済みJSONのsequence配列と関数戻りtupleの比較でassert失敗。元dumpを変えずJSON表現を揃えた。cleanup成功/保護8container不変。
+- runtime-negatives-v2はMLflowのhealthをJSONとしてparseするhelperの誤りでstartup deadline100秒に達して停止。応答bodyの形式をready条件にせずHTTP statusを確認する修正とした。v2のhelper版を保存し、cleanup/保護8container不変を記録。wait延長や運用測定retryではない。
+- runtime-negatives-v3：新専用snapshotで同candidate/artifactのready200、audit書込constraintによるHTTP503/監査0行、破損skops時のHTTP readiness503を実観測。source/alias preflightも旧source98ファイルと同正式台帳をread-only照合し、UTC逆行/adverse_review_only・writer_path_compatible=falseを確認。元registryは停止中のため、ここで照合したregistryは**保存済みsnapshotコピー**であり元live最新性は主張しない。
+- v3は後段の二版登録でMLflow3の`model_id`を渡さずINVALID_PARAMETER_VALUEを受けてexit1。既存SDKの引数/説明を確認し、logged modelの正しいmodel_idを使用するhelperへ修正。case単位の先行成功を保持し、全harness成功へは読み替えない。cleanupと保護8container不変。
+- v4では受入済みaudit/破損readyを繰り返さず、未実施の監視拒否/blocked二版/Caddy/旧REAL移行を別新projectで検証。Caddy切替が通っても承認済みdeploy/operationの証拠に昇格しない。helperのcompile成功。編集後の無効な補助shell名実行1回（exit127、mutationなし）も残す。

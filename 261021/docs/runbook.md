@@ -916,3 +916,14 @@ system logにNode20強制移行/punycode/url.parse警告は見られなかった
 
 残るSQLAlchemy noload警告は[発生箇所と最新公開版の調査](runbook.md#mlflow-orm-compatibility)を参照。
 調査済みの同じreleaseを繰り返し確認せず、当該loaderの上流変更/修正release時に個別互換試験へ進む。
+
+### 事後reviewの途中公開・破損を見つけた場合
+
+[review回復と適用前照合](capital.md#operational-review-recovery-20261115)を参照する。
+`eligibility-review --inventory`は元fileの比較用SHAを読取保存する。
+`--diagnose`は専用registryを読取照合するが、自動修復しない。
+完全なeventが残るintent/receiptだけは`--repair-metadata`で元bytesを保持した別記録へ回復できる。
+fenceだけ残った場合の`--recover-orphan`は理由付きの不利なreviewだけを許可する。
+event本文が失われた場合、原本を推定・上書きせず保留する。
+実候補へ適用する前に`--preflight MANIFEST`で旧source・正式alias・全historyを照合する。
+これらの操作によって再測定、new attempt、reopen、配信許可の変更は行わない。

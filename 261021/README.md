@@ -222,3 +222,5 @@ bundleの数値が良好でも時計資格は`incomplete`。[今回の検証索�
 追補：[測定保留と部分復元の最終記録](docs/capital.md#capital-operational-hold)。50+1000/エラー0/p95 84.05msは数値上の結果のみで、
 全journalのUTC逆行2件を検出し運用受入を保留。同artifactの別volume対応復元と一時resource cleanupは成功。
 運用gateはnot_evaluated、配信blocked。再測定/台帳reopen/時計研究を自動で行わない。
+
+review公開の破損・fenceだけの残存を見つけた場合は、[明示回復と旧source/alias照合](docs/capital.md#operational-review-recovery-20261115)を参照してください。実候補の運用保留・blockedは維持しています。

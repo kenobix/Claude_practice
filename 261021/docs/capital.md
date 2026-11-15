@@ -1599,3 +1599,53 @@ MLFLOW_REGISTRY_URI=http://127.0.0.1:5001 \
 review、approve、通常loader、runtime init、deploy promoteでbundle本文を取得してSHA/content照合する。取得前後で登録版、run、証拠/決定タグの変更がないことも確認する。Capitalのtracking/registry URIは同じ先へ固定し、環境の別registryへ流れるのを防ぐ。承認後のreport/plan SHA変更、負/NaN/Infinity p95、本文破損、証拠不足、旧schemaを拒否する。読み込んだAPIプロセス内で毎要求bundleを再取得する仕組みではない。
 
 今回、全241 testsが成功した。mock registryによる負例と、一時SQLite registry・file artifact storeを使った実MLflow clientの保存/取得/review/approve/保存元artifact破損拒否を含む。一時SQLite試験はHTTP serverの障害やネットワーク切断を再現しない。T13のHTTP経由部分書込・応答喪失、T07のCaddy復旧、実candidateの運用測定・承認は未完了。コマンド、途中の試験失敗と修正、証拠logのSHAは[作業ログ](../work_log.md)へ記録する。
+
+<a id="operational-review-recovery-20261115"></a>
+
+## reviewの診断・回復と適用前照合（2026-11-15追補）
+
+基点`a978adf`からの追補。ここでの回復は、失敗した**review公開処理**を照合する操作であり、
+運用測定の再実行、completed台帳のreopen、配信許可の変更ではない。
+実候補のUTC逆行による保留は維持する。[検証索引](reviews/20261115-review-recovery-checks.json)に各試行を記録する。
+
+| 状態 | 明示操作・保証 | 停止条件 |
+|---|---|---|
+| eventとintentが完全でreceiptだけ未作成 | 従来の`--publish-review --resume --expected-head SHA`。正しいlive headと原本を再照合 | 別head、原本変更、複数の未完了公開 |
+| intent/receiptが欠落・途中破損、eventは完全 | `--repair-metadata MEMBER`。元fileは残し、`repair-MEMBER.json`をO_EXCL/fsyncで追記。元bytes/SHAと決定的な代替metadataを結合 | receiptは**最新の1件だけ**、registryのcommitted head一致が必須。他の不正receipt、event破損・未知file・競合を拒否 |
+| fenceだけが残り、新eventが未作成 | `--recover-orphan`で`on_hold`または`ineligible`の新しい理由付きreviewのみ発行。従来headとinventory/registry全tagのSHAを照合 | `no_adverse_review`への復帰禁止。intentだけが残る、破損eventがある、またはheadが変化した場合は停止 |
+| eventやrepair sidecarそのものが破損・不足 | `--inventory`で元file名/bytes/SHAを記録し隔離状態を保つ。独立して保持した正しい原本が必要 | filenameから本文を推定しない。自動削除・上書き・正しいことにして再公開する処置は実装しない |
+
+`--inventory`はローカル読取のみ。`--diagnose`は専用registryも読取り、
+`orphan_fence / committed_matched / uninitialized / quarantined_original_required`と比較用SHAを返す。
+内部例外・認証情報・raw tag値は表示しない。診断結果自体は修復許可や配信承認ではない。
+修復済みmetadataを読むconsumerは、残した元fileのbytes/SHAと代替値を毎回照合する。
+元file、sidecar、eventのいずれかが変わると拒否する。SDKの再送はCLI操作内で0、環境変数は終了時に復元する。
+
+隔離fixtureでの操作例（**実候補へは実行しない**）:
+
+```bash
+python scripts/runtime_tools.py eligibility-review --candidate-id "$CANDIDATE" --attempt-id "$ATTEMPT" --diagnose
+python scripts/runtime_tools.py eligibility-review --candidate-id "$CANDIDATE" --attempt-id "$ATTEMPT" \
+  --repair-metadata intent-00000001.json --expected-inventory "$INVENTORY_SHA" \
+  --reviewer "$REVIEWER" --reason "$REASON" --source-commit "$SOURCE_COMMIT"
+# 修復後も公開がpendingなら、改めて診断した正確なheadで明示resumeする。
+```
+
+### 旧source・正式alias・全historyの適用前照合
+
+`eligibility-review --preflight MANIFEST`は、manifestの`expected_source_files`（相対path→SHA）、
+`aliases`（alias/target/SHA/bytes）、`canonical_root`を使って読取照合する。
+sourceはsrc/scripts/configs/pyproject.toml/requirements.lockに限定し、symlinkをたどらない。
+正式入力aliasは、明示したcanonical root内の解決先とbytesを別途確認する。
+台帳・plan/report/journal・両消費窓、既存historyの全event/intent/receipt/repairとlive headを照合する。
+全履歴を読めない場合やsource/原本/tagが変化した場合は成功扱いしない。
+
+結果の`application_authorized=false`は常に維持する。消費台帳のsymlinkを明示照合できても、
+writerのNOFOLLOW境界を緩めず、`writer_path_compatible=false / explicit_plan_required`を返す。
+既存historyがそのaliasに依存している場合は、strict readerによる停止を優先する。
+旧sourceで候補を再fitしたり、別の正式消費台帳を作ったり、既存aliasを自動変更したりしない。
+原本journalのUTC逆行は`utc_reversal_adverse_review_only`であり、採用の前提を満たした意味ではない。
+
+修復metadataのsidecarはローカルの保全記録である。v2 capsuleのevent/receipt本文は変わらず、
+独立したregistry管理者による全headの整合した巻戻しは依然として信頼境界外である。
+既存T16の4payload archiveは新sidecarを含む全review系列の可搬保存にはならない。別契約の残件として維持する。

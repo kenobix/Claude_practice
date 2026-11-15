@@ -2197,6 +2197,183 @@ s.publish(Client(),expected_head=x['head'],reviewer='synthetic-child',reason='Pr
             self.assertEqual(json.loads(output.getvalue())["head"][registry.ELIGIBILITY_KEYS[2]],"on_hold")
             self.assertEqual(os.environ["MLFLOW_HTTP_REQUEST_MAX_RETRIES"],"7")
 
+    def test_preflight_all_history_source_and_explicit_canonical_alias_read_only(self):
+        source=self.fixture.root/"src/review.py";source.parent.mkdir();source.write_bytes(b"# fixture source\n")
+        manifest={"src/review.py":hashlib.sha256(source.read_bytes()).hexdigest()}
+        before=dict(self.client.tags)
+        result=self.store.preflight(self.client,expected_source_files=manifest)
+        self.assertEqual(result["history"],"absent_requires_explicit_genesis")
+        self.assertFalse(self.directory.exists())
+        first=self.publish("on_hold")
+        result=self.store.preflight(self.client,expected_source_files=manifest)
+        self.assertEqual(result["history"],"committed_matched")
+        self.assertFalse(result["application_authorized"])
+        source.write_bytes(b"changed")
+        with self.assertRaisesRegex(ValueError,"source bytes differ"):
+            self.store.preflight(self.client,expected_source_files=manifest)
+        source.write_bytes(b"# fixture source\n")
+        # Explicit external canonical alias is read only, never a writer waiver.
+        canonical=self.fixture.root/"canonical";(canonical/"data").mkdir(parents=True)
+        target=canonical/"data/consumption.json";target.write_bytes(self.consumption.read_bytes())
+        self.consumption.unlink();self.consumption.symlink_to(target)
+        aliases=[{"alias":self.consumption.relative_to(self.fixture.root).as_posix(),"target":"data/consumption.json",
+            "sha256":hashlib.sha256(target.read_bytes()).hexdigest(),"bytes":target.stat().st_size}]
+        # Existing history intentionally cannot waive the strict writer reader.
+        with self.assertRaises(OSError):self.store.preflight(self.client,expected_source_files=manifest,aliases=aliases,canonical_root=canonical)
+        self.consumption.unlink();self.consumption.write_bytes(target.read_bytes())
+        self.assertEqual(first,self.store.read())
+
+    def test_diagnosis_tokens_do_not_publish_and_cli_recovery_is_explicit(self):
+        from bike_mlops import config
+        script=Path(__file__).resolve().parents[1]/"scripts/runtime_tools.py"
+        spec=importlib.util.spec_from_file_location("recovery_cli_test",script)
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        self.client.fail_after=(registry.ELIGIBILITY_KEYS[3],"publishing")
+        with self.assertRaises(RuntimeError):self.publish()
+        before=dict(self.client.tags);writes=list(self.client.writes)
+        diagnostic=self.store.diagnose(self.client)
+        self.assertEqual(diagnostic["state"],"orphan_fence")
+        self.assertEqual(self.client.writes,writes)
+        base=["eligibility-review","--candidate-id",self.fixture.candidate,"--attempt-id",self.args["attempt_id"]]
+        with (patch.object(config,"PROJECT_ROOT",self.fixture.root),patch.object(config,"DATA_PROFILE_ID","capital-bikeshare"),
+              patch.dict(os.environ,{"MLFLOW_TRACKING_URI":"http://127.0.0.1:5001","MLFLOW_REGISTRY_URI":"http://127.0.0.1:5001"}),
+              patch("mlflow.tracking.MlflowClient",return_value=self.client)):
+            with patch.object(sys,"argv",base+["--diagnose"]),redirect_stdout(io.StringIO()) as output:
+                module._entry_eligibility_review()
+            self.assertEqual(json.loads(output.getvalue()),diagnostic)
+            argv=base+["--recover-orphan","--expected-inventory",diagnostic["inventory"]["sha256"],
+                "--expected-registry-sha256",diagnostic["registry_sha256"],"--disposition","on_hold","--reviewer","synthetic-cli",
+                "--reason","Explicit adverse fence review","--source-commit","a"*40,"--reviewed-at-utc","2024-02-02T00:00:00Z"]
+            with patch.object(sys,"argv",argv),redirect_stdout(io.StringIO()) as output:
+                module._entry_eligibility_review()
+            self.assertEqual(json.loads(output.getvalue())["head"][registry.ELIGIBILITY_KEYS[2]],"on_hold")
+        self.assertNotIn("tags",diagnostic)
+        self.assertEqual(self.client.tags["deployment_permission"],before["deployment_permission"])
+
+    def test_genesis_preflight_can_verify_canonical_alias_without_writer_waiver(self):
+        source=self.fixture.root/"src/check.py";source.parent.mkdir();source.write_bytes(b"# expected\n")
+        manifest={"src/check.py":hashlib.sha256(source.read_bytes()).hexdigest()}
+        canonical=self.fixture.root/"canonical";(canonical/"data/evaluations").mkdir(parents=True)
+        target=canonical/"data/evaluations/consumption.json";raw=self.consumption.read_bytes();target.write_bytes(raw)
+        self.consumption.unlink();self.consumption.symlink_to(target)
+        aliases=[{"alias":self.consumption.relative_to(self.fixture.root).as_posix(),"target":"data/evaluations/consumption.json",
+            "sha256":hashlib.sha256(raw).hexdigest(),"bytes":len(raw)}]
+        before=list(self.client.writes)
+        result=self.store.preflight(self.client,expected_source_files=manifest,aliases=aliases,canonical_root=canonical)
+        self.assertFalse(result["writer_path_compatible"])
+        self.assertFalse(result["application_authorized"])
+        self.assertEqual(result["history"],"absent_requires_explicit_genesis")
+        self.assertEqual(before,self.client.writes)
+        with self.assertRaises(OSError):self.publish("ineligible")
+        aliases[0]["sha256"]="0"*64
+        with self.assertRaises(ValueError):self.store.preflight(self.client,expected_source_files=manifest,aliases=aliases,canonical_root=canonical)
+
+    def test_repair_lock_contention_and_disk_interrupt_preserve_all_bytes(self):
+        self.publish("on_hold")
+        target=self.directory/"receipt-00000000.json";target.write_bytes(b"torn")
+        from bike_mlops.operational import _exclusive_lock
+        with _exclusive_lock(self.fixture.lock_dir/f"{self.fixture.candidate}.lock"):
+            with self.assertRaises(BlockingIOError):self.repair(target.name)
+        with patch.object(registry,"_elig_write",side_effect=KeyboardInterrupt):
+            with self.assertRaises(KeyboardInterrupt):self.repair(target.name)
+        self.assertEqual(target.read_bytes(),b"torn")
+        self.assertFalse(list(self.directory.glob("repair-*")))
+        with self.assertRaises(ValueError):self.store.read()
+        self.repair(target.name)
+        self.assertEqual(self.originals,{p:p.read_bytes() for p in self.originals})
+
+    def test_repair_sidecar_tamper_and_orphan_foreign_files_stay_quarantined(self):
+        first=self.publish("ineligible")
+        target=self.directory/"receipt-00000000.json";target.write_bytes(b"bad")
+        self.repair(target.name)
+        sidecar=self.directory/("repair-"+target.name+".json")
+        value=json.loads(sidecar.read_bytes());value["replacement"]["head_sha256"]="0"*64
+        sidecar.write_text(json.dumps(value))
+        with self.assertRaises(ValueError):self.store.read()
+        self.assertEqual(target.read_bytes(),b"bad")
+        with self.assertRaises(ValueError):self.repair(target.name)
+
+    def repair(self,target,**updates):
+        args = dict(target=target,expected_inventory=self.store.inventory()["sha256"],reviewer="synthetic-recovery",
+            reason="Explicit metadata recovery with preserved originals",reviewed_at_utc="2024-02-02T00:00:00+00:00",source_commit="a"*40)
+        args.update(updates)
+        return self.store.repair_metadata(self.client,**args)
+
+    def test_torn_intent_repair_preserves_bytes_and_explicit_resume(self):
+        first=self.publish()
+        self.client.fail_after=(registry.ELIGIBILITY_KEYS[2],"ineligible")
+        with self.assertRaises(RuntimeError):self.publish("ineligible",first["events"][0]["sha256"])
+        target=self.directory/"intent-00000001.json";target.write_bytes(b'{"torn":')
+        with self.assertRaises(ValueError):self.store.read()
+        self.repair(target.name)
+        self.assertEqual(target.read_bytes(),b'{"torn":')
+        event=json.loads(next(self.directory.glob("00000001-*.json")).read_bytes())
+        result=self.store.resume(self.client,expected_head=event["sha256"])
+        self.assertEqual(result,self.store.read())
+        with self.assertRaises(ValueError):self.require(result,tags=self.client.tags)
+        self.assertEqual(self.originals,{p:p.read_bytes() for p in self.originals})
+
+    def test_torn_receipt_repair_needs_committed_live_head_and_preserves_original(self):
+        first=self.publish("ineligible")
+        target=self.directory/"receipt-00000000.json";target.write_bytes(b'{broken')
+        self.client.tags[registry.ELIGIBILITY_KEYS[3]]="publishing"
+        with self.assertRaises(ValueError):self.repair(target.name)
+        self.client.tags[registry.ELIGIBILITY_KEYS[3]]="committed"
+        writes=list(self.client.writes);self.repair(target.name)
+        self.assertEqual(self.client.writes,writes)
+        self.assertEqual(first,self.store.read())
+        self.assertEqual(target.read_bytes(),b'{broken')
+        target.write_bytes(b'other-corruption')
+        with self.assertRaisesRegex(ValueError,"original changed"):self.store.read()
+
+    def test_missing_intent_repair_and_stale_inventory_rejected(self):
+        first=self.publish("on_hold")
+        target=self.directory/"intent-00000000.json";target.unlink()
+        token=self.store.inventory()["sha256"]
+        target.write_text("{}")
+        with self.assertRaisesRegex(ValueError,"inventory changed"):
+            self.repair(target.name,expected_inventory=token)
+        self.repair(target.name)
+        self.assertEqual(first,self.store.read())
+        with self.assertRaises(ValueError):self.repair(target.name)
+
+    def test_corrupt_event_unknown_member_or_future_review_never_repaired(self):
+        self.publish("ineligible")
+        before=list(self.client.writes)
+        with self.assertRaises(ValueError):self.repair("receipt-00000000.json",reviewed_at_utc="2999-01-01T00:00:00Z")
+        event=next(self.directory.glob("00000000-*.json"));event.write_bytes(b'{lost-event')
+        with self.assertRaises(ValueError):self.repair("intent-00000000.json")
+        self.assertFalse(list(self.directory.glob("repair-*")))
+        self.assertEqual(self.client.writes,before)
+
+    def test_orphan_fence_recovers_only_by_explicit_new_adverse_review(self):
+        self.client.fail_after=(registry.ELIGIBILITY_KEYS[3],"publishing")
+        with self.assertRaises(RuntimeError):self.publish()
+        token=self.store.inventory()["sha256"]
+        request=dict(expected_inventory=token,expected_registry_sha256=registry._elig_sha(registry._elig_bytes(self.client.tags)),
+            expected_head=None,reviewer="synthetic-recovery",reason="Fence-only failure, cannot establish a clean review",
+            reviewed_at_utc="2024-02-02T00:00:00Z",source_commit="a"*40,defect_code="orphan_fence",disposition="no_adverse_review")
+        with self.assertRaises(ValueError):self.store.recover_orphan(self.client,**request)
+        request["disposition"]="ineligible"
+        result=self.store.recover_orphan(self.client,**request)
+        self.assertEqual(result,self.store.read())
+        self.assertEqual(registry.eligibility_head(result)[registry.ELIGIBILITY_KEYS[2]],"ineligible")
+        self.assertEqual(self.originals,{p:p.read_bytes() for p in self.originals})
+        self.assertEqual(self.client.tags["deployment_permission"],"blocked")
+
+    def test_existing_head_orphan_recovery_rejects_registry_drift(self):
+        first=self.publish()
+        with patch.object(registry,"_elig_write",side_effect=OSError("synthetic disk failure")):
+            with self.assertRaises(OSError):self.publish("on_hold",first["events"][0]["sha256"])
+        args=dict(expected_inventory=self.store.inventory()["sha256"],expected_registry_sha256="0"*64,
+            expected_head=first["events"][0]["sha256"],reviewer="synthetic-recovery",reason="Adverse retained fence",
+            reviewed_at_utc="2024-02-02T00:00:00Z",source_commit="a"*40,defect_code="orphan_fence",disposition="on_hold")
+        with self.assertRaises(ValueError):self.store.recover_orphan(self.client,**args)
+        args["expected_registry_sha256"]=registry._elig_sha(registry._elig_bytes(self.client.tags))
+        result=self.store.recover_orphan(self.client,**args)
+        self.assertEqual(len(result["events"]),2)
+        with self.assertRaises(ValueError):self.require(result,tags=self.client.tags)
+
     def test_real_disposable_sqlite_mlflow_preserves_head_and_adverse_history(self):
         from mlflow.tracking import MlflowClient
         uri=f"sqlite:///{self.fixture.root/'eligibility-registry.db'}"

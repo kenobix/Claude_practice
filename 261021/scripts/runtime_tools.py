@@ -488,6 +488,13 @@ def _entry_eligibility_review():
     parser.add_argument("--attempt-id", required=True)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--inspect", action="store_true")
+    mode.add_argument("--inventory", action="store_true")
+    mode.add_argument("--diagnose", action="store_true")
+    mode.add_argument("--preflight", type=Path, metavar="MANIFEST")
+    mode.add_argument("--repair-metadata", metavar="MEMBER")
+    mode.add_argument("--recover-orphan", action="store_true")
+    parser.add_argument("--expected-inventory")
+    parser.add_argument("--expected-registry-sha256")
     mode.add_argument("--publish-review", action="store_true")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--expected-head")
@@ -501,10 +508,17 @@ def _entry_eligibility_review():
         parser.error("Eligibility review requires the dedicated Capital profile")
     if args.resume and (not args.publish_review or not args.expected_head):
         parser.error("Explicit publication recovery requires --publish-review and --expected-head")
-    if args.publish_review and not args.resume and not all((args.disposition,args.reviewer,args.reason,args.source_commit)):
+    if (args.publish_review and not args.resume or args.recover_orphan) and not all((args.disposition,args.reviewer,args.reason,args.source_commit)):
         parser.error("Review publication requires disposition, reviewer, reason and source commit")
+    if (args.repair_metadata or args.recover_orphan) and not all((args.expected_inventory,args.reviewer,args.reason,args.source_commit)):
+        parser.error("Recovery requires inventory token and explicit review metadata")
+    if args.recover_orphan and (args.disposition not in {"on_hold","ineligible"} or not args.expected_registry_sha256):
+        parser.error("Orphan recovery requires an adverse disposition and registry snapshot SHA")
     store = EligibilityReviewStore(PROJECT_ROOT,args.candidate_id,args.attempt_id)
     try:
+        if args.inventory:
+            print(json.dumps({"status":"inventory_only",**store.inventory(),"new_attempts":0,"retry_permission":False},sort_keys=True))
+            return
         if args.inspect:
             result = store.read()
         else:
@@ -516,10 +530,26 @@ def _entry_eligibility_review():
             try:
                 os.environ.update(transport)
                 client = MlflowClient(tracking_uri=uri,registry_uri=uri)
+                if args.diagnose:
+                    print(json.dumps(store.diagnose(client),sort_keys=True))
+                    return
+                if args.preflight:
+                    manifest=json.loads(args.preflight.read_bytes())
+                    result=store.preflight(client,**manifest)
+                    print(json.dumps(result,sort_keys=True))
+                    return
+                if args.repair_metadata:
+                    result = store.repair_metadata(client,target=args.repair_metadata,expected_inventory=args.expected_inventory,
+                        reviewer=args.reviewer,reason=args.reason,source_commit=args.source_commit,
+                        reviewed_at_utc=args.reviewed_at_utc or datetime.now(timezone.utc).isoformat())
+                    print(json.dumps(result,sort_keys=True))
+                    return
                 if args.resume:
                     result = store.resume(client,expected_head=args.expected_head)
                 else:
-                    result = store.publish(client,expected_head=args.expected_head,reviewer=args.reviewer,reason=args.reason,
+                    extra = {"expected_inventory":args.expected_inventory,"expected_registry_sha256":args.expected_registry_sha256} if args.recover_orphan else {}
+                    operation = store.recover_orphan if args.recover_orphan else store.publish
+                    result = operation(client,**extra,expected_head=args.expected_head,reviewer=args.reviewer,reason=args.reason,
                         disposition=args.disposition,source_commit=args.source_commit,
                         reviewed_at_utc=args.reviewed_at_utc or datetime.now(timezone.utc).isoformat(),
                         defect_code="manual_eligibility_review")
