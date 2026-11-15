@@ -57,7 +57,7 @@ def eligibility_fixture(plan, report, plan_bytes, report_bytes, journal_bytes, r
         "purpose":purpose, "status":"completed", "data_sha256":plan["identity"]["data_sha256"],
         "target_contract":plan["identity"]["target_contract_id"], "attempts":[{"status":"completed",
             "protocol_sha256":plan["identity"]["evaluation_protocol_sha256"],
-            "candidate_artifact_sha256":plan["identity"]["candidate_artifact_sha256"]}]} for purpose in ("validation_selection","final_evaluation")]})
+            "candidate_artifact_sha256":plan["identity"]["candidate_artifact_sha256"]}]} for purpose in ("validation_selection","reserved_final_evaluation")]})
     sources = {}
     for name, path, raw in (
         ("ledger", "data/evaluations/capital-bikeshare/operational-attempts.json", ledger_bytes),

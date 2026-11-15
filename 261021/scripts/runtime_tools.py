@@ -481,7 +481,7 @@ def _entry_eligibility_review():
     from mlflow.tracking import MlflowClient
     from bike_mlops.config import DATA_PROFILE_ID, PROJECT_ROOT
     from bike_mlops.operational import local_registry_url
-    from bike_mlops.operational_validation import EligibilityReviewStore, eligibility_head
+    from bike_mlops.operational_validation import EligibilityReviewStore, eligibility_head, eligibility_failure_code
     import os
     parser = argparse.ArgumentParser(description="Explicit immutable operational eligibility review; never reopen or measure")
     parser.add_argument("--candidate-id", required=True)
@@ -531,7 +531,7 @@ def _entry_eligibility_review():
             "head":eligibility_head(result),"operational_gate":"unchanged","deployment_permission":"unchanged",
             "new_attempts":0,"retry_permission":False},sort_keys=True))
     except Exception as error:
-        raise SystemExit(f"error: eligibility operation stopped ({type(error).__name__}); retain evidence and inspect before explicit recovery") from None
+        raise SystemExit(f"error: eligibility operation stopped ({type(error).__name__}, code={eligibility_failure_code(error)}); retain evidence and inspect before explicit recovery") from None
 
 
 def _dispatch_cli():

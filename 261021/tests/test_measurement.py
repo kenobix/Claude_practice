@@ -1940,6 +1940,15 @@ class OperationalEligibilityReviewTests(unittest.TestCase):
                 self.publish(disposition,head)
         self.assertEqual(before,{p:p.read_bytes() for p in self.directory.iterdir()})
 
+    def test_metric_period_name_does_not_substitute_for_reserved_consumption_purpose(self):
+        value=json.loads(self.consumption.read_bytes())
+        value["records"][1]["purpose"]="final_evaluation"
+        self.consumption.write_text(json.dumps(value))
+        with self.assertRaises(ValueError) as caught:self.publish()
+        self.assertEqual(registry.eligibility_failure_code(caught.exception),"consumption_windows_mismatch")
+        self.assertEqual(self.client.writes,[])
+        self.assertEqual(registry.eligibility_failure_code(RuntimeError("postgresql://user:secret@private.invalid/db")),"unclassified_failure")
+
     def test_future_unknown_fields_invalid_identity_and_secret_references_refused(self):
         for update in ({"reviewed_at_utc":"2999-01-01T00:00:00+00:00"},{"reviewed_at_utc":"2024-01-01T00:00:00"},
                        {"reviewer":" "},{"source_commit":"wrong"},{"reason":"https://private.invalid/path"},

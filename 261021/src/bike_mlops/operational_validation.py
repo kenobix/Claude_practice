@@ -1680,7 +1680,7 @@ def _validate_eligibility_capsule(capsule, plan, report, plan_file_sha256, repor
             or attempts[0].get("plan_path") != sources["plan"]["path"]
             or type(consumption.get("schema_version")) is not int or consumption.get("schema_version") != 1 or not isinstance(consumption.get("records"), list)):
         raise ValueError("Eligibility ledger snapshot binding is invalid")
-    for purpose in ("validation_selection", "final_evaluation"):
+    for purpose in ("validation_selection", "reserved_final_evaluation"):
         matched = [r for r in consumption["records"] if r.get("purpose") == purpose
                    and r.get("data_sha256") == identity["data_sha256"]
                    and r.get("target_contract") == identity["target_contract_id"]
@@ -2073,6 +2073,27 @@ def local_eligibility_review(root, candidate_id, attempt_id):
     report = _elig_json(_elig_read(root, anchor["sources"]["report"]["path"]))
     require_eligibility_capsule(capsule, plan, report, anchor["sources"]["plan"]["sha256"], anchor["sources"]["report"]["sha256"])
     return capsule
+
+
+def eligibility_failure_code(error):
+    """Fixed diagnostic codes only; never print native client or source values."""
+    known = {
+        "Eligibility requires both bound consumed evaluation windows":"consumption_windows_mismatch",
+        "Eligibility history belongs to different original evidence":"original_binding_mismatch",
+        "Eligibility registered identity changed":"registered_identity_mismatch",
+        "Eligibility source or publication metadata is malformed":"malformed_source_or_metadata",
+        "Eligibility registry head is missing, stale or publishing":"head_not_committed_or_stale",
+        "Eligibility publication incomplete; intent retained, explicit recovery required":"publication_incomplete",
+        "Eligibility fence unconfirmed; stop and inspect, never automatically retry":"fence_unconfirmed",
+        "Evidence timestamp must not be in the future":"future_review_rejected",
+    }
+    message = str(error)
+    if message in known:return known[message]
+    if isinstance(error,FileNotFoundError):return "source_or_lock_missing"
+    if isinstance(error,BlockingIOError):return "cooperative_lock_busy"
+    if message.startswith("Journal UTC order reversed at sequence "):return "journal_utc_reversal"
+    if message.startswith("Evidence contains "):return "unsafe_evidence_rejected"
+    return "unclassified_failure"
 
 
 def main() -> None:

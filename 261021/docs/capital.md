@@ -1255,6 +1255,7 @@ raw ledger/report/journal/planを変更せず、completedをfailedへ書換え�
   登録artifact/profile/target、対象record/attemptのcanonical SHAを結合する。元ledger/消費台帳の原本bytesは
   immutableなanchorへ保存。現在の対象recordは不変を要求し、他candidateのledger追記や既存消費recordを保つappendは許容する。
   正式消費台帳には同protocol/model artifactのvalidation/final双方のcompleted記録が必要。
+  用途名は既存契約の`validation_selection`/`reserved_final_evaluation`を使い、metricの期間名`final_evaluation`で代用しない。
 - 初期状態は明示的な`no_adverse_review`（不適格review未登録）。**品質合格・人の承認ではない。**
   journalの全UTC/schedule/hash/1050応答と数値を検算できなければこの初期化を拒否する。
   既にjournalが不正なcompletedにも、最初から`ineligible`又は`on_hold`を記録できる。
@@ -1286,6 +1287,7 @@ CLIは`runtime_tools.py eligibility-review`。`--inspect`は読取のみ、変�
 candidate/attempt/reviewer/reason/source commit/dispositionを明示する。`--resume`も明示操作。
 CLIでは当該操作だけHTTP transport retry0/要求timeout15秒とし、process環境を元へ戻す。
 独自clientをlibraryへ渡す場合はsingle-attempt transportを呼出側で用意する。全体hard deadlineの保証ではない。
+停止時は固定の診断codeを出し、native例外の本文やURI/秘密値を表示しない。
 今回の実candidateに対する発行・初期化・復旧は承認していない。
 合成system harnessだけが、固定の測定完了後に合成用の空履歴を明示的に作り、同じconsumerを通す。
 

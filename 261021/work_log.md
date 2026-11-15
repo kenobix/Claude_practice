@@ -4933,3 +4933,22 @@ final-target-v10の**59件成功（64.819 test秒）**を確認。CLIのformal l
 compile-v2成功、相対リンク940件/旧import0/配置9・18・12・7を確認。
 現artifact/source/model/正式消費台帳の194原本は索引生成ごとに不変を再確認した。
 最終sourceはCIの622件で検証し、この直後の公開receiptは同じignored directoryへ保存する。
+
+### 343fac0のCI失敗・正式消費用途との整合修正
+
+343fac08f8edcd20227b48789f3020773c8e2fe6を16対象だけcommit/push。
+CI43661906453のunit **622件成功（286.139 test秒）**、compileall成功。
+synthetic systemの新しいempty eligibility初期化がValueErrorで停止し、CI全体は不合格。
+後続PG snapshot/interruption/monitor/migration/persistence、HTTP、Caddy normal/TERMは成功、cleanupも保存した。
+失敗したsystemもowned resources/workspaceを回収した。失敗log/artifact/step情報を別名で保持し、成功へ上書きしない。
+
+原因：validator/合成fixtureで、metric period名final_evaluationを消費台帳purposeとして誤用していた。
+元のevaluation.pyのbegin_evaluation契約、data_tools.pyのreserved最終評価入口、正式台帳のpurpose読取で、
+正しくは`reserved_final_evaluation`と照合した。正規台帳は未変更。
+validation_selectionとreserved_final_evaluationの両方を要求する条件を維持し、alias許容で回避しない。
+fixtureも正式名へ揃え、final_evaluationで代用した入力がhead書込前に拒否される負例を追加。
+CLIのgeneric ValueErrorだけでは診断しにくかったため、固定code（consumption_windows_mismatch等）を追加。
+未知native例外の本文/URI/値は出力しない。UTC/futureや時刻の設定を変更した修正ではない。
+
+purpose-regression-v1の**60件成功（51.471 test秒）**。最終test identityは600→623、削除0。
+修正commitのCI/artifact/cleanupまで確認する前に受入完了へしない。
