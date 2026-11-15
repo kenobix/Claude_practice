@@ -10,6 +10,7 @@
 原本を保持して不適格履歴を追記し、local/remote consumerが欠落・途中公開・旧headを拒否します。
 実candidateへの適用・再測定は行っていません。先の「writer未実装」は設計時点の記録です。
 修正実装`207c686`は[CI全623件・隔離system・artifact検算・cleanup](docs/reviews/20261115-operational-review-checks.json)まで確認済みです。
+最新の[review明示回復・旧source/alias照合・追加runtime負例](docs/capital.md#operational-review-recovery-20261115)は、実装`865362d`の[CI全634件・artifact/cleanup](docs/reviews/20261115-review-recovery-checks.json)まで確認済みです。実候補の22caseは観測12・部分5・未実証5で、最終採否は保留です。
 
 `261014/plan_mlops.md`に沿った、UCI Bike Sharingを現行データとするMLOps学習プロジェクトです。Capital Bikeshareは別targetとして扱う移行専用profileを追加中です。単にモデルを学習するだけでなく、特徴量の時点制約、モデル登録、版固定の予測API、手動承認・差し戻し、遅延ラベルを使う監視までを一続きにします。
 
@@ -35,7 +36,7 @@ Capitalの運用測定を停止した場合は[中断・タイムアウトの確
 
 - `src/bike_mlops/`: データ契約、時刻付き特徴量、学習、API、DB、監視、運用CLI。
 - `configs/`: 時系列分割と特徴量契約。
-- `configs/data-profiles/`と`compose.capital.yaml`: UCIとCapital Bikeshareのデータ/targetを別DB・別Compose projectへ分離する設定。実Capital modelと参照artifactは未生成のため、移行実験専用です。参照の保存・検証仕様は[学習参照とPSI v2](docs/monitoring.md#training-monitor-reference)を参照してください。
+- `configs/data-profiles/`と`compose.capital.yaml`: UCIとCapital Bikeshareのデータ/targetを別DB・別Compose projectへ分離する設定。実Capital候補と訓練参照artifactは専用環境へ生成済みですが、運用gateはnot_evaluated、配信はblockedの移行実験用です。参照の保存・検証仕様は[学習参照とPSI v2](docs/monitoring.md#training-monitor-reference)を参照してください。
 - `tests/`: 時刻リーク、欠損時間、入力重複、ストレージの回帰試験。
 - `docs/`: データ・アーキテクチャ・運用判断。Capital監視の合成受入シナリオと期待時刻は[監視受入基準](docs/monitoring.md#monitoring-acceptance)に記録しています。保存未確定時の[読取照合契約](docs/monitoring.md#monitor-reconciliation)に沿う`monitor-inspect`のSQLite版T06aとPostgreSQL版T06bを実装しました。読取専用snapshot・型別比較・中断/遅延commitの[検証記録](docs/reviews/20261030-t06b-checks.json)と[操作手順](docs/runbook.md#runbook)を参照してください。
 - GitHub Actionsの`synthetic-system` jobは、独立した使い捨てDocker/PostgreSQL検証として、既存のmonitor persistence保存試験も実行します。失敗を隠さずログを`bike-mlops-docker-integration-logs` artifactに含めます。対象は合成DBだけで、実運用監視や配信の証拠ではありません。 T15の[CI・artifact・cleanupの確認結果](docs/reviews/20261101-t15-checks.json)を保存しています。

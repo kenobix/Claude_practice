@@ -8,6 +8,7 @@
 [検証索引](reviews/20261115-operational-consumer-checks.json)へ記録する。整理時点のCIと今回のCIを混同しない。
 その後の[追記専用reviewと公開head](capital.md#operational-eligibility-review-20261115)は
 [別の検証索引](reviews/20261115-operational-review-checks.json)から確認する。実candidateの保留は解除していない。
+最新の[明示回復・preflight・追加runtime観測](capital.md#operational-review-recovery-20261115)は[別の最終索引](reviews/20261115-review-recovery-checks.json)を参照。実装865362dのCI634件とartifact/cleanupを受入済みで、実採否は保留。
 
 | 文書 | 内容 |
 |---|---|

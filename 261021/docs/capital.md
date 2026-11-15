@@ -1649,3 +1649,44 @@ writerのNOFOLLOW境界を緩めず、`writer_path_compatible=false / explicit_p
 修復metadataのsidecarはローカルの保全記録である。v2 capsuleのevent/receipt本文は変わらず、
 独立したregistry管理者による全headの整合した巻戻しは依然として信頼境界外である。
 既存T16の4payload archiveは新sidecarを含む全review系列の可搬保存にはならない。別契約の残件として維持する。
+
+### 今回の最終受入と残件
+
+実装`865362d`の[CI43666552694](https://github.com/kenobix/Claude_practice/actions/runs/43666552694)は
+全634 unit（249.949表示秒）、全job/step、現Dockerfileの合成system・PostgreSQL・HTTP/Caddy復旧を通過した。
+artifact14142284724は234,614 bytes、SHA256 `d4cdcc4ca6cb9bb948274fb370001a9f66445aa8c28a6963ce98ce091d51f94e`。
+固定16 memberと内包hash、ZIPだけを受け取る別processの数値検算、各owned resourceのcleanupを照合した。
+数値検算は合成1,000要求・暖機50除外・journal1,050応答・p95 28.651527msで、実候補の性能には流用しない。
+local全634件/591.268表示秒も成功。保護原本194件、元の運用/消費台帳は不変。
+
+新しい専用projectへ**保存済み実候補のバックアップだけ**を復元した追加結果:
+
+| case | 今回の観測 | 主張の限界 |
+|---|---|---|
+| 監査書込失敗 | 制約注入でHTTP503、対象監査行0 | コピーDBのみ。実DBの障害ではない |
+| 破損artifactのready | コピーskops破損でHTTP503、元の候補/registry/配信は不変 | 実運用のavailability達成ではない |
+| monitor CLI負例 | 重複時刻、source hash不一致、reference path欠落を期待理由で拒否。CSV/JSON/marker未作成、DB manifest不変 | missing-label、validation MAE未設定、constant-referenceの別条件まで完了とはしない |
+| Caddy切替・停止・復旧 | 同candidate/版1/artifactの2slotで保存応答が完全一致。green停止時502→blue切戻し後ready200 | **異なる二版、承認済み配信、製品promote中断の受入ではない** |
+| 旧REAL型fixtureの移行 | コピーの2,514行をREALへ変換して旧状態を再現し、製品initializeでDOUBLE PRECISIONへ。移行前binary32値を全行維持 | 失われた元binary64の精度を復元した意味ではない |
+| API停止 | owned containerのRunning=falseとtransport refusalを両方確認 | 過去の停止probeへの遡及適用なし |
+| 入口metadata | own Caddy経由でcandidate/artifact一致 | approval_evidence=false / legacy_unverifiableのまま |
+
+v1〜v5の失敗も保持。通常のlocal Dockerfile buildはPyPIの読取timeoutで失敗した。
+代替専用imageは固定依存105版と現source18ファイルのSHAを照合し、旧module残存を検出後に
+専用レイヤーから除去して余剰0を確認した。通常Dockerfileのlocal成功へ読み替えない。
+元UCI/Capitalの8containerは開始時点のExited状態・ID・image・起動時刻を保持し、今回の全project/volume/networkをcleanupした。
+
+旧source98ファイルと正式alias/消費台帳のread-only照合は、停止中の元registryへ接続できなかったため
+**保存済みregistry snapshotコピー**に対して行った。元live headの現在性は未確認。
+旧sourceには現行consumerがなく、formal consumption symlinkはstrict writerと互換でないため、
+実適用前に明示的なsource更新・正式入力の投影/移設契約が必要である。実projectのaliasは変えていない。
+
+最新版の22case一覧はlocal原本`data/reports/20261115-review-recovery/runtime-gap-inventory.json`。
+**実観測12領域review待ち・部分5・未実証5**で、正式なcategory attestationは発行していない。
+未実証はconstant-reference、適格な異なる二版、製品配信中断復旧、承認operation、timeout段階metadata。
+部分caseにもmissing-label/MAE未設定などの不足がある。合成CIや同版routingで埋めない。
+
+警告1,336/234窓の技術reviewは前節のまま。人のリスク受容は未承認であり、
+それだけでUTC逆行の不適格証拠を有効化することはできない。
+唯一の運用試行は保留で、再測定・新attempt・reopenは禁止されているため、
+**今回の制約下でT13bの合格・配信承認まで全P1を完了することはできない**。
