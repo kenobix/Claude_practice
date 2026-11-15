@@ -6,6 +6,8 @@
 整理後の全593テスト・隔離Docker/PG/復旧CIとartifact検算は[検証索引](reviews/20261115-file-consolidation-checks.json)を参照。
 整理後の製品変更は[UTC順序拒否・事後review契約・警告review](capital.md#operational-evidence-review-20261115)と
 [検証索引](reviews/20261115-operational-consumer-checks.json)へ記録する。整理時点のCIと今回のCIを混同しない。
+その後の[追記専用reviewと公開head](capital.md#operational-eligibility-review-20261115)は
+[別の検証索引](reviews/20261115-operational-review-checks.json)から確認する。実candidateの保留は解除していない。
 
 | 文書 | 内容 |
 |---|---|

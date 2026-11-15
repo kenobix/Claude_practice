@@ -2,9 +2,274 @@
   "kind": "operational-eligibility-review-acceptance",
   "date_label": "2026-11-15 Asia/Tokyo; raw UTC unqualified",
   "base_commit": "00f2ce860a2b111cc5e1edb1ed6237a63be8c0bc",
-  "status": "purpose_regression_verified_corrected_ci_pending",
-  "implementation_commit": null,
-  "ci": null,
+  "status": "accepted_isolated_implementation_ci_artifact_cleanup_real_candidate_on_hold",
+  "implementation_commit": "207c686d5c86a40bbd0261afbfb0d3c26f7c775c",
+  "ci": {
+    "run_id": 43663095854,
+    "url": "https://github.com/kenobix/Claude_practice/actions/runs/43663095854",
+    "implementation_commit": "207c686d5c86a40bbd0261afbfb0d3c26f7c775c",
+    "accepted": true,
+    "unit_tests": 623,
+    "unit_displayed_seconds": 175.813,
+    "jobs": [
+      {
+        "id": 132656497975,
+        "name": "tests",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 43663095854,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run python -m pip install -r requirements.lock",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run python -m pip install --no-deps --no-build-isolation -e '.[dev]'",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run python -m pip check",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Run python -m unittest discover -s tests -v",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Run python -m compileall -q src tests scripts",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          }
+        ]
+      },
+      {
+        "id": 132656498230,
+        "name": "synthetic-system",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 43663095854,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v7.0.1",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/setup-python@v7.1.0",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run python -m pip install -r requirements.lock",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run python -m pip install --no-deps --no-build-isolation -e '.[dev]'",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run python -m pip check",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Run isolated synthetic Docker system test",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Run disposable PostgreSQL snapshot-lock test",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Run disposable request interruption PostgreSQL test",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Run disposable PostgreSQL monitor reconciliation test",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Run legacy prediction precision migration and restore test",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          },
+          {
+            "name": "Run disposable PostgreSQL monitor persistence test",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 12
+          },
+          {
+            "name": "Run disposable MLflow HTTP decision fault test",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 13
+          },
+          {
+            "name": "Run disposable Caddy deployment recovery and TERM cleanup",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 14
+          },
+          {
+            "name": "Upload synthetic system test log",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15
+          },
+          {
+            "name": "Post Run actions/setup-python@v7.1.0",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 29
+          },
+          {
+            "name": "Post Run actions/checkout@v7.0.1",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 30
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 31
+          }
+        ]
+      }
+    ],
+    "artifact": {
+      "id": 14140849210,
+      "name": "bike-mlops-docker-integration-logs",
+      "size_in_bytes": 234732,
+      "url": "https://api.github.com/repos/kenobix/Claude_practice/actions/artifacts/14140849210",
+      "archive_download_url": "https://api.github.com/repos/kenobix/Claude_practice/actions/artifacts/14140849210/zip",
+      "expired": false,
+      "created_at": "2026-11-15T01:33:51Z",
+      "expires_at": "2026-11-29T01:33:50Z",
+      "updated_at": "2026-11-15T01:33:51Z",
+      "digest": "sha256:43c6148ee9f68827d82551d48bbf438d2a0cc3e5b94d3f3ec05fecc13726d790",
+      "workflow_run": {
+        "id": 43663095854,
+        "repository_id": 1197425837,
+        "head_repository_id": 1197425837,
+        "head_branch": "main",
+        "head_sha": "207c686d5c86a40bbd0261afbfb0d3c26f7c775c"
+      }
+    },
+    "verification_path": "data/reports/20261115-operational-review/ci-207c686-artifact-verification.json",
+    "verification_sha256": "f839acaae7496ea9d74b07096fde5dbf2a92a188331277f678c796fbad29db21",
+    "outer_members": 16,
+    "archive_only_recalculation": {
+      "archive_sha256": "2612b67a5ea81348fe40cb395fd0a87bf3e87d3d7539883851b3c02c7e94032d",
+      "attempt_id": "db433226-88c8-4fe3-afe2-c02262ec9c22",
+      "candidate_id": "a20dda8094026f5fa4a3be72b9905b676d691e4f2036ee5c776e9f7f47c5d638",
+      "deployment_permission": "blocked",
+      "eligibility_status": "not_verified_offline_numeric_diagnostic_only",
+      "journal_verified_responses": 1050,
+      "limitations": [
+        "Synthetic evidence only; does not prove real-data performance, clock qualification, DB audit outside the saved journal, or deployment approval."
+      ],
+      "measured_errors": 0,
+      "measured_requests_recalculated": 1000,
+      "members": {
+        "payload/operational-ledger.json": {
+          "bytes": 1232,
+          "sha256": "fb6bdef8e093acfdbe9455b06fdf4f903b66e84b3988c1ecdcef6556ba1fc0f7"
+        },
+        "payload/plan.json": {
+          "bytes": 5141,
+          "sha256": "5e2375c50e1e74279aa58779bd9dae48d18e6af274810da7ba7fc114b8a0249b"
+        },
+        "payload/report.json": {
+          "bytes": 438200,
+          "sha256": "9d6a3944fb7b73c1658e51ea4b11804feaad2a1f75023ad9cfd3d9e66c2fa759"
+        },
+        "payload/request-journal.jsonl": {
+          "bytes": 1083552,
+          "sha256": "418bb85baafce410ed6081ddd70a123446c15e9a8d94e9c55774c17343c80cf2"
+        }
+      },
+      "numeric_status": "passed",
+      "operational_gate": "not_evaluated",
+      "p95_ms": 37.96615999999631,
+      "request_id_sha256": "3c5ca804b88bbfd5a95a47748af6e0c433c4481c6c50dad8f2f8a051f71b5a2c",
+      "status": "archive_recalculated",
+      "synthetic_only": true,
+      "warmup_requests_excluded": 50
+    },
+    "cleanup_verified": true,
+    "review_history_archive_scope": "The existing four-payload T16 numeric archive does not contain the complete new review series; no archive-only review freshness or history reproduction is claimed."
+  },
   "ci_attempts": [
     {
       "implementation_commit": "343fac08f8edcd20227b48789f3020773c8e2fe6",
@@ -15,7 +280,8 @@
       "unit_displayed_seconds": 286.139,
       "failure": "system eligibility initialization rejected wrong consumption purpose",
       "artifact_id": 14139959100,
-      "artifact_sha256": "fbea4752fc0eca048f1a5eff19f6a326ef2b59faccda4729a5291f128d0aba19"
+      "artifact_sha256": "fbea4752fc0eca048f1a5eff19f6a326ef2b59faccda4729a5291f128d0aba19",
+      "failed_cleanup_scope": "owned cleanup and protected IDs observed; workspace removal not independently observed from failed log"
     }
   ],
   "scope": "Immutable review writer and local/remote evidence consumers in disposable environments only.",
@@ -189,7 +455,7 @@
       "sha256": "79324361751e1e99f90077ec06a9d587a7bc7100273cac0ddf7032805d6431d5"
     }
   ],
-  "source_matches_implementation": false,
+  "source_matches_implementation": true,
   "tests": {
     "final-target-v10.log": {
       "tests": 59,
@@ -291,6 +557,33 @@
       "log_sha256": "84e5033b9e6e2b800ee5c57d0af600975df1d8a583363c80fb7656a3bb7b316e"
     },
     {
+      "path": "data/reports/20261115-operational-review/ci-discovery-v2.json",
+      "sha256": "d0be963b56e4b3bb088005df068a3c562024bc968e39a84e1ce5b7ac4b3f1f56",
+      "command": [
+        "gh",
+        "run",
+        "list",
+        "--repo",
+        "kenobix/Claude_practice",
+        "--commit",
+        "207c686d5c86a40bbd0261afbfb0d3c26f7c775c",
+        "--workflow",
+        "bike-mlops-contracts.yml",
+        "--limit",
+        "3",
+        "--json",
+        "databaseId,headSha,status,conclusion,url"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T01:26:51.967561+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:26:53.374332+00:00",
+      "monotonic_start_ns": 22385848287212,
+      "monotonic_end_ns": 22387255049522,
+      "log": "ci-discovery-v2.log",
+      "log_sha256": "43f296cd1475159a63b97607c12e37b1371afb006de4a52e08ffb49daa92519b"
+    },
+    {
       "path": "data/reports/20261115-operational-review/ci-watch-v1.json",
       "sha256": "3f1c2c9cecd847a16df06040c9f8fe47311fafeb3bc20dd1309ac6a80a3df19e",
       "command": [
@@ -312,6 +605,45 @@
       "monotonic_end_ns": 21871202007581,
       "log": "ci-watch-v1.log",
       "log_sha256": "b684cb7a441444286cecf069071f387697650f77a17182bdcd3e76ef220d3865"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/ci-watch-v2.json",
+      "sha256": "fa5b20c8f5b858eca1f045c2954c99e1ca26c186eaebcc91d19b99d9cb82635b",
+      "command": [
+        "gh",
+        "run",
+        "watch",
+        "43663095854",
+        "--repo",
+        "kenobix/Claude_practice",
+        "--interval",
+        "30",
+        "--exit-status"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T01:28:47.309344+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:34:07.200037+00:00",
+      "monotonic_start_ns": 22507325287910,
+      "monotonic_end_ns": 22833763473298,
+      "log": "ci-watch-v2.log",
+      "log_sha256": "38f0f18f8513cbe1125cbdc476a179ee6e4658af6c8830855395b70e20b30d3d"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/commit-fix-v1.json",
+      "sha256": "02ce25ae32c9e0a2f845b8e6fce2e5b7268ad0caf1118b13a618a130182e4636",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-operational-review/commit_fix.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T01:26:08.527692+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:26:08.860707+00:00",
+      "monotonic_start_ns": 22339270264234,
+      "monotonic_end_ns": 22339603272813,
+      "log": "commit-fix-v1.log",
+      "log_sha256": "d51cb62bb92c474df7ae15ea158a0b276d18237c47cf48257e16d500a067c7c1"
     },
     {
       "path": "data/reports/20261115-operational-review/commit-implementation-v1.json",
@@ -393,6 +725,43 @@
       "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
+      "path": "data/reports/20261115-operational-review/corrected-artifact-download-v1.json",
+      "sha256": "69f682e239981fbd52354befedd716991f58bf29178c51c874cbd02c733eb527",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-operational-review/download_artifact.py",
+        "261021/data/reports/20261115-operational-review/ci-207c686-artifacts.json",
+        "ci-207c686-artifact.zip"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T01:34:51.919419+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:34:55.660636+00:00",
+      "monotonic_start_ns": 22878827787906,
+      "monotonic_end_ns": 22882569007626,
+      "log": "corrected-artifact-download-v1.log",
+      "log_sha256": "96142223454677b1a67e6dffcfb78f90b0fd313b7b79632f4cba68612b9b85b3"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/corrected-artifact-verification-v1.json",
+      "sha256": "66b7b97ee7c26ec0e5b0d257e9bb629771f0257f6381489eeddf0f47c787553f",
+      "command": [
+        "261021/.venv/bin/python",
+        "261021/data/reports/20261114-file-consolidation/verify_ci_artifact.py",
+        "261021/data/reports/20261115-operational-review/ci-207c686-artifact.zip",
+        "43c6148ee9f68827d82551d48bbf438d2a0cc3e5b94d3f3ec05fecc13726d790",
+        "261021/data/reports/20261115-operational-review/ci-207c686-artifact-verification.json"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T01:35:02.236589+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:35:05.644776+00:00",
+      "monotonic_start_ns": 22889693842675,
+      "monotonic_end_ns": 22893102022441,
+      "log": "corrected-artifact-verification-v1.log",
+      "log_sha256": "8c25b3fa5acb08f30f7128c5f9698c866a8cc2b2af2ef1a3d93b88188cbb22ed"
+    },
+    {
       "path": "data/reports/20261115-operational-review/failed-artifact-download-v1.json",
       "sha256": "168289e20e511ef8f697b7625b518bf7acd79778290541f371bdde52cc698abd",
       "command": [
@@ -409,6 +778,102 @@
       "monotonic_end_ns": 22239126987541,
       "log": "failed-artifact-download-v1.log",
       "log_sha256": "cc71317afbb192f7f4d8f08acbc49faee706db66eb526b19ba28b1fcae0e32fd"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/failed-artifact-verification-v1.json",
+      "sha256": "62c306e69139934f81166855cf7ab23216307b5f9254d719897c474ef7c42262",
+      "command": [
+        "python3",
+        "-"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-15T01:29:17.275017+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:29:17.557216+00:00",
+      "monotonic_start_ns": 22538297751311,
+      "monotonic_end_ns": 22538579933443,
+      "log": "failed-artifact-verification-v1.log",
+      "log_sha256": "d40eaa31165dbb7eeba618fb0a102cff3a7c4b124b652031073c94c4e79176cf"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/failed-artifact-verification-v2.json",
+      "sha256": "aa026bb15907cd46133676f919dfde27cd4574bd6fdf8de2e59389316dad101f",
+      "command": [
+        "python3",
+        "-"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T01:30:03.149294+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:30:03.219015+00:00",
+      "monotonic_start_ns": 22585033442066,
+      "monotonic_end_ns": 22585103164836,
+      "log": "failed-artifact-verification-v2.log",
+      "log_sha256": "c0afe5ccc6fb74b92c6f1ae32b76c6dac9afee81ab7589d2ab084180a675daad"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-evidence-consistency-v1.json",
+      "sha256": "1b56f1fab413717d7d1a02268d601a34007a6aaf4af8e1dc22eca329809f3586",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-operational-review/verify_final_index.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T01:37:07.767414+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:37:07.998305+00:00",
+      "monotonic_start_ns": 23016777024658,
+      "monotonic_end_ns": 23017007915841,
+      "log": "final-evidence-consistency-v1.log",
+      "log_sha256": "9fa4425dd2c4d1d8130933e95937016f2bdaec1fd7ac979286dddc9ecdb151dc"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-index-v1.json",
+      "sha256": "d575dddac8c243f7c207def491b45a081415dd7786b4e3072aa44bd90c103e32",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-operational-review/build_index.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T01:36:34.359701+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:36:35.178721+00:00",
+      "monotonic_start_ns": 22983147768987,
+      "monotonic_end_ns": 22983966777093,
+      "log": "final-index-v1.log",
+      "log_sha256": "274eaa47a606246645f82b06bfec1bb1a0c8b3d3adc18f7d2881f38e96e979a8"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-layout-v1.json",
+      "sha256": "0f51c896fa202fed30826894151e76af0f8c46ef53fef947ec41e31806d65d52",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-operational-review/check_final_layout.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T01:33:58.834381+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:34:00.941631+00:00",
+      "monotonic_start_ns": 22824943837412,
+      "monotonic_end_ns": 22827051091595,
+      "log": "final-layout-v1.log",
+      "log_sha256": "238a5648e98a516a2de42e900865ef0df03236c5be055ae1a6af05b4afc1232c"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-layout-v2.json",
+      "sha256": "14b90ee76354f615f9ca79311b1e2f6a9fb78bdf287f026d4a1a363db002c92f",
+      "command": [
+        "python3",
+        "261021/data/reports/20261115-operational-review/check_final_layout.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T01:36:25.946563+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:36:28.010687+00:00",
+      "monotonic_start_ns": 22974178763813,
+      "monotonic_end_ns": 22976242859009,
+      "log": "final-layout-v2.log",
+      "log_sha256": "6e3e0fc081553e6f449ba7a65f7acf47358eec26415f82f9c82c5bb11f8d783c"
     },
     {
       "path": "data/reports/20261115-operational-review/final-target-v10.json",
@@ -680,6 +1145,24 @@
       "log_sha256": "8438f18ee9340f87e2c44a1fe419e506d7a9f8d170d5168f6508b7bbd6baba73"
     },
     {
+      "path": "data/reports/20261115-operational-review/push-fix-v1.json",
+      "sha256": "a99691ba387ac68927dfcc76cd0d76c15f8044f5467b78fa6828ab11912ae623",
+      "command": [
+        "git",
+        "push",
+        "origin",
+        "main"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T01:26:17.809007+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:26:22.926219+00:00",
+      "monotonic_start_ns": 22350070424191,
+      "monotonic_end_ns": 22355187624223,
+      "log": "push-fix-v1.log",
+      "log_sha256": "0cf1877184d8a9a9e4d3f5afb24a9906d0d50c45813c46c4875b6cf04c66261c"
+    },
+    {
       "path": "data/reports/20261115-operational-review/push-implementation-v1.json",
       "sha256": "1082e0a78f8f86d9ae4917a38a506b1bdb08451a586e7cf5acdb6a5d440487af",
       "command": [
@@ -848,8 +1331,48 @@
   "artifacts": [
     {
       "path": "data/reports/20261115-operational-review/build_index.py",
-      "bytes": 7232,
-      "sha256": "f98647548586ad9fa3a5a8996fc2dc067294a2744f53415e2b13c5c5de25d138"
+      "bytes": 7659,
+      "sha256": "28d4c146557b5e2d50c5995af01b6e66ea6e709cc49a63c875305763ad02696f"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/check_final_layout.py",
+      "bytes": 2324,
+      "sha256": "fe7cf6dc8e86dc627dacc0055420db50ae591e04a1d39c3c01e8db9f960e3507"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/ci-207c686-artifact-verification.json",
+      "bytes": 4957,
+      "sha256": "f839acaae7496ea9d74b07096fde5dbf2a92a188331277f678c796fbad29db21"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/ci-207c686-artifact.zip",
+      "bytes": 234732,
+      "sha256": "43c6148ee9f68827d82551d48bbf438d2a0cc3e5b94d3f3ec05fecc13726d790"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/ci-207c686-artifacts.json",
+      "bytes": 843,
+      "sha256": "444023ab358a72561bb1c552e927f94b5fa3e737a80a4ea1d527dbb674befeb0"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/ci-207c686-jobs-initial.json",
+      "bytes": 4992,
+      "sha256": "005bc4fe4cc841142a523a23b8d64045f748fc06618d46ac635dd0e840be62a0"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/ci-207c686-jobs.json",
+      "bytes": 5387,
+      "sha256": "1d3b152faa975c48c1a384348dd45feda2eb7d710abc00581c411ae1cd2b919d"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/ci-207c686-system.log",
+      "bytes": 133369,
+      "sha256": "e34dcf1dfe0cbcb7fccacc69d726a283edc6f076dfe6b4a7baf7ca0e61ef0b73"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/ci-207c686-unit.log",
+      "bytes": 228882,
+      "sha256": "102a6d28b3c37c5c8c0d63170c46f8053f9874fb954bb3361a30e3e6832a0313"
     },
     {
       "path": "data/reports/20261115-operational-review/ci-343fac0-artifact.zip",
@@ -882,6 +1405,16 @@
       "sha256": "84e5033b9e6e2b800ee5c57d0af600975df1d8a583363c80fb7656a3bb7b316e"
     },
     {
+      "path": "data/reports/20261115-operational-review/ci-discovery-v2.json",
+      "bytes": 693,
+      "sha256": "d0be963b56e4b3bb088005df068a3c562024bc968e39a84e1ce5b7ac4b3f1f56"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/ci-discovery-v2.log",
+      "bytes": 197,
+      "sha256": "43f296cd1475159a63b97607c12e37b1371afb006de4a52e08ffb49daa92519b"
+    },
+    {
       "path": "data/reports/20261115-operational-review/ci-jobs-initial.json",
       "bytes": 4992,
       "sha256": "4514a4b4ba07c18be109bdf5cd3255c68027d905f78d6fe762a74ab6adeb8be3"
@@ -900,6 +1433,26 @@
       "path": "data/reports/20261115-operational-review/ci-watch-v1.log",
       "bytes": 16016,
       "sha256": "b684cb7a441444286cecf069071f387697650f77a17182bdcd3e76ef220d3865"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/ci-watch-v2.json",
+      "bytes": 558,
+      "sha256": "fa5b20c8f5b858eca1f045c2954c99e1ca26c186eaebcc91d19b99d9cb82635b"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/ci-watch-v2.log",
+      "bytes": 16236,
+      "sha256": "38f0f18f8513cbe1125cbdc476a179ee6e4658af6c8830855395b70e20b30d3d"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/commit-fix-v1.json",
+      "bytes": 497,
+      "sha256": "02ce25ae32c9e0a2f845b8e6fce2e5b7268ad0caf1118b13a618a130182e4636"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/commit-fix-v1.log",
+      "bytes": 1077,
+      "sha256": "d51cb62bb92c474df7ae15ea158a0b276d18237c47cf48257e16d500a067c7c1"
     },
     {
       "path": "data/reports/20261115-operational-review/commit-implementation-v1.json",
@@ -952,6 +1505,26 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
+      "path": "data/reports/20261115-operational-review/corrected-artifact-download-v1.json",
+      "bytes": 633,
+      "sha256": "69f682e239981fbd52354befedd716991f58bf29178c51c874cbd02c733eb527"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/corrected-artifact-download-v1.log",
+      "bytes": 159,
+      "sha256": "96142223454677b1a67e6dffcfb78f90b0fd313b7b79632f4cba68612b9b85b3"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/corrected-artifact-verification-v1.json",
+      "bytes": 786,
+      "sha256": "66b7b97ee7c26ec0e5b0d257e9bb629771f0257f6381489eeddf0f47c787553f"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/corrected-artifact-verification-v1.log",
+      "bytes": 157,
+      "sha256": "8c25b3fa5acb08f30f7128c5f9698c866a8cc2b2af2ef1a3d93b88188cbb22ed"
+    },
+    {
       "path": "data/reports/20261115-operational-review/download_artifact.py",
       "bytes": 628,
       "sha256": "fb9bd68f77d200e109fd72c9fe480fd710e8d6144c22eae0ecd55e463419e3dd"
@@ -965,6 +1538,71 @@
       "path": "data/reports/20261115-operational-review/failed-artifact-download-v1.log",
       "bytes": 158,
       "sha256": "cc71317afbb192f7f4d8f08acbc49faee706db66eb526b19ba28b1fcae0e32fd"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/failed-artifact-verification-v1.json",
+      "bytes": 455,
+      "sha256": "62c306e69139934f81166855cf7ab23216307b5f9254d719897c474ef7c42262"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/failed-artifact-verification-v1.log",
+      "bytes": 88,
+      "sha256": "d40eaa31165dbb7eeba618fb0a102cff3a7c4b124b652031073c94c4e79176cf"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/failed-artifact-verification-v2.json",
+      "bytes": 455,
+      "sha256": "aa026bb15907cd46133676f919dfde27cd4574bd6fdf8de2e59389316dad101f"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/failed-artifact-verification-v2.log",
+      "bytes": 135,
+      "sha256": "c0afe5ccc6fb74b92c6f1ae32b76c6dac9afee81ab7589d2ab084180a675daad"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/failed-artifact-verification.json",
+      "bytes": 2268,
+      "sha256": "623cb42f650a797fd2b7e65a40e5ae86e7f54bb4fdd3571f91e340e3d840f5e3"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-evidence-consistency-v1.json",
+      "bytes": 521,
+      "sha256": "1b56f1fab413717d7d1a02268d601a34007a6aaf4af8e1dc22eca329809f3586"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-evidence-consistency-v1.log",
+      "bytes": 228,
+      "sha256": "9fa4425dd2c4d1d8130933e95937016f2bdaec1fd7ac979286dddc9ecdb151dc"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-index-v1.json",
+      "bytes": 499,
+      "sha256": "d575dddac8c243f7c207def491b45a081415dd7786b4e3072aa44bd90c103e32"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-index-v1.log",
+      "bytes": 129,
+      "sha256": "274eaa47a606246645f82b06bfec1bb1a0c8b3d3adc18f7d2881f38e96e979a8"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-layout-v1.json",
+      "bytes": 507,
+      "sha256": "0f51c896fa202fed30826894151e76af0f8c46ef53fef947ec41e31806d65d52"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-layout-v1.log",
+      "bytes": 231,
+      "sha256": "238a5648e98a516a2de42e900865ef0df03236c5be055ae1a6af05b4afc1232c"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-layout-v2.json",
+      "bytes": 507,
+      "sha256": "14b90ee76354f615f9ca79311b1e2f6a9fb78bdf287f026d4a1a363db002c92f"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-layout-v2.log",
+      "bytes": 231,
+      "sha256": "6e3e0fc081553e6f449ba7a65f7acf47358eec26415f82f9c82c5bb11f8d783c"
     },
     {
       "path": "data/reports/20261115-operational-review/final-target-v10.json",
@@ -1152,9 +1790,19 @@
       "sha256": "b947fa0f02ee75c6dca4b52c05eab6dea6dc7c3f7ce22e36fa6015864e59714f"
     },
     {
+      "path": "data/reports/20261115-operational-review/layout-validation.json",
+      "bytes": 166,
+      "sha256": "3b1fff6fdc146b445965c886c4db8d69d0a8eeb5617c0348934c461f2acaa477"
+    },
+    {
       "path": "data/reports/20261115-operational-review/originals.json",
       "bytes": 37573,
       "sha256": "69cf96f14e8be4b7b9e2312613ee502c137582d26528757993d26ca3b05a0e89"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/purpose-fix-staged.diff",
+      "bytes": 32746,
+      "sha256": "64d8b8040ec5a38fdcc4acaf670ce0f95dd01c561640836ad0bad1d1df69f7b2"
     },
     {
       "path": "data/reports/20261115-operational-review/purpose-regression-v1.json",
@@ -1165,6 +1813,16 @@
       "path": "data/reports/20261115-operational-review/purpose-regression-v1.log",
       "bytes": 12903,
       "sha256": "8438f18ee9340f87e2c44a1fe419e506d7a9f8d170d5168f6508b7bbd6baba73"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/push-fix-v1.json",
+      "bytes": 460,
+      "sha256": "a99691ba387ac68927dfcc76cd0d76c15f8044f5467b78fa6828ab11912ae623"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/push-fix-v1.log",
+      "bytes": 76,
+      "sha256": "0cf1877184d8a9a9e4d3f5afb24a9906d0d50c45813c46c4875b6cf04c66261c"
     },
     {
       "path": "data/reports/20261115-operational-review/push-implementation-v1.json",
@@ -1255,6 +1913,11 @@
       "path": "data/reports/20261115-operational-review/tested-source.json",
       "bytes": 752,
       "sha256": "6dc9bee8980c70da6db2e3db1c3a842192bf00f52a17a9c3d36be74b68f3f6c0"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/verify_final_index.py",
+      "bytes": 1848,
+      "sha256": "e202f63f7f28d36b669b7996b21d0f6c2284466bd983f525060c06f949e2b3f3"
     }
   ],
   "local_http_result": {
@@ -1362,6 +2025,8 @@
     "Trusted registry authority and cooperative locks are the boundary; independent protection from an administrator coherently rolling back all head tags is not implemented.",
     "Passed-in library clients must have single-attempt transport; the shipped CLI enforces zero SDK transport retries.",
     "Real alias/source migration, actual candidate review issuance and runtime fault evidence remain unperformed.",
+    "The existing T16 archive contains numeric plan/report/ledger/journal only, not the full new review series; archive-only review history/freshness is not claimed.",
+    "343fac0 failed artifact verification v1 overexpected workspace_removed: v2 verifies owned cleanup/protected IDs, but failed-path workspace removal remains not independently observed. Corrected CI207c686 has its own full cleanup evidence.",
     "No OS/clock/service/task/resync, gate/permission, raw-ledger/consumption, fit/reselection or operational attempt changes.",
     "Synthetic CI and fixed-clock fixtures are not real-candidate acceptance, production SLO or clock qualification."
   ]

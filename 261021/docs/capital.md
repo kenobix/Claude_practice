@@ -1298,6 +1298,17 @@ registry管理権限で全control tagを整合した旧値へ巻き戻す攻撃�
 既存専用projectの旧sourceやsymlink入力aliasへ自動適用せず、実適用時にはsource revision・正式path・全historyを再照合する。
 caseごとの実producer証拠、警告の人によるリスク受容、最終採否は未達のまま。
 
+受入結果：修正実装`207c686d5c86a40bbd0261afbfb0d3c26f7c775c`の
+[CI43663095854](https://github.com/kenobix/Claude_practice/actions/runs/43663095854)で
+全623件（175.813 test表示秒）、全job/step、artifact16 memberのhash、別process数値再計算、cleanupを確認。
+最初の343fac0はunit622件成功後、消費台帳purposeの誤用でsystem初期化が失敗した。
+正式`reserved_final_evaluation`への修正と、その誤用を拒否する回帰を追加し、失敗原本も保持した。
+T16 archiveだけで暖機50回を除く1,000要求/全1,050応答/p95 37.96615999999631msが再計算で一致した。
+これは合成数値診断であり、実candidateの運用成績ではない。
+既存4payload archiveは新review全系列を含まないため、archiveだけでreview系列/最新headも再現できたとは主張しない。
+系列の可搬保存、orphan fence/torn fileの明示回復、旧source/aliasへの実適用前照合は計画の残件とする。
+実原本194ファイル・正式消費台帳は不変、実candidateへのhead発行・tag変更・新attemptは未実施。
+
 ### 実monitorの理由付き警告review
 
 保存済みmonitor CSV/JSON/complete markerのSHAとrun ID、登録training referenceと候補結合を確認。

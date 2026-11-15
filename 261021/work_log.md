@@ -4952,3 +4952,55 @@ CLIのgeneric ValueErrorだけでは診断しにくかったため、固定code�
 
 purpose-regression-v1の**60件成功（51.471 test秒）**。最終test identityは600→623、削除0。
 修正commitのCI/artifact/cleanupまで確認する前に受入完了へしない。
+
+失敗CIのartifact14139959100（17,401bytes、SHA fbea4752…0aba19）も保存しGitHub digest一致を確認。
+13memberで、初期化失敗前のT16 archive3memberは生成されていない。
+failed-artifact-verification-v1はworkspace_removedの完了表示まで期待してassert失敗。
+原本にはowned cleanup_complete/protected IDs不変はあるが、失敗時workspace_removed表示はない。
+v2はこの区別を保存して成功。前段の「workspaceを回収した」はfinally実装からの推論であり、
+失敗logから独立に実削除確認済みとは扱わない。失敗原本・検算失敗も保持する。
+
+### 207c686の最終CI受入と中断後の継続確認
+
+修正対象8ファイルだけを`207c686d5c86a40bbd0261afbfb0d3c26f7c775c`としてcommit/pushした。
+継続時にHEAD/statusを読取確認し、既存差分と無関係な未追跡3pathを保持した。
+初回確認でreceipt名を`failed-artifact-verification-v2.receipt.json`と誤って読もうとしてcatがexit1。
+正しい`failed-artifact-verification-v2.json`を読み、exit0/log SHAを確認した。ファイル生成失敗ではない。
+時計研究や実環境の設定変更は行っていない。
+
+GitHub pluginでrun jobs/artifactsとdecoded unit/system logを取得し、
+`ci-207c686-{jobs,artifacts}.json`、`ci-207c686-{unit,system}.log`へ保存した。
+`gh run watch 43663095854 --repo kenobix/Claude_practice --interval 30 --exit-status`はexit0。
+同commitの[CI43663095854](https://github.com/kenobix/Claude_practice/actions/runs/43663095854)は
+**unit623件成功（175.813 test表示秒）・compileall・全job/step成功**。
+旧600 identityの削除0、今回追加23。固定用途名の負例、TERM/KILL、実一時SQLite registry、CLI/consumerを含む。
+現sourceとCI実装commitのSHA一致を証拠索引生成で照合する。
+
+artifact14140849210をAPI byte downloadで保存。234,732bytes、GitHub digestとの一致を確認：
+`43c6148ee9f68827d82551d48bbf438d2a0cc3e5b94d3f3ec05fecc13726d790`。
+`corrected-artifact-download-v1`/`corrected-artifact-verification-v1`のコマンド/exit0/UTC-unqualified/
+monotonic/ログSHAをignored receiptに記録。前回失敗343fac0のartifact13件とは別名で保管した。
+正確な16member allowlist、T16内包hash、archiveだけを渡した別processの再計算が成功。
+1,000測定要求・暖機50除外・journal1,050応答、p95 **37.96615999999631ms**はCI保存値と一致。
+blocked/not_evaluated/synthetic_onlyを保持し、実Capitalの採否・本番SLO・時計資格にはしない。
+
+CI artifactからPG snapshot/interruption/monitor照合・保存/migration、実一時HTTP障害、
+paired MLflow/skops+DB restoreと破損拒否、現DockerfileのCaddy正常/SIGKILL3case/TERM cleanupを確認。
+全試験の所有resource削除とprotected container IDs不変、成功systemのworkspace_removed=trueを確認した。
+失敗systemのworkspace削除が独立観測できなかった前段の限界を、成功回の結果で遡及補完しない。
+
+T16 archiveは従来の数値4payloadだけを含み、新review全系列の可搬証拠ではない。
+この不足をP2/D2の独立課題として計画へ追加し、offlineでlive最新性が確定するとは扱わない。
+P1はorphan fence/torn fileの明示診断・回復、旧source/正式alias/historyの実適用前照合、
+Docker利用可能な専用環境で実candidate未達caseを補うこと。追加runtime負例はDocker利用不可のため未開始。
+実原本194件・正式消費台帳は不変、実candidateへのreview/tag・gate変更・再測定・新attempt・reopenは0件。
+警告の人によるリスク受容、全実証、T13b採否と時計保留は継続する。
+
+README/文書索引/計画/仕様/本ログ/証拠JSONだけを最終記録commitの対象にする。
+リンク検査final-layout-v1は942リンク/欠落0/旧import0、配置9・18・12・7を確認。
+最終文書追記後にも必要なリンク/diff/hash検査を行う。
+証拠索引は生成時点で終了済みreceiptとそのhashを収録するため、その生成・最終commit/push自身のreceiptは
+同ignored directoryの後続証跡として保持する（自分自身のhashを索引へ再帰収録しない）。
+最終追記後のfinal-layout-v2は943リンク/欠落0/旧import0、final-evidence-consistency-v1は
+113保存物・35receiptのSHAと194原本不変、現製品source=CI実装SHA、CI後のsource変更0を確認してexit0。
+diff check/変更差分の秘密値scanも成功した。この検算結果を含めて索引を最終生成し、6対象だけをcommit/pushする。

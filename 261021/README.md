@@ -4,11 +4,12 @@
 
 [Capital実候補の初回評価](docs/capital.md#capital-first-evaluation)を完了しました。validation/finalともMAE・RMSE基準に合格し、MAEは137.39/143.69件です。同候補を専用registryへblocked登録し、実API・monitorと同版の部分復元を確認しました。[運用測定はUTC逆行で受入保留](docs/capital.md#capital-operational-hold)です。両評価窓は消費済み、再fit・再選定・自動再測定は行いません。
 
-**2026-11-15追補:** [証拠consumerのUTC順序拒否、事後不適格reviewの設計、分布1,336・誤差234窓の理由付きreview](docs/capital.md#operational-evidence-review-20261115)を追加しました。配信bundle v2はjournal原本を必須とし、受信側でも検査します。review writerと実候補の不足case、最終採否は未完了。運用gateはnot_evaluated、配信はblockedを保ちます。
+**2026-11-15追補:** [証拠consumerのUTC順序拒否、事後不適格reviewの設計、分布1,336・誤差234窓の理由付きreview](docs/capital.md#operational-evidence-review-20261115)を追加しました。配信bundle v2はjournal原本を必須とし、受信側でも検査します。実候補へのreview適用、不足runtime case、最終採否は未完了。運用gateはnot_evaluated、配信はblockedを保ちます。
 
 同日追補：[追記専用review writerと適格性head](docs/capital.md#operational-eligibility-review-20261115)を隔離実装しました。
 原本を保持して不適格履歴を追記し、local/remote consumerが欠落・途中公開・旧headを拒否します。
 実candidateへの適用・再測定は行っていません。先の「writer未実装」は設計時点の記録です。
+修正実装`207c686`は[CI全623件・隔離system・artifact検算・cleanup](docs/reviews/20261115-operational-review-checks.json)まで確認済みです。
 
 `261014/plan_mlops.md`に沿った、UCI Bike Sharingを現行データとするMLOps学習プロジェクトです。Capital Bikeshareは別targetとして扱う移行専用profileを追加中です。単にモデルを学習するだけでなく、特徴量の時点制約、モデル登録、版固定の予測API、手動承認・差し戻し、遅延ラベルを使う監視までを一続きにします。
 
