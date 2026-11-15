@@ -13,13 +13,23 @@ import copy
 import hashlib
 import json
 from functools import lru_cache
+from datetime import datetime as _fixture_datetime, timezone as _fixture_timezone
 
 import pandas as pd
+
+
+class FixedJournalClock(_fixture_datetime):
+    """Pure fixture clock; real-clock interruption/decision diagnostics stay separate."""
+    @classmethod
+    def now(cls, tz=None):
+        value = cls(2024,2,1,tzinfo=_fixture_timezone.utc)
+        return value.astimezone(tz) if tz is not None else value.replace(tzinfo=None)
 
 from bike_mlops.deployment import CASES, READINESS_POLICY, READINESS_POLICY_SHA256, canonical_bytes, document, evidence_identity, prerequisite_identity, reference_tags
 from bike_mlops.evaluation import candidate_identity
 from bike_mlops.operational import PLAN_POLICY, JOURNAL_POLICY, _digest, _hash, request_schedule
 from bike_mlops.operational_validation import _validate_completed_evidence
+from bike_mlops.operational_validation import ELIGIBILITY_POLICY, eligibility_head, _elig_sha, _elig_bytes
 from bike_mlops.evaluation import BOOTSTRAP_QUALITY_GATE_POLICY as POLICY, BOOTSTRAP_QUALITY_GATE_POLICY_SHA256 as POLICY_SHA, BOOTSTRAP_SELECTION_RULE, protocol_sha256
 from bike_mlops.evaluation import baseline_accuracy_gate
 
@@ -33,6 +43,39 @@ def resources():
                      "logical_cpu_count": 4, "memory_total_bytes": 8_000_000_000, "dependencies": {}},
             "capital_stack_containers": {"status": "captured", "docker_engine_version": "synthetic",
                                          "containers": ["synthetic"], "stats": ["synthetic"]}}
+
+
+def eligibility_fixture(plan, report, plan_bytes, report_bytes, journal_bytes, run_id="synthetic-run"):
+    """Synthetic empty-history anchor; never used as real-candidate proof."""
+    attempt_id = report["operational_attempt_id"]
+    attempt = {"attempt_id":attempt_id, "status":"completed", "plan_path":"data/evaluations/capital-bikeshare/operational-plans/test.json",
+               "plan_sha256":plan["plan_sha256"], "plan_file_sha256":_sha(plan_bytes),
+               "report":{"path":f"data/reports/capital-bikeshare/operational-{attempt_id}.json", "sha256":_sha(report_bytes), "gate_status":"not_evaluated"}}
+    record = {"candidate_id":plan["identity"]["candidate_id"], "status":"completed", "reviews":[], "attempts":[attempt]}
+    ledger_bytes = canonical_bytes({"schema_version":1, "records":[record]})
+    consumption_bytes = canonical_bytes({"schema_version":1, "records":[{
+        "purpose":purpose, "status":"completed", "data_sha256":plan["identity"]["data_sha256"],
+        "target_contract":plan["identity"]["target_contract_id"], "attempts":[{"status":"completed",
+            "protocol_sha256":plan["identity"]["evaluation_protocol_sha256"],
+            "candidate_artifact_sha256":plan["identity"]["candidate_artifact_sha256"]}]} for purpose in ("validation_selection","final_evaluation")]})
+    sources = {}
+    for name, path, raw in (
+        ("ledger", "data/evaluations/capital-bikeshare/operational-attempts.json", ledger_bytes),
+        ("consumption", "data/evaluations/consumption-ledger.json", consumption_bytes),
+        ("plan", attempt["plan_path"], plan_bytes), ("report", attempt["report"]["path"], report_bytes),
+        ("journal",f"data/reports/capital-bikeshare/operational-{attempt_id}.requests.jsonl",journal_bytes)):
+        sources[name] = {"path":path, "sha256":_sha(raw), "bytes":len(raw)}
+        if name in {"ledger", "consumption"}:
+            sources[name]["content"] = raw.decode()
+    anchor = {"identity":{**plan["identity"],"attempt_id":attempt_id,"plan_sha256":plan["plan_sha256"]},
+              "sources":sources,"run_id":run_id,"record_sha256":_elig_sha(_elig_bytes(record)),"attempt_sha256":_elig_sha(_elig_bytes(attempt))}
+    event = {"schema_version":1,"policy_id":ELIGIBILITY_POLICY,"revision":0,"previous_sha256":None,"anchor":anchor,
+             "anchor_sha256":_elig_sha(_elig_bytes(anchor)),"disposition":"no_adverse_review","reviewer":"synthetic-fixture",
+             "reason":"Synthetic empty review series, not actual producer evidence", "reviewed_at_utc":"2024-02-01T01:00:00+00:00",
+             "source_commit":"a"*40,"defect_code":"synthetic_initialization","references":[sources["journal"]]}
+    event["sha256"] = _elig_sha(_elig_bytes(event))
+    return {"schema_version":1,"kind":ELIGIBILITY_POLICY,"events":[event],
+            "receipts":[{"schema_version":1,"head_sha256":event["sha256"],"revision":0,"run_id":run_id}]}
 
 
 @lru_cache(maxsize=1)
@@ -171,10 +214,13 @@ def _fixture():
                                  "events": len(events), "write_and_fsync_ms": 0, "policy_id": JOURNAL_POLICY["policy_id"]}
     report_bytes = canonical_bytes(report)
     tags.update(_validate_completed_evidence(plan, report, _sha(report_bytes), attempt, _sha(plan_bytes)))
+    eligibility = eligibility_fixture(plan, report, plan_bytes, report_bytes, journal_bytes)
+    tags.update(eligibility_head(eligibility))
     full_identity = evidence_identity(tags, "2", "synthetic-run")
     documents = {name: document(body) for name, body in {
         "candidate": selection_bytes, "final": final_bytes, "protocol": protocol_bytes, "plan": plan_bytes,
         "operational": report_bytes, "request_journal": journal_bytes, "validation_rows": validation_rows, "final_rows": final_rows,
+        "eligibility": canonical_bytes(eligibility),
     }.items()}
     for category, cases in CASES.items():
         checks = {case_id: document(canonical_bytes({
@@ -195,8 +241,19 @@ def _fixture():
     return tags, bundle, body
 
 
-def fixture():
-    return copy.deepcopy(_fixture())
+def fixture(run_id=None):
+    tags, bundle, body = copy.deepcopy(_fixture())
+    if run_id is not None:
+        reports = bundle["reports"]
+        plan, report = (json.loads(reports[name]["content"]) for name in ("plan","operational"))
+        eligibility = eligibility_fixture(plan,report,reports["plan"]["content"].encode(),
+            reports["operational"]["content"].encode(),reports["request_journal"]["content"].encode(),run_id=run_id)
+        tags.update(eligibility_head(eligibility))
+        reports["eligibility"] = document(canonical_bytes(eligibility))
+        bundle["identity"] = evidence_identity(tags,"2",run_id)
+        body = canonical_bytes(bundle)
+        tags.update(reference_tags(body,run_id))
+    return tags,bundle,body
 
 
 # ========================================================================

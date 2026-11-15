@@ -517,10 +517,19 @@ def recheck_linked_measurement(candidate_id: str, attempt_id: str, *, ledger_pat
             if issue:
                 raise ValueError(f"Ledger-linked measurement report identity or outcome is invalid: {issue}")
             recovery.verify_completed_journal(attempt, candidate_id, plan, report)
+            # Numeric diagnosis remains available without a local history, but it
+            # never proves eligibility. Existing adverse/incomplete history blocks.
+            eligibility_status = "not_verified_no_history"
+            try:
+                local_eligibility_review(recovery.PROJECT_ROOT, candidate_id, attempt_id)
+                eligibility_status = "local_history_only_online_freshness_not_verified"
+            except FileNotFoundError:
+                pass
             result = recheck_measurement_records(plan, report, attempt_id=attempt_id,
                                                   plan_file_sha256=attempt["plan_file_sha256"])
             return {**result, "candidate_id": candidate_id, "attempt_id": attempt_id,
-                    "report_path": report_path, "report_sha256": digest, "ledger_binding": "matched"}
+                    "report_path": report_path, "report_sha256": digest, "ledger_binding": "matched",
+                    "eligibility_status": eligibility_status}
 
 
 # ========================================================================
@@ -806,6 +815,17 @@ def inspect_operational_reports(candidate_id: str, *, ledger_path: _operational_
                 if (attempt["status"] == "completed" and journal["status"] == "readable"
                         and journal["counts"].get("response_verified") != 1050):
                     item["unresolved"] = True
+                if attempt["status"] == "completed":
+                    try:
+                        history = EligibilityReviewStore(PROJECT_ROOT, candidate_id, attempt_id,
+                            ledger_relative=ledger_path.relative_to(PROJECT_ROOT).as_posix()).read()
+                        state = eligibility_head(history)[ELIGIBILITY_KEYS[2]]
+                        item["eligibility_review"] = {"status":state, "online_freshness":"not_verified"}
+                        if state != "no_adverse_review":
+                            item["unresolved"] = True
+                    except (OSError, ValueError, KeyError, TypeError):
+                        item["eligibility_review"] = {"status":"missing_or_invalid", "online_freshness":"not_verified"}
+                        item["unresolved"] = True
                 item["evidence_state"] = (
                     "unfinished" if attempt["status"] in {"started", "interrupted"}
                     else "incomplete_or_corrupt" if item["linked_report"]["status"] != "matched" or plan_status != "matched"
@@ -990,7 +1010,7 @@ def _write_operational_evidence_tags(client, version: str, tags_to_record: dict[
             or registered.tags.get("deployment_permission") != "blocked"):
         raise ValueError("Operational evidence can only be attached while deployment remains blocked")
     unexpected = [key for key in registered.tags
-                  if key.startswith(_OPERATIONAL_TAG_PREFIX) and key not in tags_to_record]
+                  if key.startswith(_OPERATIONAL_TAG_PREFIX) and key not in tags_to_record and key not in ELIGIBILITY_KEYS]
     if unexpected:
         raise ValueError("Registered version contains unsupported operational evidence tags")
     conflicts = [key for key, value in tags_to_record.items()
@@ -1044,6 +1064,7 @@ def record_completed_operational_evidence(candidate_id: str, attempt_id: str) ->
             if issue:
                 raise ValueError("Ledger-linked report does not match the attempt: " + issue)
             recovery.verify_completed_journal(attempt, candidate_id, plan, report, require_journal=True)
+            eligibility = local_eligibility_review(_operational_registry_PROJECT_ROOT, candidate_id, attempt_id)
             numeric = _operational_registry_recheck_measurement_records(plan, report, attempt_id=attempt_id,
                                                   plan_file_sha256=attempt["plan_file_sha256"])
             if numeric.get("numeric_status") != report["operational_gate"].get("measurement_status"):
@@ -1077,7 +1098,14 @@ def record_completed_operational_evidence(candidate_id: str, attempt_id: str) ->
                              if registered.tags.get(key) != value]
                 if conflicts:
                     raise ValueError("Registered version identity or blocked gate tags differ: " + ", ".join(conflicts))
+                require_eligibility_capsule(eligibility, plan, report, attempt["plan_file_sha256"], report_sha256,
+                    tags=registered.tags, run_id=registered.run_id)
                 _write_operational_evidence_tags(client, version, tags_to_record)
+                if local_eligibility_review(_operational_registry_PROJECT_ROOT, candidate_id, attempt_id) != eligibility:
+                    raise ValueError("Eligibility history changed during evidence recording")
+                current = client.get_model_version(MODEL_NAME, version)
+                require_eligibility_capsule(eligibility, plan, report, attempt["plan_file_sha256"], report_sha256,
+                    tags=current.tags, run_id=current.run_id)
             return {
                 "status": "evidence_recorded",
                 "model_name": MODEL_NAME,
@@ -1355,6 +1383,7 @@ def _validate_archive(archive: _measurement_evidence_Path) -> dict:
         "measured_errors": 0, "p95_ms": numeric["p95_ms"], "numeric_status": numeric["numeric_status"],
         "request_id_sha256": numeric["request_id_sha256"],
         "journal_verified_responses": 1050, "operational_gate": "not_evaluated",
+        "eligibility_status": "not_verified_offline_numeric_diagnostic_only",
         "deployment_permission": "blocked",
         "limitations": ["Synthetic evidence only; does not prove real-data performance, clock qualification, DB audit outside the saved journal, or deployment approval."],
     }
@@ -1488,6 +1517,562 @@ def _journal_json_lines(raw: bytes):
         if line:
             rows.append(_json(line, "journal event"))
     return rows
+
+
+# ========================================================================
+# operational_eligibility_review
+# ========================================================================
+
+ELIGIBILITY_POLICY = "capital-operational-eligibility-v1"
+ELIGIBILITY_KEYS = tuple("capital_operational_eligibility_" + name for name in
+                         ("head_sha256", "revision", "status", "publication"))
+
+
+def _elig_bytes(value):
+    return (json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False) + "\n").encode()
+
+
+def _elig_sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _elig_json(raw):
+    def unique(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("Duplicate eligibility JSON key")
+            result[key] = value
+        return result
+    value = json.loads(raw, object_pairs_hook=unique)
+    if not isinstance(value, dict):
+        raise ValueError("Eligibility document must be an object")
+    _elig_bytes(value)
+    return value
+
+
+def _elig_relative(value):
+    from pathlib import PurePosixPath
+    if (not isinstance(value, str) or not value or "\\" in value or "\x00" in value
+            or PurePosixPath(value).is_absolute() or any(x in {"", ".", ".."} for x in value.split("/"))
+            or not value.startswith("data/")):
+        raise ValueError("Eligibility source path must be relative project data")
+    return value.split("/")
+
+
+def _elig_directory(root, relative, *, create=False):
+    """Anchor every component with directory FDs; never follow a symlink."""
+    fd = os.open(root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        for component in _elig_relative(relative):
+            if create:
+                try:
+                    os.mkdir(component, mode=0o700, dir_fd=fd)
+                    os.fsync(fd)
+                except FileExistsError:
+                    pass
+            child = os.open(component, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=fd)
+            os.close(fd)
+            fd = child
+        return fd
+    except BaseException:
+        os.close(fd)
+        raise
+
+
+def _elig_read_at(fd, name):
+    file_fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=fd)
+    try:
+        before = os.fstat(file_fd)
+        if not stat.S_ISREG(before.st_mode) or before.st_size > 8 * 1024 * 1024:
+            raise ValueError("Eligibility source must be a bounded regular file")
+        with os.fdopen(file_fd, "rb") as stream:
+            file_fd = None
+            raw = stream.read(8 * 1024 * 1024 + 1)
+            after = os.fstat(stream.fileno())
+        signature = lambda s: (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+        if (len(raw) > 8 * 1024 * 1024 or signature(before) != signature(after)
+                or signature(os.stat(name, dir_fd=fd, follow_symlinks=False)) != signature(after)):
+            raise ValueError("Eligibility source changed during read")
+        return raw
+    finally:
+        if file_fd is not None:
+            os.close(file_fd)
+
+
+def _elig_read(root, relative):
+    parts = _elig_relative(relative)
+    fd = _elig_directory(root, "/".join(parts[:-1]))
+    try:
+        return _elig_read_at(fd, parts[-1])
+    finally:
+        os.close(fd)
+
+
+def _elig_write(fd, name, value):
+    file_fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=fd)
+    try:
+        remaining = memoryview(_elig_bytes(value))
+        while remaining:
+            count = os.write(file_fd, remaining)
+            if count <= 0:
+                raise OSError("Eligibility write made no progress")
+            remaining = remaining[count:]
+        os.fsync(file_fd)
+    finally:
+        os.close(file_fd)
+    os.fsync(fd)
+
+
+def eligibility_head(capsule):
+    events = capsule["events"]
+    status = "ineligible" if any(e["disposition"] == "ineligible" for e in events) else events[-1]["disposition"]
+    return dict(zip(ELIGIBILITY_KEYS, (events[-1]["sha256"], str(events[-1]["revision"]), status, "committed")))
+
+
+def _validate_eligibility_capsule(capsule, plan, report, plan_file_sha256, report_sha256, *, tags=None, run_id=None):
+    """Check immutable history. A local/offline capsule alone cannot prove freshness."""
+    from bike_mlops.deployment import utc_time
+    from bike_mlops.operational import validate_operational_plan
+    validate_operational_plan(plan, allow_legacy=True)
+    if (not isinstance(capsule, dict) or set(capsule) != {"schema_version", "kind", "events", "receipts"}
+            or type(capsule["schema_version"]) is not int or capsule["schema_version"] != 1
+            or capsule["kind"] != ELIGIBILITY_POLICY or not isinstance(capsule["events"], list)
+            or not 1 <= len(capsule["events"]) <= 100 or len(_elig_bytes(capsule)) > 8 * 1024 * 1024):
+        raise ValueError("Eligibility history is missing or invalid")
+    events, receipts = capsule["events"], capsule["receipts"]
+    anchor = events[0].get("anchor")
+    if not isinstance(anchor, dict) or set(anchor) != {"identity", "sources", "record_sha256", "attempt_sha256", "run_id"}:
+        raise ValueError("Eligibility original binding is missing")
+    identity, sources = anchor["identity"], anchor["sources"]
+    if (not isinstance(sources, dict) or set(sources) != {"ledger", "consumption", "plan", "report", "journal"}
+            or identity != {**plan["identity"], "attempt_id": report["operational_attempt_id"], "plan_sha256": plan["plan_sha256"]}
+            or sources["plan"].get("sha256") != plan_file_sha256
+            or sources["report"].get("sha256") != report_sha256
+            or sources["journal"].get("sha256") != report.get("request_journal", {}).get("sha256")
+            or not isinstance(anchor["run_id"], str) or not anchor["run_id"]
+            or (run_id is not None and anchor["run_id"] != run_id)):
+        raise ValueError("Eligibility history belongs to different original evidence")
+    for name, descriptor in sources.items():
+        required = {"path", "sha256", "bytes", "content"} if name in {"ledger", "consumption"} else {"path", "sha256", "bytes"}
+        if (not isinstance(descriptor, dict) or set(descriptor) != required
+                or not isinstance(descriptor["sha256"], str) or not _operational_recovery_re.fullmatch("[0-9a-f]{64}", descriptor["sha256"])
+                or type(descriptor["bytes"]) is not int or not 0 < descriptor["bytes"] <= 8 * 1024 * 1024):
+            raise ValueError("Eligibility source descriptor is invalid")
+        _elig_relative(descriptor["path"])
+        if "content" in descriptor:
+            raw = descriptor["content"].encode("utf-8")
+            if len(raw) != descriptor["bytes"] or _elig_sha(raw) != descriptor["sha256"]:
+                raise ValueError("Eligibility original snapshot hash differs")
+    ledger_snapshot = _elig_json(sources["ledger"]["content"])
+    consumption = _elig_json(sources["consumption"]["content"])
+    _assert_no_sensitive_or_external(ledger_snapshot)
+    _assert_no_sensitive_or_external(consumption)
+    records = [r for r in ledger_snapshot.get("records", []) if r.get("candidate_id") == identity["candidate_id"]]
+    attempts = [a for r in records for a in r.get("attempts", []) if a.get("attempt_id") == identity["attempt_id"]]
+    if (type(ledger_snapshot.get("schema_version")) is not int or ledger_snapshot.get("schema_version") != 1 or len(records) != 1 or len(attempts) != 1
+            or attempts[0].get("status") != "completed" or _elig_sha(_elig_bytes(records[0])) != anchor["record_sha256"]
+            or _elig_sha(_elig_bytes(attempts[0])) != anchor["attempt_sha256"]
+            or attempts[0].get("plan_sha256") != plan["plan_sha256"]
+            or attempts[0].get("plan_file_sha256") != plan_file_sha256
+            or attempts[0].get("report", {}).get("sha256") != report_sha256
+            or attempts[0].get("report", {}).get("path") != sources["report"]["path"]
+            or attempts[0].get("plan_path") != sources["plan"]["path"]
+            or type(consumption.get("schema_version")) is not int or consumption.get("schema_version") != 1 or not isinstance(consumption.get("records"), list)):
+        raise ValueError("Eligibility ledger snapshot binding is invalid")
+    for purpose in ("validation_selection", "final_evaluation"):
+        matched = [r for r in consumption["records"] if r.get("purpose") == purpose
+                   and r.get("data_sha256") == identity["data_sha256"]
+                   and r.get("target_contract") == identity["target_contract_id"]
+                   and r.get("status") == "completed" and any(
+                       a.get("status") == "completed" and a.get("protocol_sha256") == identity["evaluation_protocol_sha256"]
+                       and a.get("candidate_artifact_sha256") == identity["candidate_artifact_sha256"] for a in r.get("attempts", []))]
+        if len(matched) != 1:
+            raise ValueError("Eligibility requires both bound consumed evaluation windows")
+    previous, previous_utc = None, None
+    for revision, event in enumerate(events):
+        keys = {"schema_version", "policy_id", "revision", "previous_sha256", "anchor_sha256", "disposition",
+                "reviewer", "reason", "reviewed_at_utc", "source_commit", "defect_code", "references", "sha256"}
+        if revision == 0:
+            keys.add("anchor")
+        if not isinstance(event, dict) or set(event) != keys:
+            raise ValueError("Eligibility review fields are invalid")
+        body = {k:v for k,v in event.items() if k != "sha256"}
+        if (type(event["schema_version"]) is not int or event["schema_version"] != 1 or type(event["revision"]) is not int or event["revision"] != revision
+                or event["policy_id"] != ELIGIBILITY_POLICY or event["previous_sha256"] != previous
+                or event["sha256"] != _elig_sha(_elig_bytes(body))
+                or event["anchor_sha256"] != _elig_sha(_elig_bytes(anchor))
+                or event["disposition"] not in ({"no_adverse_review", "on_hold", "ineligible"} if revision == 0 else {"on_hold", "ineligible"})
+                or any(not isinstance(event[k], str) or not event[k].strip() or len(event[k]) > limit
+                       for k, limit in (("reviewer",128), ("reason",1000), ("defect_code",64)))
+                or not isinstance(event["source_commit"], str) or not _operational_recovery_re.fullmatch("[0-9a-f]{40}", event["source_commit"])):
+            raise ValueError("Eligibility review hash, sequence or decision is invalid")
+        instant = utc_time(event["reviewed_at_utc"])
+        if previous_utc is not None and instant < previous_utc:
+            raise ValueError("Eligibility review UTC order reversed")
+        references = event["references"]
+        if not isinstance(references, list) or not references or len(references) > 32:
+            raise ValueError("Eligibility review requires bounded evidence references")
+        for ref in references:
+            if (not isinstance(ref, dict) or set(ref) != {"path", "sha256", "bytes"}
+                    or type(ref["bytes"]) is not int or not 0 < ref["bytes"] <= 8 * 1024 * 1024
+                    or not isinstance(ref["sha256"], str) or not _operational_recovery_re.fullmatch("[0-9a-f]{64}", ref["sha256"])):
+                raise ValueError("Eligibility evidence reference is invalid")
+            _elig_relative(ref["path"])
+        _assert_no_sensitive_or_external({k:event[k] for k in ("reviewer", "reason", "defect_code", "references")})
+        previous, previous_utc = event["sha256"], instant
+    expected_receipts = [{"schema_version":1, "head_sha256":e["sha256"], "revision":e["revision"],
+                          "run_id":anchor["run_id"]} for e in events]
+    if _elig_bytes(receipts) != _elig_bytes(expected_receipts):
+        raise ValueError("Eligibility publication is incomplete")
+    head = eligibility_head(capsule)
+    if tags is not None and any(tags.get(k) != v for k,v in head.items()):
+        raise ValueError("Eligibility registry head is missing, stale or publishing")
+    return head
+
+
+def validate_eligibility_capsule(*args, **kwargs):
+    try:
+        return _validate_eligibility_capsule(*args, **kwargs)
+    except (AttributeError,KeyError,TypeError,StopIteration,OverflowError,UnicodeError):
+        raise ValueError("Eligibility history has malformed fields or original bindings") from None
+
+
+def require_eligibility_capsule(capsule, plan, report, plan_file_sha256, report_sha256, *, tags=None, run_id=None):
+    head = validate_eligibility_capsule(capsule, plan, report, plan_file_sha256, report_sha256, tags=tags, run_id=run_id)
+    if head[ELIGIBILITY_KEYS[2]] != "no_adverse_review":
+        raise ValueError("Operational attempt is on hold or ineligible; no evidence use or retry")
+    return head
+
+
+class EligibilityReviewStore:
+    """Explicit append-only publication; passed-in clients only, no automatic retries."""
+
+    def __init__(self, root, candidate_id, attempt_id, *, ledger_relative="data/evaluations/capital-bikeshare/operational-attempts.json",
+                 consumption_relative="data/evaluations/consumption-ledger.json",
+                 lock_relative="data/evaluations/capital-bikeshare/operational-locks"):
+        if not isinstance(candidate_id, str) or not _operational_recovery_re.fullmatch("[0-9a-f]{64}", candidate_id) or not _canonical_attempt(attempt_id):
+            raise ValueError("Eligibility requires canonical candidate and attempt IDs")
+        self.root, self.candidate_id, self.attempt_id = _operational_recovery_Path(root), candidate_id, attempt_id
+        self.ledger_relative, self.consumption_relative = ledger_relative, consumption_relative
+        self.lock_relative = lock_relative
+        _elig_relative(ledger_relative); _elig_relative(consumption_relative); _elig_relative(lock_relative)
+        self.relative = f"data/evaluations/capital-bikeshare/operational-reviews/{candidate_id}/{attempt_id}"
+
+    def _capture(self, run_id):
+        raw = _elig_read(self.root, self.ledger_relative)
+        ledger = _elig_json(raw)
+        records = [r for r in ledger.get("records", []) if r.get("candidate_id") == self.candidate_id]
+        attempts = [a for r in records for a in r.get("attempts", []) if a.get("attempt_id") == self.attempt_id]
+        if len(records) != 1 or len(attempts) != 1 or attempts[0].get("status") != "completed":
+            raise ValueError("Eligibility review requires one completed raw attempt")
+        attempt = attempts[0]
+        paths = {"ledger":self.ledger_relative, "consumption":self.consumption_relative,
+                 "plan":attempt["plan_path"], "report":attempt["report"]["path"],
+                 "journal":f"data/reports/capital-bikeshare/operational-{self.attempt_id}.requests.jsonl"}
+        sources = {}
+        for name, path in paths.items():
+            content = raw if name == "ledger" else _elig_read(self.root, path)
+            sources[name] = {"path":path, "bytes":len(content), "sha256":_elig_sha(content)}
+            if name in {"ledger", "consumption"}:
+                sources[name]["content"] = content.decode("utf-8")
+        plan = _elig_json(_elig_read(self.root, paths["plan"]))
+        report = _elig_json(_elig_read(self.root, paths["report"]))
+        return {"identity":{**plan["identity"], "attempt_id":self.attempt_id, "plan_sha256":plan["plan_sha256"]},
+                "sources":sources, "record_sha256":_elig_sha(_elig_bytes(records[0])),
+                "attempt_sha256":_elig_sha(_elig_bytes(attempt)), "run_id":run_id}, plan, report
+
+    def _current_sources(self, anchor):
+        current, plan, report = self._capture(anchor["run_id"])
+        for name in ("plan", "report", "journal"):
+            if current["sources"][name] != anchor["sources"][name]:
+                raise ValueError("Eligibility original source changed")
+        if current["record_sha256"] != anchor["record_sha256"] or current["attempt_sha256"] != anchor["attempt_sha256"]:
+            raise ValueError("Eligibility original attempt or record changed")
+        old = _elig_json(anchor["sources"]["consumption"]["content"])
+        new = _elig_json(current["sources"]["consumption"]["content"])
+        if new.get("schema_version") != old.get("schema_version") or new.get("records", [])[:len(old["records"])] != old["records"]:
+            raise ValueError("Eligibility consumption history changed")
+        return plan, report
+
+    def _load(self, fd, *, pending=False):
+        names = os.listdir(fd)
+        if len(names) > 301:
+            raise ValueError("Eligibility directory exceeds its bounded history")
+        events, receipts = {}, {}
+        total_bytes = 0
+        for name in names:
+            if name == ".lock":
+                if not stat.S_ISREG(os.stat(name,dir_fd=fd,follow_symlinks=False).st_mode):
+                    raise ValueError("Eligibility lock must be regular, not a symlink")
+                continue
+            match = _operational_recovery_re.fullmatch(r"([0-9]{8})-([0-9a-f]{64})\.json", name)
+            pub = _operational_recovery_re.fullmatch(r"(intent|receipt)-([0-9]{8})\.json", name)
+            if not match and not pub:
+                raise ValueError("Eligibility directory contains unknown or conflicting entries")
+            raw = _elig_read_at(fd, name)
+            total_bytes += len(raw)
+            if total_bytes > 8 * 1024 * 1024:
+                raise ValueError("Eligibility history exceeds its byte limit")
+            value = _elig_json(raw)
+            if match:
+                revision = int(match[1])
+                if revision in events or value.get("sha256") != match[2] or value.get("revision") != revision:
+                    raise ValueError("Eligibility history fork or filename mismatch")
+                events[revision] = value
+            elif pub[1] == "receipt":
+                receipts[int(pub[2])] = value
+        if not events or len(events) > 100 or sorted(events) != list(range(len(events))):
+            raise ValueError("Eligibility history is missing or has a gap")
+        for rev, event in events.items():
+            intent = {"schema_version":1, "head_sha256":event["sha256"], "revision":rev, "run_id":events[0]["anchor"]["run_id"]}
+            if f"intent-{rev:08d}.json" not in names or _elig_json(_elig_read_at(fd, f"intent-{rev:08d}.json")) != intent:
+                raise ValueError("Eligibility durable publication intent is missing or differs")
+        expected = {".lock"} | {f"{i:08d}-{e['sha256']}.json" for i,e in events.items()} | {f"intent-{i:08d}.json" for i in events} | {f"receipt-{i:08d}.json" for i in receipts}
+        if set(names) != expected or (not pending and len(receipts) != len(events)) or any(i not in events for i in receipts):
+            raise ValueError("Eligibility publication is incomplete or conflicting")
+        return {"schema_version":1, "kind":ELIGIBILITY_POLICY, "events":[events[i] for i in range(len(events))],
+                "receipts":[receipts[i] for i in sorted(receipts)]}
+
+    def read(self):
+        fd = _elig_directory(self.root, self.relative)
+        try:
+            capsule = self._load(fd)
+            plan, report = self._current_sources(capsule["events"][0]["anchor"])
+            sources = capsule["events"][0]["anchor"]["sources"]
+            validate_eligibility_capsule(capsule, plan, report, sources["plan"]["sha256"], sources["report"]["sha256"])
+            self._references_current(capsule)
+            return capsule
+        except FileNotFoundError as error:
+            raise ValueError("Eligibility existing history has missing source or publication files") from error
+        finally:
+            os.close(fd)
+
+    def _references_current(self, capsule):
+        for event in capsule["events"]:
+            for ref in event["references"]:
+                raw = _elig_read(self.root, ref["path"])
+                if len(raw) != ref["bytes"] or _elig_sha(raw) != ref["sha256"]:
+                    raise ValueError("Eligibility referenced evidence changed")
+
+    def _registered(self, client, anchor):
+        identity = anchor["identity"]
+        value = client.get_model_version(identity["model_name"], identity["model_version"])
+        expected = {"candidate_id":identity["candidate_id"], "artifact_sha256":identity["registered_artifact_sha256"],
+                    "candidate_model_sha256":identity["candidate_artifact_sha256"], "data_profile_id":identity["data_profile_id"],
+                    "target_contract_id":identity["target_contract_id"], "feature_contract_version":identity["feature_contract_version"]}
+        if (value.name != identity["model_name"] or str(value.version) != identity["model_version"] or value.status != "READY"
+                or value.run_id != anchor["run_id"] or any(value.tags.get(k) != v for k,v in expected.items())):
+            raise ValueError("Eligibility registered identity changed")
+        return value
+
+    def _publish(self, fd, client, capsule):
+        anchor = capsule["events"][0]["anchor"]
+        event = capsule["events"][-1]
+        receipt = {"schema_version":1, "head_sha256":event["sha256"], "revision":event["revision"], "run_id":anchor["run_id"]}
+        complete = {**capsule, "receipts":capsule["receipts"] + [receipt]}
+        plan, report = self._current_sources(anchor)
+        sources = anchor["sources"]
+        validate_eligibility_capsule(complete, plan, report, sources["plan"]["sha256"], sources["report"]["sha256"])
+        self._references_current(complete)
+        before = self._registered(client, anchor)
+        head = eligibility_head(complete)
+        prior = eligibility_head({**capsule, "events":capsule["events"][:-1]}) if len(capsule["events"]) > 1 else {}
+        if (before.tags.get(ELIGIBILITY_KEYS[3]) not in {None, "committed", "publishing"}
+                or any(before.tags.get(k) not in {None if not prior else prior[k], head[k]} for k in ELIGIBILITY_KEYS[:3])):
+            raise ValueError("Eligibility registry publication conflicts with another head")
+        name, version = anchor["identity"]["model_name"], anchor["identity"]["model_version"]
+        gates = {k:before.tags.get(k) for k in ("operational_gate_status", "deployment_permission")}
+        try:
+            if any(before.tags.get(k) != v for k,v in head.items()):
+                if before.tags.get(ELIGIBILITY_KEYS[3]) != "publishing":
+                    client.set_model_version_tag(name, version, ELIGIBILITY_KEYS[3], "publishing")
+                for key in ELIGIBILITY_KEYS[:3]:
+                    client.set_model_version_tag(name, version, key, head[key])
+                self._current_sources(anchor)
+                self._references_current(complete)
+                client.set_model_version_tag(name, version, ELIGIBILITY_KEYS[3], "committed")
+            after = self._registered(client, anchor)
+            if any(after.tags.get(k) != v for k,v in head.items()) or any(after.tags.get(k) != v for k,v in gates.items()):
+                raise ValueError("Eligibility publication readback differs")
+            _elig_write(fd, f"receipt-{event['revision']:08d}.json", receipt)
+        except BaseException as error:
+            if isinstance(error, (KeyboardInterrupt, SystemExit)):
+                raise
+            raise RuntimeError("Eligibility publication incomplete; intent retained, explicit recovery required") from None
+        return complete
+
+    def _publish_locked(self, client, *, expected_head, reviewer, reason, reviewed_at_utc, source_commit,
+                disposition, defect_code, references=None):
+        """Explicit creation/append only. No report/ledger edits, gates or new attempts."""
+        fd = _elig_directory(self.root, self.relative, create=True)
+        lock = None
+        try:
+            lock = os.open(".lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=fd)
+            if not stat.S_ISREG(os.fstat(lock).st_mode):
+                raise ValueError("Eligibility lock is not regular")
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            os.fsync(fd)
+            if os.listdir(fd) != [".lock"]:
+                capsule = self._load(fd)
+                plan, report = self._current_sources(capsule["events"][0]["anchor"])
+                anchor = capsule["events"][0]["anchor"]
+                sources = anchor["sources"]
+                validate_eligibility_capsule(capsule, plan, report, sources["plan"]["sha256"], sources["report"]["sha256"])
+                if expected_head != capsule["events"][-1]["sha256"] or disposition not in {"on_hold", "ineligible"}:
+                    raise ValueError("Eligibility append needs the exact previous head and an adverse decision")
+                before = self._registered(client, anchor)
+                if any(before.tags.get(k) != v for k,v in eligibility_head(capsule).items()):
+                    raise ValueError("Eligibility live head differs before append")
+            else:
+                if expected_head is not None:
+                    raise ValueError("Eligibility history is missing for the expected head")
+                raw = _elig_read(self.root, self.ledger_relative)
+                state = _elig_json(raw)
+                record = next(r for r in state["records"] if r["candidate_id"] == self.candidate_id)
+                attempt = next(a for a in record["attempts"] if a["attempt_id"] == self.attempt_id)
+                plan = _elig_json(_elig_read(self.root, attempt["plan_path"]))
+                registered = client.get_model_version(plan["identity"]["model_name"], plan["identity"]["model_version"])
+                anchor, plan, report = self._capture(registered.run_id)
+                registered = self._registered(client, anchor)
+                if any(k in registered.tags for k in ELIGIBILITY_KEYS):
+                    raise ValueError("Eligibility history was hidden or already initialized")
+                if disposition == "no_adverse_review":
+                    if registered.tags.get("deployment_permission") != "blocked" or registered.tags.get("operational_gate_status") != "not_evaluated":
+                        raise ValueError("Eligibility initialization requires blocked unevaluated gates")
+                    verify_portable_journal(_elig_read(self.root, anchor["sources"]["journal"]["path"]), self.candidate_id,
+                        self.attempt_id, plan, report, anchor["sources"]["plan"]["sha256"])
+                    recheck_measurement_records(plan, report, attempt_id=self.attempt_id, plan_file_sha256=anchor["sources"]["plan"]["sha256"])
+                capsule = {"schema_version":1, "kind":ELIGIBILITY_POLICY, "events":[], "receipts":[]}
+            revision = len(capsule["events"])
+            if revision >= 100:
+                raise ValueError("Eligibility review history limit reached")
+            event = {"schema_version":1, "policy_id":ELIGIBILITY_POLICY, "revision":revision, "previous_sha256":expected_head,
+                     "anchor_sha256":_elig_sha(_elig_bytes(anchor)), "disposition":disposition, "reviewer":reviewer,
+                     "reason":reason, "reviewed_at_utc":reviewed_at_utc, "source_commit":source_commit,
+                     "defect_code":defect_code, "references":references if references is not None else [
+                         {k:v for k,v in anchor["sources"]["journal"].items()}]}
+            if revision == 0:
+                event["anchor"] = anchor
+            event["sha256"] = _elig_sha(_elig_bytes(event))
+            new = {**capsule, "events":capsule["events"] + [event]}
+            prospective = {"schema_version":1, "head_sha256":event["sha256"], "revision":revision, "run_id":anchor["run_id"]}
+            validate_eligibility_capsule({**new, "receipts":new["receipts"]+[prospective]}, plan, report,
+                anchor["sources"]["plan"]["sha256"], anchor["sources"]["report"]["sha256"])
+            for ref in event["references"]:
+                raw = _elig_read(self.root, ref["path"])
+                if len(raw) != ref["bytes"] or _elig_sha(raw) != ref["sha256"]:
+                    raise ValueError("Eligibility referenced evidence changed")
+            # Fence online approval BEFORE creating an issued review. If this
+            # RPC is not accepted no review was issued; if its reply is lost,
+            # registry publishing still blocks. A disk failure after the fence
+            # cannot leave a newly issued adverse record behind a clean head.
+            current = self._registered(client, anchor)
+            expected = eligibility_head(capsule) if capsule["events"] else {}
+            if any(current.tags.get(k) != expected.get(k) for k in ELIGIBILITY_KEYS):
+                raise ValueError("Eligibility live head changed before publication fence")
+            try:
+                client.set_model_version_tag(anchor["identity"]["model_name"], anchor["identity"]["model_version"],
+                                             ELIGIBILITY_KEYS[3], "publishing")
+                fenced = self._registered(client, anchor)
+                if fenced.tags.get(ELIGIBILITY_KEYS[3]) != "publishing" or any(
+                        fenced.tags.get(k) != expected.get(k) for k in ELIGIBILITY_KEYS[:3]):
+                    raise ValueError("Eligibility publication fence readback differs")
+            except Exception:
+                raise RuntimeError("Eligibility fence unconfirmed; stop and inspect, never automatically retry") from None
+            _elig_write(fd, f"intent-{revision:08d}.json", prospective)
+            _elig_write(fd, f"{revision:08d}-{event['sha256']}.json", event)
+            return self._publish(fd, client, new)
+        finally:
+            if lock is not None:
+                os.close(lock)
+            os.close(fd)
+
+    def _resume_locked(self, client, *, expected_head):
+        """Explicitly reconcile one retained publication; never create a new review."""
+        fd = _elig_directory(self.root, self.relative)
+        lock = None
+        try:
+            lock = os.open(".lock", os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=fd)
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            capsule = self._load(fd, pending=True)
+            if capsule["events"][-1]["sha256"] != expected_head:
+                raise ValueError("Eligibility recovery head differs")
+            if len(capsule["receipts"]) == len(capsule["events"]):
+                plan, report = self._current_sources(capsule["events"][0]["anchor"])
+                anchor = capsule["events"][0]["anchor"]
+                registered = self._registered(client, anchor)
+                validate_eligibility_capsule(capsule, plan, report, anchor["sources"]["plan"]["sha256"],
+                    anchor["sources"]["report"]["sha256"], tags=registered.tags, run_id=registered.run_id)
+                return capsule
+            if len(capsule["receipts"]) != len(capsule["events"]) - 1:
+                raise ValueError("Eligibility recovery has multiple incomplete publications")
+            return self._publish(fd, client, capsule)
+        finally:
+            if lock is not None:
+                os.close(lock)
+            os.close(fd)
+
+    @_operational_recovery_contextmanager
+    def _writer_locks(self):
+        from contextlib import ExitStack
+        def existing(relative):
+            parts = _elig_relative(relative)
+            fd = _elig_directory(self.root, "/".join(parts[:-1]))
+            try:
+                value = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=fd)
+            finally:
+                os.close(fd)
+            if not stat.S_ISREG(os.fstat(value).st_mode):
+                os.close(value)
+                raise ValueError("Eligibility source lock is not regular")
+            try:
+                fcntl.flock(value, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BaseException:
+                os.close(value)
+                raise
+            return value
+        with ExitStack() as stack:
+            for relative in (f"{self.lock_relative}/{self.candidate_id}.lock", self.ledger_relative+".lock"):
+                value = existing(relative)
+                stack.callback(os.close, value)
+            state = _elig_json(_elig_read(self.root, self.ledger_relative))
+            record = next(r for r in state["records"] if r["candidate_id"] == self.candidate_id)
+            attempt = next(a for a in record["attempts"] if a["attempt_id"] == self.attempt_id)
+            plan = _elig_json(_elig_read(self.root, attempt["plan_path"]))
+            identity = plan["identity"]
+            if identity["model_name"] != "bike-demand-capital" or not _operational_recovery_re.fullmatch(r"[1-9][0-9]*", identity["model_version"]):
+                raise ValueError("Eligibility lock model identity is invalid")
+            fd = _elig_directory(self.root, "data/evaluations/capital-bikeshare/registry-record-locks", create=True)
+            stack.callback(os.close, fd)
+            lock = os.open(f"bike-demand-capital-v{identity['model_version']}.lock",
+                           os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=fd)
+            stack.callback(os.close, lock)
+            if not stat.S_ISREG(os.fstat(lock).st_mode) or os.fstat(lock).st_mode & 0o077:
+                raise ValueError("Eligibility version lock must be private and regular")
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            os.fsync(fd)
+            yield
+
+    def publish(self, client, **request):
+        try:
+            with self._writer_locks():
+                return self._publish_locked(client, **request)
+        except (AttributeError,KeyError,TypeError,StopIteration,UnicodeError):
+            raise ValueError("Eligibility source or publication metadata is malformed") from None
+
+    def resume(self, client, *, expected_head):
+        with self._writer_locks():
+            return self._resume_locked(client, expected_head=expected_head)
+
+
+def local_eligibility_review(root, candidate_id, attempt_id):
+    capsule = EligibilityReviewStore(root, candidate_id, attempt_id).read()
+    anchor = capsule["events"][0]["anchor"]
+    plan = _elig_json(_elig_read(root, anchor["sources"]["plan"]["path"]))
+    report = _elig_json(_elig_read(root, anchor["sources"]["report"]["path"]))
+    require_eligibility_capsule(capsule, plan, report, anchor["sources"]["plan"]["sha256"], anchor["sources"]["report"]["sha256"])
+    return capsule
 
 
 def main() -> None:

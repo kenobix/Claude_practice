@@ -65,7 +65,8 @@ CASES = {
 }
 READINESS_POLICY = {"policy_id": "capital-deployment-evidence-v2", "schema_version": 2,
                     "required_cases": CASES, "uncertain_evidence_allowed": False,
-                    "request_journal": "required_raw_hash_bound_all_events_utc_nondecreasing"}
+                    "request_journal": "required_raw_hash_bound_all_events_utc_nondecreasing",
+                    "eligibility_review": "required_immutable_history_and_live_committed_head_v1"}
 BINDING_KEYS = (
     "data_profile_id", "target_contract_id", "feature_contract_version",
     "quality_gate", "validation_gate_status", "final_accuracy_gate_status",
@@ -78,6 +79,8 @@ BINDING_KEYS = (
     "capital_operational_numeric_recheck_status", "capital_operational_input_provenance_status",
     "capital_operational_audit_status", "capital_operational_resource_context_status",
     "capital_operational_request_id_sha256", "capital_operational_p95_ms",
+    "capital_operational_eligibility_head_sha256", "capital_operational_eligibility_revision",
+    "capital_operational_eligibility_status", "capital_operational_eligibility_publication",
 )
 REF_KEYS = (
     "capital_deployment_evidence_sha256", "capital_deployment_evidence_path",
@@ -164,6 +167,10 @@ def binding(tags: dict) -> dict:
             raise ValueError(f"Capital evidence differs from its fixed policy: {key}")
     if values["capital_operational_measurement_status"] not in {"passed", "failed"}:
         raise ValueError("Invalid operational measurement status")
+    if (values["capital_operational_eligibility_status"] != "no_adverse_review"
+            or values["capital_operational_eligibility_publication"] != "committed"
+            or not re.fullmatch(r"0|[1-9][0-9]*", values["capital_operational_eligibility_revision"])):
+        raise ValueError("Operational eligibility is missing, on hold, ineligible or publishing")
     try:
         number = float(values["capital_operational_p95_ms"])
         attempt = str(uuid.UUID(values["capital_operational_attempt_id"]))
@@ -271,6 +278,7 @@ def validate_bundle(bundle: dict, tags: dict, version: str, run_id: str) -> dict
     from bike_mlops.operational_validation import recheck_measurement_records
     from bike_mlops.operational_validation import _validate_completed_evidence
     from bike_mlops.operational_validation import verify_portable_journal
+    from bike_mlops.operational_validation import require_eligibility_capsule
     from bike_mlops.evaluation import validate_protocol
     from bike_mlops.evaluation import baseline_accuracy_gate
 
@@ -283,7 +291,7 @@ def validate_bundle(bundle: dict, tags: dict, version: str, run_id: str) -> dict
             or bundle.get("identity") != identity):
         raise ValueError("Deployment evidence policy or exact registered identity differs")
     reports = bundle.get("reports")
-    names = {"candidate", "final", "protocol", "plan", "operational", "request_journal", "validation_rows", "final_rows", *CASES}
+    names = {"candidate", "final", "protocol", "plan", "operational", "request_journal", "eligibility", "validation_rows", "final_rows", *CASES}
     if not isinstance(reports, dict) or set(reports) != names:
         raise ValueError("Deployment evidence is missing required report bodies")
     parsed = {name: unpack(reports[name], csv=name.endswith("_rows") or name == "request_journal") for name in names}
@@ -366,6 +374,8 @@ def validate_bundle(bundle: dict, tags: dict, version: str, run_id: str) -> dict
     verify_portable_journal(parsed["request_journal"].encode("utf-8"), identity["candidate_id"],
         identity["capital_operational_attempt_id"], plan, report,
         identity["capital_operational_plan_file_sha256"])
+    require_eligibility_capsule(parsed["eligibility"], plan, report,
+        reports["plan"]["sha256"], reports["operational"]["sha256"], tags=tags, run_id=run_id)
     recorded = _validate_completed_evidence(plan, report, reports["operational"]["sha256"],
                                             identity["capital_operational_attempt_id"],
                                             identity["capital_operational_plan_file_sha256"])
@@ -374,7 +384,8 @@ def validate_bundle(bundle: dict, tags: dict, version: str, run_id: str) -> dict
         raise ValueError("Operational evidence or fixed p95 gate differs from saved rows")
     for category in CASES:
         validate_prerequisite(parsed[category], category, identity)
-    return {"identity": identity, "p95_ms": numeric["p95_ms"], "policy_sha256": READINESS_POLICY_SHA256}
+    return {"identity": identity, "p95_ms": numeric["p95_ms"], "policy_sha256": READINESS_POLICY_SHA256,
+            "eligibility_freshness":"not_proven_offline_requires_live_registry"}
 
 
 def reference_tags(body: bytes, run_id: str) -> dict:
@@ -425,7 +436,7 @@ def verified_registered_evidence(client, version: str, tags: dict) -> dict:
             or getattr(after, "run_id", None) != run_id
             or any(before.tags.get(k) != tags.get(k) or after.tags.get(k) != tags.get(k) for k in protected)):
         raise ValueError("Registered deployment evidence changed during retrieval")
-    return {**result, "bundle_sha256": expected_sha}
+    return {**result, "bundle_sha256": expected_sha,"eligibility_freshness":"live_registry_bracket_matched"}
 
 
 # ========================================================================
@@ -851,6 +862,7 @@ def publish_deployment_evidence(candidate_id: str, attempt_id: str, final_path: 
             if recovery._report_error(report, attempt, candidate_id, plan, linked=True):
                 raise ValueError("Operational report does not match its attempt")
             recovery.verify_completed_journal(attempt, candidate_id, plan, report, require_journal=True)
+            eligibility = recovery.local_eligibility_review(PROJECT_ROOT, candidate_id, attempt_id)
             selection_path = PROJECT_ROOT / "data/candidates" / candidate_id / "candidate-report.json"
             verified = verify_candidate_for_staging(selection_path, final_path)
             final_path = verified["final_report_path"]
@@ -868,6 +880,8 @@ def publish_deployment_evidence(candidate_id: str, attempt_id: str, final_path: 
                     raise ValueError("Evidence may only be attached to the exact READY blocked version")
                 tags = registered.tags
                 identity = _deployment_evidence_publisher_evidence_identity(tags, version, registered.run_id)
+                recovery.require_eligibility_capsule(eligibility, plan, report, attempt["plan_file_sha256"],
+                    report_hash, tags=tags, run_id=registered.run_id)
                 paths = {
                     "candidate": selection_path, "final": final_path,
                     "protocol": selection_path.parent / "evaluation-protocol.json",
@@ -886,12 +900,15 @@ def publish_deployment_evidence(candidate_id: str, attempt_id: str, final_path: 
                         raise ValueError("Deployment evidence inputs must be regular project data files")
                     bodies[name] = _deployment_evidence_publisher_document(resolved.read_bytes())
                     resolved_paths[name] = resolved
+                bodies["eligibility"] = _deployment_evidence_publisher_document(_deployment_evidence_publisher_canonical_bytes(eligibility))
                 bundle = {"schema_version": 2, "kind": "capital-deployment-evidence",
                           "policy": _deployment_evidence_publisher_READINESS_POLICY, "identity": identity, "reports": bodies}
                 _deployment_evidence_publisher_validate_bundle(bundle, tags, version, registered.run_id)
                 for name, path in resolved_paths.items():
                     if sha256_file(path) != bodies[name]["sha256"]:
                         raise ValueError("Deployment evidence file changed during preparation")
+                if recovery.local_eligibility_review(PROJECT_ROOT, candidate_id, attempt_id) != eligibility:
+                    raise ValueError("Eligibility history changed during evidence preparation")
                 body = _deployment_evidence_publisher_canonical_bytes(bundle)
                 refs = _deployment_evidence_publisher_reference_tags(body, registered.run_id)
                 current = client.get_model_version(_deployment_evidence_publisher_MODEL, version)

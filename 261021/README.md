@@ -6,6 +6,10 @@
 
 **2026-11-15追補:** [証拠consumerのUTC順序拒否、事後不適格reviewの設計、分布1,336・誤差234窓の理由付きreview](docs/capital.md#operational-evidence-review-20261115)を追加しました。配信bundle v2はjournal原本を必須とし、受信側でも検査します。review writerと実候補の不足case、最終採否は未完了。運用gateはnot_evaluated、配信はblockedを保ちます。
 
+同日追補：[追記専用review writerと適格性head](docs/capital.md#operational-eligibility-review-20261115)を隔離実装しました。
+原本を保持して不適格履歴を追記し、local/remote consumerが欠落・途中公開・旧headを拒否します。
+実candidateへの適用・再測定は行っていません。先の「writer未実装」は設計時点の記録です。
+
 `261014/plan_mlops.md`に沿った、UCI Bike Sharingを現行データとするMLOps学習プロジェクトです。Capital Bikeshareは別targetとして扱う移行専用profileを追加中です。単にモデルを学習するだけでなく、特徴量の時点制約、モデル登録、版固定の予測API、手動承認・差し戻し、遅延ラベルを使う監視までを一続きにします。
 
 これは公開過去データを使った運用再現実験です。現在の需要を予測するサービスでも、実店舗の売上や配置を改善した実証でもありません。性能結果は実行後に記録し、未実行の結果は記載しません。

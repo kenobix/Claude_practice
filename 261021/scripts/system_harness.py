@@ -687,6 +687,14 @@ def run_synthetic_system(root: Path, harness: "Harness", synthetic: dict, projec
             or len(report.get("measurements", [])) != 1050
             or report.get("resource_context", {}).get("capital_stack_containers", {}).get("status") != "captured"):
         raise HarnessError("Synthetic measurement report lacks completed requests, audit or resource evidence")
+    source_commit = subprocess.run(["git","-C",str(SOURCE_ROOT),"rev-parse","HEAD"],capture_output=True,text=True,timeout=10,check=True).stdout.strip()
+    eligibility = run_isolated_script(root, env, "explicit synthetic empty eligibility history", 'runtime_tools.py', [
+        'eligibility-review', '--candidate-id',candidate_id,'--attempt-id',measurement['attempt_id'],
+        '--publish-review','--disposition','no_adverse_review','--reviewer','synthetic-system-fixture',
+        '--reason','Initialize synthetic-only empty review history; never actual candidate acceptance',
+        '--source-commit',source_commit])
+    if eligibility.get("new_attempts") != 0 or eligibility.get("retry_permission") is not False:
+        raise HarnessError("Synthetic eligibility initialization changed measurement permission")
     recheck = run_isolated_script(root, env, "ledger-linked numeric recheck", 'runtime_tools.py', ['recheck',
         "--candidate-id", candidate_id, "--attempt-id", measurement["attempt_id"],
     ])

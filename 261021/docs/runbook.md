@@ -1,5 +1,18 @@
 # 使用操作・配信・復旧・CI運用
 
+2026-11-15追補：[completed事後reviewの仕様](capital.md#operational-eligibility-review-20261115)を優先する。
+既存実試行へのreview発行/初期化・測定再試行は行わない。履歴が用意された隔離環境で状態を読む入口は次のとおり。
+`261021`から、実際のcandidate SHA/attempt UUIDを指定する。
+
+```bash
+DATA_PROFILE_ID=capital-bikeshare .venv/bin/python scripts/runtime_tools.py eligibility-review \
+  --inspect --candidate-id CANDIDATE_SHA256 --attempt-id ATTEMPT_UUID
+```
+
+履歴なし/不完全なら停止し、空履歴を勝手に作って回避しない。
+変更入口は明示的な`--publish-review`で、`--resume --expected-head`は公開途中の同じreviewだけを照合する。
+publishingだけが残った場合やtorn fileは自動修復せず保全する。raw completedのまま、配信許可を上書きしない。
+
 [文書一覧・統合対応表](README.md)。2026-11-15に用途別へ統合。過去の結論・未解決事項・原本hashは保持。
 
 各節の日付・「未完了」は執筆時点の記録を含みます。現在の状態は[プロジェクトREADME](../README.md)と[計画書の最新残件](../../261014/plan_mlops.md#remaining-work-latest)を優先してください。再実行用の入口は新配置へ更新し、当時の原文・コマンド・hashはGit `9479201`、work_log、review JSONに保持しています。

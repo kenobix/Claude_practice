@@ -4862,3 +4862,74 @@ T13bは残す。DockerのWSL連携が利用不能で、実candidate負例の新�
 最終相対リンク933件も問題なし。最終manifest検査で既存593 test identityの削除0・追加7・計600をASTでも確認。
 全194原本のbytes/SHA、保存済みCI/artifact/log/recipeのdescriptor、実装source一致と秘密情報除外を照合した。
 公開索引は生成時点までの完了receiptを保持し、この後のcommit/push自身のreceiptは同じignored試行directoryへ別保存する。
+
+## 2026-11-15：completed試行の追記専用reviewとconsumer結合（基点00f2ce8）
+
+開始HEAD 00f2ce860a2b111cc5e1edb1ed6237a63be8c0bc。未追跡の260701/charts、260701/logs、260905画像は対象外。
+plan §11.6、work_log、capital.mdの事後review契約、直前consumer CI索引を確認。
+元の194原本のSHA/bytesが前回checkpointと一致したことを確認してoriginals.jsonへ保持した。
+実candidate/台帳/registry/配信への適用、新attempt/再測定/再fit/窓再利用は行っていない。
+
+### 実装と検証範囲
+
+operational_validation.pyへEligibilityReviewStoreを集約し、ファイル数を増やさず実装。
+source/消費台帳snapshot、対象candidate/attempt/登録artifact/plan/report/journalの結合、
+revision/previous SHA、O_EXCL/0600/fsync、親directory FDのnofollow、raw candidate/ledger/version/系列lockを使う。
+最初のno_adverse_reviewは1050応答・UTC・数値を検算してから作成し、品質/採否の合格とは分離する。
+追記はon_hold/ineligibleだけ。ineligibleは後のon_holdでも戻さず、completedの原本は書換えない。
+
+設計時点の公開順を補強し、registry publishing fenceを確認してからimmutable intent/eventを発行。
+head/revision/status→committed→読戻し→local receiptの順。通信失敗/中断/不完全fileを自動修復しない。
+exact headを指定した明示resumeだけで回復し、committed応答喪失ではreceiptのみ追加、同じ完了headのresumeはread-only。
+fenceのみ/event未作成・torn fileはquarantineしたまま残る。この残件を自動retryで迂回しない。
+registry authorityを信頼する境界であり、管理者が全headを整合した旧値に巻き戻す攻撃の独立検出は未実装。
+
+recorder/publisherはlocal historyとlive committed headを確認。bundle schema/policy v2とraw journal要件を維持し、
+policy SHAを改訂してeligibility本文と4つのcontrol tagを必須にした。remoteも取得前後にhead/run/版を比較。
+offline recheck/inspect/T16は未確認状態を明示し、数値診断から運用合格を発行しない。
+既存recorderの未知tag拒否は新control4keyだけを許容し、それ以外の未知key拒否を維持。
+
+runtime_tools.pyに明示的eligibility-reviewを追加。inspectは読取専用、publish/resumeは明示操作。
+CLIは当該操作だけMLflow HTTP retry0/要求timeout15秒を設定し、終了時にprocess環境値を戻す。
+libraryへ渡す独自clientのtransportは呼出側の責任で、全体hard deadlineや外部公証は保証しない。
+system harnessだけが合成計測後に空履歴を明示初期化。合成成功を実candidateへ流用しない。
+
+### 試行と失敗
+
+全instrumentedコマンドは`data/reports/20261115-operational-review/run.py`のlabel別receiptへ
+command/cwd/exit/未資格UTC/MONOTONIC/log SHAを保存した。source hashと全test identityも索引へ記録する。
+
+- target-v1：35件成功。
+- target-v2：49件中1error。新しい不適格publisher testへ既存のpositive deployment assertionを誤って移した編集ミスを修正。
+- target-v3：既存MeasurementRecheckの合成journalがgeneric invalidで拒否された。temp原本はcleanup済みで原因をUTC逆行と断定しない。
+  当該非時刻fixtureだけFixedJournalClockへ変更し、実時計の未来拒否/診断や製品readerは緩めなかった。
+- target-v4：49件成功。full-suite-v1：620件中1error、SQLite実run_idと新eligibility anchorのrun_id不一致。
+  合成fixture(run_id=...)でanchor/head/identity/bundleを一貫して作るよう修正し、HTTP harnessにも適用。
+- target-v5：51件成功。SIGTERM/SIGKILL子processのintent保持・lock解放・明示resumeはsignal-v1で成功。
+  子processと専用fixtureだけへsignalを送り、現サービスは操作していない。
+- final-target-v6：58件成功。final-target-v7は59件中1error、publisher fixture生成中にjournalの1934→1935 UTC逆行をreaderが明示拒否。
+  原本の正確な差分値はtemp cleanup後で未取得。これを過去のT03/tick原因へ帰属せず、時計研究を再開しない。
+  publisherの非時刻journal fixtureもFixedJournalClockへ固定し、decisionの実時計診断は維持。
+- final-target-v8/v9：CLI publish testが正式operational-locksではなくfixture固有locksを用意していたためFileNotFoundで停止。
+  fixtureを正式pathへ合わせ、製品のlock拒否は変更しない。final-target-v10で最終確認する。
+- full-suite-v2/v3は上記修正前/途中で開始した結果として区別し、最終sourceの全受入へ流用しない。
+  最終sourceの全受入は実装commitのCIで確認する。成功目的の無変更再試行はしない。
+- native HTTP：`scripts/runtime_checks.py decision-http --run-disposable --evidence-dir .../http-v1`。
+  新規一時SQLite/任意loopback portの実MLflowで既存5caseの部分書込/応答喪失/同値回復/競合拒否とcleanupが成功。
+  registry起動/保存/削除はこの使い捨て環境だけ。実Capital・本番SLO・時計資格の証拠ではない。
+- 初回`docker context show`はWSL integration unavailableでexit1。設定変更/反復probeはせず、実候補の追加runtime負例は未開始。
+  対象実行前のsed読取1回もcwd不一致で失敗したが無変更。compileall/diff checkを実施。
+
+### 残る条件
+
+orphan fence/torn recordの明示回復、旧専用project/正式symlink alias/全historyの実適用前照合、
+実candidate全22caseの未達部分、警告の人によるリスク受容、T13b採否を残す。
+実運用attemptは保留のまま。新しい時計採取/問い合わせ、OS/サービス/task/log設定、resync、future緩和/clampは0件。
+最終対象検証・CI/artifact/cleanupの結果は確認後に追記する。
+
+final-target-v10の**59件成功（64.819 test秒）**を確認。CLIのformal lock path、retry0の設定/復元、
+実MLflow SDKの一時SQLite registryでの初期化・不適格追記、TERM/KILLの2subcaseも含む。
+中間full-suite-v3は621件成功（590.761 test秒）だったが、その後のCLI/fixture補強と最終622件の根拠へ流用しない。
+compile-v2成功、相対リンク940件/旧import0/配置9・18・12・7を確認。
+現artifact/source/model/正式消費台帳の194原本は索引生成ごとに不変を再確認した。
+最終sourceはCIの622件で検証し、この直後の公開receiptは同じignored directoryへ保存する。

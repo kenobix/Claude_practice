@@ -1,0 +1,1074 @@
+{
+  "kind": "operational-eligibility-review-acceptance",
+  "date_label": "2026-11-15 Asia/Tokyo; raw UTC unqualified",
+  "base_commit": "00f2ce860a2b111cc5e1edb1ed6237a63be8c0bc",
+  "status": "target_verified_ci_pending",
+  "implementation_commit": null,
+  "ci": null,
+  "scope": "Immutable review writer and local/remote evidence consumers in disposable environments only.",
+  "product_changes": [
+    "Original ledger/consumption snapshots and source SHA binding; completed remains immutable.",
+    "Explicit empty-history initialization plus adverse-only append; ineligible remains sticky.",
+    "Candidate/ledger/version/series locks, directory-FD nofollow reads, O_EXCL and fsync.",
+    "Publishing fence before record issuance, retained intent/event and explicit exact-head recovery; no automatic retry.",
+    "Local recorder/publisher and bundle v2 consumers require history and a matching committed live head.",
+    "Offline numeric consumers state eligibility/freshness not verified; they never approve.",
+    "CLI transport retries disabled only for the scoped operation, environment restored."
+  ],
+  "originals_verified_unchanged": 194,
+  "original_manifest": {
+    "path": "data/reports/20261115-operational-review/originals.json",
+    "sha256": "69cf96f14e8be4b7b9e2312613ee502c137582d26528757993d26ca3b05a0e89"
+  },
+  "test_identities": {
+    "baseline": 600,
+    "current": 622,
+    "removed": [],
+    "added": [
+      [
+        "261021/tests/test_deployment.py",
+        "CompleteDeploymentEvidenceTests",
+        "test_missing_publishing_and_changed_during_download_heads_are_rejected"
+      ],
+      [
+        "261021/tests/test_deployment.py",
+        "CompleteDeploymentEvidenceTests",
+        "test_old_bundle_and_stale_saved_tags_cannot_bypass_live_eligibility_revocation"
+      ],
+      [
+        "261021/tests/test_deployment.py",
+        "DeploymentEvidencePublisherTests",
+        "test_adverse_review_blocks_publisher_before_any_upload_and_keeps_originals"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_adverse_initialization_can_describe_an_already_bad_utc_journal"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_cli_inspection_is_read_only_and_publication_requires_explicit_metadata"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_cooperative_candidate_lock_rejects_competing_review"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_disk_failure_after_fence_is_retained_and_cannot_be_misread_as_clean"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_fence_response_loss_stays_blocked_without_issuing_a_record"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_fork_unknown_file_receipt_gap_and_symlink_are_rejected"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_future_unknown_fields_invalid_identity_and_secret_references_refused"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_initialize_append_sticky_ineligible_preserves_every_original_and_attempt"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_interrupt_after_record_keeps_intent_and_explicit_recovery"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_legitimate_other_candidate_ledger_append_keeps_historical_snapshot"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_local_consumers_reject_adverse_or_missing_history_and_no_tag_writes"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_lost_commit_reply_preserves_review_and_resume_adds_only_receipt"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_parent_symlink_and_fifo_never_followed"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_portable_malformed_or_rehashed_history_cannot_use_the_live_head"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_raw_source_changes_and_deletion_refused_without_rewriting_review"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_real_disposable_sqlite_mlflow_preserves_head_and_adverse_history"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_real_sigterm_and_sigkill_retain_publication_and_release_owned_locks"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_registry_partial_publication_retained_and_explicit_resume_is_idempotent"
+      ],
+      [
+        "261021/tests/test_measurement.py",
+        "OperationalEligibilityReviewTests",
+        "test_stale_expected_head_missing_history_and_positive_override_refused"
+      ]
+    ]
+  },
+  "source_files": [
+    {
+      "path": "scripts/runtime_checks.py",
+      "sha256": "1ed3014105e7a45509e9a96f78d46569b65e0d69c0c337c739b894be32c2d0b4"
+    },
+    {
+      "path": "scripts/runtime_tools.py",
+      "sha256": "b72524c8cd252ddca229752157236386fbd2236e965912a13644c70c62e036ac"
+    },
+    {
+      "path": "scripts/system_harness.py",
+      "sha256": "0c8d26cebf001900b8cda5d9b53fc7af0b29f436cac648b2c2ebb27f3dd7e0db"
+    },
+    {
+      "path": "src/bike_mlops/deployment.py",
+      "sha256": "4d0e11e40b5c8f927cad5a8456884ddcbe3c58c92cee952a8db33d52ca85a088"
+    },
+    {
+      "path": "src/bike_mlops/operational_validation.py",
+      "sha256": "0b881ba5e046fb41ea1d99efff3e9e205051a5217552e5c6152690f53280a2d8"
+    },
+    {
+      "path": "tests/support.py",
+      "sha256": "7e74de51d412ef849a952f05bdfaef7d3ceb8863c4d14f58ee95c1580bf88d23"
+    },
+    {
+      "path": "tests/test_deployment.py",
+      "sha256": "0bab0e3325ebb95da4c37f3b7bdd4412ded5dc14c72e5b5321b5efb803fa9c79"
+    },
+    {
+      "path": "tests/test_measurement.py",
+      "sha256": "57e5b34e6ca64a94d9de25a4807c96d74625beb980850aaa5fc25621bb39bff4"
+    }
+  ],
+  "source_matches_implementation": false,
+  "tests": {
+    "final-target-v10.log": {
+      "tests": 59,
+      "displayed_seconds": 64.819,
+      "exit_code": 0
+    },
+    "final-target-v6.log": {
+      "tests": 58,
+      "displayed_seconds": 65.147,
+      "exit_code": 0
+    },
+    "final-target-v7.log": {
+      "tests": 59,
+      "displayed_seconds": 65.971,
+      "exit_code": 1
+    },
+    "final-target-v8.log": {
+      "tests": 59,
+      "displayed_seconds": 55.174,
+      "exit_code": 1
+    },
+    "final-target-v9.log": {
+      "tests": 59,
+      "displayed_seconds": 55.486,
+      "exit_code": 1
+    },
+    "full-suite-v1.log": {
+      "tests": 620,
+      "displayed_seconds": 522.013,
+      "exit_code": 1
+    },
+    "full-suite-v2.log": {
+      "tests": 620,
+      "displayed_seconds": 594.736,
+      "exit_code": 1
+    },
+    "full-suite-v3.log": {
+      "tests": 621,
+      "displayed_seconds": 590.761,
+      "exit_code": 0
+    },
+    "target-v1.log": {
+      "tests": 35,
+      "displayed_seconds": 21.893,
+      "exit_code": 0
+    },
+    "target-v2.log": {
+      "tests": 49,
+      "displayed_seconds": 34.848,
+      "exit_code": 1
+    },
+    "target-v3.log": {
+      "tests": 49,
+      "displayed_seconds": 38.413,
+      "exit_code": 1
+    },
+    "target-v4.log": {
+      "tests": 49,
+      "displayed_seconds": 39.541,
+      "exit_code": 0
+    },
+    "target-v5.log": {
+      "tests": 51,
+      "displayed_seconds": 71.543,
+      "exit_code": 0
+    }
+  },
+  "attempts": [
+    {
+      "path": "data/reports/20261115-operational-review/compile-v1.json",
+      "sha256": "5254daf1fe8f06be88b7979b31540631ff11f02f9d1b4378cb0894467b9554a3",
+      "command": [
+        "261021/.venv/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "261021/src",
+        "261021/tests",
+        "261021/scripts"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T00:54:06.032667+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T00:54:06.120259+00:00",
+      "monotonic_start_ns": 20317830005434,
+      "monotonic_end_ns": 20317917596334,
+      "log": "compile-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/compile-v2.json",
+      "sha256": "2dbd2ca3734136e3f37bdafe38ce399a1ff5f6f7cb2116ddad9c546558b03506",
+      "command": [
+        "261021/.venv/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "261021/src",
+        "261021/tests",
+        "261021/scripts"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T01:08:12.315250+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:08:12.384808+00:00",
+      "monotonic_start_ns": 21205333685949,
+      "monotonic_end_ns": 21205403242499,
+      "log": "compile-v2.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-target-v10.json",
+      "sha256": "defeb6eb7e5dfadbd2b2e3e6f1d9b49d47868ab44ea023dbdb6e94289fb5da59",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "PYTHONPATH=src:tests",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "test_measurement.OperationalEligibilityReviewTests",
+        "test_measurement.MeasurementRecheckTests",
+        "test_measurement.CapitalOperationalRegistryEvidenceTests",
+        "test_deployment.CompleteDeploymentEvidenceTests",
+        "test_deployment.DeploymentEvidencePublisherTests",
+        "test_deployment.IsolatedMlflowDeploymentEvidenceTests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T01:06:53.484609+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:07:57.470557+00:00",
+      "monotonic_start_ns": 21121823689585,
+      "monotonic_end_ns": 21190488991532,
+      "log": "final-target-v10.log",
+      "log_sha256": "9cf147a1870e27e8c88a4cc81c328bab64231dbef6aae6e4658fec9e6fabcf05"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-target-v6.json",
+      "sha256": "1a5d5f562053b79f6a6a7c47a74535d4a54517155b0298508e68330af270f466",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "PYTHONPATH=src:tests",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "test_measurement.OperationalEligibilityReviewTests",
+        "test_measurement.MeasurementRecheckTests",
+        "test_measurement.CapitalOperationalRegistryEvidenceTests",
+        "test_deployment.CompleteDeploymentEvidenceTests",
+        "test_deployment.DeploymentEvidencePublisherTests",
+        "test_deployment.IsolatedMlflowDeploymentEvidenceTests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T01:01:11.194738+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:02:15.976311+00:00",
+      "monotonic_start_ns": 20762539995929,
+      "monotonic_end_ns": 20831597294762,
+      "log": "final-target-v6.log",
+      "log_sha256": "28b96130e69717edfc95880801554c6b2ba8c8d58f6596caeb0a3908c3523bec"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-target-v7.json",
+      "sha256": "34913135929ca35f51674dc4150dfdb493b62bc84726489f03947c1a9628c717",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "PYTHONPATH=src:tests",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "test_measurement.OperationalEligibilityReviewTests",
+        "test_measurement.MeasurementRecheckTests",
+        "test_measurement.CapitalOperationalRegistryEvidenceTests",
+        "test_deployment.CompleteDeploymentEvidenceTests",
+        "test_deployment.DeploymentEvidencePublisherTests",
+        "test_deployment.IsolatedMlflowDeploymentEvidenceTests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-15T01:02:15.943613+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:03:22.760967+00:00",
+      "monotonic_start_ns": 20831564631570,
+      "monotonic_end_ns": 20901743053960,
+      "log": "final-target-v7.log",
+      "log_sha256": "7340e36d43df068bf7fa568575bc9a476235e2c3103915563809fec247e4a979"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-target-v8.json",
+      "sha256": "fd5ecde9928139398474c547517a064e4f3447fffc0d2b45c48d0113df7fffb8",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "PYTHONPATH=src:tests",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "test_measurement.OperationalEligibilityReviewTests",
+        "test_measurement.MeasurementRecheckTests",
+        "test_measurement.CapitalOperationalRegistryEvidenceTests",
+        "test_deployment.CompleteDeploymentEvidenceTests",
+        "test_deployment.DeploymentEvidencePublisherTests",
+        "test_deployment.IsolatedMlflowDeploymentEvidenceTests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-15T01:04:00.770422+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:04:56.662197+00:00",
+      "monotonic_start_ns": 20941356935197,
+      "monotonic_end_ns": 21000445248547,
+      "log": "final-target-v8.log",
+      "log_sha256": "8d2eaecdb41a9467d0f4004da8f2cb12a9204299a5e1ae535b294bb08dcb138e"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-target-v9.json",
+      "sha256": "5bfbe114b01579211808a1f6f3676062d61046ea91730a26e35a3fd3a8fbfaa2",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "PYTHONPATH=src:tests",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "test_measurement.OperationalEligibilityReviewTests",
+        "test_measurement.MeasurementRecheckTests",
+        "test_measurement.CapitalOperationalRegistryEvidenceTests",
+        "test_deployment.CompleteDeploymentEvidenceTests",
+        "test_deployment.DeploymentEvidencePublisherTests",
+        "test_deployment.IsolatedMlflowDeploymentEvidenceTests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-15T01:04:50.550387+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:05:48.868978+00:00",
+      "monotonic_start_ns": 20994333447143,
+      "monotonic_end_ns": 21053933988795,
+      "log": "final-target-v9.log",
+      "log_sha256": "3309eecab81aa4de1d4c5bd72437d6b2b880c8e54b556e738693dfe5f6c9bc2f"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/full-suite-v1.json",
+      "sha256": "ae065469b856b5d23d2a0256a5ddaeae51ddc946d689856e35abfe9af01e2909",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-15T00:48:37.171810+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T00:57:00.201766+00:00",
+      "monotonic_start_ns": 19972816721411,
+      "monotonic_end_ns": 20499344591121,
+      "log": "full-suite-v1.log",
+      "log_sha256": "8af718d858ecded406b23bc84162bcf5cc541017f14315b9cf5ddb5cd51c352f"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/full-suite-v2.json",
+      "sha256": "55135f67a7c10e8e65ec344ba1820313312933689fb62dc4fdd88c12a71baf61",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-15T00:54:24.877408+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:03:55.061945+00:00",
+      "monotonic_start_ns": 20336674746764,
+      "monotonic_end_ns": 20935648564007,
+      "log": "full-suite-v2.log",
+      "log_sha256": "aed4c4332518c187f01e0538b35546dec5d5a71a96aed5d47ab7d0b4e40164f6"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/full-suite-v3.json",
+      "sha256": "4d5ec5a0029f31f221cc777b3620ed722a8580da9d3ab46f11b38bacdfe55b22",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T00:59:25.731543+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:08:56.233116+00:00",
+      "monotonic_start_ns": 20652312532579,
+      "monotonic_end_ns": 21252345503665,
+      "log": "full-suite-v3.log",
+      "log_sha256": "a14b5a8b223d1c16ad6abdbfe8b193872dbf3c5ce6787ba3a9000407e95ef687"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1.json",
+      "sha256": "5f22fb9711c42fdbe336b2fb78b48f876a50b37cf1850fb1502215f16f8f0b4d",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        ".venv/bin/python",
+        "scripts/runtime_checks.py",
+        "decision-http",
+        "--run-disposable",
+        "--evidence-dir",
+        "data/reports/20261115-operational-review/http-v1"
+      ],
+      "cwd": "261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T00:59:05.422520+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T00:59:45.912159+00:00",
+      "monotonic_start_ns": 20630509474697,
+      "monotonic_end_ns": 20674057525128,
+      "log": "http-v1.log",
+      "log_sha256": "1976a23f1f66cba00cc118fb2141a6f5ac68c121d0494da464a25001e91a95e3"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/layout-v1.json",
+      "sha256": "2a2efc96373910147af96c2326ee8fb31154404d181904122fde76aad2a4db21",
+      "command": [
+        "python3",
+        "261021/data/reports/20261114-file-consolidation/check_layout.py"
+      ],
+      "cwd": "/home/kenshin/work/claude_practice",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T01:08:01.345329+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T01:08:04.396918+00:00",
+      "monotonic_start_ns": 21194363767700,
+      "monotonic_end_ns": 21197415356481,
+      "log": "layout-v1.log",
+      "log_sha256": "b947fa0f02ee75c6dca4b52c05eab6dea6dc7c3f7ce22e36fa6015864e59714f"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/signal-v1.json",
+      "sha256": "31473f62fd18f6d634aabff1080756148b8a42b090bb7677457e12b0827d8198",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "PYTHONPATH=src:tests",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "test_measurement.OperationalEligibilityReviewTests.test_real_sigterm_and_sigkill_retain_publication_and_release_owned_locks",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T00:57:24.318124+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T00:57:33.025499+00:00",
+      "monotonic_start_ns": 20524962152285,
+      "monotonic_end_ns": 20533669523149,
+      "log": "signal-v1.log",
+      "log_sha256": "30e1193ba3ef00c003087e788b888787daab868fe35a4d20ef8b2098ceb3a70c"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/target-v1.json",
+      "sha256": "1e480fe8e9e28ec6608f0791f7e2338b51da5417c9aeb9a033481345b5048dba",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "PYTHONPATH=src:tests",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "test_measurement.OperationalEligibilityReviewTests",
+        "test_deployment.CompleteDeploymentEvidenceTests",
+        "test_deployment.DeploymentEvidencePublisherTests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T00:42:36.693744+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T00:43:03.130502+00:00",
+      "monotonic_start_ns": 19596724663309,
+      "monotonic_end_ns": 19623161413384,
+      "log": "target-v1.log",
+      "log_sha256": "6e594a65d94f07ecc4648f96cb54229e9ea4105af2c265184c81b23687c60397"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/target-v2.json",
+      "sha256": "b0c4b840bfb798ab7699a5f81fc7110c9446fbac03d7bed873bde389b32cd6a1",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "PYTHONPATH=src:tests",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "test_measurement.OperationalEligibilityReviewTests",
+        "test_measurement.MeasurementRecheckTests",
+        "test_deployment.CompleteDeploymentEvidenceTests",
+        "test_deployment.DeploymentEvidencePublisherTests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-15T00:46:56.371588+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T00:47:32.904867+00:00",
+      "monotonic_start_ns": 19867660642435,
+      "monotonic_end_ns": 19905757832868,
+      "log": "target-v2.log",
+      "log_sha256": "083443b718fd29bb80c8f82bc8c7ec574efd137291904bccd42e621df097070c"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/target-v3.json",
+      "sha256": "ba17a725341955628d46e32ae1a70bf332f1e1cfe8f77ca0c391920e6cafa224",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "PYTHONPATH=src:tests",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "test_measurement.OperationalEligibilityReviewTests",
+        "test_measurement.MeasurementRecheckTests",
+        "test_deployment.CompleteDeploymentEvidenceTests",
+        "test_deployment.DeploymentEvidencePublisherTests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 1,
+      "started_at_utc_unqualified": "2026-11-15T00:48:34.505859+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T00:49:14.546180+00:00",
+      "monotonic_start_ns": 19970150780752,
+      "monotonic_end_ns": 20011604554285,
+      "log": "target-v3.log",
+      "log_sha256": "15115d02a40fee827afe73c74a1264e6bd8108b16cdc5f5b7ae197c14acd3dce"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/target-v4.json",
+      "sha256": "fd7a10eceae5ca7d7f25ce0f1d326d48779fe4c3c8c7c23684428e11c2f7d49c",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "PYTHONPATH=src:tests",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "test_measurement.OperationalEligibilityReviewTests",
+        "test_measurement.MeasurementRecheckTests",
+        "test_deployment.CompleteDeploymentEvidenceTests",
+        "test_deployment.DeploymentEvidencePublisherTests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T00:52:12.640840+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T00:52:53.760411+00:00",
+      "monotonic_start_ns": 20198366402753,
+      "monotonic_end_ns": 20240968422795,
+      "log": "target-v4.log",
+      "log_sha256": "8bddb4c90736eae597c79895b6ea8a91119c1b4ba425c1c7427e73096fab1366"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/target-v5.json",
+      "sha256": "573178f15bfcc03cffcda49e4012087b6eb2c5a7d07caf65817c7a74041f9595",
+      "command": [
+        "env",
+        "MLFLOW_DISABLE_AGENT_HINT=1",
+        "PYTHONPATH=src:tests",
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "test_measurement.OperationalEligibilityReviewTests",
+        "test_measurement.MeasurementRecheckTests",
+        "test_deployment.CompleteDeploymentEvidenceTests",
+        "test_deployment.DeploymentEvidencePublisherTests",
+        "test_deployment.IsolatedMlflowDeploymentEvidenceTests",
+        "-v"
+      ],
+      "cwd": "261021",
+      "exit_code": 0,
+      "started_at_utc_unqualified": "2026-11-15T00:58:42.046555+00:00",
+      "ended_at_utc_unqualified": "2026-11-15T00:59:54.141659+00:00",
+      "monotonic_start_ns": 20607133517361,
+      "monotonic_end_ns": 20682287030355,
+      "log": "target-v5.log",
+      "log_sha256": "174792d6e49d3ae8849f671fc1b59f9e77c8b351322e73c06f44741616123ddf"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "data/reports/20261115-operational-review/build_index.py",
+      "bytes": 6847,
+      "sha256": "05df14470d5a0fb05c0815d654e983d87cdfc5729904db97540addce24ba08a1"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/commit_implementation.py",
+      "bytes": 1558,
+      "sha256": "62468da250cfbf8dd6ab8e67d35662163fe6230010fd73a91e78898d1d4d50d5"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/compile-v1.json",
+      "bytes": 539,
+      "sha256": "5254daf1fe8f06be88b7979b31540631ff11f02f9d1b4378cb0894467b9554a3"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/compile-v1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/compile-v2.json",
+      "bytes": 539,
+      "sha256": "2dbd2ca3734136e3f37bdafe38ce399a1ff5f6f7cb2116ddad9c546558b03506"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/compile-v2.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-target-v10.json",
+      "bytes": 899,
+      "sha256": "defeb6eb7e5dfadbd2b2e3e6f1d9b49d47868ab44ea023dbdb6e94289fb5da59"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-target-v10.log",
+      "bytes": 12689,
+      "sha256": "9cf147a1870e27e8c88a4cc81c328bab64231dbef6aae6e4658fec9e6fabcf05"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-target-v6.json",
+      "bytes": 898,
+      "sha256": "1a5d5f562053b79f6a6a7c47a74535d4a54517155b0298508e68330af270f466"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-target-v6.log",
+      "bytes": 12325,
+      "sha256": "28b96130e69717edfc95880801554c6b2ba8c8d58f6596caeb0a3908c3523bec"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-target-v7.json",
+      "bytes": 898,
+      "sha256": "34913135929ca35f51674dc4150dfdb493b62bc84726489f03947c1a9628c717"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-target-v7.log",
+      "bytes": 14298,
+      "sha256": "7340e36d43df068bf7fa568575bc9a476235e2c3103915563809fec247e4a979"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-target-v8.json",
+      "bytes": 898,
+      "sha256": "fd5ecde9928139398474c547517a064e4f3447fffc0d2b45c48d0113df7fffb8"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-target-v8.log",
+      "bytes": 13694,
+      "sha256": "8d2eaecdb41a9467d0f4004da8f2cb12a9204299a5e1ae535b294bb08dcb138e"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-target-v9.json",
+      "bytes": 898,
+      "sha256": "5bfbe114b01579211808a1f6f3676062d61046ea91730a26e35a3fd3a8fbfaa2"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/final-target-v9.log",
+      "bytes": 13694,
+      "sha256": "3309eecab81aa4de1d4c5bd72437d6b2b880c8e54b556e738693dfe5f6c9bc2f"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/full-suite-v1.json",
+      "bytes": 565,
+      "sha256": "ae065469b856b5d23d2a0256a5ddaeae51ddc946d689856e35abfe9af01e2909"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/full-suite-v1.log",
+      "bytes": 149902,
+      "sha256": "8af718d858ecded406b23bc84162bcf5cc541017f14315b9cf5ddb5cd51c352f"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/full-suite-v2.json",
+      "bytes": 565,
+      "sha256": "55135f67a7c10e8e65ec344ba1820313312933689fb62dc4fdd88c12a71baf61"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/full-suite-v2.log",
+      "bytes": 149859,
+      "sha256": "aed4c4332518c187f01e0538b35546dec5d5a71a96aed5d47ab7d0b4e40164f6"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/full-suite-v3.json",
+      "bytes": 565,
+      "sha256": "4d5ec5a0029f31f221cc777b3620ed722a8580da9d3ab46f11b38bacdfe55b22"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/full-suite-v3.log",
+      "bytes": 146939,
+      "sha256": "a14b5a8b223d1c16ad6abdbfe8b193872dbf3c5ce6787ba3a9000407e95ef687"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1/approval-recovered-tags.json",
+      "bytes": 4587,
+      "sha256": "baa156fd8fd5ce44340d4b9470630c0722287512f647e437a4ac1c7015745314"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1/cases.json",
+      "bytes": 3866,
+      "sha256": "18fbe731349fd4a28da2176159a70a1a9beb4879bf599025651029543fdcc4f0"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1/cleanup.json",
+      "bytes": 151,
+      "sha256": "69f77deb47ff6075ddfe90c09da729b48b4f582dbdc555e99cdcaddd3b0b5fd7"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1/command.json",
+      "bytes": 490,
+      "sha256": "512d7f2154a4984dd020a310d2fa3147d7efe598ef91701bc6c05bec2cca12fd"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1/concurrent-rejected-tags.json",
+      "bytes": 4587,
+      "sha256": "baa156fd8fd5ce44340d4b9470630c0722287512f647e437a4ac1c7015745314"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1/conflict-rejected-tags.json",
+      "bytes": 4587,
+      "sha256": "baa156fd8fd5ce44340d4b9470630c0722287512f647e437a4ac1c7015745314"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1/hashes.json",
+      "bytes": 2029,
+      "sha256": "953ae2b7c358c9d7230a397981d22ef46c355570f7f6e04156257b903aebe6e1"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1/http.jsonl",
+      "bytes": 47814,
+      "sha256": "daf76497d1f9061d5a8d4afa212ad1f3debb9a0ab034927a618f06a2de142c75"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1/listener-ownership.json",
+      "bytes": 262,
+      "sha256": "f853bdde4e8d58c5295286679889cb8bf1b315071b0db87237146500f521aa0a"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1/partial-approval-tags.json",
+      "bytes": 3892,
+      "sha256": "3cbf8afb8fe085444575b1cdc08929481624cb02d8d1460ded0d35294aa2ea8c"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1/partial-review-tags.json",
+      "bytes": 3219,
+      "sha256": "33a3b94e51af9667bae63f23079a9bdc1dddd2be8f997fae80559635b153fd1d"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1/response-lost-approval-tags.json",
+      "bytes": 4587,
+      "sha256": "baa156fd8fd5ce44340d4b9470630c0722287512f647e437a4ac1c7015745314"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1/response-lost-review-tags.json",
+      "bytes": 3785,
+      "sha256": "79e1a96a19e33a008bca10e83f3edb1f9e6b151205649448e7fc764294773efa"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1/review-recovered-tags.json",
+      "bytes": 3785,
+      "sha256": "79e1a96a19e33a008bca10e83f3edb1f9e6b151205649448e7fc764294773efa"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1/server.log",
+      "bytes": 30329,
+      "sha256": "90e2942d1df8c8fe753a9b6bccb3fd79a6ea92d2e12d02612747616941641715"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1/synthetic-evidence-bundle.json",
+      "bytes": 1528998,
+      "sha256": "33c68bf1cd869e027e71e6325147542ccbe9c71a88269f617a6dc10cd772bce6"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1.json",
+      "bytes": 640,
+      "sha256": "5f22fb9711c42fdbe336b2fb78b48f876a50b37cf1850fb1502215f16f8f0b4d"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/http-v1.log",
+      "bytes": 3855,
+      "sha256": "1976a23f1f66cba00cc118fb2141a6f5ac68c121d0494da464a25001e91a95e3"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/layout-v1.json",
+      "bytes": 495,
+      "sha256": "2a2efc96373910147af96c2326ee8fb31154404d181904122fde76aad2a4db21"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/layout-v1.log",
+      "bytes": 308,
+      "sha256": "b947fa0f02ee75c6dca4b52c05eab6dea6dc7c3f7ce22e36fa6015864e59714f"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/originals.json",
+      "bytes": 37573,
+      "sha256": "69cf96f14e8be4b7b9e2312613ee502c137582d26528757993d26ca3b05a0e89"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/run.py",
+      "bytes": 1029,
+      "sha256": "950bdd279a849a257fbfecf196473b79c5768abcf41cd4f14d1de4613fa6919c"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/signal-v1.json",
+      "bytes": 681,
+      "sha256": "31473f62fd18f6d634aabff1080756148b8a42b090bb7677457e12b0827d8198"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/signal-v1.log",
+      "bytes": 303,
+      "sha256": "30e1193ba3ef00c003087e788b888787daab868fe35a4d20ef8b2098ceb3a70c"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/target-v1.json",
+      "bytes": 719,
+      "sha256": "1e480fe8e9e28ec6608f0791f7e2338b51da5417c9aeb9a033481345b5048dba"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/target-v1.log",
+      "bytes": 6867,
+      "sha256": "6e594a65d94f07ecc4648f96cb54229e9ea4105af2c265184c81b23687c60397"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/target-v2.json",
+      "bytes": 767,
+      "sha256": "b0c4b840bfb798ab7699a5f81fc7110c9446fbac03d7bed873bde389b32cd6a1"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/target-v2.log",
+      "bytes": 10903,
+      "sha256": "083443b718fd29bb80c8f82bc8c7ec574efd137291904bccd42e621df097070c"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/target-v3.json",
+      "bytes": 767,
+      "sha256": "ba17a725341955628d46e32ae1a70bf332f1e1cfe8f77ca0c391920e6cafa224"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/target-v3.log",
+      "bytes": 11349,
+      "sha256": "15115d02a40fee827afe73c74a1264e6bd8108b16cdc5f5b7ae197c14acd3dce"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/target-v4.json",
+      "bytes": 767,
+      "sha256": "fd7a10eceae5ca7d7f25ce0f1d326d48779fe4c3c8c7c23684428e11c2f7d49c"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/target-v4.log",
+      "bytes": 10020,
+      "sha256": "8bddb4c90736eae597c79895b6ea8a91119c1b4ba425c1c7427e73096fab1366"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/target-v5.json",
+      "bytes": 828,
+      "sha256": "573178f15bfcc03cffcda49e4012087b6eb2c5a7d07caf65817c7a74041f9595"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/target-v5.log",
+      "bytes": 11001,
+      "sha256": "174792d6e49d3ae8849f671fc1b59f9e77c8b351322e73c06f44741616123ddf"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/tested-source-v2.json",
+      "bytes": 3937,
+      "sha256": "afc431db52ac9b7c7c4d48e9afe8ca084a9be838058d7cfe132952ae4b2759a1"
+    },
+    {
+      "path": "data/reports/20261115-operational-review/tested-source.json",
+      "bytes": 752,
+      "sha256": "6dc9bee8980c70da6db2e3db1c3a842192bf00f52a17a9c3d36be74b68f3f6c0"
+    }
+  ],
+  "local_http_result": {
+    "cases": {
+      "artifact_transport": "temporary local file, not HTTP",
+      "cases": {
+        "conflicting_decisions": {
+          "concurrent": {
+            "error_type": "RuntimeError",
+            "message": "Another operational evidence recorder holds this model-version lock"
+          },
+          "metadata_unchanged": true,
+          "sequential": {
+            "error_type": "ValueError",
+            "message": "Refusing to overwrite a different decision tag: capital_deployment_approval_reason"
+          }
+        },
+        "lost_approval_response": {
+          "client_outcome": "unknown_until_readback",
+          "failure": {
+            "error_type": "MlflowException",
+            "message": "API request to http://127.0.0.1:45703/api/2.0/mlflow/model-versions/set-tag failed with exception HTTPConnectionPool(host='127.0.0.1', port=45703): Max retries exceeded with url: /api/2.0/mlflow/model-versions/set-tag (Caused by ProtocolError('Connection aborted.', RemoteDisconnected('Remote end closed connection without response')))"
+          },
+          "injected_requests": 1,
+          "readback": "eligible_and_coherent",
+          "recovery": {
+            "approval_sha256": "6897649cbfa984d6ad63bae82042d0951c2bd5b571ec360d9feefe8f88cbbb6a",
+            "deployment_permission": "eligible",
+            "model_version": "2",
+            "operational_gate_status": "passed",
+            "status": "deployment_approved"
+          }
+        },
+        "lost_review_response": {
+          "failure": {
+            "error_type": "MlflowException",
+            "message": "API request to http://127.0.0.1:45703/api/2.0/mlflow/model-versions/set-tag failed with exception HTTPConnectionPool(host='127.0.0.1', port=45703): Max retries exceeded with url: /api/2.0/mlflow/model-versions/set-tag (Caused by ProtocolError('Connection aborted.', RemoteDisconnected('Remote end closed connection without response')))"
+          },
+          "injected_requests": 1,
+          "readback": "passed_but_blocked",
+          "recovery": {
+            "decision": "passed",
+            "deployment_permission": "blocked",
+            "model_version": "2",
+            "operational_gate_status": "passed",
+            "review_sha256": "2cea4119ebf48b4857fa086451b8b8b3deef6211ea8607d8b19f5304c2d4c536",
+            "status": "review_recorded"
+          }
+        },
+        "partial_approval": {
+          "failure": {
+            "error_type": "MlflowException",
+            "message": "API request to http://127.0.0.1:45703/api/2.0/mlflow/model-versions/set-tag failed with exception HTTPConnectionPool(host='127.0.0.1', port=45703): Max retries exceeded with url: /api/2.0/mlflow/model-versions/set-tag (Caused by ResponseError('too many 502 error responses'))"
+          },
+          "injected_requests": 1,
+          "loader_rejection": {
+            "error_type": "ValueError",
+            "message": "Capital model is not eligible for deployment; missing or non-passed gate tags: deployment_permission"
+          }
+        },
+        "partial_review": {
+          "failure": {
+            "error_type": "MlflowException",
+            "message": "API request to http://127.0.0.1:45703/api/2.0/mlflow/model-versions/set-tag failed with exception HTTPConnectionPool(host='127.0.0.1', port=45703): Max retries exceeded with url: /api/2.0/mlflow/model-versions/set-tag (Caused by ResponseError('too many 502 error responses'))"
+          },
+          "injected_requests": 1,
+          "loader_rejection": {
+            "error_type": "ValueError",
+            "message": "Capital model is not eligible for deployment; missing or non-passed gate tags: operational_gate_status, deployment_permission"
+          },
+          "recovery": {
+            "decision": "passed",
+            "deployment_permission": "blocked",
+            "model_version": "2",
+            "operational_gate_status": "passed",
+            "review_sha256": "2cea4119ebf48b4857fa086451b8b8b3deef6211ea8607d8b19f5304c2d4c536",
+            "status": "review_recorded"
+          }
+        }
+      },
+      "decision_time_input": "2026-11-01T00:00:00+00:00",
+      "status": "passed",
+      "synthetic_only": true
+    },
+    "cleanup": {
+      "proxy_stopped": true,
+      "server_group_remaining": [],
+      "server_returncode": 0,
+      "server_stopped": true,
+      "temporary_workspace_removed": true
+    }
+  },
+  "failures_and_limits": [
+    "target-v1: 35 passed. target-v2: 49 with one test-edit error: positive deployment assertion accidentally moved to adverse test; restored.",
+    "target-v3: existing synthetic measurement journal rejected; temporary bytes already cleaned, so cause not retrospectively attributed. Fixture generation clock fixed, rejection preserved.",
+    "full-suite-v1: 620, one deterministic SQLite fixture run_id/eligibility-anchor mismatch. Fixture and HTTP harness now bind the real disposable run_id throughout.",
+    "full-suite-v2 and v3 are intermediate source attempts; do not present them as final-source acceptance.",
+    "final-target-v7: synthetic publisher fixture journal naturally reversed at sequence1934->1935 and correctly rejected. Generation clock fixed only for non-clock fixture; real decision diagnostics remain real.",
+    "final-target-v8/v9: CLI fixture used noncanonical locks directory and failed FileNotFound. Fixture now uses formal operational-locks; product lock refusal unchanged. final-target-v10 passes59.",
+    "Existing recorder unsupported-key check initially also rejected the new four control keys; exact whitelist integration preserves all other unknown-key rejection.",
+    "Initial unwrapped Docker context read exited1: Docker Desktop WSL integration unavailable; no actual-candidate fault attempts started.",
+    "One unwrapped sed read used the wrong cwd and failed; no file mutation.",
+    "Orphan publishing fence before event issuance and torn files remain quarantined; automatic repair not implemented.",
+    "Trusted registry authority and cooperative locks are the boundary; independent protection from an administrator coherently rolling back all head tags is not implemented.",
+    "Passed-in library clients must have single-attempt transport; the shipped CLI enforces zero SDK transport retries.",
+    "Real alias/source migration, actual candidate review issuance and runtime fault evidence remain unperformed.",
+    "No OS/clock/service/task/resync, gate/permission, raw-ledger/consumption, fit/reselection or operational attempt changes.",
+    "Synthetic CI and fixed-clock fixtures are not real-candidate acceptance, production SLO or clock qualification."
+  ]
+}

@@ -1245,6 +1245,36 @@ class CompleteDeploymentEvidenceTests(_capital_deployment_evidence_unittest.Test
             _capital_deployment_evidence_record_operational_review(self.client, "2", "reviewer-a", "passed", "must refuse")
         self.assertEqual(before, self.client.tags)
 
+    def test_old_bundle_and_stale_saved_tags_cannot_bypass_live_eligibility_revocation(self):
+        self.approve()
+        old = dict(self.client.tags)
+        for status in ("on_hold","ineligible"):
+            self.client.tags = dict(old)
+            self.client.tags[registry.ELIGIBILITY_KEYS[0]] = "f"*64
+            self.client.tags[registry.ELIGIBILITY_KEYS[1]] = "1"
+            self.client.tags[registry.ELIGIBILITY_KEYS[2]] = status
+            with self.subTest(status=status):
+                with self.assertRaises(ValueError):evidence.verified_registered_evidence(self.client,"2",old)
+                with self.assertRaises(ValueError):self.check()
+
+    def test_missing_publishing_and_changed_during_download_heads_are_rejected(self):
+        old = dict(self.client.tags)
+        for key in registry.ELIGIBILITY_KEYS:
+            self.client.tags = dict(old);self.client.tags.pop(key)
+            with self.subTest(missing=key),self.assertRaises(ValueError):
+                evidence.verified_registered_evidence(self.client,"2",self.client.tags)
+        self.client.tags = dict(old);self.client.tags[registry.ELIGIBILITY_KEYS[3]]="publishing"
+        with self.assertRaises(ValueError):evidence.verified_registered_evidence(self.client,"2",self.client.tags)
+        self.client.tags = dict(old)
+        download=self.client.download_artifacts
+        def changed(*args):
+            path=download(*args)
+            self.client.tags[registry.ELIGIBILITY_KEYS[0]]="f"*64
+            return path
+        self.client.download_artifacts=changed
+        with self.assertRaisesRegex(ValueError,"changed during"):
+            evidence.verified_registered_evidence(self.client,"2",dict(self.client.tags))
+
     def test_all_bound_tag_mutations_and_invalid_numbers_are_rejected_after_approval(self):
         self.approve()
         original = dict(self.client.tags)
@@ -1519,16 +1549,18 @@ class DeploymentEvidencePublisherTests(_capital_deployment_evidence_publisher_un
             report["operational_gate"]["observed"]["request_id_sha256"] = ids_sha
             report["audit"]["request_id_sha256"] = ids_sha
             self.journal_path = self.final_path.parent / f"operational-{attempt.attempt_id}.requests.jsonl"
-            journal = RequestJournal(self.journal_path, attempt, plan)
-            try:
-                # Fixture preparation does not test disk durability; dedicated interruption tests do.
-                with _capital_deployment_evidence_publisher_patch('bike_mlops.operational.os.fsync'):
-                    for payload, row in zip(journal.schedule, report["measurements"], strict=True):
-                        journal.sending(payload)
-                        journal.outcome(payload, http_status=200, latency_ms=row["latency_ms"], error=None)
-                report["request_journal"] = journal.descriptor()
-            finally:
-                journal.close()
+            from support import FixedJournalClock
+            with _capital_deployment_evidence_publisher_patch('bike_mlops.operational.datetime',FixedJournalClock):
+                journal = RequestJournal(self.journal_path, attempt, plan)
+                try:
+                    # This fixture tests bindings, not real clock/disk durability.
+                    with _capital_deployment_evidence_publisher_patch('bike_mlops.operational.os.fsync'):
+                        for payload, row in zip(journal.schedule, report["measurements"], strict=True):
+                            journal.sending(payload)
+                            journal.outcome(payload, http_status=200, latency_ms=row["latency_ms"], error=None)
+                    report["request_journal"] = journal.descriptor()
+                finally:
+                    journal.close()
             self.report_path = self.final_path.parent / f"operational-{attempt.attempt_id}.json"
             self.report_path.write_bytes(_capital_deployment_evidence_publisher_evidence.canonical_bytes(report))
             attempt.finish(status="completed", report_path=self.report_path)
@@ -1545,6 +1577,17 @@ class DeploymentEvidencePublisherTests(_capital_deployment_evidence_publisher_un
             self.paths[category] = path
         self.verified = {"selection_report_path": self.selection_path, "final_report_path": self.final_path,
                          "selection": selection, "final": _capital_deployment_evidence_publisher_evidence.unpack(bundle["reports"]["final"])}
+        from support import eligibility_fixture
+        synthetic = eligibility_fixture(plan, report, self.plan_path.read_bytes(), self.report_path.read_bytes(), self.journal_path.read_bytes())
+        consumption = self.root / "data/evaluations/consumption-ledger.json"
+        consumption.write_text(synthetic["events"][0]["anchor"]["sources"]["consumption"]["content"])
+        for key in registry.ELIGIBILITY_KEYS:
+            self.client.tags.pop(key, None)
+        self.eligibility_store = registry.EligibilityReviewStore(self.root, self.cid, self.attempt_id,
+            lock_relative=self.lock_dir.relative_to(self.root).as_posix())
+        self.eligibility_store.publish(self.client, expected_head=None, reviewer="synthetic-fixture",
+            reason="Initialize empty synthetic eligibility history", reviewed_at_utc="2024-02-01T01:00:00+00:00",
+            source_commit="a"*40, disposition="no_adverse_review", defect_code="synthetic_initialization")
 
     def publish(self):
         with (_capital_deployment_evidence_publisher_patch.dict(_capital_deployment_evidence_publisher_os.environ, {"MLFLOW_TRACKING_URI": "http://127.0.0.1:5001",
@@ -1565,6 +1608,16 @@ class DeploymentEvidencePublisherTests(_capital_deployment_evidence_publisher_un
         _capital_deployment_evidence_publisher_record_deployment_approval(self.client, "2", "synthetic-approver", "fixture")
         _capital_deployment_evidence_publisher_require_deployment_eligible("capital-bikeshare", self.client.tags,
             model_name=_capital_deployment_evidence_publisher_evidence.MODEL, model_version="2", client=self.client)
+
+    def test_adverse_review_blocks_publisher_before_any_upload_and_keeps_originals(self):
+        before={p:p.read_bytes() for p in (self.report_path,self.journal_path,self.plan_path,self.ledger_path)}
+        head=self.client.tags[registry.ELIGIBILITY_KEYS[0]]
+        self.eligibility_store.publish(self.client,expected_head=head,reviewer="synthetic-reviewer",reason="Reject isolated fixture",
+            reviewed_at_utc="2024-02-02T00:00:00+00:00",source_commit="a"*40,disposition="ineligible",defect_code="synthetic_failure")
+        with _capital_deployment_evidence_publisher_patch.object(self.client,"log_artifact") as upload:
+            with self.assertRaisesRegex(ValueError,"on hold or ineligible"):self.publish()
+            upload.assert_not_called()
+        self.assertEqual(before,{p:p.read_bytes() for p in before})
 
     def test_missing_or_torn_journal_is_rejected_before_upload(self):
         original = self.journal_path.read_bytes()
@@ -1629,8 +1682,7 @@ class IsolatedMlflowDeploymentEvidenceTests(_capital_deployment_evidence_publish
             client.create_model_version(_capital_deployment_evidence_publisher_evidence.MODEL, str(source), run_id=run_id)
             version = client.create_model_version(_capital_deployment_evidence_publisher_evidence.MODEL, str(source), run_id=run_id)
             self.assertEqual(str(version.version), "2")
-            tags, bundle, _ = _capital_deployment_evidence_publisher_fixture()
-            bundle["identity"]["run_id"] = run_id
+            tags, bundle, _ = _capital_deployment_evidence_publisher_fixture(run_id=run_id)
             body = _capital_deployment_evidence_publisher_evidence.canonical_bytes(bundle)
             refs = _capital_deployment_evidence_publisher_evidence.reference_tags(body, run_id)
             tags.update(refs)

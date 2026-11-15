@@ -16,6 +16,7 @@
 - [実候補の保存済み予測を使う監視診断（2026-11-14）](#capital-offline-monitoring)
 - [Capital実候補の隔離runtime受入（2026-11-14）](#capital-runtime-acceptance)
 - [実候補の運用測定保留と部分復元（2026-11-14）](#capital-operational-hold)
+- [completed試行の追記専用reviewと適格性head（2026-11-15）](#operational-eligibility-review-20261115)
 - [次のSol作業：同じ実候補の隔離runtime/producer受入](#capital-runtime-handoff)
 - [T13a: 合成証拠を使うMLflow HTTP決定の障害受入](#capital-decision-http)
 - [Capital配信証拠の束ね方と検証](#capital-deployment-evidence)
@@ -1198,6 +1199,8 @@ report/journal/plan/運用台帳のbytesは不変。raw completedは実行履歴
 
 ### completed試行の事後不適格review：設計済み、writer未実装
 
+この小節は設計時点の記録。後続の[隔離実装と適用範囲](#operational-eligibility-review-20261115)を参照。
+
 **今回実施したのは契約設計。台帳を無効化/reopenするCLIや、新attempt開始許可は未実装・未実行。**
 実行状態（completed等）と証拠の適格性を分け、後者を別の追記専用review系列へ保存する。
 raw ledger/report/journal/planを変更せず、completedをfailedへ書換えない。
@@ -1239,6 +1242,59 @@ raw ledger/report/journal/planを変更せず、completedをfailedへ書換え�
 
 この契約はwriterと全consumerを揃えて隔離検証するまで適用しない。
 現状を無効化済み、review済み再実行可、又は新規head公開済みと呼ばない。
+
+<a id="operational-eligibility-review-20261115"></a>
+
+### 2026-11-15：completed試行の追記専用reviewと適格性head
+
+[検証索引](reviews/20261115-operational-review-checks.json)とwork_logへ全試行を保存する。
+`EligibilityReviewStore`をoperational_validation.pyに実装。実台帳/registryへは適用せず、
+一時directory/FakeRegistryと合成CIで検証する。再測定・新attempt・台帳reopenは機能に含めない。
+
+- 正式sourceのledger/plan/report/journal/消費台帳をbounded readし、原本SHA、candidate/attempt/model版/
+  登録artifact/profile/target、対象record/attemptのcanonical SHAを結合する。元ledger/消費台帳の原本bytesは
+  immutableなanchorへ保存。現在の対象recordは不変を要求し、他candidateのledger追記や既存消費recordを保つappendは許容する。
+  正式消費台帳には同protocol/model artifactのvalidation/final双方のcompleted記録が必要。
+- 初期状態は明示的な`no_adverse_review`（不適格review未登録）。**品質合格・人の承認ではない。**
+  journalの全UTC/schedule/hash/1050応答と数値を検算できなければこの初期化を拒否する。
+  既にjournalが不正なcompletedにも、最初から`ineligible`又は`on_hold`を記録できる。
+  初期化後は悪い方向のreviewだけ追記でき、ineligibleは後のon_holdでも取り消せない。
+- 保存先は設計と同じcandidate/attempt別directory。eventは`<8桁revision>-<SHA>.json`、
+  publicationは`intent-<revision>.json`と`receipt-<revision>.json`。全てO_EXCL/0600/file・directory fsync。
+  candidate/運用台帳/version/系列の協調lockを使う。親を含むsymlink、FIFO、未知file、fork、欠番、
+  欠落receipt、過大history、不正/重複JSON、元source差替え、他candidate、未来reviewを拒否する。
+- **公開順序を設計から補強:** 原本/metadataを検証後、registryの`publication=publishing`を読戻し確認して
+  online承認を止めてからintent/eventを保存する。その後head/revision/statusを記録し、committedを最後に書く。
+  その読戻し後だけlocal receiptを新規作成する。原本・operational gate・deployment permissionは書換えない。
+  fence後のdisk失敗でもregistryはpublishingで停止し、新しい不適格recordをclean headの裏へ発行しない。
+- 通信失敗/中断を成功へ読み替えず、自動retryしない。intent/eventが揃った途中公開は、exact headを指定した
+  `resume`だけで再照合する。committed応答だけ失った場合はheadを再公開せずreceiptだけ保存する。
+  同じ完了headのresumeはread-only。同値requestのpublish再提出で新revisionを作らない。
+  **fenceだけ成功してevent未作成、torn event、複数不完全publicationは自動修復しない。**
+  publishingのまま保全し、別途明示的な照合/回復契約が必要。最初のfence RPCが未受理ならreviewは未発行であり、
+  古い正常headの失効が完了したとは報告しない。
+- recorder/publisherはlocal系列が欠落/不完全/不適格なら拒否。registryのexact version/run/identityと
+  committed headを照合し、記録の前後にも確認する。配信bundleは**schema/policy v2とraw journal必須を維持**し、
+  新policy SHAで`reports.eligibility`と4つのhead tagを必須化。古いv2の無review bundleを新承認へ流用しない。
+  受信側は全系列・原本snapshot・report/plan/journal SHAを検算し、onlineはlive headをartifact取得前後で確認する。
+- offline bundle検算、数値recheck、T16 archiveだけではhead最新性を証明しない。
+  出力は`not_proven_offline_requires_live_registry`又は`not_verified...`で、gateはnot_evaluated/配信blockedを保持。
+  local recheckは履歴なしでも数値診断を残すが、履歴が存在して不適格/不完全なら拒否する。
+  `inspect`も適格性が未確認であることを表示する。これらの診断をproducer証拠・承認へ変換しない。
+
+CLIは`runtime_tools.py eligibility-review`。`--inspect`は読取のみ、変更は`--publish-review`と
+candidate/attempt/reviewer/reason/source commit/dispositionを明示する。`--resume`も明示操作。
+CLIでは当該操作だけHTTP transport retry0/要求timeout15秒とし、process環境を元へ戻す。
+独自clientをlibraryへ渡す場合はsingle-attempt transportを呼出側で用意する。全体hard deadlineの保証ではない。
+今回の実candidateに対する発行・初期化・復旧は承認していない。
+合成system harnessだけが、固定の測定完了後に合成用の空履歴を明示的に作り、同じconsumerを通す。
+
+信頼境界：ローカルhashとregistry headは本人認証・外部署名・外部公証ではない。
+協調writerによる旧head再提出や、live値と異なる古いtag/bundleは拒否する。
+registry管理権限で全control tagを整合した旧値へ巻き戻す攻撃を、遠隔consumerが独立に検出する保証はない。
+独立したrollback防止anchorを導入していないことを明示する。稼働中modelの自動evict/traffic停止も行わない。
+既存専用projectの旧sourceやsymlink入力aliasへ自動適用せず、実適用時にはsource revision・正式path・全historyを再照合する。
+caseごとの実producer証拠、警告の人によるリスク受容、最終採否は未達のまま。
 
 ### 実monitorの理由付き警告review
 

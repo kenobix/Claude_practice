@@ -29,7 +29,7 @@ Python import・テストの参照・CLI/Compose/CIを新配置へ更新した�
 | 補助CLI | コマンド |
 |---|---|
 | `python scripts/data_tools.py` | `prepare`, `protocol`, `evaluate`, `evaluation-ledger` |
-| `python scripts/runtime_tools.py` | `register`, `seed`, `plan`, `benchmark`, `recheck`, `record-operational`, `evidence`, `decision`, `inspect`, `pending-audit`, `attempt-ledger` |
+| `python scripts/runtime_tools.py` | `register`, `seed`, `plan`, `benchmark`, `recheck`, `record-operational`, `evidence`, `decision`, `inspect`, `pending-audit`, `attempt-ledger`, `eligibility-review` |
 | `python scripts/clock_tools.py` | `capture-fake`, `derive`, `review`, `rate-review`, `bundle`, `diagnose` |
 | `python scripts/system_harness.py` | `run`, `fixture` |
 | `python scripts/storage_checks.py` | `snapshot`, `interruption`, `monitor-inspection`, `monitor-persistence`, `migration`, `sqlite-os`, `storage-probe` |

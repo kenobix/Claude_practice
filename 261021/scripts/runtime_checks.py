@@ -206,8 +206,7 @@ def exercise(root, output, client, proxy):
     source.mkdir(parents=True)
     for _ in range(2):
         client.create_model_version(evidence.MODEL, str(source), run_id=run_id)
-    tags, bundle, _ = fixture()
-    bundle["identity"]["run_id"] = run_id
+    tags, bundle, _ = fixture(run_id=run_id)
     body = evidence.canonical_bytes(bundle)
     (output / "synthetic-evidence-bundle.json").write_bytes(body)
     refs = evidence.reference_tags(body, run_id)

@@ -788,14 +788,16 @@ class MeasurementRecheckTests(_capital_measurement_recheck_unittest.TestCase):
                 row["request_id"] = row["request_id"].replace(self.attempt_id, lease.attempt_id)
             report["operational_gate"]["observed"]["request_id_sha256"] = _capital_measurement_recheck_hashlib.sha256(
                 "\n".join(row["request_id"] for row in report["measurements"]).encode()).hexdigest()
-            journal = RequestJournal(self.fixture.report_dir / f"operational-{lease.attempt_id}.requests.jsonl", lease, self.plan)
-            try:
-                for payload, row in zip(journal.schedule, report["measurements"], strict=True):
-                    journal.sending(payload)
-                    journal.outcome(payload, http_status=200, latency_ms=row["latency_ms"], error=None)
-                report["request_journal"] = journal.descriptor()
-            finally:
-                journal.close()
+            from support import FixedJournalClock
+            with _capital_measurement_recheck_patch("bike_mlops.operational.datetime",FixedJournalClock):
+                journal = RequestJournal(self.fixture.report_dir / f"operational-{lease.attempt_id}.requests.jsonl", lease, self.plan)
+                try:
+                    for payload, row in zip(journal.schedule, report["measurements"], strict=True):
+                        journal.sending(payload)
+                        journal.outcome(payload, http_status=200, latency_ms=row["latency_ms"], error=None)
+                    report["request_journal"] = journal.descriptor()
+                finally:
+                    journal.close()
             path = self.fixture.report_dir / f"operational-{lease.attempt_id}.json"
             path.write_text(_capital_measurement_recheck_json.dumps(report))
             lease.finish(status="completed", report_path=path)
@@ -988,6 +990,7 @@ class CapitalOperationalRegistryEvidenceTests(_capital_operational_registry_unit
         class Client:
             def __init__(self):
                 self.tags = {"operational_gate_status": "not_evaluated", "deployment_permission": "blocked"}
+                self.tags.update(dict(zip(registry.ELIGIBILITY_KEYS,("e"*64,"0","no_adverse_review","committed"))))
                 self.writes = []
 
             def get_model_version(self, _name, version):
@@ -1007,6 +1010,10 @@ class CapitalOperationalRegistryEvidenceTests(_capital_operational_registry_unit
         self.assertEqual(len(client.writes), write_count)
         self.assertEqual(client.tags["operational_gate_status"], "not_evaluated")
         self.assertEqual(client.tags["deployment_permission"], "blocked")
+        self.assertEqual(client.tags[registry.ELIGIBILITY_KEYS[0]],"e"*64)
+        client.tags["capital_operational_unsupported"]="synthetic-unknown"
+        with self.assertRaisesRegex(ValueError,"unsupported"):
+            _write_operational_evidence_tags(client,"1",tags)
 
     def test_version_tag_write_refuses_different_attempt_without_overwriting(self):
         class Client:
@@ -1823,6 +1830,389 @@ class CapitalMeasurementEvidenceTests(_capital_measurement_evidence_unittest.Tes
         self._write_archive(self._rebind_report(report))
         with self.assertRaises(ValueError):
             verify_archive_process(self.archive)
+
+
+# ========================================================================
+# operational_eligibility_review
+# ========================================================================
+
+class OperationalEligibilityReviewTests(unittest.TestCase):
+    def setUp(self):
+        from types import SimpleNamespace
+        from support import eligibility_fixture
+        self.recheck = MeasurementRecheckTests(methodName="runTest")
+        self.recheck.setUp()
+        self.addCleanup(self.recheck.doCleanups)
+        self.fixture = self.recheck.fixture
+        self.fixture.ledger_path = self.fixture.root / "data/evaluations/capital-bikeshare/operational-attempts.json"
+        self.fixture.lock_dir = self.fixture.root / "data/evaluations/capital-bikeshare/operational-locks"
+        with patch("bike_mlops.operational.os.fsync"):
+            self.args, self.report_path, self.journal_path = self.recheck.completed_measurement_fixture()
+        self.plan = self.fixture.plan
+        self.report = json.loads(self.report_path.read_bytes())
+        capsule = eligibility_fixture(self.plan, self.report, self.fixture.plan_path.read_bytes(),
+            self.report_path.read_bytes(), self.journal_path.read_bytes())
+        self.consumption = self.fixture.root / "data/evaluations/consumption-ledger.json"
+        self.consumption.write_text(capsule["events"][0]["anchor"]["sources"]["consumption"]["content"])
+        identity = self.plan["identity"]
+        class Client:
+            def __init__(client):
+                client.tags = {"candidate_id":identity["candidate_id"], "candidate_model_sha256":identity["candidate_artifact_sha256"],
+                    "artifact_sha256":identity["registered_artifact_sha256"], "data_profile_id":identity["data_profile_id"],
+                    "target_contract_id":identity["target_contract_id"], "feature_contract_version":identity["feature_contract_version"],
+                    "deployment_permission":"blocked", "operational_gate_status":"not_evaluated"}
+                client.writes = []
+                client.fail_after = None
+                client.mutate = None
+            def get_model_version(client, name, version):
+                if client.mutate:
+                    effect, client.mutate = client.mutate, None
+                    effect()
+                return SimpleNamespace(name=name, version=str(version), status="READY", run_id="synthetic-run", tags=dict(client.tags))
+            def set_model_version_tag(client, name, version, key, value):
+                client.writes.append((key,value))
+                client.tags[key] = value
+                if client.fail_after == (key,value):
+                    client.fail_after = None
+                    raise RuntimeError("hidden private detail must not escape")
+        self.client = Client()
+        self.store = registry.EligibilityReviewStore(self.fixture.root, self.fixture.candidate, self.args["attempt_id"],
+            lock_relative=self.fixture.lock_dir.relative_to(self.fixture.root).as_posix())
+        self.directory = self.fixture.root / self.store.relative
+        self.originals = {p:p.read_bytes() for p in (self.fixture.ledger_path,self.fixture.plan_path,self.report_path,self.journal_path,self.consumption)}
+
+    def publish(self, disposition="no_adverse_review", expected_head=None, **updates):
+        args = dict(expected_head=expected_head, reviewer="synthetic-reviewer", reason="Isolated eligibility contract verification",
+            reviewed_at_utc="2024-02-02T00:00:00+00:00", source_commit="a"*40, disposition=disposition, defect_code="synthetic_case")
+        args.update(updates)
+        return self.store.publish(self.client, **args)
+
+    def require(self, capsule, **kw):
+        return registry.require_eligibility_capsule(capsule,self.plan,self.report,
+            hashlib.sha256(self.fixture.plan_path.read_bytes()).hexdigest(),hashlib.sha256(self.report_path.read_bytes()).hexdigest(),**kw)
+
+    def test_initialize_append_sticky_ineligible_preserves_every_original_and_attempt(self):
+        first = self.publish()
+        self.require(first, tags=self.client.tags, run_id="synthetic-run")
+        before = {p:p.read_bytes() for p in self.directory.iterdir()}
+        second = self.publish("ineligible", first["events"][-1]["sha256"])
+        third = self.publish("on_hold",second["events"][-1]["sha256"])
+        self.assertEqual(registry.eligibility_head(third)[registry.ELIGIBILITY_KEYS[2]],"ineligible")
+        self.assertEqual(third,self.store.read())
+        self.assertEqual(before,{p:p.read_bytes() for p in before})
+        self.assertEqual(self.originals,{p:p.read_bytes() for p in self.originals})
+        with self.assertRaisesRegex(ValueError,"on hold or ineligible"):
+            self.require(third,tags=self.client.tags)
+        state = json.loads(self.fixture.ledger_path.read_bytes())
+        self.assertEqual(state["records"][0]["status"],"completed")
+        self.assertEqual(len(state["records"][0]["attempts"]),1)
+        self.assertEqual(self.client.tags["deployment_permission"],"blocked")
+        with self.assertRaises(ValueError):
+            with self.fixture.attempt(): pass
+
+    def test_adverse_initialization_can_describe_an_already_bad_utc_journal(self):
+        from bike_mlops.operational import _hash
+        events=[json.loads(line) for line in self.journal_path.read_bytes().splitlines()]
+        previous=None
+        for i,event in enumerate(events):
+            event.pop("event_sha256")
+            event["recorded_at_utc"]="2024-01-01T00:00:00Z" if i==941 else "2024-01-01T00:00:00.000001Z"
+            event["previous_sha256"]=previous
+            previous=event["event_sha256"]=_hash(event)
+        self.journal_path.write_bytes(b"".join((json.dumps(e)+"\n").encode() for e in events))
+        self.report["request_journal"]["sha256"]=hashlib.sha256(self.journal_path.read_bytes()).hexdigest()
+        self.report_path.write_text(json.dumps(self.report))
+        state=json.loads(self.fixture.ledger_path.read_bytes())
+        state["records"][0]["attempts"][0]["report"]["sha256"]=hashlib.sha256(self.report_path.read_bytes()).hexdigest()
+        self.fixture.ledger_path.write_text(json.dumps(state))
+        with self.assertRaisesRegex(ValueError,"UTC order"):
+            self.publish()
+        result=self.publish("ineligible")
+        self.assertEqual(registry.eligibility_head(result)[registry.ELIGIBILITY_KEYS[2]],"ineligible")
+
+    def test_stale_expected_head_missing_history_and_positive_override_refused(self):
+        with self.assertRaises((OSError,ValueError)):
+            self.store.read()
+        first=self.publish()
+        before={p:p.read_bytes() for p in self.directory.iterdir()}
+        for disposition,head in (("ineligible","0"*64),("no_adverse_review",first["events"][0]["sha256"]),("passed",first["events"][0]["sha256"])):
+            with self.subTest(disposition=disposition,head=head), self.assertRaises(ValueError):
+                self.publish(disposition,head)
+        self.assertEqual(before,{p:p.read_bytes() for p in self.directory.iterdir()})
+
+    def test_future_unknown_fields_invalid_identity_and_secret_references_refused(self):
+        for update in ({"reviewed_at_utc":"2999-01-01T00:00:00+00:00"},{"reviewed_at_utc":"2024-01-01T00:00:00"},
+                       {"reviewer":" "},{"source_commit":"wrong"},{"reason":"https://private.invalid/path"},
+                       {"references":[{"path":"../.env","sha256":"a"*64,"bytes":1}]}):
+            with self.subTest(update=update), self.assertRaises(ValueError):
+                self.publish(**update)
+        self.assertEqual(self.client.writes,[])
+        self.assertFalse(list(self.directory.glob("*.json")))
+        self.client.tags["candidate_id"]="f"*64
+        with self.assertRaisesRegex(ValueError,"identity"):
+            self.publish()
+
+    def test_raw_source_changes_and_deletion_refused_without_rewriting_review(self):
+        self.publish()
+        before={p:p.read_bytes() for p in self.directory.iterdir()}
+        for path,original in self.originals.items():
+            with self.subTest(path=path.name):
+                path.write_bytes(original+b" ")
+                # Whole ledger can change only by a valid logical append; plain
+                # whitespace preserves its bound target record and is harmless.
+                if path not in {self.fixture.ledger_path,self.consumption}:
+                    with self.assertRaises(ValueError): self.store.read()
+                path.write_bytes(original)
+                path.unlink()
+                with self.assertRaises((OSError,ValueError)): self.store.read()
+                path.write_bytes(original)
+        self.assertEqual(before,{p:p.read_bytes() for p in self.directory.iterdir()})
+
+    def test_legitimate_other_candidate_ledger_append_keeps_historical_snapshot(self):
+        first=self.publish()
+        state=json.loads(self.fixture.ledger_path.read_bytes())
+        state["records"].append({"candidate_id":"f"*64,"status":"completed","attempts":[],"reviews":[]})
+        self.fixture.ledger_path.write_text(json.dumps(state))
+        consumed=json.loads(self.consumption.read_bytes());consumed["records"].append({"purpose":"unrelated_fixture"})
+        self.consumption.write_text(json.dumps(consumed))
+        self.assertEqual(first,self.store.read())
+        consumed["records"][0]["status"]="unused"
+        self.consumption.write_text(json.dumps(consumed))
+        with self.assertRaisesRegex(ValueError,"consumption history changed"):
+            self.store.read()
+
+    def test_fork_unknown_file_receipt_gap_and_symlink_are_rejected(self):
+        first=self.publish()
+        event=next(self.directory.glob("00000000-*.json"));receipt=self.directory/"receipt-00000000.json"
+        raw=receipt.read_bytes()
+        receipt.unlink()
+        with self.assertRaisesRegex(ValueError,"incomplete"): self.store.read()
+        receipt.write_bytes(raw)
+        extra=self.directory/"unexpected.json";extra.write_text("{}")
+        with self.assertRaisesRegex(ValueError,"unknown"): self.store.read()
+        extra.unlink()
+        fork=self.directory/("00000000-"+"0"*64+".json");fork.write_bytes(event.read_bytes())
+        with self.assertRaises(ValueError):self.store.read()
+        fork.unlink()
+        event_raw=event.read_bytes();event.unlink();event.symlink_to(self.report_path)
+        with self.assertRaises(OSError):self.store.read()
+        event.unlink();event.write_bytes(event_raw)
+        self.assertEqual(first,self.store.read())
+
+    def test_parent_symlink_and_fifo_never_followed(self):
+        base=self.fixture.root/"data/evaluations/capital-bikeshare/operational-reviews"
+        outside=self.fixture.root/"outside";outside.mkdir()
+        base.symlink_to(outside,target_is_directory=True)
+        with self.assertRaises(OSError):self.publish()
+        self.assertEqual(list(outside.iterdir()),[])
+        base.unlink()
+        raw=self.journal_path.read_bytes();self.journal_path.unlink();os.mkfifo(self.journal_path)
+        with self.assertRaisesRegex(ValueError,"regular"):self.publish("ineligible")
+        self.journal_path.unlink();self.journal_path.write_bytes(raw)
+
+    def test_cooperative_candidate_lock_rejects_competing_review(self):
+        from bike_mlops import operational as ledger
+        with ledger._exclusive_lock(self.fixture.lock_dir/f"{self.fixture.candidate}.lock"):
+            with self.assertRaises(BlockingIOError):self.publish()
+        self.assertEqual(self.client.writes,[])
+
+    def test_registry_partial_publication_retained_and_explicit_resume_is_idempotent(self):
+        first=self.publish()
+        self.client.fail_after=(registry.ELIGIBILITY_KEYS[2],"ineligible")
+        with self.assertRaisesRegex(RuntimeError,"incomplete") as caught:
+            self.publish("ineligible",first["events"][0]["sha256"])
+        self.assertNotIn("private",str(caught.exception))
+        with self.assertRaises(ValueError):self.store.read()
+        with self.assertRaises(ValueError):self.require(first,tags=self.client.tags)
+        event=json.loads(next(self.directory.glob("00000001-*.json")).read_bytes())
+        new=self.store.resume(self.client,expected_head=event["sha256"])
+        with self.assertRaisesRegex(ValueError,"ineligible"):self.require(new,tags=self.client.tags)
+        before={p:p.read_bytes() for p in self.directory.iterdir()};writes=len(self.client.writes)
+        self.assertEqual(new,self.store.resume(self.client,expected_head=event["sha256"]))
+        self.assertEqual(writes,len(self.client.writes));self.assertEqual(before,{p:p.read_bytes() for p in before})
+
+    def test_lost_commit_reply_preserves_review_and_resume_adds_only_receipt(self):
+        first=self.publish()
+        self.client.fail_after=(registry.ELIGIBILITY_KEYS[3],"committed")
+        with self.assertRaises(RuntimeError):self.publish("on_hold",first["events"][0]["sha256"])
+        event=json.loads(next(self.directory.glob("00000001-*.json")).read_bytes())
+        writes=len(self.client.writes)
+        self.store.resume(self.client,expected_head=event["sha256"])
+        self.assertEqual(writes,len(self.client.writes))
+        self.assertEqual(self.originals,{p:p.read_bytes() for p in self.originals})
+
+    def test_fence_response_loss_stays_blocked_without_issuing_a_record(self):
+        self.client.fail_after=(registry.ELIGIBILITY_KEYS[3],"publishing")
+        with self.assertRaisesRegex(RuntimeError,"fence unconfirmed"):self.publish()
+        self.assertEqual(self.client.tags[registry.ELIGIBILITY_KEYS[3]],"publishing")
+        self.assertFalse(list(self.directory.glob("*.json")))
+        with self.assertRaises(ValueError):self.publish()
+
+    def test_disk_failure_after_fence_is_retained_and_cannot_be_misread_as_clean(self):
+        self.publish()
+        head=self.client.tags[registry.ELIGIBILITY_KEYS[0]]
+        with patch.object(registry,"_elig_write",side_effect=OSError("synthetic disk failure")):
+            with self.assertRaises(OSError):self.publish("ineligible",head)
+        self.assertEqual(self.client.tags[registry.ELIGIBILITY_KEYS[3]],"publishing")
+        with self.assertRaises(ValueError):self.require(self.store.read(),tags=self.client.tags)
+        self.assertEqual(self.originals,{p:p.read_bytes() for p in self.originals})
+
+    def test_interrupt_after_record_keeps_intent_and_explicit_recovery(self):
+        first=self.publish()
+        original=self.client.set_model_version_tag
+        def interrupted(name,version,key,value):
+            if key==registry.ELIGIBILITY_KEYS[0]:raise KeyboardInterrupt("synthetic interrupt")
+            return original(name,version,key,value)
+        with patch.object(self.client,"set_model_version_tag",side_effect=interrupted):
+            with self.assertRaises(KeyboardInterrupt):self.publish("on_hold",first["events"][0]["sha256"])
+        event=json.loads(next(self.directory.glob("00000001-*.json")).read_bytes())
+        with self.assertRaises(ValueError):self.store.read()
+        self.assertTrue((self.directory/"intent-00000001.json").is_file())
+        self.store.resume(self.client,expected_head=event["sha256"])
+        self.assertEqual(self.store.read()["events"][-1]["sha256"],event["sha256"])
+
+    def test_real_sigterm_and_sigkill_retain_publication_and_release_owned_locks(self):
+        import signal,time
+        first=self.publish()
+        child_code = '''
+import json,sys,time
+from pathlib import Path
+from types import SimpleNamespace
+from bike_mlops.operational_validation import EligibilityReviewStore,ELIGIBILITY_KEYS
+x=json.loads(Path(sys.argv[1]).read_text())
+class Client:
+ def __init__(self): self.tags=x['tags']
+ def get_model_version(self,name,version): return SimpleNamespace(name=name,version=str(version),status='READY',run_id='synthetic-run',tags=dict(self.tags))
+ def set_model_version_tag(self,name,version,key,value):
+  self.tags[key]=value
+  Path(x['state']).write_text(json.dumps(self.tags))
+  if key==ELIGIBILITY_KEYS[0]:
+   Path(x['ready']).write_text(value)
+   time.sleep(60)
+s=EligibilityReviewStore(Path(x['root']),x['candidate'],x['attempt'],lock_relative=x['locks'])
+s.publish(Client(),expected_head=x['head'],reviewer='synthetic-child',reason='Process interruption fixture',
+ reviewed_at_utc='2024-02-02T00:00:00+00:00',source_commit='a'*40,disposition='ineligible',defect_code='synthetic_signal')
+'''
+        for sig in (signal.SIGTERM,signal.SIGKILL):
+            with self.subTest(signal=sig):
+                ready=self.fixture.root/(sig.name+"-ready")
+                state=self.fixture.root/(sig.name+"-state.json")
+                spec=self.fixture.root/(sig.name+"-spec.json")
+                spec.write_text(json.dumps({"root":str(self.fixture.root),"candidate":self.fixture.candidate,
+                    "attempt":self.args["attempt_id"],"locks":self.fixture.lock_dir.relative_to(self.fixture.root).as_posix(),
+                    "head":first["events"][-1]["sha256"],"tags":self.client.tags,"state":str(state),"ready":str(ready)}))
+                process=subprocess.Popen([sys.executable,"-c",child_code,str(spec)],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+                try:
+                    deadline=time.monotonic()+20
+                    while not ready.exists() and process.poll() is None and time.monotonic()<deadline:
+                        time.sleep(.05)
+                    self.assertTrue(ready.exists(),"child did not reach retained review publication")
+                    process.send_signal(sig)
+                    stdout,stderr=process.communicate(timeout=10)
+                    self.assertEqual(process.returncode,-int(sig),(stdout,stderr))
+                    self.client.tags=json.loads(state.read_text())
+                    with self.assertRaises(ValueError):self.store.read()
+                    with self.assertRaises(ValueError):self.require(first,tags=self.client.tags)
+                    first=self.store.resume(self.client,expected_head=ready.read_text())
+                    self.assertEqual(first,self.store.read())
+                    self.assertEqual(self.originals,{p:p.read_bytes() for p in self.originals})
+                finally:
+                    if process.poll() is None:process.kill();process.communicate(timeout=10)
+
+    def test_portable_malformed_or_rehashed_history_cannot_use_the_live_head(self):
+        import copy
+        first=self.publish()
+        for change in ("hash","receipt","gap","anchor","duplicate","shape","secret"):
+            body=copy.deepcopy(first)
+            if change=="hash":body["events"][0]["reason"]="changed"
+            if change=="receipt":body["receipts"][0]["schema_version"]=True
+            if change=="gap":body["events"][0]["revision"]=1
+            if change=="anchor":body["events"][0]["anchor"]["identity"]["candidate_id"]="f"*64
+            if change=="duplicate":body["events"].append(body["events"][0])
+            if change=="shape":body["events"][0]=42
+            if change=="secret":body["events"][0]["reason"]="postgresql://user:secret@private.invalid/db"
+            with self.subTest(change=change),self.assertRaises(ValueError):self.require(body,tags=self.client.tags)
+        body=copy.deepcopy(first)
+        event=body["events"][0];event["reason"]="rehashed different history";event.pop("sha256")
+        event["sha256"]=registry._elig_sha(registry._elig_bytes(event))
+        body["receipts"][0]["head_sha256"]=event["sha256"]
+        with self.assertRaisesRegex(ValueError,"registry head"):self.require(body,tags=self.client.tags)
+
+    def test_local_consumers_reject_adverse_or_missing_history_and_no_tag_writes(self):
+        with (patch.object(registry,"PROJECT_ROOT",self.fixture.root),
+              patch.object(registry,"_operational_registry_PROJECT_ROOT",self.fixture.root),
+              patch.object(registry,"DATA_PROFILE_ID","capital-bikeshare"),
+              patch.object(registry,"MODEL_NAME","bike-demand-capital"),
+              patch.object(_capital_measurement_recheck_ledger,"DEFAULT_LEDGER",self.fixture.ledger_path),
+              patch.object(_capital_measurement_recheck_ledger,"DEFAULT_LOCK_DIR",self.fixture.lock_dir),
+              patch("mlflow.tracking.MlflowClient") as client):
+            with self.assertRaises(FileNotFoundError):
+                registry.record_completed_operational_evidence(self.fixture.candidate,self.args["attempt_id"])
+            first=self.publish()
+            self.publish("on_hold",first["events"][0]["sha256"])
+            with self.assertRaisesRegex(ValueError,"on hold"):
+                recheck_linked_measurement(**self.args)
+            with self.assertRaisesRegex(ValueError,"on hold"):
+                registry.record_completed_operational_evidence(self.fixture.candidate,self.args["attempt_id"])
+            client.assert_not_called()
+
+    def test_cli_inspection_is_read_only_and_publication_requires_explicit_metadata(self):
+        from bike_mlops import config
+        script=Path(__file__).resolve().parents[1]/"scripts/runtime_tools.py"
+        spec=importlib.util.spec_from_file_location("eligibility_cli_test",script)
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        first=self.publish()
+        files={p:p.read_bytes() for p in self.directory.iterdir()}
+        base=["eligibility-review","--candidate-id",self.fixture.candidate,"--attempt-id",self.args["attempt_id"]]
+        with (patch.object(config,"PROJECT_ROOT",self.fixture.root),patch.object(config,"DATA_PROFILE_ID","capital-bikeshare"),
+              patch("mlflow.tracking.MlflowClient") as client):
+            with patch.object(sys,"argv",base+["--inspect"]),redirect_stdout(io.StringIO()) as output:
+                module._entry_eligibility_review()
+            self.assertEqual(json.loads(output.getvalue())["head"],registry.eligibility_head(first))
+            with patch.object(sys,"argv",base+["--publish-review"]),self.assertRaises(SystemExit):
+                module._entry_eligibility_review()
+            client.assert_not_called()
+        self.assertEqual(files,{p:p.read_bytes() for p in files})
+
+        def configured(**kwargs):
+            self.assertEqual(os.environ["MLFLOW_HTTP_REQUEST_MAX_RETRIES"],"0")
+            return self.client
+        with (patch.object(config,"PROJECT_ROOT",self.fixture.root),patch.object(config,"DATA_PROFILE_ID","capital-bikeshare"),
+              patch.dict(os.environ,{"MLFLOW_TRACKING_URI":"http://127.0.0.1:5001","MLFLOW_REGISTRY_URI":"http://127.0.0.1:5001","MLFLOW_HTTP_REQUEST_MAX_RETRIES":"7"}),
+              patch("mlflow.tracking.MlflowClient",side_effect=configured)):
+            argv=base+["--publish-review","--expected-head",first["events"][0]["sha256"],"--disposition","on_hold",
+                "--reviewer","synthetic-cli","--reason","Explicit isolated review","--source-commit","a"*40,
+                "--reviewed-at-utc","2024-02-02T00:00:00+00:00"]
+            with patch.object(sys,"argv",argv),redirect_stdout(io.StringIO()) as output:
+                module._entry_eligibility_review()
+            self.assertEqual(json.loads(output.getvalue())["head"][registry.ELIGIBILITY_KEYS[2]],"on_hold")
+            self.assertEqual(os.environ["MLFLOW_HTTP_REQUEST_MAX_RETRIES"],"7")
+
+    def test_real_disposable_sqlite_mlflow_preserves_head_and_adverse_history(self):
+        from mlflow.tracking import MlflowClient
+        uri=f"sqlite:///{self.fixture.root/'eligibility-registry.db'}"
+        client=MlflowClient(tracking_uri=uri,registry_uri=uri)
+        experiment=client.create_experiment("synthetic-eligibility-only",artifact_location=(self.fixture.root/"artifacts").as_uri())
+        run=client.create_run(experiment)
+        identity=self.plan["identity"]
+        client.create_registered_model(identity["model_name"])
+        source=self.fixture.root/"synthetic-model";source.mkdir()
+        for _ in range(int(identity["model_version"])):
+            version=client.create_model_version(identity["model_name"],str(source),run_id=run.info.run_id)
+        self.assertEqual(str(version.version),identity["model_version"])
+        for key,value in self.client.tags.items():
+            client.set_model_version_tag(identity["model_name"],identity["model_version"],key,value)
+        args=dict(expected_head=None,reviewer="synthetic-sqlite",reason="Disposable SDK integration",
+            reviewed_at_utc="2024-02-02T00:00:00+00:00",source_commit="a"*40,disposition="no_adverse_review",defect_code="synthetic_sdk")
+        first=self.store.publish(client,**args)
+        tags=client.get_model_version(identity["model_name"],identity["model_version"]).tags
+        self.require(first,tags=tags,run_id=run.info.run_id)
+        args.update(expected_head=first["events"][-1]["sha256"],disposition="ineligible")
+        second=self.store.publish(client,**args)
+        tags=client.get_model_version(identity["model_name"],identity["model_version"]).tags
+        with self.assertRaisesRegex(ValueError,"ineligible"):self.require(second,tags=tags,run_id=run.info.run_id)
+        self.assertEqual(second,self.store.read())
+        self.assertEqual(self.originals,{p:p.read_bytes() for p in self.originals})
 
 
 if __name__ == "__main__":

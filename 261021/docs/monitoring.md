@@ -4,6 +4,10 @@
 運用証拠の記録・配信bundle v2にはjournal原本が必要。[適用範囲・legacy・事後review・実警告の結論](capital.md#operational-evidence-review-20261115)を参照。
 raw completedや数値p95合格だけで運用受入にしない。時計研究・再測定は保留のまま。
 
+追補：[適格性reviewの追記・公開head・consumer照合](capital.md#operational-eligibility-review-20261115)を隔離実装。
+recheck/inspect/archiveは数値診断と履歴の状態を区別し、offlineだけで最新headや運用受入を保証しない。
+writerの明示的なresumeはreview公開の回復であり、運用測定のretryや台帳reopenではない。
+
 [文書一覧・統合対応表](README.md)。2026-11-15に用途別へ統合。過去の結論・未解決事項・原本hashは保持。
 
 各節の日付・「未完了」は執筆時点の記録を含みます。現在の状態は[プロジェクトREADME](../README.md)と[計画書の最新残件](../../261014/plan_mlops.md#remaining-work-latest)を優先してください。再実行用の入口は新配置へ更新し、当時の原文・コマンド・hashはGit `9479201`、work_log、review JSONに保持しています。

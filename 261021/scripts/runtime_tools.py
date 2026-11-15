@@ -475,11 +475,71 @@ def _entry_operational_attempt_ledger():
     _operational_attempt_ledger_main()
 
 
+def _entry_eligibility_review():
+    import argparse
+    from datetime import datetime, timezone
+    from mlflow.tracking import MlflowClient
+    from bike_mlops.config import DATA_PROFILE_ID, PROJECT_ROOT
+    from bike_mlops.operational import local_registry_url
+    from bike_mlops.operational_validation import EligibilityReviewStore, eligibility_head
+    import os
+    parser = argparse.ArgumentParser(description="Explicit immutable operational eligibility review; never reopen or measure")
+    parser.add_argument("--candidate-id", required=True)
+    parser.add_argument("--attempt-id", required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--inspect", action="store_true")
+    mode.add_argument("--publish-review", action="store_true")
+    parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--expected-head")
+    parser.add_argument("--disposition", choices=("no_adverse_review", "on_hold", "ineligible"))
+    parser.add_argument("--reviewer")
+    parser.add_argument("--reason")
+    parser.add_argument("--reviewed-at-utc")
+    parser.add_argument("--source-commit")
+    args = parser.parse_args()
+    if DATA_PROFILE_ID != "capital-bikeshare":
+        parser.error("Eligibility review requires the dedicated Capital profile")
+    if args.resume and (not args.publish_review or not args.expected_head):
+        parser.error("Explicit publication recovery requires --publish-review and --expected-head")
+    if args.publish_review and not args.resume and not all((args.disposition,args.reviewer,args.reason,args.source_commit)):
+        parser.error("Review publication requires disposition, reviewer, reason and source commit")
+    store = EligibilityReviewStore(PROJECT_ROOT,args.candidate_id,args.attempt_id)
+    try:
+        if args.inspect:
+            result = store.read()
+        else:
+            uri = local_registry_url(os.getenv("MLFLOW_TRACKING_URI", ""))
+            if os.getenv("MLFLOW_REGISTRY_URI",uri).rstrip("/") != uri:
+                raise ValueError("Eligibility registry must match the dedicated tracking registry")
+            transport = {"MLFLOW_HTTP_REQUEST_MAX_RETRIES":"0","MLFLOW_HTTP_REQUEST_TIMEOUT":"15"}
+            previous = {key:os.environ.get(key) for key in transport}
+            try:
+                os.environ.update(transport)
+                client = MlflowClient(tracking_uri=uri,registry_uri=uri)
+                if args.resume:
+                    result = store.resume(client,expected_head=args.expected_head)
+                else:
+                    result = store.publish(client,expected_head=args.expected_head,reviewer=args.reviewer,reason=args.reason,
+                        disposition=args.disposition,source_commit=args.source_commit,
+                        reviewed_at_utc=args.reviewed_at_utc or datetime.now(timezone.utc).isoformat(),
+                        defect_code="manual_eligibility_review")
+            finally:
+                for key,value in previous.items():
+                    if value is None:os.environ.pop(key,None)
+                    else:os.environ[key]=value
+        print(json.dumps({"status":"inspection_only" if args.inspect else "review_publication_completed",
+            "head":eligibility_head(result),"operational_gate":"unchanged","deployment_permission":"unchanged",
+            "new_attempts":0,"retry_permission":False},sort_keys=True))
+    except Exception as error:
+        raise SystemExit(f"error: eligibility operation stopped ({type(error).__name__}); retain evidence and inspect before explicit recovery") from None
+
+
 def _dispatch_cli():
     import sys as _dispatch_sys
     commands = {'register': _entry_register_capital_candidate, 'seed': _entry_seed_capital_staging, 'plan': _entry_prepare_capital_operational_plan, 'benchmark': _entry_benchmark_capital_runtime, 'recheck': _entry_recheck_capital_measurement, 'record-operational': _entry_record_capital_operational_evidence, 'evidence': _entry_prepare_capital_deployment_evidence, 'decision': _entry_record_capital_deployment_decision, 'inspect': _entry_inspect_capital_operational_reports, 'pending-audit': _entry_inspect_capital_pending_audit, 'attempt-ledger': _entry_operational_attempt_ledger}
+    commands['eligibility-review'] = _entry_eligibility_review
     if len(_dispatch_sys.argv) < 2 or _dispatch_sys.argv[1] in {"-h", "--help"}:
-        print("Usage: runtime_tools.py <command> [options]\nCommands: register, seed, plan, benchmark, recheck, record-operational, evidence, decision, inspect, pending-audit, attempt-ledger")
+        print("Usage: runtime_tools.py <command> [options]\nCommands: register, seed, plan, benchmark, recheck, record-operational, evidence, decision, inspect, pending-audit, attempt-ledger, eligibility-review")
         return 0
     command = _dispatch_sys.argv.pop(1)
     if command not in commands:
