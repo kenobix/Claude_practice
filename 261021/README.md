@@ -1,4 +1,6 @@
-2026-11-15最新：[実候補の追加監視負例・復元カテゴリ・残る開始条件](docs/capital.md#runtime-followup-20261115)。MAE欠損2件の拒否とcleanupを確認し、復元4ケースだけをcategory証拠へ整理。最終採否と運用保留は継続。
+**2026-11-16完了（今回の作業範囲の残件0）:** [製品の完了範囲・候補の不採用判断](docs/capital.md#project-closure-20261116)。実候補は精度評価合格、UTC逆行した唯一の運用試行を拒否して**配信不採用**。元registryとのlive照合と正式入力参照確認を完了。配信許可はblocked。承認後の実配信試験・新しい運用試行・時計研究は今回の採用対象から除外し、過去の未達を合格へ書き換えません。ローカル全667テスト・実装commitのCI両job・artifact16member/再計算/cleanupが成功。最終検証状況は[証拠索引](docs/reviews/20261116-product-acceptance-checks.json)を参照。
+
+2026-11-15最新：[22ケースの受入設計・承認順序の改訂案](docs/capital.md#acceptance-scope-proposal-20261115)。汎用機能・候補固有・承認後の適用表と限定起動案を整理。現v2は維持、改訂案は2026-11-16にユーザー承認済み。[直前の実績](docs/capital.md#runtime-followup-20261115)は復元4ケースcategory確認・観測8・部分5・未実証5。最終採否と運用保留は継続。
 
 2026-11-15追補：[正式入力参照・review全系列保存と原本回復](docs/capital.md#operational-review-input-archive-20261115)。実装cb05e72はCI全653件・artifact/cleanupまで受入。実candidateの運用保留・実採否未達は継続。
 

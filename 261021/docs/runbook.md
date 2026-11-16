@@ -943,3 +943,16 @@ event本文が失われた場合、原本を推定・上書きせず保留する
 [基点b8644faのruntime追補](capital.md#runtime-followup-20261115)に、実施可能な監視負例、復元categoryの範囲、正式入力への実適用前提を記載した。
 元PG/MLflowの起動はstartup書込を伴い得るため、読取許可だけで行わない。API/UCI/Caddyは対象外。
 現在のrestore報告だけで全bundleの採用・risk受容・配信承認・再測定を行わない。
+
+## 製品受入と不採用記録の読取
+
+2026-11-16の候補は[配信不採用](capital.md#project-closure-20261116)。通常のpromoteは実行しない。以下はregistryを変更しないlocal履歴読取である（261021で実行）。
+
+```bash
+.venv/bin/python -m scripts.runtime_tools product-acceptance read-disposition \
+  --root . \
+  --candidate-id e2df57935e8f3fcdea05da0036c786537bd130e461d6a05eed5104066d3a981b \
+  --expected-head ece3b490a552de4ff140660a59c3b6d27d83b6dde8fd2c6c35a44c1179f83b21
+```
+
+このheadを独立した記録として保存する。履歴欠落・破損・head不一致は停止し、自動削除/再発行しない。証拠原本はignoredのdata配下にあり、別PCのcloneだけでは再現できない。共有時は[証拠索引](reviews/20261116-product-acceptance-checks.json)のhashと原本を別途照合する。新規appendは履歴を変える操作なので、閲覧目的で再実行しない。

@@ -1802,6 +1802,8 @@ local全suiteの途中source651件には既存future拒否1 error、measurement�
 
 <a id="runtime-followup-20261115"></a>
 
+最新の適用範囲・承認順序の改訂案は[22ケースの受入設計](#acceptance-scope-proposal-20261115)を参照。以下の実績・v2の未達判定は改訂案によって変更しない。
+
 ## 実候補の監視負例・復元カテゴリ・実適用の前提（基点b8644fa）
 
 [検証索引](reviews/20261115-runtime-followup-checks.json)。製品source、固定policy、評価窓、元の台帳・registryを変更していない。
@@ -1863,3 +1865,136 @@ exit124はsuite外側の240秒timeoutで、monotonic差は240.136817945秒。
 
 原因は未特定として残す。次に新しい理由で該当testを実行する際は、`addFailure/addError`直後のtraceback flush、cleanup前の所有fixture保存、test開始/終了のmonotonic、timeout前のfaulthandler stackを採取する。
 今回それだけを理由に受入済みsuiteを再実行したり、timeoutを延ばしたりしていない。
+
+<a id="acceptance-scope-proposal-20261115"></a>
+
+## 22ケースの受入設計と承認順序の改訂案（基点77438f4・未適用）
+
+この節は**ユーザー判断用の設計案**。現行`capital-deployment-evidence-v2`、製品consumer、registry、正式入力参照は変更していない。既存の集計は復元category確認4・観測8・部分5・未実証5のまま。試験を適用外とする判断や新policyの有効化は未承認である。
+
+### コードから確認した不整合
+
+- `deployment.CASES`は22ケースすべてに同じ候補・登録版・artifact等の8項目identityを要求する。`validate_prerequisite`はcategory内の全case名・固定outcome・hash・identityを要求するが、`observations`の中身は非空dictまでの検査。**機械validatorの成功だけではproducerの観測内容を証明できない**ため、技術reviewが必要。
+- `record_operational_review(passed)`と`record_deployment_approval`は全bundleを検証する。一方、通常loaderは`require_deployment_eligible`により、この承認を取得済みの版しか読み込まない。従って「同candidateの承認済みoperationを事前のmetadata categoryへ入れる」という受入解釈には循環がある。観測に架空の承認を書くことは解決にならない。
+- `command_monitor`はラベルを固定CSVから生成し、Capitalでは予測targetがCSVに無い場合も拒否する。DBの観測削除をラベル欠測として扱う実装ではない。既存の「ラベル停止」合成試験はavailabilityを69時間ずらす方式で、欠落ラベルを持つ実CLI入力の証明ではない。
+- `candidate_identity`はvalidationとmonitor_referenceを含む。実候補のMAEを未設定にしたり非定数referenceを定数へ置換したりすればidentityが変わる。一般機能の分岐を固定候補に無理に成立させることはできない。
+- 現T13b writerのdecisionは`passed/rejected`だけ。`rejected`も`_validate_registered_version`で`capital_operational_evidence_status=recorded`等を要求する。したがって**「この候補なら今すぐ正式な不採用を書ける」わけではない**。保留は現状のblocked状態と文書に保持され、正式な保留判断の専用契約はまだ無い。
+
+### 全ケースの適用先と必要証拠
+
+G=汎用機能、C=同候補の隔離観測、P=人の配信承認後の実操作。Gの合成証拠はC/Pの代用にしない。下表の「変更案」は未適用。全行に共通して、source・依存lock・入力・rawログ・producer・結果のSHA、専用環境identity、終了値、cleanupが必要。Cはcandidate/data/protocol/reference/raw model/登録artifact/versionを固定し、評価窓を再消費しない。Pはさらに有効な運用証拠と別承認を要する。
+
+| category / case | 適用先と開始条件 | 検証・証拠、固定候補への制約／変更案 |
+|---|---|---|
+| monitoring / training_reference_bound | C・凍結CSV/manifest/候補/reference/登録版一致 | training行・特徴・binsの再構築とSHA照合、別reference拒否。実候補の非定数3特徴を維持。 |
+| monitoring / psi_v2_constant_shift | G・専用定数fixture、C・reference mode確認 | 定数の同値/上下shift・件数・PSIをGで検証。Cで全対象modeが非定数なら定数分岐は適用外の根拠を保存し、非定数binsとPSI実計算を別途必須とする。自己申告N/Aは禁止。 |
+| monitoring / distribution_error_separation | G＋C・固定bins/閾値/予測/ラベル | 分布だけ/誤差だけ/双方/不足をGで区別。Cでは保存CSV/JSON/DBの母数と1,336/234警告を照合。警告を合格や因果特定に読み替えない。 |
+| monitoring / delayed_missing_duplicate_labels | G＋C・入力経路ごとのラベル契約 | Gは真の欠落・遅延・重複を区別。Cでは固定3時間の到着制約、重複CSV拒否、CSV外target拒否を確認。別のライブ到着ラベルfeedは現CLIの対象外で、対応済みと主張しない。 |
+| monitoring / insufficient_labels_and_unset_reference | G＋C・固定MAE/reference | Cは24件未満の保留、reference/報告改変拒否。Gは正規のMAE未設定で`performance_reference_unset`。CでMAEが設定済みなら未設定分岐は非適用の根拠を固定し、欠損注入の拒否を必須にする。 |
+| monitoring / monitor_persistence_reconciliation | C・同candidateのmonitor CLI出力 | 窓/母数/指標/identityをCSV/JSON/complete marker/DBで照合し、不一致・途中公開を拒否。offline診断だけで代用しない。 |
+| recovery / concurrent_request_retry | G＋C・専用API/DB | 同一requestを並行送信し、同じ保存結果と監査1件。順次retryだけを並行成功にしない。 |
+| recovery / changed_input_conflict | C・保存済みrequest ID | 同IDの入力差に409、元予測・監査不変。 |
+| recovery / version_switch_preserves_saved_prediction | G＋C試験コピー、Pは別 | 異なる2登録版・各artifact SHAをpin。旧IDは旧版の保存結果、新IDは新しい版。原モデル同一の場合は版切替/冪等性に限定し性能改善を主張しない。現候補へ試験許可を与える契約が必要。 |
+| recovery / audit_write_failure | C・コピーDBへの限定fault | 実audit書込み失敗に503、成功予測として返さない。故障を除去した後の状態も保存。 |
+| recovery / bad_artifact_and_ready | C・コピーartifactへの限定破損 | hash/読込拒否とready503、元artifact不変。 |
+| recovery / api_stop | C・所有APIだけ停止 | 接続失敗の検出と監査への影響。元サービスを停止しない。 |
+| recovery / caddy_switch_and_rollback | G＋C試験コピー、Pは別 | 2登録版と専用Caddyで切替/502/旧版復旧、entry/API/DB一致。現在の同版2slot観測は限定証拠として保持。 |
+| recovery / interrupted_deployment | G＋C試験コピー、Pは別 | registry/artifact/準備/route切替の段階で中断、操作ID・未確定state・再起動後の明示recover・旧route整合。開始前gate拒否では代用しない。 |
+| restore / database_artifact_snapshot_binding | C・停止/整合snapshot | 同時点のDB manifest・dump・artifact tree、candidate/版の対応。既存確認済み4ケースの一つ。 |
+| restore / separate_volume_restore | C・別volume/所有project | 元volumeを上書きせずDB/artifactを復元、専用resource cleanup。 |
+| restore / restored_version_prediction_audit | C・復元後の同candidate/API/DB | ready/version/保存retry/新規単発予測と監査。運用1,000要求の再測定をしない。 |
+| restore / legacy_real_double_migration | G＋Cコピー・旧schema明示 | コピー2,514行のbinary32値保持を検証。DOUBLE化で失われた精度が戻るとはしない。 |
+| metadata / entry_runtime_database_identity | G＋C、P | Cはcandidate/version/artifactとblocked状態、試験操作は試験許可IDを一致。Pでは本物の承認ID/operation/state/台帳一致を追加。legacy_unverifiableを承認済みにしない。 |
+| metadata / approval_operation_metadata | G＋試験C、P | G/試験Cは試験許可と操作の結合。Pは実承認者・理由・承認SHAと操作IDを照合。Pの結果を初回承認の前提にせず、承認後の稼働確認にする案。 |
+| metadata / unloadable_version | G＋C、P | 候補履歴を残し破損版を選択/rollbackから除外、正しい旧版へ戻る。Cのready503だけと区別する。 |
+| metadata / timeout_stage_outcome | G＋試験C、P | registry/artifactを含む全体deadline、段階/elapsed/未確定outcomeとchild cleanup。試験Cは試験許可、Pは実承認に結合。遅延完了で成功へ自動変更しない。 |
+
+### 提案A：受入契約v3と初回承認の順序（承認待ち）
+
+予定IDは`capital-deployment-evidence-v3`。現v2とは別のschema/policy hashとして扱い、現時点で有効なhashや承認は発行しない。
+
+1. **Gの製品機能証拠**をsource/依存lock/試験入力/producerへ結合する。各caseの必須observations schema・型・期待値を定義する。単なる`completed=true`や非空dictを証明にしない。実候補identityを合成fixtureへ貼らない。
+2. **Cの候補証拠**は同一candidateに結合する。条件付き分岐はvalidatorが元reference/候補内容から適用性を再計算する。非適用でもG証拠と、Cでの代替必須検証が欠ければ拒否。未知mode/欠落field/identity不一致はN/Aにせず拒否する。
+3. **試験専用二版の許可**は実承認と独立した`isolated-runtime-test-authorization-v1`案。許可manifestはsource、対象2版と各artifact/raw model SHA、所有project/DB/volume/API/registry、保護対象一覧、操作範囲、承認者/理由、deadlineへ結合する。原モデル同一の登録2版なら、その限定目的も固定する。登録metadataの差によるartifact SHA差は正当に記録し、hashを緩めない。
+4. 試験用経路は専用harness/adapterに閉じる。通常loader・promote・evidence consumerへ`allow_test`等の環境変数やfallbackを追加しない。通常の`eligible`/承認tagを捏造せず、API/state/台帳に`test_only`の識別を保存する。正規orchestrationの共有部分を試験する場合も、実際に通過した経路と注入した境界を明示する。試験許可の改変/期限切れ/所有者違い/別volume/実registryへの誤接続を拒否し、実consumerが試験証拠を採用根拠として受け取らない負例を必須にする。
+5. 初回の実配信承認は、G＋C＋有効な運用証拠＋警告review＋別人承認の順。**現在のUTC逆行attemptはここを満たさない**。試験許可だけでは次段へ進めない。
+6. Pの本物の承認operationとの照合は承認後の確認とする。承認直後は「配信許可あり・稼働未確認」であり稼働完了としない。P確認に失敗/timeoutならrouteを公開せず、既にrouteを動かした場合は事前確認済み旧routeへ明示復旧する。未知状態は未確定のまま保全する。新しい版の公開を初回確認より先に恒久化しない設計・負例を必要とする。
+
+**移行:** v2原本・旧索引・head・policy SHAを保持し、v3へ自動変換/再hashしない。新しい評価manifestに旧証拠の元hashと使用できる限定主張を記録し、足りないv3観測は新規に検証する。source変更後の正式入力参照は36file等の実際のclosureが変わるため別途照合・明示発行が必要。v2 consumerはv3を拒否、v3 consumerはpolicy/schemaを明示選択し、unknown policy・v2をv3と偽る入力・test-onlyの本番利用・古いlive headを拒否する。改訂後も再fit/窓再利用/精度閾値変更は許可しない。
+
+**影響:** candidate評価の合否を変えず、配信前後の証拠の適用先を変更する。旧v2全22case合格という表示にはしない。実際のv3 consumer/harnessの実装とunit/CI/同commit artifact・cleanup検証はユーザーの方針承認後に行う。
+
+### 提案B：保留・不採用の正式な決定（承認待ち）
+
+`capital-candidate-disposition-v1`という別の追記専用判断記録を提案する。既存の運用review/approval tagsとは別で、候補ID・登録版/registry identity（未照合ならその状態）・評価報告SHA・attempt/raw journal/report/正式台帳SHA・UTC逆行位置・未達case・警告review・判断者/理由・前decision hashに結合する。
+
+- `held`は条件未達・判断保留、`rejected`は今回候補の採用を見送る明示判断。どちらも配信許可を与えない。署名/IAMが無ければ人名は自己申告である限界を記す。
+- 保留記録は「運用gate passed」も「数値gate failed」も意味しない。将来の判断は前decisionを参照した新しい記録とし、元attempt/台帳/headを書き換えない。
+- 原本とcopyの違い、live head未確認を必須fieldにする。未照合での文書判断は可能でも、正式入力移設の完了やregistryでの決定済み状態を主張しない。元registry書込みは別許可。
+- `adopted`はこの軽量な判断経路に追加しない。採用には通常の全受入・有効な運用証拠・別承認を要求する。現在候補の推奨は**精度合格・配信保留**。
+
+将来配信を希望する場合だけ、元attemptを残す別運用試行の計画（新しい試行IDと前attempt参照、同candidate/固定plan、回数/資源/停止条件、記録の更新先）を作り、測定前に別許可を得る。既存completedをreopenせず、自動retryしない。時計研究再開は含めない。
+
+### 提案C：元PG/MLflow限定起動・live照合の実行計画（承認待ち）
+
+対象identity/image/volume/portは[前回限定inspect](#runtime-followup-20261115)に記録済み。起動直前に再照合する。許可対象を次のC1/C2に分け、PG/MLflow以外の既存サービスには触れない。
+
+**C1・元2サービスの起動/終了と起動時書込み:**
+
+1. 対象8containerのID/image/開始/状態、元2volume/port/commandの安全なfingerprintを保存する。秘密を含むexpanded env/commandは非公開0600保存・公開はSHAだけ。元2containerが停止中、port5001/55434が未使用、固定image/volume一致が開始条件。状態変化・未知利用者・容量不足なら停止。
+2. 停止状態を保ったまま、固定imageの新しい一時helperから元volumeを**read-only mount**し、PGとMLflow artifactを別のprivate cold archiveへ保存する。helperはnetworkなし、元volumeへの書込み不可、原本を削除しない。PG_VERSION・image major・全member SHA/型/owner/mode、PGのtablespace等が別mountを指す場合は対象範囲を確定するまで停止。2archiveの取得前後に元container停止を再確認する。
+3. archiveを新しいvolumeだけへ復元し、元と同imageの一時PGでcrash recoveryを検証する。DB/schema versionとMLflow alembic head、audit schema、全artifact manifestを確認する。このcopy試験は元liveの代用ではなく、backupが利用可能かの検査。予定MLflow imageのmigration headとDB head不一致、未知migration、復元不成立は元の起動前に停止する。
+4. 同一性が保たれた元PGを既存container ID指定で起動し、最大60秒のreadiness期限。その後元MLflowだけをID指定で起動し最大90秒。全作業deadline15分（backup/dry restoreは別の準備作業上限30分）。失敗時に自動再起動しない。HTTP/SQL個別readは5秒、HTTP retry=0、SQL read-only transaction/statement timeoutを指定する。
+5. 版1・run・candidate/artifact/report/全review系列・publishing fence・live headを現在のconsumerで照合する。事前/事後registry tagsと原本SHAを比較し、同じformal rootの既存locksを使う。head不一致・fence・原本変化・future/UTC逆行・timeoutなら発行へ進まない。新しいhistoryが見つかれば古いheadへ戻さない。
+6. 許可された2containerだけをMLflow→PG順に正常停止（各30秒上限）。間に状態・所有者が変わった場合は第三者の操作へ干渉せず停止理由を記録する。kill・volume削除・自動backup restoreは許可に含めない。期限内停止できなければ状態を保全して追加判断へ戻る。元8containerの保護状態と原本再照合を記録する。
+
+PG起動ではWAL/recovery/統計、MLflowではログ・初期化・migration等の書込みが起こり得る。**readonly queryだけを許可しても起動はできない**。想定外schema/data変更は検知・停止し、巻戻しは別許可。正常停止してもWAL/起動ログ等のbytesを元に戻す保証はなく、cold backupがあることを自動切戻し許可と解釈しない。現段階ではbackup未取得、dry restore未実施、元2サービス未起動である。
+
+**C2・正式入力参照の発行:** C1のlive照合と現在source closure/5入力canonical identity/両窓消費済み/全history整合が通った場合だけ、現行`bind_inputs`の新しいprivate参照controlを明示発行する。元台帳の複製/初期化、review/承認tag変更は含めない。A/Bのsource変更後は新sourceを先に固定してから行う。C2を許可しない場合はC1は診断だけで終える。
+
+### 残件と判断順
+
+1. A（適用範囲/試験専用二版/順序）とB（非採用の追記判断）をreviewし、方針承認後に実装・負例・CIを行う。仕様承認はリスク受容や実配信承認を意味しない。
+2. 現行契約で確認できる独立した拒否条件は隔離fixtureで補う。今回の追加検査の結果とhashは検証索引へ記録し、v2全case合格にはしない。
+3. C1/C2の許可後、backup・復元検査・限定起動・live照合・入力参照の順に進める。未許可の起動はしない。
+4. G/Cの製品受入と候補の保留判断を完成させる。警告の技術reviewは維持する。実配信の採否は有効な運用証拠と人の判断が揃った場合だけ再開する。
+
+新しい運用測定・new attempt・reopen・再fit・時計調査はこの提案の承認だけでは開始しない。過去の原因未特定FAIL/timeoutは未解決として保持し、必要な新規試験では失敗直後のtraceback・fixture記述・timeout前stackを保存する。
+
+<a id="product-acceptance-contracts-20261116"></a>
+
+## 承認済みA/B/Cの実施記録（2026-11-16）
+
+ユーザーは2026-11-16のチャットで案A/BとC1/C2を明示承認した。従って上の「承認待ち」は提案時点の記録であり、再度の同じ許可は不要。運用再測定・new attempt・reopen・再fit・実配信承認は依然として対象外。
+
+Aの実装は、誤って通常配信bundleと扱われないよう、IDを`capital-product-acceptance-v3`とした。`product_scope`は元candidate ID・monitor referenceファイルSHA・training reference契約から22ケースの必要証拠を導出する。定数かどうかやMAE未設定を自己申告N/Aで指定できない。結果はrequirements planで、全caseは`not_evaluated`。**この計画の生成成功を22ケース合格とは呼ばない**。現v2の配信consumer・UTC逆行拒否・全bundle受入は維持する。
+
+`validate_isolated_test_authorization`は人がpinしたSHAと、harnessが実環境から読んだproject/source/候補/2登録版のartifact/専用registry/DB/volume/保護対象を照合する。許可期限は最長1時間、操作は版切替・retry・rollback・中断・timeout・metadata・読込不可の試験に限定。実MLflow5000/5001や保護volume、同版・同artifactの2版偽装を拒否する。これは署名/IAMではない。通常loader/承認経路はこの許可を利用せず、試験結果も`blocked/approval_evidence=false`である。harnessへの接続・実2版観測が揃うまでは二版受入を完了扱いにしない。
+
+Bの`CandidateDispositionStore`は別のlocal判断系列に`held/rejected`だけを記録する。採用・配信許可・registry tag・運用台帳を書かない。candidate報告・final・運用plan/report/journal・両台帳・警告review・受入reviewの9原本をNOFOLLOWで読み、bytes/SHAを固定。candidate identityを照合し、期待する前head・連番・UTC順序・排他lock・O_EXCL/fsyncで追記する。途中書込み/破損/未知file/古いhead/競合/消失/将来時刻は拒否し、残った原本を自動削除しない。外部に保持したheadが無ければ整合した全系列巻戻しを防げず、人名も署名ではない。**localな非採用判断であり、remote registryへ保留が発行されたことを意味しない**。
+
+操作入口は`python -m scripts.runtime_tools product-acceptance`。`scope`には`--candidate-report/--reference/--candidate-id`、`read-disposition`には`--root/--candidate-id/--expected-head`を指定する。初回headは明示的に`none`、2件目以降は外部保管SHAが必要。`append-disposition --request`はdecision/reason/reviewer/recorded_at_utc/evidence_files/registry_observation/limitationsを含むprivate JSONを使用する。公開ログへ入力の絶対pathや秘密値を返さない。正式原本のコピーを要求する仕様ではなく、同じroot配下のcanonical原本を参照する。
+
+C1のcold backupは元PG85,688,320bytes・artifact1,433,600bytesをprivate tarへ保存し、PGの別volume復元が成功した。元imageのMLflowは**3.17.1**（表示の推測ではなく固定image内から取得）、DBとimageのmigration headはともに`dc11669786a5`。元8container不変・一時resource回収まで確認した。これは起動前準備であり、live照合/参照発行は別の結果を必要とする。
+
+中断時点（後述の再開で解消）の[検証索引](reviews/20261116-product-acceptance-checks.json)：新契約14件は成功、既存deployment回帰は300秒timeout。C2参照controlは発行済みで、正式5入力・現source closure・194保護原本はoffline照合済み。C1/C2終了時に診断helperの短縮/完全ID比較が失敗し、結果JSON未保存。再起動による結果回収は自動承認レビューに拒否されたため、元liveの再確認・現在の停止状態をこの索引の確認済み項目に含めない。参照controlの再発行は行わない。製品sourceは未commit/CI未検証、試験専用二版harnessと実保留判断はまだ未完了。
+
+<a id="project-closure-20261116"></a>
+
+## 製品の完了範囲と候補の不採用判断（2026-11-16）
+
+ユーザーから最善の終了判断を委任されたため、候補e2df579…を**配信不採用**と決定した。精度合格は変更しない。有効な運用受入が存在せず、新attempt/再測定を行わない条件では、配信採用の必要条件を満たせない。警告1,336/234窓は重なる窓の診断であり独立事故数ではない。リスク受容は行わず、不採用の判断材料として保存した。
+
+local追記専用dispositionのheadは`ece3b490a552de4ff140660a59c3b6d27d83b6dde8fd2c6c35a44c1179f83b21`。9原本のhash/bytesを結合し、readbackで同headを確認した。これはremote registryの採否tagではない。通常配信は既存v2 consumerが引き続きblockedとする。T13bの「配信採用」は中止し、別契約の非採用判断として閉じる。旧T13b writerの条件を緩めて不正な証拠を受け入れない。
+
+元PG/MLflowの限定再起動は今回明示的に再許可された。保存済みcold backupを検算し、live headと発行済み参照controlの整合、5正式入力/36source、両DB論理manifestの不変を確認した。control再発行0、tag更新0。元2サービスを再停止、他6サービス不変。起動に伴うWAL/logは巻き戻していない。
+
+22ケースは[受入設計表](#acceptance-scope-proposal-20261115)の適用範囲を維持する。旧v2の復元4確認/観測8/部分5/未実証5は過去の事実であり、今回全passedにはしない。不採用候補に対する採用前の追加case、承認後の実配信、中断した承認済み配信の復旧、実配信承認metadataは**採用中止に伴い実施を中止**する。汎用機能はunit/隔離CIの証拠、候補コピーの二登録版/Caddy試験は試験専用証拠として保存し、実候補採用へ代用しない。
+
+時計の原因究明、独立時計資格、新candidate/新運用試行は本製品を採用判断まで完結するためには不要となったため、今回の作業から取り下げる。時計問題は未解決、資格未合格を保持する。後から配信を目指す場合は別プロジェクトとして、新しい承認・未消費評価窓・運用証拠が必要。
+
+全回帰・実装commitのCI/artifact/cleanupは証拠索引の最終状態で判断する。外側timeoutの失敗・環境差は保存し、自然再発がないことを原因解決へ読み替えない。
+
+隔離二版試験（two-versions-v6）は版1→2、保存要求の版1保持、新要求の版2、切替先停止502→明示rollback→ready200を確認した。登録skops本体は両方SHA `bd5764e19f97674366495c24cf12d348ee5f8a9aaf8f8e0078c042679f18fb82`。登録artifact hashは1が13dbe8…、2が3e5ce7…で、差は登録metadata。元8container不変、所有container/volume/network回収済み。操作前に専用leaseを検証した。APIの承認operationはlegacy_unverifiableのままで、通常配信許可ではない。
+
+最終受入：実装`0efc7913fe64832467ad4ce0b293d701c2ba293b`の[CI43853213533](https://github.com/kenobix/Claude_practice/actions/runs/43853213533)両job成功。ローカル全667件（790.464表示秒）成功、CI全667件成功。artifact14221415361は234,870bytes、SHA `2c4cb4811a209014afa11d54669abde9132d174d782118f00c63b075b0bc7d14`。16member、内包hash、ZIPのみ別process再計算、暖機50除外/1,000要求、Docker/PG/HTTP/Caddy/TERMのcleanupを検算した。CIの合成p95は実候補の運用証拠へ流用しない。今回の範囲の残作業は0で、上記中止項目と歴史的原因未確定はそのまま保持する。

@@ -1,3 +1,5 @@
+**2026-11-16 最終状態：本プロジェクトの残作業0。** 完了した製品実装・検証と、候補不採用により中止した採用/承認後試験を区別する。時計問題や過去原因不明の失敗を解決済みとはしない。[最新の終了判断](../261021/docs/capital.md#project-closure-20261116)と[最終証拠](../261021/docs/reviews/20261116-product-acceptance-checks.json)を優先し、下の日付付き一覧は履歴として読む。
+
 # 需要予測モデルを継続運用するMLOps基盤の詳細計画
 
 - 作成・資料確認日: 2026-10-14
@@ -380,6 +382,8 @@ registry URIの進捗補足: Capital staging登録・loader・seed・preflight�
 
 ### 11.6 2026-10-30監査後の優先度・難易度別計画
 
+**2026-11-16終了：現行スコープの未完了タスクは0。** 実装0efc791は全667unit/隔離Docker CI/artifact16member/cleanupまで確認。候補はlocal追記専用記録で配信不採用。以下のP1表は途中経過であり、末尾の終了判断を優先する。未達の採用条件はpassedへ変更せず、当該候補の追加採用作業を中止した。
+
 **現在の残件は[最新の残課題](#remaining-work-latest)を参照。以下の過去checkpointは当時の実施状況として保持する。**
 
 2026-11-15の[ファイル統合](../261021/docs/README.md)により、文書67→9本、Python製品52→18・tests56→12・scripts34→7本へ用途別に整理した。[旧→新対応表](../261021/configs/file-layout.json)で旧名を検索できる。元67文書の判断と過去証拠JSON/hashは履歴として保持し、README・現行CLI/Compose/CIの参照を更新した。今回は構成整理と回帰検証だけを行い、下記の製品残件・運用受入保留・時計研究保留は据え置く。最終localは旧590件保持＋旧source layout互換1件の全591件が成功。初回aa8a61fのCIは591unit成功/snapshot profile409失敗を記録。import時の設定汚染を修正し、対象50件と593件discoveryを確認した。追補ec7f50eの[CI43635329160](https://github.com/kenobix/Claude_practice/actions/runs/43635329160)で最終593件・全PG/HTTP/Caddy/対応復元が成功。16 artifact/member hash・archive-only再計算・cleanupまで確認し構成整理を完了した。[検証索引](../261021/docs/reviews/20261115-file-consolidation-checks.json)で最終test/CIの確認範囲を示す。
@@ -534,11 +538,25 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 
 <a id="remaining-work-latest"></a>
 
+#### 2026-11-16 現在の一覧：残作業0（完了／中止を区別）
+
+| 優先度 | 作業 | 最終状態 |
+|---|---|---|
+| P1 | 正式入力参照・元registry live照合 | 完了。発行済controlを読取確認、元2サービス再停止、他6不変 |
+| P1 | 受入scope・試験専用二版許可・非採用writer | 実装0efc791、local/CI全667件・artifact検算/cleanup完了 |
+| P1 | 試験専用の異なる登録二版/Caddy切替・保存予測保持・backend停止復旧 | 完了。同じskopsの登録版1/2。通常配信承認の証拠にはしない |
+| P1 | 警告review・最終判断 | 完了。risk受容せずlocal配信不採用記録、remote blocked維持 |
+| P1 | 当該候補の不足category・承認後の実配信/中断/timeout metadata | 不採用のため中止。汎用機能のCI実証とは区別し、旧caseをpassedにしない |
+| 取下げ | 新運用attempt・reopen・時計研究/資格、原因不明の歴史的失敗の追加調査 | 今回の製品範囲から取下げ。問題の解決や未達証拠の合格化はしない |
+| 将来保守 | MLflow互換性など上流変更時だけの再検証 | 新しい変更時の保守であり、現時点の未完了作業ではない |
+
+以下は日付付きの旧一覧であり、現在の残課題ではない。
+
 #### 2026-11-14：時計研究を保留し、製品作業の開始条件を分離
 
 ユーザー承認により[作業別の開始・停止条件](../261021/docs/capital.md#product-completion-policy)を採用する。
 時計の内部原因/独立源選定/精密校正/全campaignは再開指示まで保留。未解決履歴と資格未合格を保持する。
-以下が現在の残件。下の2026-11-09以前の表と索引は当時の状態であり、一律のfit禁止を現在へ適用しない。
+以下は2026-11-14時点の残件。下の2026-11-09以前の表と索引は当時の状態であり、一律のfit禁止を現在へ適用しない。
 
 | 優先度 | 難易度・担当 | 残課題と開始条件 |
 |---|---|---|
@@ -552,7 +570,7 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 | 完了（隔離実装・CI受入） | D3・Sol | 独立保管SHA付き全系列archiveからevent/repairのexact bytesを明示回復。破損元を残しcontrolへ追記、gate/tag変更なし。古いhead/未知member/競合/将来時刻/原本変化を拒否。回復control自体の破損・多段回復は停止し別計画が必要 |
 | 完了（隔離実装・CI受入） | D2→Sol | 全review系列可搬保存：snapshot/event/intent/receipt/repair/保全元/全referenceとmanifestを保存し、ZIPと独立SHAだけで別process再検算。offlineだけではlive最新性・実適用・運用採用を主張しない |
 | P1（実適用前・停止条件あり） | D3・Sol | 現source参照契約の実candidateへの発行は未実施。正式5入力canonical identity/hash・現36sourceは読取確認済み。元registryは停止中でlive最新head未確認。限定した元PG/MLflow起動にはstartup書込・backup・schema確認・終了条件を含む別許可が必要。具体案は最新runtime追補。実原本/正式台帳/実registry/現配信を変更しない今回の制約を維持し、自動適用しない |
-| P1（適用範囲の判断） | D3・Sol＋ユーザー判断 | 定数reference/正規MAE未設定/欠測labelは固定済み実candidateのidentityを変えずに注入できない条件がある。汎用機能受入と候補固有受入、初回承認と配信metadata試験の順序をreviewする。無断のcase免除・閾値変更・合成結果流用はしない |
+| P1（改訂案review完了・適用判断待ち） | D3・Sol＋ユーザー判断 | [22ケースの適用表と案A/B/C](../261021/docs/capital.md#acceptance-scope-proposal-20261115)を作成。AはG/C/Pと試験専用二版の許可を分離し、自己申告N/Aを拒否するv3案。Bは正式な保留/不採用の追記判断。Cは元PG/MLflowのcold backup・コピー復元/schema検査・限定起動/live照合・参照control発行。意味変更/既存サービス起動前のユーザー判断が必要。現v2/全caseの判定は変更せず、承認前は案の実装・適用を行わない |
 | 補足（原因未特定） | D3・Sol | 前回FAILはその後もtestが進行し、外側240秒timeoutはmonotonic240.136817945秒。traceback/個別stack欠落で歴史的原因は未確定。次の正当な検証時に即時失敗記録とfixture保全を追加。CI653成功で解決扱いにしない |
 | 技術review済み・採否判断待ち | D3・Sol | 警告1,336/234窓の全母数/既存閾値/保存MAE・RMSEを独立再計算。lag24/168が分布警告源、誤差は38窓と196窓の2連続区間。最新MAE224.346232>固定閾値171.740595、PSI非警告と両立。7日窓ではbaselineに優るが暦日17/61日は劣る。原因・人のリスク受容は未確定。閾値/recipe/消費窓を変更せず説明を保存、承認へ代用しない |
 | P1（前提未達） | D3・Sol＋別承認 | T13b：警告の理由付きrisk受容・全実producer/運用証拠・別承認が必要。唯一の運用試行はUTC逆行で保留、今回再測定/new attempt/reopenは禁止のため合格化できない。閾値/消費窓/未来拒否を緩めず、現registry/配信へ決定を書かない |
@@ -822,3 +840,22 @@ SQL改善9147027のCI42447659584は全570件/213.056表示秒、両job全step成
 残りは、時計独立源/真正性/不確かさ・実採取/host deadline/固定負荷・同期責任/許可後の修復と資格（P1/D3/Sol）、
 その前提後のT02/T11/T12/T13b実candidate証拠（P1/D3/Sol）、上流変更時だけのMLflow互換再検証（P2/D2/Sol review）。
 T09公開待ちやT10未集約・未凍結を現状の残件へ戻さず、同じtrace/原本検査を新情報なしに繰り返さない。
+
+### 2026-11-16 承認済みA/B/Cの途中チェックポイント
+
+[実施記録](../261021/docs/capital.md#product-acceptance-contracts-20261116)、[検証索引](../261021/docs/reviews/20261116-product-acceptance-checks.json)。A/B/C1/C2はユーザー承認済み。新規14契約test成功、cold backup/別volume復元/schema一致成功。正式入力参照controlは発行済み、offlineで5入力とsource closureを照合。ただし終了記録のID比較バグでlive結果JSONが欠け、再起動は自動レビュー拒否。元liveの再確認と終了状態の記録回収、試験専用二版harness・中断/timeout/metadata、実候補の非採用記録、source commitのCI/artifact/cleanupがP1として残る。既存TestClient待機はstack保存済み・原因未特定。過去22caseを遡及合格化せず、全P1完了としない。
+
+### 2026-11-16 最新の終了判断（過去一覧より優先）
+
+[製品の終了判断](../261021/docs/capital.md#project-closure-20261116)と[検証索引](../261021/docs/reviews/20261116-product-acceptance-checks.json)を正とする。ユーザー委任により、実候補は精度合格を保持しつつ配信不採用と決定。local追記専用記録を発行し、remote blocked維持。これは旧T13bの採用成功を意味しない。
+
+| 項目 | 終了方法 |
+|---|---|
+| 正式入力参照・元live head | 再許可後の限定起動/読取/停止成功。control再発行なし |
+| 適用範囲・試験専用許可・非採用writer | 製品実装/専用14件。CIの最終確認は索引参照 |
+| 警告review・採否 | 警告のriskを受容せず、UTC不適格運用証拠に基づき配信不採用。原本/精度/評価窓は維持 |
+| 当該候補の未達category・承認済み配信の追加検証 | 不採用により中止。過去の部分5/未実証5を合格化しない |
+| 再測定/new attempt/reopen/時計研究・精密資格 | 今回の完成範囲から取り下げ。再開は別プロジェクト |
+| 過去local未特定失敗 | stack/失敗を保存。sandbox外の単独成功は原因の確定ではなく環境差の証拠 |
+
+未完了を隠すために必要な製品機能を削除しない。現在の候補の配信採用条件を満たせないため、不採用という正式な結果で終了させる。製品sourceの受入は実装commit CI/artifact/cleanup確認後に確定する。
