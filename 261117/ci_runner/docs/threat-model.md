@@ -38,7 +38,7 @@ Docker inspectの値だけで有効と判断せず、実際の失敗・抑制と
 6. 制限が無効なら失敗として記録し、設定を修正するまでWorkerを有効化しない。
 
 PostgreSQL 17.12-bookwormのdigestはComposeに固定済み。P0 fixtureのPythonイメージもdigest固定で実測済み。
-表の制御はP0テストで実証したものと、P1以降の要件を含む。API/Workerの実行境界は未実装なので、アプリからジョブ開始を許す経路は存在しない。
+表の制御はP0テストで実証したものと、P1以降の要件を含む。受付APIのrepository/SHA/4KiB/未知入力拒否は実装・検証済み。Workerの実行境界は未実装なので、アプリからジョブ開始を許す経路は存在しない。
 今回の監視処理はテスト用であり、Workerに実装済みとは説明しない。nosuid/nodevや全setuid/全syscallの試験は未実施。
 
 参照: [Docker security](https://docs.docker.com/engine/security/)、[Rootless mode](https://docs.docker.com/engine/security/rootless/)。

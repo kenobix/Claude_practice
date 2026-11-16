@@ -127,3 +127,47 @@ DockerのVM/カーネルを共有する構成であり、非信頼コードを�
 
 最終の専用ラベル照会で、隔離テストのcontainer/image、およびDB回帰のcontainer/volume/networkの残存はすべて0件だった。
 証拠JSONの全ソースSHA-256が保存対象コードと一致し、10ケースのPid=0/removed=true、相対ドキュメントリンクの存在を確認した。
+
+## 継続依頼：P1前半（受付API・DB永続化・冪等性）
+
+開始時のpwd/branchは指定どおり、HEADは31d3467、変更なし。計画・日付AGENTS・既存API/DDL/migration/テストを確認した。
+変更は261117/に限定し、Worker・Webhook・clone・ジョブ実行経路を追加しない方針を維持した。
+
+### 実装した契約
+
+- サーバー許可設定はkenobix/Claude_practice、refs/heads/main、fixture-v1に固定。入力はrepository_idと小文字16進40桁commit_shaのみ。
+- 任意URL/command/YAML/ref/workflow等の未知入力を拒否。JSONのみ、body 4KiB。Content-Lengthと実受信量の両方を確認し、複数chunk、ヘッダー偽装、巨大bodyをDB接続前に拒否する。
+- POST /runsはcommit後に新規201、業務キー再送200で同一run。再送でfailed等の保存状態をqueuedに戻さない。
+- GET一覧はcreated_at DESC/id DESCのkeysetページング（limit 1〜100）。日時/UUIDカーソルを検証し、詳細は不正UUID422・未登録404。
+- DB未設定/停止/query失敗は情報を漏らさず503。commit結果不明時は同じ業務キーによる再送で確認する。
+- READ COMMITTEDを明示し、競合INSERT後は別SELECTで相手のcommitを読む。SQL値はパラメータ化。
+- 001は未変更。002で履歴indexを追加し、migrationツールを番号順の前進適用へ拡張。readyは版2を要求する。
+- SHAの実在・ref所属は未確認。受付はqueuedの永続化だけで、Worker等の実行権・状態遷移処理は未実装。
+
+### 実行した検証
+
+1. 初回専用DB検証は34 passed、10 skipped。実HTTPで正常・再送・同時投入・API再起動・commit前後SIGKILL・DB停止/回復を確認。
+2. 一意キーを別接続で未commitのまま保持し、pg_stat_activityでAPIのLock待ちを確認してからcommitする試験と、構造不正cursor試験を追加。最終は39 passed、10 skipped、1 warning in 24.92s。
+3. 10同時HTTP要求は201が1件・200が9件、同一ID、DB行1件。直列10回再送も同一。異なるcommitは別run。
+4. commit直前のAPI SIGKILLはHTTP応答なし・DB行0・再送201。commit直後/応答前はHTTP応答なし・DB行1・再送200で保存済みID。障害factoryはtestsだけに置き、アプリにHTTP/環境変数スイッチを追加していない。
+5. 専用DBコンテナの実停止でPOST/GET/readyは503。再開後ready200、未受理要求の行は増えていない。APIプロセス再起動後も保存runと日時・状態を取得した。
+6. 同一created_atのUUID順、limit=1、途中の先頭挿入、空/最終ページ、404/422を確認。
+7. migration版1/2適用・再適用、DB再起動後の両版保持、pip check、editable install 0.1.0を確認。
+
+P0回帰の初回は9 passed、1 failed、1 error（125.04秒）。ログ上限時の同期docker killが30秒でtimeoutし、rmとimage削除にも影響した。
+attachの出力pipeをdrainせず制御コマンドを待つことによるbackpressureが原因と推定し、kill要求を非同期にして読取を継続するよう修正。
+finallyでは削除の成否にかかわらずattach/controlプロセスを先に回収し、teardown失敗も証拠に残して失敗として扱うようにした。
+初回のコンテナは検証終了後の照会時点で消えていた。既存のDocker/OS設定は変更していない。
+修正後の最終P0回帰は10 passed in 32.48s。新しい証拠はdocs/p1-p0-regression.json、過去のisolation-evidence.jsonは履歴として保持。
+APIの39件とP0の10件は別実行。TestClient非推奨警告1件は既知で、依存追加・変更はしていない。
+
+### 判定と残り
+
+今回のP1前半は実装・検証済み。P1全体の「固定ジョブ実行から結果保存」は未完了。
+次は単一Workerの原子的なqueued取得・attempt/token/DB期限発行を先に実装し、固定fixture実行・上限・回収・条件付き結果確定へ進める。
+heartbeat/自動期限回収/複数Worker/古い結果と取消競合はP2。物理電源断やcommit応答中の分断、非信頼コードの受付は検証していない。
+状態・契約・実験はdocs/intake-api.md、残りの実装順序はdocs/p1-plan.mdへ記録した。
+
+最終の専用ラベル照会で初回失敗の一時イメージタグが1件残っていたため、sessionラベルの一致を確認してそのタグだけ削除した。
+再照会で今回の隔離container/imageとDBのcontainer/volume/networkはすべて0件。ベースイメージ/build cacheは既定どおり残した。
+001の内容が開始HEADと完全一致すること、回帰証拠の全ソースSHA-256とcleanup成功、相対リンク、Python構文、git diff --checkを確認した。

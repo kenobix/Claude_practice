@@ -1,4 +1,4 @@
-"""Disposable P0 PostgreSQL integration check. Removes only its own new project.
+"""Disposable PostgreSQL API and migration integration check. Removes only its own new project.
 
 Run from the project venv. Docker daemon access and image pull are required.
 Credentials are generated in memory and never saved or printed.
@@ -29,6 +29,9 @@ def verify():
         '@127.0.0.1:55417/ci_runner_261117'
     )
     env['CI_TEST_DATABASE_URL'] = env['DATABASE_URL']
+    env['CI_TEST_DISPOSABLE'] = '1'
+    env['CI_TEST_COMPOSE_PROJECT'] = PROJECT
+    env['CI_TEST_COMPOSE_FILE'] = str(ROOT / 'compose.yaml')
     compose = ['docker', 'compose', '--project-name', PROJECT, '-f', str(ROOT / 'compose.yaml')]
     # Refuse to mutate or remove any existing project, including abandoned volumes.
     for resource in ('ps', 'volume ls', 'network ls'):
@@ -58,7 +61,7 @@ def verify():
         subprocess.run(compose + ['restart', 'db'], env=env, check=True)
         subprocess.run(compose + ['up', '-d', '--wait', 'db'], env=env, check=True)
         with psycopg.connect(env['DATABASE_URL'], connect_timeout=3) as conn:
-            assert conn.execute('SELECT version FROM schema_migrations').fetchall() == [(1,)]
+            assert conn.execute('SELECT version FROM schema_migrations ORDER BY version').fetchall() == [(1,), (2,)]
             print('PostgreSQL:', conn.execute('SHOW server_version').fetchone()[0])
             print('migration persists after restart')
         subprocess.run(['docker', 'image', 'inspect', 'postgres:17.12-bookworm',

@@ -69,6 +69,7 @@ class IsolationCheck:
             raise ValueError('only reviewed fixed P0 probe names are allowed')
         cid = None
         process = None
+        stop_request = None
         selector = selectors.DefaultSelector()
         out, err = bytearray(), bytearray()
         observed = {'stdout': 0, 'stderr': 0}
@@ -99,7 +100,8 @@ class IsolationCheck:
             while selector.get_map() or process.poll() is None:
                 if reason == 'completed' and time.monotonic() - started >= TIMEOUT:
                     reason = 'timeout'
-                    self.docker('kill', cid)
+                    stop_request = subprocess.Popen(['docker', 'kill', cid],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=self.env)
                 for key, _ in selector.select(timeout=0.1):
                     chunk = os.read(key.fileobj.fileno(), 16384)
                     if not chunk:
@@ -112,10 +114,15 @@ class IsolationCheck:
                     if reason == 'completed' and sum(observed.values()) > LOG_LIMIT:
                         reason = 'log_limit'
                         # Kill the container, not merely the attached Docker client.
-                        self.docker('kill', cid, check=False)
+                        # Continue draining attach while the daemon processes kill.
+                        # Waiting synchronously here can deadlock on full output pipes.
+                        stop_request = subprocess.Popen(['docker', 'kill', cid],
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=self.env)
                 if time.monotonic() - started > TIMEOUT + 10:
                     raise TimeoutError('attach did not close after container deadline/kill')
             process.wait(timeout=5)
+            if stop_request:
+                assert stop_request.wait(timeout=5) == 0, 'container kill failed'
             info = json.loads(self.docker('inspect', cid).stdout)[0]
             assert not info['State']['Running'] and info['State']['Pid'] == 0
             assert info['State']['Status'] == 'exited', 'container failed to start'
@@ -141,34 +148,44 @@ class IsolationCheck:
             return Result(bytes(out), bytes(err), record)
         finally:
             selector.close()
+            # Reap attach even if container removal fails. Closing the client's pipes
+            # releases daemon-side backpressure before any blocking cleanup request.
+            for child in (process, stop_request):
+                if child:
+                    if child.poll() is None:
+                        child.kill()
+                    child.wait(timeout=5)
+            if process:
+                process.stdout.close()
+                process.stderr.close()
             if cid:
-                # Operate only on the ID created above. No global prune or name-based deletion.
                 self.docker('rm', '--force', '--volumes', cid)
                 record['removed'] = not self.docker('ps', '-aq', '--filter', f'id={cid}').stdout.strip()
                 assert record['removed'], 'container still exists after removal'
-            if process:
-                if process.poll() is None:
-                    process.kill()
-                process.wait(timeout=5)
-                process.stdout.close()
-                process.stderr.close()
 
     def close(self, failures):
+        errors = []
+        remaining = []
         try:
             remaining = self.docker('ps', '-aq', '--filter', f'label={LABEL}={self.session}').stdout.split()
             self.report['remaining_containers_before_final_cleanup'] = remaining
             for cid in remaining:
                 self.docker('rm', '--force', '--volumes', cid)
-            assert not remaining, 'per-case cleanup was incomplete'
-        finally:
+        except Exception as exc:
+            errors.append({'stage': 'container_cleanup', 'error': type(exc).__name__})
+        try:
             if self.built:
                 self.docker('image', 'rm', self.image)
-            self.report['pytest_failures_at_teardown'] = failures
-            self.report['finished_at'] = datetime.now(timezone.utc).isoformat()
-            evidence = os.environ.get('CI_ISOLATION_EVIDENCE')
-            if evidence:
-                path = Path(evidence).resolve()
-                # Evidence output is confined to this project's docs or ignored artifacts.
-                assert any(path.is_relative_to(ROOT / d) for d in ('docs', 'artifacts'))
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(json.dumps(self.report, indent=2) + '\n')
+        except Exception as exc:
+            errors.append({'stage': 'image_cleanup', 'error': type(exc).__name__})
+        self.report['cleanup_errors'] = errors
+        self.report['pytest_failures_at_teardown'] = failures
+        self.report['finished_at'] = datetime.now(timezone.utc).isoformat()
+        evidence = os.environ.get('CI_ISOLATION_EVIDENCE')
+        if evidence:
+            path = Path(evidence).resolve()
+            assert any(path.is_relative_to(ROOT / d) for d in ('docs', 'artifacts'))
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(self.report, indent=2) + '\n')
+        if errors or remaining:
+            raise RuntimeError('P0 cleanup was incomplete; see evidence cleanup fields')

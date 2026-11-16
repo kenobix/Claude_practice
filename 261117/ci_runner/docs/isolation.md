@@ -1,7 +1,7 @@
 # P0隔離仕様・実測証拠
 
 検証日: 2026-11-17 JST（JSONの時刻はUTC）。判定: **P0完了（管理下の固定fixtureによる開発検証範囲）**。
-P1の受付API・Worker・DBキュー処理は未実装。APIからジョブを実行する経路はない。
+このP0実測時点ではP1の受付API・Workerは未実装だった。現在は[受付API](intake-api.md)を実装済み。Workerとジョブ実行経路は引き続き未実装。
 P0用のfixtureと監視処理はtests/・scripts/に置き、アプリ本体から参照しない。
 
 ## 環境と再現手順
@@ -12,7 +12,8 @@ P0用のfixtureと監視処理はtests/・scripts/に置き、アプリ本体か
 - ベースイメージ: `python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df`。
 - fixtureイメージID: `sha256:037c44a08b4ee0167d3d37fd65e426585cd162f9adf5757349a9d55276e9d5b1`。実測後の一時タグ・イメージは削除した。
 - [生の実測JSON](isolation-evidence.json)に各コンテナの設定・終了状態・削除確認・出力バイト数・ソースSHA-256を保存した。
-- JSONのgit_headは実測時点の親commit。追加ソースの正確な内容はsource_sha256とこのcommitのファイルで照合できる。
+- JSONのgit_headは実測時点の親commit。当時のソースはsource_sha256とcommit `31d3467` のファイルで照合できる。
+  P1開発時の回帰で監視ハーネスの同期kill待ちを修正したため、現在の回帰証拠は別の[p1-p0-regression.json](p1-p0-regression.json)に記録する。
 
 ```bash
 cd ~/work/Claude_practice-261117/261117/ci_runner

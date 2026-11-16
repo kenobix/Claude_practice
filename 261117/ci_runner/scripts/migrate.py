@@ -1,4 +1,4 @@
-"""Apply the initial schema atomically; never print credentials."""
+"""Apply forward SQL migrations atomically; never print credentials."""
 import os
 from pathlib import Path
 
@@ -6,21 +6,24 @@ import psycopg
 
 
 def migrate():
-    sql = (Path(__file__).resolve().parents[1] / "migrations/001_initial.sql").read_text()
-    with psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=3) as conn:
-        # Serialize migration tools using a transaction-scoped lock.
-        conn.execute("SELECT pg_advisory_xact_lock(261117, 1)")
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS schema_migrations "
-            "(version integer PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())"
-        )
-        if conn.execute("SELECT 1 FROM schema_migrations WHERE version = 1").fetchone():
-            print("schema 1 already applied")
-            return
-        conn.execute(sql)
-        conn.execute("INSERT INTO schema_migrations(version) VALUES (1)")
-    print("schema 1 applied")
+    files = sorted((Path(__file__).resolve().parents[1] / 'migrations').glob('[0-9][0-9][0-9]_*.sql'))
+    migrations = {int(p.name.split('_', 1)[0]): p for p in files}
+    if len(migrations) != len(files):
+        raise SystemExit('duplicate migration version')
+    with psycopg.connect(os.environ['DATABASE_URL'], connect_timeout=3) as conn:
+        conn.execute('SELECT pg_advisory_xact_lock(261117, 1)')
+        conn.execute('CREATE TABLE IF NOT EXISTS schema_migrations '
+                     '(version integer PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())')
+        applied = {row[0] for row in conn.execute('SELECT version FROM schema_migrations')}
+        if not applied.issubset(migrations):
+            raise SystemExit('database has unknown migration versions')
+        for version, path in migrations.items():
+            if version not in applied:
+                conn.execute(path.read_text())
+                conn.execute('INSERT INTO schema_migrations(version) VALUES (%s)', (version,))
+                print(f'schema {version} applied')
+    print(f'schema {max(migrations)} ready')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     migrate()

@@ -1,6 +1,7 @@
 # P0設計案：ジョブの正本と実行権
 
-状態: アプリ機能はDDLとhealth APIのみ。P0の固定fixture・隔離検証は完了、ジョブ受付/Worker等は未実装。
+状態: P0検証とP1前半（受付/取得API・DB永続化・冪等性）は実装済み。Worker・Webhook・ジョブ実行等は未実装。
+実装したHTTP契約と競合・commit前後の障害証拠は[受付API仕様](intake-api.md)を参照。
 計画書のP1/P2/P3/P4にまたがる条件を先に定義する。数値は実験初期値であり保証ではない。
 
 ## 状態遷移
@@ -60,7 +61,7 @@ run.completed_attempt_idを現在の有効attemptの確定transactionでのみ�
 | artifacts | attempt FK、サーバー生成名、サイズCHECK、SHA-256、保存キー一意 |
 | schema_migrations | 適用版とDB時刻、transactionでDDLと同時記録 |
 
-DDLは `../migrations/001_initial.sql`。UUIDはDB生成。日時はtimestamptz。
+基礎DDLは `../migrations/001_initial.sql`（未変更）。版2で履歴用(created_at DESC, id DESC) indexを追加。UUIDはDB生成。日時はtimestamptz。
 状態CHECKだけでは遷移順・期限・取消優先・正式結果の整合性を保証しない。
 それらはP1/P2の条件付き更新と競合統合テストで検証する。実DB適用・二重適用・業務キー一意制約・状態CHECK・再起動後のschema保持は検証済み。遷移競合は未検証。
 現在のDDLはSHA-1の40桁commitを許容し、他形式は将来再検討する。
@@ -81,6 +82,7 @@ DDLは `../migrations/001_initial.sql`。UUIDはDB生成。日時はtimestamptz�
 | PostgreSQL再起動 | volumeから履歴復元、lease失効処理を再開 |
 | CPU占有・大量ログ・時間超過 | 各上限で停止し理由を記録、他ジョブとディスクを保護 |
 
+P1前半ではcommit前/後のAPI SIGKILL、実DB停止、10 HTTP同時投入と一意キー競合待ち、API再起動後の保持を実測済み。
 P0ではDB再起動後のschema保持、CPU/RAM/PID制限、時間/ログ上限と回収を固定fixtureで実測済み。
 run/attemptへの反映とWorker障害回復・競合は未実装・未検証。[隔離実測](isolation.md)と[P1計画](p1-plan.md)を参照。
 復旧45秒は未測定の仮目標。実装も測定も未実施。

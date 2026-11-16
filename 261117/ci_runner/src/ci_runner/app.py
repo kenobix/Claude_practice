@@ -1,31 +1,71 @@
-import os
+from typing import Annotated
+from uuid import UUID
 
 import psycopg
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Query, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-app = FastAPI(title="CI runner P0", version="0.0.1")
+from . import database, runs
+from .body_limit import RunBodyLimit
+from .models import Run, RunInput, RunPage
+from .settings import POLICY, SCHEMA_VERSION
 
 
-@app.get("/health/live")
-def live():
-    return {"status": "ok", "phase": "P0"}
+def create_app(connection_factory=None):
+    app = FastAPI(title='CI runner', version='0.1.0')
+    app.add_middleware(RunBodyLimit)
+    # Test processes can inject a connection context at the transaction boundary.
+    # No HTTP/environment fault switch exists in production.
+    factory = connection_factory or database.connect
+
+    @app.exception_handler(database.DatabaseUnavailable)
+    @app.exception_handler(psycopg.Error)
+    async def unavailable(request, exc):
+        return JSONResponse({'detail': 'database unavailable'}, 503, headers={'Retry-After': '1'})
+
+    @app.exception_handler(RequestValidationError)
+    async def invalid(request, exc):
+        # Do not reflect arbitrary request values into errors or logs.
+        errors = [{'loc': e['loc'], 'type': e['type'], 'msg': e['msg']} for e in exc.errors()]
+        return JSONResponse({'detail': errors}, 422)
+
+    @app.get('/health/live')
+    def live():
+        return {'status': 'ok', 'phase': 'P1-intake'}
+
+    @app.get('/health/ready')
+    def ready():
+        try:
+            with factory() as conn:
+                row = conn.execute('SELECT version FROM schema_migrations WHERE version=%s',
+                                   (SCHEMA_VERSION,)).fetchone()
+            if row is not None:
+                return {'status': 'ready'}
+        except (psycopg.Error, database.DatabaseUnavailable):
+            pass
+        return JSONResponse({'status': 'unavailable'}, 503)
+
+    @app.post('/runs', response_model=Run, status_code=201)
+    def submit(payload: RunInput, response: Response):
+        if payload.repository_id != POLICY.repository_id:
+            raise HTTPException(422, 'repository_id not allowed')
+        result, created = runs.create_run(factory, payload.commit_sha)
+        response.status_code = 201 if created else 200
+        response.headers['Location'] = f'/runs/{result.id}'
+        return result
+
+    @app.get('/runs', response_model=RunPage)
+    def history(limit: Annotated[int, Query(ge=1, le=100)] = 20,
+                cursor: Annotated[str | None, Query(min_length=1, max_length=256)] = None):
+        position = runs.decode_cursor(cursor)
+        return runs.list_runs(factory, limit, position)
+
+    @app.get('/runs/{run_id}', response_model=Run)
+    def detail(run_id: UUID):
+        return runs.get_run(factory, run_id)
+
+    return app
 
 
-@app.get("/health/ready")
-def ready():
-    dsn = os.environ.get("DATABASE_URL")
-    if not dsn:
-        return JSONResponse({"status": "unavailable"}, status_code=503)
-    try:
-        with psycopg.connect(dsn, connect_timeout=2) as conn:
-            # Schema readiness, not merely TCP connectivity.
-            row = conn.execute(
-                "SELECT version FROM schema_migrations WHERE version = 1"
-            ).fetchone()
-            if row != (1,):
-                return JSONResponse({"status": "unavailable"}, status_code=503)
-    except psycopg.Error:
-        # Do not expose DSN or database errors to HTTP clients.
-        return JSONResponse({"status": "unavailable"}, status_code=503)
-    return {"status": "ready"}
+app = create_app()
