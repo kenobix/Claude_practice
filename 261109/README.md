@@ -55,3 +55,11 @@
 - 無料モデルの学習利用許可の現在値を再確認する。
 - 従来のCodexとGoを併用し、既存設定を保持する。
 - 外部媒体へのWindows/WSLバックアップ、デバイス暗号化の調査、CPU/GPUの継続負荷試験。
+
+## 2026-11-16 追記：Strata・OpenCode検証と次の優先順位
+
+この節は2026-11-14の整理後に確認した新しい結果。上の過去時点の「今後のモデル運用方針／残作業」を当時の記録として残したまま、進捗を補足する。
+
+- [Strata × OpenCode実験記録](strata_opencode_validation_20261116.md)：Windows/WSL API接続、32Kコンテキスト、AGENTS.md読み取り、実ファイル作成、pytest初回失敗の自己修正と最終29テスト成功。ソース本体は別途コピー／pushが必要。
+- [今後の優先順位と却下案](ai_learning_roadmap_20261116.md)：P1完了、P2 Codex比較を限定実施、P3 FastAPI＋ComfyUIのローカルAI Studio。判断根拠・保留案・GPUメモリ・ポート衝突の注意点を整理。
+- **更新された実験状況**：Qwen Image 2.1のLoRA、LTX-2.3 I2V、StrataローカルLLMは利用者の後続ログで動作確認済み。過去のWan／画像記録に記載された測定値と混同しない。StrataがVRAMとRAMをほぼ使い切るため、ComfyUIと同時起動しない。
