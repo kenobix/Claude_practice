@@ -71,3 +71,79 @@ IPv6/pcapng/VLAN/TLS復号、ライブ捕捉・スキャン・外部照会は実
 Phase 2でフローとDNS状態機械、Phase 3でTShark比較へ進む。
 
 変更は未ステージ・未commit。push・PR作成を行っていない。
+
+
+# Phase 1 — 読み込みと件数集計
+
+実施日: 2026-11-17（Asia/Tokyo）。以下は前節のPhase 0作業後の追加記録。
+
+## 既存成果の確認と保存
+
+- 指定worktree/branchを再確認。最初に既存15テストを再実行し成功した。
+- 既存仕様、Schema、14人工fixture、期待値、CLI、差分を確認。
+- 依頼に従ってルートREADMEへの前回の一覧追加1行だけを取り消し、元の内容へ戻した。
+  他のPhase 0成果は保持した。以後の変更は261119/以下のみ。
+- Phase 0を `ea61cf2`（chore(261119): initialize PCAP analyzer development environment）として
+  commitし、`origin/feat/pcap-analyzer` へpushした。mainは変更していない。
+- 今回の指示に合わせ261119/AGENTS.mdのPhase 0時のcommit禁止等を更新した。
+
+## Phase 1実装
+
+- models.py: 上限設定、入力診断、根拠番号・整数ns・長さ・端点・分類を持つPacketRecord。
+- reader.py: 通常ファイルの読み取り専用open、classic pcap v2.4の4 magic、link type1、
+  snaplen、厳密なレコード境界、caplen実読込長、RawPcapReaderによる逐次読込。
+  Scapyの既定MTUによる長いレコードの切り落としを防ぐためsize=caplenを明示。
+- packet.py: ヘッダー境界を検査してからScapyでEthernet/IPv4/TCP/UDPヘッダーのみ復号。
+  payloadを復号せず、fragmentをL4から除外。分類競合はmalformed > truncated > unsupported > parsed。
+- report.py: 件数、捕捉/元長、時刻範囲、分類・排他的protocol別件数、fragment、根拠番号、
+  不正時刻、診断の逐次集計とJSON/端末表。
+- cli.py: JSONと端末表、引下げ可能な上限、正常0/入力・不完全・上限エラー2。
+  無効グローバルヘッダーはstdout空、読込開始後の停止はcomplete=falseの途中出力を返す。
+- 入力100 MiB/100万レコードに加え、1レコード1 MiB/通常診断1万件の上限を導入。
+  診断上限は当該レコード計数後に停止し、終了診断1件を追加する。
+- SHA-256はサイズ検査後に入力全体をチャンク読込して計算。完全レコードを一括保持しない。
+  FIFO/デバイス拒否、サイズ/mtime/ctimeの変化検知も追加した。不変snapshot保証ではない。
+- 不正timestamp fractionはmalformedに数えて時刻範囲から除外。
+  逆行は警告として保持し、JSONを決定的にするため時刻順へ並べ替えない。
+- 現行JSON Schemaを0.2.0（Phase 1）へ更新。flows=null、DNSはnot_implemented/events=null。
+  旧Schemaはreport.phase0.schema.jsonとして保管し、旧将来レポート例も維持した。
+  Phase 1用baseline.phase1.jsonは独立した手計算値から定義した。
+- ツール版を0.1.0へ更新し、同じvenvへネットワーク不要でeditable再導入した。
+  依存版・requirements.lockの変更はない。
+
+## 検証結果
+
+全100テスト成功。既存15件はCLIの未実装期待と旧Schema参照を更新しつつ維持し、
+85件の機能テストを追加した。件数だけでなく以下の仕様を確認した。
+
+- 14種類の保存fixtureをすべて再利用し、正常・空・未対応・破損の期待値を照合。
+- baselineは10件/捕捉680 bytes/元長680 bytes/TCP4件/UDP6件/parsed10件、8秒幅。
+  全体期待JSONと一致し、入力SHA-256・Schema・分類合計・参照番号の一意性も一致。
+- little/big endian × µs/nsの4形式で整数nsと元精度を確認。不正fractionを除外し、
+  逆行のmin/max範囲と警告を確認。
+- Ethernet/IPv4/TCP/UDPの不足・長さ矛盾、options全体長、fragment、IPv6/VLAN/ARP、
+  分類の優先順位、caplen/wirelen/snaplenの矛盾を検証。
+- レコードヘッダー不足/本文不足で完全レコードだけを保持し、終了2と不完全JSONを確認。
+- 不正magic/version/snaplen、圧縮入力、pcapng、未対応link typeを拒否。
+- 入力bytes/レコード/捕捉長/診断の上限と境界、巨大宣言長の割当前拒否、
+  次のレコードをScapyで読まずに件数上限で停止することを確認。
+- Scapyの既定MTUより長い70054 bytesのレコードが切り落とされないことを確認。
+- 同じ入力のJSON一致と1パケット追加時の件数/バイト増分、未実装値の明示を確認。
+- socket生成禁止下の解析、読み取り専用ファイルの不変、FIFOの非ブロック拒否、
+  存在しない入力、ディレクトリ、読込中変更検出を確認。
+- 別途、固定seedの不正ヘッダー500例をdecodeへ入力し、未捕捉例外が出ないことを確認した。
+  これは異常入力全体の網羅性を保証する検証ではない。
+- pip check成功。READMEのコマンドで端末表/JSONを確認し、文書リンク・差分・秘密情報パターンを点検。
+
+## 制限とPhase 2
+
+DNS本文・名前の正規化・照合、フロー集計、TCP再送推定、チェックサム、optionの意味検証は未実装。
+parsedはL4ヘッダーまでの検査成功。UDP長はIPv4の宣言payload長との一致を要求する。
+pcapng/圧縮pcap/IPv6/VLAN/cooked/Wi-Fi、IP/TCP再構成、TLS復号は対象外。
+TShark比較、性能測定、実通信、他Python版、VS Code GUI実行は未検証。
+ライブ捕捉・送信・スキャン・外部照会は行っていない。
+
+Phase 2は①双方向キー/方向別bytes/根拠のフロー集計と上限、②DNS境界・圧縮名・byte正規化、
+③5秒窓/重複・ID再利用/追加・孤立応答、④終端/逆行での未確定・時間無効化、
+⑤既存手計算期待値と新境界fixtureによる照合の順で進める。
+今回の成果はレビュー後にfeat/pcap-analyzerだけへ保存する。mainへのpush・マージとPR作成は行わない。

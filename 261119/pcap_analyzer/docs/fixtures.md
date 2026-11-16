@@ -48,8 +48,11 @@ UDP queryは14+20+8+30=72、responseは圧縮A回答16を加え88 bytes。
 | unsupported_linktype.pcap | ヘッダーlink type101、E_LINKTYPE |
 | unsupported_pcapng.pcapng | section headerのみ、E_FORMAT_UNSUPPORTED |
 
-今回のテストは生成の決定性、コンテナbytes・メタデータ、Scapy復号、手計算との一致を確認する。
-分類/DNS照合/エラー終了の上表は未実装解析器に対する将来の期待であり、成功結果ではない。
+Phase 0では生成の決定性、コンテナbytes・メタデータ、Scapy復号、手計算との一致を確認した。
+Phase 1では上表の入力検査・分類・集計・整数時刻・エラー終了も解析器で確認済み。
+DNS照合だけは未実装で、基本例の25ms/未応答/ambiguousは将来の期待である。
+[Phase 1の全体期待値](../expected/baseline.phase1.json)は手計算から定義し、
+解析コードや生成スクリプトはこのファイルを上書きしない。
 
 ## Phase 1/2で追加するfixture
 
@@ -57,4 +60,6 @@ big endian ns（4 magicの残り）、不正magic/version/snaplen/fraction、cap
 IPv4/TCP/UDP/DNS長さ矛盾、IPv6/VLAN、各上限の境界（小さい設定値で再現）、
 DNS窓ちょうど5秒/超過、同ID別名/port/type/class、大小文字/非ASCII/圧縮ループ、
 NXDOMAIN/TC、完了後query再利用、additional/unmatched_response、window_incomplete。
-現時点でこれらの解析挙動・性能は検証していない。
+現時点でこれらのうちPhase 1の形式・ヘッダー・上限の境界は、追加機能テスト内で
+独立したbytes/structから合成して検証済み。保存fixtureは引き続き14ファイルである。
+DNS照合の解析挙動・性能は検証していない。

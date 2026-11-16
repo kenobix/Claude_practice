@@ -1,0 +1,71 @@
+{
+  "schema_version": "0.2.0",
+  "phase": 1,
+  "input": {
+    "sha256": "15d498f6b295f4325b1add47e408ce26564aa14a506c5f10cde30143f65912b6",
+    "size_bytes": 864,
+    "timestamp_precision": "us",
+    "linktype": 1
+  },
+  "tool": {
+    "name": "pcap-analyzer",
+    "version": "0.1.0"
+  },
+  "config": {
+    "version": "0.2",
+    "max_input_bytes": 104857600,
+    "max_records": 1000000,
+    "max_packet_bytes": 1048576,
+    "max_diagnostics": 10000
+  },
+  "complete": true,
+  "summary": {
+    "packet_count": 10,
+    "captured_bytes": 680,
+    "original_bytes": 680,
+    "classification_counts": {
+      "parsed": 10,
+      "unsupported": 0,
+      "truncated": 0,
+      "malformed": 0
+    },
+    "protocol_counts": {
+      "tcp": 4,
+      "udp": 6,
+      "ipv4_fragment": 0,
+      "ipv4_other": 0,
+      "non_ipv4": 0,
+      "unknown": 0
+    },
+    "parsed_ratio": 1.0,
+    "start_ns": 1700000000000000000,
+    "end_ns": 1700000008000000000,
+    "duration_ns": 8000000000,
+    "ipv4_fragment_count": 0,
+    "timestamp_invalid_count": 0
+  },
+  "classification_indices": {
+    "parsed": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "unsupported": [],
+    "truncated": [],
+    "malformed": []
+  },
+  "flows": null,
+  "dns": {
+    "status": "not_implemented",
+    "time_analysis": "not_implemented",
+    "events": null
+  },
+  "diagnostics": []
+}

@@ -1,3 +1,3 @@
-"""Offline analyzer scaffold; analysis starts in Phase 1."""
+"""Offline classic pcap header analysis."""
 
-__version__ = "0.0.0"
+__version__ = "0.1.0"

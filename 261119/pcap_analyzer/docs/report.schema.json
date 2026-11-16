@@ -3,18 +3,23 @@
   "additionalProperties": false,
   "required": [
     "schema_version",
+    "phase",
     "input",
     "tool",
     "config",
     "complete",
     "summary",
+    "classification_indices",
     "flows",
     "dns",
     "diagnostics"
   ],
   "properties": {
     "schema_version": {
-      "const": "0.1.0"
+      "const": "0.2.0"
+    },
+    "phase": {
+      "const": 1
     },
     "input": {
       "type": "object",
@@ -57,7 +62,7 @@
           "const": "pcap-analyzer"
         },
         "version": {
-          "type": "string"
+          "const": "0.1.0"
         }
       }
     },
@@ -66,35 +71,34 @@
       "additionalProperties": false,
       "required": [
         "version",
-        "dns_window_ns",
         "max_input_bytes",
         "max_records",
-        "max_flows",
-        "max_dns_keys"
+        "max_packet_bytes",
+        "max_diagnostics"
       ],
       "properties": {
         "version": {
-          "const": "0.1"
-        },
-        "dns_window_ns": {
-          "type": "integer",
-          "minimum": 1
+          "const": "0.2"
         },
         "max_input_bytes": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 1,
+          "maximum": 104857600
         },
         "max_records": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 1,
+          "maximum": 1000000
         },
-        "max_flows": {
+        "max_packet_bytes": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 1,
+          "maximum": 1048576
         },
-        "max_dns_keys": {
+        "max_diagnostics": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 1,
+          "maximum": 10000
         }
       }
     },
@@ -108,13 +112,14 @@
         "packet_count",
         "captured_bytes",
         "original_bytes",
-        "unattributed_captured_bytes",
         "classification_counts",
+        "protocol_counts",
         "parsed_ratio",
         "start_ns",
         "end_ns",
         "duration_ns",
-        "ipv4_fragment_count"
+        "ipv4_fragment_count",
+        "timestamp_invalid_count"
       ],
       "properties": {
         "packet_count": {
@@ -126,10 +131,6 @@
           "minimum": 0
         },
         "original_bytes": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "unattributed_captured_bytes": {
           "type": "integer",
           "minimum": 0
         },
@@ -156,6 +157,44 @@
               "minimum": 0
             },
             "malformed": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "protocol_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tcp",
+            "udp",
+            "ipv4_fragment",
+            "ipv4_other",
+            "non_ipv4",
+            "unknown"
+          ],
+          "properties": {
+            "tcp": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "udp": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "ipv4_fragment": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "ipv4_other": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "non_ipv4": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unknown": {
               "type": "integer",
               "minimum": 0
             }
@@ -193,371 +232,80 @@
         "ipv4_fragment_count": {
           "type": "integer",
           "minimum": 0
+        },
+        "timestamp_invalid_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "classification_indices": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "parsed",
+        "unsupported",
+        "truncated",
+        "malformed"
+      ],
+      "properties": {
+        "parsed": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true
+        },
+        "unsupported": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true
+        },
+        "truncated": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true
+        },
+        "malformed": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true
         }
       }
     },
     "flows": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "protocol",
-          "a",
-          "b",
-          "a_to_b",
-          "b_to_a",
-          "tcp_flag_counts"
-        ],
-        "properties": {
-          "protocol": {
-            "enum": [
-              6,
-              17
-            ]
-          },
-          "a": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "ip",
-              "port"
-            ],
-            "properties": {
-              "ip": {
-                "type": "string",
-                "pattern": "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$"
-              },
-              "port": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 65535
-              }
-            }
-          },
-          "b": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "ip",
-              "port"
-            ],
-            "properties": {
-              "ip": {
-                "type": "string",
-                "pattern": "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$"
-              },
-              "port": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 65535
-              }
-            }
-          },
-          "a_to_b": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "packets",
-              "captured_bytes",
-              "original_bytes",
-              "packet_indices"
-            ],
-            "properties": {
-              "packets": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "captured_bytes": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "original_bytes": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "packet_indices": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "minimum": 1
-                },
-                "uniqueItems": true
-              }
-            }
-          },
-          "b_to_a": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "packets",
-              "captured_bytes",
-              "original_bytes",
-              "packet_indices"
-            ],
-            "properties": {
-              "packets": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "captured_bytes": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "original_bytes": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "packet_indices": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "minimum": 1
-                },
-                "uniqueItems": true
-              }
-            }
-          },
-          "tcp_flag_counts": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "additionalProperties": false,
-            "required": [
-              "F",
-              "S",
-              "R",
-              "P",
-              "A",
-              "U",
-              "E",
-              "C"
-            ],
-            "properties": {
-              "F": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "S": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "R": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "P": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "A": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "U": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "E": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "C": {
-                "type": "integer",
-                "minimum": 0
-              }
-            }
-          }
-        }
-      }
+      "type": "null"
     },
     "dns": {
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "status",
         "time_analysis",
         "events"
       ],
       "properties": {
+        "status": {
+          "const": "not_implemented"
+        },
         "time_analysis": {
           "enum": [
-            "enabled",
+            "not_implemented",
             "disabled_timestamp_regression"
           ]
         },
         "events": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "status",
-              "query_indices",
-              "response_indices",
-              "response_time_ms",
-              "rcode",
-              "tc",
-              "key"
-            ],
-            "properties": {
-              "status": {
-                "enum": [
-                  "matched",
-                  "ambiguous",
-                  "additional_response",
-                  "unmatched_response",
-                  "no_response_observed",
-                  "window_incomplete"
-                ]
-              },
-              "query_indices": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "minimum": 1
-                },
-                "uniqueItems": true
-              },
-              "response_indices": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "minimum": 1
-                },
-                "uniqueItems": true
-              },
-              "response_time_ms": {
-                "type": [
-                  "number",
-                  "null"
-                ],
-                "minimum": 0
-              },
-              "rcode": {
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": 0,
-                "maximum": 15
-              },
-              "tc": {
-                "type": [
-                  "boolean",
-                  "null"
-                ]
-              },
-              "key": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "client",
-                  "server",
-                  "id",
-                  "labels_hex",
-                  "qtype",
-                  "qclass"
-                ],
-                "properties": {
-                  "client": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "required": [
-                      "ip",
-                      "port"
-                    ],
-                    "properties": {
-                      "ip": {
-                        "type": "string",
-                        "pattern": "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$"
-                      },
-                      "port": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 65535
-                      }
-                    }
-                  },
-                  "server": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "required": [
-                      "ip",
-                      "port"
-                    ],
-                    "properties": {
-                      "ip": {
-                        "type": "string",
-                        "pattern": "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$"
-                      },
-                      "port": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 65535
-                      }
-                    }
-                  },
-                  "id": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 65535
-                  },
-                  "labels_hex": {
-                    "type": "array",
-                    "minItems": 1,
-                    "items": {
-                      "type": "string",
-                      "pattern": "^(?:[0-9a-f]{2})*$"
-                    }
-                  },
-                  "qtype": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 65535
-                  },
-                  "qclass": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 65535
-                  }
-                }
-              }
-            },
-            "allOf": [
-              {
-                "if": {
-                  "properties": {
-                    "status": {
-                      "const": "matched"
-                    }
-                  }
-                },
-                "then": {
-                  "properties": {
-                    "query_indices": {
-                      "minItems": 1,
-                      "maxItems": 1
-                    },
-                    "response_indices": {
-                      "minItems": 1,
-                      "maxItems": 1
-                    },
-                    "response_time_ms": {
-                      "type": "number"
-                    }
-                  }
-                },
-                "else": {
-                  "properties": {
-                    "response_time_ms": {
-                      "type": "null"
-                    }
-                  }
-                }
-              }
-            ]
-          }
+          "type": "null"
         }
       }
     },
@@ -568,12 +316,17 @@
         "additionalProperties": false,
         "required": [
           "code",
-          "packet_index",
-          "reason"
+          "reason",
+          "packet_index"
         ],
         "properties": {
           "code": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[EPW]_[A-Z_]+$"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
           },
           "packet_index": {
             "type": [
@@ -581,14 +334,11 @@
               "null"
             ],
             "minimum": 1
-          },
-          "reason": {
-            "type": "string"
           }
         }
       }
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "PCAP analyzer report v0.1.0 (Phase 0 contract)"
+  "title": "PCAP analyzer Phase 1 report v0.2.0"
 }

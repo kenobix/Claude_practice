@@ -141,18 +141,20 @@ def test_unsupported_container_identity(fixtures):
     assert (fixtures / "unsupported_pcapng.pcapng").read_bytes()[:4] == b"\x0a\x0d\x0d\x0a"
 
 
-def test_cli_startup_and_unimplemented_analysis():
+def test_cli_startup_and_baseline_analysis():
     for args in (["--version"], ["--help"], []):
         result = subprocess.run([sys.executable, "-m", "pcap_analyzer", *args], capture_output=True, text=True)
         assert result.returncode == 0
     result = subprocess.run([sys.executable, "-m", "pcap_analyzer", str(ROOT / "fixtures/baseline.pcap")], capture_output=True, text=True)
-    assert result.returncode == 3
-    assert "E_NOT_IMPLEMENTED" in result.stderr
-    assert result.stdout == ""
+    assert result.returncode == 0
+    assert result.stderr == ""
+    assert "Captured bytes" in result.stdout
+    assert "680" in result.stdout
 
 
 def test_report_schema_and_manual_example():
-    schema = json.loads((ROOT / "docs/report.schema.json").read_text())
+    # Keep the original Phase 0 future-report contract under its archived schema.
+    schema = json.loads((ROOT / "docs/report.phase0.schema.json").read_text())
     Draft202012Validator.check_schema(schema)
     example = json.loads((ROOT / "expected/baseline.report.json").read_text())
     validator = Draft202012Validator(schema)
