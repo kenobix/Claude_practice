@@ -83,3 +83,47 @@ DB統合ではSQLiteへの代替は行っていない。`.env`や実認証情報
 verify_db.pyの再実行で4 passed（既知のTestClient非推奨警告1件）、実DB readiness 200、migration再適用、DB再起動後の版1保持を再現した。
 一時DB資源は検証後に削除。既存ファイルを確認したうえで、この記録と日付直下AGENTSの現在のGit方針のみ更新した。
 環境構築成果を最初の節目としてcommit・pushし、次にP0隔離実測を進める。
+
+## 継続依頼：P0隔離実測・P1準備
+
+最初の節目は `a04d92a`（chore(261117): initialize CI runner development environment）としてcommitし、origin/feat/ci-runnerへpush成功。mainは操作していない。
+
+### 実装と結果
+
+P0専用のDockerfile・有限probe、tests/isolation_support.py、test_isolation.py、verify_isolation.pyを追加した。
+本番API/Workerへ実行経路は追加せず、通常pytestからは明示opt-inまでDocker試験をskipする。
+Docker Desktop/WSL2、cgroup v2/cgroupfsの現環境を使用し、rootlessやOS設定変更は行っていない。
+
+初回は9 passedだったが、logs fixtureが上限検出後のkill前に自然終了していたため、停止の証拠が不十分と判断。
+出力後に待機させ、exit 137を必須にし、設定不一致の拒否とtmpfs noexecも追加した。
+最終実行は10 passed in 36.23s。証拠はdocs/isolation-evidence.json、設定・実測・期待動作と限界はdocs/isolation.md。
+
+- CPU 0.5設定、3秒負荷の実測比0.497、throttle 30回。
+- RAM 128MiB/swapなしで有限192MiB割当がOOMKilled=true、exit 137。
+- 親1+子63=64 PIDで追加fork拒否EAGAIN、limit event増加。
+- SIGTERM無視fixtureを10秒監視でkill、10.380秒で終了・exit 137。
+- stdout/stderr合計保持1MiBで停止・exit 137。観測総量4MiBはpipe等の転送済みデータを含み、保持しない。厳密な総生成バイト数の上限ではない。
+- uid/gid65534、CapEff/CapBnd=0、NoNewPrivs=1、Seccomp=2、setuid/raw socket拒否。
+- loのみ、外向きTCP接続ENETUNREACH。root FS書込EROFS、tmpfs容量16MiBでENOSPC、tmpfs実行EACCES。
+- Docker socketなし・接続ENOENT、host bind/device/環境変数継承なし。
+- 全10コンテナで停止後Pid=0・削除確認、sessionの残存コンテナ0。一時イメージもテスト終端で削除。
+- メモリを意図的に64MiBに変更したケースはpreflightで負荷開始前に拒否。未知のprobe名もDocker操作前に拒否。
+
+DB/API回帰もverify_db.pyで再確認し、4 passed、10 skipped（別実行済みDocker試験）、既知のTestClient警告1件。
+migration二重適用・readiness 200・DB再起動保持も再確認し、DBの一時container/volume/networkを削除した。
+P0の10件とDBの4件は異なる実行で確認した結果であり、単一の14 passed実行ではない。
+
+### 判定・残課題
+
+管理下の固定fixtureによる現在環境のP0は完了。P1計画だけをdocs/p1-plan.mdで具体化し、本格実装は行っていない。
+根拠はcgroup実値だけでなく実際の抑制・OOM・拒否・kill・削除結果。nosuid/nodevは設定確認のみ、全setuid/全seccomp攻撃やカーネル脱出は試験範囲外。
+DockerのVM/カーネルを共有する構成であり、非信頼コードを受け付ける完全隔離基盤とは説明しない。
+監視処理自体のSIGKILL/電源断時回収、Workerのlease/DB断/競合復旧は未実装。別環境では同じ検証を再実行する。
+最初のP1は固定入力契約→POST /runsの永続化・冪等性→GET APIと再送/故障試験→単一Worker・制限付き実行→結果保存と回収の順。
+
+生成物はvenv/cache/通常実測JSONをignoreし、レビュー可能なfixtureソースと必要な証拠JSONだけを保存する。
+ベースイメージとDocker build cacheは再利用用に残し、global pruneや既存コンテナ操作は行わない。
+変更は261117/内に限定し、今回の成果も差分・秘密情報確認後にfeat/ci-runnerへcommit・pushする。
+
+最終の専用ラベル照会で、隔離テストのcontainer/image、およびDB回帰のcontainer/volume/networkの残存はすべて0件だった。
+証拠JSONの全ソースSHA-256が保存対象コードと一致し、10ケースのPid=0/removed=true、相対ドキュメントリンクの存在を確認した。

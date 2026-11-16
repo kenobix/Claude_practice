@@ -1,8 +1,9 @@
-# 固定fixture v1仕様（未実装・未実行）
+# 固定fixture v1仕様とP0検証fixture
 
-管理下の公開サンプル1つ、固定workflow、外部依存なしのPythonを対象とする。
+P1の実行対象は管理下の公開サンプル1つ、固定workflow、外部依存なしのPythonとする。公開サンプルへの接続は未実装。
 コードの取得はサーバー許可設定から行い、受理したcommit SHAに固定する。
-fixtureイメージはPython版とdigestを固定予定。実行時はnetwork noneとする。
+P0用は `fixtures/isolation/` に実装済み。公式PythonベースのdigestをDockerfileに固定し、network noneで実測した。
+このfixtureは隔離検証だけに使い、API/Workerから実行する経路はない。P1用イメージは別途実装する。
 
 | 名前 | 固定動作 | 期待結果 |
 |---|---|---|
@@ -13,5 +14,7 @@ fixtureイメージはPython版とdigestを固定予定。実行時はnetwork no
 
 大量ログはパイプを読み続けながら上限判定し、メモリへの全量読込をしない。
 上限到達時に停止・強制killし、truncated=trueを記録する案とする。
-成功/失敗/時間切れ/大量ログでコンテナ・一時領域を回収できることをP1で検証する。
-CPU/RAM/PID限界試験は別の管理下プローブとし、専用VM上で実施する。
+P0ではsuccess/failure/timeout/logsモードで正常終了・exit 1・10秒kill・ログ上限killと回収を確認済み。
+P1ではrun/attemptへの結果保存まで統合して再検証する。CPU/RAM/PID等の有限プローブも実装・実測済み。
+P0のlogsは4MiB出力後60秒待機し、自然終了と監視によるkillを区別する。tmpfs容量・noexecと設定不一致の起動拒否も検証した。
+詳細と限界は[隔離仕様](isolation.md)を参照。

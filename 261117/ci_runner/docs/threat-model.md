@@ -1,7 +1,7 @@
 # P0脅威モデルと検証ゲート
 
 通常サンドボックスでの接続拒否後、許可された経路でDocker daemon接続とDB起動を確認した。
-ただし以下のジョブ制限は設計要件であり、有効性はすべて未検証。
+現在環境の管理下fixtureで主要な制限を実測しP0を完了した。[制限ごとの実証・設定確認のみの項目・限界](isolation.md)を参照。
 現Composeは開発DBだけを定義し、ジョブ実行の安全性を証明するものではない。
 
 ## 信頼境界
@@ -28,7 +28,7 @@ Docker操作権限は信頼済みWorkerだけ。APIやジョブへsocketを渡�
 Docker inspectの値だけで有効と判断せず、実際の失敗・抑制とホスト影響を観測する。
 管理下fixture以外は検証ゲートを通すまで実行しない。ホストでfixtureを代替実行しない。
 
-## Docker利用再開手順
+## 異なる実行環境へ移る際の検証手順
 
 1. 専用VMと利用可能なDocker contextを管理者と確認する。今回は権限変更・sudo・group追加を行わない。
 2. rootlessを候補にし、uidmap/subuid/subgid、cgroup v2/systemd等の前提とresource制限対応を確認する。
@@ -37,7 +37,8 @@ Docker inspectの値だけで有効と判断せず、実際の失敗・抑制と
 5. 固定したfixtureイメージをbuild/pullしdigestを記録してから、上の各制御を実測する。
 6. 制限が無効なら失敗として記録し、設定を修正するまでWorkerを有効化しない。
 
-PostgreSQL 17.12-bookwormのpullとdigestを確認しComposeに固定済み。ジョブfixtureイメージは未作成。
-Worker本体も隔離チェックも未実装なので、現時点でジョブ開始を許す経路は存在しない。
+PostgreSQL 17.12-bookwormのdigestはComposeに固定済み。P0 fixtureのPythonイメージもdigest固定で実測済み。
+表の制御はP0テストで実証したものと、P1以降の要件を含む。API/Workerの実行境界は未実装なので、アプリからジョブ開始を許す経路は存在しない。
+今回の監視処理はテスト用であり、Workerに実装済みとは説明しない。nosuid/nodevや全setuid/全syscallの試験は未実施。
 
 参照: [Docker security](https://docs.docker.com/engine/security/)、[Rootless mode](https://docs.docker.com/engine/security/rootless/)。
