@@ -410,7 +410,7 @@ mlops-bikectl monitor-inspect --csv /absolute/path/monitor.csv \
   --run-id '3ae0909d-7ae1-4a09-a756-96a7ed582edf'
 ```
 
-PostgreSQLは同一REPEATABLE READ READ ONLYで型・profile・対象行を読みます。接続timeout 5秒、statement timeout 5秒、lock timeout 1秒を固定し、schema/DBを新規作成しません。REALの丸めとSQL NaNは[数値照合ルール](monitoring.md#monitor-reconciliation--数値と欠落値の固定ルール)に従います。設定されたURIのoptionsは安全な固定値で上書きされ、schemaはその接続のcurrent_schema()を使います。接続不能・権限拒否・timeoutはdatabase_unavailable/2であり、必要行がないと確定したわけではありません。最終unit/PG受入/CI結果は[T06b検証記録](reviews/20261030-t06b-checks.json)を参照してください。使い捨てDBの保存型probeや合成受入を、実Capital監視・配信の証拠へ流用しないでください。既存DB/reportの修正やmarker再作成を行わず原本を保持してください。
+PostgreSQLは同一REPEATABLE READ READ ONLYで型・profile・対象行を読みます。接続timeout 5秒、statement timeout 5秒、lock timeout 1秒を固定し、schema/DBを新規作成しません。REALの丸めとSQL NaNは[数値照合ルール](monitoring.md#monitor-reconciliation--数値と欠落値の固定ルール)に従います。設定されたURIのoptionsは安全な固定値で上書きされ、schemaはその接続のcurrent_schema()を使います。接続不能・権限拒否・timeoutはdatabase_unavailable/2であり、必要行がないと確定したわけではありません。最終unit/PG受入/CI結果は[T06b検証記録](reviews/foundation.json#/reviews/20261030-t06b-checks.json)を参照してください。使い捨てDBの保存型probeや合成受入を、実Capital監視・配信の証拠へ流用しないでください。既存DB/reportの修正やmarker再作成を行わず原本を保持してください。
 
 Capital監視は[学習参照とPSI v2](monitoring.md#training-monitor-reference)の手順を使います。`--psi-version psi-v2-constant-bins`と、同じ登録候補の学習参照artifactが必要です。UCIは従来の呼出しとPSIを維持します。
 
@@ -461,9 +461,9 @@ T03のSIGTERM終了待ちやT13の未来時刻拒否が再発した場合は、[
 
 現行initializeは`predictions.predicted`がREALならDOUBLE PRECISIONへ移行します。実DBに新コードを適用する前に、[T08の検証・復元手順](runbook.md#prediction-precision-migration)で制約を確認してください。専用fixtureでは保存値・metadata・同一ID再送・中断時rollback・別volumeへのbackup/restoreを検証します。旧保存時に失われた桁は戻らず、APIの十進表示は変わる場合があります（例: 415.72473→415.7247314453125）。過去JSONとの完全一致を保証した検証ではありません。実DBの移行は今回行っていません。
 
-2026-11-03更新: 新規配信のAPI・state・台帳の操作ID照合と、CLI promote900秒/recover300秒の全体deadline、未確定時の手順は[配信診断](runbook.md#deployment-observability--2026-11-03-t17b-操作の照合とcli全体の待機上限)を参照。最終受入状況は[検証索引](reviews/20261103-t17b-t07a-checks.json)を確認する。
+2026-11-03更新: 新規配信のAPI・state・台帳の操作ID照合と、CLI promote900秒/recover300秒の全体deadline、未確定時の手順は[配信診断](runbook.md#deployment-observability--2026-11-03-t17b-操作の照合とcli全体の待機上限)を参照。最終受入状況は[検証索引](reviews/deployment-ci.json#/reviews/20261103-t17b-t07a-checks.json)を確認する。
 
-2026-11-03最終確認: 実装`4a4474e`の[CI41559833990](https://github.com/kenobix/Claude_practice/actions/runs/41559833990)で全447件・Caddy normal/TERM・対応復元・artifact16 member/hash/cleanupが成功。[最終CI索引](reviews/20261103-t17b-t07a-ci-checks.json)を確認する。合成受入とSQLite OS補足は完了し、実producer・時計資格・新原本からの採否は計画§11.6の残件に従う。
+2026-11-03最終確認: 実装`4a4474e`の[CI41559833990](https://github.com/kenobix/Claude_practice/actions/runs/41559833990)で全447件・Caddy normal/TERM・対応復元・artifact16 member/hash/cleanupが成功。[最終CI索引](reviews/deployment-ci.json#/reviews/20261103-t17b-t07a-ci-checks.json)を確認する。合成受入とSQLite OS補足は完了し、実producer・時計資格・新原本からの採否は計画§11.6の残件に従う。
 
 <a id="runbook--2026-11-08：保存したcapital事前protocolを読む"></a>
 
@@ -584,11 +584,11 @@ legacy以外の不一致では`/ready`は503、`/version`は診断状態だけ�
 
 Docker daemonや送信済みHTTPの完了はprocess停止で取消保証できない。固定probe request ID `deploy-probe:<deployment_id>`と台帳・入口・stateを調査し、必要なら手動recoverする。自動retryは行わない。completed commit後の応答喪失でも完了行を未完了へ戻さず、結果はinspectで確認する。失敗時の補償も同じ全体予算内であり、補償時間だけを無制限に延長しない。
 
-この上限はCLI配信操作の上限で、API起動自身のloader時間や予測応答SLOを変更するものではない。合成試験の時間を実Capital性能・時計資格として使わない。受入原本・失敗・未達ケースは[今回の索引](reviews/20261103-t17b-t07a-checks.json)に追記する。
+この上限はCLI配信操作の上限で、API起動自身のloader時間や予測応答SLOを変更するものではない。合成試験の時間を実Capital性能・時計資格として使わない。受入原本・失敗・未達ケースは[今回の索引](reviews/deployment-ci.json#/reviews/20261103-t17b-t07a-checks.json)に追記する。
 
 Composeへ必要なDB設定3項目（`APP_DB_PASSWORD`、`MLFLOW_DB_PASSWORD`、`POSTGRES_ADMIN_PASSWORD`）と`APP_DB_HOST_PORT`も子processの明示環境へ渡す。環境変数だけの構成とport上書きを維持し、これらの値をargv/診断logへ表示しない。その他の無関係な環境変数を一括継承しない。
 
-最終確認は実装4a4474eの[CI索引](reviews/20261103-t17b-t07a-ci-checks.json)。全447件・artifact/cleanupまで確認済み。冒頭の部分実装に関する記述は2026-11-02時点の履歴であり、現在のCLI契約は2026-11-03節を使う。
+最終確認は実装4a4474eの[CI索引](reviews/deployment-ci.json#/reviews/20261103-t17b-t07a-ci-checks.json)。全447件・artifact/cleanupまで確認済み。冒頭の部分実装に関する記述は2026-11-02時点の履歴であり、現在のCLI契約は2026-11-03節を使う。
 
 <a id="deployment-recovery"></a>
 
@@ -600,7 +600,7 @@ Composeへ必要なDB設定3項目（`APP_DB_PASSWORD`、`MLFLOW_DB_PASSWORD`、
 
 2026-11-02追記: 以下のT07a/T17aは当時の境界を保持する。追加した実MLflow/skops対応復元は本書末尾、通常CLIの部分的な段階表示・読取診断は[配信処理の診断](runbook.md#deployment-observability)を参照。
 
-基点`444acc9`。[計画§11.6](../../261014/plan_mlops.md)、[証拠JSON](reviews/20261101-t07-t17-checks.json)を参照。
+基点`444acc9`。[計画§11.6](../../261014/plan_mlops.md)、[証拠JSON](reviews/deployment-ci.json#/reviews/20261101-t07-t17-checks.json)を参照。
 実DB・実registry・現配信への適用は行っていない。合成UCI契約の試験であり、実Capitalの配信証拠producerには使用しない。
 
 <a id="deployment-recovery--修正した問題"></a>
@@ -698,7 +698,7 @@ T13の厳密拒否は維持し、OS修復や時計資格をこの受入の成功
 
 #### 2026-11-01 CI追跡
 
-実装f341e94の[CI検証索引](reviews/20261101-t07-t17-ci-checks.json)で、全369件と既存合成system/PostgreSQL/cleanup成功・artifact hashを確認した。本書の新復旧harnessの実Caddy受入自体はlocal実行で、CI接続は残る。local全suiteの既存UTC拒否も取り消さない。
+実装f341e94の[CI検証索引](reviews/deployment-ci.json#/reviews/20261101-t07-t17-ci-checks.json)で、全369件と既存合成system/PostgreSQL/cleanup成功・artifact hashを確認した。本書の新復旧harnessの実Caddy受入自体はlocal実行で、CI接続は残る。local全suiteの既存UTC拒否も取り消さない。
 
 <a id="deployment-recovery--t07b-合成capitalの実mlflow・skops・db対応復元"></a>
 
@@ -727,7 +727,7 @@ T07aの実Caddy/SIGKILLによる切替復旧harness自体のCI接続と、実can
 
 ##### T07bの実装CI確認（2026-11-02）
 
-実装`2414b20`の[CI41462429218](https://github.com/kenobix/Claude_practice/actions/runs/41462429218)は419 tests/54.813秒・両job全stepが成功。[照合索引](reviews/20261102-t07b-ci-checks.json)に保存した。
+実装`2414b20`の[CI41462429218](https://github.com/kenobix/Claude_practice/actions/runs/41462429218)は419 tests/54.813秒・両job全stepが成功。[照合索引](reviews/deployment-ci.json#/reviews/20261102-t07b-ci-checks.json)に保存した。
 artifact13150206991の外側ZIP SHAは`4c010bcb5591152645c6004a38d99ffac21d61137fcefb2e3ddfb62b4461f802`、全13 memberのhashを照合した。
 registry65table・audit5table（744観測/1052予測）・column/sequence・8 artifactの対応、別3volume、破損モデル拒否、同ID再送/新ID推論を確認した。
 restoreの残存container/network/volume/imageがすべて0、workspace回収済み、source project cleanupと保護container ID不変も確認できた。
@@ -744,7 +744,7 @@ T07bの合成対応復元を完了とし、T07a復旧harnessのCIと実producer�
 
 CIにはnormal/TERMの2 runと明示したlog/summary3 fileだけを追加する。dump、環境file、raw HTTP、model資料は公開allowlistに加えない。CI実装commitのartifact/member hashと両runのcleanupが確認されるまではCI受入を完了扱いにしない。build client自体のtimeoutでdaemonに作業が残る場合の取消は保証せず、残存またはcleanup未確認は成功にしない。
 
-2026-11-03最終確認: 実装`4a4474e`の[CI41559833990](https://github.com/kenobix/Claude_practice/actions/runs/41559833990)で全447件・Caddy normal/TERM・対応復元・artifact16 member/hash/cleanupが成功。[最終CI索引](reviews/20261103-t17b-t07a-ci-checks.json)を確認する。合成受入とSQLite OS補足は完了し、実producer・時計資格・新原本からの採否は計画§11.6の残件に従う。
+2026-11-03最終確認: 実装`4a4474e`の[CI41559833990](https://github.com/kenobix/Claude_practice/actions/runs/41559833990)で全447件・Caddy normal/TERM・対応復元・artifact16 member/hash/cleanupが成功。[最終CI索引](reviews/deployment-ci.json#/reviews/20261103-t17b-t07a-ci-checks.json)を確認する。合成受入とSQLite OS補足は完了し、実producer・時計資格・新原本からの採否は計画§11.6の残件に従う。
 
 <a id="prediction-precision-migration"></a>
 
@@ -754,7 +754,7 @@ CIにはnormal/TERMの2 runと明示したlog/summary3 fileだけを追加する
 
 ### 予測保存列の精度移行と復元の検証（T08）
 
-T08は既存の`Database.initialize()`がPostgreSQLの`predictions.predicted`をREALからDOUBLE PRECISIONへ移す処理の検証です。実DBの移行は行っていません。現行の`monitor_windows`のREAL列を移行する作業も含みません。最終結果とsource/log/backupのSHAは[検証記録](reviews/20261101-t08-checks.json)、試行の経緯は[作業ログ](../work_log.md)を参照してください。
+T08は既存の`Database.initialize()`がPostgreSQLの`predictions.predicted`をREALからDOUBLE PRECISIONへ移す処理の検証です。実DBの移行は行っていません。現行の`monitor_windows`のREAL列を移行する作業も含みません。最終結果とsource/log/backupのSHAは[検証記録](reviews/deployment-ci.json#/reviews/20261101-t08-checks.json)、試行の経緯は[作業ログ](../work_log.md)を参照してください。
 
 REALは約6桁、DOUBLE PRECISIONは約15桁の精度を持ちます。旧REAL保存時に失われた桁は、型を広げても復元できません。T08では`predicted::double precision`で読み出した旧保存値と`struct.pack('!f', value)`のbinary32を照合し、移行後も同じbinary32由来の値を保持することを確認します。新しい予測行についてはbinary64の値を保持できることを別に調べます。[PostgreSQL数値型の仕様](https://www.postgresql.org/docs/17/datatype-numeric.html)を参照。
 
@@ -817,7 +817,7 @@ T08は合成旧schemaの受入です。既存UCIを停止・backup・移行・�
 ### MLflowのnoload非推奨警告の切分け
 
 2026-11-03、基点`298c6c8`からの独立したP2調査。
-[検証索引](reviews/20261103-orm-compatibility-checks.json)を参照。
+[検証索引](reviews/deployment-ci.json#/reviews/20261103-orm-compatibility-checks.json)を参照。
 **警告の発生箇所と更新判断は確認済み。上流の修正は未確認で、依存lockは変更しない。**
 
 <a id="mlflow-orm-compatibility--確認した範囲"></a>
@@ -894,7 +894,7 @@ name、16pathの明示allowlist、14日保存、失敗時のlog回収条件、hi
 
 受入には実装commitのCI全job/step成功、16member ZIPの実download、GitHub digestとのSHA一致、
 内側archiveのmember hashと別process再計算、T07a normal/TERM・T07b/既存PGのcleanup確認が必要。
-local構文検証だけでは完了にしない。初期記録は[local索引](reviews/20261103-upload-action-checks.json)。
+local構文検証だけでは完了にしない。初期記録は[local索引](reviews/deployment-ci.json#/reviews/20261103-upload-action-checks.json)。
 
 このCIは合成検証で、実Capital採否・時計資格・本番SLOの証拠ではない。
 他の非推奨警告が残る場合は発生箇所と別taskを記録し、warningを消すための広範な依存更新は行わない。
@@ -904,7 +904,7 @@ local構文検証だけでは完了にしない。初期記録は[local索引](r
 - MLflowの`sqlalchemy_store.py:327`からSQLAlchemyの`noload`非推奨警告。現行lockでの試験は成功したが、将来の依存互換は個別に確認する。今回警告の抑制・lock更新・上流fileの直接patchはしない。
 - ZIP重複memberのUserWarningは、重複を拒否する負例を作ったときのもの。重複archiveを受理した証拠でも通常処理の破損でもない。
 
-全system job・artifact・cleanupの受入は[CI索引](reviews/20261103-upload-action-ci-checks.json)で確認済み。
+全system job・artifact・cleanupの受入は[CI索引](reviews/deployment-ci.json#/reviews/20261103-upload-action-ci-checks.json)で確認済み。
 実装`5a687a7a58ead84240bfd72bfcbe4cfbe31f3559`の[CI41598271089](https://github.com/kenobix/Claude_practice/actions/runs/41598271089)は全job/step成功。
 実行時のaction解決SHAは`cf430e030ddbb5b0abf93d22962f4752f3646cd9`、`archive: true`も実logで確認した。
 artifact13214080832の233,299 bytes/16member ZIP SHA
@@ -955,4 +955,4 @@ event本文が失われた場合、原本を推定・上書きせず保留する
   --expected-head ece3b490a552de4ff140660a59c3b6d27d83b6dde8fd2c6c35a44c1179f83b21
 ```
 
-このheadを独立した記録として保存する。履歴欠落・破損・head不一致は停止し、自動削除/再発行しない。証拠原本はignoredのdata配下にあり、別PCのcloneだけでは再現できない。共有時は[証拠索引](reviews/20261116-product-acceptance-checks.json)のhashと原本を別途照合する。新規appendは履歴を変える操作なので、閲覧目的で再実行しない。
+このheadを独立した記録として保存する。履歴欠落・破損・head不一致は停止し、自動削除/再発行しない。証拠原本はignoredのdata配下にあり、別PCのcloneだけでは再現できない。共有時は[証拠索引](reviews/capital.json#/reviews/20261116-product-acceptance-checks.json)のhashと原本を別途照合する。新規appendは履歴を変える操作なので、閲覧目的で再実行しない。

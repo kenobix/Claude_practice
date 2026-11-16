@@ -1,16 +1,20 @@
-最新契約：[正式入力参照・全review系列archive・独立原本回復](capital.md#operational-review-input-archive-20261115)、[検証索引](reviews/20261115-review-archive-checks.json)。
+最新契約：[正式入力参照・全review系列archive・独立原本回復](capital.md#operational-review-input-archive-20261115)、[検証索引](reviews/capital.json#/reviews/20261115-review-archive-checks.json)。
 
 # 文書一覧とファイル統合の対応表
+
+2026-11-16：検証JSON 80本を[用途別5冊と旧名索引](reviews/README.md)へ統合した。
+各冊の`reviews[旧ファイル名]`で内容を参照でき、`originals`には元のUTF-8原文・サイズ・SHA256も保持する。
+以下の2026-11-15時点の整理記録や、JSON内の旧path/hashは当時の記録として読む。
 
 2026-11-15：Markdown 67本を用途別8冊＋この索引へ統合。元の内容は各冊の旧ファイル名の節へ収録した。
 過去reviewのJSON、保存済み候補・原本・消費台帳は変更していない。過去ログの旧path/hashは当時の記録で、
 必要ならGitの整理前commit `9479201`で原本を確認できる。時計研究・運用受入保留は解除していない。
-整理後の全593テスト・隔離Docker/PG/復旧CIとartifact検算は[検証索引](reviews/20261115-file-consolidation-checks.json)を参照。
+整理後の全593テスト・隔離Docker/PG/復旧CIとartifact検算は[検証索引](reviews/capital.json#/reviews/20261115-file-consolidation-checks.json)を参照。
 整理後の製品変更は[UTC順序拒否・事後review契約・警告review](capital.md#operational-evidence-review-20261115)と
-[検証索引](reviews/20261115-operational-consumer-checks.json)へ記録する。整理時点のCIと今回のCIを混同しない。
+[検証索引](reviews/capital.json#/reviews/20261115-operational-consumer-checks.json)へ記録する。整理時点のCIと今回のCIを混同しない。
 その後の[追記専用reviewと公開head](capital.md#operational-eligibility-review-20261115)は
-[別の検証索引](reviews/20261115-operational-review-checks.json)から確認する。実candidateの保留は解除していない。
-最新の[明示回復・preflight・追加runtime観測](capital.md#operational-review-recovery-20261115)は[別の最終索引](reviews/20261115-review-recovery-checks.json)を参照。実装865362dのCI634件とartifact/cleanupを受入済みで、実採否は保留。
+[別の検証索引](reviews/capital.json#/reviews/20261115-operational-review-checks.json)から確認する。実candidateの保留は解除していない。
+最新の[明示回復・preflight・追加runtime観測](capital.md#operational-review-recovery-20261115)は[別の最終索引](reviews/capital.json#/reviews/20261115-review-recovery-checks.json)を参照。実装865362dのCI634件とartifact/cleanupを受入済みで、実採否は保留。
 
 | 文書 | 内容 |
 |---|---|

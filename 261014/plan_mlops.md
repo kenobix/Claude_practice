@@ -1,4 +1,6 @@
-**2026-11-16 最終状態：本プロジェクトの残作業0。** 完了した製品実装・検証と、候補不採用により中止した採用/承認後試験を区別する。時計問題や過去原因不明の失敗を解決済みとはしない。[最新の終了判断](../261021/docs/capital.md#project-closure-20261116)と[最終証拠](../261021/docs/reviews/20261116-product-acceptance-checks.json)を優先し、下の日付付き一覧は履歴として読む。
+**2026-11-16 最終状態：本プロジェクトの残作業0。** 完了した製品実装・検証と、候補不採用により中止した採用/承認後試験を区別する。時計問題や過去原因不明の失敗を解決済みとはしない。[最新の終了判断](../261021/docs/capital.md#project-closure-20261116)と[最終証拠](../261021/docs/reviews/capital.json#/reviews/20261116-product-acceptance-checks.json)を優先し、下の日付付き一覧は履歴として読む。
+
+検証JSONの保存先は[用途別5冊・旧名対応表](../261021/docs/reviews/README.md)を参照。以下の履歴内の旧名・hashは保持し、参照リンクを現在の収録先へ更新した。
 
 # 需要予測モデルを継続運用するMLOps基盤の詳細計画
 
@@ -208,7 +210,7 @@ GitHub Pagesには成果説明、録画、匿名化した実験結果を掲載�
 
 ### 11.1 現在の到達点と作業範囲
 
-[差分監査](../261021/docs/evidence.md#20261028-review)は、版2のAPI確認を記録した`cb79db0`以降の`485286c`・`6b99746`を中心に、関連する既存処理まで照合した。集計証拠は[監査JSON](../261021/docs/reviews/20261028-evidence.json)にある。
+[差分監査](../261021/docs/evidence.md#20261028-review)は、版2のAPI確認を記録した`cb79db0`以降の`485286c`・`6b99746`を中心に、関連する既存処理まで照合した。集計証拠は[監査JSON](../261021/docs/reviews/foundation.json#/reviews/20261028-evidence.json)にある。
 
 - 確認済み: UCI版3のCaddy/Blue ready 200、Green版2 ready 200、昇格台帳とartifact SHA一致、Q4各2,168予測の特徴量/出典/誤差、直近週の到着済み164ラベルとPSI、既存13テスト、対象2コミットのCI成功。
 - 新データ: 41 ZIPの取得時hash一致、29,177時間、学習17,538・validation4,343・後続最終7,294、分割重複0。7日166時間の別方式原本集計も一致。全原本を別実装で再集計したわけではない。
@@ -297,7 +299,7 @@ P0は新たな最終評価や候補の配信承認を進める前に解消する
 - [ ] 新pathのmanifest schema 3、日時grid/DST/欠測理由・出典、分割件数、特徴量版、固定recipe、比較対象、gateとpolicy hashを実験protocolへ保存し、消費台帳の重複を検査する。候補fit前にvalidation開始を記録する。
 - [ ] bootstrap validationを一度実行してtarget-specific model card・artifact・行別予測・判断記録を固定する。合格時だけ同一artifactで後続評価を一度実行し、再fitしない。使用済みwindowを最終評価や調整後候補へ再利用しない。
 - [x] 固定168時間・50暖機+1,000逐次要求・HTTP/schema/候補識別・再試行0・timeout10秒・nearest-rank p95・全要求記録の合成通し処理を実装し、最新CIで検証した。benchmark_capital_runtime.pyはcheck-input-only/run-measurementの明示選択式として復帰済み。loopback 8110のapi-stagingと専用DBを通常runtimeから分離し、資源・出典・監査・linked reportまで確認する。実候補の初回計測と承認はT12/T13の未完了として維持する。
-- [x] **合成データの統合検証:** 使い捨てCompose projectと一時MLflow/PostgreSQLで、人工候補のblocked登録・再登録、tag/artifact不一致の拒否、staging APIのready/predict/DB記録、offline/API parity、通常loader/runtime init/promoteの拒否を確認した。promoteの入口は合成proxyであり、実Caddy切替は未試験。候補切替後の再送でも元の候補IDを返すことと、合成1,050要求の保存を確認し、test resourceを破棄した。[作業ログ](../261021/work_log.md)と[合成要求記録](../261021/docs/reviews/20261028-synthetic-staging-benchmark.json)を参照。これは実候補の精度・運用合格を示さない。
+- [x] **合成データの統合検証:** 使い捨てCompose projectと一時MLflow/PostgreSQLで、人工候補のblocked登録・再登録、tag/artifact不一致の拒否、staging APIのready/predict/DB記録、offline/API parity、通常loader/runtime init/promoteの拒否を確認した。promoteの入口は合成proxyであり、実Caddy切替は未試験。候補切替後の再送でも元の候補IDを返すことと、合成1,050要求の保存を確認し、test resourceを破棄した。[作業ログ](../261021/work_log.md)と[合成要求記録](../261021/docs/reviews/foundation.json#/reviews/20261028-synthetic-staging-benchmark.json)を参照。これは実候補の精度・運用合格を示さない。
 - [x] **合成systemの入力固定と測定CLI復帰:** seed/verify-only、候補report・registry・CSV/manifest・training行hash・168時間・label cutoffを照合する。測定中はPostgreSQLの観測snapshot lockを保ち、全API応答のlag出典hashと1,050監査行を照合する。CLIはcheck-input-only/run-measurementを明示選択し、最新CIで通し実行済み。completedは処理完了を指し、正式運用gateはnot_evaluated、配信はblocked。旧合成benchmarkのcutoff超過2時刻は達成証拠にしない。
 - [ ] **実候補での再検証:** 未使用snapshot/protocolから作るcandidateを使い、同じ入力固定・DB分離・運用測定・保存reportの照合を行う（T10〜T12）。
 - [ ] **全証拠を結ぶMLflow承認経路:** operational evidence記録とreview/approveのmock経路は実装済み。ただしA01/A02でfinal/plan SHA変更後の判定、負のp95、監視・復旧証拠欠落の拒否が不足と判明した。T01/T02でreport本体・時刻付き決定・全証拠hashを固定し、通常loader/runtime/promoteで同条件を要求する。実MLflowの部分書込復旧はT13で試験し、実採否は必要証拠が揃うまでblockedにする。
@@ -386,9 +388,9 @@ registry URIの進捗補足: Capital staging登録・loader・seed・preflight�
 
 **現在の残件は[最新の残課題](#remaining-work-latest)を参照。以下の過去checkpointは当時の実施状況として保持する。**
 
-2026-11-15の[ファイル統合](../261021/docs/README.md)により、文書67→9本、Python製品52→18・tests56→12・scripts34→7本へ用途別に整理した。[旧→新対応表](../261021/configs/file-layout.json)で旧名を検索できる。元67文書の判断と過去証拠JSON/hashは履歴として保持し、README・現行CLI/Compose/CIの参照を更新した。今回は構成整理と回帰検証だけを行い、下記の製品残件・運用受入保留・時計研究保留は据え置く。最終localは旧590件保持＋旧source layout互換1件の全591件が成功。初回aa8a61fのCIは591unit成功/snapshot profile409失敗を記録。import時の設定汚染を修正し、対象50件と593件discoveryを確認した。追補ec7f50eの[CI43635329160](https://github.com/kenobix/Claude_practice/actions/runs/43635329160)で最終593件・全PG/HTTP/Caddy/対応復元が成功。16 artifact/member hash・archive-only再計算・cleanupまで確認し構成整理を完了した。[検証索引](../261021/docs/reviews/20261115-file-consolidation-checks.json)で最終test/CIの確認範囲を示す。
+2026-11-15の[ファイル統合](../261021/docs/README.md)により、文書67→9本、Python製品52→18・tests56→12・scripts34→7本へ用途別に整理した。[旧→新対応表](../261021/configs/file-layout.json)で旧名を検索できる。元67文書の判断と過去証拠JSON/hashは履歴として保持し、README・現行CLI/Compose/CIの参照を更新した。今回は構成整理と回帰検証だけを行い、下記の製品残件・運用受入保留・時計研究保留は据え置く。最終localは旧590件保持＋旧source layout互換1件の全591件が成功。初回aa8a61fのCIは591unit成功/snapshot profile409失敗を記録。import時の設定汚染を修正し、対象50件と593件discoveryを確認した。追補ec7f50eの[CI43635329160](https://github.com/kenobix/Claude_practice/actions/runs/43635329160)で最終593件・全PG/HTTP/Caddy/対応復元が成功。16 artifact/member hash・archive-only再計算・cleanupまで確認し構成整理を完了した。[検証索引](../261021/docs/reviews/capital.json#/reviews/20261115-file-consolidation-checks.json)で最終test/CIの確認範囲を示す。
 
-本節を残作業の正規一覧とする。前回checkpoint記録10dfb8fから070b033までの28コミット・65ファイルを確認した結果と、[差分レビュー](../261021/docs/evidence.md#20261030-checkpoint-review)・[証拠JSON](../261021/docs/reviews/20261030-checkpoint-evidence.json)を根拠にする。R01〜R10は目的のIDとして維持し、以下のT番号を実際の作業単位にする。11.4/11.5の旧順番やチェック数より本節が優先する。
+本節を残作業の正規一覧とする。前回checkpoint記録10dfb8fから070b033までの28コミット・65ファイルを確認した結果と、[差分レビュー](../261021/docs/evidence.md#20261030-checkpoint-review)・[証拠JSON](../261021/docs/reviews/foundation.json#/reviews/20261030-checkpoint-evidence.json)を根拠にする。R01〜R10は目的のIDとして維持し、以下のT番号を実際の作業単位にする。11.4/11.5の旧順番やチェック数より本節が優先する。
 
 現在の到達点は、UCI版3の稼働と合成Capitalの入力固定・監査付き運用計測・CI成功。監査時点の070b033のCI 40966966672では221 testsとDocker/PostgreSQL/cleanupが成功した。T01/T02実装commit 29ed879のCI 40977087079では全241 tests（8.204秒）と合成Docker/PostgreSQL/cleanupが成功した。合成計測は1,050要求/監査行、p95 31.186768msでblockedを維持。Pages run 40977086506も成功した。実Capitalの新候補、独立final、運用合格、通常配信の完成は未達。監査時の合成registryでは、承認後のfinal/plan SHA変更・負のp95の受理、監視・復旧証拠なしのeligible化を確認した。その後T01とT02の必須schema/拒否処理を実装し、全241 tests（30.810秒）が成功した。11報告書本体を持つbundleとschema 2の決定で結合し、一時SQLite MLflowで保存/承認/本文破損拒否も確認した。実Capital候補と監視・復旧producerの実証は残る。実運用registryは変更していない。詳細は[配信証拠仕様](../261021/docs/capital.md#capital-deployment-evidence)と[作業ログ](../261021/work_log.md)。
 
@@ -410,21 +412,21 @@ registry URIの進捗補足: Capital staging登録・loader・seed・preflight�
 |---|---|---|---|
 | T01 / R06・A01/A03 | **P0 / D3 / Sol** | **実装・合成/一時SQLite検証済み**。HTTP実証はT13 | **承認した証拠の全体を固定する。** candidate、exact model/version、profile/target、登録artifact、candidate/final/operational report、protocol/plan/policyのhashと検証済み指標を版付きpayloadへ結ぶ。report本体を取得・hash/content照合し、不足・SHA変更・理由変更・負/NaN/無限p95・別versionを通常loader/runtime/promoteで拒否する。通常Capital clientとartifact取得のtracking/registry URIも同じ先へ固定し、異なる環境変数の負例を試す。値違いを人の承認で上書きしない。合成fixtureでA01/A03の拒否、通常loader/runtimeの本文拒否、URI固定を確認済み。11報告書のSHA/content・保存済み予測行の精度と要求別p95を検算し、取得前後のregistry変更も拒否する。 |
 | T02 / R06・S06・A02 | **P0 / D3 / Sol** | **schema・必須化・拒否処理は実装済み**。実証はT04/T05/T06/T07/T08/T12/T17に依存 | **監視・復旧を配信の必須条件へ接続する。** 必要なmonitor/recovery/restore証拠のschema・同一profile/version/artifactへの結合・policyを事前固定する。欠落、failed、別候補、未確定DB/fileをapprove/通常配信で拒否し、時刻・操作者・理由を持つ決定を保存する。実MLflow書込はT13。policy `capital-deployment-evidence-v1`で監視6・復旧8・復元4・metadata4ケースを固定し、4分類すべての本文を要求する。失敗・未確定・別candidate・不足の負例を確認した。実producerの観測申告は未作成で、合成fixtureを実証へ転用しない。必要証拠がない間はblockedを保つ。名前の自己申告と認証済みidentityは区別し、AIが二つの名前を作って独立した人の審査と説明しない。 |
-| T03 / R06/R08・A04 | P1 / D3 / Sol | **実装・障害検証・CI成功（2026-10-30）**。最終コード24115cfのCI 40999776550で全265 tests（29.205秒）、合成Docker/両PostgreSQL試験・cleanup成功。[証拠](../261021/docs/reviews/20261030-t03-checks.json)参照。**2026-11-01追跡: 自然停止は未再現。signal/HTTP終了/台帳書込/process終了traceとstack採取を追加、人工停止で診断確認** | **中断・遅延commitを追跡する。** attemptと固定request IDの送信予定/送信中/応答確認を、強制終了後に調べられる形へ永続化する。fsyncの位置、HTTP時間とjournal等の全体時間の区別、計測policyへの影響を先に決める。実HTTP timeout後の遅延commit、SIGTERM/SIGKILL、DB接続喪失を使い捨て環境で注入し、照会時不在を未送信と断定しない。再試行は理由付き別attemptとし速い結果だけを採用しない。 |
+| T03 / R06/R08・A04 | P1 / D3 / Sol | **実装・障害検証・CI成功（2026-10-30）**。最終コード24115cfのCI 40999776550で全265 tests（29.205秒）、合成Docker/両PostgreSQL試験・cleanup成功。[証拠](../261021/docs/reviews/foundation.json#/reviews/20261030-t03-checks.json)参照。**2026-11-01追跡: 自然停止は未再現。signal/HTTP終了/台帳書込/process終了traceとstack採取を追加、人工停止で診断確認** | **中断・遅延commitを追跡する。** attemptと固定request IDの送信予定/送信中/応答確認を、強制終了後に調べられる形へ永続化する。fsyncの位置、HTTP時間とjournal等の全体時間の区別、計測policyへの影響を先に決める。実HTTP timeout後の遅延commit、SIGTERM/SIGKILL、DB接続喪失を使い捨て環境で注入し、照会時不在を未送信と断定しない。再試行は理由付き別attemptとし速い結果だけを採用しない。 |
 | T04 / R05/R07・A05 | P1 / D3 / Sol | **実装・全255 tests・CI 40980116840のDocker/PostgreSQL/cleanup成功**。実候補/HTTP監視は未実施 | **training referenceとPSI v2を接続する。** 参照行集合・期間・CSV/manifest/profile/feature契約・固定bins・algorithm versionを候補artifactへ結び、hashの違いを拒否する。既存monitorからversionを明示して使い、定数参照・小標本・非有限・欠測を別状態にする。後続評価の分布を使ってbinsや閾値を選び直さず、旧UCIの履歴値を保存する。新規protocolへmonitor policyを固定し、欠落/変更時はfit・台帳開始前に拒否。参照descriptorをcandidate IDへ含め、MLflow run artifactの取得後に元CSV/manifest/学習行・全特徴量・binsを照合する。合成CLIで27窓のSQLite/CSV/JSON/marker保存、変更参照・異版予測・不正特徴量の拒否を確認した。[仕様と未実施範囲](../261021/docs/monitoring.md#training-monitor-reference)。 |
-| T05 / R07 | P1 / D2 / **Luna実装、Sol review** | **Sol review・合成受入・CI成功**。対象26件/全277件local成功、[CI 41005083367](https://github.com/kenobix/Claude_practice/actions/runs/41005083367)も全277件35.217秒・隔離Docker/両PostgreSQL/cleanup成功。実Capital/HTTP監視は未実施 | **合成監視の受入を確認した。** 10シナリオと閾値同値/168時間窓の下端除外の2境界を実CLI・一時SQLiteへ通し、全時計の母数/警告、CSV/JSON/marker hash・run ID・DB全窓の値を照合。期待窓と検知遅れは[受入基準](../261021/docs/monitoring.md#monitoring-acceptance)、実行log/source SHAは[証拠JSON](../261021/docs/reviews/20261030-t05-checks.json)。欠測はnullで保存し、遅延注入は監視対象の24ラベルだけへ限定した。欠測率の新規閾値は導入せず、未設定validation MAEは診断で`performance_reference_unset`を記録し採用許可にはしない。重複入力はreport/監視DB行保存前に拒否。T06の異常保存照合、実候補/HTTP監視、T02実証producerは別途必要。 |
-| T06 / R07・A05 | P1 / **D2（a）Luna→Sol review、D3（b）Sol** | **a/b実装・local/CI受入完了（b: 164ac53）** | **monitor保存の未確定状態を読取照合する。** [契約](../261021/docs/monitoring.md#monitor-reconciliation)と[T06b証拠](../261021/docs/reviews/20261030-t06b-checks.json)を参照。aはSQLite/CLI対象54件とCI全331件/隔離system成功。bはREPEATABLE READ READ ONLY、型/metadata/UUID行の同一snapshot、REAL量子化とDOUBLE/JSONの厳密比較、SQL NaN欠落正規化を実装。最終対象unit 60件17.869秒、専用PG受入25件27.049秒とcleanup成功。cleanup診断の最終修正前の全suite 336件143.300秒も成功。実装commit 164ac53の[CI 41068758500](https://github.com/kenobix/Claude_practice/actions/runs/41068758500)は最終337件39.970秒・PG受入25件14.461秒・全system/cleanup成功。writer/schema/実DB・実reportは変更せず、合成成功を実Capital監視/配信の証拠へ転用しない。実候補/HTTP monitor・T02 producer接続は残る。SQLite OS権限/busy timeout補足は2026-11-03にSolが完了した。 |
-| T07 / R08 | P1 / D3 / Sol | **T07a local合成UCI/実Caddy・API・PG受入成功**。f341e94のCI全369件・既存system成功。**T07bは実装2414b20の[CI41462429218](https://github.com/kenobix/Claude_practice/actions/runs/41462429218)で全419件・対応DB/実MLflow-skopsの別project/3volume復元・artifact/hash/cleanupまで成功**。 [CI索引](../261021/docs/reviews/20261102-t07b-ci-checks.json)。**2026-11-03: T07a現Dockerfile/所有image・normal/TERM cleanupのCI受入完了（4a4474e、CI41559833990、16 member/hash照合）**。実Capital producerは未了 | **隔離配信と復旧を通す。** PostgreSQL同一IDの並行再送/異入力409/版切替後の元予測/監査保存失敗503を確認する。破損artifact、ready失敗、API停止を注入し、実Caddyの切替前後・台帳確定前の停止からrollback/recoverする。入口・runtime・DBの版/件数を照合し、DBとartifactを対応snapshotとして別volumeへ復元する。既存UCIを障害対象にしない。 |
-| T08 / R08・A06 | P1 / D3 / Sol | **local受入/13回帰と実装commit 20abdabのCI成功** | **REAL→DOUBLE PRECISIONの移行を検証した。** [CI 41263492531](https://github.com/kenobix/Claude_practice/actions/runs/41263492531)で全337件40.391秒・移行9件2.549秒・既存system/PG/cleanupも成功。 [仕様・制約](../261021/docs/runbook.md#prediction-precision-migration)と[証拠](../261021/docs/reviews/20261101-t08-checks.json)参照。旧4数値/全table/metadata、型変更だけの反復initialize、同一IDの元版応答/異入力409、新行binary64、profile拒否、ALTER後の例外/実接続喪失/commit前後SIGKILL、並行initializeを確認。移行前/後dumpを第二専用container・別volumeへ復元し型/全行/APIも照合。既存production source/実DBは変更していない。旧丸め前値は復元できず、保存binary32を保持してもAPI十進表示は変わり得る。過去JSON完全一致は保証せず、必要な利用者がいる場合は応答policyを別設計する。 |
+| T05 / R07 | P1 / D2 / **Luna実装、Sol review** | **Sol review・合成受入・CI成功**。対象26件/全277件local成功、[CI 41005083367](https://github.com/kenobix/Claude_practice/actions/runs/41005083367)も全277件35.217秒・隔離Docker/両PostgreSQL/cleanup成功。実Capital/HTTP監視は未実施 | **合成監視の受入を確認した。** 10シナリオと閾値同値/168時間窓の下端除外の2境界を実CLI・一時SQLiteへ通し、全時計の母数/警告、CSV/JSON/marker hash・run ID・DB全窓の値を照合。期待窓と検知遅れは[受入基準](../261021/docs/monitoring.md#monitoring-acceptance)、実行log/source SHAは[証拠JSON](../261021/docs/reviews/foundation.json#/reviews/20261030-t05-checks.json)。欠測はnullで保存し、遅延注入は監視対象の24ラベルだけへ限定した。欠測率の新規閾値は導入せず、未設定validation MAEは診断で`performance_reference_unset`を記録し採用許可にはしない。重複入力はreport/監視DB行保存前に拒否。T06の異常保存照合、実候補/HTTP監視、T02実証producerは別途必要。 |
+| T06 / R07・A05 | P1 / **D2（a）Luna→Sol review、D3（b）Sol** | **a/b実装・local/CI受入完了（b: 164ac53）** | **monitor保存の未確定状態を読取照合する。** [契約](../261021/docs/monitoring.md#monitor-reconciliation)と[T06b証拠](../261021/docs/reviews/foundation.json#/reviews/20261030-t06b-checks.json)を参照。aはSQLite/CLI対象54件とCI全331件/隔離system成功。bはREPEATABLE READ READ ONLY、型/metadata/UUID行の同一snapshot、REAL量子化とDOUBLE/JSONの厳密比較、SQL NaN欠落正規化を実装。最終対象unit 60件17.869秒、専用PG受入25件27.049秒とcleanup成功。cleanup診断の最終修正前の全suite 336件143.300秒も成功。実装commit 164ac53の[CI 41068758500](https://github.com/kenobix/Claude_practice/actions/runs/41068758500)は最終337件39.970秒・PG受入25件14.461秒・全system/cleanup成功。writer/schema/実DB・実reportは変更せず、合成成功を実Capital監視/配信の証拠へ転用しない。実候補/HTTP monitor・T02 producer接続は残る。SQLite OS権限/busy timeout補足は2026-11-03にSolが完了した。 |
+| T07 / R08 | P1 / D3 / Sol | **T07a local合成UCI/実Caddy・API・PG受入成功**。f341e94のCI全369件・既存system成功。**T07bは実装2414b20の[CI41462429218](https://github.com/kenobix/Claude_practice/actions/runs/41462429218)で全419件・対応DB/実MLflow-skopsの別project/3volume復元・artifact/hash/cleanupまで成功**。 [CI索引](../261021/docs/reviews/deployment-ci.json#/reviews/20261102-t07b-ci-checks.json)。**2026-11-03: T07a現Dockerfile/所有image・normal/TERM cleanupのCI受入完了（4a4474e、CI41559833990、16 member/hash照合）**。実Capital producerは未了 | **隔離配信と復旧を通す。** PostgreSQL同一IDの並行再送/異入力409/版切替後の元予測/監査保存失敗503を確認する。破損artifact、ready失敗、API停止を注入し、実Caddyの切替前後・台帳確定前の停止からrollback/recoverする。入口・runtime・DBの版/件数を照合し、DBとartifactを対応snapshotとして別volumeへ復元する。既存UCIを障害対象にしない。 |
+| T08 / R08・A06 | P1 / D3 / Sol | **local受入/13回帰と実装commit 20abdabのCI成功** | **REAL→DOUBLE PRECISIONの移行を検証した。** [CI 41263492531](https://github.com/kenobix/Claude_practice/actions/runs/41263492531)で全337件40.391秒・移行9件2.549秒・既存system/PG/cleanupも成功。 [仕様・制約](../261021/docs/runbook.md#prediction-precision-migration)と[証拠](../261021/docs/reviews/deployment-ci.json#/reviews/20261101-t08-checks.json)参照。旧4数値/全table/metadata、型変更だけの反復initialize、同一IDの元版応答/異入力409、新行binary64、profile拒否、ALTER後の例外/実接続喪失/commit前後SIGKILL、並行initializeを確認。移行前/後dumpを第二専用container・別volumeへ復元し型/全行/APIも照合。既存production source/実DBは変更していない。旧丸め前値は復元できず、保存binary32を保持してもAPI十進表示は変わり得る。過去JSON完全一致は保証せず、必要な利用者がいる場合は応答policyを別設計する。 |
 | T09 / R01 | P1 / D1 / **Luna** | 外部待ち。2026-11-02/03公式HEADで202609=200/202610=404を再確認 | **未取得原本の取得と機械的照合。** 公式objectの公開後に既存acquire手順で取得し、bytes/SHA/ZIP/CSV member/schemaを新規logへ残す。ソースURL、隣月範囲、既存ファイルとの違いを報告する。候補fit・評価窓変更・精度の計算は含めない。不一致は保存してT10のSol判断へ戻す。 |
 | T10 / R01/R02 | **P0（fit前） / D3 / Sol** | T09、T04のbundle仕様。T01/T02の新policyと整合 | **全期間snapshotと未使用protocolを固定する。** 隣月bufferの範囲/理由、全原本manifest schema 3、TZif identity、重複/収支/DST/欠測理由、target gridを監査する。6〜9月の診断aggregateは正式入力へ流用せず新pathへ集約する。既評価窓との非重複、training cutoff=2026-06-01 00時と前日22/23時のラベル未到着除外、validation/finalの判断時点・件数・recipe・MAE/RMSE policyをfit前に保存する。10月bufferなしで窓を短縮しない。 |
 | T11 / R03/R06 | P1 / D3 / Sol | T10完了 | **一度限りの実candidate評価。** 消費台帳を先に更新し固定recipeでfit・candidate bundleを保存する。同じ行のbaselineにMAE厳密改善かつRMSE以下を確認し、通過した同じartifactだけを独立finalで一度評価する。weekday/weekend/通勤時間帯も件数付きで報告し再fitしない。不合格なら見送り、同じ窓で候補を選び直さない。 |
 | T12 / R05/R06 | P1 / D3 / Sol | T11の精度条件通過、T03の測定policy | **実候補のblocked運用測定。** exact version登録/seed/ready/offline-API一致/通常deploy拒否を確認し、固定planの50暖機+1,000逐次要求、DB監査・出典hash・資源条件を保存する。別attemptや失敗も残し、数値再計算とreport本体をexact versionへ結ぶ。この段階で実配信の採否は確定しない。 |
-| T13 / R06/R09 | P1 / D3 / Sol | 一時SQLite MLflowの正常保存/承認/破損拒否は確認済み。**2026-11-01: FakeRegistryの2回に加え、最新全suiteで一時SQLite承認試験も自然再発。reviewが比較UTCより4.170111秒先、MONOTONICは正方向。現在の実SQLite経路のUTC逆行機序を確認。過去のsetterとの同一性は未確定**。**T13aの使い捨て実MLflow HTTPで部分書込/最終gate・permission応答喪失/同一retry/競合拒否を確認、最終5ケースとTERM cleanup成功**。[仕様](../261021/docs/capital.md#capital-decision-http)。**実装f1cc9ffの[CI41300378098](https://github.com/kenobix/Claude_practice/actions/runs/41300378098)で全376件・新HTTP step・artifact/cleanup成功**。[CI証拠](../261021/docs/reviews/20261101-t13-http-ci-checks.json)。実採否T13bはT05/T06/T07/T08/T12/T17等の必須証拠後 | **実MLflowの決定書込復旧と最終採否。** 使い捨てregistryで部分tag書込、最後のgate書込後の応答喪失、同じretry、競合decisionを試す。実候補では必要証拠が同一artifactを指すことを確認し、ユーザーの意図するreviewer/approver・理由・時刻を記録する。未達を人名/理由で上書きしない。別targetのUCIへ自動移行しない。 |
+| T13 / R06/R09 | P1 / D3 / Sol | 一時SQLite MLflowの正常保存/承認/破損拒否は確認済み。**2026-11-01: FakeRegistryの2回に加え、最新全suiteで一時SQLite承認試験も自然再発。reviewが比較UTCより4.170111秒先、MONOTONICは正方向。現在の実SQLite経路のUTC逆行機序を確認。過去のsetterとの同一性は未確定**。**T13aの使い捨て実MLflow HTTPで部分書込/最終gate・permission応答喪失/同一retry/競合拒否を確認、最終5ケースとTERM cleanup成功**。[仕様](../261021/docs/capital.md#capital-decision-http)。**実装f1cc9ffの[CI41300378098](https://github.com/kenobix/Claude_practice/actions/runs/41300378098)で全376件・新HTTP step・artifact/cleanup成功**。[CI証拠](../261021/docs/reviews/deployment-ci.json#/reviews/20261101-t13-http-ci-checks.json)。実採否T13bはT05/T06/T07/T08/T12/T17等の必須証拠後 | **実MLflowの決定書込復旧と最終採否。** 使い捨てregistryで部分tag書込、最後のgate書込後の応答喪失、同じretry、競合decisionを試す。実候補では必要証拠が同一artifactを指すことを確認し、ユーザーの意図するreviewer/approver・理由・時刻を記録する。未達を人名/理由で上書きしない。別targetのUCIへ自動移行しない。 |
 | T14 / R10・A08 | P2 / D1 / **Luna** | **今回checkpointのT01〜T17→実装commit/CI/artifact SHA対応表・読取入口・5分説明を整理済み**。[証拠入口](../261021/docs/evidence.md#evidence-guide)。以後は各taskの実証後に追記 | **証拠と説明を整理する。** R/T task→commit→CI→artifact/log hashの一覧、用語、読取手順、5分demoを作る。logはcommit/UTC/attempt付きの新規pathにし、過去の件数訂正・上書き済み証拠の限界も残す。予測誤差・API時間・PSI・復旧時間を混同せず、未実施項目を完了にしない。 |
-| T15 / R04 | P2 / D2 / **Luna実装、Sol review** | **Sol review・実装commit 5cc5a89の[CI 41264954179](https://github.com/kenobix/Claude_practice/actions/runs/41264954179)・artifact/cleanup確認済み** | **CI接続完了。** 既存の使い捨てmonitor persistence PostgreSQL scriptを独立CI stepへ接続し、失敗を隠さずlogを保存した。fake registry unit testのversion lockはT01作業で一時directoryへ分離済み。変更YAMLの検査と対象回帰試験を行う。失敗/timeoutの終了値23/124がtee後にも伝播することをSolで確認した。全337件40.792秒・新step/既存system/PG成功。artifact 13067122187のZIP digestと9 memberを照合し、専用logの5検査成功/cleanupを確認した。[証拠](../261021/docs/reviews/20261101-t15-checks.json)。lockや共通runnerを広く更新する必要が出たらSolへ戻し、警告だけで全面upgradeしない。合成試験は実Capital監視/配信の証拠ではない。 |
-| T16 / R04/R10・A07 | P1 / D2 / **Luna実装、Sol review** | **完了: Sol review修正・専用23件/全399件成功後、実装2492abcの[CI41442578156](https://github.com/kenobix/Claude_practice/actions/runs/41442578156)で全399件/両job全step成功。artifact13 member（T16追加3件）、ZIP/member hash、archive-only別processの1,000件p95再計算・cleanupまで確認**。[CI証拠](../261021/docs/reviews/20261102-t16-ci-checks.json)。[Sol review](../261021/docs/reviews/20261102-t16-sol-review.json)。[引継ぎ仕様](../261021/docs/evidence.md#t16-luna-handoff)、[操作/限界](../261021/docs/monitoring.md#measurement-evidence-archive)、[検証JSON](../261021/docs/reviews/20261102-t16-checks.json) | **合成CIの再計算可能な証拠を保全する。** cleanup前にsynthetic-only plan/report/ledger/request journalを固定allowlist archiveへbyte-preserving保存する。journal SHA/要求別HTTP時間とreportを照合する。.env/credential/外部pathを含めず、ZIP hashとmember hashを確認する。archiveだけを得た別processでwarmup50を除く1,000件p95を再計算しsummary一致、cleanup成功を確認する。**同一実装commitのCI artifact・hash・別process再計算・cleanup確認まで完了。実Capital性能・時計資格・配信採否への流用は禁止**。 |
-| T17 / R09 | P1 / D3 / Sol（進行文言は固定仕様後Luna可） | **T17a受入済み。T17b部分（2026-11-02時点）: 通常CLIのstage/経過/log、Docker timeoutの未確定記録、SQLite/PGの旧state読取診断を実装。実装2414b20のCI419件・合成PG診断が成功**。**2026-11-03: schema3/API操作照合・CLI全体900/300秒deadlineの合成受入完了。最終4a4474eのCI447件/16 member/hash/normal・TERM cleanup成功**。[最終CI索引](../261021/docs/reviews/20261103-t17b-t07a-ci-checks.json) | **現在版・承認metadata・利用不可版の扱いを揃える。** 入口/runtime/配信台帳の版・操作ID・承認者/理由をrecoverでも一致させる。読み込み不可の旧版1を履歴に残し、rollback候補から除外する。実deploy/model取得の段階・経過時間・参照log・timeout時の未確定状態を表示する。harnessだけのheartbeatで製品側まで完了としない。 |
+| T15 / R04 | P2 / D2 / **Luna実装、Sol review** | **Sol review・実装commit 5cc5a89の[CI 41264954179](https://github.com/kenobix/Claude_practice/actions/runs/41264954179)・artifact/cleanup確認済み** | **CI接続完了。** 既存の使い捨てmonitor persistence PostgreSQL scriptを独立CI stepへ接続し、失敗を隠さずlogを保存した。fake registry unit testのversion lockはT01作業で一時directoryへ分離済み。変更YAMLの検査と対象回帰試験を行う。失敗/timeoutの終了値23/124がtee後にも伝播することをSolで確認した。全337件40.792秒・新step/既存system/PG成功。artifact 13067122187のZIP digestと9 memberを照合し、専用logの5検査成功/cleanupを確認した。[証拠](../261021/docs/reviews/deployment-ci.json#/reviews/20261101-t15-checks.json)。lockや共通runnerを広く更新する必要が出たらSolへ戻し、警告だけで全面upgradeしない。合成試験は実Capital監視/配信の証拠ではない。 |
+| T16 / R04/R10・A07 | P1 / D2 / **Luna実装、Sol review** | **完了: Sol review修正・専用23件/全399件成功後、実装2492abcの[CI41442578156](https://github.com/kenobix/Claude_practice/actions/runs/41442578156)で全399件/両job全step成功。artifact13 member（T16追加3件）、ZIP/member hash、archive-only別processの1,000件p95再計算・cleanupまで確認**。[CI証拠](../261021/docs/reviews/deployment-ci.json#/reviews/20261102-t16-ci-checks.json)。[Sol review](../261021/docs/reviews/deployment-ci.json#/reviews/20261102-t16-sol-review.json)。[引継ぎ仕様](../261021/docs/evidence.md#t16-luna-handoff)、[操作/限界](../261021/docs/monitoring.md#measurement-evidence-archive)、[検証JSON](../261021/docs/reviews/deployment-ci.json#/reviews/20261102-t16-checks.json) | **合成CIの再計算可能な証拠を保全する。** cleanup前にsynthetic-only plan/report/ledger/request journalを固定allowlist archiveへbyte-preserving保存する。journal SHA/要求別HTTP時間とreportを照合する。.env/credential/外部pathを含めず、ZIP hashとmember hashを確認する。archiveだけを得た別processでwarmup50を除く1,000件p95を再計算しsummary一致、cleanup成功を確認する。**同一実装commitのCI artifact・hash・別process再計算・cleanup確認まで完了。実Capital性能・時計資格・配信採否への流用は禁止**。 |
+| T17 / R09 | P1 / D3 / Sol（進行文言は固定仕様後Luna可） | **T17a受入済み。T17b部分（2026-11-02時点）: 通常CLIのstage/経過/log、Docker timeoutの未確定記録、SQLite/PGの旧state読取診断を実装。実装2414b20のCI419件・合成PG診断が成功**。**2026-11-03: schema3/API操作照合・CLI全体900/300秒deadlineの合成受入完了。最終4a4474eのCI447件/16 member/hash/normal・TERM cleanup成功**。[最終CI索引](../261021/docs/reviews/deployment-ci.json#/reviews/20261103-t17b-t07a-ci-checks.json) | **現在版・承認metadata・利用不可版の扱いを揃える。** 入口/runtime/配信台帳の版・操作ID・承認者/理由をrecoverでも一致させる。読み込み不可の旧版1を履歴に残し、rollback候補から除外する。実deploy/model取得の段階・経過時間・参照log・timeout時の未確定状態を表示する。harnessだけのheartbeatで製品側まで完了としない。 |
 
 T15で観測したCI保守の残件（P2/D2、Sol review）: `actions/upload-artifact@v4`のNode.js 20→24強制実行とpunycode/url.parse、MLflow経由SQLAlchemy noloadの非推奨警告。新step・artifact保存は成功しており、CI接続の未完了とは扱わない。actionの単独更新は互換性・allowlist・ZIP回収を別途確認し、警告だけで依存lockを全面更新しない。
 
@@ -439,11 +441,11 @@ T06a/bの読取照合部品はlocal/実装commit CI受入済み。T06に関連�
 
 T05の全suite再検証で、既存T03のSIGTERM子process終了待ち10秒のtimeoutと、既存T13相当の一時SQLite承認試験で直前のreview時刻をfutureとする失敗を各1回観測した。各単独試験と最終277件suiteは成功したが、原因は未特定。**追加追跡はP1 / D3 / Sol**とし、T03では受信/signal/handler/ledger書込/終了の段階と子process stack、T13では生成時刻と検証時刻のUTC/monotonic関係を記録して切り分ける。限られた500,000回のwall clockサンプルで逆行0件だったことだけで時刻問題を解消済みにしない。待ち時間やfuture拒否を緩めて成功に置き換えず、T05の合成受入成功と既存境界の安定性を区別する。全試行は[作業ログ](../261021/work_log.md)とT05証拠JSONに保存する。
 
-**2026-11-01追加追跡:** [診断手順と判断](../261021/docs/clock-history.md#interruption-clock-diagnostics)、[今回の証拠JSON](../261021/docs/reviews/20261101-t03-t13-diagnostics.json)を追加した。基点試験、独立3反復、診断対象24件、全340件（161.771秒）で元のT03停止/SQLite承認失敗は自然再現していない。最後の制御時計fixture固定後はdecision 9件を再確認し、最終sourceは実装8869ee1の[CI 41268250834](https://github.com/kenobix/Claude_practice/actions/runs/41268250834)で全340件44.901秒・compileall・全system/PG/cleanup成功、artifact ZIP/9 memberも回収照合済み。人工台帳停止ではsignal受信後の停止stackと未確定journal、自動retry拒否を確認した。T03の歴史的停止原因はP1/D3/Solのまま。
+**2026-11-01追加追跡:** [診断手順と判断](../261021/docs/clock-history.md#interruption-clock-diagnostics)、[今回の証拠JSON](../261021/docs/reviews/clock-history.json#/reviews/20261101-t03-t13-diagnostics.json)を追加した。基点試験、独立3反復、診断対象24件、全340件（161.771秒）で元のT03停止/SQLite承認失敗は自然再現していない。最後の制御時計fixture固定後はdecision 9件を再確認し、最終sourceは実装8869ee1の[CI 41268250834](https://github.com/kenobix/Claude_practice/actions/runs/41268250834)で全340件44.901秒・compileall・全system/PG/cleanup成功、artifact ZIP/9 memberも回収照合済み。人工台帳停止ではsignal受信後の停止stackと未確定journal、自動retry拒否を確認した。T03の歴史的停止原因はP1/D3/Solのまま。
 
 時計の独立2万sampleでは逆行0回だったが、試験と並行した10万sampleではCLOCK_REALTIMEが4回逆行（約2.956/2.927/3.873/2.921秒）、他3時計の逆行は0回だった。実時計をmockしないFakeRegistry probeでは2回、承認関数のレビュー時刻検証がfutureで拒否され、比較UTCと正のmonotonic経過・tag不変/blockedを保存した。2回目は3.029889秒のUTC差と元ログと同じ判定行のtracebackを保存した。現在環境の発生機序は確認できたが、過去失敗時の時刻値とUTCを動かした同期機構は不明。NTP/同期flagはyes、timesyncdはrunning、clocksourceはtscであり、flagだけで時計の安定性を判断しない。UTCの先行1µsも拒否し、clamp/待機/自動retryは導入しない。timesyncdの読取ログにtimeout/再接続と時刻逆順、poll 32秒を観測したが、CLOCK_REALTIMEを変更した主体は断定していない。同期機構の切り分けと当該実行環境の観測保全はP1/D3/Solとして残す。今回の診断追加をT13のHTTP障害検証・実採否全体の完了にしない。
 
-**2026-11-01・基点b5dbdfdからの変更元追跡:** [詳細/未実施の設定案](../261021/docs/clock-history.md#clock-origin-investigation)、[全試行・hash](../261021/docs/reviews/20261101-clock-origin-checks.json)。Windows/WSLの同時読取、NTP更新との照合、専用kernel traceを追加した。負方向5区間は`systemd-timesyn`（global TID 496）の`clock_adjtime→timekeeping_inject_offset`と一致し、うち2回は要求−4.473373174/−3.128148078秒と成功戻り値を直接採取。`initd`の5回は前進、`hv_set_host_time`は同じ観測区間で0回だった。別途`chronyd`（global TID 213）がADJ_TICK/FREQUENCYを16回成功させ、うち14回tick=11000/freq=0を指定した。bracket付きWindows QPC比はMONOTONICが1.099918〜1.100057、RAWが0.999926〜1.000052。同期flagや単調増加を正常な秒数の保証としない。Windows W32TimeはStoppedで、現在区間の時計変更イベントは検索一致なし。現在の直接呼出元は絞れたが、commと外側PIDの実行file/管理主体の照合、11000再指定の理由、過去失敗との同一性は未解決。Windows管理者debug shellは起動を拒否され、OS設定/実DB/registry/配信は変更していない。
+**2026-11-01・基点b5dbdfdからの変更元追跡:** [詳細/未実施の設定案](../261021/docs/clock-history.md#clock-origin-investigation)、[全試行・hash](../261021/docs/reviews/clock-history.json#/reviews/20261101-clock-origin-checks.json)。Windows/WSLの同時読取、NTP更新との照合、専用kernel traceを追加した。負方向5区間は`systemd-timesyn`（global TID 496）の`clock_adjtime→timekeeping_inject_offset`と一致し、うち2回は要求−4.473373174/−3.128148078秒と成功戻り値を直接採取。`initd`の5回は前進、`hv_set_host_time`は同じ観測区間で0回だった。別途`chronyd`（global TID 213）がADJ_TICK/FREQUENCYを16回成功させ、うち14回tick=11000/freq=0を指定した。bracket付きWindows QPC比はMONOTONICが1.099918〜1.100057、RAWが0.999926〜1.000052。同期flagや単調増加を正常な秒数の保証としない。Windows W32TimeはStoppedで、現在区間の時計変更イベントは検索一致なし。現在の直接呼出元は絞れたが、commと外側PIDの実行file/管理主体の照合、11000再指定の理由、過去失敗との同一性は未解決。Windows管理者debug shellは起動を拒否され、OS設定/実DB/registry/配信は変更していない。
 
 | 追加残件 | 優先度 / 難易度 / 担当 | 完了条件・依存 |
 |---|---|---|
@@ -453,16 +455,16 @@ T05の全suite再検証で、既存T03のSIGTERM子process終了待ち10秒のti
 
 既存decision 9件/publisher 6件も成功。今回はproduction source/test/workflow/lockを変更せず、対象回帰24件と証拠照合を行った。全suite/新規CI成功はこの節目で先取りしない。T13のHTTP部分書込/応答喪失/実採否、T07/T17等の残件は維持する。一時trace/probeは削除し既存制御の前後hash一致を確認した。全試行と取得失敗を保存し、設定の自動変更やfuture拒否の緩和は行っていない。
 
-**2026-11-01・基点0477e8cからの管理元照合:** [結果/原因と未確定事項/未実施の修復案](../261021/docs/clock-history.md#clock-process-ownership)、[管理者向け限定読取](../261021/docs/clock-operations.md#clock-owner-admin-read)、[全試行/hash](../261021/docs/reviews/20261101-clock-owner-checks.json)。当該bootのBTFを読み、読取専用sched_getschedulerの対象taskを専用probeで対応付けた。Ubuntu timesyncd local 214がkernel 496であることをexe/開始tick等の前後一致と合わせて確認し、同区間で−3.197128772秒の補正要求成功を観測。chronyd 213は同区間で8回tick11000/freq0を成功させた。WSL init公式sourceのPHC用生成configと、system distroで見えるtime.windows.comのpackage既定fileを混同しない。現在のPHC0応答を稼働exeの認証ともしない。
+**2026-11-01・基点0477e8cからの管理元照合:** [結果/原因と未確定事項/未実施の修復案](../261021/docs/clock-history.md#clock-process-ownership)、[管理者向け限定読取](../261021/docs/clock-operations.md#clock-owner-admin-read)、[全試行/hash](../261021/docs/reviews/clock-history.json#/reviews/20261101-clock-owner-checks.json)。当該bootのBTFを読み、読取専用sched_getschedulerの対象taskを専用probeで対応付けた。Ubuntu timesyncd local 214がkernel 496であることをexe/開始tick等の前後一致と合わせて確認し、同区間で−3.197128772秒の補正要求成功を観測。chronyd 213は同区間で8回tick11000/freq0を成功させた。WSL init公式sourceのPHC用生成configと、system distroで見えるtime.windows.comのpackage既定fileを混同しない。現在のPHC0応答を稼働exeの認証ともしない。
 
 T03 journal 9件11.120 test秒とdecision 9件1.711 test秒が成功。自然停止は未再発で、元原因は未解決。timesyncd対応付けの初回は変動するstatus全体を比較して失敗し、差がcontext switch回数だけと確認して安定identityへ修正した別attemptを保存。readerの初回glob無効化、system環境のawk不在、analysis準備のcwd失敗、Windows管理者/policy拒否も保持した。修正版shell readerはUbuntu rootでtimesyncd 1件/chronyd 0件を返しexit42（不完全）、非rootは77。PowerShellは実parser成功、管理者経路のend-to-endは未確認。全suite/PG/実配信は再実行せず、時計資格と実Capitalの合格を先取りしない。OS設定変更・future緩和/clamp/自動retryは未実施。次は外側processの限定採取→生成元と実体照合→影響/切戻し付き保守案をSolが判断する。
 
 
-**2026-11-01・基点2181bfeからのchronyd追加調査:** [数値の意味・仮説・修復案/影響/切戻し](../261021/docs/clock-history.md#chrony-control-analysis)、[証拠JSON](../261021/docs/reviews/20261101-chrony-control-checks.json)。管理者採取はまだ行われていないため、稼働exe/hash・親/namespace/生成設定の直接照合を完了にしない。現在のtimesyncd identityを再照合し−4.197671651秒の補正成功、chronyd213のtick11000/freq0成功10回、PHC0 tracking21応答を同じ観測期間で保存した。upstream4.1の総量は基準周波数+slew補正であり、tracking Frequencyと同値ではない。メモリstubだけのC検証9条件は成功し、driver限界との一致と条件付きの飽和経路を説明できたが、実base_freq/corr_freq/設定・制限前総量は未読。cwd引継ぎwarning付きの21queryも保存し、--cd /を指定した別queryはstderrなしで成功。前回113原本hash一致、専用probe回収/global制御hash不変/lost0を確認。OS修復・future緩和・実DB/registry/配信変更は行っていない。既存source/test/CI未変更で全suiteを再実行せず、T03歴史的停止・T13 HTTP障害・T07/T17・実候補の証拠作成は残す。
+**2026-11-01・基点2181bfeからのchronyd追加調査:** [数値の意味・仮説・修復案/影響/切戻し](../261021/docs/clock-history.md#chrony-control-analysis)、[証拠JSON](../261021/docs/reviews/clock-history.json#/reviews/20261101-chrony-control-checks.json)。管理者採取はまだ行われていないため、稼働exe/hash・親/namespace/生成設定の直接照合を完了にしない。現在のtimesyncd identityを再照合し−4.197671651秒の補正成功、chronyd213のtick11000/freq0成功10回、PHC0 tracking21応答を同じ観測期間で保存した。upstream4.1の総量は基準周波数+slew補正であり、tracking Frequencyと同値ではない。メモリstubだけのC検証9条件は成功し、driver限界との一致と条件付きの飽和経路を説明できたが、実base_freq/corr_freq/設定・制限前総量は未読。cwd引継ぎwarning付きの21queryも保存し、--cd /を指定した別queryはstderrなしで成功。前回113原本hash一致、専用probe回収/global制御hash不変/lost0を確認。OS修復・future緩和・実DB/registry/配信変更は行っていない。既存source/test/CI未変更で全suiteを再実行せず、T03歴史的停止・T13 HTTP障害・T07/T17・実候補の証拠作成は残す。
 
-**2026-11-01・基点f70cb37後の管理者ログ照合:** [結果](../261021/docs/clock-history.md#clock-admin-log-review)、[証拠](../261021/docs/reviews/20261101-admin-owner-checks.json)。ユーザーは管理者Trueで実行したが.ps1はpolicy拒否。対話readerは初期namespaceでchronyd213/exe hash/親1 mini_init /init、開始tick319、pid/mnt/timeとprocess rootのconfigを採取し、実行された完了行/両1件/error0がある。同boot/開始時刻と前回setterを照合し、可視4.1 binary hashと一致、configの全bytes hashがWSL StartTimeSyncAgentの生成文字列と一致した。親はdaemon reparent後なので過去exec launcherまで断定しない。collection.json/native終了値/QPCは欠落し、後から捏造しない。旧pipeline案内の終了境界の不足を記録し、追加採取時はdebug shell内でfileへ直接保存する手順へ修正（構文検証のみ、管理者end-to-endは未実施）。基本inventoryの再採取は不要。PHC fd/UDP所有と内部制御/修復資格、T03/T13の歴史的原因は残し、独立するT07/T17へ進む。
+**2026-11-01・基点f70cb37後の管理者ログ照合:** [結果](../261021/docs/clock-history.md#clock-admin-log-review)、[証拠](../261021/docs/reviews/clock-history.json#/reviews/20261101-admin-owner-checks.json)。ユーザーは管理者Trueで実行したが.ps1はpolicy拒否。対話readerは初期namespaceでchronyd213/exe hash/親1 mini_init /init、開始tick319、pid/mnt/timeとprocess rootのconfigを採取し、実行された完了行/両1件/error0がある。同boot/開始時刻と前回setterを照合し、可視4.1 binary hashと一致、configの全bytes hashがWSL StartTimeSyncAgentの生成文字列と一致した。親はdaemon reparent後なので過去exec launcherまで断定しない。collection.json/native終了値/QPCは欠落し、後から捏造しない。旧pipeline案内の終了境界の不足を記録し、追加採取時はdebug shell内でfileへ直接保存する手順へ修正（構文検証のみ、管理者end-to-endは未実施）。基本inventoryの再採取は不要。PHC fd/UDP所有と内部制御/修復資格、T03/T13の歴史的原因は残し、独立するT07/T17へ進む。
 
-**2026-11-01・基点444acc9からのT07a/T17a:** [契約/未実施範囲](../261021/docs/runbook.md#deployment-recovery)、[全試行と証拠](../261021/docs/reviews/20261101-t07-t17-checks.json)。promote/recoverの共通lock、preparedのschema2旧state/旧・候補identity固定、承認者/理由/操作IDの反映、補償未確認時のrecovery_required、複数未完了の自動選択拒否、利用不可rollbackの事前拒否を実装。対象24件とharness安全性5件が成功。実Caddy/通常API/専用PGで並行同ID1行/異入力409、保存503、元予測再送、破損ready拒否、SIGKILL3地点、API停止、failed gate、別volumeへの5table/JSONモデル資料復元を確認し、最終専用resource残存0/既存container ID一致。model/registryは合成doubleで、実Capital/MLflow/skops producer証拠ではない。T17bの段階/経過/timeout表示・API側metadata・既存stateの旧承認情報診断、T07のCapital証拠契約/実MLflow-skops復元/現Dockerfile build/CI接続は残る。
+**2026-11-01・基点444acc9からのT07a/T17a:** [契約/未実施範囲](../261021/docs/runbook.md#deployment-recovery)、[全試行と証拠](../261021/docs/reviews/deployment-ci.json#/reviews/20261101-t07-t17-checks.json)。promote/recoverの共通lock、preparedのschema2旧state/旧・候補identity固定、承認者/理由/操作IDの反映、補償未確認時のrecovery_required、複数未完了の自動選択拒否、利用不可rollbackの事前拒否を実装。対象24件とharness安全性5件が成功。実Caddy/通常API/専用PGで並行同ID1行/異入力409、保存503、元予測再送、破損ready拒否、SIGKILL3地点、API停止、failed gate、別volumeへの5table/JSONモデル資料復元を確認し、最終専用resource残存0/既存container ID一致。model/registryは合成doubleで、実Capital/MLflow/skops producer証拠ではない。T17bの段階/経過/timeout表示・API側metadata・既存stateの旧承認情報診断、T07のCapital証拠契約/実MLflow-skops復元/現Dockerfile build/CI接続は残る。
 
 最終production sourceに対する全364件は363成功・既存publisher一時SQLite試験1エラー（review 10:24:01.367182Z > 比較10:23:57.197071Z）。原本traceでUTC逆行と正方向MONOTONICを確認し、対象decision/evidence/test/diagnostic sourceが基点から不変と照合した。直前の中間source全361件は成功したが、最終suite成功へ流用しない。future拒否を緩めず全suiteのgreen目的再試行もしない。T03自然停止は未再発。通常sandboxのTestClient待機/300秒timeoutと、単独のstack付き25秒timeoutも保存し、host側同試験成功と区別。Docker初回はcached imageのtzdata欠落で失敗しcleanup済み、locked tzdataを一時workspaceへ複製して解決。既存image/venvは未変更。自動承認reviewのBad Requestで一回未実行となった起動も保存し、同じ限定操作の再review成功後に実施した。
 
@@ -486,7 +488,7 @@ f341e94の[CI 41298859518](https://github.com/kenobix/Claude_practice/actions/ru
 
 T13aは新規scripts/test_capital_decision_http.pyで、private loopback MLflow/SQLite/実REST、障害proxy、既存決定関数と配信gateを使用。合成証拠と事前固定した歴史的時刻を使い、時計validatorやproducerは未変更。review/approval部分書込、両最終tag後の応答喪失、同一hashへの明示retry、逐次/並行競合拒否を確認。新guard7件、既存決定/証拠30件、最終HTTP5ケース、実TERM中断後のserver group/proxy/temp回収が成功。初回import失敗とREST source拒否も保存。CLI/実モデルartifactのHTTP取得・実候補採否・時計修復の証拠ではない。CIへbounded step/logだけを追加し、実行結果を別の追跡記録へ保存する。
 
-T16の[固定仕様](../261021/docs/evidence.md#t16-luna-handoff)に従うlocal合成原本archiveとarchive-only別process再計算は実施済み。Sol review修正・再検証と実装2492abcのCI artifact/hash/再計算/cleanup確認まで完了。[証拠](../261021/docs/reviews/20261102-t16-ci-checks.json)。独立次作業はT07の実MLflow/skops対応snapshotとT17bの段階/timeout表示・既存metadata読取診断。時計追加採取はPHC fd/UDP所有/生成include/制限前制御量へ限定し、基本inventory再取得を前提にしない。OS修復は具体案/影響/切戻しを別扱いとし今回適用しない。実データT09は202610原本404の外部待ち、T10は新規fit前に必須。
+T16の[固定仕様](../261021/docs/evidence.md#t16-luna-handoff)に従うlocal合成原本archiveとarchive-only別process再計算は実施済み。Sol review修正・再検証と実装2492abcのCI artifact/hash/再計算/cleanup確認まで完了。[証拠](../261021/docs/reviews/deployment-ci.json#/reviews/20261102-t16-ci-checks.json)。独立次作業はT07の実MLflow/skops対応snapshotとT17bの段階/timeout表示・既存metadata読取診断。時計追加採取はPHC fd/UDP所有/生成include/制限前制御量へ限定し、基本inventory再取得を前提にしない。OS修復は具体案/影響/切戻しを別扱いとし今回適用しない。実データT09は202610原本404の外部待ち、T10は新規fit前に必須。
 
 
 T13a CI追跡完了: 実装f1cc9ff、run41300378098の全376 tests（51.768秒）と2 jobs全step成功。新capital-decision-http-ci.logがartifact13080624977の10 memberに含まれ、5ケース/4障害各1回/読戻しと同一retry/競合拒否を照合。proxy/server/group/temp回収を確認。ZIP SHA0d9dce8eae65f263c2349011ca5594e9b21fc830a7776b582c4ac376c5988f5aとmember SHAも一致。T13aの範囲で完了とし、T13b実採否・時計資格・T16原本archiveは未完了。記録のみの後続commitを、この実装CIで直接試験したcommitとは呼ばない。
@@ -496,7 +498,7 @@ T13a CI追跡完了: 実装f1cc9ff、run41300378098の全376 tests（51.768秒�
 
 ### 2026-11-02 基点69c3a5a以降・T07b/T17b部分と次の順序
 
-[対応復元契約](../261021/docs/runbook.md#deployment-recovery)、[配信診断の操作/制限](../261021/docs/runbook.md#deployment-observability)、[検証索引](../261021/docs/reviews/20261102-t07b-t17b-checks.json)を参照。
+[対応復元契約](../261021/docs/runbook.md#deployment-recovery)、[配信診断の操作/制限](../261021/docs/runbook.md#deployment-observability)、[検証索引](../261021/docs/reviews/deployment-ci.json#/reviews/20261102-t07b-t17b-checks.json)を参照。
 実MLflow/skops登録版とregistry DB・監査DB・artifactをquiescent pairとして採取し、別project/3volume・ランダムloopbackポートへ復元するlocal v2が成功。全table内容・column/sequence・全artifact hash、破損skops拒否、同ID再送と新ID推論、read-only PG診断、cleanupを確認した。v1の同ポート引継ぎ時EADDRINUSEと失敗時cleanupも保存。停止直後のsocket残存/TIME_WAIT等は仮説で、変更元を特定したとは呼ばない。
 通常CLIにはstage/elapsed/診断JSONLを追加。Docker build600秒/他30秒のtimeoutを「daemon未確定」としてpending/recovery_requiredへ残し、自動で補償成功としない。旧stateはro DBでprofileを先に照合し、対応completed行/未完了/legacy/metadata差異を診断する。自動移行・承認には使わない。
 418件の全unitと追加対象検証が成功。最終補強の全体確認は実装commitのCIで行い、CI/artifact/cleanupの確認前には今回部分のCI受入完了としない。OS・時計・実DB・実registry・現配信、writer/schema/依存lockは変更していない。UTC/MONOTONICの区間差は継続し時計資格は未達。
@@ -513,13 +515,13 @@ T13a CI追跡完了: 実装f1cc9ff、run41300378098の全376 tests（51.768秒�
 | P2 / D2 / Luna→Sol review | T06aの実file権限/busy timeout補足 | 使い捨てSQLiteだけで確認。writer/schemaは変更しない |
 
 
-**2026-11-02 T07b CI確認完了:** 実装`2414b2031dd21cdf425761b1cd29d43c7a355f66`の[CI41462429218](https://github.com/kenobix/Claude_practice/actions/runs/41462429218)で419 tests/54.813秒・両job全step成功。[CI索引](../261021/docs/reviews/20261102-t07b-ci-checks.json)。artifact13150206991の外側ZIP SHA4c010bcb5591…/13 member、内側T16 archive SHA c6ca847386fe…/4原本/別processの1000 measured・p95再計算が一致。paired restoreはregistry65tableとaudit5table（744観測/1052予測）、8 artifact、column/sequence、破損skops拒否、同ID/新ID予測、別3volume、read-only PG旧state診断、残存resource0/workspace回収、元project cleanup/保護ID不変まで確認。T07bの合成対応復元受入は完了し、T17bは段階/timeout/旧state診断の部分完了に留める。
+**2026-11-02 T07b CI確認完了:** 実装`2414b2031dd21cdf425761b1cd29d43c7a355f66`の[CI41462429218](https://github.com/kenobix/Claude_practice/actions/runs/41462429218)で419 tests/54.813秒・両job全step成功。[CI索引](../261021/docs/reviews/deployment-ci.json#/reviews/20261102-t07b-ci-checks.json)。artifact13150206991の外側ZIP SHA4c010bcb5591…/13 member、内側T16 archive SHA c6ca847386fe…/4原本/別processの1000 measured・p95再計算が一致。paired restoreはregistry65tableとaudit5table（744観測/1052予測）、8 artifact、column/sequence、破損skops拒否、同ID/新ID予測、別3volume、read-only PG旧state診断、残存resource0/workspace回収、元project cleanup/保護ID不変まで確認。T07bの合成対応復元受入は完了し、T17bは段階/timeout/旧state診断の部分完了に留める。
 T14は今回checkpointのT01〜T17対応表と説明導線を整理し、過去索引9件のrecord SHA/実装commit/run/artifact SHA転記を検証。旧CIを再取得/再実行したとは呼ばない。次のSol作業は[T17b/T07a引継ぎ](../261021/docs/evidence.md#t17b-sol-handoff)のAPI metadata/全体deadlineと現image・signal cleanup付きCaddy復旧CI。未完了項目を可能な限り多く独立して進め、実producer/時計資格/実採否は条件未達のまま保持する。後続の記録commitをこの実装CIの試験対象とは呼ばない。
 
 
 #### 2026-11-03 T17b/T07aの実装と残件更新（基点0472111）
 
-[原本・試行索引](../261021/docs/reviews/20261103-t17b-t07a-checks.json)、[操作・deadline仕様](../261021/docs/runbook.md#deployment-observability--2026-11-03-t17b-操作の照合とcli全体の待機上限)、[全作業ログ](../261021/work_log.md)を参照。以前の未実装記述は各checkpoint時点の履歴として保持する。
+[原本・試行索引](../261021/docs/reviews/deployment-ci.json#/reviews/20261103-t17b-t07a-checks.json)、[操作・deadline仕様](../261021/docs/runbook.md#deployment-observability--2026-11-03-t17b-操作の照合とcli全体の待機上限)、[全作業ログ](../261021/work_log.md)を参照。以前の未実装記述は各checkpoint時点の履歴として保持する。
 
 | 優先度・難易度 | 現状 / 次の条件 |
 |---|---|
@@ -584,7 +586,7 @@ OS・時計・実DB/registry・現配信・future拒否・schema/writer/依存lo
 #### 2026-11-09 NICT取得方法review後の残課題
 
 最新追加（基点`114af9d`）：[NICTの頻度・認証・不確かさ/因果bracket方法](../261021/docs/clock-operations.md#clock-nict-method-review)、
-[証拠索引](../261021/docs/reviews/20261109-nict-method-checks.json)。公式FAQの平均20回/時・480回/日と超過時の事前連絡を新確認。
+[証拠索引](../261021/docs/reviews/clock-history.json#/reviews/20261109-nict-method-checks.json)。公式FAQの平均20回/時・480回/日と超過時の事前連絡を新確認。
 前回の16秒下限だけの説明を訂正。毎分の直接query案は通常60分で最小61時点、再開後込み122時点で時間条件を超える。
 認証/NTS利用可否・source誤差・固定境界への対応は未取得。非循環の因果bracket式を合成13件/450組で検算したが、
 数値包含だけを実源/全資格へ昇格しない。長区間の良好値から60秒窓を補間しない。
@@ -595,49 +597,49 @@ P1/D3の次は頻度/真正性/不確かさ資料のreview。問い合わせ文�
 基点`99f14cd`からの追加作業：追加管理者ログ/独立源資料はユーザーが未取得と回答。
 [次に必要な入力](../261021/docs/clock-operations.md#clock-input-request)へ提出項目・保存先・不確かさの根拠を具体化した。
 独立課題として[合成raw bundle](../261021/docs/clock-implementation.md#clock-raw-bundle)を実装し、rawだけをZIPで別processへ渡して再計算する。
-local専用/回帰/負例と実装commit CIの状況は[今回索引](../261021/docs/reviews/20261108-clock-bundle-checks.json)へ記録する。
+local専用/回帰/負例と実装commit CIの状況は[今回索引](../261021/docs/reviews/clock-validation.json#/reviews/20261108-clock-bundle-checks.json)へ記録する。
 ZIP成功は源認定・実資格・fit許可ではない。既存clock policy、T10原本/protocol、future拒否は維持する。
 先行f071c09後の境界reviewで、raw総量へmanifest用予算を流用できる不足を1byte境界の負例で再現し修正した。
-[追加境界索引](../261021/docs/reviews/20261108-clock-bundle-budget-checks.json)へ修正前FAILと修正後18件を保存。
-修正後067d3ceの[CI42449911296](https://github.com/kenobix/Claude_practice/actions/runs/42449911296)で全588件（bundle18）/全system・16 artifact/hash・archive-only/cleanupまで受入済み。[最終索引](../261021/docs/reviews/20261108-clock-bundle-ci-checks.json)。先行f071c09のCIと分け、合成可搬性だけの受入とする。
+[追加境界索引](../261021/docs/reviews/clock-validation.json#/reviews/20261108-clock-bundle-budget-checks.json)へ修正前FAILと修正後18件を保存。
+修正後067d3ceの[CI42449911296](https://github.com/kenobix/Claude_practice/actions/runs/42449911296)で全588件（bundle18）/全system・16 artifact/hash・archive-only/cleanupまで受入済み。[最終索引](../261021/docs/reviews/clock-validation.json#/reviews/20261108-clock-bundle-ci-checks.json)。先行f071c09のCIと分け、合成可搬性だけの受入とする。
 時計の残件は[必要入力一覧](../261021/docs/clock-operations.md#clock-input-request)の追加管理者/独立源資料、同期責任・内部値review、実collector/host deadline/固定負荷、別途許可後の修復・全資格。T10を再凍結せず実fit/採点は保留。
 
 最新の[fake固定周期/phase終端](../261021/docs/clock-implementation.md#clock-fixed-schedule)は`c1c5dcb`の[CI42126656283](https://github.com/kenobix/Claude_practice/actions/runs/42126656283)で
 専用19件/旧採取30件を含む全568件・全system/16 artifact/hash/archive-only/cleanupまで受入済み。
-[最終索引](../261021/docs/reviews/20261106-clock-scheduler-ci-checks.json)。実時間の採取/資格ではない。
+[最終索引](../261021/docs/reviews/clock-validation.json#/reviews/20261106-clock-scheduler-ci-checks.json)。実時間の採取/資格ではない。
 
 先行のfake採取/原本結合は`a5c1605`の[CI42037278421](https://github.com/kenobix/Claude_practice/actions/runs/42037278421)で
 専用30件を含む全549件/119.271表示秒・両job全stepが成功。
-[最終CI索引](../261021/docs/reviews/20261105-clock-acquisition-ci-checks.json)で16 artifact/hash・archive-only再計算・cleanupも受入済み。
+[最終CI索引](../261021/docs/reviews/clock-validation.json#/reviews/20261105-clock-acquisition-ci-checks.json)で16 artifact/hash・archive-only再計算・cleanupも受入済み。
 合成raw代表はlocal ignored原本へ保存し、そのCI artifactへ含めたとは主張しない。実時計資格/独立源の認定は未達。
 
 先行の全campaign実装`f6b3cad`の[CI41939041432](https://github.com/kenobix/Claude_practice/actions/runs/41939041432)は
 最終37件を含む全519件/79.058表示秒・両job全step成功。
-[全campaign最終CI索引](../261021/docs/reviews/20261105-clock-campaign-ci-checks.json)で16 artifact member/hash・archive-only再計算・全cleanupも受入済み。
+[全campaign最終CI索引](../261021/docs/reviews/clock-validation.json#/reviews/20261105-clock-campaign-ci-checks.json)で16 artifact member/hash・archive-only再計算・全cleanupも受入済み。
 数値/構造のoffline照合だけで実時計資格をpassedにする経路はなく、実採取・修復・外部源/校正reviewは残件。
 
 先行実装`f26b334`の[CI41845551048](https://github.com/kenobix/Claude_practice/actions/runs/41845551048)は全482件・全隔離system/cleanup成功。
-[進行率component最終CI索引](../261021/docs/reviews/20261104-clock-rate-ci-checks.json)で、artifact16 member/hash・archive-only検算まで確認した。
+[進行率component最終CI索引](../261021/docs/reviews/clock-validation.json#/reviews/20261104-clock-rate-ci-checks.json)で、artifact16 member/hash・archive-only検算まで確認した。
 設計とoffline componentの合成受入で、実時計資格・PHC/UDP所有・過去の動的原因を確定しない。
 
 先行実装`f45733a`の[CI41603978704](https://github.com/kenobix/Claude_practice/actions/runs/41603978704)も全464件・全隔離system/cleanup成功。
-[今回のCI索引](../261021/docs/reviews/20261103-chrony-runtime-ci-checks.json)で16member ZIP/digest・archive-only検算まで確認した。
+[今回のCI索引](../261021/docs/reviews/clock-validation.json#/reviews/20261103-chrony-runtime-ci-checks.json)で16member ZIP/digest・archive-only検算まで確認した。
 新readerのinode境界と17件はCI受入済み。時計の24組の数値観測はlocal診断であり、CIを時計資格の証明にしない。
 
-[最終CI索引](../261021/docs/reviews/20261103-t17b-t07a-ci-checks.json)の実装4a4474e/CI41559833990で全447件、T07aのnormal/TERM、T07b対応復元、16 artifact member/SHA・archive-only検算・全cleanupを確認した。T17b/T07aの実装・合成受入とT06a OS補足は完了。先行b5aa7c5のcold Caddy欠落CI失敗、legacy操作binding持越し、Compose設定伝播漏れの修正前失敗も保持する。T16のCPU名@誤分類は専用25件と同じ最終CIで修正を検証した。自然ec71拒否fieldは未採取で、最終CIのCPUはAMD EPYCだったことと区別する。これらを実Capital producerや時計資格の証明にしない。
+[最終CI索引](../261021/docs/reviews/deployment-ci.json#/reviews/20261103-t17b-t07a-ci-checks.json)の実装4a4474e/CI41559833990で全447件、T07aのnormal/TERM、T07b対応復元、16 artifact member/SHA・archive-only検算・全cleanupを確認した。T17b/T07aの実装・合成受入とT06a OS補足は完了。先行b5aa7c5のcold Caddy欠落CI失敗、legacy操作binding持越し、Compose設定伝播漏れの修正前失敗も保持する。T16のCPU名@誤分類は専用25件と同じ最終CIで修正を検証した。自然ec71拒否fieldは未採取で、最終CIのCPUはAMD EPYCだったことと区別する。これらを実Capital producerや時計資格の証明にしない。
 
 | 優先度 | 難易度・担当 | 残課題と次の条件 |
 |---|---|---|
-| P1 | D3・Sol | 時計：前回initd setterの実exe/親/namespaceは照合済み。保存済みELFの[backend取得interfaceとSettimeofday CALL](../261021/docs/clock-history.md#backend-time-path-review)も静的照合したが、新しいruntime応答/stackではない。2026-11-09の[指定管理者原本review](../261021/docs/clock-history.md#clock-resources-admin-review)で採取区間のchronyd identity/PHC fd/UDP所有と直接保存の完了を確認済み。旧probeとdev不一致、timesyncdのPID/開始tick/exe SHA変更は過去traceへ持ち越さない。hostは[管理者runtime review](../261021/docs/clock-operations.md#clock-host-runtime-review)でsource/configuration取得も完了。NtpClient有効/Type=NTP/time.windows.com,0x9だが、status/sourceはLI3/Local CMOS Clock。[peer/status/identity](../261021/docs/clock-history.md#clock-host-cause-review)も受入済みで、全体no time data/Unset、peer pending/現在valid sample0、前後PID34104/開始時刻/exe SHA一致、event該当なしを保存した。残りは新情報による根本原因・同期責任、[未許可の保守比較案](../261021/docs/clock-operations.md#clock-host-maintenance-plan)、tick11000時内部値、backend/host時刻源・外部UTC差・同期責任、修復と時計資格。同じqueryを新情報なしに反復しない。最新の[ユーザーresync1回の実結果](../261021/docs/clock-operations.md#clock-resync-result)では、同一要求区間に受信/同期開始/時刻設定+2ms報告とcode0停止があり、事後queryは0x80070426/現Stopped。[新しいtask XML/COM登録review](../261021/docs/clock-operations.md#clock-task-definition-review)で起動設定は具体化済み。内部方針/停止callerは未確定で、追加service起動/resync/poll変更は未許可。[資格計測設計v1](../261021/docs/clock-operations.md#clock-qualification-plan)と[offline進行率phase component](../261021/docs/clock-implementation.md#clock-rate-review)を追加し、実装f26b334のCI482件/全system/artifact/cleanupまで受入済み。全campaignのpolicy/事前plan SHA結合・外部UTC/校正/identity/欠測を[offline照合](../261021/docs/clock-implementation.md#clock-campaign-review)する実装f6b3cadをCI519件/全system/artifact/cleanupまで受入済み。数値/構造だけの成功でも資格はincompleteを保つ。[fake採取](../261021/docs/clock-implementation.md#clock-fake-acquisition)で送信前intent/nonce/sequence、raw→identity/全JSON→offline CLI、負例/中断cleanupを実装。local28件の[初回索引](../261021/docs/reviews/20261105-clock-acquisition-checks.json)を保持し、[起動回収の追加索引](../261021/docs/reviews/20261105-clock-acquisition-startup-checks.json)で30件/起動時所有権移譲とmask復元/源予算を照合する。最終a5c1605の[CI549件/30件・artifact/hash/cleanup](../261021/docs/reviews/20261105-clock-acquisition-ci-checks.json)も受入済み。[fake QPC固定周期/phase deadline](../261021/docs/clock-implementation.md#clock-fixed-schedule)を追加し、専用19件で遅延のcatch-up/観測延長拒否、欠測/中断と同phaseの既知違反保持、子process回収をlocal検証済み。[今回索引](../261021/docs/reviews/20261106-clock-scheduler-checks.json)へ初回16件と同phase負例の失敗/修正を別記する。実装c1c5dcbの[CI568件/専用19件・artifact/hash/cleanup](../261021/docs/reviews/20261106-clock-scheduler-ci-checks.json)まで受入済み。残りは[源選定review](../261021/docs/clock-operations.md#clock-source-readiness)に必要な独立UTC/elapsed参照と不確かさ根拠（未選定）、実採取器/host deadline/固定負荷、原本/実行真正性、同期責任review、別途許可後の修復/休止再開/全受入。非飽和traceを反復せず、過去の飽和/T03歴史的停止も未確定。initd全体を止めず、future拒否/clamp/retryの禁止は維持 |
-| P0（実fit前） | D3・Sol | T10の正式snapshot/事前protocolは2026-11-08に静的受入済み。47原本/22,925,436行を重複除去した32,849 hourが独立再計数と全一致、schema3/47 SHA・stat/TZif/月別収支を照合した。[snapshot review](../261021/docs/capital.md#t10-snapshot-review)。固定train29,919/validation1,464/final1,461、境界5 hour除外/label+3時間/選択8月1日02時、固定recipe/policy/source11件、local ledger/legacyを確認。SQL修正9147027の[CI570件/16 artifact/hash/cleanup](../261021/docs/reviews/20261108-t10-snapshot-checks.json)まで受入済み。fit直前に同じ原本・CSV/manifest/protocol/依存bytesと未消費窓を再照合し、時計資格等の前提が未達ならT11へ進まない。保存は消費予約やblind holdoutの保証ではない |
+| P1 | D3・Sol | 時計：前回initd setterの実exe/親/namespaceは照合済み。保存済みELFの[backend取得interfaceとSettimeofday CALL](../261021/docs/clock-history.md#backend-time-path-review)も静的照合したが、新しいruntime応答/stackではない。2026-11-09の[指定管理者原本review](../261021/docs/clock-history.md#clock-resources-admin-review)で採取区間のchronyd identity/PHC fd/UDP所有と直接保存の完了を確認済み。旧probeとdev不一致、timesyncdのPID/開始tick/exe SHA変更は過去traceへ持ち越さない。hostは[管理者runtime review](../261021/docs/clock-operations.md#clock-host-runtime-review)でsource/configuration取得も完了。NtpClient有効/Type=NTP/time.windows.com,0x9だが、status/sourceはLI3/Local CMOS Clock。[peer/status/identity](../261021/docs/clock-history.md#clock-host-cause-review)も受入済みで、全体no time data/Unset、peer pending/現在valid sample0、前後PID34104/開始時刻/exe SHA一致、event該当なしを保存した。残りは新情報による根本原因・同期責任、[未許可の保守比較案](../261021/docs/clock-operations.md#clock-host-maintenance-plan)、tick11000時内部値、backend/host時刻源・外部UTC差・同期責任、修復と時計資格。同じqueryを新情報なしに反復しない。最新の[ユーザーresync1回の実結果](../261021/docs/clock-operations.md#clock-resync-result)では、同一要求区間に受信/同期開始/時刻設定+2ms報告とcode0停止があり、事後queryは0x80070426/現Stopped。[新しいtask XML/COM登録review](../261021/docs/clock-operations.md#clock-task-definition-review)で起動設定は具体化済み。内部方針/停止callerは未確定で、追加service起動/resync/poll変更は未許可。[資格計測設計v1](../261021/docs/clock-operations.md#clock-qualification-plan)と[offline進行率phase component](../261021/docs/clock-implementation.md#clock-rate-review)を追加し、実装f26b334のCI482件/全system/artifact/cleanupまで受入済み。全campaignのpolicy/事前plan SHA結合・外部UTC/校正/identity/欠測を[offline照合](../261021/docs/clock-implementation.md#clock-campaign-review)する実装f6b3cadをCI519件/全system/artifact/cleanupまで受入済み。数値/構造だけの成功でも資格はincompleteを保つ。[fake採取](../261021/docs/clock-implementation.md#clock-fake-acquisition)で送信前intent/nonce/sequence、raw→identity/全JSON→offline CLI、負例/中断cleanupを実装。local28件の[初回索引](../261021/docs/reviews/clock-validation.json#/reviews/20261105-clock-acquisition-checks.json)を保持し、[起動回収の追加索引](../261021/docs/reviews/clock-validation.json#/reviews/20261105-clock-acquisition-startup-checks.json)で30件/起動時所有権移譲とmask復元/源予算を照合する。最終a5c1605の[CI549件/30件・artifact/hash/cleanup](../261021/docs/reviews/clock-validation.json#/reviews/20261105-clock-acquisition-ci-checks.json)も受入済み。[fake QPC固定周期/phase deadline](../261021/docs/clock-implementation.md#clock-fixed-schedule)を追加し、専用19件で遅延のcatch-up/観測延長拒否、欠測/中断と同phaseの既知違反保持、子process回収をlocal検証済み。[今回索引](../261021/docs/reviews/clock-validation.json#/reviews/20261106-clock-scheduler-checks.json)へ初回16件と同phase負例の失敗/修正を別記する。実装c1c5dcbの[CI568件/専用19件・artifact/hash/cleanup](../261021/docs/reviews/clock-validation.json#/reviews/20261106-clock-scheduler-ci-checks.json)まで受入済み。残りは[源選定review](../261021/docs/clock-operations.md#clock-source-readiness)に必要な独立UTC/elapsed参照と不確かさ根拠（未選定）、実採取器/host deadline/固定負荷、原本/実行真正性、同期責任review、別途許可後の修復/休止再開/全受入。非飽和traceを反復せず、過去の飽和/T03歴史的停止も未確定。initd全体を止めず、future拒否/clamp/retryの禁止は維持 |
+| P0（実fit前） | D3・Sol | T10の正式snapshot/事前protocolは2026-11-08に静的受入済み。47原本/22,925,436行を重複除去した32,849 hourが独立再計数と全一致、schema3/47 SHA・stat/TZif/月別収支を照合した。[snapshot review](../261021/docs/capital.md#t10-snapshot-review)。固定train29,919/validation1,464/final1,461、境界5 hour除外/label+3時間/選択8月1日02時、固定recipe/policy/source11件、local ledger/legacyを確認。SQL修正9147027の[CI570件/16 artifact/hash/cleanup](../261021/docs/reviews/foundation.json#/reviews/20261108-t10-snapshot-checks.json)まで受入済み。fit直前に同じ原本・CSV/manifest/protocol/依存bytesと未消費窓を再照合し、時計資格等の前提が未達ならT11へ進まない。保存は消費予約やblind holdoutの保証ではない |
 | P1 | D3・Sol | T02実producerおよびT11/T12/T13b：同一の実candidate/artifactに精度・監視・復旧・metadata・運用測定を結合し採否を記録。T09/T10/時計資格等の前提を満たす範囲で順に進める |
 | P2（上流変更時） | D2・Sol review | MLflow noloadの発生箇所/通常import/厳格警告負例と現行publisher6件は確認済み。最新3.17.2にも同指定があり、修正releaseまたはloader変更時に個別再検証。それまではlock変更/警告抑制をしない。[調査と報告下書き](../261021/docs/runbook.md#mlflow-orm-compatibility)。upload-artifact保守は前回CI受入済み |
 
-T09は2026-11-06に[10月原本取得/構造・右端2原本の独立照合](../261021/docs/capital.md#t09-october-acquisition)を完了した（[索引](../261021/docs/reviews/20261106-t09-checks.json)）。原本47件が揃い、公開待ちを残件から除いた。2026-11-08にT10の正式集計/全manifest/protocol静的照合も受入済み。実fitは未実施。
+T09は2026-11-06に[10月原本取得/構造・右端2原本の独立照合](../261021/docs/capital.md#t09-october-acquisition)を完了した（[索引](../261021/docs/reviews/foundation.json#/reviews/20261106-t09-checks.json)）。原本47件が揃い、公開待ちを残件から除いた。2026-11-08にT10の正式集計/全manifest/protocol静的照合も受入済み。実fitは未実施。
 
 T14の証拠入口・task対応表・操作説明は最新CIへ追記済み。T06a OS補足とT07a CI接続を残件一覧へ再掲しない。旧checkpoint表は当時の記録として保持する。
 
-**2026-11-09・基点d285aa9のユーザーresync結果:** [review](../261021/docs/clock-operations.md#clock-resync-result)、[証拠索引](../261021/docs/reviews/20261109-resync-result-checks.json)。
+**2026-11-09・基点d285aa9のユーザーresync結果:** [review](../261021/docs/clock-operations.md#clock-resync-result)、[証拠索引](../261021/docs/reviews/clock-history.json#/reviews/20261109-resync-result-checks.json)。
 原本13file/manifest12件とhelper SHA、resync1回を照合。native exit0でも応答はshutdown中、事後2queryは0x80070426、service-after.jsonは0byteで部分失敗として保持。
 追加読取のOperational XML5件（PID34104）にresync通知→受信→同期開始→時刻設定（ログ上+2ms）→code0停止が存在。現在Stopped/Manual/PID0、終了コード0を確認した。
 現triggerはSTART2件/STOPなし、SynchronizeTime task_started設定と過去実行時刻は確認したが、TaskScheduler logは無効で有効化せず、停止caller/内部理由は未確定。
@@ -645,7 +647,7 @@ P1/D3：task定義の追加reviewは下記のとおり完了し、内部方針/�
 外部精度/継続同期/全資格や過去T03/tick11000の解決にはしない。独立UTC/elapsed/collector/全資格と実fit/T02/T11/T12/T13bの前提待ちは維持。
 
 **2026-11-09・基点67f4586のtask/Web review:** [task原本review](../261021/docs/clock-operations.md#clock-task-definition-review)、
-[Web源の用途/制限](../261021/docs/clock-operations.md#clock-web-source-review)、[証拠索引](../261021/docs/reviews/20261109-task-source-checks.json)。
+[Web源の用途/制限](../261021/docs/clock-operations.md#clock-web-source-review)、[証拠索引](../261021/docs/reviews/clock-history.json#/reviews/20261109-task-source-checks.json)。
 XML2件/manifest2 hashと3原本を照合。task_startedとWNF/Settings、ForceSynchronizeTimeのCOM Actionを確認し、
 限定HKLM64登録はTimeSyncTask.dllへ対応、32bit keyは無し、固定2 DLLの現在版/hashを記録した。過去activation/停止callerは証明しない。
 UTF8保存/UTF16宣言の不一致は原本を保ってUnicode parseし、再importしない。固定capture10負例を拒否した。
@@ -656,7 +658,7 @@ P1/D3の次は源資料と輸送境界、または[案Dの別許可](../261021/d
 実reader/host deadline/固定負荷/全資格と、前提未達の実fit/T02/T11/T12/T13bは保留を維持する。
 他の独立した未実施受入条件は今回特定できず、受入済みsuite/CI/T09/T10を反復しない。
 
-**2026-11-09・基点9c32298のpeer/status/identity受入:** [review](../261021/docs/clock-history.md#clock-host-cause-review)、[証拠索引](../261021/docs/reviews/20261109-host-cause-checks.json)。
+**2026-11-09・基点9c32298のpeer/status/identity受入:** [review](../261021/docs/clock-history.md#clock-host-cause-review)、[証拠索引](../261021/docs/reviews/clock-history.json#/reviews/20261109-host-cause-checks.json)。
 指定原本9file/manifest8件、query2件exit0、前後W32Time PID34104/開始時刻/exe SHA一致、host版/boot報告値とquery UTC/QPC bracketを照合した。
 全体はLI3/Local CMOS/Unset/last-error1 no time data、peerはpending/NoAuth/現在valid counter0/reachability0。peer error0や過去時刻を全体同期成功としない。
 新eventはRecord>26321の範囲で0件/該当なしの診断を保持。過去valid受信eventとprocess開始のwall近接は確認したが、当時PIDやpayloadが無く動的帰属・採用/継続同期を確定しない。
@@ -665,7 +667,7 @@ P1/D3のpeer/status/identity読取不足は解消。次は新状態変化/自然
 独立源/不確かさは未提出。実collector/host deadline/固定負荷、別許可後の修復・休止再開・全資格、T10実fit直前P0→T02/T11/T12/T13bは前提待ちのまま。
 診断14負例（再hash12）を受入。準備読取で旧索引keyを誤ったKeyErrorも保存した。製品source/schema/writer/lock/workflow変更やsuite/既存CI/原本集計の反復はない。
 
-**2026-11-09・基点b0589eeのhost管理者runtime受入（peer原本到着前の履歴）:** [新review](../261021/docs/clock-operations.md#clock-host-runtime-review)、[証拠索引](../261021/docs/reviews/20261109-host-admin-checks.json)。
+**2026-11-09・基点b0589eeのhost管理者runtime受入（peer原本到着前の履歴）:** [新review](../261021/docs/clock-operations.md#clock-host-runtime-review)、[証拠索引](../261021/docs/reviews/clock-history.json#/reviews/20261109-host-admin-checks.json)。
 指定clock-host-admin-00f021d1原本6file/manifest5件のSHA、3query exit0、provider別34設定を照合した。
 前回未取得だったsource/configurationは残件から除く。設定peer=time.windows.com,0x9、NtpClient有効だが、LI3/階層0/最終正常同期未指定・Local CMOS Clockと報告。
 実UTC誤差や現原因は未測定で、過去DNS失敗/飽和/T03の原因へ遡及適用しない。host boot/service exe identity/取得bracketも今回原本にない。
@@ -675,7 +677,7 @@ P1/D3のpeer/status/identity読取不足は解消。次は新状態変化/自然
 追加資料なしに解消できる別の計画上の実装条件は特定できず、受入済みsuite/CIやT09/T10原本集計は反復しない。
 診断12負例（再hash7）は今回captureのparser確認で、製品unit/実時計資格/新CIの受入ではない。
 
-**2026-11-09・基点464df19の新資料受入:** [管理者原本review](../261021/docs/clock-history.md#clock-resources-admin-review)、[証拠索引](../261021/docs/reviews/20261109-admin-resources-checks.json)。
+**2026-11-09・基点464df19の新資料受入:** [管理者原本review](../261021/docs/clock-history.md#clock-resources-admin-review)、[証拠索引](../261021/docs/reviews/clock-history.json#/reviews/20261109-admin-resources-checks.json)。
 owner/resources 2件のscript込みhash5/7件・実完了/exit0、同boot・開始tick/親/exe/hash/namespace/config、PHC fd3/rdev247:0、UDP323のfd5/6→inode3582/3583を照合した。
 これは実採取の読取受入で、合成成功の代用ではない。新しい飽和内部値やsetter eventは含まれない。
 採取区間のidentity/PHC/UDPは残件から除き、同じinventoryを新情報なしに再採取しない。timesyncdは旧496から973・開始tick/本人と親のSHAも変化。旧probe dev42→今回27の差も未説明で、過去traceへのfile同一性を断定しない。
@@ -685,7 +687,7 @@ host限定読取はW32Time Running/Manual、vmictimesync Stopped/Manual、status
 T10は静的受入済みのまま。実fit直前のP0照合、T02/T11/T12/T13bは全前提後に着手。T03/tick11000は自然再発資料がある場合のみ照合する。
 診断23負例とPowerShell構文の確認は製品suite/新CIや時計資格ではない。OS/時計・実DB/registry/現配信・future拒否は不変。
 
-**2026-11-09・基点2f59af8の再開可否（以下は新資料到着前の履歴）:** [前提確認索引](../261021/docs/reviews/20261109-prerequisite-review-checks.json)。
+**2026-11-09・基点2f59af8の再開可否（以下は新資料到着前の履歴）:** [前提確認索引](../261021/docs/reviews/clock-history.json#/reviews/20261109-prerequisite-review-checks.json)。
 標準保存先は既存admin原本1件のみで、過去索引とbytes/SHAが一致。新source dossierは未発見。
 今回新たに解消した実装課題・時計資格条件は0件。受入済み試験/CI/原本取得・集計を反復せず、製品codeも変更しない。
 次の開始順を明示する（基点2f59af8当時はいずれも前提待ち）。
@@ -705,18 +707,18 @@ T10は静的受入済みのまま。実fit直前のP0照合、T02/T11/T12/T13b�
 version 9.9・patched-data・strong-encryptionで未捕捉例外/CLI終了値1/内部pathのtracebackを再現した。
 version例外の入力エラー化と固定ZIP以外のflag拒否を追加し、local-only header改変も含む5変種で
 replay前拒否・終了値2・秘密canary非表示・原本不変・report/stagingなしを検証する。
-この節目は[追加入力境界索引](../261021/docs/reviews/20261109-clock-bundle-input-checks.json)で追跡し、
+この節目は[追加入力境界索引](../261021/docs/reviews/clock-validation.json#/reviews/20261109-clock-bundle-input-checks.json)で追跡し、
 local受入時点では実装CI待ちとして保存した。その後、実装`3d1a5bf`の[CI42539864950](https://github.com/kenobix/Claude_practice/actions/runs/42539864950)で
 全590件（bundle20件）・両job全step、16 artifact/digest/member hash、archive-only要求1000/p95再計算、
 Caddy normal/TERM・3 SIGKILL段階、MLflow/skops+DB対応復元・PG/HTTPを含むcleanupまで受入済み。
-[最終CI索引](../261021/docs/reviews/20261109-clock-bundle-input-ci-checks.json)に原本と失敗/限界を結合した。
+[最終CI索引](../261021/docs/reviews/clock-validation.json#/reviews/20261109-clock-bundle-input-ci-checks.json)に原本と失敗/限界を結合した。
 初回stageのread-only拒否、SHA転記誤り/接続失敗、log原本取得失敗後に空logを検証した失敗も保持する。
 合成入力境界を1件閉じたが、追加資料なしに着手できる別の計画上の未検証条件は今回特定できなかった。
 実源のidentity/真正性/不確かさ・同期責任、実採取器/host deadline/固定負荷、許可後の修復と全資格、
 T02/T11/T12/T13bの前提は上表から変更しない。独立して進められる未検証条件の新発見と、受入済み試験の単純な反復を区別する。
 
 基点`24c30c0`以降の独立作業：[資格計測の設計v1](../261021/docs/clock-operations.md#clock-qualification-plan)と
-[設計検証索引](../261021/docs/reviews/20261104-qualification-design-checks.json)。
+[設計検証索引](../261021/docs/reviews/clock-validation.json#/reviews/20261104-qualification-design-checks.json)。
 以前は期間/許容範囲/欠測の扱いが未固定だったため、QPCによる60分×通常/再開後試行、全bracket区間を使う進行率、
 独立外部UTC区間、厳密future拒否、失効条件を事前方針として記述した。
 境界10件・不正bracket5件・独立列挙192組の算術検算は合成設計だけの証拠で、製品unit追加や時計の合格ではない。
@@ -729,24 +731,24 @@ QPC基準で固定した30分/60秒窓を選び、MONOTONIC/RAWのbracketを厳�
 全campaign判定・QPC校正/外部UTC/identity・採取器/負荷生成器は残件。実採取/設定変更/実fitはしていない。
 専用試験・回帰の結果と限界は後続のwork log/検証索引へ記録する。
 localは専用13→16件、sandbox中断を保存後の承認付き全480件、IO guard追加後の最終専用18件が成功。
-全480件を最終482件の実行と読み替えない。[進行率component検証索引](../261021/docs/reviews/20261104-clock-rate-checks.json)。
+全480件を最終482件の実行と読み替えない。[進行率component検証索引](../261021/docs/reviews/clock-validation.json#/reviews/20261104-clock-rate-checks.json)。
 実装記録時点ではCI未確認だった。最終受入はf26b334/CI41845551048、
-[後続索引](../261021/docs/reviews/20261104-clock-rate-ci-checks.json)の全482件/両job全step成功・artifact16 member/SHA・archive-only再計算・全cleanupで確認した。
+[後続索引](../261021/docs/reviews/clock-validation.json#/reviews/20261104-clock-rate-ci-checks.json)の全482件/両job全step成功・artifact16 member/SHA・archive-only再計算・全cleanupで確認した。
 後続文書commitをこの実装CIが直接試験したとは呼ばない。
 
-891a420以降の[検証索引](../261021/docs/reviews/20261104-backend-boundary-checks.json)では、
+891a420以降の[検証索引](../261021/docs/reviews/clock-history.json#/reviews/20261104-backend-boundary-checks.json)では、
 静的PIE解析の初回exit0不採用・maxpc/etext assert失敗、テストcwd誤りも保存した。
 最終静的照合/合成改変5件拒否、左端2parser照合、既存pipeline回帰8件は成功。
 製品source/schema/writer/lock/workflowは変更しておらず、全suite/CIを新規受入と呼ばない。
 今回の新しい完了単位は保存ELFのbackend経路reviewと左端buffer判断・取得・境界監査まで。
 PHC/UDP管理者採取・時計修復/資格、10月原本、T10正式protocol、実producer/採否を未完了として維持する。
 
-2026-11-04の後続確認（基点`1e622dd`）は[追跡索引](../261021/docs/reviews/20261104-followup-checks.json)を参照。
+2026-11-04の後続確認（基点`1e622dd`）は[追跡索引](../261021/docs/reviews/clock-history.json#/reviews/20261104-followup-checks.json)を参照。
 公式S3への権限付きHEADは13:42:25UTCに202610 object=404。通常sandbox試行はDNS解決失敗(exit 6)であり、別試行の404で補完した。
 公開後取得は未実施。管理者PHC/socketの新規採取directoryは見つからず、tick11000もT03も自然再発していない。
 時計の未確定事項を閉じず、T10正式aggregate/protocol・fitにも進んでいない。依存前提に変化がないため、それ以外の独立タスクもこの確認では新規受入していない。
 
-2026-11-03・基点dcfdd9c以降の追加読取：[時計調査索引](../261021/docs/reviews/20261103-clock-followup-checks.json)。
+2026-11-03・基点dcfdd9c以降の追加読取：[時計調査索引](../261021/docs/reviews/clock-history.json#/reviews/20261103-clock-followup-checks.json)。
 同bootのtimesyncd identityを再対応し、専用40秒traceでchronydのtick/freq8指定（11000は3件）、
 initdとtimesyncdの両方の負方向stepを確認。前回区間のinitd前進だけという記録を今回全区間へ一般化しない。
 別のjoint採取でreviewが1.235856秒futureとなる自然拒否とtimesyncdのstepを生成/検証MONOTONIC区間内で照合し、tag不変/blockedを確認した。
@@ -762,16 +764,16 @@ Node20強制移行/punycode/url.parse警告は今回system logで見られず、
 T14として時計/CIの用語16項目も補足した。後続記録commitをこの実装CIが直接試験したとは呼ばない。
 
 2026-11-03・298c6c8以降：追加管理者ログは未採取とユーザー確認。T09の公式08:02UTC HEADも202610=404（202609=200）。
-時計は[配布debugと内部数値の照合](../261021/docs/reviews/20261103-chrony-runtime-checks.json)を追加した。
+時計は[配布debugと内部数値の照合](../261021/docs/reviews/clock-validation.json#/reviews/20261103-chrony-runtime-checks.json)を追加した。
 完全debugのBuild ID/CRC、compile unit/型、稼働inodeを照合し、計算とkernel入力が一致する非飽和16組を確認した。tick11000が出るまでの延長/retryはせず未再現を保持する。
 exe dev/inode/sizeの前後比較を追加readerへ接続し、同bytesの別inode置換も拒否する専用17件が成功。local索引のCI_PENDINGは当時のsnapshotとして保持し、最終受入はf45733aのCI索引を参照する。
-T03 journal9件/既存publisher6件成功。MLflow警告は[独立調査](../261021/docs/reviews/20261103-orm-compatibility-checks.json)で上流修正待ちへ整理した。
+T03 journal9件/既存publisher6件成功。MLflow警告は[独立調査](../261021/docs/reviews/deployment-ci.json#/reviews/20261103-orm-compatibility-checks.json)で上流修正待ちへ整理した。
 
 次は追加管理者ログがあればPHC/UDPと現在identityを照合し、tick11000が自然再現した区間で内部数値とkernel書込を対応させる。
 新しいログ・状態変化がない間、同じ非飽和確認や未修正releaseの確認だけを繰り返して進捗扱いにしない。
 依存条件を満たす独立課題は進めるが、原本/修復許可/資格/必須producerを未取得のまま実fit・運用合格・採否へ進めない。
 
-2026-11-05追加review：[全campaignの欠測負例索引](../261021/docs/reviews/20261105-clock-campaign-missing-checks.json)。
+2026-11-05追加review：[全campaignの欠測負例索引](../261021/docs/reviews/clock-validation.json#/reviews/20261105-clock-campaign-missing-checks.json)。
 QPC1件欠測時にも既知の正確な固定端点の逸脱と提出UTC区間の上下逆転を保存する補強を追加した。
 不足は補完せず、資格全体をpassedにしない。最初の実装と補強後を別commit/CIとして区別する。
 
@@ -835,7 +837,7 @@ currentからseen PKを検索するEXISTSは119/119命令で、実helperの仕�
 正式snapshot/protocol静的受入と、実fit/採点/時計資格/実producer/運用採否を分ける。CIの受入はこれから確認する。
 
 SQL改善9147027のCI42447659584は全570件/213.056表示秒、両job全step成功。
-[最終T10索引](../261021/docs/reviews/20261108-t10-snapshot-checks.json)で、16 artifact/member hash、archive-only再計算、Caddy normal/TERM/SIGKILL・MLflow/skops/DB対応復元・PG/HTTP cleanupまで受入した。
+[最終T10索引](../261021/docs/reviews/foundation.json#/reviews/20261108-t10-snapshot-checks.json)で、16 artifact/member hash、archive-only再計算、Caddy normal/TERM/SIGKILL・MLflow/skops/DB対応復元・PG/HTTP cleanupまで受入した。
 これでT10の静的snapshot/protocol受入とT14の説明更新を完了。fit直前の未消費/bytes再照合は必要時のP0条件として維持する。
 残りは、時計独立源/真正性/不確かさ・実採取/host deadline/固定負荷・同期責任/許可後の修復と資格（P1/D3/Sol）、
 その前提後のT02/T11/T12/T13b実candidate証拠（P1/D3/Sol）、上流変更時だけのMLflow互換再検証（P2/D2/Sol review）。
@@ -843,11 +845,11 @@ T09公開待ちやT10未集約・未凍結を現状の残件へ戻さず、同�
 
 ### 2026-11-16 承認済みA/B/Cの途中チェックポイント
 
-[実施記録](../261021/docs/capital.md#product-acceptance-contracts-20261116)、[検証索引](../261021/docs/reviews/20261116-product-acceptance-checks.json)。A/B/C1/C2はユーザー承認済み。新規14契約test成功、cold backup/別volume復元/schema一致成功。正式入力参照controlは発行済み、offlineで5入力とsource closureを照合。ただし終了記録のID比較バグでlive結果JSONが欠け、再起動は自動レビュー拒否。元liveの再確認と終了状態の記録回収、試験専用二版harness・中断/timeout/metadata、実候補の非採用記録、source commitのCI/artifact/cleanupがP1として残る。既存TestClient待機はstack保存済み・原因未特定。過去22caseを遡及合格化せず、全P1完了としない。
+[実施記録](../261021/docs/capital.md#product-acceptance-contracts-20261116)、[検証索引](../261021/docs/reviews/capital.json#/reviews/20261116-product-acceptance-checks.json)。A/B/C1/C2はユーザー承認済み。新規14契約test成功、cold backup/別volume復元/schema一致成功。正式入力参照controlは発行済み、offlineで5入力とsource closureを照合。ただし終了記録のID比較バグでlive結果JSONが欠け、再起動は自動レビュー拒否。元liveの再確認と終了状態の記録回収、試験専用二版harness・中断/timeout/metadata、実候補の非採用記録、source commitのCI/artifact/cleanupがP1として残る。既存TestClient待機はstack保存済み・原因未特定。過去22caseを遡及合格化せず、全P1完了としない。
 
 ### 2026-11-16 最新の終了判断（過去一覧より優先）
 
-[製品の終了判断](../261021/docs/capital.md#project-closure-20261116)と[検証索引](../261021/docs/reviews/20261116-product-acceptance-checks.json)を正とする。ユーザー委任により、実候補は精度合格を保持しつつ配信不採用と決定。local追記専用記録を発行し、remote blocked維持。これは旧T13bの採用成功を意味しない。
+[製品の終了判断](../261021/docs/capital.md#project-closure-20261116)と[検証索引](../261021/docs/reviews/capital.json#/reviews/20261116-product-acceptance-checks.json)を正とする。ユーザー委任により、実候補は精度合格を保持しつつ配信不採用と決定。local追記専用記録を発行し、remote blocked維持。これは旧T13bの採用成功を意味しない。
 
 | 項目 | 終了方法 |
 |---|---|

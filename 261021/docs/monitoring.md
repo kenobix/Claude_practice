@@ -126,7 +126,7 @@ Capital用DB接続を事前に設定する。`scripts/bikectl`のprofile別port�
 
 T05では、時点ごとの期待窓・母数・警告・検知時刻を先に固定し、分布のみ/誤差のみ/両方、ラベル遅延/停止/重複、欠測増加をCLIまで通す。今回の部分ケースだけで、T02のmonitoring 6項目すべてをpassedにしない。T06のDB/file読取照合、実候補とHTTP MLflowでの監視、実証producerは未完了。
 
-T05の具体的な受入期待値とSol reviewの判断は[Capital監視の合成受入基準](monitoring.md#monitoring-acceptance)を参照。fake registryと一時SQLiteを通る10ケースと2境界を追加し、対象26件13.348秒、全277件127.327秒がlocalで成功した。保存したCSV/JSON/markerとDB全窓の値・hashも照合した。[CI 41005083367](https://github.com/kenobix/Claude_practice/actions/runs/41005083367)でも全277件35.217秒と隔離Docker/両PostgreSQL/cleanupが成功した。[全試行の証拠](reviews/20261030-t05-checks.json)には既存T03/T13の一度ずつの失敗も残し、原因を残課題として扱う。これはCLIの合成経路の受入であり、実MLflow/Capital候補の監視証拠ではない。
+T05の具体的な受入期待値とSol reviewの判断は[Capital監視の合成受入基準](monitoring.md#monitoring-acceptance)を参照。fake registryと一時SQLiteを通る10ケースと2境界を追加し、対象26件13.348秒、全277件127.327秒がlocalで成功した。保存したCSV/JSON/markerとDB全窓の値・hashも照合した。[CI 41005083367](https://github.com/kenobix/Claude_practice/actions/runs/41005083367)でも全277件35.217秒と隔離Docker/両PostgreSQL/cleanupが成功した。[全試行の証拠](reviews/foundation.json#/reviews/20261030-t05-checks.json)には既存T03/T13の一度ずつの失敗も残し、原因を残課題として扱う。これはCLIの合成経路の受入であり、実MLflow/Capital候補の監視証拠ではない。
 
 <a id="monitoring-acceptance"></a>
 
@@ -201,7 +201,7 @@ validation MAE未設定のcandidateも、出典・hash・保存済み予測の�
 
 これらは閾値式を複製する単体testではなく、登録済み参照の取得、CLIの時刻・ID照合、window scoring、CSV/JSON/SQLite保存を通す合成シナリオである。ラベル停止と遅延の2caseだけはCLIが採点へ渡す1月18日の24ラベルのavailability timestampを意図的にずらして作り、通常caseは本物の+3時間処理を通す。既存予測のlag出典となる過去のラベルは遅らせず、特徴量の利用可能性と矛盾させない。これは実ラベルfeedの障害注入ではない。重複はsource loaderの契約どおり拒否する。sourceを変えたcaseでも元の学習行hash・学習特徴量hashは変わらないことを確認し、後の分布をtraining referenceへ混入させない。
 
-2026-10-30のSol review後、対象26件は13.348秒、全277件は127.327秒でlocal成功。[CI 41005083367](https://github.com/kenobix/Claude_practice/actions/runs/41005083367)でも全277件35.217秒、隔離Docker/両PostgreSQL/cleanup成功。[証拠JSON](reviews/20261030-t05-checks.json)と[作業ログ](../work_log.md)に全試行を記録した。既存T03のSIGTERM待ちとT13相当の時刻検証の一度ずつの失敗は原因未特定として残す。合成結果を実データの品質・配信可否・運用SLOの証明へ転用しない。
+2026-10-30のSol review後、対象26件は13.348秒、全277件は127.327秒でlocal成功。[CI 41005083367](https://github.com/kenobix/Claude_practice/actions/runs/41005083367)でも全277件35.217秒、隔離Docker/両PostgreSQL/cleanup成功。[証拠JSON](reviews/foundation.json#/reviews/20261030-t05-checks.json)と[作業ログ](../work_log.md)に全試行を記録した。既存T03のSIGTERM待ちとT13相当の時刻検証の一度ずつの失敗は原因未特定として残す。合成結果を実データの品質・配信可否・運用SLOの証明へ転用しない。
 
 <a id="monitor-reconciliation"></a>
 
@@ -211,7 +211,7 @@ validation MAE未設定のcandidateも、出典・hash・保存済み予測の�
 
 ### 監視保存の読取照合契約（T06）
 
-policy IDは `monitor-run-reconciliation-v1`。2026-10-30にSolで状態・比較・読取境界を固定した。SQLite版T06aに続き、PostgreSQL版T06bを実装し、使い捨てPostgreSQLで読取照合を検証した。最終の検証・CI状態は末尾と[検証記録](reviews/20261030-t06b-checks.json)を参照。設計時点の保存挙動確認は[設計証拠](reviews/20261030-t06-design.json)を参照。
+policy IDは `monitor-run-reconciliation-v1`。2026-10-30にSolで状態・比較・読取境界を固定した。SQLite版T06aに続き、PostgreSQL版T06bを実装し、使い捨てPostgreSQLで読取照合を検証した。最終の検証・CI状態は末尾と[検証記録](reviews/foundation.json#/reviews/20261030-t06b-checks.json)を参照。設計時点の保存挙動確認は[設計証拠](reviews/foundation.json#/reviews/20261030-t06-design.json)を参照。
 
 <a id="monitor-reconciliation--目的と担当範囲"></a>
 
@@ -393,7 +393,7 @@ DATABASE_URL='sqlite:////absolute/path/ops.db' \
 
 Sol reviewでは期間末尾の未確認窓、JSON boolと数値の同値扱い、旧形式とDB障害の優先順、最終再読取中のinode交換、field上限の分類、欠落window_hoursの分類を修正した。固定した状態表・数値ルールを変えず、ファイル判定・DB profile/接続・行比較を順に検査し、最後にファイルsnapshotを再確認する。SQLiteの未知の数値列型はunsupported、DB JSONのbool/非有限/文字列は数値へ変換しない。
 
-対象54 testsではUCI形式とCapital追加列、read-only接続へのUPDATE拒否、metadata/行の同一SQLite snapshot、他run/旧行とreportの非変更、CLI exit 0/1/2、許可・ロック失敗の秘匿、差分50件/値512文字上限も確認した。実行・失敗・修正と全suite/CIの最終成否は[検証記録](reviews/20261030-t06a-checks.json)と[作業ログ](../work_log.md)を参照する。PostgreSQL接続、REAL量子化、SQL NaN、遅延commitはT06bの残件であり、SQLiteや既存CIのPostgreSQL試験成功をT06bの受入へ転用しない。
+対象54 testsではUCI形式とCapital追加列、read-only接続へのUPDATE拒否、metadata/行の同一SQLite snapshot、他run/旧行とreportの非変更、CLI exit 0/1/2、許可・ロック失敗の秘匿、差分50件/値512文字上限も確認した。実行・失敗・修正と全suite/CIの最終成否は[検証記録](reviews/foundation.json#/reviews/20261030-t06a-checks.json)と[作業ログ](../work_log.md)を参照する。PostgreSQL接続、REAL量子化、SQL NaN、遅延commitはT06bの残件であり、SQLiteや既存CIのPostgreSQL試験成功をT06bの受入へ転用しない。
 
 実装commit df4c3b9の[CI 41038726909](https://github.com/kenobix/Claude_practice/actions/runs/41038726909)は全331 tests、既存の隔離Docker/PG試験とcleanupまで成功した。これはSQLite版T06aと既存機能の回帰確認である。T06bのPG inspectorは未実装のままで、S13のOS実権限/実busy timeoutの組合せも追加確認として残る。
 
@@ -418,9 +418,9 @@ MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m unittest discover -s tests -p 't
 MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python scripts/storage_checks.py monitor-inspection --run-disposable
 ```
 
-CIにT06b専用stepを追加し、`monitor-inspection-postgres-ci.log`を既存artifactへ保存する。実行済みの件数・終了値・cleanup・source/log SHA・post-push CIは[検証記録](reviews/20261030-t06b-checks.json)と[作業ログ](../work_log.md)へ記録する。ネットワーク上の実接続timeout満了は未注入で、接続5秒の指定はunitで検査し、実接続失敗・切断と実statement/lock timeoutはPG受入で確認する。
+CIにT06b専用stepを追加し、`monitor-inspection-postgres-ci.log`を既存artifactへ保存する。実行済みの件数・終了値・cleanup・source/log SHA・post-push CIは[検証記録](reviews/foundation.json#/reviews/20261030-t06b-checks.json)と[作業ログ](../work_log.md)へ記録する。ネットワーク上の実接続timeout満了は未注入で、接続5秒の指定はunitで検査し、実接続失敗・切断と実statement/lock timeoutはPG受入で確認する。
 
-T06b実装commit `164ac53`の[CI 41068758500](https://github.com/kenobix/Claude_practice/actions/runs/41068758500)は全337 tests（39.970秒）、T06b専用PG25 tests（14.461秒）、既存system/PG試験とcleanupまで成功した。artifact ZIPのSHA-256と4 memberの内容・hashも検算済み。2026-11-01に観測し、[検証記録](reviews/20261030-t06b-checks.json)へ追記した。
+T06b実装commit `164ac53`の[CI 41068758500](https://github.com/kenobix/Claude_practice/actions/runs/41068758500)は全337 tests（39.970秒）、T06b専用PG25 tests（14.461秒）、既存system/PG試験とcleanupまで成功した。artifact ZIPのSHA-256と4 memberの内容・hashも検算済み。2026-11-01に観測し、[検証記録](reviews/foundation.json#/reviews/20261030-t06b-checks.json)へ追記した。
 
 <a id="monitor-reconciliation--sqlite-s13の実os補足（2026-11-03）"></a>
 
@@ -432,9 +432,9 @@ T06b実装commit `164ac53`の[CI 41068758500](https://github.com/kenobix/Claude_
 MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python scripts/storage_checks.py sqlite-os --run-disposable
 ```
 
-今回の実測待機は約5.025秒で、失敗結果はいずれも`database_unavailable`/終了区分2だった。全filesystem/ネットワークmountの挙動や実Capital monitorの受入を代表するものではない。rootでは権限拒否の証明にならないので明示的に停止する。原本/hashは[2026-11-03索引](reviews/20261103-t17b-t07a-checks.json)を参照。
+今回の実測待機は約5.025秒で、失敗結果はいずれも`database_unavailable`/終了区分2だった。全filesystem/ネットワークmountの挙動や実Capital monitorの受入を代表するものではない。rootでは権限拒否の証明にならないので明示的に停止する。原本/hashは[2026-11-03索引](reviews/deployment-ci.json#/reviews/20261103-t17b-t07a-checks.json)を参照。
 
-2026-11-03最終確認: 実装`4a4474e`の[CI41559833990](https://github.com/kenobix/Claude_practice/actions/runs/41559833990)で全447件・Caddy normal/TERM・対応復元・artifact16 member/hash/cleanupが成功。[最終CI索引](reviews/20261103-t17b-t07a-ci-checks.json)を確認する。合成受入とSQLite OS補足は完了し、実producer・時計資格・新原本からの採否は計画§11.6の残件に従う。
+2026-11-03最終確認: 実装`4a4474e`の[CI41559833990](https://github.com/kenobix/Claude_practice/actions/runs/41559833990)で全447件・Caddy normal/TERM・対応復元・artifact16 member/hash/cleanupが成功。[最終CI索引](reviews/deployment-ci.json#/reviews/20261103-t17b-t07a-ci-checks.json)を確認する。合成受入とSQLite OS補足は完了し、実producer・時計資格・新原本からの採否は計画§11.6の残件に従う。
 
 <a id="measurement-interruption"></a>
 
@@ -564,14 +564,14 @@ export時に加え、archiveだけを検証する経路でも台帳とjournal全
 
 export失敗と部分出力削除の失敗が重なった場合は両方を記録して非0で終了します。resource cleanup失敗時のarchive削除失敗も握り潰しません。これらの検査は固定された合成出力用であり、任意の文章から全種類の秘密値を発見する汎用検出器ではありません。未知の原本を公開してよいと判断する用途には使いません。
 
-Solの検証結果は[review索引](reviews/20261102-t16-sol-review.json)へ記録します。Luna索引は当時の検証記録として保持します。
+Solの検証結果は[review索引](reviews/deployment-ci.json#/reviews/20261102-t16-sol-review.json)へ記録します。Luna索引は当時の検証記録として保持します。
 
 <a id="measurement-evidence-archive--実装commitのci確認"></a>
 
 #### 実装commitのCI確認
 
-実装`2492abc`の[CI41442578156](https://github.com/kenobix/Claude_practice/actions/runs/41442578156)で399 testsと両job全stepが成功しました。T16の3ファイルを含むartifactの全13 memberとhashを照合し、ZIPだけを別processへ渡して1050応答・warmup50除外・1000測定件のp95を再計算しました。同じattemptの報告値と一致し、専用project cleanupも確認したため、T16を完了とします。[CI証拠](reviews/20261102-t16-ci-checks.json)に記録しています。上記のlocal/CI pending記述は受入条件・実施順の説明であり、最新の完了状態はこの節です。
+実装`2492abc`の[CI41442578156](https://github.com/kenobix/Claude_practice/actions/runs/41442578156)で399 testsと両job全stepが成功しました。T16の3ファイルを含むartifactの全13 memberとhashを照合し、ZIPだけを別processへ渡して1050応答・warmup50除外・1000測定件のp95を再計算しました。同じattemptの報告値と一致し、専用project cleanupも確認したため、T16を完了とします。[CI証拠](reviews/deployment-ci.json#/reviews/20261102-t16-ci-checks.json)に記録しています。上記のlocal/CI pending記述は受入条件・実施順の説明であり、最新の完了状態はこの節です。
 
 2026-11-03補足: 通常のCPU名（例: `CPU @ 2.80GHz`）の`@`をURI資格情報と誤分類するケースを修正した。URI authorityのuserinfo（空usernameを含む）、埋込み資格情報URI、bare user@host/email、絶対path、外部URLは引き続き拒否する。CPU fieldを無条件で許可せず、同fieldへ資格情報URIを置いた負例も確認する。原本を正規化・削除してからexportする回避はしない。ec71 CIで拒否した具体的field/valueはcleanup後に回収できず、CPU原因との同一性は推定として残す。
 
-最終実装`4a4474e`の[CI41559833990](https://github.com/kenobix/Claude_practice/actions/runs/41559833990)で全447件・16 member/hash・archive-only再計算・cleanupまで成功した。[最新CI索引](reviews/20261103-t17b-t07a-ci-checks.json)を参照。実CIの保存CPUはAMD EPYCで、Intelの@を含む原本の再計算は固定fixtureの別process試験で確認した。自然失敗の具体的field未採取という限界を、後続の成功で埋め合わせない。
+最終実装`4a4474e`の[CI41559833990](https://github.com/kenobix/Claude_practice/actions/runs/41559833990)で全447件・16 member/hash・archive-only再計算・cleanupまで成功した。[最新CI索引](reviews/deployment-ci.json#/reviews/20261103-t17b-t07a-ci-checks.json)を参照。実CIの保存CPUはAMD EPYCで、Intelの@を含む原本の再計算は固定fixtureの別process試験で確認した。自然失敗の具体的field未採取という限界を、後続の成功で埋め合わせない。

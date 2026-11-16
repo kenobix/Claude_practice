@@ -102,7 +102,7 @@ JSON拒否、読取中変更、link/fsync失敗cleanup、既存report保護を�
 
 実装`f26b334`の[CI41845551048](https://github.com/kenobix/Claude_practice/actions/runs/41845551048)で
 最終の専用18件を含む全482件と全隔離systemが成功した。
-[最終CI索引](reviews/20261104-clock-rate-ci-checks.json)でartifact/member hash・archive-only再計算・cleanupも確認した。
+[最終CI索引](reviews/clock-validation.json#/reviews/20261104-clock-rate-ci-checks.json)でartifact/member hash・archive-only再計算・cleanupも確認した。
 localの全480件は最終IO guard追加前の記録として保持し、CIの482件と区別する。
 
 次は、全campaignの入力schemaとpolicy binding、外部UTC区間/校正/identity/採取真正性・coverageの判定を設計・実装する。
@@ -274,7 +274,7 @@ host/backend同期責任review・新PHC/UDPログ、別途許可後の修復/休
 提出外部UTC区間そのものの上下逆転は、対応境界が欠けていても違反として残す。
 
 最終37件を含む全519件・全systemを実装f6b3cadの[CI41939041432](https://github.com/kenobix/Claude_practice/actions/runs/41939041432)で確認した。
-[最終索引](reviews/20261105-clock-campaign-ci-checks.json)にartifact/member SHA・別process再計算・cleanupを残す。
+[最終索引](reviews/clock-validation.json#/reviews/20261105-clock-campaign-ci-checks.json)にartifact/member SHA・別process再計算・cleanupを残す。
 次の実装の[採取protocol](clock-implementation.md#clock-campaign-acquisition)は設計契約であり、採取真正性や実資格の証明ではない。
 
 <a id="clock-campaign-acquisition"></a>
@@ -517,7 +517,7 @@ future equal/1µs/live probeとresume境界もrawへ保存して照合する。�
 
 実装a5c1605の[CI42037278421](https://github.com/kenobix/Claude_practice/actions/runs/42037278421)で
 専用30件を含む全549件/119.271表示秒と両job全stepが成功した。
-[最終索引](reviews/20261105-clock-acquisition-ci-checks.json)にunit log・原本/試行hashと既存16 artifactの検算/cleanupを保存する。
+[最終索引](reviews/clock-validation.json#/reviews/20261105-clock-acquisition-ci-checks.json)にunit log・原本/試行hashと既存16 artifactの検算/cleanupを保存する。
 CI unitのclock原本は使い捨てで、local代表原本と区別する。16 artifactにclock原本を追加したとは主張しない。
 
 上記はa5c1605時点の受入。続くfake QPCを使った固定周期/phase deadline schedulerの制御は
@@ -625,7 +625,7 @@ SIGINT/TERM、IO timeout、disk失敗や仮想時計逆行でも、対象reader�
 SIGKILL/OS停止、disk障害での全原本保存、不可視の一時差替えの検出を保証しない。
 complete公開直後の中断とexit非0の境界も旧契約どおり。実設定/DB/registry/配信は変更しない。
 
-[最終CI索引](reviews/20261106-clock-scheduler-ci-checks.json)で実装c1c5dcb/CI42126656283の
+[最終CI索引](reviews/clock-validation.json#/reviews/20261106-clock-scheduler-ci-checks.json)で実装c1c5dcb/CI42126656283の
 全568件（専用19件）/169.811表示秒、全system・既存16 artifact/hash/archive-only/cleanupを照合した。
 clock unitのrawはCIで使い捨て、代表原本はlocal保存であり16 artifactへ加えたとは主張しない。
 記録だけの後続commitを先行実装CIで直接試験したとも呼ばない。
@@ -652,10 +652,10 @@ version 9.9、patched-data（bit 5）、strong-encryption（bit 6）はPythonの
 local headerだけにflagを付けた不一致も含む5変種を、ライブラリと別processのCLIで確認する。
 拒否時は終了値2・固定の短い診断だけを返し、原本を書き換えずreport/stagingも作らない。
 数値上の既知違反を示す終了値1と、構造が不正な入力の終了値2を区別する。
-修正前失敗・修正後試験・CIの範囲は[追加索引](reviews/20261109-clock-bundle-input-checks.json)に記録する。
+修正前失敗・修正後試験・CIの範囲は[追加索引](reviews/clock-validation.json#/reviews/20261109-clock-bundle-input-checks.json)に記録する。
 実装`3d1a5bf`の[CI42539864950](https://github.com/kenobix/Claude_practice/actions/runs/42539864950)は
 全590件/専用20件・両job全stepと16 artifact/hash・archive-only再計算・cleanupに成功した。
-[最終CI索引](reviews/20261109-clock-bundle-input-ci-checks.json)を参照。後続の説明更新commitを同CIが直接試験したとは呼ばない。
+[最終CI索引](reviews/clock-validation.json#/reviews/20261109-clock-bundle-input-ci-checks.json)を参照。後続の説明更新commitを同CIが直接試験したとは呼ばない。
 
 <a id="clock-raw-bundle--使用方法と終了値"></a>
 
@@ -726,7 +726,7 @@ archiveはcodeの自己完結した実行環境ではなく、対応するverifi
 任意の秘密情報を検出する汎用scannerではない。合成schema/許可sourceでも、公開前には内容と共有範囲を別途reviewする。
 既存の実T10 snapshot/protocol/ledgerは変更しない。次の実入力は[必要資料一覧](clock-operations.md#clock-input-request)を参照する。
 
-修正後067d3ceの[CI42449911296/最終索引](reviews/20261108-clock-bundle-ci-checks.json)で全588件（専用18件）と全system、既存16 artifact/hash/archive-only/cleanupを確認した。
+修正後067d3ceの[CI42449911296/最終索引](reviews/clock-validation.json#/reviews/20261108-clock-bundle-ci-checks.json)で全588件（専用18件）と全system、既存16 artifact/hash/archive-only/cleanupを確認した。
 初期のZIP末尾byte拒否漏れと、その後のraw/manifest予算混同は、修正前FAILと修正後成功を別索引に保持する。
 別processの可搬性は受入済みだが、合成raw ZIPをCI artifactへ公開したものではない。[用語集](architecture.md#glossary--時計源の提出資料と原本bundleで使う用語)も参照できる。
 
@@ -744,7 +744,7 @@ archiveはcodeの自己完結した実行環境ではなく、対応するverifi
 
 基点`298c6c82db98c2ae607e69f81e9f99695a4a1f59`、2026-11-03。
 [前回の時計調査](clock-history.md#clock-followup)の続き。原本・失敗・hashは
-[検証索引](reviews/20261103-chrony-runtime-checks.json)で確認する。
+[検証索引](reviews/clock-validation.json#/reviews/20261103-chrony-runtime-checks.json)で確認する。
 
 **一致する完全なdebug情報を取得し、非飽和時の内部計算とkernel書込を照合した。
 今回tick=11000は再現しておらず、過去の上限到達原因・時計修復・資格確認は未完了。**
@@ -841,6 +841,6 @@ T03は今回9件成功して自然停止未再発、T09は公式202610が404の�
 #### readerのCI受入
 
 実装`f45733a467e09c79d9d557682195c85da37b8b4a`の[CI41603978704](https://github.com/kenobix/Claude_practice/actions/runs/41603978704)は全464件・全system成功。
-[CI索引](reviews/20261103-chrony-runtime-ci-checks.json)で実artifact16member/hash・別process再計算・正常/TERM/対応復元cleanupまで確認した。
+[CI索引](reviews/clock-validation.json#/reviews/20261103-chrony-runtime-ci-checks.json)で実artifact16member/hash・別process再計算・正常/TERM/対応復元cleanupまで確認した。
 17件のreader fixtureを含むコード回帰の受入であり、この文書の稼働uprobeをGitHub runnerで再現したことや、時計資格の合格ではない。
 初期local索引のCI_PENDINGは当時の記録として保持する。後続文書commitはこの実装CIが直接試験したcommitではない。

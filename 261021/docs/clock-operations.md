@@ -664,7 +664,7 @@ hostのW32TimeはRunningでもstatusは同期未実行/Local CMOS Clockで、sou
 UTC offset ±1秒が良好でも、60秒の校正に必要な不確かさへ入るとは限らない。
 両端誤差が相殺するとの根拠が無ければ、保守的に半径を合算する。
 14条件をFractionで検算し、60秒ではu=2,999,700nsは区間内、次の1nsは越えることも保存した。
-これは源の実測や真正性の証拠ではない。原本とhashは[追加review索引](reviews/20261105-clock-acquisition-startup-checks.json)に記録する。
+これは源の実測や真正性の証拠ではない。原本とhashは[追加review索引](reviews/clock-validation.json#/reviews/20261105-clock-acquisition-startup-checks.json)に記録する。
 
 <a id="clock-source-readiness--次に進められる範囲"></a>
 
@@ -789,7 +789,7 @@ peerのNoAuth表示は独立UTC/elapsedの真正性や不確かさを満たす�
 これは静的な現在設定の追加資料であり、以下の過去停止callerが確定したという更新ではない。
 
 2026-11-09、基点`d285aa9`。ユーザーが案Aを実行した実結果をreviewした。
-[証拠索引](reviews/20261109-resync-result-checks.json)、[保守案](clock-operations.md#clock-host-maintenance-plan)、
+[証拠索引](reviews/clock-history.json#/reviews/20261109-resync-result-checks.json)、[保守案](clock-operations.md#clock-host-maintenance-plan)、
 [計画§11.6](../../261014/plan_mlops.md#remaining-work-latest)を参照する。
 
 **要求1回のあと、Windowsのログは受信・同期開始・時刻設定・停止を記録した。事後queryは失敗し、全時計資格は未達。**
@@ -878,7 +878,7 @@ code0は今回の終了値であり、意図どおり/恒久安定/停止原因�
 ### Windows管理者ログのruntime設定・同期責任review
 
 2026-11-09、基点`b0589ee`。新しい`clock-host-admin-00f021d1-2b24-4c53-aaf9-325fbe81cdba`をreviewした。
-[今回の証拠索引](reviews/20261109-host-admin-checks.json)、[前回のPHC/UDP照合](clock-history.md#clock-resources-admin-review)、
+[今回の証拠索引](reviews/clock-history.json#/reviews/20261109-host-admin-checks.json)、[前回のPHC/UDP照合](clock-history.md#clock-resources-admin-review)、
 [最新計画](../../261014/plan_mlops.md#remaining-work-latest)を参照する。
 
 **前回拒否されたsource/configurationの管理者読取は完了。WindowsはNTPを設定しているが、採取時は同期未実行と報告した。**
@@ -988,7 +988,7 @@ source不一致/client無効/provider差替え/status重複/JSON重複keyを拒�
 
 ### 時刻同期タスクの定義と停止原因の境界
 
-2026-11-09、基点`67f4586`。[証拠索引](reviews/20261109-task-source-checks.json)、
+2026-11-09、基点`67f4586`。[証拠索引](reviews/clock-history.json#/reviews/20261109-task-source-checks.json)、
 [前回resyncの実結果](clock-operations.md#clock-resync-result)、[残課題](../../261014/plan_mlops.md#remaining-work-latest)。
 
 ユーザー提出の`clock-task-definition-c6cba967-567c-4f62-98f3-60e64ab3f850`は、XML2件とhashes.jsonの3原本。
@@ -1071,7 +1071,7 @@ offline-task-review-v1ではlocal UTCが0.254948秒逆行し、MONOTONIC差は�
 下記の「16秒以上」だけでは利用条件として不足。毎分の直接取得案は、頻度の回答・真正性・不確かさの根拠が揃うまで開始しない。
 
 2026-11-09、基点`67f4586`。ユーザー提示2サイトと提供元の説明をreviewした。
-[証拠索引](reviews/20261109-task-source-checks.json)、[既存の源受入条件](clock-operations.md#clock-source-readiness)を参照。
+[証拠索引](reviews/clock-history.json#/reviews/20261109-task-source-checks.json)、[既存の源受入条件](clock-operations.md#clock-source-readiness)を参照。
 
 **外部との大きな時刻差を人が確認する用途には使えるが、画面の表示だけで今回の全時計資格は満たせない。**
 時計設定をサイトへ合わせる操作、実source reader、継続取得、資格試験は実施していない。
@@ -1148,7 +1148,7 @@ time.is/accuracyの取得はtoolエラーで根拠に使わず、旧NICT資料�
 ### NICT NTPの取得方法・不確かさのreview
 
 2026-11-09、基点`114af9d`。[前回のWeb源review](clock-operations.md#clock-web-source-review)、
-[入力条件](clock-operations.md#clock-source-readiness)、[今回の証拠索引](reviews/20261109-nict-method-checks.json)を参照。
+[入力条件](clock-operations.md#clock-source-readiness)、[今回の証拠索引](reviews/clock-history.json#/reviews/20261109-nict-method-checks.json)を参照。
 **NICTは候補のまま。実query・source adapter・時計資格・実fitは開始していない。**
 新しく判明した利用条件と、計算方法の成立条件を整理した資料である。
 
@@ -1283,7 +1283,7 @@ host同期用peerの変更と、時計を変更しない計測readerの採用は
 `data/reports/20261109-nict-method-review/verify_math.py`の標準libraryだけの13件で、
 450組の有限包含、広い区間/明確な逸脱、無効domain、source誤差、負delay、境界補間の反例、query数を検算した。
 製品unit/packet parser試験ではない。raw NTP、campaign/registry/DBへの書込は0件。
-原本recipe/hash・基点資料・コマンド/cwd/終了値/未資格UTC/MONOTONICは[証拠索引](reviews/20261109-nict-method-checks.json)へ結合する。
+原本recipe/hash・基点資料・コマンド/cwd/終了値/未資格UTC/MONOTONICは[証拠索引](reviews/clock-history.json#/reviews/20261109-nict-method-checks.json)へ結合する。
 Web説明はtoolで読んだURL/要約で、生HTTP archive・動的サービス認証の証拠ではない。
 source/schema/writer/lock/workflowを変更せず、受入済みsuite/CI/T09/T10は繰り返していない。
 実reader/collector/host deadline/固定負荷/全資格とT02/T11/T12/T13bは前提待ちを維持する。

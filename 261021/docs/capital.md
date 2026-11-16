@@ -413,7 +413,7 @@ ZIPのCRC、member名重複なし、CSV1件、9月と同じ13列のheaderを照�
 
 #### 証拠と限界
 
-[検証索引](reviews/20261106-t09-checks.json)と`data/reports/20261106-t09/`に、
+[検証索引](reviews/foundation.json#/reviews/20261106-t09-checks.json)と`data/reports/20261106-t09/`に、
 取得/主監査/独立照合のscript・command・終了値・log bytes/SHA・入力SHAを保存する。
 公開HEADの原本は時計作業の`data/reports/20261106-clock-scheduler/t09-head-resume-v1.*`と結合する。
 初期のschema previewはチャットのstdinコマンドと保存JSON、主要な取得/監査/検証は保存scriptとrunner記録を使う。
@@ -437,20 +437,20 @@ OS/時計設定、実DB・実registry・現在の配信、`.env`を変更して�
 固定した202212〜202610の47原本で正式CSV/manifest schema3を作り、全32,849 hourを独立照合した。
 [正式snapshotと事前protocol](capital.md#t10-snapshot-review)は固定済み。train29,919/validation1,464/final1,461、境界5 hourは除外する。
 原本/CSV/manifest/protocol/11 sourceのSHAを結合し、local消費台帳/legacy窓を読取確認した。実fit/採点は未実施。
-SQL修正9147027の[CI570件・artifact/hash/cleanup](reviews/20261108-t10-snapshot-checks.json)まで受入済み。時計資格・独立源/校正・修復/実受入は未達で、protocol保存はfit開始許可ではない。
-[SQL切り分けのlocal索引](reviews/20261106-t10-query-checks.json)は正式pair監査後/CI前のsnapshot。
+SQL修正9147027の[CI570件・artifact/hash/cleanup](reviews/foundation.json#/reviews/20261108-t10-snapshot-checks.json)まで受入済み。時計資格・独立源/校正・修復/実受入は未達で、protocol保存はfit開始許可ではない。
+[SQL切り分けのlocal索引](reviews/foundation.json#/reviews/20261106-t10-query-checks.json)は正式pair監査後/CI前のsnapshot。
 初回意図中断と次の1800秒timeout、3回目exit0を別々の試行として保存し、上限や窓は変更していない。
 以下の404/46of47/未集約等は当時の履歴として保持し、現在の公開待ち/未集約と解釈しない。
 
 **891a420以降の更新:** 左側は202212を保守的な隣月bufferに採用し、公式原本を取得・202301との境界を監査した。
 以下の開始手順を`202212`開始へ更新した。target/評価窓・recipeは変更していない。
-追加の[検証索引](reviews/20261104-backend-boundary-checks.json)と、末尾の境界reviewを参照する。
+追加の[検証索引](reviews/clock-history.json#/reviews/20261104-backend-boundary-checks.json)と、末尾の境界reviewを参照する。
 
 **1e622dd以降のT09確認:** 2026-11-04 13:42:25UTCの公式S3 HEADも202610=404。
-通常sandboxのDNS失敗を含む試行/終了値/hashは[追跡索引](reviews/20261104-followup-checks.json)へ保存した。
+通常sandboxのDNS失敗を含む試行/終了値/hashは[追跡索引](reviews/clock-history.json#/reviews/20261104-followup-checks.json)へ保存した。
 既存原本の追加取得・正式集計・protocol作成・fitは行わず、10月原本待ちを維持する。
 
-2026-11-04、基点`d8ec164`。[今回の検証索引](reviews/20261104-clock-readiness-checks.json)。
+2026-11-04、基点`d8ec164`。[今回の検証索引](reviews/clock-history.json#/reviews/20261104-clock-readiness-checks.json)。
 **既存45 ZIPの完全性と既存手順を確認した。T09/T10の完了、protocol凍結、fit・採点はまだ行っていない。**
 計画の[最新残件](../../261014/plan_mlops.md#remaining-work-latest)と
 [固定済みの初回評価方針](capital.md#capital-bootstrap-gate)を優先する。
@@ -584,7 +584,7 @@ T10のレビューが完了してから一度だけcandidate fitへ進む。vali
 **2026-11-14方針改訂:** [製品作業の開始・停止条件](capital.md#product-completion-policy)を優先する。時計研究は再開指示まで保留、資格未合格と過去の失敗は保持する。以下の以前の日付の一律fit禁止/時計資料の追加依頼は当時の記録であり、現在の開始条件ではない。
 
 2026-11-08更新。[T09の取得](capital.md#t09-october-acquisition)後、固定済みの47原本で正式CSV/manifestを独立照合し、事前protocolを固定した。
-学習・採点・candidate作成は開始していない。SQL改善9147027の[CI・正式pair/protocol索引](reviews/20261108-t10-snapshot-checks.json)まで受入済み。
+学習・採点・candidate作成は開始していない。SQL改善9147027の[CI・正式pair/protocol索引](reviews/foundation.json#/reviews/20261108-t10-snapshot-checks.json)まで受入済み。
 合成CI、実原本のデータ検査、実候補の学習/採点、実時計資格を別々に扱う。
 
 <a id="t10-snapshot-review--変えない入力と判断条件"></a>
@@ -649,9 +649,9 @@ spring/fall・複数trip・重複を含む9件、既存protocol10件、独立sor
 2回目の出力先は`capital-bootstrap-f5daf2e4114e4788b8c77f357249422f`。
 同じ1800秒の上限を使い、専用TMPDIRのlease/cleanupを残す。旧attemptの出力を再利用しない。
 開始時はsource未commit差分を含む36b9306だったことをplanに明記し、保存bytesのSHAを後の実装bae010aへ結合する。
-[local索引](reviews/20261106-t10-grouping-checks.json)はCI/実pair確認前のsnapshotとして保持する。
+[local索引](reviews/foundation.json#/reviews/20261106-t10-grouping-checks.json)はCI/実pair確認前のsnapshotとして保持する。
 実装bae010aは[CI42214102466](https://github.com/kenobix/Claude_practice/actions/runs/42214102466)の全569件/全systemで成功し、
-[CI索引](reviews/20261106-t10-grouping-ci-checks.json)で16 artifact/hash/archive-only/cleanupも照合した。
+[CI索引](reviews/foundation.json#/reviews/20261106-t10-grouping-ci-checks.json)で16 artifact/hash/archive-only/cleanupも照合した。
 この成功は合成契約の受入であり、実47原本のsnapshot/実候補採否の受入ではない。
 
 <a id="t10-snapshot-review--sql計画の退化と正式pairの受入"></a>
@@ -666,7 +666,7 @@ spring/fall・複数trip・重複を含む9件、既存protocol10件、独立sor
 current10行を固定して履歴1,000→100,000行にするとSQLite VM命令数が4,012→400,012へ増加した。
 currentから履歴の主キーを検索するEXISTSでは119→119。同hour再送許容/異hour拒否を保つ回帰は修正前FAIL、修正後10件成功、既存protocol10件も成功。
 命令数とquery planによる機構の切り分けであり、実時計で測った速度倍率や過去T03の原因確定ではない。
-[local索引](reviews/20261106-t10-query-checks.json)へ負例・失敗・source bytes・原本hashを保存した。
+[local索引](reviews/foundation.json#/reviews/20261106-t10-query-checks.json)へ負例・失敗・source bytes・原本hashを保存した。
 
 3回目は同じ47原本/窓/1800秒上限でexit0。実行開始時は1bf9584+未commit差分で、保存script SHAを後の実装9147027とbyte照合する。
 正式出力は`data/derived/capital-bootstrap-a5b76d0f89d6433287007f3414d2208b/`。
@@ -741,7 +741,7 @@ legacy/default消費台帳の重複拒否を維持し、保存しても消費開
 
 固定した47原本のsnapshot/protocolを変えず、隔離したsource/venvでvalidationを1回、
 その合格後に同じskops artifactを再学習せずfinalを1回評価した。**両精度gateは合格、配信許可はblocked**。
-[開始条件の改訂](capital.md#product-completion-policy)、[検証索引](reviews/20261114-capital-evaluation-checks.json)を参照。
+[開始条件の改訂](capital.md#product-completion-policy)、[検証索引](reviews/capital.json#/reviews/20261114-capital-evaluation-checks.json)を参照。
 
 | 期間 | 行数 | 候補MAE | baseline MAE | 候補RMSE | baseline RMSE |
 |---|---:|---:|---:|---:|---:|
@@ -961,7 +961,7 @@ SQLite/CSV/JSON/complete markerを通したmonitor CLIの結果ではなく、DB
 producer内で全窓の所属/到着済み正解数/MAEを別算術で確認した後、さらに別processの標準libraryだけで、
 1,464窓の件数・MAE/RMSE・品質状態と、4,392個のfeature PSI/分布状態を再計算した。
 後者はpandas/sklearn/製品monitor関数をimportせず、元CSVの件数からexact lagを作り、bisect histogramとmath.logを使った。
-両方成功。referenceの再作成やbins変更はしていない。[証拠索引](reviews/20261114-capital-monitor-checks.json)。
+両方成功。referenceの再作成やbins変更はしていない。[証拠索引](reviews/capital.json#/reviews/20261114-capital-monitor-checks.json)。
 次の作業は[実候補の隔離runtime手順](capital.md#capital-runtime-handoff)を参照する。
 
 追補：[実API・監視受入](capital.md#capital-runtime-acceptance)で独立したHTTP/DB producerを実行し、全1,464窓の一致を確認した。
@@ -980,7 +980,7 @@ producer内で全窓の所属/到着済み正解数/MAEを別算術で確認し�
 
 同じ評価済み候補を専用MLflowへblocked登録し、実HTTP予測・PostgreSQL監査・monitor CLIを通した。
 **API/監視の今回の受入は成功。T02/T12全体とT13b採否は未完了**。
-[今回の証拠索引](reviews/20261114-capital-runtime-checks.json)、[実精度評価](capital.md#capital-first-evaluation)、
+[今回の証拠索引](reviews/capital.json#/reviews/20261114-capital-runtime-checks.json)、[実精度評価](capital.md#capital-first-evaluation)、
 [作業別の開始条件](capital.md#product-completion-policy)を参照する。
 
 <a id="capital-runtime-acceptance--実行環境とidentity"></a>
@@ -1075,7 +1075,7 @@ MLflow UIはこのPCの[専用実験run](http://127.0.0.1:5001/#/experiments/1/r
 ### 実候補の運用測定保留と部分復元（2026-11-14）
 
 **実API・監視と対応復元は部分受入。運用測定はUTC逆行のため保留、T13b採否はblocked。**
-[先行runtime受入](capital.md#capital-runtime-acceptance)、[最終証拠索引](reviews/20261114-capital-operational-restore-checks.json)、
+[先行runtime受入](capital.md#capital-runtime-acceptance)、[最終証拠索引](reviews/capital.json#/reviews/20261114-capital-operational-restore-checks.json)、
 [作業別policy](capital.md#product-completion-policy)を参照する。時計研究は再開していない。
 
 <a id="capital-operational-hold--1回の実測と、その後の停止判断"></a>
@@ -1152,7 +1152,7 @@ raw dumpとartifactのprivate backupはignored directory（0700）で保持し�
 git pullだけでignored成果物は移らない。**別PCでの再測定も、上記の事後不適格review契約が未整備の現時点では開始しない。**
 ユーザーに今すぐ必要なコマンドはない。独立した製品の拒否検証・不足case整理は、時計研究を再開せず進められる。
 
-先行文書commit9a1f433の[自動CI検算](reviews/20261114-capital-runtime-docs-ci-checks.json)は590unit/全job成功、
+先行文書commit9a1f433の[自動CI検算](reviews/capital.json#/reviews/20261114-capital-runtime-docs-ci-checks.json)は590unit/全job成功、
 16 artifact memberとarchive-only再計算/cleanupを確認。既存合成CIの結果であり、今回の実運用保留を解除しない。
 
 <a id="operational-evidence-review-20261115"></a>
@@ -1160,7 +1160,7 @@ git pullだけでignored成果物は移らない。**別PCでの再測定も、�
 ## 2026-11-15：UTC順序の拒否と事後review
 
 基点9479201以降のファイル統合（e9e3bda）を保持した変更。
-[今回の検証索引](reviews/20261115-operational-consumer-checks.json)にコマンド、失敗、原本hash、CIを保存する。
+[今回の検証索引](reviews/capital.json#/reviews/20261115-operational-consumer-checks.json)にコマンド、失敗、原本hash、CIを保存する。
 時計研究は保留、validation/finalは消費済み。再fit・再選定・閾値変更はしない。
 
 実装commit **b67902f**の[CI43640947101](https://github.com/kenobix/Claude_practice/actions/runs/43640947101)で
@@ -1247,7 +1247,7 @@ raw ledger/report/journal/planを変更せず、completedをfailedへ書換え�
 
 ### 2026-11-15：completed試行の追記専用reviewと適格性head
 
-[検証索引](reviews/20261115-operational-review-checks.json)とwork_logへ全試行を保存する。
+[検証索引](reviews/capital.json#/reviews/20261115-operational-review-checks.json)とwork_logへ全試行を保存する。
 `EligibilityReviewStore`をoperational_validation.pyに実装。実台帳/registryへは適用せず、
 一時directory/FakeRegistryと合成CIで検証する。再測定・新attempt・台帳reopenは機能に含めない。
 
@@ -1338,10 +1338,10 @@ T16 archiveだけで暖機50回を除く1,000要求/全1,050応答/p95 37.966159
 
 ### 次のSol作業：同じ実候補の隔離runtime/producer受入
 
-2026-11-14追補：[実runtime受入](capital.md#capital-runtime-acceptance)と[証拠索引](reviews/20261114-capital-runtime-checks.json)まで完了。
+2026-11-14追補：[実runtime受入](capital.md#capital-runtime-acceptance)と[証拠索引](reviews/capital.json#/reviews/20261114-capital-runtime-checks.json)まで完了。
 現在PCの専用project capital-acceptance-20261114、registry5001/version1、DB55434、API8110。
 入力/候補/正式消費台帳は維持。data/evaluationsは専用directory＋consumption-ledger.jsonだけ正式台帳へのsymlinkへ変更済み。
-最新：[運用保留・部分復元と残件](capital.md#capital-operational-hold)、[最終索引](reviews/20261114-capital-operational-restore-checks.json)。
+最新：[運用保留・部分復元と残件](capital.md#capital-operational-hold)、[最終索引](reviews/capital.json#/reviews/20261114-capital-operational-restore-checks.json)。
 同planの測定は1回完了したがjournalのUTC逆行により受入保留、対応復元は別volumeで部分受入済み。
 次はconsumerのUTC順序拒否、completed事後不適格の履歴保持review設計、独立した不足caseの実証。
 現台帳のまま別PCで再測定したり、証拠tagを記録したりしない。以下の開始前記録は当時の経緯として参照する。
@@ -1445,7 +1445,7 @@ TERMはfinallyを通る非0終了へ変換し、自分のserver groupへTERM、�
 
 MLflowのHTTP自動retryを0にし、各障害の注入回数が1であることを照合する。明示retryと最初の失敗を別々に保存する。外見上のMax retries exceededという例外文だけで、自動再送があったと判断しない。
 
-http.jsonlにforward/注入/HTTP status、各地点のtag JSON、cases.jsonに例外・読戻し・復旧hash、server.logに起動/終了、cleanup.jsonに回収、hashes.jsonに元fileのSHAを保存する。hashは改変検出用で、独立した第三者の署名ではない。実コマンド/UTC/MONOTONIC/失敗logは[作業ログ](../work_log.md)、公開索引は[検証JSON](reviews/20261101-t13-http-checks.json)を参照。
+http.jsonlにforward/注入/HTTP status、各地点のtag JSON、cases.jsonに例外・読戻し・復旧hash、server.logに起動/終了、cleanup.jsonに回収、hashes.jsonに元fileのSHAを保存する。hashは改変検出用で、独立した第三者の署名ではない。実コマンド/UTC/MONOTONIC/失敗logは[作業ログ](../work_log.md)、公開索引は[検証JSON](reviews/deployment-ci.json#/reviews/20261101-t13-http-checks.json)を参照。
 
 初回はimport先誤り、二回目はRESTがrun外のモデルsourceを拒否した。正しい既存moduleとrun内artifactへ修正し、serverの保護を緩めなかった。v3/v4の成功後、TERM cleanupを追加し原本保存/CI logを整えた最終v6と実TERM中断試験が成功した。新guard 7件、既存決定/証拠30件が成功。新scriptはCIにも接続し、失敗終了値をpipefail/timeout経由で保持する。CI実績は対象commitとrunを別記録し、local結果で代用しない。
 
@@ -1455,7 +1455,7 @@ http.jsonlにforward/注入/HTTP status、各地点のtag JSON、cases.jsonに�
 
 #### 実装commitのCI確認
 
-f1cc9ffの[CI41300378098](https://github.com/kenobix/Claude_practice/actions/runs/41300378098)で全376 tests、既存system/PG、新HTTP stepが成功。artifact内のcapital-decision-http-ci.log、5ケースとcleanup、ZIP/全member SHAを[CI検証索引](reviews/20261101-t13-http-ci-checks.json)で確認した。元のlocal索引は実装review時点の記録として維持する。合成時刻入力・file artifact・未学習sourceという限界も変わらない。T13aの範囲は完了し、T13b実候補の最終採否は残る。
+f1cc9ffの[CI41300378098](https://github.com/kenobix/Claude_practice/actions/runs/41300378098)で全376 tests、既存system/PG、新HTTP stepが成功。artifact内のcapital-decision-http-ci.log、5ケースとcleanup、ZIP/全member SHAを[CI検証索引](reviews/deployment-ci.json#/reviews/20261101-t13-http-ci-checks.json)で確認した。元のlocal索引は実装review時点の記録として維持する。合成時刻入力・file artifact・未学習sourceという限界も変わらない。T13aの範囲は完了し、T13b実候補の最終採否は残る。
 
 <a id="capital-deployment-evidence"></a>
 
@@ -1606,7 +1606,7 @@ review、approve、通常loader、runtime init、deploy promoteでbundle本文�
 
 基点`a978adf`からの追補。ここでの回復は、失敗した**review公開処理**を照合する操作であり、
 運用測定の再実行、completed台帳のreopen、配信許可の変更ではない。
-実候補のUTC逆行による保留は維持する。[検証索引](reviews/20261115-review-recovery-checks.json)に各試行を記録する。
+実候補のUTC逆行による保留は維持する。[検証索引](reviews/capital.json#/reviews/20261115-review-recovery-checks.json)に各試行を記録する。
 
 | 状態 | 明示操作・保証 | 停止条件 |
 |---|---|---|
@@ -1700,7 +1700,7 @@ v1〜v5の失敗も保持。通常のlocal Dockerfile buildはPyPIの読取timeo
 
 基点`3482f6e`からの製品契約。前節の「移設契約未実装」「event/repair原本回復未実装」「全系列archive未実装」は、
 この節の隔離実装・検証状況で補う。実候補への適用、元live registryの最新性、運用保留の解除を意味しない。
-[今回の証拠索引](reviews/20261115-review-archive-checks.json)と[作業ログ](../work_log.md)を参照する。
+[今回の証拠索引](reviews/capital.json#/reviews/20261115-review-archive-checks.json)と[作業ログ](../work_log.md)を参照する。
 
 ### 現sourceから同じ正式入力を参照する
 
@@ -1806,7 +1806,7 @@ local全suiteの途中source651件には既存future拒否1 error、measurement�
 
 ## 実候補の監視負例・復元カテゴリ・実適用の前提（基点b8644fa）
 
-[検証索引](reviews/20261115-runtime-followup-checks.json)。製品source、固定policy、評価窓、元の台帳・registryを変更していない。
+[検証索引](reviews/capital.json#/reviews/20261115-runtime-followup-checks.json)。製品source、固定policy、評価窓、元の台帳・registryを変更していない。
 再fit・再測定・new operational attempt・reopenは0件。以下の専用コピー試験は新しい運用測定attemptではない。
 
 ### 今回完了した範囲
@@ -1977,7 +1977,7 @@ Bの`CandidateDispositionStore`は別のlocal判断系列に`held/rejected`だ�
 
 C1のcold backupは元PG85,688,320bytes・artifact1,433,600bytesをprivate tarへ保存し、PGの別volume復元が成功した。元imageのMLflowは**3.17.1**（表示の推測ではなく固定image内から取得）、DBとimageのmigration headはともに`dc11669786a5`。元8container不変・一時resource回収まで確認した。これは起動前準備であり、live照合/参照発行は別の結果を必要とする。
 
-中断時点（後述の再開で解消）の[検証索引](reviews/20261116-product-acceptance-checks.json)：新契約14件は成功、既存deployment回帰は300秒timeout。C2参照controlは発行済みで、正式5入力・現source closure・194保護原本はoffline照合済み。C1/C2終了時に診断helperの短縮/完全ID比較が失敗し、結果JSON未保存。再起動による結果回収は自動承認レビューに拒否されたため、元liveの再確認・現在の停止状態をこの索引の確認済み項目に含めない。参照controlの再発行は行わない。製品sourceは未commit/CI未検証、試験専用二版harnessと実保留判断はまだ未完了。
+中断時点（後述の再開で解消）の[検証索引](reviews/capital.json#/reviews/20261116-product-acceptance-checks.json)：新契約14件は成功、既存deployment回帰は300秒timeout。C2参照controlは発行済みで、正式5入力・現source closure・194保護原本はoffline照合済み。C1/C2終了時に診断helperの短縮/完全ID比較が失敗し、結果JSON未保存。再起動による結果回収は自動承認レビューに拒否されたため、元liveの再確認・現在の停止状態をこの索引の確認済み項目に含めない。参照controlの再発行は行わない。製品sourceは未commit/CI未検証、試験専用二版harnessと実保留判断はまだ未完了。
 
 <a id="project-closure-20261116"></a>
 

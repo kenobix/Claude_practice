@@ -28,7 +28,7 @@
 ### backend時刻取得経路の静的照合と保守判断
 
 2026-11-04、基点`891a420`。[前回のinitd管理層照合](clock-history.md#initd-owner-correlation)の続き。
-原本・失敗・hashは[今回の検証索引](reviews/20261104-backend-boundary-checks.json)を参照する。
+原本・失敗・hashは[今回の検証索引](reviews/clock-history.json#/reviews/20261104-backend-boundary-checks.json)を参照する。
 
 **保存済みの同じinitd binaryに、backendの時刻を取得し、Settimeofdayを呼ぶ経路が存在した。**
 今回は実行fileの静的解析であり、新しい時計書込・backend応答・goroutine stackの観測ではない。
@@ -116,7 +116,7 @@ chronydは今回常に11000ではなく、内部変数・PHC/socket本採取は�
 
 基点: `2181bfe453bf9c87ec9374a5d74013bcdddb86b0`。
 [管理元調査](clock-history.md#clock-process-ownership)、[限定した管理者採取](clock-operations.md#clock-owner-admin-read)、
-[今回の証拠JSON](reviews/20261101-chrony-control-checks.json)を参照する。
+[今回の証拠JSON](reviews/clock-history.json#/reviews/20261101-chrony-control-checks.json)を参照する。
 
 **tick/freqの数値の意味は絞れた。稼働chronydの実行file・管理元と、限界値を要求し続ける内部原因は未確定。**
 管理者採取ログは指定のreports内に存在せず、ユーザーからも「まだ採取していない」と回答を得た。
@@ -228,7 +228,7 @@ source/tests/CI/依存lock/実DB/registry/配信は変更せず、全suiteやDoc
 
 基点`f70cb37380ba4846451cf662807f208033b7a35c`。ユーザー添付と、
 `data/reports/clock-owner-admin-053cb32639e54e04aea39f299e82711d/debug-shell.log`を照合した。
-[証拠JSON](reviews/20261101-admin-owner-checks.json)と[採取手順](clock-operations.md#clock-owner-admin-read)を参照する。
+[証拠JSON](reviews/clock-history.json#/reviews/20261101-admin-owner-checks.json)と[採取手順](clock-operations.md#clock-owner-admin-read)を参照する。
 
 <a id="clock-admin-log-review--実行結果"></a>
 
@@ -300,7 +300,7 @@ OS設定変更や同期service停止、future条件の緩和は行っていな�
 
 基点`dcfdd9c1d1bcc5b17194cc7dbd7c333b9ec19416`。
 [前回の管理者ログ](clock-history.md#clock-admin-log-review)、[補正量の説明](clock-history.md#chrony-control-analysis)、
-[今回の試行・hash索引](reviews/20261103-clock-followup-checks.json)を参照する。
+[今回の試行・hash索引](reviews/clock-history.json#/reviews/20261103-clock-followup-checks.json)を参照する。
 **時計は未修復・未資格確認。** 読取と使い捨て試験だけを行い、実DB・registry・現在配信は触っていない。
 
 <a id="clock-followup--新しく確認できた事実"></a>
@@ -406,7 +406,7 @@ Windowsから`w32tm /stripchart /computer:ntp.ubuntu.com /samples:5 /period:1 /d
 単一NTP先・短区間・通信経路の観測なので絶対UTC精度の校正や原因確定とはしないが、
 **host/PHC側が正確だと無条件に仮定してUbuntuの同期だけを止める修復案は採用しない。**
 hostの外部UTCとの差と、同期責任の決定も先に確認する。
-[追加原本索引](reviews/20261103-clock-extra-checks.json)を参照。
+[追加原本索引](reviews/clock-history.json#/reviews/20261103-clock-extra-checks.json)を参照。
 
 最初のsandboxではWindows interop socketとDNSを拒否されたため、読取範囲のsandbox外実行で確認した。
 package照会は外側exit0でも内側rpmが127だったので、package検証成功には数えない。
@@ -422,7 +422,7 @@ package照会は外側exit0でも内側rpmが127だったので、package検証�
 ### Windows peer・最終エラー・service identityの照合
 
 2026-11-09、基点`9c32298`。提出された`clock-host-cause-a52e422e-45db-44d1-b1a8-1c3579e47e0b`をoffline reviewした。
-[今回索引](reviews/20261109-host-cause-checks.json)、[前回runtime review](clock-operations.md#clock-host-runtime-review)、
+[今回索引](reviews/clock-history.json#/reviews/20261109-host-cause-checks.json)、[前回runtime review](clock-operations.md#clock-host-runtime-review)、
 [最新計画](../../261014/plan_mlops.md#remaining-work-latest)を参照する。
 
 **採取したWindows全体の同期状態は未同期・時刻データなし。peerは保留中で、現在の有効サンプルは0だった。**
@@ -524,7 +524,7 @@ identity差、QPC/UTC逆転、query失敗、peer/global誤読、counter/認証�
 基点は`b5dbdfd2df16da8325b9a422fd2c2729f5991689`。
 [後続の管理元照合](clock-history.md#clock-process-ownership)でUbuntu timesyncdのlocal PIDとkernel PIDの対応・実行file・管理unit・同期元を確認した。以下は当時の調査記録を保持する。chronydの稼働exe/親/生成config照合と環境修復は後続でも未完了。
 [前回の診断](clock-history.md#interruption-clock-diagnostics)から、時計変更の呼出元を追加調査した。
-[証拠JSON](reviews/20261101-clock-origin-checks.json)に全試行、失敗、原本のbytes/SHA-256を記録する。
+[証拠JSON](reviews/clock-history.json#/reviews/20261101-clock-origin-checks.json)に全試行、失敗、原本のbytes/SHA-256を記録する。
 現在環境の機序を絞った節目であり、過去T03/T13の根本原因や環境修復の完了ではない。
 
 <a id="clock-origin-investigation--結論と確度"></a>
@@ -624,7 +624,7 @@ T03の未再発も解決扱いにしない。HTTP部分書込/応答喪失、T07
 最新の[管理者ログ照合](clock-history.md#clock-admin-log-review)でchronyd実exe・初期namespace・親と生成configの一致を確認した。以下は管理者採取前の記録として保持する。
 
 基点は`0477e8ccb0d9ebb1b7eb6a51befc8435f279ec57`。
-[前回の呼出元調査](clock-history.md#clock-origin-investigation)と[今回の証拠JSON](reviews/20261101-clock-owner-checks.json)を参照する。
+[前回の呼出元調査](clock-history.md#clock-origin-investigation)と[今回の証拠JSON](reviews/clock-history.json#/reviews/20261101-clock-owner-checks.json)を参照する。
 **Ubuntu timesyncdの管理元は特定した。chronydの稼働実体への最終照合と環境修復は未完了。**
 続く基点2181bfeからの[補正量・tick計算の調査](clock-history.md#chrony-control-analysis)では、現在のsetterとtrackingを重ね、上流計算で補正限界との一致を確認した。管理者ログは未採取で、稼働実体と内部理由の確定は引き続き未了。
 OS時計・同期設定・実DB・registry・配信は変更していない。一時的な診断probeだけを追加して回収した。
@@ -709,7 +709,7 @@ production source/test/workflow/lock未変更のため全suite・Docker/PG・実
 ### 管理者PHC・UDP原本の照合とhost同期の残条件
 
 2026-11-09、基点`464df19`。指定されたowner `b9641680-…` とresources `ed1b37fc-…` の2 directoryをofflineでreviewした。
-[証拠索引](reviews/20261109-admin-resources-checks.json)、[原本取得手順](clock-operations.md#clock-owner-admin-read)、[計画§11.6](../../261014/plan_mlops.md#remaining-work-latest)を参照。
+[証拠索引](reviews/clock-history.json#/reviews/20261109-admin-resources-checks.json)、[原本取得手順](clock-operations.md#clock-owner-admin-read)、[計画§11.6](../../261014/plan_mlops.md#remaining-work-latest)を参照。
 **採取区間のchronyd実体とPHC/UDP所有を確認した。時計資格・tick11000の内部原因・実fit開始条件は未達。**
 
 基点`b0589ee`後の追補：[Windows管理者runtime review](clock-operations.md#clock-host-runtime-review)で、下記で不足していたsource/configurationを取得・照合済み。
@@ -835,7 +835,7 @@ OS/時計設定・実DB・registry・現配信・future拒否は不変。独立�
 
 2026-11-04、基点`d8ec16412cc833e4b9eb9582921a4309265d1166`。
 [前回の内部制御調査](clock-implementation.md#chrony-runtime-control)からの追加診断。
-原本・全試行・失敗・hashは[今回の索引](reviews/20261104-clock-readiness-checks.json)を参照する。
+原本・全試行・失敗・hashは[今回の索引](reviews/clock-history.json#/reviews/20261104-clock-readiness-checks.json)を参照する。
 
 **今回の負方向settimeofdayは、Docker Desktopの`/initd services`のスレッドに対応した。**
 現在の実行fileと管理層の照合が進んだ。chronydのtick11000の内部原因、時計修復、資格確認は未完了。
@@ -939,7 +939,7 @@ future拒否の緩和、時刻clamp、自動retry、OS/時計設定変更、実D
 **追補:** 基点`b5dbdfd`からの[時計変更元の調査](clock-history.md#clock-origin-investigation)で、現在環境の負方向補正を`systemd-timesyn`のoffset注入へ照合し、`chronyd`によるtick=11000の成功書込も観測した。単調時計もWindows QPCに対して約10%速い区間があった。以下は先行調査時点の記録として保持し、変更元の現在の確度・残件は追補を参照する。OS設定は未変更で、根本原因の全解明・環境修復の完了ではない。
 
 2026-11-01、基点`cfd7ef7`から、T05で残った2件の一過性失敗を調べた。
-[検証JSON](reviews/20261101-t03-t13-diagnostics.json)にコマンド・終了値・hashを保存する。
+[検証JSON](reviews/clock-history.json#/reviews/20261101-t03-t13-diagnostics.json)にコマンド・終了値・hashを保存する。
 
 <a id="interruption-clock-diagnostics--分かったことと未確定のこと"></a>
 

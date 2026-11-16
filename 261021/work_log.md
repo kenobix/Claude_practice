@@ -1,5 +1,9 @@
 # 作業記録
 
+検証JSONは2026-11-16に[用途別5冊](docs/reviews/README.md)へ統合しました。
+過去の実施コマンド・本文中の旧JSON名は当時の記録です。旧名索引と`reviews[旧名]`で現在の収録先を確認できます。
+元のUTF-8原文・SHA256も保存しており、整理によって過去の証拠や判定を変更していません。
+
 用語が分からないときは[初学者向け用語集](docs/architecture.md#glossary)を参照してください。
 
 ## 2026-10-21: 実データ取得・Docker/WSL接続・Compose初回学習
@@ -549,7 +553,7 @@ MLFLOW_TRACKING_URI=http://127.0.0.1:5000 ./.venv/bin/python scripts/evaluate_ca
 
 ## 2026-10-28: 前回確認以降の差分監査と計画追補
 
-ユーザー依頼により、版2のAPI・再送・再起動確認を記録した`cb79db0`を基準に、`485286c`と`6b99746`の変更14ファイルと関連する既存の配信・監視・DB・CIを確認した。詳細は[`docs/reviews/20261028-review.md`](docs/evidence.md#20261028-review)、集計証拠は[`20261028-evidence.json`](docs/reviews/20261028-evidence.json)。途中でチャットが中断されたが、保存済みの監査結果から再開し、同じ最終評価をやり直していない。
+ユーザー依頼により、版2のAPI・再送・再起動確認を記録した`cb79db0`を基準に、`485286c`と`6b99746`の変更14ファイルと関連する既存の配信・監視・DB・CIを確認した。詳細は[`docs/reviews/20261028-review.md`](docs/evidence.md#20261028-review)、集計証拠は[`20261028-evidence.json`](docs/reviews/foundation.json#/reviews/20261028-evidence.json)。途中でチャットが中断されたが、保存済みの監査結果から再開し、同じ最終評価をやり直していない。
 
 ### 実行確認
 
@@ -1022,7 +1026,7 @@ docker compose -f compose.yaml -f compose.capital.yaml -f compose.capital-stagin
 - 一時registryのcandidate ID tagを変更してAPIを再起動すると、約45秒のload retry後`/ready`が503となり、原因にcandidate ID不一致を示した。tagを戻して再起動後は200へ復帰。別途、登録artifact SHA不一致は実MLflowからのロード時に拒否した。
 - 通常loaderと`runtime init --diagnostic`はblocked候補を拒否した。`deploy promote`の本体も、合成proxyを使い実registryを参照した上で拒否し、状態ファイルは変化しなかった。実Caddy切替・復旧操作はこの試験に含まない。
 - 一時APIを合成version 2から1へ切り替えた後、version 2で保存した同一requestの再送はversion 2と元のcandidate IDを返し、新規requestはversion 1のcandidate IDを返した。その後version 2へ戻し、ready 200を確認した。
-- 合成候補で暖機50件と逐次1,000件を送信。エラー0、p95 `106.464485 ms`、最大 `254.821038 ms`、監査DBの対応行1,050件、配信許可`blocked`。p95基準は満たしたが、他のhost負荷を測定しておらず、実候補の運用gateの合格証拠ではない。[全要求の合成レポート](docs/reviews/20261028-synthetic-staging-benchmark.json)のSHA-256は`cc68b465ae2dc1b819148f367361d1c92677731d6a883964a9383bf9b503c8f5`。[実行スクリプトの記録](docs/evidence.md#20261028-synthetic-staging-harness)には今回の一時パス・候補IDが含まれ、そのまま再実行するためのものではない。
+- 合成候補で暖機50件と逐次1,000件を送信。エラー0、p95 `106.464485 ms`、最大 `254.821038 ms`、監査DBの対応行1,050件、配信許可`blocked`。p95基準は満たしたが、他のhost負荷を測定しておらず、実候補の運用gateの合格証拠ではない。[全要求の合成レポート](docs/reviews/foundation.json#/reviews/20261028-synthetic-staging-benchmark.json)のSHA-256は`cc68b465ae2dc1b819148f367361d1c92677731d6a883964a9383bf9b503c8f5`。[実行スクリプトの記録](docs/evidence.md#20261028-synthetic-staging-harness)には今回の一時パス・候補IDが含まれ、そのまま再実行するためのものではない。
 
 ### 残った入力条件の問題
 
@@ -1114,7 +1118,7 @@ git diff --check
 
 ## 2026-10-28: stagingチェックポイント後の差分レビュー
 
-ユーザー依頼により、前回の正式レビューを確定した`7609af5`から`5df03f7`までの13コミット・45ファイルを点検した。対象はR04 timezone固定、R06 baseline-only gate、候補登録/staging、合成system test、seed/DB再照合、学習期間確認。詳細は[`docs/reviews/20261028-staging-checkpoint-review.md`](docs/evidence.md#20261028-staging-checkpoint-review)、秘密値を含まない集計は[`20261028-staging-checkpoint-evidence.json`](docs/reviews/20261028-staging-checkpoint-evidence.json)に保存した。
+ユーザー依頼により、前回の正式レビューを確定した`7609af5`から`5df03f7`までの13コミット・45ファイルを点検した。対象はR04 timezone固定、R06 baseline-only gate、候補登録/staging、合成system test、seed/DB再照合、学習期間確認。詳細は[`docs/reviews/20261028-staging-checkpoint-review.md`](docs/evidence.md#20261028-staging-checkpoint-review)、秘密値を含まない集計は[`20261028-staging-checkpoint-evidence.json`](docs/reviews/foundation.json#/reviews/20261028-staging-checkpoint-evidence.json)に保存した。
 
 実装の方向と評価窓保護は妥当。ローカル86 testsを再実行して成功（10.996秒）、対象13コミットのcontract CI/Pages計26 runも全てsuccess。最新contract run `40693844897`のstepsではlock install、editable install、pip check、unit tests、compileallまでを確認した。CIはDocker buildや実MLflow/PostgreSQL/Caddy integrationを実施しないため、CI成功をそれらの成功へ読み替えない。
 
@@ -1966,7 +1970,7 @@ gh run view 40966167637 --json databaseId,headSha,status,conclusion,jobs,url
 
 ## 2026-10-30: checkpoint差分監査とモデル別の残課題整理
 
-依頼に従い、前回正式レビューを記録した10dfb8fから070b033までの28コミット・65ファイルを確認した。前回レビューのコード終点は5df03f7。過去全範囲の再監査ではなく、追加差分の実装・作業ログ・CI/artifactと主要な失敗経路を照合した。成果物は[差分レビュー](docs/evidence.md#20261030-checkpoint-review)と[証拠JSON](docs/reviews/20261030-checkpoint-evidence.json)。今回の製品コード変更はない。
+依頼に従い、前回正式レビューを記録した10dfb8fから070b033までの28コミット・65ファイルを確認した。前回レビューのコード終点は5df03f7。過去全範囲の再監査ではなく、追加差分の実装・作業ログ・CI/artifactと主要な失敗経路を照合した。成果物は[差分レビュー](docs/evidence.md#20261030-checkpoint-review)と[証拠JSON](docs/reviews/foundation.json#/reviews/20261030-checkpoint-evidence.json)。今回の製品コード変更はない。
 
 ### 確認した実装・結果
 
@@ -2024,7 +2028,7 @@ OpenAI Docs skillを参照し、公式model selectionと指定モデルのペー
 
 ## 2026-10-30: P0 T01とT02の証拠結合・必須schemaを実装
 
-依頼「優先度の高いタスクから進める」に従い、基点`bd49f9165b1bd199c439dc548fdb24592542f4d8`からT01とT02のschema/拒否処理を実装した。T02全体の実証完了ではない。監査A01/A02/A03の元レビューは当時の記録として残し、現在状態を計画書11.6・README・bootstrap gateへ追記した。仕様は[capital-deployment-evidence.md](docs/capital.md#capital-deployment-evidence)、コード/テストのSHAとraw log結果は[証拠JSON](docs/reviews/20261030-p0-evidence-checks.json)。
+依頼「優先度の高いタスクから進める」に従い、基点`bd49f9165b1bd199c439dc548fdb24592542f4d8`からT01とT02のschema/拒否処理を実装した。T02全体の実証完了ではない。監査A01/A02/A03の元レビューは当時の記録として残し、現在状態を計画書11.6・README・bootstrap gateへ追記した。仕様は[capital-deployment-evidence.md](docs/capital.md#capital-deployment-evidence)、コード/テストのSHAとraw log結果は[証拠JSON](docs/reviews/foundation.json#/reviews/20261030-p0-evidence-checks.json)。
 
 ### 実装と理由
 
@@ -2113,7 +2117,7 @@ ghのjob log取得初回はterminal escape sequencesを含むため出力拒否�
 
 ## 2026-10-30: T04 学習参照とPSI v2を候補保存・登録・監視へ接続
 
-基点`b843825`から計画の次優先T04を進めた。PSI v2単体部品が既存monitorへ未接続、Capitalのprofile参照はnullという状態を確認した。新規候補ごとのtraining referenceを保存して登録版から取得する設計とした。仕様・操作・結果の場所・T05受入範囲は[training-monitor-reference.md](docs/monitoring.md#training-monitor-reference)、コード/log hashは[証拠JSON](docs/reviews/20261030-t04-checks.json)。
+基点`b843825`から計画の次優先T04を進めた。PSI v2単体部品が既存monitorへ未接続、Capitalのprofile参照はnullという状態を確認した。新規候補ごとのtraining referenceを保存して登録版から取得する設計とした。仕様・操作・結果の場所・T05受入範囲は[training-monitor-reference.md](docs/monitoring.md#training-monitor-reference)、コード/log hashは[証拠JSON](docs/reviews/foundation.json#/reviews/20261030-t04-checks.json)。
 
 ### 実装した範囲
 
@@ -2220,7 +2224,7 @@ gh api repos/kenobix/Claude_practice/actions/artifacts/12944562497/zip
 
 最初のCapital部分suiteは120秒でexit 124。途中で旧fixtureのjournal欠落、journal書込失敗testが先に台帳fsyncを失敗させていたこと、未知結果の再送拒否例外の期待型違いが見つかった。fixturesを現行の固定要求・journalへ揃え、旧reportの回帰testは明示的に歴史的planを用意した。最初のsuiteは未完了で成功扱いにしない。FastAPI TestClient/実HTTPを含むsuiteはlocal socketを許す実行権限で以後実行した。
 
-261021から実行した主要コマンド（各logは新規作成、`set -o noclobber`。ログ名の71cc7e7は開始時commitで、変更中コードの厳密なSHAは[証拠JSON](docs/reviews/20261030-t03-checks.json)に記録）:
+261021から実行した主要コマンド（各logは新規作成、`set -o noclobber`。ログ名の71cc7e7は開始時commitで、変更中コードの厳密なSHAは[証拠JSON](docs/reviews/foundation.json#/reviews/20261030-t03-checks.json)に記録）:
 
 ```bash
 MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 120 .venv/bin/python -u -m unittest discover -s tests -p 'test_capital*' -v
@@ -2428,7 +2432,7 @@ MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 180 .venv/bin/
 .venv/bin/python -m compileall -q scripts/test_monitor_reconciliation_storage.py
 ```
 
-help/compileallはexit 0。`docker image inspect postgres:17.6-bookworm --format '{{.Id}}'`で既存image ID `sha256:f3bd19c606e442c3d7bdfa8002e03fe260a1023351e0ea4598032022b68dd6e3`を確認し、pullは行っていない。source/log/hashと実施/未実施範囲は[設計証拠JSON](docs/reviews/20261030-t06-design.json)へ保存した。production codeは変えていないため全suiteのlocal再実行は省き、このprobeと静的確認を設計の確認単位にする。共通運用に従い確認後に設計commitをpushし、CIの成否は実装受入と区別して追記する。
+help/compileallはexit 0。`docker image inspect postgres:17.6-bookworm --format '{{.Id}}'`で既存image ID `sha256:f3bd19c606e442c3d7bdfa8002e03fe260a1023351e0ea4598032022b68dd6e3`を確認し、pullは行っていない。source/log/hashと実施/未実施範囲は[設計証拠JSON](docs/reviews/foundation.json#/reviews/20261030-t06-design.json)へ保存した。production codeは変えていないため全suiteのlocal再実行は省き、このprobeと静的確認を設計の確認単位にする。共通運用に従い確認後に設計commitをpushし、CIの成否は実装受入と区別して追記する。
 
 設計commit前にsource 4ファイルのSHA、契約/依頼書2ファイルとlocal log 3件のSHA/bytes、相対リンク59件、23 case IDの連番、JSONを照合した。新しいscriptの全差分、local-only/所有label/cleanup、認証情報非出力、既存producer/CLIを変えていないことを確認した。新規8ファイル分の作業単位（既存4ファイルの更新と4ファイル追加）だけをstageし、無関係な未追跡3パスは含めない。
 
@@ -2636,7 +2640,7 @@ T08の合成移行・再送・中断・復元検証を完了とし、計画のR0
 
 workflowの`synthetic-system` jobへ、lock/project installと`pip check`がすべて成功し、jobがcancelされていない場合に動く独立stepを追加した。`MLFLOW_DISABLE_AGENT_HINT=1`、`set -o pipefail`、`timeout --signal=TERM --kill-after=10 300`を使い、既存scriptの失敗を隠さず`data/reports/monitor-persistence-postgres-ci.log`へteeする。artifact allowlistにはこのログだけを追加した。READMEは当該stepが使い捨て合成DBであり実監視/配信証拠ではないことを説明する。plan上のT15はCI接続実装済み・Sol review待ち・push後CI未確認に更新した。
 
-実行試行と結果（コマンド出力、終了値、SHA-256は[`T15検証JSON`](docs/reviews/20261101-t15-checks.json)と`data/reports/20261101-t15/`に保存。各logはstdout/stderrを結合して記録）:
+実行試行と結果（コマンド出力、終了値、SHA-256は[`T15検証JSON`](docs/reviews/deployment-ci.json#/reviews/20261101-t15-checks.json)と`data/reports/20261101-t15/`に保存。各logはstdout/stderrを結合して記録）:
 
 - 通常sandboxの`docker version`はDocker socket permission deniedでexit 1（`docker-sandbox-check.log`）。許可された使い捨てDB検証のため権限付き実行に切り替え、Docker接続とcleanupを確認した。
 - `MLFLOW_DISABLE_AGENT_HINT=1 timeout --signal=TERM --kill-after=10 300 python scripts/test_monitor_persistence_postgres.py`は`python`がPATH上にないため開始できずexit 127。`postgres-attempt-1.log`へ記録した。
@@ -2721,7 +2725,7 @@ artifact 13068077631のraw ZIP（11,322 bytes、SHA-256 `9a4459a00045e0b8b4ab49d
 
 基点b5dbdfd2df16da8325b9a422fd2c2729f5991689。AGENTS、plan §11.6、先行診断文書/証拠JSON/原本logを確認した。tracked差分なし、無関係な未追跡3 pathは保持。前回raw証拠139件のbytes/SHAを再検算して一致した。実DB・registry・配信・OS時計設定/同期service設定を変更していない。production source/tests/workflow/lockも変更しない。
 
-全実験attemptをignored `data/reports/20261101-clock-origin/`へ新規保存した。`run-attempt.py`は前回runnerを別保存先へ複製し、完全argv/stdout/stderr/終了値/timeout/開始終了UTC/MONOTONIC経過/hashを保存する。初期のファイル探索等はterminal観測で、実験の29 attemptを恒久logにした。詳細は[調査文書](docs/clock-history.md#clock-origin-investigation)、[検証JSON](docs/reviews/20261101-clock-origin-checks.json)。同じUTCが戻るため試行/イベントの順序にはMONOTONICと新規pathを使った。
+全実験attemptをignored `data/reports/20261101-clock-origin/`へ新規保存した。`run-attempt.py`は前回runnerを別保存先へ複製し、完全argv/stdout/stderr/終了値/timeout/開始終了UTC/MONOTONIC経過/hashを保存する。初期のファイル探索等はterminal観測で、実験の29 attemptを恒久logにした。詳細は[調査文書](docs/clock-history.md#clock-origin-investigation)、[検証JSON](docs/reviews/clock-history.json#/reviews/20261101-clock-origin-checks.json)。同じUTCが戻るため試行/イベントの順序にはMONOTONICと新規pathを使った。
 
 ### 実行とつまずき
 
@@ -2765,7 +2769,7 @@ source/test/CI未変更なので全340件suiteやDocker/PG受入は繰り返さ�
 
 ## P1/D3 — 時計調整processの管理元照合（2026-11-01、基点0477e8c）
 
-指定4資料とplan §11.6を再読し、HEADが0477e8ccb0d9ebb1b7eb6a51befc8435f279ec57、tracked差分なしを確認した。無関係な未追跡3 pathは保持した。今回の[調査結果](docs/clock-history.md#clock-process-ownership)、[Windows管理者向け限定読取](docs/clock-operations.md#clock-owner-admin-read)、[証拠JSON](docs/reviews/20261101-clock-owner-checks.json)を追加。OS時計/同期設定・実DB・registry・配信は変更していない。production source/tests/CI/lockも未変更。
+指定4資料とplan §11.6を再読し、HEADが0477e8ccb0d9ebb1b7eb6a51befc8435f279ec57、tracked差分なしを確認した。無関係な未追跡3 pathは保持した。今回の[調査結果](docs/clock-history.md#clock-process-ownership)、[Windows管理者向け限定読取](docs/clock-operations.md#clock-owner-admin-read)、[証拠JSON](docs/reviews/clock-history.json#/reviews/20261101-clock-owner-checks.json)を追加。OS時計/同期設定・実DB・registry・配信は変更していない。production source/tests/CI/lockも未変更。
 
 全試行は新規ignored `data/reports/20261101-clock-owner/`。前回runnerを保存先だけ変えて使用し、argv、開始/終了UTC、monotonic経過、期限/timeout、stdout/stderr、exit、bytes/SHAを新規pathへ保存した。UTC表示順だけで順序を推定しない。通常sandboxのprocはCodex側namespaceなので、実WSL読取は許可付きの同じユーザーから、稼働一覧を確認した上で既存Ubuntu/system/docker-desktopへ限定した。Windows管理者へ自動昇格していない。
 
@@ -2798,7 +2802,7 @@ source/test/CI未変更なので全340件suiteやDocker/PG受入は繰り返さ�
 
 ## P1/D3 — chronyd補正量と管理者採取の前提確認（2026-11-01）
 
-基点2181bfe453bf9c87ec9374a5d74013bcdddb86b0。AGENTS・plan §11.6・指定4資料と前回証拠を読み、tracked差分なし/無関係な未追跡3pathを確認した。指定入力5fileのGit snapshotとhashを新規ignored `data/reports/20261101-chrony-control/`へ保存。管理者採取directoryはなく、チャットでもユーザーから「まだ採取していない」と回答を得た。Windows tokenも非管理者なので自動昇格やdebug-shell拒否の反復はしない。[結果と修復案](docs/clock-history.md#chrony-control-analysis)、[管理者採取手順](docs/clock-operations.md#clock-owner-admin-read)、[新規証拠JSON](docs/reviews/20261101-chrony-control-checks.json)を参照。
+基点2181bfe453bf9c87ec9374a5d74013bcdddb86b0。AGENTS・plan §11.6・指定4資料と前回証拠を読み、tracked差分なし/無関係な未追跡3pathを確認した。指定入力5fileのGit snapshotとhashを新規ignored `data/reports/20261101-chrony-control/`へ保存。管理者採取directoryはなく、チャットでもユーザーから「まだ採取していない」と回答を得た。Windows tokenも非管理者なので自動昇格やdebug-shell拒否の反復はしない。[結果と修復案](docs/clock-history.md#chrony-control-analysis)、[管理者採取手順](docs/clock-operations.md#clock-owner-admin-read)、[新規証拠JSON](docs/reviews/clock-history.json#/reviews/20261101-chrony-control-checks.json)を参照。
 
 各コマンドは261021から`.venv/bin/python data/reports/20261101-chrony-control/run-attempt.py LABEL LIMIT COMMAND...`で実行した。runnerは既存版を別保存先へ複製し、argv/UTC/MONOTONIC/deadline/exit/stdout/stderr/bytes/SHAを新規pathへ保存した。実験用Pythonはこのreports directoryに保存する。OS時計・同期設定・実DB・registry・配信は変更していない。
 
@@ -2827,7 +2831,7 @@ source/test/CI未変更なので全340件suiteやDocker/PG受入は繰り返さ�
 
 session-read-v1/v2はWindows tokenとwsl.exeのPID/作成時刻/CommandLine可視性を限定読取。v1のfilterでは昇格processの引数が不可視なら見落とすので、v2で全wsl.exeの可視性を確認した。OS/同期設定・実DB/registry/配信の操作はしていない。初期探索で存在しないdeployment.py/compose_system_test.sh等を読もうとして失敗した点と、web文書rendererの取得不可も探索記録へ保存した。推定したfile名を実装の証拠にせず、rg一覧で正しいcli.py/harnessへ戻った。
 
-公開記録は[管理者ログ照合](docs/clock-history.md#clock-admin-log-review)と[証拠JSON](docs/reviews/20261101-admin-owner-checks.json)。rawのterminal escape/ASLR詳細はignoredのままにする。相対リンク、文書内shのsh -n、元ログ/manifest hash、git diff --check、既存source/test/script不変を確認して、この記録単位だけcommit/pushする。続いてT07/T17へ着手し、時計資格と実Capital合格は先取りしない。
+公開記録は[管理者ログ照合](docs/clock-history.md#clock-admin-log-review)と[証拠JSON](docs/reviews/clock-history.json#/reviews/20261101-admin-owner-checks.json)。rawのterminal escape/ASLR詳細はignoredのままにする。相対リンク、文書内shのsh -n、元ログ/manifest hash、git diff --check、既存source/test/script不変を確認して、この記録単位だけcommit/pushする。続いてT07/T17へ着手し、時計資格と実Capital合格は先取りしない。
 
 record-checks-v1はexit0。元ログ不変、前回62原本hash、文書sh構文、相対リンク、既存source/test/scripts/workflow不変を確認した。Windows session v2は可視性を含めて記録し、現在の不在から過去の待機原因を断定しない。
 
@@ -2901,7 +2905,7 @@ T16は4原本(plan/report/ledger/journal)+manifestの基本allowlist、別proces
 
 全376 tests/51.768秒、compile、既存合成Docker/各PostgreSQL/新HTTP step/artifact/cleanupが全成功。artifact-check-v1はgh apiでartifact13080624977のZIP bytesを取得しexit0（2.498775292 MONOTONIC秒、計測性能ではない）。GitHub digest0d9dce8eae65f263c2349011ca5594e9b21fc830a7776b582c4ac376c5988f5aと一致、重複なし10 member/全SHAを確認。capital-decision-http-ci.logの5合成ケース、review/approvalの各部分・最終応答喪失の注入各1件、同じretry、理由競合拒否、client未確定から読戻しでcoherent eligible、server/proxy/temp=true/group残存0を検算した。実Capital承認や時計資格へ転用しない。
 
-公開[CI索引](docs/reviews/20261101-t13-http-ci-checks.json)を追加し、計画書/HTTP仕様へ結果を追記。元のf1cc9ff local索引は当該commit時点のCI pendingという履歴として保ち、後から原本hashや成功件数を書き換えない。code/workflow/tests/依存/実DB/registry/配信/OSはこの追跡段階で変更せず、記録のみのcommitを別単位でpushする。後続記録commit自身のCI成功を先取りしない。
+公開[CI索引](docs/reviews/deployment-ci.json#/reviews/20261101-t13-http-ci-checks.json)を追加し、計画書/HTTP仕様へ結果を追記。元のf1cc9ff local索引は当該commit時点のCI pendingという履歴として保ち、後から原本hashや成功件数を書き換えない。code/workflow/tests/依存/実DB/registry/配信/OSはこの追跡段階で変更せず、記録のみのcommitを別単位でpushする。後続記録commit自身のCI成功を先取りしない。
 
 残件は、T16の4原本+manifest archive/別process再計算（Luna固定依頼書あり）、T07実MLflow/skops登録版とDBの対応復元・新復旧harnessのbuild/CI、T17b段階/timeout/未確定状態/API metadataと旧state読取診断、PHC fd/UDP所有/chronyd制限前内部量/時計資格、T13b実採否、T09公開待ち→T10のfit前固定→T11/T12。T03歴史的自然停止は未特定のまま。全記録を確認済み範囲と未実施範囲に分けて引き継ぐ。
 
@@ -2912,7 +2916,7 @@ T16は4原本(plan/report/ledger/journal)+manifestの基本allowlist、別proces
 
 #### 検証
 
-詳細なコマンド・UTC/MONOTONIC・終了値・log SHA-256はignored `data/reports/20261102-t16-luna/attempts.jsonl`と専用logに保存した。まとめは[docs/reviews/20261102-t16-checks.json](docs/reviews/20261102-t16-checks.json)。data/reportsはgitignore対象であり、実データ/secretをcommitへ追加しない。
+詳細なコマンド・UTC/MONOTONIC・終了値・log SHA-256はignored `data/reports/20261102-t16-luna/attempts.jsonl`と専用logに保存した。まとめは[docs/reviews/20261102-t16-checks.json](docs/reviews/deployment-ci.json#/reviews/20261102-t16-checks.json)。data/reportsはgitignore対象であり、実データ/secretをcommitへ追加しない。
 
 | 実行・確認 | 結果 |
 |---|---|
@@ -2933,7 +2937,7 @@ T16は4原本(plan/report/ledger/journal)+manifestの基本allowlist、別proces
 
 ### 2026-11-02 T16 Sol review・修正（基点23235e3）
 
-[Sol review索引](docs/reviews/20261102-t16-sol-review.json)へ、全構造化試行のコマンド/UTC/MONOTONIC/終了値/log hashと診断原本索引を保存。Luna索引と全原本は変更せず、記載済み13 descriptorのhashを再照合した。固定allowlistとbyte-preserving copy、既存recheck/journal/ledgerの再利用を維持した。
+[Sol review索引](docs/reviews/deployment-ci.json#/reviews/20261102-t16-sol-review.json)へ、全構造化試行のコマンド/UTC/MONOTONIC/終了値/log hashと診断原本索引を保存。Luna索引と全原本は変更せず、記載済み13 descriptorのhashを再照合した。固定allowlistとbyte-preserving copy、既存recheck/journal/ledgerの再利用を維持した。
 
 reviewでarchive-only検証がledger/journalの秘密情報を検査しないこと、root/途中directory symlinkを受け入れること、manifest descriptorの余分fieldとjournal元pathの照合不足を発見。追加18件時点の修正前試験で4 failuresを再現した。4原本すべてのstrict-JSON/秘密情報検査、全path componentのsymlink拒否とO_NOFOLLOW directory読取、descriptor exact keysとcanonical attempt pathを追加。raw envのdict/listや任意のcontainer風absolute文字列も拒否する。export失敗+部分出力削除失敗、resource cleanup失敗+archive削除失敗を両方残し非0伝播するよう補強した。
 
@@ -2952,7 +2956,7 @@ CI全399 tests/51.854秒、compile、両job全step成功。connectorのartifact�
 
 artifact-check-v1はZIPだけをprivate tempの別processへ渡し、PATHのみの環境で再計算exit0。1050 journal応答、50 warmup除外、1000 measured、0 errors、p95 24.62401799999725msが保存result/reportと一致し、別のnearest-rank計算も一致。candidate c19329b6a03e46d686c56a1c882a1e511302e7249ea3a329544c6d03096731ab/attempt f83e3f4c-43b9-415f-b04c-20138a0b4a8cとsystem結果を照合。gate not_evaluated/permission blockedを維持。export後のcleanup_complete、PG停止/回収をcompleted job logで確認。check log SHA785d0b248c3ce48b0d9a686485276b9a1a87b53474d4d0ddf27f46a056e77de9。
 
-取得trialでは開始UTC12:17:28.817782Z→終了12:17:27.436808Z、MONOTONIC+1.315339699秒と逆行を再観測。原本を残し時計資格を回復扱いにしない。T16の合成証拠保存・検算として完了し、実Capital採否・T07/T17b・時計原因・T09以降は残件。[CI索引](docs/reviews/20261102-t16-ci-checks.json)へ全13 artifact member/4原本hash・構造化trial・限界を保存した。後続は記録のみのcommitであり、この実装CIがその記録commitも直接試験したとは記載しない。
+取得trialでは開始UTC12:17:28.817782Z→終了12:17:27.436808Z、MONOTONIC+1.315339699秒と逆行を再観測。原本を残し時計資格を回復扱いにしない。T16の合成証拠保存・検算として完了し、実Capital採否・T07/T17b・時計原因・T09以降は残件。[CI索引](docs/reviews/deployment-ci.json#/reviews/20261102-t16-ci-checks.json)へ全13 artifact member/4原本hash・構造化trial・限界を保存した。後続は記録のみのcommitであり、この実装CIがその記録commitも直接試験したとは記載しない。
 
 記録commit前のrecord-validation-v1もexit0。CI証拠27原本hash、実装commitからのsource不変、新規リンク、4変更docと追加CI索引の範囲、diff check、一時URL削除を確認。検証script/meta/logを含む公開索引は30原本/5構造化trial。記録段階でunit/systemの再実行は行わず、同じ実装commitの成功を参照した。
 
@@ -2960,7 +2964,7 @@ artifact-check-v1はZIPだけをprivate tempの別processへ渡し、PATHのみ�
 
 作業前に§11.6、deployment-recovery.md、直近T16 Sol/CI索引と現sourceを読取。HEADは指定基点、未追跡3pathは既存無関係として保持した。T07aのlocal実Caddy/PG受入がmodel/registry doubleであること、新復旧harness自体はCI未接続であることを確認し、独立する実MLflow/skopsの対応復元を先行した。
 
-新規ignored `data/reports/20261102-t07-t17/`のrun-attempt.pyにargv・UTC開始/終了・MONOTONIC経過・deadline・終了値・log bytes/SHAを保存。原本の索引は[検証JSON](docs/reviews/20261102-t07b-t17b-checks.json)。OS/時計設定、実DB・実registry・現配信を操作せず、future拒否/schema/writer/依存lockを変更していない。
+新規ignored `data/reports/20261102-t07-t17/`のrun-attempt.pyにargv・UTC開始/終了・MONOTONIC経過・deadline・終了値・log bytes/SHAを保存。原本の索引は[検証JSON](docs/reviews/deployment-ci.json#/reviews/20261102-t07b-t17b-checks.json)。OS/時計設定、実DB・実registry・現配信を操作せず、future拒否/schema/writer/依存lockを変更していない。
 
 | 試行・コマンド（261021から） | 結果と解釈 |
 |---|---|
@@ -2995,7 +2999,7 @@ T14は[証拠入口と5分説明の初版](docs/evidence.md#evidence-guide)を�
 
 19対象pathをstageし、全差分151904bytes/SHA85eb73db8d81f30d4defcf7f6a4be3947a31098a1be6689a80184f953349eb9c、78原本hash、staged/worktree一致、db/model/staging/evidence validator/lock不変、秘密情報とstatusを確認した。実装`2414b2031dd21cdf425761b1cd29d43c7a355f66`をcommit/push。既存無関係の未追跡3pathは含めていない。
 
-以降の原本はignored `data/reports/20261102-t07b-ci/`へ分離し、[CI照合JSON](docs/reviews/20261102-t07b-ci-checks.json)に記録した。push runのfull SHA検索はconnectorがPR起点のみのためgh APIで行い、jobs/log/artifactはGitHub connectorを使用。初回jobs照会はtool transcriptのみ、後続4段階と最終jobsは別fileで保存した。file_uriを文字列と仮定したintrospectionはTypeErrorだったが、objectのdownload_urlを確認して取得した。一時参照URLは0600のfileだけに置き、download成功直後に削除。公開索引へ署名URLを残していない。
+以降の原本はignored `data/reports/20261102-t07b-ci/`へ分離し、[CI照合JSON](docs/reviews/deployment-ci.json#/reviews/20261102-t07b-ci-checks.json)に記録した。push runのfull SHA検索はconnectorがPR起点のみのためgh APIで行い、jobs/log/artifactはGitHub connectorを使用。初回jobs照会はtool transcriptのみ、後続4段階と最終jobsは別fileで保存した。file_uriを文字列と仮定したintrospectionはTypeErrorだったが、objectのdownload_urlを確認して取得した。一時参照URLは0600のfileだけに置き、download成功直後に削除。公開索引へ署名URLを残していない。
 
 run-query-v1/run-query-finalは同じ[CI41462429218](https://github.com/kenobix/Claude_practice/actions/runs/41462429218)の進行中/完了を別log・別元JSONへ保存。最終は両job全step成功、unit419件/54.813秒、compileall、system/全PG/HTTP障害/cleanup成功。artifact-download-v1はartifact13150206991の実ZIP229786bytesを取得し、GitHub digestとSHA4c010bcb5591152645c6004a38d99ffac21d61137fcefb2e3ddfb62b4461f802が一致した。artifact-check-v1はexit0で全13 member/hash、T16内側archive c6ca847386fe751a8d559a6b1ffc2e41e2b90e3eaada4581c22ce5fd82cab66d、4原本hash、archive-only別processと別nearest-rankの1000 measured/p95=31.77884499999095msを再計算した。これは合成保存値の数値で、実候補性能や時計資格を示さない。
 
@@ -3011,7 +3015,7 @@ record-validation-v1はexit0でCI原本38hash・相対link152件・source/workfl
 
 ## 2026-11-03 基点0472111からのT17b・T07a・SQLite S13補足
 
-指定のhandoff/計画§11.6/直近T07b CI索引を読取。HEADは0472111で、既存無関係の未追跡3pathを保持した。今回の全構造化試行はignored `data/reports/20261103-t17b/`へ分離し、command/UTC開始終了/MONOTONIC/終了値/log SHAをrun_attempt.pyで保存した。[今回索引](docs/reviews/20261103-t17b-t07a-checks.json)が原本hashと失敗をまとめる。
+指定のhandoff/計画§11.6/直近T07b CI索引を読取。HEADは0472111で、既存無関係の未追跡3pathを保持した。今回の全構造化試行はignored `data/reports/20261103-t17b/`へ分離し、command/UTC開始終了/MONOTONIC/終了値/log SHAをrun_attempt.pyで保存した。[今回索引](docs/reviews/deployment-ci.json#/reviews/20261103-t17b-t07a-checks.json)が原本hashと失敗をまとめる。
 
 T17bは、prepared時のschema3 contextに固定した操作ID/profile/target/slot/version/artifact/申告者/理由をAPI起動環境へ結び付けた。DB profile確認前にdeployment行をSELECTせず、read-only snapshotで指定1行だけを照合する。APIのpending/completed表示、stateの同一binding、recoverでの再照合、legacy/bootstrapの照合不能を区別する。新規API書込/schema/writerは追加しない。申告者は認証済みidentityではなく、approval_evidence=falseを維持する。
 
@@ -3074,7 +3078,7 @@ scannerはURI以外の全stringでも@を資格情報と判定していた。Int
 
 最終sourceは4a4474ec2997a62ea16250646086344decda6d2c、CI41559833990。両job全step成功、全447件65.772秒、compileall成功。実artifact 13196428050のZIP SHA ae1f101f77c7767dff8e5f5014d82cc81302f88751ce0d883f26613507e9fc43はGitHub digestと一致し、明示allowlist16 memberと各bytes/SHAを確認した。T16内側archiveはarchiveだけを別processへ渡して再計算し、50暖機を除く1000件/p95の保存値・report/journal/hashを一致確認した。数値は合成保存値の検算であり実性能/SLO/時計資格ではない。
 
-T07a normalは実Caddy/API/PGの並行同ID/409、監査失敗503、3地点SIGKILL→recover、操作metadata、5table別volume復元を確認。TERM負例は意図した非0/failed/SIGTERMで、正常/TERMとも固有image/current Dockerfile・全4種類残存0・保護container ID不変・cleanup成功。T07bの実MLflow/skops対応復元・両project cleanupと、既存PG/HTTP障害stepも成功した。[最終索引](docs/reviews/20261103-t17b-t07a-ci-checks.json)に全16 member・原本hash・先行失敗run・試行を保存した。
+T07a normalは実Caddy/API/PGの並行同ID/409、監査失敗503、3地点SIGKILL→recover、操作metadata、5table別volume復元を確認。TERM負例は意図した非0/failed/SIGTERMで、正常/TERMとも固有image/current Dockerfile・全4種類残存0・保護container ID不変・cleanup成功。T07bの実MLflow/skops対応復元・両project cleanupと、既存PG/HTTP障害stepも成功した。[最終索引](docs/reviews/deployment-ci.json#/reviews/20261103-t17b-t07a-ci-checks.json)に全16 member・原本hash・先行失敗run・試行を保存した。
 
 先行b5aa7c5/CI41556503335はunit443件成功だがCaddy cached image不足で新step失敗。実ZIP14 member/SHA5d8e59a4d8b9dc9392e32b3f24418afc498f0d15f08f7fd108f72df8781c56aaも保存し、CI受入不合格を明示した。795d3e1/CI41557135899とf2cc523/CI41557788564は両job成功だが、そのartifactを最終sourceの受入へ流用していない。legacy修正前1 failure→27回帰成功、Compose環境伝播修正前1 failure→15process回帰成功も別attempt/hashで保持した。
 
@@ -3127,7 +3131,7 @@ GitHub connectorのraw source取得はproviderのAttributeError、旧Mariner con
 公式upload-artifact v7.0.2のrelease/action/READMEも読取り保存し、時計/データ待ちから独立したP2単独保守を次の単位で扱う。
 
 今回の局所検証は専用16件、既存journal9件、decision9件、Python構文、shell構文/管理者snippet、link/hash/diff確認。product source/lockを変更していないため、この記録単位で全suite/Dockerを繰り返さない。
-最終コマンド・log・hash・限界は[今回索引](docs/reviews/20261103-clock-followup-checks.json)。実Capital採否/時計資格を合格にせず、次は限定管理者採取を待ちながら独立CI保守を進める。
+最終コマンド・log・hash・限界は[今回索引](docs/reviews/clock-history.json#/reviews/20261103-clock-followup-checks.json)。実Capital採否/時計資格を合格にせず、次は限定管理者採取を待ちながら独立CI保守を進める。
 
 ### 時計診断の節目commitと独立P2 action保守
 
@@ -3139,7 +3143,7 @@ P2は`actions/upload-artifact`だけをv4→公式固定v7.0.2に更新する。
 Node24とZIP既定を確認し、単一file非archive機能へ切り替わらないよう`archive: true`を明示する。
 workflow-validation-v1はYAMLをparseして、正規化した変更がこの2点だけ、allowlist16path・他のif/timeout/pipefail/stepすべて不変、全10run block bash -n、上流input互換/diff check成功。
 既存Python/MLflow/依存lockを変更しない。rawは`data/reports/20261103-upload-maintenance/`。
-この時点では実装commitのCI/artifact/cleanup未確認で、[local索引](docs/reviews/20261103-upload-action-checks.json)はCI_PENDINGを維持する。
+この時点では実装commitのCI/artifact/cleanup未確認で、[local索引](docs/reviews/deployment-ci.json#/reviews/20261103-upload-action-checks.json)はCI_PENDINGを維持する。
 
 ### CI待機中の追加clock読取
 
@@ -3147,7 +3151,7 @@ workflow-validation-v1はYAMLをparseして、正規化した変更がこの2点
 WindowsのW32Time/vmictimesyncはStopped/Manualを読取。同じ読取で`w32tm.exe /stripchart /computer:ntp.ubuntu.com /samples:5 /period:1 /dataonly`を実行し、exit0、5offset −1.3567374〜−1.3418427秒を保存した。
 生stdout/stderr bytesも保持し、CP932表示を解析した。PowerShell module progress stderrも残した。`/resync`・config/service変更はしていない。
 単一NTP先の有限観測なので絶対精度校正とはしない。hostが正確だと仮定してUbuntu timesyncdだけを停止する案を先行せず、hostの外部UTC差と同期責任も修復前に確認する。
-原本は`data/reports/20261103-clock-extra/`、[索引](docs/reviews/20261103-clock-extra-checks.json)へ別保存。主時計索引113原本は上書きしていない。
+原本は`data/reports/20261103-clock-extra/`、[索引](docs/reviews/clock-history.json#/reviews/20261103-clock-extra-checks.json)へ別保存。主時計索引113原本は上書きしていない。
 
 T14の独立した文書補足として、時計/CI調査で増えた用語16項目を`docs/glossary.md`へ追記した。
 UTC表示と正確さ、MONOTONICと外部秒、QPC bracketの非同時性、PHC存在と所有、commとexe、関数symbolと内部値、archive-only検算と実運用証明を区別した。
@@ -3170,7 +3174,7 @@ T07bの65registry table/5audit table・8artifact file・3別volume・破損skops
 system logではNode20強制移行/punycode/url.parseの警告は見られなかった。unitのMLflow経由SQLAlchemy noload非推奨は残す。
 ZIP重複member警告は意図した負例で、通常upload破損ではない。依存lockの広範更新・警告抑制は行っていない。
 
-受入の正規索引は[20261103-upload-action-ci-checks.json](docs/reviews/20261103-upload-action-ci-checks.json)。local索引のCI_PENDINGを後から上書きせず、最終CI索引を追加した。
+受入の正規索引は[20261103-upload-action-ci-checks.json](docs/reviews/deployment-ci.json#/reviews/20261103-upload-action-ci-checks.json)。local索引のCI_PENDINGを後から上書きせず、最終CI索引を追加した。
 時計の限定管理者採取・chronyd内部値・initd実体・host外部UTC差/同期責任と資格、T09公開/T10以降の実candidate/producer/採否は残る。
 合成成功を実運用性能や時計資格へ流用しない。後続文書commitは5a687a7の実装内容を変更せず、当該CIがその文書commitを直接試験したとは呼ばない。
 
@@ -3240,7 +3244,7 @@ artifact13216600174のZIPを実downloadし、234,656 bytes、外側SHA`2bbf5e182
 archiveのみを渡した別processで暖機50除外/1000 measured・1050journal/誤り0・p95保存値一致、独立nearest-rank再計算を確認。
 T07a normal/TERMのcurrent image・3地点SIGKILL復旧・metadata・別volume復元・4資源残存0・保護container不変と、
 T07bの65registry/5audit table・8file・別3volume・破損skops拒否/元retry/新規予測・全cleanup、既存PG/HTTP cleanupを照合した。
-合成計測と実候補採否・時計資格を混同しない。local索引のCI_PENDINGは当時のsnapshotとして保持し、[最終CI索引](docs/reviews/20261103-chrony-runtime-ci-checks.json)を追加する。
+合成計測と実候補採否・時計資格を混同しない。local索引のCI_PENDINGは当時のsnapshotとして保持し、[最終CI索引](docs/reviews/clock-validation.json#/reviews/20261103-chrony-runtime-ci-checks.json)を追加する。
 
 追加管理者ログ未採取、tick11000時の内部状態・initd管理元・host精度/同期責任・修復/資格、T03歴史的停止、T09公開/T10以降の実candidate/producer/採否は残る。
 同じ非飽和区間や未修正releaseだけの再確認を進捗にせず、新しい状態/ログ/上流変更を次の判断条件にした。
@@ -3262,7 +3266,7 @@ validation log/metadataも含めCI側27原本・4attemptの最終索引へ再生
 
 原本は`data/reports/20261104-followup-d8ec164/`。
 runnerはcommand/cwd、開始終了UTC/MONOTONIC、exit、log bytes/SHAを保存し、同名attemptの上書きを拒否する。
-以下の全14 timed research attemptは[今回の索引](docs/reviews/20261104-clock-readiness-checks.json)へ対応する。
+以下の全14 timed research attemptは[今回の索引](docs/reviews/clock-history.json#/reviews/20261104-clock-readiness-checks.json)へ対応する。
 
 | attempt / 実行コマンド | 結果・失敗・判断 |
 |---|---|
@@ -3331,7 +3335,7 @@ raw binary・Windows個人pathを含むchain log・実原本・無関係な未�
 新しい管理者採取directoryはなく、旧debug-shell.log1件だけが同bytes/SHAで存在した。
 非管理者debug-shellの拒否を再試行せず、同じ非飽和trace・45原本の全件CRC・未修正MLflow release確認も反復しなかった。
 
-原本は`data/reports/20261104-followup-891a420/`、[検証索引](docs/reviews/20261104-backend-boundary-checks.json)に対応する。
+原本は`data/reports/20261104-followup-891a420/`、[検証索引](docs/reviews/clock-history.json#/reviews/20261104-backend-boundary-checks.json)に対応する。
 前回runnerを再利用し、command/cwd・開始終了UTC/MONOTONIC・exit・log bytes/SHAを保存した。
 UTCおよびMONOTONICは今回も外部秒として資格確認済みではない。
 
@@ -3401,7 +3405,7 @@ completion-validation-v1成功：当時のraw64件+入力7件のhash、235相対
 既存の無関係な未追跡3path（`260701/charts/`、`260701/logs/`、`260905/sets/bookkeeping-2kyu/images/assekiritono-flow.png`）は保持。
 `.env`は読まず、OS/時計設定・実DB/registry/現配信は変更していない。
 
-今回の全記録は[検証索引](docs/reviews/20261104-followup-checks.json)、raw log/attempt JSONはignoredの`data/reports/20261104-followup-1e622dd/`にある。
+今回の全記録は[検証索引](docs/reviews/clock-history.json#/reviews/20261104-followup-checks.json)、raw log/attempt JSONはignoredの`data/reports/20261104-followup-1e622dd/`にある。
 
 | attempt | 実行 | 結果 |
 |---|---|---|
@@ -3449,7 +3453,7 @@ WSL要求前後bracketの両端からrateの下限/上限を計算し、区間�
 ### コマンド・検証・失敗
 
 原本はignoredの`data/reports/20261104-qualification-design/`、公開用は
-[今回の検証索引](docs/reviews/20261104-qualification-design-checks.json)。
+[今回の検証索引](docs/reviews/clock-validation.json#/reviews/20261104-qualification-design-checks.json)。
 read/status/log/rg/sed/findの出力はこのチャットのtool transcriptにあり、独立したraw file/hashとして保存したとは主張しない。
 新しい算術検証と最終文書検証はrunnerでcommand/cwd、UTC/MONOTONIC、終了値、stdout/stderr、bytes/SHAを保存する。
 runnerは既存attemptの上書きを拒否する。UTC/MONOTONICは未資格で、外部の秒数校正には使わない。
@@ -3502,7 +3506,7 @@ code reviewでは、QPC gapが複数の60秒境界を飛び越すと同じ終点
 ### 全試行と失敗
 
 原本はignoredの`data/reports/20261104-clock-rate-component/`、
-[公開用検証索引](docs/reviews/20261104-clock-rate-checks.json)にcommands/cwd/UTC/MONOTONIC/終了値とbytes/hashを記録する。
+[公開用検証索引](docs/reviews/clock-validation.json#/reviews/20261104-clock-rate-checks.json)にcommands/cwd/UTC/MONOTONIC/終了値とbytes/hashを記録する。
 UTC/MONOTONICは校正済みではなく、testが表示した秒数も時計資格の証明ではない。
 
 | attempt / コマンド | 結果 |
@@ -3552,7 +3556,7 @@ T09は同turnで再照会しておらず、最後の実観測13:42:25UTCの404�
 component側ci-list-v1/ci-view-v1に初期進行状態、CI側run-read-v1に後続状態を保存した。
 `watch-v1`は`timeout --signal=TERM --kill-after=10 900 gh run watch … --interval 30 --exit-status`でexit0。
 fetch-final-v1でexact SHAの完了run・2 job/step・artifact metadata・両job logを保存した。
-全コマンド/終了値/UTC/MONOTONICとhashは[最終CI索引](docs/reviews/20261104-clock-rate-ci-checks.json)を参照する。
+全コマンド/終了値/UTC/MONOTONICとhashは[最終CI索引](docs/reviews/clock-validation.json#/reviews/20261104-clock-rate-ci-checks.json)を参照する。
 
 artifact-check-v1はexit0。先行の検算helperを新しいcommit/run/482件とgh API envelopeへ明示的に合わせ、
 artifact13331782007を実downloadした。外側SHA
@@ -3581,7 +3585,7 @@ validation-v1はexit0。当時80 hash record・241相対link・6対象fileと、
 
 計画§11.6、work log、固定済み資格設計、phase部品、実装f26b334/CI41845551048の索引を確認した。
 実時計の修復ではなく、独立して実装できる全観測期間の入力契約/数値照合を進めた。
-[新契約と操作](docs/clock-implementation.md#clock-campaign-review)、[試行/hash索引](docs/reviews/20261105-clock-campaign-checks.json)。
+[新契約と操作](docs/clock-implementation.md#clock-campaign-review)、[試行/hash索引](docs/reviews/clock-validation.json#/reviews/20261105-clock-campaign-checks.json)。
 OS/時計設定・実DB/registry/現配信、既存future拒否、schema/writer/lock/workflowは変更しない。
 既存の凍結済みclock-qualification-plan.mdも不変。設計で未定だったQPC校正の数値を、
 今回policyで±100ppmに固定した。WSL対QPCの±1000ppmとは別予算で、合成結果/過去p95を補正しない。
@@ -3671,7 +3675,7 @@ validation-missing-v1は98 hash record/211相対link/3Python構文/diff checkで
 本節の文書commit自体をf6b3cadのCIで直接試験したとは呼ばない。
 
 原本は`data/reports/20261105-clock-campaign-ci/`、
-[最終CI/hash索引](docs/reviews/20261105-clock-campaign-ci-checks.json)。
+[最終CI/hash索引](docs/reviews/clock-validation.json#/reviews/20261105-clock-campaign-ci-checks.json)。
 watch-v1は900秒上限/TERM/kill-after10、gh --interval30 --exit-statusでexit0。
 fetch-final-v1はexact SHA/完了成功/全job-stepとartifact metadata・両job log、先行runの状態を保存してexit0。
 準備の最初はproject cwdで261021/を重ねてcpとrunner lookupが失敗し、CI commandは始まらなかった。
@@ -3708,7 +3712,7 @@ validation-final-v1は128 hash record/260相対linkと製品3pathのf6b3cad不�
 OS/時計設定、実DB/registry/現配信、既存future validator/schema/writer/lock/workflowは変更していない。
 .envも読取/変更していない。無関係な既存未追跡3パスは対象外。
 [操作/入力/終了値](docs/clock-implementation.md#clock-fake-acquisition)、[独立源のreview](docs/clock-operations.md#clock-source-readiness)、
-[今回の試行/hash索引](docs/reviews/20261105-clock-acquisition-checks.json)を追加する。
+[今回の試行/hash索引](docs/reviews/clock-validation.json#/reviews/20261105-clock-acquisition-checks.json)を追加する。
 
 ### 実装とreviewで補強した点
 
@@ -3795,7 +3799,7 @@ source-budget-v1は14仮定条件をFractionで検算してexit0。
 1800秒全体だけで良好でも必須60秒窓を代替せず、中心差/輸送/読取/丸め等の追加誤差も別に必要。
 [源選定review](docs/clock-operations.md#clock-source-readiness)にこの条件を追記したが、実provider/精度/真正性/資格の認定ではない。
 
-[起動時回収の追加索引](docs/reviews/20261105-clock-acquisition-startup-checks.json)へ全試行/hash/sourceを記録する。
+[起動時回収の追加索引](docs/reviews/clock-validation.json#/reviews/20261105-clock-acquisition-startup-checks.json)へ全試行/hash/sourceを記録する。
 初回索引はdf3aeb4時点の28件/CI未確定snapshotとして保持し、最終30件と混同しない。
 最終実装commitの全suite（予定549件）/CI/artifact/cleanupは後続で照合する。
 
@@ -3814,7 +3818,7 @@ unit job2m56s/system6m22s。先行df3aeb4のCI成功/28件を最終sourceの受�
 この記録更新だけの後続commit自体を、この実装CIで直接試験したとも呼ばない。
 
 原本は`data/reports/20261105-clock-acquisition-ci/`、
-[最終索引](docs/reviews/20261105-clock-acquisition-ci-checks.json)。
+[最終索引](docs/reviews/clock-validation.json#/reviews/20261105-clock-acquisition-ci-checks.json)。
 list-final-v1で完全SHA/runを特定し、watch-final-v1は900秒/TERM/kill-after10・30秒間隔/exit-statusでexit0。
 fetch-final-v1は完全SHAとsuccess/全job-step、artifact metadata・両job log、先行runの成功状態を保存してexit0。
 artifact-check-v1は既存checkerのexact SHA/run/549件を合わせ、新clock30件の全ok照合も追加してexit0。
@@ -3895,7 +3899,7 @@ T09は前回公式HEAD=2026-11-05 13:16:12UTC（JST同日22:16）404後の新し
 仮想phase終端と実IO safety timeoutの違いをclock-fixed-schedule.mdに明記した。
 
 README/証拠入口/旧採取説明/§11.6を更新。
-[local索引](docs/reviews/20261106-clock-scheduler-checks.json)へ全試行/失敗/hash/限界を結合する。
+[local索引](docs/reviews/clock-validation.json#/reviews/20261106-clock-scheduler-checks.json)へ全試行/失敗/hash/限界を結合する。
 全suiteは実装commitのCIで確認予定。CI/artifact/cleanup確認前に全体の受入完了としない。
 
 reviewer-regression-v2は通常のmodule discoveryで55件/20.685表示秒が成功。製品sourceをこの起動問題で変更していない。
@@ -3929,7 +3933,7 @@ clock rawは既存16artifactへ追加せず、unitは一時原本、代表原本
 改変原本は使い捨てでcleanupし、代表原本のbytes不変を照合した。最終19unitへ追加した件数ではない。
 用語集へfake QPC・QPC tick/周波数・slot/固定周期・deadline・wake/overshoot・catch-up・不足計数・共有終端の8項目を追加。
 Linux補正tick=11000、配信のblue/green slotと混同しないようにした。
-[最終CI索引](docs/reviews/20261106-clock-scheduler-ci-checks.json)へ初回/失敗/local snapshotと最終CIを結合する。
+[最終CI索引](docs/reviews/clock-validation.json#/reviews/20261106-clock-scheduler-ci-checks.json)へ初回/失敗/local snapshotと最終CIを結合する。
 
 再開時のT09は前回から約22時間経過したため一度だけ公式HEADを実行。
 2026-11-06 11:11:56UTC（JST20:11）、200/32,848,117bytes、Last-Modified=11月5日16:54:56UTCへ変化。
@@ -3967,7 +3971,7 @@ T09側の保存先は`data/reports/20261106-t09/`。初期のschema previewはst
 T09の取得/構造検査は完了として、残件から公開待ちを除く。T10の正式集計/全manifest/protocolは後続の別単位。
 fit、validation/final採点、消費台帳、実DB/registry/配信、OS/時計/.envは変更していない。
 
-[取得と限界](docs/capital.md#t09-october-acquisition)・[検証索引](docs/reviews/20261106-t09-checks.json)へ証拠を結合する。
+[取得と限界](docs/capital.md#t09-october-acquisition)・[検証索引](docs/reviews/foundation.json#/reviews/20261106-t09-checks.json)へ証拠を結合する。
 時計の合成CIはc1c5dcb、記録commit8d8ad74をそのCIで直接試験したとは呼ばない。
 このT09もsource修正や追加CI実装ではなく、取得実原本の限定監査と文書更新である。
 
@@ -4060,7 +4064,7 @@ archive-only別processと独立nearest-rankで1050 journal/暖機50除外/1000�
 gate=not_evaluated/permission=blockedで、実Capital性能・時計資格・承認の証拠ではない。
 現DockerfileのCaddy通常/TERM・3段階SIGKILL/保護container不変、MLflow/skops+DBの別volume対応復元・破損拒否、
 PG/HTTPのcleanupと専用resource残存0も完成log/summaryで照合した。
-[集計改善CI索引](docs/reviews/20261106-t10-grouping-ci-checks.json)は実pair/protocolの受入と分ける。
+[集計改善CI索引](docs/reviews/foundation.json#/reviews/20261106-t10-grouping-ci-checks.json)は実pair/protocolの受入と分ける。
 実データ/clock rawを既存16artifactへ追加していない。後続の記録commitをこの実装CIで直接試験したとも呼ばない。
 
 grouping-ci-validation-v1は89原本hash/315相対link、製品2pathのbae010a byte一致/AST・diff/秘密パターン確認で成功。
@@ -4134,7 +4138,7 @@ artifact13604163480のZIP SHA=0f1863b1afff1671c8b306a59d38fa82b88919b8eecd8fa5c9
 Caddyの現Dockerfile normal/TERM・3段階SIGKILL、保護container不変、実MLflow/skops+DBの別volume対応復元/破損拒否、PG/HTTP cleanup/残存resource0も照合した。
 今回CIへ47実原本を持ち込んだりartifact allowlistへ追加したりはしていない。正式集計のlocal証拠と分ける。
 計画§11.6/README/証拠入口/手順書/T10 review/用語を更新し、T09待ちやT10未完了の古い記載と現在状態を区別した。
-[最終索引](docs/reviews/20261108-t10-snapshot-checks.json)へ全試行（中断254/timeout124/SQL回帰FAIL1/検算FAIL1を含む）とhash・限界を結合する。
+[最終索引](docs/reviews/foundation.json#/reviews/20261108-t10-snapshot-checks.json)へ全試行（中断254/timeout124/SQL回帰FAIL1/検算FAIL1を含む）とhash・限界を結合する。
 残件は時計資格等と、その前提後の実candidate評価/producer/運用採否。新情報なしの再採取や、前提未達のfit/採点は行わない。
 
 snapshot-validation-v1は192原本hash+正式dataset3 file、352相対link、9147027の製品2path/保存source11件、
@@ -4199,7 +4203,7 @@ raw memberのサイズ合計をLIMITへ照合し、manifestは別のMANIFEST_LIM
 
 境界修正後bundle-budget-final-v1は18件/80.099表示秒で成功、budget-compile-v1もexit0。
 追加文書patchは2つ目の対象に別文書の行を指定してverification failedとなった。実diffではplan側も未適用だったため、必要なplan追記だけを再適用した。
-[境界索引](docs/reviews/20261108-clock-bundle-budget-checks.json)で修正前FAILと最終専用試験を分離する。
+[境界索引](docs/reviews/clock-validation.json#/reviews/20261108-clock-bundle-budget-checks.json)で修正前FAILと最終専用試験を分離する。
 
 ### 2026-11-08：合成raw bundleの最終実装CI受入
 
@@ -4728,7 +4732,7 @@ artifact ZIP SHA4bf21be…/16member hash、T16の4原本をarchiveだけから�
 - Markdownの相対file/fragment参照を検査し、古いT06a work_log anchorを明示追加した。検査対象の参照はすべて解決する。過去証拠JSONのhash/pathを現行fileのhashへ書き換えていない。
 - 正式消費台帳のSHAは`c42de5e869d4765ac5f776ed098e98cbbed347c0dbe2c967016b14d64986b652`で従来と一致。実candidateの再fit・運用再測定・時計採取・実サービス操作は行っていない。
 
-最終全suiteと実装commitのCIは確認中。成功した事実だけを[今回の検証索引](docs/reviews/20261115-file-consolidation-checks.json)へ追記する。合成CIや構成整理をT02/T12/T13b・時計資格の完了へ流用しない。
+最終全suiteと実装commitのCIは確認中。成功した事実だけを[今回の検証索引](docs/reviews/capital.json#/reviews/20261115-file-consolidation-checks.json)へ追記する。合成CIや構成整理をT02/T12/T13b・時計資格の完了へ流用しない。
 
 最終ローカル全suiteは`full-suite-final-v2`で591件/509.142表示秒・exit 0。旧590件の欠落0と旧raw互換1件を確認した。静的最終v3も成功。ステージ後の新規fileを含む`git diff --cached --check`で見つかったhelper呼出5行の末尾空白を除去し、再確認した（通常の未ステージdiffでは未追跡fileの空白を検査できない点も記録）。新旧module入口、旧67文書anchor、923相対file/fragment、obsolete import 0、公開対象54text fileのcredential patternなしを確認した。root/plan/README/Compose/workflowも対象へ明示stageし、無関係な未追跡3pathとignored原本は含めない。実装commitのCIはこれから確認し、local成功でCI完了を先取りしない。
 
@@ -4748,7 +4752,7 @@ localのsnapshot試行は`docker context show`でexit 1となり、Dockerコン�
 
 artifact `14130222048`のZIP SHA `8cd735bfdbb616c72c63f3653f3b65cc464dd2daad9dea06d095c117b5059f4d`がGitHub digestと一致。allowlist16 memberの全SHA/bytes、内側4原本のhashを検算し、元のplan/report/ledger/journalの保存先へアクセスしない別processへarchiveだけを渡して、暖機50除外・計測1,000・journal確定1,050・p95を再計算しCI保存値と完全一致した。これは合成fixtureの検算であり実候補性能・本番SLO・時計資格の証明ではない。
 
-T07a normal/TERMのsummaryでcurrent Dockerfile build・protected ID不変・残resourceなし・cleanupを確認し、system対応復元/破損skops拒否/workspace回収、snapshot/PG monitor/HTTP等の後片付けも照合した。検算は`final-ci-artifact-verification`/exit 0、原本と結果hashは[検証索引](docs/reviews/20261115-file-consolidation-checks.json)へ保存した。初回CI失敗とlocal Docker未統合の試行を削除・成功化していない。
+T07a normal/TERMのsummaryでcurrent Dockerfile build・protected ID不変・残resourceなし・cleanupを確認し、system対応復元/破損skops拒否/workspace回収、snapshot/PG monitor/HTTP等の後片付けも照合した。検算は`final-ci-artifact-verification`/exit 0、原本と結果hashは[検証索引](docs/reviews/capital.json#/reviews/20261115-file-consolidation-checks.json)へ保存した。初回CI失敗とlocal Docker未統合の試行を削除・成功化していない。
 
 文書9本・製品Python18本・tests12本・scripts7本の整理と参照更新を完了する。今回は製品の残課題や実運用の保留は進めていない。最後は文書/計画/検証索引だけの記録commitとし、その自動CIを先行ec7f50eの受入と混同しない。再fit・実測再試行・実DB/registry/配信・OS/時計設定の変更はない。
 # 2026-11-15：UTC逆行journalのconsumer拒否・completed事後review設計・実警告review
@@ -4812,7 +4816,7 @@ project261021から以下を実施（環境変数`MLFLOW_DISABLE_AGENT_HINT=1`�
 - compileall/diff check成功。Markdownの最初のapply_patchは見出し不一致で失敗し無変更、実見出しで修正。
 
 最終suite・実装commitのGitHub Actions（artifact/cleanup含む）は確認後に追記する。
-[公開証拠索引](docs/reviews/20261115-operational-consumer-checks.json)は完了したreceipt/hashのみを参照する。
+[公開証拠索引](docs/reviews/capital.json#/reviews/20261115-operational-consumer-checks.json)は完了したreceipt/hashのみを参照する。
 合成CIの成功を実candidate運用受入・時計資格・本番SLOへ流用しない。
 
 ### 2026-11-15：最終local suiteと実装公開の節目
@@ -5125,3 +5129,15 @@ diff check/変更差分の秘密値scanも成功した。この検算結果を�
 - 今回の終了方法：元live/正式参照は実確認で完了、実装/汎用試験はCIで完了、実候補は不採用という判断で完了。当該候補の未達category追加/承認後配信は不採用で中止、新測定・時計研究は今回範囲から取下げ。過去未実証を合格化せず、時計問題/過去の未特定FAILを解決済みとしない。ユーザーの全課題終了指示に基づく範囲判断であり、採用成功や本番運用完成は主張しない。
 
 - 最終索引cutoffは193保存物/40receipt、194保護原本不変。final-integrity-v1で全descriptor/SHA・実装CI・秘密生成値非混入を再確認。相対リンク最終792件・欠落0、集約layout維持。最終索引生成コマンドの初回はrepo cwdで.venv相対指定がなくshell exit127、同helperを261021 cwdで実行したfinal-index-v1は成功した。最終検算/差分/commit/push自身は自己hash循環を避けignored後続証跡として保存する。
+
+
+## 2026-11-16: 検証JSON 80本を用途別5冊へ整理
+
+- ユーザー依頼によりdocs/reviewsの個別JSONを統合。整理基点は`76c533eb4e4a63dc28b6310126df2ea732b4bb60`。無関係な未追跡3pathは保持する。
+- [旧名対応表・読み方](docs/reviews/README.md)を追加。foundation16件、deployment-ci16件、clock-history17件、clock-validation18件、capital13件の合計80件。集約先は5JSONだけとし、新しい検証結果JSONを同ディレクトリへ追加しない。
+- 各冊の`reviews[旧名]`へ解析内容を収録し、`originals[旧名]`へ元path/size/SHA256/UTF-8原文を保存。原文を再エンコードしたbytesをGit上の整理前原本80件と直接比較し、解析構造も全件一致。独立した旧SHA検算のため原文を重複収録し、合計容量は約3.4MiBから約7.4MiBへ増加。個別80ファイルは照合成功後に削除した。
+- README・計画・用途別文書・作業ログのMarkdownリンク261箇所を現行5冊のJSON Pointerへ更新。JSON内部の過去path/hashと、過去の実行コマンド・非リンク旧名は履歴として保持。source_commit/旧名索引から辿れる。ブラウザーによってPointerへ直接移動できないため、検索とPython読取例をREADMEへ記載した。
+- コマンドは`python3 /tmp/consolidate_review_json.py`と`python3 /tmp/verify_review_consolidation.py`。原本・helper・全試行説明・検算log/hashはGit対象外の`data/reports/20261116-review-consolidation/`へ保存。整理helper自体のコピーも残し、既存scriptsへ新規Pythonを増やさない。
+- 初回の文書apply_patchはREADME文脈不一致で拒否。検算v1はPointer内の旧名を旧pathと誤判定、v2はfragmentなしの冊全体リンクを拒否。製品や原本の失敗ではなく検算helperを修正し、v3で80件の原文/SHA/size/構造、重複key0、943のローカルリンク、344のJSON Pointer、欠落0、diff check成功を確認。最終追記後もリンクを再検算する。
+- 製品source・tests・scripts・依存lock・CIは未変更。構成変更は文書保存形式だけなのでunit suiteや隔離サービスは起動せず、内容保存と参照整合を検証した。正式原本・消費台帳・参照control・registry・候補の配信不採用・時計問題の未解決状態を保持する。
+- 最終追記後の検算も成功：80原本のbyte/SHA/構造一致、5冊、ローカルリンク944件・JSON Pointer344箇所、欠落0、重複key0。製品・試験・CIの差分0を確認した。
