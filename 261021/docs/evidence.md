@@ -1,8 +1,24 @@
-# 証拠の読み方・過去review・引継ぎ
+# 試験の証拠を読む：確認できたことと限界
 
-[文書一覧・統合対応表](README.md)。2026-11-15に用途別へ統合。過去の結論・未解決事項・原本hashは保持。
+この文書は、試験記録から「何を確認したか」「何までは確認していないか」を読み取るための案内です。
+全部の履歴を読む必要はありません。最初は次の「現在の確認先」と「5分で説明する順番」だけを読んでください。
 
-各節の日付・「未完了」は執筆時点の記録を含みます。現在の状態は[プロジェクトREADME](../README.md)と[計画書の最新残件](../../261014/plan_mlops.md#remaining-work-latest)を優先してください。再実行用の入口は新配置へ更新し、当時の原文・コマンド・hashはGit `9479201`、work_log、review JSONに保持しています。
+CI（Continuous Integration）は変更ごとの自動試験です。CIが成功しても、試験用の人工データの結果を実候補の精度や配信承認の証拠にはできません。
+API（Application Programming Interface）は予測要求の窓口、DB（Database）は観測や予測の保存先です。
+ファイルの一致はSHA-256（Secure Hash Algorithm 256-bit）ハッシュで調べます。ハッシュが一致しても、記録時刻や試験条件が正しいことを単独では証明しません。
+
+## 現在の確認先
+
+| 読みたい内容 | 確認先 | 注意点 |
+|---|---|---|
+| 製品の完了範囲と候補の不採用 | Capital文書の最終節 | 実配信の成功や時計問題の解決は主張しない |
+| 最終の試験・保存結果・後片付け | 検証記録の`20261116-product-acceptance-checks.json` | 実装コミットと説明用コミットを区別する |
+| 実行コマンド、失敗、原因の仮説 | `work_log.md` | 仮説と確定した原因を区別する |
+| 旧名からの検証記録検索 | [検証記録の索引](reviews/README.md) | JSONの本文と元の原文を照合できる |
+
+JSON（JavaScript Object Notation）は項目名と値を組にした保存形式です。
+索引の`reviews[旧名]`が記録本文、`originals[旧名]`が整理前の原文です。
+日付付きの表や引継ぎ文にある「次の作業」は当時の依頼であり、新しい実行指示ではありません。
 
 ## 目次
 
@@ -20,18 +36,21 @@
 
 <a id="evidence-guide"></a>
 
-## evidence-guide
+## 証拠の読み方と説明例
 
 <a id="evidence-guide--証拠の入口と5分の説明手順（t14・初版）"></a>
 
 ### 証拠の入口と5分の説明手順（T14・初版）
 
-**2026-11-14:** [Capital実候補のvalidation/final結果](capital.md#capital-first-evaluation)と[実行/検算索引](reviews/capital.json#/reviews/20261114-capital-evaluation-checks.json)を追加。両窓消費済み、精度gate合格。運用gateと最終採否は未完了、時計研究は保留。
+2026年11月14日に実候補の精度を評価し、保存した予測で監視も実行しました。
+両方の評価期間は使用済みです。その後、運用試験の記録時刻が逆行したため、11月16日に候補を配信不採用と判断しました。
+以下の表には開発途中の状態も残しています。当時の「未完了」を現在の残作業とは読み替えないでください。
 
-追加：[実候補のoffline監視](capital.md#capital-offline-monitoring)と[索引](reviews/capital.json#/reviews/20261114-capital-monitor-checks.json)。数値診断と運用producer受入を分け、警告を残したまま次の隔離runtimeへ進む。
+記録だけを更新したコミットは、先行する自動試験で確認した実装コミットと区別します。
+また、保存された検証結果を読み直すことと、その試験を新たに実行することも別です。
 
-現在の優先度は[計画§11.6の最新残件](../../261014/plan_mlops.md#remaining-work-latest)、コマンド・失敗・仮説の履歴は[作業log](../work_log.md)を正規の入口とする。
-レビューJSONはその時点のsnapshotなので、後続のCI確認JSONと区別する。記録だけの後続commitを、先行CIで試験した実装commitとは呼ばない。
+<details>
+<summary>過去の実装コミット・試験・制約の対応表を表示</summary>
 
 | 対象 | 実装commit / CI | 確認できる証拠 | 限界 |
 |---|---|---|---|
@@ -80,18 +99,23 @@ raw logや一時dumpをcommitしたと主張しない。手元の`data/reports/`
 T16のarchiveだけが手元にある場合の再計算手順は[計測証拠アーカイブ](monitoring.md#measurement-evidence-archive)を使う。
 CI artifact以外の実DB原本、`.env`、認証値、実候補データを説明用にコピーしない。
 
+</details>
+
 <a id="evidence-guide--5分で説明する順番"></a>
 
 #### 5分で説明する順番
 
-1. **0〜1分:** [README](../README.md)で、需要予測モデルと、それを安全に登録・監査・切替する基盤の目的を説明する。UCIの実験履歴と合成Capital試験の区別を先に伝える。
-2. **1〜2分:** MLflowは実験・登録モデルの管理画面。`training-report.json`のMAE/RMSEは予測誤差で、APIの応答時間ではない。学習・評価済み期間を次候補の選択へ再利用しない。
-3. **2〜3分:** T16のCI索引で実装commit・run・artifact SHA・1000 measured・p95・warmup除外を示す。p95は応答時間であり、合成PC試験から本番SLOを合格としない。
-4. **3〜4分:** 配信復旧文書で、同一request IDの再送は元の予測を返すこと、台帳とartifactを対応させて復元すること、timeoutでは未確定を残すことを示す。
-5. **4〜5分:** 計画書で、新原本取得と事前protocolの静的受入は完了し、時計資格と実候補の精度/監視/復旧/承認がまだ必要と説明する。合成成功を実採否へ格上げしない。
+1. 0〜1分：READMEの図で、学習だけでなく予測の保存、監視、復旧まで扱う目的を説明します。UCIの実験、合成試験、Capital実候補の結果を区別します。
+2. 1〜2分：MLflowで学習条件と登録番号を確認できることを示します。MAE（Mean Absolute Error）とRMSE（Root Mean Squared Error）は予測誤差で、応答時間とは別の値です。
+3. 2〜3分：保存された試験記録から、準備用50要求を除いた1,000要求と、応答時間の95パーセンタイル（p95）を再計算する方法を説明します。合成試験の値を本番のSLO（Service Level Objective：サービス品質の目標）の達成とは扱いません。
+4. 3〜4分：同じ要求IDで送り直すと元の予測が返ること、DBとモデルファイルを対応させて復元すること、応答がなくても未処理と断定しないことを示します。
+5. 4〜5分：Capital候補は精度に合格しても、UTC（Coordinated Universal Time：協定世界時）の記録が逆行した運用証拠を拒否し、配信不採用にしたと説明します。失敗を残して判断を止められることも、この製品で確認した動作です。
 
-説明のためにlive環境を変更する必要はない。CLIの確認や新しい障害試験は、[runbook](runbook.md#runbook)に従い別途実行する。
-用語は[用語集](architecture.md#glossary)、時計の限界は[中断と時計診断](clock-history.md#interruption-clock-diagnostics)を参照する。
+説明には保存済みの記録を使えます。既存の実行環境を変更したり、障害試験を始めたりする必要はありません。
+CLI（Command Line Interface）による確認を行う場合は、操作手順で読取と書込の範囲を確認してください。
+
+<details>
+<summary>2026年11月3〜8日の追補記録を表示</summary>
 
 2026-11-03更新: 配信の名前/理由は申告情報で、APIのmatched_pendingは処理中、matched_completedも認証済み承認の証明ではない。新しいCI artifact ZIP SHA先頭は`ae1f101f77c7`。操作の読取とtimeout時の手順は[配信診断](runbook.md#deployment-observability)へ。
 
@@ -132,9 +156,11 @@ SQL改善9147027/[CI42447659584](https://github.com/kenobix/Claude_practice/acti
 raw4原本をZIPから別processで再計算する合成可搬性の証拠で、実源の真正性/時計資格/T02実producerの証拠ではない。
 [次に必要な入力](clock-operations.md#clock-input-request)を未取得のまま、実fit・採点・採否へ進めない。
 
+</details>
+
 <a id="t06-luna-handoff"></a>
 
-## t06-luna-handoff
+## 過去の引継ぎ：監視保存の読取照合
 
 <a id="t06-luna-handoff--t06aをgpt-6-lunaへ渡す依頼"></a>
 
@@ -208,7 +234,7 @@ Solへの最終依頼には、設計commit、変更path、状態表caseの合否
 
 <a id="t08-sol-handoff"></a>
 
-## t08-sol-handoff
+## 過去の引継ぎ：保存精度の移行と復元
 
 <a id="t08-sol-handoff--次の依頼-t08-旧real-schemaの移行・復元検証"></a>
 
@@ -255,7 +281,7 @@ Lunaへ切り出す場合も、移行値・transaction・再送互換の判断�
 
 <a id="t15-luna-handoff"></a>
 
-## t15-luna-handoff
+## 過去の引継ぎ：PostgreSQL監視試験の自動実行
 
 <a id="t15-luna-handoff--gpt-6-lunaへの次の依頼（t15）"></a>
 
@@ -291,7 +317,7 @@ commit/pushはSol review後に行ってください。無関係な未追跡path�
 
 <a id="t16-luna-handoff"></a>
 
-## t16-luna-handoff
+## 過去の引継ぎ：合成計測の記録保存
 
 <a id="t16-luna-handoff--t16-合成ci証拠の保存と別processでの再計算"></a>
 
@@ -346,7 +372,7 @@ CI artifactへ追加するpathはarchive、外側SHA descriptor、再計算結�
 
 <a id="t17b-sol-handoff"></a>
 
-## t17b-sol-handoff
+## 過去の引継ぎ：配信中断と復旧の試験
 
 <a id="t17b-sol-handoff--t17b残件とt07a-ci接続のsol向け引継ぎ"></a>
 
@@ -421,7 +447,7 @@ schema/writer・承認の信頼境界を変更する必要があれば、Solが�
 
 <a id="20261028-r06-delta-review"></a>
 
-## 20261028-r06-delta-review
+## 2026年10月28日：差分確認と評価方法の判断
 
 <a id="20261028-r06-delta-review--前回確認後の差分レビューとr06の判断"></a>
 
@@ -480,7 +506,7 @@ CI参照: [run 40645058486](https://github.com/kenobix/Claude_practice/actions/r
 
 <a id="20261028-review"></a>
 
-## 20261028-review
+## 2026年10月28日：実装と保存結果の監査
 
 <a id="20261028-review--2026-10-28-差分監査と残作業"></a>
 
@@ -661,7 +687,7 @@ Pythonは実際にはプロジェクトの`.venv/bin/python`を使用した。DB
 
 <a id="20261028-staging-checkpoint-review"></a>
 
-## 20261028-staging-checkpoint-review
+## 2026年10月28日：隔離評価環境の確認
 
 <a id="20261028-staging-checkpoint-review--r06-staging実装後のチェックポイントレビュー"></a>
 
@@ -793,7 +819,7 @@ UCI DBは基準時刻を条件とするSELECT、MLflowは検索APIを全page取�
 
 <a id="20261028-synthetic-staging-harness"></a>
 
-## 20261028-synthetic-staging-harness
+## 2026年10月28日：合成試験の実行スクリプト
 
 <a id="20261028-synthetic-staging-harness--合成staging統合検証の実行スクリプト（記録）"></a>
 
@@ -1124,7 +1150,7 @@ print(json.dumps({'scope':'synthetic fixture only; not a real candidate operatio
 
 <a id="20261030-checkpoint-review"></a>
 
-## 20261030-checkpoint-review
+## 2026年10月30日：前回確認後の差分監査
 
 <a id="20261030-checkpoint-review--2026-10-30-checkpoint差分レビュー"></a>
 

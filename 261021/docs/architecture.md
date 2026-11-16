@@ -1,8 +1,12 @@
 # 構成・データ契約・用語
 
-[文書一覧・統合対応表](README.md)。2026-11-15に用途別へ統合。過去の結論・未解決事項・原本hashは保持。
+この文書では予測を受け付ける仕組み、入力データの決まり、専門用語を説明します。
+「データ契約」は入力の列や時刻、値の形式をそろえるための決まりです。
+構成を知りたい場合は最初の節、分からない語を調べたい場合は末尾の用語集から読めます。
 
-各節の日付・「未完了」は執筆時点の記録を含みます。現在の状態は[プロジェクトREADME](../README.md)と[計画書の最新残件](../../261014/plan_mlops.md#remaining-work-latest)を優先してください。再実行用の入口は新配置へ更新し、当時の原文・コマンド・hashはGit `9479201`、work_log、review JSONに保持しています。
+UCI（University of California, Irvine）の公開データ集にある自転車データと、Capital Bikeshareの履歴を別々の予測対象として扱います。
+UCIの実験とCapital候補の評価結果を混ぜず、Capital候補の現在の判断は「精度合格・配信不採用」と読み分けてください。
+日付付きの調査結果は当時の記録です。現在の結果と文書全体の案内は[プロジェクトREADME](../README.md)にあります。
 
 ## 目次
 
@@ -13,25 +17,48 @@
 
 <a id="architecture"></a>
 
-## architecture
+## システムの構成
 
 <a id="architecture--アーキテクチャと運用判断"></a>
 
 ### アーキテクチャと運用判断
 
-初学者向けの用語は[用語集](architecture.md#glossary)を参照してください。
+API（Application Programming Interface）は、プログラムから予測を要求する窓口です。
+DB（Database：データベース）は観測値と予測の保存先、CLI（Command Line Interface）はターミナルから操作する入口です。
+
+```mermaid
+flowchart TB
+    user[予測要求] --> caddy[Caddy：接続先を切替]
+    caddy --> blue[Blue：固定したモデル番号]
+    caddy --> green[Green：別のモデル番号]
+    mlflow[MLflow：モデルと学習記録] --> blue
+    mlflow --> green
+    blue --> database[PostgreSQL：観測・予測・操作履歴]
+    green --> database
+```
+
+図はUCI用の標準構成です。BlueとGreenは用途が固定された名前ではなく、切替のたびに配信側と待機側が入れ替わる2つの実行枠です。
 
 <a id="architecture--開発プロファイル"></a>
 
 #### 開発プロファイル
 
-Python 3.12、SQLite、ローカルMLflow tracking/artifact storeで、データ監査・学習・特徴量と台帳をCPU上で検証できます。デフォルトのDBと成果物はGit対象外の`data/`以下です。HTTP APIはFastAPI依存を追加した後に`uvicorn`で起動します。
+Python 3.12、SQLite、ローカルのMLflowで、データ監査、学習、特徴量の生成、記録の保存を検証できます。
+デフォルトのDBと成果物は、Gitへ含めない`data/`以下に保存します。
+FastAPIの予測プログラムは`uvicorn`で起動し、HTTP（Hypertext Transfer Protocol）という通信方式で要求を受け付けます。
 
-動作確認したNumPy・pandas・scikit-learnの版を固定し、Python・Dockerの主要イメージも版付きにしています。FastAPI・MLflow・psycopgは互換範囲で指定し、学習runには実際に解決された全パッケージ版を記録します。
+実行環境を再現する際は`requirements.lock`の固定バージョンを使います。
+`pyproject.toml`にはNumPy・pandas・scikit-learnの固定バージョンと、FastAPI・MLflow・psycopgなどの互換範囲を指定しています。
+学習の記録には実際にインストールされた全パッケージのバージョンも残します。
 
-MLflowのscikit-learnモデルはskops形式で保存します。HistGradientBoostingRegressorが使う`sklearn.ensemble._hist_gradient_boosting.predictor.TreePredictor`だけを、エラー内容を確認したうえで明示的な信頼型に加えます。この許可はプロジェクトが生成したローカルモデル用で、外部や未信頼のモデルartifactには使いません。包括的な信頼許可は使いません。配信時はモデル成果物のSHA-256を登録情報と照合してからskopsで読み込みます。
+学習済みモデルはskopsというライブラリで保存・読み込みします。
+使用する予測器はscikit-learnの`HistGradientBoostingRegressor`です。読み込む際は、内部部品`sklearn.ensemble._hist_gradient_boosting.predictor.TreePredictor`を個別に許可します。これを「明示的な信頼型」と呼んでいます。
+この許可はプロジェクト内で生成したモデルに限定し、出所不明のモデルには使いません。
+配信時はモデルファイル一式（モデル成果物）のSHA-256（Secure Hash Algorithm 256-bit）ハッシュを登録情報と照合してから読み込みます。
+ハッシュは内容の一致を調べるもので、作成者の認証を代わりに行うものではありません。
 
-MLflow 3では学習runの通常artifactとログ済みモデルの保存場所が分かれます。登録時は`log_model()`が返す`model_info.model_uri`を使い、`runs:/<run_id>/<name>`という古い保存場所を仮定しません。[MLflow 3の移行ガイド](https://mlflow.org/docs/latest/ml/mlflow-3)を参照してください。
+MLflow 3では学習の通常の出力物と、保存したモデルを別の場所で管理します。
+登録時は`log_model()`が返す`model_info.model_uri`を使い、`runs:/<run_id>/<name>`という古い保存場所を仮定しません。詳しくは用語集の「モデルとMLflow」にまとめています。
 
 <a id="architecture--composeプロファイル"></a>
 
@@ -41,11 +68,13 @@ MLflow 3では学習runの通常artifactとログ済みモデルの保存場所�
 
 - `mlflow` DB / `mlflow_app`ロール: MLflowの実験・モデル登録メタデータ。
 - `bikeops` DB / `bike_app`ロール: 観測・予測・配信操作・監視窓。
-- Docker named volume: MLflowが管理するモデル成果物、PostgreSQLデータ。
+- Dockerの名前付きボリューム: コンテナを作り直しても残すモデル成果物とPostgreSQLデータ。
 - Caddy: 127.0.0.1:8080だけで待ち受ける入口。
 - API: 青・緑を別ポートで起動し、モデル版は環境変数で固定。
 
-外部公開の認証・TLSや常時運用のbackupサービスはこのローカル学習構成の範囲外です。元計画にあるローカルDB/artifactのbackup・別環境復元実験は未完了で、[計画書R08](../../261014/plan_mlops.md#11-2026-10-28差分監査後の実行計画)に残します。Composeのポートはloopbackに限定しています。
+接続先は自分のPCを指すループバックに限定しています。
+外部公開用の認証、TLS（Transport Layer Security）による通信暗号化、常時運用するバックアップサービスは、この学習用構成の範囲外です。
+DBとモデル成果物を対応させた別環境への復元試験は実施済みですが、常時稼働サービスの無停止バックアップを保証した結果ではありません。
 
 <a id="architecture--apiと再送"></a>
 
@@ -60,17 +89,29 @@ MLflow 3では学習runの通常artifactとログ済みモデルの保存場所�
 
 #### 手動の青緑切り替え
 
-`deploy promote`はLinuxのプロセスロックを取り、登録版・品質ゲート・ready・版・成果物ロードを確認してから、未使用側のAPIを起動します。候補の固定予測が成功した後だけ、Caddyfileを一時ファイルから置換し、Caddyのvalidate/reloadを行います。入口の`/version`で切り替わった版を確認後に配信台帳と実行状態を確定します。途中で失敗したときは旧ルートへ戻し、処理段階を残します。
+`deploy promote`は、ほかの配信操作が重ならないようプロセスロックを取得します。
+登録モデルと品質条件を確認し、未使用側のAPIを起動して準備状態、モデル番号、成果物の読込を検査します。
+決めた入力で予測が成功した場合だけCaddyの設定ファイルを置き換え、設定検査と再読込を行います。
+入口の`/version`で切替先を確認した後、配信履歴と実行状態を確定します。途中で失敗した場合は旧接続先へ戻し、失敗した段階を記録します。
 
-DBとCaddyは共通トランザクションではありません。中断後に`deploy recover`を実行し、実際の入口が旧版なら再試行可能と記録し、新版なら台帳を確定します。未知の版を返す場合は自動変更せず停止します。旧API枠は次回候補を起動するまで残ります。無停止を保証する構成ではありません。
+DBへの保存とCaddyの切替は、一度にまとめて確定できる処理ではありません。
+中断後は`deploy recover`で実際の接続先を調べます。旧バージョンなら再試行できる状態として記録し、新バージョンなら配信履歴を確定します。
+未知のバージョンが返った場合は、自動変更せず停止します。旧APIの枠は次の候補を起動するまで残りますが、無停止を保証する構成ではありません。
 
-UCIの通常昇格はMLflowモデル版の`quality_gate=passed`が必要です。Capitalではvalidation/final/operational/policyと配信許可のtagも確認しますが、report・承認証拠の照合経路は未完成で、現在の候補は通常配信できません。差し戻しは運用履歴にある以前の版だけに限定し、理由と承認者を保存します。監視結果や学習完了をきっかけに自動昇格する処理はありません。
+UCIの通常配信への切替には、登録モデルの`quality_gate=passed`が必要です。
+Capitalでは検証・最終評価・運用・判定規則と、人の配信許可も確認します。
+Capital候補は運用証拠が不適格だったため配信不採用となり、通常配信は引き続き拒否されます。
+以前のモデルへ戻す場合も運用履歴にあるバージョンに限定し、理由と承認者を保存します。学習完了や監視結果だけで自動的に切り替える処理はありません。
 
 <a id="architecture--品質ゲートと監視"></a>
 
 #### 品質ゲートと監視
 
-2026-10-28の[差分監査](evidence.md#20261028-review)は当時のUCI運用と移行候補を記録したものです。Capital初回候補の現在の基準と未完了作業は[初回ゲート](capital.md#capital-bootstrap-gate)と計画書R06〜R09を参照します。
+2026年10月28日の差分監査は、当時のUCI運用と移行候補を記録したものです。
+Capital初回候補の評価基準と、その後の判断はCapital文書にまとめています。過去の計画にあるR06〜R09は開発時の作業番号です。
+
+精度の指標にはMAE（Mean Absolute Error：平均絶対誤差）とRMSE（Root Mean Squared Error：二乗平均平方根誤差）を使います。
+前者は平均的なずれ、後者は大きなずれの影響も強く受ける値です。どちらも小さいほど誤差が少ないと読みます。
 
 - UCIの初回学習では、検証期間のMAEが前日同時刻ベースラインを厳密に下回ることを品質条件とします。未達版も診断目的で登録されますが、通常の昇格CLIは拒否します。
 - `train --evaluate-final-holdout`で初回だけ固定最終ホールドアウトを報告します。既定の`train`とrolling candidateはこの期間を評価しません。固定ホールドアウトはモデル登録・昇格条件に含めません。
@@ -85,11 +126,14 @@ UCIの通常昇格はMLflowモデル版の`quality_gate=passed`が必要です�
 
 #### Capitalの学習参照と監視の版
 
-新規Capital候補では、学習に使った行だけからPSI v2のbins/件数を保存し、参照ファイルSHAをcandidate IDへ含めます。policyはfit前の評価protocolに固定し、監視は登録版の元runから参照と候補reportを取得して元CSV/manifest/学習行/特徴量を照合します。通常UCIのPSI方式と履歴値は維持します。実Capital候補・全監視受入は未完了です。[仕様・コマンド・結果の読み方](monitoring.md#training-monitor-reference)を参照してください。
+Capitalでは学習に使った行だけから入力分布の区切りと件数を保存し、比較用の学習参照にします。
+分布変化の指標PSI（Population Stability Index）は、この参照と後の入力を比べて計算します。
+参照ファイルのハッシュを候補IDへ含め、監視時には元データ、学習行、特徴量、候補報告書との一致を確認します。
+実候補を使った監視も実施しましたが、その結果だけで候補全体の配信条件が揃ったとは扱いません。詳しい保存形式は監視の仕様にまとめています。
 
 <a id="data-contract"></a>
 
-## data-contract
+## データの決まりと未来情報の混入防止
 
 <a id="data-contract--データ契約とリーク防止"></a>
 
@@ -97,7 +141,8 @@ UCIの通常昇格はMLflowモデル版の`quality_gate=passed`が必要です�
 
 初学者向けの用語は[用語集](architecture.md#glossary)を参照してください。
 
-この契約は現在配信中のUCIモデル用です。UCIとCapital Bikeshareのtargetの違い、隔離Compose、未完了条件は[データプロファイルとtarget分離](architecture.md#data-profiles)を参照してください。Capitalはmigration-onlyであり、別target用の承認済みmodelと監視参照期間は未準備です。
+この節はUCIモデルのデータの決まりです。予測対象（target）は`hour.csv`の1時間あたりの貸出台数です。
+Capitalは別の予測対象として扱います。後の「データ源を分ける設定」で違いを説明しているので、UCIの値や評価期間をそのままCapitalへ流用しないでください。
 
 <a id="data-contract--出典と加工"></a>
 
@@ -114,7 +159,8 @@ UCIの通常昇格はMLflowモデル版の`quality_gate=passed`が必要です�
 
 #### 時刻とラベル
 
-時刻は`dteday`と`hr`から作るデータセット内のnaive datetimeです。原典の説明で根拠を得られないUTC変換、夏時間補正、曖昧な重複時刻の自動修正はしません。実験では各行を1時間区間の開始時刻、`cnt`をその区間の確定値と解釈します。
+時刻は`dteday`と`hr`から作ります。タイムゾーン情報がない日時（naive datetime）として扱い、出典に根拠のないUTC（Coordinated Universal Time：協定世界時）への変換や夏時間補正は行いません。
+重複する曖昧な時刻も自動修正しません。実験では各行を1時間区間の開始時刻、`cnt`をその区間の確定値と解釈します。
 
 `available_at = timestamp + 3時間`を実験設定にします。これは区間の終了後2時間で値が利用可能になるという想定です。データ自体の実際の配信遅延ではありません。APIは`as_of == target_hour`かつ時間境界に揃った入力のみ受理し、`available_at <= as_of`の行だけを参照します。
 
@@ -122,7 +168,7 @@ UCIの通常昇格はMLflowモデル版の`quality_gate=passed`が必要です�
 
 #### 入力・特徴量・出力
 
-予測入力:
+予測入力の例です。
 
 ```json
 {
@@ -156,7 +202,7 @@ UCIではprofile/targetの指定は古いclientとの互換性のため省略で
 
 <a id="data-profiles"></a>
 
-## data-profiles
+## データ源を分ける設定
 
 <a id="data-profiles--データプロファイルとtarget分離"></a>
 
@@ -188,8 +234,8 @@ UCIではprofile/targetの指定は古いclientとの互換性のため省略で
 - 過去の再集計CSV・manifest schema 2は`data/derived/capitalbikeshare-next/`に保存してある。元の41 ZIPを検査した成果で、期間は2023-01〜2026-04。R04対応後は同じ41 ZIPを`data/derived/capitalbikeshare-r04-tzdata2026-5/`へschema 3で再集計し、timezone供給元を記録した。schema 3のCSV hashがschema 2と一致しても、原本と期間は同じなので新しい評価データではない。どちらも新規評価に再利用しない。
 - timezoneは依存lockで`tzdata==2026.5`に固定し、OSのtimezone databaseを参照せず、Python package内の`America/New_York` TZifファイルを集計・manifest検査・APIで直接使う。manifest schema 3とtraining reportにprovider、package版、zone名、バイト数、zone-file SHA-256を記録する。schema 2は既存データの監査・seed用に後方互換で読めるが、新しい評価protocol/candidateにはschema 3を要求する。
 - Capital用SQLiteへ29,177時間をseedし、profile/target metadataと単一のdata hashを確認した。これはDB分離・hash保存の証拠で、隔離PostgreSQL/MLflow/Composeの起動やmodel loadingの証拠ではない。
-- 未使用の次候補として公式2026年6〜9月archiveのURLへのHTTP HEADが200だったことを確認したが、ZIP内容はまだ取得していない。2026年10月archiveは確認時点で404。取得後は別pathに保存し、R06でvalidationと後続期間を凍結するまで候補学習・評価に使わない。
-- このプロファイルにはまだ凍結済みの監視参照期間も承認済みmodelもない。APIを本番利用可能と表示したり、旧UCIモデル版3をCapital incumbentとして比較したりしない。
+- その後、2026年10月分を含む47原本を取得し、新しい入力と評価条件を固定しました。2026年6〜7月の検証、8〜9月の最終評価は実施済みで、同じ期間を次の候補選びに再利用しません。
+- 学習参照と候補は作成済みですが、配信承認はありません。APIを本番利用可能と表示したり、UCIモデルのバージョン3をCapitalの現行モデルとして比較したりしません。
 
 <a id="data-profiles--apiの要求識別"></a>
 
@@ -217,7 +263,17 @@ cd ~/work/claude_practice/261021
 docker compose -f compose.yaml -f compose.capital.yaml config -q
 ```
 
-このCompose projectは`bike-mlops-capital`、DB/MLflowのvolumeも別名空間です。host portはPostgreSQL `55433`、MLflow `5001`、API blue/green `8101`/`8102`、入口 `8180`です。通常UCI stackの55432/5000/8001/8002/8080を置き換えません。MLflowのUI/APIは`http://127.0.0.1:5001`、入口は`http://127.0.0.1:8180`です。
+Capitalの標準Compose構成は`bike-mlops-capital`というプロジェクト名を使い、DBとモデル成果物の保存領域もUCIから分けます。
+ホスト側で使うポートは次のとおりです。UCIの設定を置き換えません。
+
+| 接続先 | UCI | Capitalの標準設定 |
+|---|---:|---:|
+| PostgreSQL | 55432 | 55433 |
+| MLflow | 5000 | 5001 |
+| Blue / Green | 8001 / 8002 | 8101 / 8102 |
+| 予測の入口 | 8080 | 8180 |
+
+Capital標準設定でのMLflow画面は`http://127.0.0.1:5001`、予測の入口は`http://127.0.0.1:8180`です。
 
 Capital用ホストCLIは、profileとMLflow URLを同時に指定します。
 
@@ -229,7 +285,9 @@ MLFLOW_TRACKING_URI=http://127.0.0.1:5001 \
 
 `./scripts/bikectl`を使う場合も、先頭に`DATA_PROFILE_ID=capital-bikeshare`を付けるとCapital用のPostgreSQL `55433`とMLflow `5001`を選びます。UCI profileでは従来どおり`.env`の`APP_DB_HOST_PORT`（既定`55432`）とMLflow `5000`です。コマンド行で明示した`DATABASE_URL`と`MLFLOW_TRACKING_URI`は`.env`より優先されます。
 
-manifest schema 2の過去データとprofile別seedは検証済みです。R04のschema 3・timezone固定も完了しました。一方、同targetのmodel・承認済みmonitor参照、隔離PostgreSQL/MLflowの実起動は未完了です。このためAPIはまだreadyになりません。決定済みのbootstrap基準と未使用期間の事前案は[`capital-bootstrap-gate.md`](capital.md#capital-bootstrap-gate)を参照してください。基準の判断待ちは解消しましたが、候補作成・評価には[R06の実装とprotocol](../../261014/plan_mlops.md#r06-比較gateと昇格条件の完成)が必要です。実環境を起動する場合も先にCompose設定の適用・別port・profile表示を確認します。
+上のポートは`compose.capital.yaml`の標準設定です。2026年11月14日以降の実候補試験では、さらに専用の環境とポートを使いました。
+候補の登録、APIの準備完了、監視、復元は隔離環境で確認済みです。ただし運用試験は記録時刻の逆行で受け入れられず、候補は配信不採用となりました。
+APIの`ready`が成功することと、配信が承認されていることは別です。保存先とポートを確認せず、過去の例を既存環境へ実行しないでください。
 
 <a id="data-profiles--特徴量の情報時点"></a>
 
@@ -239,7 +297,7 @@ manifest schema 2の過去データとprofile別seedは検証済みです。R04�
 
 <a id="glossary"></a>
 
-## glossary
+## 用語集
 
 <a id="glossary--初学者向け用語集"></a>
 
@@ -253,36 +311,36 @@ manifest schema 2の過去データとprofile別seedは検証済みです。R04�
 
 | 用語 | かんたんな説明 |
 |---|---|
-| データセット | 分析や学習に使うデータの集まり。このプロジェクトでは自転車の時間別貸出台数データです。 |
-| CSV / JSON | CSVは表形式のテキスト、JSONは項目名と値を組にしたテキストです。データと処理結果の保存によく使います。 |
-| YAML / TOML | 設定を人が読み書きしやすい形で保存するテキスト形式です。Compose設定はYAML、Pythonパッケージ設定はTOMLを使います。 |
+| データセット | 分析や学習に使うデータの集まりです。UCIでは時間別貸出台数、Capitalでは利用履歴から集計した時間別利用開始件数を扱います。 |
+| CSV / JSON | CSV（Comma-Separated Values）はカンマで列を区切る表形式のテキスト、JSON（JavaScript Object Notation）は項目名と値を組にしたテキストです。データや処理結果の保存に使います。 |
+| YAML / TOML | 設定を人が読み書きしやすく保存する形式です。YAML（YAML Ain't Markup Language）はCompose設定、TOML（Tom's Obvious Minimal Language）はPythonパッケージ設定に使います。 |
 | CC BY 4.0 | 出典を表示すれば再配布や改変ができるCreative Commonsライセンスです。元データの利用条件を守ってください。 |
 | データ監査 | データの件数、値、時刻の重複や欠けなどを調べ、問題がないか記録することです。 |
 | データ契約 | 入力列、値の形式、時刻の扱いなど、データを使うときに守る約束です。 |
 | source manifest | データの取得元、取得時刻、元ファイルとCSVのハッシュなどを書いた出所記録です。 |
 | ハッシュ / SHA-256 | ファイルの中身から計算する短い指紋です。中身が変わると通常は別の値になり、同じデータか確かめるのに使います。暗号化ではありません。 |
 | naive datetime | タイムゾーン情報が付いていない日時です。このデータでは、出典に根拠がないためUTCなどへ勝手に変換しません。 |
-| UTC / 夏時間 | UTCは世界共通の基準時刻です。夏時間は地域によって時計を進める制度です。このデータでは根拠のない変換や補正をしません。 |
+| UTC / 夏時間 | UTC（Coordinated Universal Time）は協定世界時です。夏時間（Daylight Saving Time、DST）は、地域によって季節に合わせて時計を進める制度です。出典に根拠のない変換や補正は行いません。 |
 | 特徴量 (feature) | 予測の材料としてモデルに渡す情報です。例: 時刻、曜日、過去24時間前の貸出台数。 |
-| feature contract version | 予測APIと学習が共有する特徴量の並び・意味の版番号です。別の版の入力を誤って使わないために指定します。 |
-| ラベル / 目的値 | モデルに当ててほしい正解の値です。このプロジェクトでは対象時間の貸出台数`cnt`です。 |
+| feature contract version | 学習と予測で共有する特徴量の並び・意味を識別するバージョンです。違う条件の入力を誤って使わないために指定します。 |
+| ラベル / 目的値 | 予測と比較する正解の値です。UCIでは貸出台数`cnt`、Capitalでは1時間あたりの利用開始件数です。 |
 | `available_at` | 実績値が使えるようになった時刻です。観測時刻とは別に管理します。 |
 | `as_of` | 予測を出す時点です。この時点ですでに使える情報だけを予測材料にします。 |
 | ラグ (lag) | 過去の値を予測材料に使うことです。例: 24時間前や168時間前の貸出台数。 |
-| 欠損 / NaN | 値が記録されていない状態です。NaNはプログラムで欠損値を表す書き方の一つです。 |
+| 欠損 / NaN | 欠損は値が記録されていない状態です。NaN（Not a Number）は数値として扱えない値の表現で、この実装では数値の欠損にも使います。 |
 | 特徴量リーク | 予測時にはまだ知り得ない未来の情報を学習に混ぜてしまうことです。結果が実際より良く見える原因になります。 |
 | 時系列分割 | 時刻の順を保ってデータを学習用・検証用・最終確認用に分ける方法です。未来の行を過去の学習へ混ぜません。 |
 | 学習 / 検証 / holdout | 学習はモデルを作るデータ、検証は設定や合否を決めるデータ、holdoutは最後に一度だけ性能を見るために取り置くデータです。 |
 | replay (リプレイ) | 過去の時刻順にAPIへ予測を送り、当時の運用を再現することです。 |
 | baseline (基準値) | 比較相手になる簡単な予測方法です。このプロジェクトでは前日の同じ時刻の値を使い、それがない場合は学習データの曜日・時刻別平均、さらに全体平均を使います。 |
 | 指標 (metric) | 性能や状態を数値で表したものです。MAEやRMSEが予測誤差の指標です。 |
-| MAE | 予測と正解の差を絶対値にして平均した値です。貸出台数なら、平均で何台ずれたかを表します。小さいほど良い値です。 |
-| RMSE | 大きく外した予測をより重く数える誤差です。小さいほど良い値です。 |
+| MAE | Mean Absolute Error、平均絶対誤差です。予測と正解の差を絶対値にして平均します。貸出台数なら平均で何台ずれたかを表し、小さいほど良い値です。 |
+| RMSE | Root Mean Squared Error、二乗平均平方根誤差です。差を二乗して平均し、その平方根を取ります。大きく外した予測の影響を強く受け、小さいほど良い値です。 |
 | percentile / パーセンタイル | 数値を小さい順に並べたとき、指定割合までの値です。例: p95は応答時間の遅い側5%を除いた境目を示します。 |
 | p95 latency | 測った応答時間の95パーセンタイルです。p95が250msなら、95%の応答が250ms以内という意味です。 |
 | nearest-rank法 | パーセンタイルの位置を`ceil(割合 × 件数)`番目として選ぶ計算方法です。計算手順による差を避けるため、報告ではこの方法を固定します。 |
 | 運用benchmark | 決めた入力をAPIへ送り、応答時間・失敗数・予測形式などを測る試験です。精度を測る試験ではありません。 |
-| PSI | 予測に使うデータの分布が、以前とどれくらい変わったかを調べる数値です。変化の調査開始に使い、自動でモデルを切り替える判定にはしません。 |
+| PSI | Population Stability Indexです。入力データの分布が学習時などの参照分布からどれだけ変わったかを調べます。変化を調査するきっかけに使い、自動でモデルを切り替える判定にはしません。 |
 | 品質ゲートの条件と判定 | `quality_gate`は合否のルール、`quality_gate_passed`は今回の結果です。初回CapitalモデルはMAEがbaselineより厳密に小さく、RMSEもbaseline以下である必要があります。validation、final精度、運用のgateは別々に記録します。 |
 | 検証 (validation) | 学習したモデルを別の期間の正解と比べ、設定や配信可否を決める評価です。最終holdoutとは役割が違います。 |
 
@@ -294,7 +352,7 @@ manifest schema 2の過去データとprofile別seedは検証済みです。R04�
 |---|---|
 | 機械学習 | 例から規則を学び、新しい入力への予測を作る方法です。 |
 | 回帰 (regression) | 数量や金額など、数値を予測する機械学習の種類です。このモデルは貸出台数を予測します。 |
-| モデル | 学習でできた予測プログラムです。このプロジェクトのモデルは時刻や過去の貸出台数から、1時間の貸出台数を予測します。 |
+| モデル | 学習した規則を使って新しい入力から予測値を計算するものです。このプロジェクトでは、時刻や過去の利用実績から、1時間の利用件数を予測します。 |
 | HistGradientBoostingRegressor | scikit-learnにある回帰モデルです。複数の決定木を順に組み合わせて、数値を予測します。 |
 | scikit-learn | Pythonで機械学習を行うためのライブラリです。 |
 | MLflow | 学習の記録、モデルファイルの保存、モデル版の管理をするソフトウェアです。 |
@@ -304,14 +362,14 @@ manifest schema 2の過去データとprofile別seedは検証済みです。R04�
 | rolling evaluation | 時刻の境界を決め、過去で学習して後の期間で評価する方法です。期間ごとに同じ手順を繰り返せます。 |
 | model registry (モデル登録簿) | 名前と版番号を付けて、学習済みモデルを管理する場所です。 |
 | モデル版 | 登録されたモデルの番号です。版1と版2は別々の保存・配信対象です。 |
-| model URI | MLflow内のモデルの場所を表す文字列です。例:`models:/bike-demand/2`。 |
+| model URI | URI（Uniform Resource Identifier）は資源を識別する文字列です。モデルの場合は`models:/bike-demand/2`などと書きます。 |
 | model artifact | 学習済みモデルを読み込むためのファイル一式です。プログラム本体のほか、読み方を示す`MLmodel`などを含みます。 |
 | `MLmodel`ファイル | artifactの中身や読み込み方法をMLflowに伝える説明ファイルです。これがない場所は、読み込めるMLflowモデルとして認識できません。 |
 | artifact store | MLflowがモデルや学習時のファイルを保存する場所です。画面やDBに記録されたURIから実ファイルを取得します。 |
 | MLflow 3のlogged model | MLflow 3がモデルをrunの通常ファイルとは別に管理する仕組みです。`log_model()`が返すURIやmodel IDを登録・読み込みに使います。 |
 | model card | モデルの目的、使ってよい範囲、データ、注意点をまとめた説明書です。 |
 | ハイパーパラメーター | 学習前に人が決めるモデルの設定値です。例: 木の数や学習率。 |
-| 品質ゲート | モデルを通常配信へ進めてよいかを決める条件です。このプロジェクトでは検証MAEが基準値を下回ることが条件です。 |
+| 品質ゲート | 次の段階へ進めるかを決める合格条件です。UCIでは検証MAEの改善を確認し、Capitalでは検証・最終評価のMAEとRMSEを確認します。配信には精度以外の運用条件や承認も必要です。 |
 | `READY`状態 | MLflowがモデル版の登録処理を終え、保存先を参照できる状態です。品質ゲート合格を意味する`passed`とは別の状態です。 |
 | skops | scikit-learnモデルを保存・読み込みするためのPythonライブラリです。読み込み時に、含まれる型を確認できます。 |
 | 明示的な信頼型 | skopsに「この種類のPython部品は読み込みを許可する」と個別に指定した型です。このプロジェクトでは`TreePredictor`だけを許可し、何でも許可する設定より範囲を限定しています。 |
@@ -324,15 +382,16 @@ MLflow 3ではモデルの保存場所が従来と変わりました。このプ
 
 | 用語 | かんたんな説明 |
 |---|---|
-| MLOps | 機械学習モデルを作るだけでなく、記録、配信、監視、更新まで安全に続ける考え方と仕組みです。 |
-| API | プログラム同士が決められた形式で情報をやり取りする窓口です。このAPIは予測要求を受け付けます。 |
+| MLOps | Machine Learning Operationsです。機械学習モデルの学習、記録、配信、監視、更新を継続するための考え方と仕組みです。 |
+| API | Application Programming Interfaceです。プログラム同士が決められた形式で情報をやり取りする窓口です。このAPIは予測要求を受け付けます。 |
 | FastAPI | このプロジェクトのAPIをPythonで作るために使うライブラリです。 |
 | Uvicorn | FastAPIのプログラムをネットワークから呼び出せるように動かすサーバーです。 |
-| CLI | コマンドラインインターフェース。ターミナルで文字のコマンドを入力して使う操作方法です。 |
+| CLI | Command Line Interfaceです。ターミナルで文字のコマンドを入力して操作する窓口です。 |
 | endpoint (エンドポイント) | APIの機能ごとのURLです。例:`/ready`は使用準備ができたかを返します。 |
 | PostgreSQL | 複数の利用者やサービスで使うデータを保存するデータベースソフトウェアです。 |
 | SQLite | 1つのファイルで扱える小型データベースです。ローカルの試行に使います。 |
 | psycopg | PythonプログラムからPostgreSQLへ接続するためのライブラリです。 |
+| DB / SQL | DB（Database）はデータベースです。SQL（Structured Query Language）は、保存した行を検索・追加・更新するための言語です。 |
 | Caddy | APIの前に立ち、入口URLの要求をBlueまたはGreenへ渡すWebサーバーです。 |
 | staging (隔離試験環境) | まだ正式配信を許可していないcandidateを、利用者向けruntimeから分けて試す環境です。試験結果だけで正式配信になるわけではありません。 |
 | fail-closed | 必要な確認情報が欠けた場合に通してしまわず、処理を拒否する作り方です。 |
@@ -343,11 +402,11 @@ MLflow 3ではモデルの保存場所が従来と変わりました。このプ
 | Docker Compose | 複数のcontainerやネットワーク、保存領域をまとめて起動・停止する仕組みです。 |
 | named volume | Dockerが管理する保存場所です。containerを作り直してもDBやartifactを残せます。 |
 | port (ポート) | ネットワーク上で、どのプログラムに接続するかを分ける番号です。8001と8002はAPIの別枠に割り当てています。 |
-| HTTP 503 | 接続先のHTTPサーバーが「今は要求を処理する準備ができていない」と返した状態です。このプロジェクトではモデル読み込み失敗時に返ります。 |
+| HTTP 503 | 接続先が要求を処理できないと返した状態です。このプロジェクトでは、モデルの読み込み失敗や、予測を監査記録へ保存できない場合などに返します。 |
 | tracking URI | 学習記録やモデル登録情報を管理するMLflowサーバーの接続先です。 |
 | loopback | 自分のPC自身を指す接続先です。`127.0.0.1`に公開したサービスは、通常ほかのPCから直接アクセスできません。 |
-| TLS | ネットワーク通信を暗号化し、接続先を証明書で確認する仕組みです。 |
-| WSL 2 | Windows上でLinuxを動かす仕組みです。この作業ではUbuntuとDocker Desktopをつなぎます。 |
+| TLS | Transport Layer Securityです。通信を暗号化し、接続先を証明書で確認する仕組みです。 |
+| WSL 2 | Windows Subsystem for Linuxのバージョン2です。Windows上でLinuxを動かす仕組みで、この作業ではUbuntuとDocker Desktopをつなぎます。 |
 | venv | Pythonのライブラリをプロジェクトごとに分けて入れる仮想環境です。 |
 | 依存ライブラリ / 版固定 | 依存ライブラリはプログラムが使う別ソフトです。版固定は使う版を指定し、環境差による動作変化を抑えます。 |
 | psycopg接続とデータベースロール | ロールはデータベースへ入るための利用者名と権限です。用途ごとに分けて権限を限定します。 |
@@ -360,7 +419,7 @@ MLflow 3ではモデルの保存場所が従来と変わりました。このプ
 |---|---|
 | health / readiness | healthはプログラムが動いているか、readinessはモデルやDBが使えて予測を受けられるかを表します。containerがUpでもreadinessが失敗することがあります。 |
 | Blue / Green | 同じ役割を持つAPI枠を2つ用意する方式です。片方で新版を試し、準備ができてから入口を切り替えます。 |
-| reverse proxy / Caddyfile | reverse proxyは入口の要求を別のAPIへ転送する役です。CaddyfileはCaddyに転送先などの設定を書くファイルです。 |
+| reverse proxy / Caddyfile | リバースプロキシは、受け取った要求を別のAPIへ転送するサーバーです。CaddyfileにはCaddyの転送先などの設定を書きます。 |
 | active slot | Caddyが現在要求を渡しているAPI枠です。 |
 | promote (昇格) | 確認済みのモデルを配信対象に切り替える操作です。このプロジェクトでは理由と承認者を記録します。 |
 | rollback (差し戻し) | 問題が起きたとき、以前のモデル版へ戻す操作です。 |
@@ -375,11 +434,12 @@ MLflow 3ではモデルの保存場所が従来と変わりました。このプ
 | unique constraint (一意制約) | 同じIDなどの重複登録をデータベースが拒否するルールです。 |
 | CPU | プログラムの計算を実行する装置です。このプロジェクトのモデル学習はCPUで行います。 |
 | API latency / throughput | latencyは1要求の応答にかかる時間、throughputは一定時間に処理できる要求数です。MAE/RMSEの予測誤差とは別の性能です。 |
-| source revision / working tree | source revisionは実行コードのGit上の版です。working treeは今のフォルダーにある変更状態で、`dirty`は未コミット変更があることを表します。 |
+| source revision / working tree | 前者は実行コードのGit上のバージョン、後者は作業中のファイル群です。`dirty`は未コミットの変更がある状態を表します。 |
 | source tree hash | 実行コード一式から計算した指紋です。報告に記録し、実際に使ったコードをあとで識別する手掛かりにします。 |
 | seed (初期投入) | この文書ではDBに過去の観測データをあらかじめ登録することです。乱数を固定するseedとは別の用法です。 |
 | Host allowlist | サーバーが受け入れる接続先名を限定する設定です。Docker内部の`mlflow:5000`とローカルUI用の名前を許可しています。 |
 | DNS rebinding対策 | 怪しいWebページがブラウザー経由でPC内部のサービスへ接続する攻撃を防ぐ仕組みの一つです。MLflowはHost名を確認します。 |
+| DNS | Domain Name Systemです。サーバー名から接続先のアドレスを調べる仕組みです。 |
 
 <a id="glossary--監査と残作業計画"></a>
 
@@ -403,7 +463,7 @@ MLflow 3ではモデルの保存場所が従来と変わりました。このプ
 | attestation（観測の申告） | 試験を行った側が「この結果を観測した」と記録することです。ここでは報告書同士の一致を検査しますが、署名や本人確認を提供せず、報告書を読むだけで試験を自動再実行するわけでもありません。 |
 | bins / quantile（区切り / 分位点） | 数値をいくつかの区間に分ける境界です。分位点は値を小さい順に並べて同じ割合ごとに区切る目安です。この基盤では学習時の境界を保存して、後の分布と同じ物差しで比べます。 |
 | training reference（学習参照） | モデルが勉強したときの入力分布を記録した比較用の資料です。使った行・期間・欠測・区切りをモデルへ結び付け、別データと取り違えないようにします。[仕様](monitoring.md#training-monitor-reference)を参照してください。 |
-| request journal / JSONL | 要求ごとの予定・送信直前・応答確認を追記する記録です。JSONLは1行に1つのJSONを書きます。プログラムが強制終了しても途中経過を調べるために使います。[確認手順](monitoring.md#measurement-interruption)を参照してください。 |
+| request journal / JSONL | 要求ごとの予定・送信直前・応答確認を追記する記録です。JSONL（JSON Lines）は1行に1つのJSONを書く形式です。強制終了した場合にも途中経過を調べるために使います。 |
 | fsync | メモリ上の書込データをディスクへ保存するようOSへ求め、完了を待つ操作です。この基盤は送信直前と結果の記録で使います。装置の故障まで防ぐ保証ではありません。 |
 | SIGTERM / SIGKILL | 実行中のプログラムを止めるLinuxの通知です。TERMは終了処理の機会があります。KILLは即座に止めるため、終了処理や失敗reportが残らない場合があります。 |
 | 遅延commit / 結果未確定 | APIを呼んだ側が待ち切れなくなった後に、サーバーのDB保存だけが完了する場合があります。「応答がない」「まだDBで見えない」だけでは未処理と決めず、同じ要求IDを調べます。 |
@@ -411,6 +471,14 @@ MLflow 3ではモデルの保存場所が従来と変わりました。このプ
 | quiescent snapshot / 書込みを止めた対応保存 | APIやモデル管理サービスの書込みを止めてから、DBとモデルfileを組として保存します。動き続けるシステム全般を無停止でbackupできるという意味ではありません。 |
 | sequence / DBの連番 | DBが次の行番号などを作るために持つカウンターです。復元時は行数だけでなくカウンターの現在値も照合し、次の書込みで番号が衝突する問題を見逃さないようにします。 |
 | torn tail / SHA鎖 | torn tailは中断で最後の行が途中になった状態です。SHA鎖は各行へ前の行の指紋を持たせ、順序や内容の破損を調べる方法です。本人確認や電子署名にはなりません。 |
+| consumer / producer | consumerは保存された証拠を読み、使えるか検査する処理です。producerは試験を実行し、結果の記録を作る処理です。両者の結果が一致していても、合成試験を実候補の証拠に置き換えることはできません。 |
+| head / live head | headは追記履歴の最新記録を指すハッシュです。live headの照合では、実際の管理先で現在の値を読み、手元に保存した値と比べます。コピー環境の値では元の管理先の最新性を確認できません。 |
+| fence / publishing | review公開の途中で、別の書き込みが割り込まないようにする保護状態です。保護用ファイルだけが残った場合は、内容を保全し、診断後に明示的な回復操作を行います。 |
+| 事後review / disposition | 事後reviewは、処理完了後に証拠が不適格と分かった場合の審査です。dispositionは候補を保留・不採用にする判断記録です。元の試行を書き換えたり、登録先の配信許可を変更したりする処理とは分けています。 |
+| complete marker | 複数ファイルの保存が完了したことを示す印です。印だけで成功とせず、報告書、行別結果、DBとの一致も確認します。 |
+| metadata | データ本体を説明する付随情報です。モデル番号、候補ID、操作ID、承認理由などを対応付け、違う試験の結果を取り違えないようにします。 |
+| CI / artifact | CI（Continuous Integration）は変更ごとに試験する仕組みです。CIのartifactは試験ログや保存結果などの出力物で、モデル成果物とは用途が違います。 |
+| UUID | Universally Unique Identifierです。別の操作と識別子が重複しにくいように作る値で、この基盤では試行の識別などに使います。 |
 
 <a id="glossary--時計調査とci証拠の用語"></a>
 
@@ -422,13 +490,13 @@ MLflow 3ではモデルの保存場所が従来と変わりました。このプ
 |---|---|
 | UTC / CLOCK_REALTIME | UTCは世界共通の時刻の基準です。CLOCK_REALTIMEはOSが返す現在日時で、同期によって前後へ動くことがあります。UTC形式で表示しただけでは、そのPCの時計が正確だと証明できません。 |
 | MONOTONIC / MONOTONIC_RAW | 経過時間を調べるLinuxの時計です。MONOTONICは現在日時の急な変更で直接巻き戻る時計ではありませんが、周波数補正の影響を受けます。RAWはその補正を受けない比較用の時計です。どちらも外部の正しい1秒と常に一致する保証ではありません。 |
-| QPC / bracket採取 | QPCはWindowsの経過時間カウンターです。bracket採取はWindowsの読取をWSL側の前後2回の読取で挟み、通信待ちの幅も含めて比較する方法です。違うOSの値を同時に読んだことにはしません。 |
-| NTP / offset / step / slew | NTPはネットワーク越しに時計を合わせるための仕組みです。offsetは時計の差、stepは日時を一度に動かす補正、slewは進む速さを少しずつ変える補正です。通信で見積もった差にも誤差があります。 |
+| QPC / bracket採取 | QPC（QueryPerformanceCounter）はWindowsの経過時間カウンターです。bracket採取はWindowsの読取をWSL側の前後2回の読取で挟み、通信待ちの幅も含めて比較する方法です。同時に読んだことにはしません。 |
+| NTP / offset / step / slew | NTP（Network Time Protocol）はネットワーク越しに時計を合わせる通信規約です。offsetは時計の差、stepは日時を一度に動かす補正、slewは進む速さを少しずつ変える補正です。通信で見積もった差にも誤差があります。 |
 | chronyd / chronyc | chronydは時計を合わせる常駐プログラム、chronycはその状態を問い合わせる道具です。設定を変える機能もあるため、今回使うのは明示した読取コマンドだけです。 |
 | systemd-timesyncd / W32Time | 前者はUbuntu側、後者はWindows側の時計同期サービスです。この環境でどちらが動いているかを確認しています。サービスが動作中というだけでは時計の正確さは証明できません。 |
-| PHC / Hyper-Vのptp0 | PHCはOSが時刻源として使う装置の一種です。今回のWSLでは仮想化基盤側の時計を`/dev/ptp0`で参照しています。装置があるだけで、それをどのprocessが使用中か、元の時計が正確かは分かりません。 |
+| PHC / Hyper-Vのptp0 | PHC（PTP Hardware Clock）は時計を参照する装置の一種です。PTPはPrecision Time Protocolの略です。今回のWSLでは仮想化基盤側の時計を`/dev/ptp0`で参照しています。装置の存在だけでは、使用中のプロセスや元の時計の正確さは分かりません。 |
 | tick / freq / ppm | tickとfreqはLinuxの時計の進み方を補正する値です。ppmは100万分のいくつかを表す割合で、1,000ppmは0.1%です。tick=11000を11,000Hzという意味にはせず、freqとの組合せで解釈します。 |
-| PID / namespace / comm | PIDはプログラムの実行番号、namespaceはOS内で見える範囲を分ける仕組みです。同じprocessでも見えるPIDが異なります。commは短い表示名で、同じ名前だけでは実行fileや管理元を特定できません。 |
+| PID / namespace / comm | PID（Process Identifier）は実行中のプログラムの識別番号、namespaceはOS内で見える範囲を分ける仕組みです。同じプロセスでも見えるPIDが異なります。commは短い表示名で、同名というだけでは実行ファイルや管理元を特定できません。 |
 | exe / 開始tick / 親process | exeは実際の実行file、開始tickはそのprocessが起動した時点を表す値です。PIDの再利用を見分けるため併用します。親processは現在の親で、元の起動者が終了して親が変わる場合もあります。 |
 | fd / socket inode | fdはprocessが開いているfileや通信口の番号です。socket inodeはOS上の通信口を照合する手掛かりです。今回、processのfdとそのprocessのUDP一覧を合わせ、応答した名前だけで所有者を決めないようにしています。 |
 | setter / syscall / kernel trace | setterは時計の変更を要求した側を指す調査用の呼び方です。syscallはプログラムからOSへの要求、kernel traceはOS内部の出来事の記録です。変更要求だけでなく戻り値と時計の変化を対応付けます。 |
@@ -445,7 +513,7 @@ MLflow 3ではモデルの保存場所が従来と変わりました。このプ
 | interface table / literal | interface tableは共通の呼び方から実際の処理へ結ぶ表です。literalはコードに埋め込んだ文字列や数値です。時刻取得の呼出先とエラー文は経路の手掛かりになりますが、実際の応答値の証明にはなりません。 |
 | 隣月buffer / partition | bufferは境界の取りこぼしなどを調べるため、対象の前後へ余分に含める入力です。partitionはfile等へ分ける単位です。月名のfileにその月の開始tripだけが入ると決めつけず、前後のfileも確認します。追加した12月入力を2023年開始の学習targetへ混ぜる意味ではありません。 |
 | 飽和 / 非飽和 | 計算した補正が許された上限に達することを飽和と呼びます。非飽和は上限に達していない状態です。今回の非飽和の観測だけで、過去に上限へ達した原因が分かったことにはしません。 |
-| ORM / mapper / noload | ORMはDBの行とプログラムのobjectを対応させる仕組み、mapperはその対応設定です。noloadは関連するobjectを自動で読まない指定です。今回のSQLAlchemyでは非推奨なので、MLflowの設定箇所と修正releaseの有無を調べています。 |
+| ORM / mapper / noload | ORM（Object-Relational Mapping）はDBの行とプログラムのオブジェクトを対応させる仕組み、mapperはその対応設定です。noloadは関連するオブジェクトを自動で読まない指定です。調査時のSQLAlchemyでは非推奨で、MLflow側の使用箇所を切り分けました。 |
 | TID / TGID / scheduler照会 | TIDは実行中のthreadの番号、TGIDはthreadが所属するprocessの番号です。1つのprocessに複数threadがあるため、時計を書いたTIDをexeや親へ結ぶには所属も確認します。今回の`chrt -p 番号`はschedulerの状態を読むだけで、優先度変更はしていません。 |
 | wsl-bootstrap / initd services | 今回確認したDocker Desktopの起動・service管理processです。単独の時刻同期service名とは限りません。時計調整だけを止めるつもりでprocess全体を停止すると、他のserviceやcontainerにも影響し得ます。 |
 | Go build情報 / 静的解析 | 実行fileに埋め込まれたコンパイラ版やmodule名を、起動せずに読む調査です。記載された関数名が見つかっても、その関数が今回の要求で実行されたことや、署名済みの出所を保証するものではありません。 |

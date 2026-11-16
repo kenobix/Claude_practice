@@ -1,8 +1,41 @@
-# Capital計画・評価・runtime受入
+# Capital候補の評価と配信判断
 
-[文書一覧・統合対応表](README.md)。2026-11-15に用途別へ統合。過去の結論・未解決事項・原本hashは保持。
+Capital Bikeshareの公開利用履歴を使い、1時間あたりの利用開始件数を予測する候補モデルを評価しました。
+この文書には、使った期間、合格条件、隔離環境での試験、最終判断の根拠をまとめています。
+2026年11月16日の結論は**精度合格・配信不採用**です。
 
-各節の日付・「未完了」は執筆時点の記録を含みます。現在の状態は[プロジェクトREADME](../README.md)と[計画書の最新残件](../../261014/plan_mlops.md#remaining-work-latest)を優先してください。再実行用の入口は新配置へ更新し、当時の原文・コマンド・hashはGit `9479201`、work_log、review JSONに保持しています。
+## 先に確認する結果
+
+| 確認したこと | 結果 |
+|---|---|
+| 同じ候補を検証期間と最終期間で評価 | 両期間で精度の条件を達成。両期間とも使用済み |
+| 専用環境で予測、監視、復元を実行 | 保存済みの観測・試験範囲を記録。全ケースの配信承認を意味しない |
+| 1,000要求の運用試験 | エラー数と応答時間の数値条件は達成。ただし要求記録の時刻が逆行 |
+| 配信に使える運用証拠か | 不適格として拒否 |
+| 最終判断 | 不採用をローカルの追記履歴へ保存。モデル登録先の配信許可は`blocked`のまま |
+
+```mermaid
+flowchart LR
+    accuracy[精度の条件を達成] --> runtime[運用試験を実行]
+    runtime --> reversal[要求記録の時刻が逆行]
+    reversal --> refuse[運用証拠を拒否]
+    refuse --> decision[候補の配信不採用を記録]
+    decision --> blocked[登録先の配信禁止を維持]
+```
+
+予測要求の窓口をAPI（Application Programming Interface）、文字のコマンドで操作する窓口をCLI（Command Line Interface）と呼びます。
+DB（Database）は予測や観測の保存先です。監視結果はCSV（Comma-Separated Values：表形式）やJSON（JavaScript Object Notation：項目名と値の組）にも保存します。
+SHA-256（Secure Hash Algorithm 256-bit）は内容の一致を調べるハッシュ値です。
+
+精度のMAE（Mean Absolute Error）は平均絶対誤差、RMSE（Root Mean Squared Error）は大きなずれの影響も強く受ける誤差です。
+PSI（Population Stability Index）は入力分布の変化を調べる指標です。
+UTC（Coordinated Universal Time）は協定世界時、CI（Continuous Integration）は変更ごとの自動試験を指します。
+
+現在の判断だけを確認する場合は、末尾の[完了範囲と不採用の根拠](#project-closure-20261116)へ進んでください。
+以下は、仕様の詳細と開発途中の記録です。「未実施」「次の作業」などは当時の状態として残し、現在の実行許可とは扱いません。
+
+<details>
+<summary>評価・監視・証拠保存の仕様と開発履歴を表示</summary>
 
 ## 目次
 
@@ -23,7 +56,7 @@
 
 <a id="product-completion-policy"></a>
 
-## product-completion-policy
+## 作業の開始条件と停止条件
 
 <a id="product-completion-policy--製品完成に向けた開始条件（2026-11-14改訂）"></a>
 
@@ -81,7 +114,7 @@ SSH導入・ポート開放・OS変更は不要。実fitの前に最新の消費
 
 <a id="capital-bootstrap-gate"></a>
 
-## capital-bootstrap-gate
+## 初回候補の精度評価基準
 
 <a id="capital-bootstrap-gate--capital-bikeshare初回モデルの評価基準"></a>
 
@@ -351,7 +384,7 @@ seedは候補・最終reportを再検証し、指定したMLflow版のtag、CSV�
 
 <a id="t09-october-acquisition"></a>
 
-## t09-october-acquisition
+## 2026年10月分の原本取得と構造確認
 
 <a id="t09-october-acquisition--t09：2026年10月原本の取得・構造と右端境界の照合"></a>
 
@@ -425,7 +458,7 @@ OS/時計設定、実DB・実registry・現在の配信、`.env`を変更して�
 
 <a id="t10-input-readiness"></a>
 
-## t10-input-readiness
+## 評価用の入力を固定する手順
 
 <a id="t10-input-readiness--t09取得監査とt10開始手順"></a>
 
@@ -575,7 +608,7 @@ T10のレビューが完了してから一度だけcandidate fitへ進む。vali
 
 <a id="t10-snapshot-review"></a>
 
-## t10-snapshot-review
+## 固定した入力と評価計画の照合
 
 <a id="t10-snapshot-review--t10：固定原本の正式snapshot・事前protocolのreview"></a>
 
@@ -733,7 +766,7 @@ legacy/default消費台帳の重複拒否を維持し、保存しても消費開
 
 <a id="capital-first-evaluation"></a>
 
-## capital-first-evaluation
+## 実候補の予測精度
 
 <a id="capital-first-evaluation--capital初回候補：実データの精度評価（2026-11-14）"></a>
 
@@ -802,7 +835,7 @@ review/別承認と全実証が揃うまでT13b採否は未完了。時計研究
 
 <a id="monitor-investigation-and-next-data"></a>
 
-## monitor-investigation-and-next-data
+## 過去の分布警告・誤差と新データの調査
 
 <a id="monitor-investigation-and-next-data--psi・直近誤差の調査と新データ評価"></a>
 
@@ -915,7 +948,7 @@ MLFLOW_TRACKING_URI=http://127.0.0.1:5000 ./.venv/bin/python scripts/data_tools.
 
 <a id="capital-offline-monitoring"></a>
 
-## capital-offline-monitoring
+## 保存済みの予測を使う監視診断
 
 <a id="capital-offline-monitoring--実候補の保存済み予測を使う監視診断（2026-11-14）"></a>
 
@@ -969,7 +1002,7 @@ producer内で全窓の所属/到着済み正解数/MAEを別算術で確認し�
 
 <a id="capital-runtime-acceptance"></a>
 
-## capital-runtime-acceptance
+## 実候補を隔離環境で動かす試験
 
 <a id="capital-runtime-acceptance--capital実候補の隔離runtime受入（2026-11-14）"></a>
 
@@ -1065,7 +1098,7 @@ MLflow UIはこのPCの[専用実験run](http://127.0.0.1:5001/#/experiments/1/r
 
 <a id="capital-operational-hold"></a>
 
-## capital-operational-hold
+## 運用試験の受入保留と対応する復元
 
 **2026-11-15追補:** [consumerのUTC拒否・事後review契約・警告review](#operational-evidence-review-20261115)へ進んだ。
 以下の2026-11-14記録と原本は保持する。新測定・証拠tag・採否は実施していない。
@@ -1332,7 +1365,7 @@ T16 archiveだけで暖機50回を除く1,000要求/全1,050応答/p95 37.966159
 
 <a id="capital-runtime-handoff"></a>
 
-## capital-runtime-handoff
+## 過去の引継ぎ：実候補の隔離試験
 
 <a id="capital-runtime-handoff--次のsol作業：同じ実候補の隔離runtimeproducer受入"></a>
 
@@ -1404,7 +1437,7 @@ path/hashを照合してから続行する。venvは別PCへそのままコピ�
 
 <a id="capital-decision-http"></a>
 
-## capital-decision-http
+## HTTP通信が失敗した場合の判断記録の試験
 
 <a id="capital-decision-http--t13a-合成証拠を使うmlflow-http決定の障害受入"></a>
 
@@ -1459,7 +1492,7 @@ f1cc9ffの[CI41300378098](https://github.com/kenobix/Claude_practice/actions/run
 
 <a id="capital-deployment-evidence"></a>
 
-## capital-deployment-evidence
+## 配信に必要な証拠をまとめて照合する
 
 **2026-11-15改訂:** 現行bundleはschema/policy v2で、`reports.request_journal`の原本とUTC順序検査が必須。
 v1を新規承認へ使用しない。[変更点と既存原本の扱い](#operational-evidence-review-20261115)を優先する。
@@ -1878,7 +1911,7 @@ exit124はsuite外側の240秒timeoutで、monotonic差は240.136817945秒。
 - `record_operational_review(passed)`と`record_deployment_approval`は全bundleを検証する。一方、通常loaderは`require_deployment_eligible`により、この承認を取得済みの版しか読み込まない。従って「同candidateの承認済みoperationを事前のmetadata categoryへ入れる」という受入解釈には循環がある。観測に架空の承認を書くことは解決にならない。
 - `command_monitor`はラベルを固定CSVから生成し、Capitalでは予測targetがCSVに無い場合も拒否する。DBの観測削除をラベル欠測として扱う実装ではない。既存の「ラベル停止」合成試験はavailabilityを69時間ずらす方式で、欠落ラベルを持つ実CLI入力の証明ではない。
 - `candidate_identity`はvalidationとmonitor_referenceを含む。実候補のMAEを未設定にしたり非定数referenceを定数へ置換したりすればidentityが変わる。一般機能の分岐を固定候補に無理に成立させることはできない。
-- 現T13b writerのdecisionは`passed/rejected`だけ。`rejected`も`_validate_registered_version`で`capital_operational_evidence_status=recorded`等を要求する。したがって**「この候補なら今すぐ正式な不採用を書ける」わけではない**。保留は現状のblocked状態と文書に保持され、正式な保留判断の専用契約はまだ無い。
+- 当時のT13b記録処理が受け付けるdecisionは`passed/rejected`だけでした。`rejected`でも、`_validate_registered_version`が`capital_operational_evidence_status=recorded`などを要求します。そのため、その入口から直ちに正式な不採用を記録することはできませんでした。保留は`blocked`状態と文書で維持し、この時点では保留判断専用の保存仕様もありませんでした。
 
 ### 全ケースの適用先と必要証拠
 
@@ -1979,22 +2012,72 @@ C1のcold backupは元PG85,688,320bytes・artifact1,433,600bytesをprivate tar�
 
 中断時点（後述の再開で解消）の[検証索引](reviews/capital.json#/reviews/20261116-product-acceptance-checks.json)：新契約14件は成功、既存deployment回帰は300秒timeout。C2参照controlは発行済みで、正式5入力・現source closure・194保護原本はoffline照合済み。C1/C2終了時に診断helperの短縮/完全ID比較が失敗し、結果JSON未保存。再起動による結果回収は自動承認レビューに拒否されたため、元liveの再確認・現在の停止状態をこの索引の確認済み項目に含めない。参照controlの再発行は行わない。製品sourceは未commit/CI未検証、試験専用二版harnessと実保留判断はまだ未完了。
 
+</details>
+
 <a id="project-closure-20261116"></a>
 
 ## 製品の完了範囲と候補の不採用判断（2026-11-16）
 
-ユーザーから最善の終了判断を委任されたため、候補e2df579…を**配信不採用**と決定した。精度合格は変更しない。有効な運用受入が存在せず、新attempt/再測定を行わない条件では、配信採用の必要条件を満たせない。警告1,336/234窓は重なる窓の診断であり独立事故数ではない。リスク受容は行わず、不採用の判断材料として保存した。
+ユーザーから最善の終了判断を委任され、候補e2df579…を配信不採用と決定しました。
+精度合格は変更していません。しかし、有効な運用証拠がなく、新しい試行や再測定も行わない条件では、配信の必要条件を満たせません。
+分布警告1,336窓、誤差警告234窓は、不採用の判断材料として保存しました。窓には重なりがあるため、それぞれ独立した事故の件数ではありません。警告のリスク受容も行っていません。
 
-local追記専用dispositionのheadは`ece3b490a552de4ff140660a59c3b6d27d83b6dde8fd2c6c35a44c1179f83b21`。9原本のhash/bytesを結合し、readbackで同headを確認した。これはremote registryの採否tagではない。通常配信は既存v2 consumerが引き続きblockedとする。T13bの「配信採用」は中止し、別契約の非採用判断として閉じる。旧T13b writerの条件を緩めて不正な証拠を受け入れない。
+### 不採用判断の保存
 
-元PG/MLflowの限定再起動は今回明示的に再許可された。保存済みcold backupを検算し、live headと発行済み参照controlの整合、5正式入力/36source、両DB論理manifestの不変を確認した。control再発行0、tag更新0。元2サービスを再停止、他6サービス不変。起動に伴うWAL/logは巻き戻していない。
+ローカルの追記専用履歴に判断を保存し、9原本のハッシュとバイト数を対応付けました。
+書込後に読み直して確認した最新記録のハッシュ（head）は、次の値です。
 
-22ケースは[受入設計表](#acceptance-scope-proposal-20261115)の適用範囲を維持する。旧v2の復元4確認/観測8/部分5/未実証5は過去の事実であり、今回全passedにはしない。不採用候補に対する採用前の追加case、承認後の実配信、中断した承認済み配信の復旧、実配信承認metadataは**採用中止に伴い実施を中止**する。汎用機能はunit/隔離CIの証拠、候補コピーの二登録版/Caddy試験は試験専用証拠として保存し、実候補採用へ代用しない。
+`ece3b490a552de4ff140660a59c3b6d27d83b6dde8fd2c6c35a44c1179f83b21`
 
-時計の原因究明、独立時計資格、新candidate/新運用試行は本製品を採用判断まで完結するためには不要となったため、今回の作業から取り下げる。時計問題は未解決、資格未合格を保持する。後から配信を目指す場合は別プロジェクトとして、新しい承認・未消費評価窓・運用証拠が必要。
+これはモデル登録先の採否タグではありません。通常配信の検査は既存のv2仕様を維持し、配信許可を`blocked`のままにしています。
+T13bの「配信採用」は中止し、別の仕様による不採用判断として記録しました。従来の判断記録処理を緩めて、不適格な証拠を受け入れたわけではありません。
 
-全回帰・実装commitのCI/artifact/cleanupは証拠索引の最終状態で判断する。外側timeoutの失敗・環境差は保存し、自然再発がないことを原因解決へ読み替えない。
+### 元の登録先との照合
 
-隔離二版試験（two-versions-v6）は版1→2、保存要求の版1保持、新要求の版2、切替先停止502→明示rollback→ready200を確認した。登録skops本体は両方SHA `bd5764e19f97674366495c24cf12d348ee5f8a9aaf8f8e0078c042679f18fb82`。登録artifact hashは1が13dbe8…、2が3e5ce7…で、差は登録metadata。元8container不変、所有container/volume/network回収済み。操作前に専用leaseを検証した。APIの承認operationはlegacy_unverifiableのままで、通常配信許可ではない。
+明示的な再許可に基づき、元のPostgreSQLとMLflowだけを限定起動しました。
+停止中に保存したバックアップを検算し、元の登録先の最新値、発行済みの入力参照記録、5つの正式入力、36のソースファイルを照合しました。
+両DBの論理的な内容が変わっていないことも確認しています。
 
-最終受入：実装`0efc7913fe64832467ad4ce0b293d701c2ba293b`の[CI43853213533](https://github.com/kenobix/Claude_practice/actions/runs/43853213533)両job成功。ローカル全667件（790.464表示秒）成功、CI全667件成功。artifact14221415361は234,870bytes、SHA `2c4cb4811a209014afa11d54669abde9132d174d782118f00c63b075b0bc7d14`。16member、内包hash、ZIPのみ別process再計算、暖機50除外/1,000要求、Docker/PG/HTTP/Caddy/TERMのcleanupを検算した。CIの合成p95は実候補の運用証拠へ流用しない。今回の範囲の残作業は0で、上記中止項目と歴史的原因未確定はそのまま保持する。
+参照記録の再発行とタグ更新は、ともに0件です。元の2サービスは再停止し、ほかの6サービスは変更しませんでした。
+起動に伴うWAL（Write-Ahead Log：更新を先に記録するログ）や通常のログへの書込みは、巻き戻していません。
+
+### 試験で確認した範囲
+
+22ケースは受入設計表の適用範囲を維持しています。
+従来仕様の「復元4件確認、観測8領域、部分確認5件、未実証5件」は当時の事実として残し、全件合格にはしません。
+採用前の追加ケース、承認後の実配信、中断した承認済み配信の復旧、実配信の承認情報を確かめる試験は、不採用に伴い中止しました。
+汎用機能の単体・隔離試験や、候補のコピーを使った試験を、実候補の採用証拠に置き換えてはいません。
+
+隔離二版試験`two-versions-v6`で確認した動作は次のとおりです。
+
+| 操作・確認 | 結果 |
+|---|---|
+| バージョン1から2へ切替 | 新しい要求はバージョン2で予測 |
+| 保存済みの要求を再送 | バージョン1の保存済み応答を保持 |
+| 切替先を停止 | 入口がHTTP 502を返す |
+| 旧接続先へ明示的に切戻し | `/ready`がHTTP 200になり、保存済みの応答も一致 |
+| 試験環境の終了 | 作成したコンテナ・保存領域・ネットワークを回収し、元の8コンテナは不変 |
+
+両登録モデルのskops本体は同じで、SHA-256は`bd5764e19f97674366495c24cf12d348ee5f8a9aaf8f8e0078c042679f18fb82`です。
+登録ファイル一式のハッシュはバージョン1が13dbe8…、2が3e5ce7…で、登録時の付随情報が異なります。
+性能が異なる2モデルの比較をした結果ではありません。
+操作前に期限付きの試験専用許可を検査しましたが、APIの承認情報は`legacy_unverifiable`のままです。通常配信の許可には使えません。
+
+### 最終検証と終了範囲
+
+| 確認項目 | 結果 |
+|---|---|
+| 実装コミット | `0efc7913fe64832467ad4ce0b293d701c2ba293b` |
+| 自動試験 | [CI 43853213533](https://github.com/kenobix/Claude_practice/actions/runs/43853213533)の両ジョブが成功、全667件成功 |
+| ローカル試験 | 全667件成功。出力上の実行時間は790.464秒 |
+| 保存した出力物 | 番号14221415361、234,870バイト、16ファイル |
+| 出力物全体のSHA-256 | `2c4cb4811a209014afa11d54669abde9132d174d782118f00c63b075b0bc7d14` |
+| 再計算 | 内部ファイルのハッシュ、ZIPだけを渡した別プロセスでの件数とp95、準備用50件を除く1,000要求を照合 |
+| 後片付け | Docker、PostgreSQL、HTTP障害、Caddy、中断試験の資源回収を確認 |
+
+自動試験の合成p95は、実候補の運用証拠へ流用しません。
+過去のタイムアウト、環境差、原因不明の失敗も保存し、再発しなかったことを原因解決とは扱いません。
+
+今回の作業範囲の残作業は0です。時計の原因究明・精密な校正、新候補や新運用試行は今回の範囲から取り下げました。
+時計問題は未解決、時計の資格確認は未合格のままです。
+後から配信を目指す場合は別プロジェクトとして、新しい承認、未使用の評価期間、有効な運用証拠を用意する必要があります。

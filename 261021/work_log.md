@@ -1,10 +1,51 @@
 # 作業記録
 
-検証JSONは2026-11-16に[用途別5冊](docs/reviews/README.md)へ統合しました。
-過去の実施コマンド・本文中の旧JSON名は当時の記録です。旧名索引と`reviews[旧名]`で現在の収録先を確認できます。
-元のUTF-8原文・SHA256も保存しており、整理によって過去の証拠や判定を変更していません。
+このログは、実行したコマンド、結果、失敗、原因の仮説、検証範囲を時系列で残すための記録です。
+最初から通読するための説明書ではありません。全体像はプロジェクトREADME、実行方法は操作手順、判断根拠はCapital文書で確認できます。
 
-用語が分からないときは[初学者向け用語集](docs/architecture.md#glossary)を参照してください。
+## 現在の結論と履歴の読み方
+
+2026年11月16日に今回の製品作業を終了しました。Capital候補は精度合格ですが、唯一の運用試行の記録時刻が逆行したため配信不採用です。
+未達の試験を合格に変更しておらず、時計問題も未解決のままです。
+過去の「次に実施する」「未完了」は当時の状態を示し、新しい実行許可や現在の残課題を意味しません。
+
+日付や試験名から必要な範囲だけ開いてください。折りたたみを開くと、ブラウザーの検索でも本文を探しやすくなります。
+
+| 探したい記録 | 収録範囲 |
+|---|---|
+| データ取得、Docker接続、初回学習 | [環境構築と初期確認](#log-setup) |
+| 候補比較、監視、証拠保存の実装 | [候補評価と運用基盤](#log-foundation) |
+| 復旧、自動試験、時計調査、正式入力の固定 | [隔離試験と調査](#log-investigation) |
+| 実候補の一度限り評価、監視、運用試行の保留 | [2026年11月14日](#log-capital) |
+| 事後審査、証拠の回復、入力参照 | [2026年11月15日](#log-review) |
+| 元登録先との照合、二版試験、不採用、ファイル整理 | [2026年11月16日](#log-closure) |
+
+API（Application Programming Interface）は予測要求の窓口、CLI（Command Line Interface）はコマンド操作の窓口、DB（Database）はデータベースです。
+CI（Continuous Integration）は変更ごとの自動試験、UTC（Coordinated Universal Time）は協定世界時です。
+SHA-256（Secure Hash Algorithm 256-bit）ハッシュでファイル内容の一致を確認します。
+精度にはMAE（Mean Absolute Error：平均絶対誤差）とRMSE（Root Mean Squared Error：二乗平均平方根誤差）、分布変化にはPSI（Population Stability Index）を使います。
+WSL（Windows Subsystem for Linux）はWindows上のLinux環境です。UCI（University of California, Irvine）のデータ集を使った実験と、Capitalの実験を区別して記録しています。
+
+### 過去の記録で使っている表現
+
+| 表現 | 読み方 |
+|---|---|
+| `exit0` / `exit1` / `exit124` | プログラムの終了値。通常は0が正常、1が失敗。124は外側の制限時間超過を示す場合があるので、失敗箇所は元ログで確認する |
+| `source` / `metadata` | 実行したソースコード / 候補や操作を説明する付随情報 |
+| `producer` / `consumer` | 試験結果を作る処理 / 保存結果を検査して使う処理 |
+| `artifact` / `cleanup` | モデルや試験の出力物 / 試験で作った資源の後片付け |
+| `failed` / `incomplete` / `blocked` | 検査に不合格 / 必要な確認が不足 / 配信が禁止された状態。区別して読む |
+| `reference` / `policy` / `head` | 比較用の参照 / 判定規則 / 追記履歴の最新記録を指すハッシュ |
+
+数式や各略語の説明は[用語集](docs/architecture.md#glossary)を参照してください。
+CSV（Comma-Separated Values）は表形式、JSON（JavaScript Object Notation）は項目名と値の組を保存する形式です。
+過去の実施コマンド、英語のエラー、識別子、数値、旧ファイル名は、当時の内容を確認できるよう保持しています。
+80件の公開JSONは[用途別の索引](docs/reviews/README.md)から探せます。
+
+<a id="log-setup"></a>
+
+<details>
+<summary>環境構築と初期確認の原記録を表示</summary>
 
 ## 2026-10-21: 実データ取得・Docker/WSL接続・Compose初回学習
 
@@ -350,6 +391,15 @@ curl -sS http://127.0.0.1:8080/version
 ## 初学者向け用語集の再点検
 
 README、作業記録、アーキテクチャ、データ契約、runbookの全Markdownを再走査し、品質ゲート条件と合否、incumbent/candidate、training cutoff、rolling evaluation、API応答性能と予測誤差の違い、source revision/worktree、Docker image build、loopback/TLS、Caddyfile、deployment lock/recover、固定予測probeなどを`docs/glossary.md`に追加した。
+
+
+</details>
+
+
+<a id="log-foundation"></a>
+
+<details>
+<summary>候補評価と運用基盤の原記録を表示</summary>
 
 ## 2026-10-28: API予測保存・再送とDocker再起動後の確認
 
@@ -2599,6 +2649,14 @@ CIの最終sourceは全337件39.970秒、T06b PG受入25件14.461秒で成功。
 
 検証JSON/照合文書/計画/このログの4ファイルへ実装commit CIを追記し、T06a/bの実装・合成受入を完了にする。記録commit自体のCIを先取りして成功にしない。次は計画の独立P1/D3で、既存UCIへの新コード適用前に必要なT08へ進める。既知T03/T13の不安定性・T07/T17・T02 producerと実Capital/HTTP監視は残件のまま。
 
+
+</details>
+
+<a id="log-investigation"></a>
+
+<details>
+<summary>隔離試験・時計調査・入力固定の原記録を表示</summary>
+
 ## T08 旧REAL予測列の移行・復元検証（2026-11-01、Sol）
 
 T06bの記録commit c38ee00を基点に、plan §11.6とt08-sol-handoffを確認し、次の独立P1/D3を実施した。`db.py`の既存initializeにはadvisory lockと同transaction内のREAL→DOUBLE PRECISION移行が既にあるため、production source/API/schema定義は変更しない。追加は専用受入script、CI接続、制約/手順/証拠/次依頼の記録である。
@@ -4531,6 +4589,14 @@ push-review-v1はexit1、remote先行更新によるfetch-first拒否。fetch-re
 この出版前失敗/取得/rebase receiptのhashと終了値も索引へ追記。原本reviewの基点114af9dや既存24証拠を新parentへ書き換えない。
 最終記録を同じ未公開commitへamendして通常pushする。amend/pushの最終receiptは循環参照を避けlocalへ保存し、force pushは行わない。
 
+
+</details>
+
+<a id="log-capital"></a>
+
+<details>
+<summary>2026年11月14日の原記録を表示</summary>
+
 ## 2026-11-14：時計研究を保留し製品作業を再開（基点d5c0ebf）
 
 ユーザーが時計内部原因・独立源選定・精密校正・全campaignの保留を承認した。
@@ -4706,6 +4772,14 @@ artifact ZIP SHA4bf21be…/16member hash、T16の4原本をarchiveだけから�
 索引20261114-capital-runtime-docs-ci-checks.jsonへ別記。新しい製品実装の受入ではなく既存合成CIであり、実運用保留の解除や実candidate不足caseへ流用しない。
 最後の文書commitの自動CIをこの先行runの結果と混同しない。
 
+
+</details>
+
+<a id="log-review"></a>
+
+<details>
+<summary>2026年11月15日の原記録を表示</summary>
+
 ## 2026-11-15：文書・Pythonファイルの用途別統合
 
 依頼は`docs`のMarkdownと`src/tests/scripts`のPythonを少数のファイルへまとめ、旧ファイルを削除して参照を更新すること。MLOps残課題は進めない。基点`9479201babd74d2ea318c33574044098cc9d8768`を確認し、無関係な未追跡`260701/charts/`、`260701/logs/`、`260905/sets/bookkeeping-2kyu/images/assekiritono-flow.png`は保持した。
@@ -4852,7 +4926,7 @@ artifact14131858623のZIPは235,013bytes、GitHub digestとSHA
 `fdb7be466cbd9f133c835956a7c50aafadce21d8ec586a602dece586d09d0b96`が一致。
 既存allowlist16memberが過不足なく存在し、内包archive/member SHAも一致。
 `verify_ci_artifact.py`を使い、新規一時cwdでarchiveだけを入力にした別processが
-warmup50除外/測定1000/応答1050/p95 **36.49398800001791ms（合成のみ）**を再計算し、CIのJSONと完全一致。
+warmup50除外/測定1000/応答1050/p95 <strong>36.49398800001791ms（合成のみ）</strong>を再計算し、CIのJSONと完全一致。
 gate not_evaluated / permission blocked / synthetic_onlyを保持。
 normal/TERMのCaddy summaryでcurrent Dockerfile build、protected container IDs不変、残resourceなし/errorなし。
 PG各container、HTTP server/group、system paired restore/workspaceのcleanup原本も照合した。
@@ -4931,7 +5005,7 @@ orphan fence/torn recordの明示回復、旧専用project/正式symlink alias/�
 実運用attemptは保留のまま。新しい時計採取/問い合わせ、OS/サービス/task/log設定、resync、future緩和/clampは0件。
 最終対象検証・CI/artifact/cleanupの結果は確認後に追記する。
 
-final-target-v10の**59件成功（64.819 test秒）**を確認。CLIのformal lock path、retry0の設定/復元、
+final-target-v10の<strong>59件成功（64.819 test秒）</strong>を確認。CLIのformal lock path、retry0の設定/復元、
 実MLflow SDKの一時SQLite registryでの初期化・不適格追記、TERM/KILLの2subcaseも含む。
 中間full-suite-v3は621件成功（590.761 test秒）だったが、その後のCLI/fixture補強と最終622件の根拠へ流用しない。
 compile-v2成功、相対リンク940件/旧import0/配置9・18・12・7を確認。
@@ -5100,6 +5174,14 @@ diff check/変更差分の秘密値scanも成功した。この検算結果を�
 - integrity-v1は索引生成中のbuild-index-v2.logをcutoffへ含めたため、終了後のlog SHA差を検出してexit1。原本改変ではなく索引生成helperの自己収録不備。旧helperをbuild_index-v2.pyへ保全し、receipt未完了の生成logを除外する修正を行った。失敗logを消さず、新しい索引を生成して全descriptorを再検証する。
 - integrity-v2成功：最終cutoff53保存物/16receiptの全SHA・194原本不変・復元4case・製品source/tests/scripts/CI不変・private値非公開・初回失敗保持を確認。後続検算/commit/push receiptは同ignored保存先に残す。今回の対象は計画/README/capital/runbook/ログ/新証拠索引の6ファイルだけ。
 
+
+</details>
+
+<a id="log-closure"></a>
+
+<details>
+<summary>2026年11月16日の原記録を表示</summary>
+
 ## 2026-11-16 基点77438f4：受入範囲改訂A/B・限定起動C1/C2
 
 - 前turnの20261115-acceptance-scopeを継続。22ケース表、初回承認の循環、T13b rejectedにも運用記録を要する不整合を整理。合成contract probe3件成功。実候補コピーのCSV外target拒否exit2・出力0・CLIによる監査DB/registry変更0を確認。初回helperのCSV列timestamp誤指定と編集cwd誤り、probeのsys.path不足、表headerをcaseとした失敗、candidate IDの末尾LFを誤って含めたhash検算失敗は各ログ・旧helperを保持した。scope-review-v3で22件と元candidate/hash/非定数3特徴、提案依存グラフの非循環を確認。
@@ -5141,3 +5223,37 @@ diff check/変更差分の秘密値scanも成功した。この検算結果を�
 - 初回の文書apply_patchはREADME文脈不一致で拒否。検算v1はPointer内の旧名を旧pathと誤判定、v2はfragmentなしの冊全体リンクを拒否。製品や原本の失敗ではなく検算helperを修正し、v3で80件の原文/SHA/size/構造、重複key0、943のローカルリンク、344のJSON Pointer、欠落0、diff check成功を確認。最終追記後もリンクを再検算する。
 - 製品source・tests・scripts・依存lock・CIは未変更。構成変更は文書保存形式だけなのでunit suiteや隔離サービスは起動せず、内容保存と参照整合を検証した。正式原本・消費台帳・参照control・registry・候補の配信不採用・時計問題の未解決状態を保持する。
 - 最終追記後の検算も成功：80原本のbyte/SHA/構造一致、5冊、ローカルリンク944件・JSON Pointer344箇所、欠落0、重複key0。製品・試験・CIの差分0を確認した。
+
+</details>
+
+## 2026-11-16：第三者・初学者向けに文書を推敲
+
+### 変えたところ
+
+- 基点`2991e14`から、プロジェクトREADME、文書9冊、検証索引README、作業ログの12文書を確認した。READMEの過去の追記を整理し、概要、最終結果、読む順序、準備、結果の確認先をまとめた。過去の詳しい結果は用途別文書と原記録に残す。
+- READMEのリンクを97から8へ、検証索引のリンクを86から6へ整理した。同じ保存先へのリンクを並べる代わりに、文書一覧と旧名対応表を使う。数値はMarkdownのリンク表記を同じ方法で数えた値で、読みやすさの得点ではない。
+- APIなどの略語をページ内で説明し、用語集にも正式名称を追加した。「精度の合格」「運用証拠の適格性」「配信許可」を分けて説明し、英語の状態名は意味を添えて保持した。
+- 学習から判断までの流れ、Blue/Greenの構成、監視の流れ、実候補を不採用にした判断経路の4図を追加した。複雑な履歴や過去の操作例は折りたたみ、作業ログは6つの時期・作業範囲から開けるようにした。
+- 現在の説明に残っていた古い「未完了」と、日付付きの開発履歴を区別した。実装完了を実候補の配信承認とは書かず、不採用・時計未解決・過去の原因未特定を維持する。
+- 再現手順では、仮想環境を作る前に有効化する例を修正し、削除済みの`bike_mlops.capital_measurement_evidence`を現在の`bike_mlops.operational_validation`へ更新した。新しい入口の`--help`は正常終了。運用測定やDB照会は実行していない。
+
+### 参照資料とスキル
+
+指定されたQiitaの2記事、natural-japaneseの公開リポジトリをWebで確認した。
+そこからyomiyasuの配布元を確認し、バージョン3.1.0を`/tmp/261021-yomiyasu`へ一時取得した。グローバル設定や製品の依存ライブラリは変更していない。
+最初の取得はsandboxのDNS解決に失敗し、権限付きの同じ取得で成功した。
+
+表記と略語の方針は、JTFとMicrosoftの公開ガイドも検索して比較した。
+技術用語は、既存の用語集、MLflowとscikit-learnの公式文書、現行ソースと配置表で照合した。外部資料の確認は、利用者の明示指示に基づく用語・表現の確認であり、時計源の調査再開ではない。
+複数の日本語スキルを同時適用せず、yomiyasuの指摘を手掛かりに元の文と条件を読み比べた。
+
+### 事実の確認と検証範囲
+
+- 作業ログの原記録は、強調が表示されない2箇所のHTML表記を除いて内容を保持した。実行コマンド・エラー原文・数値・識別子は変更していない。
+- 元からある明示アンカーと、文書中の64桁ハッシュを保持した。公開検証JSON5冊もGit上の基点とバイト単位で一致する。
+- CommonMarkに沿うパーサーで文書、内部リンク、JSON Pointer、折りたたみの対応を確認した。初回は12文書、671リンク、167のJSON内参照で欠落0。追記と修正後の結果も保存する。
+- Mermaid 11.12.0で4図の構文を検査した。Chromiumの初回起動はsandboxの内部ソケット制限で失敗したが、権限付きでローカルHTMLだけを開き、12文書・4図・履歴の開閉を確認した。ブラウザーのHTTP通信は遮断し、既存サービスへ接続していない。
+- yomiyasuの原文lintと、原文・修正文の差分検査を実行した。提出するファイルのハッシュ照合も行う。指摘件数は品質の点数ではなく、条件や数値が保持された証明でもない。定着した「台帳」や、過去の試験条件を区別する否定表現は意味のために残す。
+- 原文、外部資料のURL、スキルのコミット、検査結果、失敗と検証用コードは`data/reports/20261116-doc-readability/`へGit対象外で保存する。本文の編集に一括置換は使わず、個々の説明を確認して修正した。旧名のリンク表と折りたたみは構造だけを機械的に整理した。
+- 製品ソース、テスト、CI、固定依存、実DB、モデル登録情報、配信状態、正式な評価台帳は変更しない。文書の推敲に伴う単体テストの再実行は行わず、リンク・構文・表示・原記録の保持を検証する。
+- 文書検算の追記後に末尾の空行をdiff checkが検出したため除去した。最終の用語照合ではUCIをデータ集自体の略称と読める文を修正し、大学名と取得元を区別した。数値や判定の変更ではない。yomiyasuの機械検査後に行ったこの追加の事実訂正は再検査して記録する。

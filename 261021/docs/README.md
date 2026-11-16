@@ -1,50 +1,49 @@
-最新契約：[正式入力参照・全review系列archive・独立原本回復](capital.md#operational-review-input-archive-20261115)、[検証索引](reviews/capital.json#/reviews/20261115-review-archive-checks.json)。
+# 文書一覧と読み方
 
-# 文書一覧とファイル統合の対応表
-
-2026-11-16：検証JSON 80本を[用途別5冊と旧名索引](reviews/README.md)へ統合した。
-各冊の`reviews[旧ファイル名]`で内容を参照でき、`originals`には元のUTF-8原文・サイズ・SHA256も保持する。
-以下の2026-11-15時点の整理記録や、JSON内の旧path/hashは当時の記録として読む。
-
-2026-11-15：Markdown 67本を用途別8冊＋この索引へ統合。元の内容は各冊の旧ファイル名の節へ収録した。
-過去reviewのJSON、保存済み候補・原本・消費台帳は変更していない。過去ログの旧path/hashは当時の記録で、
-必要ならGitの整理前commit `9479201`で原本を確認できる。時計研究・運用受入保留は解除していない。
-整理後の全593テスト・隔離Docker/PG/復旧CIとartifact検算は[検証索引](reviews/capital.json#/reviews/20261115-file-consolidation-checks.json)を参照。
-整理後の製品変更は[UTC順序拒否・事後review契約・警告review](capital.md#operational-evidence-review-20261115)と
-[検証索引](reviews/capital.json#/reviews/20261115-operational-consumer-checks.json)へ記録する。整理時点のCIと今回のCIを混同しない。
-その後の[追記専用reviewと公開head](capital.md#operational-eligibility-review-20261115)は
-[別の検証索引](reviews/capital.json#/reviews/20261115-operational-review-checks.json)から確認する。実candidateの保留は解除していない。
-最新の[明示回復・preflight・追加runtime観測](capital.md#operational-review-recovery-20261115)は[別の最終索引](reviews/capital.json#/reviews/20261115-review-recovery-checks.json)を参照。実装865362dのCI634件とartifact/cleanupを受入済みで、実採否は保留。
+このページは、目的に合う文書を選ぶための索引です。最初は「構成と用語集」、実際に動かすときは「操作手順」を読んでください。
+Capital候補は2026年11月16日に配信不採用と判断しました。過去の節にある「未完了」「次に実施する」は当時の状態です。
+現在の結論はCapital文書の最終節、実行の経緯は作業ログで確認できます。
 
 | 文書 | 内容 |
 |---|---|
-| [architecture.md](architecture.md) | 構成・データ契約・用語 |
-| [runbook.md](runbook.md) | 使用操作・配信・復旧・CI運用 |
-| [capital.md](capital.md) | Capital計画・評価・runtime受入 |
-| [monitoring.md](monitoring.md) | 監視・照合・運用測定の契約 |
-| [evidence.md](evidence.md) | 証拠の読み方・過去review・引継ぎ |
+| [構成と用語集](architecture.md) | 何を作ったか、データをどう扱うか、用語の意味 |
+| [操作手順](runbook.md) | 環境の準備、起動、配信の切替、復旧 |
+| [Capitalの評価と判断](capital.md) | データの固定、精度評価、隔離試験、不採用の根拠 |
+| [監視の仕様](monitoring.md) | 分布や誤差の警告、保存結果の照合、中断時の扱い |
+| [証拠の読み方](evidence.md) | 試験で確認できたことと限界、過去の監査・引継ぎ |
 | [clock-operations.md](clock-operations.md) | 時計資料：手順と選定・保留事項 |
 | [clock-implementation.md](clock-implementation.md) | 時計資料：offline部品と合成検証 |
 | [clock-history.md](clock-history.md) | 時計資料：原因調査の履歴（保留） |
 
+時計の3冊は補足資料です。通常の利用手順から分けており、記載された調査や設定操作を再開する許可は含みません。
+
+検証記録は[用途別5冊の索引](reviews/README.md)から探せます。
+JSON（JavaScript Object Notation：項目名と値を保存する形式）内の`reviews[旧ファイル名]`が本文です。
+`originals`には元のUTF-8（Unicode Transformation Format 8-bit）原文と、SHA-256（Secure Hash Algorithm 256-bit）ハッシュも保持しています。
+ハッシュは内容の一致を調べる値で、記録の作成者を証明する署名ではありません。
+
 ## Pythonの入口
 
-製品18本、tests12本、補助Python7本へ統合した。元モジュールのstate/mock境界を維持するため、
-同名の補助bindingには役割prefixを付けた。runtimeで旧ソースをexecする仕組みや旧名stubは置いていない。
-Python import・テストの参照・CLI/Compose/CIを新配置へ更新した。
-`storage_checks.py`は選択した試験で必要な設定だけを読み、inactiveなmigrationの設定を他の試験へ混ぜない。
-完全な旧→新module/export/command対応は[configs/file-layout.json](../configs/file-layout.json)を参照。
+製品コードは18本、テストは12本、補助スクリプトは7本に整理しました。
+CLI（Command Line Interface）は、ターミナルに文字のコマンドを入力して操作する窓口です。
+以下は`261021`ディレクトリで実行する補助CLIの一覧です。内容を確認する場合は、コマンドの末尾に`--help`を付けます。
 
 | 補助CLI | コマンド |
 |---|---|
 | `python scripts/data_tools.py` | `prepare`, `protocol`, `evaluate`, `evaluation-ledger` |
-| `python scripts/runtime_tools.py` | `register`, `seed`, `plan`, `benchmark`, `recheck`, `record-operational`, `evidence`, `decision`, `inspect`, `pending-audit`, `attempt-ledger`, `eligibility-review` |
+| `python scripts/runtime_tools.py` | `register`, `seed`, `plan`, `benchmark`, `recheck`, `record-operational`, `evidence`, `decision`, `inspect`, `pending-audit`, `attempt-ledger`, `eligibility-review`, `product-acceptance` |
 | `python scripts/clock_tools.py` | `capture-fake`, `derive`, `review`, `rate-review`, `bundle`, `diagnose` |
 | `python scripts/system_harness.py` | `run`, `fixture` |
 | `python scripts/storage_checks.py` | `snapshot`, `interruption`, `monitor-inspection`, `monitor-persistence`, `migration`, `sqlite-os`, `storage-probe` |
 | `python scripts/runtime_checks.py` | `decision-http`, `deployment-recovery` |
 
+これらのコマンドは、一覧にあるだけで既存環境へ実行してよいわけではありません。
+特に`benchmark`や`decision`は測定や判断の記録を伴うため、操作手順の開始条件を先に確認してください。
+
 ## 製品コードとテストの配置
+
+DB（Database）はデータベース、CI（Continuous Integration）は変更ごとに実行する自動試験です。
+表の「隔離候補」は、通常の利用者向け環境から分けて試す候補モデルを指します。
 
 | 役割 | `src/bike_mlops/` | `tests/` |
 |---|---|---|
@@ -57,17 +56,26 @@ Python import・テストの参照・CLI/Compose/CIを新配置へ更新した�
 | 保留中の時計部品 | `clock.py` | `test_clock.py` |
 | 共通入口・試験補助 | `__init__.py`, `cli.py` | `support.py`, `request_interruption_child.py`, `probe_decision_clock.py` |
 
-各ファイルの区切りコメントに統合元の名前を残した。CLIはスクリプト名の後にサブコマンドを指定する。
-例えば旧 `python scripts/register_capital_candidate.py --help` は、
-`python scripts/runtime_tools.py register --help` となる。旧CLI名の互換ファイルは残していない。
-通常APIは `bike_mlops.api:app`、専用Capital APIは `bike_mlops.api:_staging_api_app` が入口。
-文書・過去ログ・証拠JSONの旧path/hashは当時の記録として読み、再実行時は対応表で現行入口を確認する。
+各ファイルの区切りコメントに統合前の名前を残しています。
+例えば旧コマンド`python scripts/register_capital_candidate.py --help`は、現在は`python scripts/runtime_tools.py register --help`です。
+旧名の互換ファイルはありません。関数名も含む詳しい対応は[ファイル配置表](../configs/file-layout.json)で確認できます。
+通常のAPI（Application Programming Interface：プログラムから予測を要求する窓口）は`bike_mlops.api:app`、Capital専用のAPIは`bike_mlops.api:_staging_api_app`です。
 
-統合前の合成時計raw（6/7個の旧source名）はoffline読取を維持する。新規の合成rawは
-実在する `clock.py` と `clock_tools.py` の2本を結合する。保存コードは実行しない。
-公開用exportは現在インストールしたsource bytesとの一致を引き続き要求し、時計資格を与えない。
+ファイルをまとめた後も、状態管理と試験で使う代替部品の参照先を区別しています。
+実行時に旧ソースを読み直す仕組みはありません。
+`storage_checks.py`は選択した試験の設定だけを読み、別の移行試験の設定を混ぜません。
+
+時計の過去の合成記録は、旧ソース名が含まれていても読み取れます。現在の形式では`clock.py`と`clock_tools.py`を対応付けます。
+保存されたコードは実行しません。公開用の書き出しでは、インストール中のソースと内容が一致することを引き続き要求します。
+この互換処理は時計の精度を保証するものではありません。
 
 ## 旧Markdownから探す
+
+2026年11月15日に67本の文書を8冊と本索引へまとめました。以下は旧ファイル名から探すための対応表です。
+過去の原文・コマンド・ハッシュは、整理前のGitコミット`9479201`、作業ログ、検証記録にも残しています。
+
+<details>
+<summary>旧ファイル名と現在の収録先を表示</summary>
 
 | 旧ファイル | 統合先 |
 |---|---|
@@ -138,3 +146,22 @@ Python import・テストの参照・CLI/Compose/CIを新配置へ更新した�
 | `t17b-sol-handoff.md` | [evidence.md#t17b-sol-handoff](evidence.md#t17b-sol-handoff) |
 | `time-api-options.md` | [clock-operations.md#time-api-options](clock-operations.md#time-api-options) |
 | `training-monitor-reference.md` | [monitoring.md#training-monitor-reference](monitoring.md#training-monitor-reference) |
+
+</details>
+
+## 文書の編集方針
+
+説明は「目的、必要な準備、操作、確認する結果」の順に書きます。
+略語はページ内で一度だけ正式名称と意味を説明し、以後は短い表記を使います。識別子やコマンド、画面の状態名は変更しません。
+同じ内容へのリンクを何度も置かず、入口となる一覧へまとめます。流れや分岐は図にし、細かな条件や数値は表で確認できるようにします。
+
+過去の実行結果と、現在の説明文は扱いを分けています。
+作業ログのコマンド、エラー原文、識別子、測定値は保持し、読み始めの案内と折りたたみで探しやすくしました。
+仕様中の否定、必須条件、不確かさは、文章を短くするために取り除きません。
+
+今回の推敲では、指定された記事とスキルを確認し、日本語の表記は[JTFのスタイルガイド](https://www.jtf.jp/index.php/tips/styleguide)、略語の扱いは[Microsoftの執筆ガイド](https://learn.microsoft.com/ja-jp/style-guide/acronyms)も参照しました。
+表現の自然さは規則だけでは決められないため、主語と動作、条件、時制が元の資料と同じ意味になるかも読み比べています。
+
+日本語の検査には[yomiyasu](https://github.com/nanaism/yomiyasu)のバージョン3.1.0を一時的に取得して使用しました。
+`natural-japanese`と`meiseki`の紹介は方針を比較する資料として読み、複数の推敲スキルを同時適用してはいません。
+機械検査の指摘件数は、読みやすさの得点や意味保存の証明ではありません。

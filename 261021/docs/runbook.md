@@ -1,21 +1,37 @@
-# 使用操作・配信・復旧・CI運用
+# 操作手順：準備・起動・確認・復旧
 
-2026-11-15追補：[completed事後reviewの仕様](capital.md#operational-eligibility-review-20261115)を優先する。
-既存実試行へのreview発行/初期化・測定再試行は行わない。履歴が用意された隔離環境で状態を読む入口は次のとおり。
-`261021`から、実際のcandidate SHA/attempt UUIDを指定する。
+この文書は、環境の準備から予測の確認、配信の切替、失敗時の復旧までを扱います。
+初めて使う場合は節0と節1から読み、SQLiteだけで試すなら節2、Dockerで複数のサービスを動かすなら節3へ進んでください。
+以下のコマンドは、特に指定がなければ`261021`ディレクトリで実行します。
+
+API（Application Programming Interface）は予測要求の窓口、CLI（Command Line Interface）はターミナルで操作する窓口です。
+DB（Database）は観測と予測の保存先、CI（Continuous Integration）はコード変更ごとに行う自動試験です。
+UCIはUniversity of California, Irvineのデータ集を指し、Capitalとは別環境で扱います。
+精度にはMAE（Mean Absolute Error：平均絶対誤差）とRMSE（Root Mean Squared Error：二乗平均平方根誤差）を使い、入力分布の変化にはPSI（Population Stability Index）を使います。
+HTTP（Hypertext Transfer Protocol）はAPIの通信方式、SQL（Structured Query Language）はDBの検索・更新に使う言語です。PGはPostgreSQLの略記です。
+
+現在のCapital候補は配信不採用です。既存候補の再学習、評価期間の再利用、新しい運用測定、台帳の再開は、この手順書を読むだけで許可されるものではありません。
+起動済み環境の結果を見る場合は、まず`/ready`と`/version`の読取だけを行ってください。
+
+<details>
+<summary>上級者向け：完了した運用試行の事後審査を読み取る</summary>
+
+2026年11月15日に追加した事後reviewは、完了した試行の証拠に問題が見つかった場合の審査記録です。
+元の試行は書き換えません。履歴が用意された隔離環境で、候補のSHA-256（Secure Hash Algorithm 256-bit）ハッシュと、試行のUUID（Universally Unique Identifier）を指定します。
 
 ```bash
 DATA_PROFILE_ID=capital-bikeshare .venv/bin/python scripts/runtime_tools.py eligibility-review \
   --inspect --candidate-id CANDIDATE_SHA256 --attempt-id ATTEMPT_UUID
 ```
 
-履歴なし/不完全なら停止し、空履歴を勝手に作って回避しない。
-変更入口は明示的な`--publish-review`で、`--resume --expected-head`は公開途中の同じreviewだけを照合する。
-publishingだけが残った場合やtorn fileは自動修復せず保全する。raw completedのまま、配信許可を上書きしない。
+履歴がない場合や不完全な場合は停止します。空の履歴を作って検査を回避しません。
+変更を伴う`--publish-review`と、公開途中の同じ記録を確認する`--resume --expected-head`は別の操作です。
+公開を保護する状態（`publishing`）だけが残った場合や、途中までしか保存されていないファイルは、自動修復せず保全します。
+元の`completed`は処理が完了したという記録であり、配信を許可する意味ではありません。
 
-[文書一覧・統合対応表](README.md)。2026-11-15に用途別へ統合。過去の結論・未解決事項・原本hashは保持。
+</details>
 
-各節の日付・「未完了」は執筆時点の記録を含みます。現在の状態は[プロジェクトREADME](../README.md)と[計画書の最新残件](../../261014/plan_mlops.md#remaining-work-latest)を優先してください。再実行用の入口は新配置へ更新し、当時の原文・コマンド・hashはGit `9479201`、work_log、review JSONに保持しています。
+日付付きの記録は当時の状態を示します。現在の判断は[プロジェクトREADME](../README.md)、用語や旧ファイル名は文書一覧で確認できます。
 
 ## 目次
 
@@ -28,28 +44,23 @@ publishingだけが残った場合やtorn fileは自動修復せず保全する�
 
 <a id="runbook"></a>
 
-## runbook
+## 環境を準備して動かす
 
 <a id="runbook--実行・運用手順"></a>
 
 ### 実行・運用手順
 
-**2026-11-14現在:** 時計研究は保留。[製品作業の開始条件](capital.md#product-completion-policy)へ改訂し、履歴学習/精度評価と時計依存の運用測定を分離した。過去の時計資格は未合格のまま。日付付きの旧停止条件は当時の履歴として読む。
-
-Capitalの実fit/一度限りfinalは完了。[精度結果](capital.md#capital-first-evaluation)、[監視診断](capital.md#capital-offline-monitoring)、[次の隔離runtime手順](capital.md#capital-runtime-handoff)を参照。両窓を再消費せず、現配信/実registryへ接続しない。
-
-配信中の段階表示、Docker timeout時の未確定状態、読取専用の`deploy inspect`は[配信処理の診断](runbook.md#deployment-observability)を参照してください。
-合成Capitalの実MLflow/skops/DBを別volumeへ復元する追加試験は[配信復旧](runbook.md#deployment-recovery)を参照してください。現配信を障害対象にしない手順です。
-
-初学者向けの用語は[用語集](architecture.md#glossary)を参照してください。
-データ源を切り替える場合は[データプロファイルとtarget分離](architecture.md#data-profiles)を先に確認してください。通常運用は引き続きUCIのCompose projectです。
-合成Capital測定のZIP保存・別process再計算手順は[T16計測証拠アーカイブ](monitoring.md#measurement-evidence-archive)を参照してください。これは隔離fixtureの証拠であり、実データの合格・配信承認ではありません。
+通常の操作例はUCI用です。Capital候補は学習と最終評価を終えており、その期間を使い直しません。
+データ源を変更する場合は、構成文書のデータ設定を先に確認してください。UCIとCapitalを同じDBやモデル名で扱うことはできません。
+処理が止まった場合は、本書後半の「配信処理の診断」と「配信の復旧」へ進んでください。
 
 <a id="runbook--0-windowswslからプロジェクトを開く"></a>
 
 #### 0. Windows/WSLからプロジェクトを開く
 
-Docker DesktopのWSL Integrationを変更した後や、`wsl.exe --shutdown`を実行した後は、Windows PowerShellからUbuntuを明示して起動します。`wsl.exe -l -v`でUbuntuが`Running`と表示されても、Ubuntuのシェルに入っているとは限りません。Docker DesktopがWSLディストリビューションを自動起動することもあるため、作業用シェルは次のコマンドで開きます。
+WSL（Windows Subsystem for Linux）は、Windows上でLinuxを動かす仕組みです。
+Docker Desktopの「WSL Integration」を変更した後や、`wsl.exe --shutdown`を実行した後は、PowerShellからUbuntuの作業用シェルを開きます。
+一覧に`Running`と表示されても、その画面がUbuntuのシェルになっているとは限りません。
 
 ```powershell
 wsl.exe -l -v
@@ -61,18 +72,20 @@ Ubuntuのシェルに入ったら、PowerShellの現在位置（例: `/mnt/c/WIN
 ```bash
 cd ~/work/claude_practice/261021
 code .
-. .venv/bin/activate
 docker version
 docker compose version
 ```
 
-今回の環境では、Ubuntuと`docker-desktop`はいずれもWSL 2で、Docker Desktop 4.96.0 / Engine 29.9.1への接続と`hello-world`コンテナの実行が確認できています。`wsl.exe --shutdown`の後は一覧の状態にかかわらず、`wsl.exe -d Ubuntu`で作業用シェルを開いてから続行してください。WSLを終了する前に、開いている作業を保存します。
+`docker version`にClientとServerの両方が表示されれば、Dockerの実行サービスへ接続できています。
+過去の確認環境はDocker Desktop 4.96.0、Engine 29.9.1でした。同じ数字への更新を要求するものではありません。
+WSLを終了する前は開いている作業を保存してください。Pythonの仮想環境は、次の節で作成した後に有効にします。
 
 <a id="runbook--1-環境とデータ"></a>
 
 #### 1. 環境とデータ
 
-Python 3.12とパッケージインデックスへの接続を用意します。
+Python 3.12と、依存ライブラリの配布元へ接続できる環境を用意します。
+`/home/kenshin/work/claude_practice/261021`は作業時の例なので、自分の保存先が違う場合は読み替えてください。
 
 ```bash
 cd /home/kenshin/work/claude_practice/261021
@@ -85,13 +98,17 @@ mlops-bikectl data audit
 python -m unittest discover -s tests -v
 ```
 
-監査JSONを読み、時間欠損があるときはラグ特徴量のmissing値として扱われることを確認します。時刻重複・型・値域違反はロード時に失敗させます。
+`data audit`が出力するJSON（JavaScript Object Notation形式の報告書）で、件数、時刻の重複、欠けた時間を確認します。
+欠けた時間は、過去の値を使う特徴量の欠損として扱います。近い時刻の行で埋めません。
+時刻の重複、型や値の範囲の違反がある場合は、読込を失敗させます。
 
 <a id="runbook--2-sqliteで学習・apiを試す"></a>
 
 #### 2. SQLiteで学習・APIを試す
 
-この節はSQLiteで個別に試す場合の任意手順です。ComposeでMLOps基盤を動かす場合はこの節を飛ばして、節3の手順を使います。固定最終ホールドアウト評価は同じ実験で一度だけ実施してください。
+この節は、SQLiteで個別に試す場合の任意手順です。Docker Composeを使う場合は節3へ進んでください。
+以下の学習例は、独立した新規実験の初回だけを想定しています。既存の評価済み実験やCapital候補で繰り返し実行しないでください。
+最終ホールドアウトは、モデル選びに使わず最後の確認用に取り置く期間です。
 
 ```bash
 mlops-bikectl train --evaluate-final-holdout
@@ -131,18 +148,32 @@ docker compose up -d --build postgres mlflow
 docker compose ps
 ```
 
-`data/runtime/blue.env`と`green.env`はモデル版登録後に`runtime init`が生成するため、この時点ではなくて構いません。Compose設定ではこれらの`env_file`を任意にし、PostgreSQLとMLflowだけを先に検証・起動できるようにしています。APIサービスは`runtime init`後に起動してください。`docker compose config -q`が成功したら、ホスト側CLIラッパーは`.env`を読み、運用DBとMLflowへ接続します。データの取得が済んでいない場合だけdownloadを実行し、いずれの場合も監査結果を確認してから初回学習へ進みます。まだ固定最終ホールドアウトを評価していない場合は、次の初回学習で一度だけ評価します。節2ですでに評価した場合は、コマンドから`--evaluate-final-holdout`を外します。
+`data/runtime/blue.env`と`green.env`は、モデル登録後に`runtime init`が生成するため、この段階にはなくても構いません。
+Composeはこれらの設定を任意として扱い、先にPostgreSQLとMLflowだけを起動できます。APIは初期化の後に起動します。
+`./scripts/bikectl`は`.env`を読み、設定された運用DBとMLflowへ接続する補助コマンドです。
+
+次の学習例は独立した新規実験用です。既存の評価済み実験で再実行しないでください。
+データ取得が済んでいれば再ダウンロードは不要ですが、学習前には監査結果を確認します。
+最終ホールドアウトを評価するのは、未評価の実験で`--evaluate-final-holdout`を明示した初回だけです。下の通常学習例にはこのオプションを含めていません。
 
 ```bash
 ./scripts/bikectl data audit
 ./scripts/bikectl train
 ```
 
-初回学習時に固定ホールドアウトを評価したrunは`http://127.0.0.1:5000/#/experiments/1/runs/42abda5f8da94b9b8a3d5f5f46da42ad`です。holdoutのモデルMAE 72.5362、RMSE 111.5060を記録しました。信頼型を限定して再学習したrun `0db7aa07461b4b8785145156d8de9a66`はvalidation MAE 55.0728（ベースライン63.9628）、RMSE 88.6249（ベースライン107.8187）で品質ゲートを通過しました。固定holdoutは再評価していません。
+<details>
+<summary>2026年10月の初期構築・モデル読込エラーの履歴を表示</summary>
+
+以下は当時の結果と対処です。記載した再学習・初期化・昇格コマンドを、現在の実験へ続けて実行する手順ではありません。
+初回に固定ホールドアウトを評価した学習記録は`42abda5f8da94b9b8a3d5f5f46da42ad`です。
+ホールドアウトのMAE 72.5362、RMSE 111.5060を記録しました。
+信頼型を限定して再学習した記録`0db7aa07461b4b8785145156d8de9a66`では、検証MAE 55.0728（比較基準63.9628）、RMSE 88.6249（比較基準107.8187）で品質ゲートを通過しました。固定ホールドアウトは再評価していません。
 
 ただし、最初に登録されたモデル版1はAPIから読み込めませんでした。エラーは`No such artifact: 'MLmodel'`です。原因はMLflow 3でモデルartifactの保存場所が変わったのに、登録処理が`runs:/<run_id>/sklearn-model`という従来のrun artifact URIを登録元に使っていたことです。登録処理を`mlflow.sklearn.log_model()`が返す`model_info.model_uri`を使うよう修正しました。MLflow 3はログ済みモデルを通常のrun artifactと別に保存し、返却されたモデルURIを読み込みに使うよう案内しています。[MLflow 3移行ガイド](https://mlflow.org/docs/latest/ml/mlflow-3)
 
-修正版を作業環境へ取り込んでから、固定holdoutを再評価せずに通常学習を再実行します。版1は履歴として残し、新しい版を登録した後、既に初期化済みのruntimeから手動昇格します。`runtime init`をやり直してはいけません。別のチェックアウトで作業する場合は、まずローカル変更がないことを確認して更新します。
+当時は修正版を取り込み、固定ホールドアウトを再評価せず通常学習を再実行しました。
+読み込めなかったバージョン1は履歴として残し、新しいバージョンを登録してから手動で切り替えています。
+初期化済みの環境で`runtime init`をやり直してはいけません。次は、そのときに使ったコマンドです。
 
 ```bash
 git status --short
@@ -153,7 +184,9 @@ git pull --ff-only origin main
 
 2026-10-27にこの手順を実行し、run `f55812c02dac4084a8185856cf7b4793`からモデル版`2`が登録されました。validation MAEは55.0728、基準MAEは63.9628、`quality_gate_passed`は`true`、`final_holdout`は`null`です。`quality_gate`文字列は合格条件の説明で、合否は`quality_gate_passed`で確認します。
 
-`git status --short`に自分の未保存作業が表示された場合は、先にその変更を保全してからpullします。レポートでは`registration.model_version`と`quality_gate_passed`を確認します。2026-10-27の学習ではモデル版2が作られ、ゲートに合格して当時の稼働版になりました。2026-10-28に版3へ更新済みです。以下の版2学習・昇格コマンドをもう一度実行しないでください。
+`git status --short`に未コミットの変更が表示された場合は、その変更を保全してから更新します。
+報告書では`registration.model_version`と`quality_gate_passed`を確認しました。2026年10月27日の学習で作成したバージョン2はゲートに合格し、当時の稼働モデルになりました。翌28日にはバージョン3へ更新しています。
+以下のバージョン2の昇格コマンドは、もう一度実行しないでください。
 
 ```bash
 MODEL_VERSION=2 # 学習レポートのregistration.model_versionに置き換える
@@ -162,7 +195,9 @@ curl -sS -i http://127.0.0.1:8080/ready
 curl -sS http://127.0.0.1:8080/version
 ```
 
-昇格コマンドは候補APIをbuild・起動し、readyと固定予測を検査してから入口を切り替えます。内部でDocker Composeの出力を捕まえ、最後にまとめて表示するため、処理中はターミナルが無表示になることがあります。今回の実行では、完了確認前に別ターミナルから次を確認しました。
+当時の昇格処理は、候補APIをビルド・起動し、準備状態と固定入力の予測を検査してから接続先を切り替えていました。
+Docker Composeの出力を一時的に保存し、最後にまとめて表示する実装だったため、処理中にターミナルへ何も出ない場合がありました。
+完了確認前に、別のターミナルで次の状態を確認しています。
 
 ```bash
 docker compose ps -a
@@ -218,6 +253,8 @@ MODEL_VERSION=1 # 学習レポートの登録版番号に置き換える
 ```
 
 診断配信は低精度の可能性を残し、実用性能を満たしたモデルとして紹介しません。
+
+</details>
 
 MLflow UIはローカルの`http://127.0.0.1:5000`、入口APIは`http://127.0.0.1:8080`です。PostgreSQLは`127.0.0.1:55432`です。必要なとき以外はポートを公開しないでください。
 
@@ -504,7 +541,7 @@ export 0は保存完了のみ、review 1は違反、2は不足/数値成功で�
 
 <a id="deployment-observability"></a>
 
-## deployment-observability
+## 配信処理の診断
 
 <a id="deployment-observability--配信処理の進み具合・timeout・旧stateの読取診断（t17b）"></a>
 
@@ -592,7 +629,7 @@ Composeへ必要なDB設定3項目（`APP_DB_PASSWORD`、`MLFLOW_DB_PASSWORD`、
 
 <a id="deployment-recovery"></a>
 
-## deployment-recovery
+## 配信の復旧と隔離試験
 
 <a id="deployment-recovery--配信復旧の状態・承認metadataと隔離受入（t07at17a）"></a>
 
@@ -748,7 +785,7 @@ CIにはnormal/TERMの2 runと明示したlog/summary3 fileだけを追加する
 
 <a id="prediction-precision-migration"></a>
 
-## prediction-precision-migration
+## 保存する予測値の精度を移行する
 
 <a id="prediction-precision-migration--予測保存列の精度移行と復元の検証（t08）"></a>
 
@@ -810,7 +847,7 @@ T08は合成旧schemaの受入です。既存UCIを停止・backup・移行・�
 
 <a id="mlflow-orm-compatibility"></a>
 
-## mlflow-orm-compatibility
+## MLflowの互換性警告を調べる
 
 <a id="mlflow-orm-compatibility--mlflowのnoload非推奨警告の切分け"></a>
 
@@ -876,7 +913,7 @@ paths with regression coverage before SQLAlchemy removes noload.
 
 <a id="ci-artifact-maintenance"></a>
 
-## ci-artifact-maintenance
+## 自動試験の出力物を保存する設定
 
 <a id="ci-artifact-maintenance--ci-artifact-actionの単独保守（2026-11-03）"></a>
 

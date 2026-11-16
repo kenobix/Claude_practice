@@ -1,16 +1,33 @@
-# 監視・照合・運用測定の契約
+# 監視の仕様：変化の検知・保存・中断時の確認
 
-2026-11-15追補：journal全eventのUTC順序をconsumerで検査し、欠落/不正/逆行を拒否する。
-運用証拠の記録・配信bundle v2にはjournal原本が必要。[適用範囲・legacy・事後review・実警告の結論](capital.md#operational-evidence-review-20261115)を参照。
-raw completedや数値p95合格だけで運用受入にしない。時計研究・再測定は保留のまま。
+この文書は、予測を提供した後に入力や誤差がどう変わったかを調べ、結果を保存・照合する方法を説明します。
+「警告」は調査を始めるための情報です。警告がないことや、報告書の保存が完了したことだけでは配信を承認しません。
 
-追補：[適格性reviewの追記・公開head・consumer照合](capital.md#operational-eligibility-review-20261115)を隔離実装。
-recheck/inspect/archiveは数値診断と履歴の状態を区別し、offlineだけで最新headや運用受入を保証しない。
-writerの明示的なresumeはreview公開の回復であり、運用測定のretryや台帳reopenではない。
+監視は、API（Application Programming Interface：予測要求の窓口）が記録した予測を、後から利用可能になる正解と比べます。
+入力分布の変化にはPSI（Population Stability Index）、誤差にはMAE（Mean Absolute Error）とRMSE（Root Mean Squared Error）を使います。
+MAEは平均的なずれ、RMSEは大きなずれの影響も強く受ける値です。
 
-[文書一覧・統合対応表](README.md)。2026-11-15に用途別へ統合。過去の結論・未解決事項・原本hashは保持。
+```mermaid
+flowchart LR
+    reference[学習時の入力分布] --> compare[後の入力と比較]
+    predictions[保存済みの予測] --> error[到着済みの正解と比較]
+    compare --> save[行別結果・要約・DBへ保存]
+    error --> save
+    save --> inspect[保存内容と完了印を照合]
+    inspect --> review[警告と不足を人が確認]
+```
 
-各節の日付・「未完了」は執筆時点の記録を含みます。現在の状態は[プロジェクトREADME](../README.md)と[計画書の最新残件](../../261014/plan_mlops.md#remaining-work-latest)を優先してください。再実行用の入口は新配置へ更新し、当時の原文・コマンド・hashはGit `9479201`、work_log、review JSONに保持しています。
+DB（Database）はデータベースです。行別結果はCSV（Comma-Separated Values：表形式のテキスト）、要約と完了印はJSON（JavaScript Object Notation：項目名と値の組）に保存します。
+SQL（Structured Query Language）はDBの行を検索するための言語です。試行を識別するUUID（Universally Unique Identifier）は、別の試行と重複しにくい識別子です。
+監視結果はCLI（Command Line Interface：ターミナルから操作する窓口）で確認します。
+下の試験表にあるT03、T05、T06、T16は計画書の作業番号で、機能や品質の等級ではありません。
+
+証拠を検査する処理は、UTC（Coordinated Universal Time：協定世界時）の順序が逆行した要求記録を拒否します。
+ファイルが同じ内容かはSHA-256（Secure Hash Algorithm 256-bit）ハッシュで確認しますが、ハッシュ一致だけでは時刻の順序や内容の正しさを証明できません。
+実候補はこの時刻検査により運用受入不可となり、最終的に配信不採用と判断しました。
+
+過去の試験結果や当時の残作業も残しています。現在の結論は[プロジェクトREADME](../README.md)、警告の審査と候補の判断はCapital文書を参照してください。
+本書の過去の中断・回復手順は、新しい運用測定、台帳の再開、保留中の時計調査を許可するものではありません。
 
 ## 目次
 
@@ -22,19 +39,22 @@ writerの明示的なresumeはreview公開の回復であり、運用測定のre
 
 <a id="training-monitor-reference"></a>
 
-## training-monitor-reference
+## 学習時の入力分布を比較基準にする
 
 <a id="training-monitor-reference--capitalの学習参照とpsi-v2"></a>
 
 ### Capitalの学習参照とPSI v2
 
-2026-10-30、計画T04の候補保存・登録・監視CLI接続を実装し、T05の10シナリオと2境界の合成受入をSol review後に確認した。実Capital候補はまだ作成しておらず、検証は合成データで行った。T06の異常保存照合、T02の実証報告producer、実候補/HTTP MLflowからの監視は後続課題である。[残作業計画](../../261014/plan_mlops.md#remaining-work-20261030)を正規の一覧とする。
+2026年10月30日に、候補の保存、登録、監視コマンドを接続し、合成データの10シナリオと2つの境界条件を確認しました。
+その後、2026年11月14日に実候補を使った監視も実行しています。以下の合成試験は機能の確認であり、実候補の監視結果を代わりに証明するものではありません。
 
 <a id="training-monitor-reference--何を固定するか"></a>
 
 #### 何を固定するか
 
-PSIは「学習時と現在の入力分布がどの程度違うか」を調べる指標。比較の物差しとなる数値の区切り（bins）を後のデータに合わせて変えると、結果の意味が変わる。Capitalでは、実際にfitした学習行と特徴量だけから参照を作り、候補モデルと一緒に保存する。UCIの既存PSI計算・保存済み履歴は維持する。
+PSIは、入力の分布が学習時からどれだけ変わったかを調べる値です。
+数値を区切る境界（bins）を後のデータに合わせて変えると、同じ条件で比較できなくなります。
+Capitalでは、実際に学習へ使った行と特徴量だけから比較用の参照を作り、候補モデルと一緒に保存します。UCIの過去の計算方式や数値は変更しません。
 
 | 固定する項目 | 値・結び付き |
 |---|---|
@@ -53,7 +73,9 @@ PSIは「学習時と現在の入力分布がどの程度違うか」を調べ�
 
 #### 保存形式と流れ
 
-候補保存のstaging directoryで`model.skops`のSHAを求めてから`monitor-reference.json`を作る。参照ファイルのdescriptorをcandidate identityへ追加し、候補IDを計算した後、候補directory全体を公開する。参照hashと候補IDの循環を避けるため、参照の中には候補IDを入れず、元モデルSHAなどの学習identityを入れる。
+候補を準備する一時ディレクトリで`model.skops`のハッシュを計算し、`monitor-reference.json`を作ります。
+この参照ファイルの保存先やハッシュを候補の識別情報に加えてから候補IDを計算し、ディレクトリ全体を公開します。
+参照ファイルと候補IDがお互いを計算の前提にしないよう、参照内には候補IDを入れず、元モデルのハッシュなどを記録します。
 
 参照schema 1は次の内容を持つ。
 
@@ -64,7 +86,9 @@ PSIは「学習時と現在の入力分布がどの程度違うか」を調べ�
 - `feature_missing_rates`: 学習時の特徴量欠測率。
 - `reference_sha256`: 自分自身のhash項目を除いた本文のSHA。
 
-JSONはキー順ソート、空白なし、UTF-8、末尾改行1個でhash化する（`capital_deployment_evidence.canonical_bytes`）。PSI componentの自己hashは既存PSI v2方式（末尾改行なし）を維持する。candidate reportの`monitor_reference`には正規path、元ファイルSHA、本文SHA、algorithm、schemaを入れる。
+JSONのハッシュ計算では、キー順をそろえ、空白なし、UTF-8、末尾改行1個の表現を使います（現在の関数は`deployment.canonical_bytes`）。
+PSIの部品ごとの自己ハッシュは従来方式に合わせ、末尾改行を付けません。
+候補報告書の`monitor_reference`には、正規の保存先、ファイルのハッシュ、本文のハッシュ、計算方式、形式のバージョンを記録します。
 
 参照を含まない歴史的候補のIDは変更しない。その候補のCapital監視は参照不足として拒否し、後から同じIDの参照を作って補わない。新しいCapital候補の保存には、正確なtraining frame/featuresが必要である。
 
@@ -130,7 +154,7 @@ T05の具体的な受入期待値とSol reviewの判断は[Capital監視の合�
 
 <a id="monitoring-acceptance"></a>
 
-## monitoring-acceptance
+## 合成データで確認する監視ケース
 
 <a id="monitoring-acceptance--capital監視の合成受入基準（t05）"></a>
 
@@ -199,13 +223,16 @@ validation MAE未設定のcandidateも、出典・hash・保存済み予測の�
 
 #### 解釈と範囲
 
-これらは閾値式を複製する単体testではなく、登録済み参照の取得、CLIの時刻・ID照合、window scoring、CSV/JSON/SQLite保存を通す合成シナリオである。ラベル停止と遅延の2caseだけはCLIが採点へ渡す1月18日の24ラベルのavailability timestampを意図的にずらして作り、通常caseは本物の+3時間処理を通す。既存予測のlag出典となる過去のラベルは遅らせず、特徴量の利用可能性と矛盾させない。これは実ラベルfeedの障害注入ではない。重複はsource loaderの契約どおり拒否する。sourceを変えたcaseでも元の学習行hash・学習特徴量hashは変わらないことを確認し、後の分布をtraining referenceへ混入させない。
+これらの合成シナリオでは、登録済みの学習参照の取得、時刻とIDの照合、窓ごとの採点、CSV・JSON・SQLiteへの保存までを確認します。閾値の計算式だけを写した単体テストとは検証範囲が異なります。
+ラベル停止と遅延の2ケースだけは、採点へ渡す1月18日の24ラベルの利用可能時刻を意図的にずらしています。通常のケースは、観測から3時間後に利用可能とする処理を通します。
+過去の予測の材料になったラベルは遅らせず、特徴量の利用可能時刻との矛盾を避けます。実際のラベル配信サービスへ障害を入れた試験ではありません。
+重複する時刻はデータ読込の決まりに従って拒否します。入力を変えたケースでも、元の学習行と特徴量のハッシュが変わらないことを確認し、後の分布を学習参照へ混ぜません。
 
 2026-10-30のSol review後、対象26件は13.348秒、全277件は127.327秒でlocal成功。[CI 41005083367](https://github.com/kenobix/Claude_practice/actions/runs/41005083367)でも全277件35.217秒、隔離Docker/両PostgreSQL/cleanup成功。[証拠JSON](reviews/foundation.json#/reviews/20261030-t05-checks.json)と[作業ログ](../work_log.md)に全試行を記録した。既存T03のSIGTERM待ちとT13相当の時刻検証の一度ずつの失敗は原因未特定として残す。合成結果を実データの品質・配信可否・運用SLOの証明へ転用しない。
 
 <a id="monitor-reconciliation"></a>
 
-## monitor-reconciliation
+## 保存されたファイルとDBを照合する
 
 <a id="monitor-reconciliation--監視保存の読取照合契約（t06）"></a>
 
@@ -217,7 +244,10 @@ policy IDは `monitor-run-reconciliation-v1`。2026-10-30にSolで状態・比�
 
 #### 目的と担当範囲
 
-既存monitorはCSV、JSON、DB transaction、complete markerの順に保存する。ファイルとDBを一度にcommitできないため、marker不在だけではDBの成否を決められない。T06は観測したファイルとDB行を照合し、操作メモをstdoutのJSONへ出す。採点・再送・修復・marker再作成・DB更新・registry操作はしない。
+監視処理は、CSV、JSON、DBへの確定保存、完了印（complete marker）の順に結果を保存します。
+ファイルとDBを一度に確定できないため、完了印がないだけではDBの保存失敗と断定できません。
+読取照合では、保存されたファイルとDBの行を比べ、確認できた状態をJSONとして画面へ出します。
+採点、再送、修復、完了印の再作成、DB更新、モデル登録情報の変更は行いません。
 
 - **T06a / P1 / D2 / Luna実装→Sol review**: ファイル検査、状態判定、SQLite読取、CLI、合成受入。T06aの受入時点ではPostgreSQL URLを接続せず `unsupported_input` とした。T06bで対応を追加した。
 - **T06b / P1 / D3 / Sol**: PostgreSQLの読取専用snapshot、型別比較、使い捨てPostgreSQLでの中断・遅延commit受入と全体review。T06aの後に進める。
@@ -438,7 +468,7 @@ MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python scripts/storage_checks.py sqlite-os
 
 <a id="measurement-interruption"></a>
 
-## measurement-interruption
+## 運用測定が中断したときの確認
 
 <a id="measurement-interruption--capital運用測定の中断・タイムアウト（t03）"></a>
 
@@ -505,13 +535,16 @@ DATA_PROFILE_ID=capital-bikeshare python scripts/runtime_tools.py pending-audit 
 
 <a id="measurement-evidence-archive"></a>
 
-## measurement-evidence-archive
+## 合成計測の記録を保存して再計算する
 
 <a id="measurement-evidence-archive--t16-合成計測証拠の保存と再計算"></a>
 
 ### T16: 合成計測証拠の保存と再計算
 
-`synthetic-system` CI jobでは、T16を有効にした実行で、使い捨てCapital fixtureの合成計測原本4件を`synthetic-measurement-evidence.zip`へ保存します。対象は計画、計測report、operational attempt ledger、要求journalです。manifestには各原本の相対パス・byte数・SHA-256、candidate/attempt ID、source commitとdirty flagを含めます。ZIP外の`archive-sha256.json`はZIP全体のSHA-256を記録し、`recalculation.json`は別processの検算結果です。
+CI（Continuous Integration：変更ごとの自動試験）の`synthetic-system`では、T16を有効にすると合成計測の原本4件を`synthetic-measurement-evidence.zip`へ保存します。
+内容は計画、計測報告書、試行の台帳、要求ごとの記録です。
+目録には各原本の相対パス、バイト数、ハッシュ、候補ID、試行ID、ソースのコミットと未コミット変更の有無を含めます。
+ZIP全体のハッシュは`archive-sha256.json`、別プロセスの検算結果は`recalculation.json`へ保存します。
 
 <a id="measurement-evidence-archive--ローカル実行"></a>
 
@@ -540,7 +573,7 @@ timeout --signal=TERM --kill-after=10 1200 \
 別processで手動再検算する場合は、検証processにarchive以外の計画・台帳・環境情報を渡さず、次を実行します。
 
 ```bash
-env -i PATH="$PATH" .venv/bin/python -m bike_mlops.capital_measurement_evidence \
+env -i PATH="$PATH" .venv/bin/python -m bike_mlops.operational_validation \
   --verify-archive data/reports/t16-local/synthetic-measurement-evidence.zip
 ```
 

@@ -1,10 +1,18 @@
-# 時計資料：offline部品と合成検証
+# 時計資料：保存値を使う計算部品と合成試験
 
-[文書一覧・統合対応表](README.md)。2026-11-15に用途別へ統合。過去の結論・未解決事項・原本hashは保持。
+この文書は、保存済みの時刻記録や試験用の仮想時計から、順序・欠測・進み方を検査する部品を説明します。
+offlineは、実際の時計やサービスへ新しく接続せず、保存した入力だけで計算するという意味です。
+合成試験が成功しても、実際のPCの時計が正確だと証明したことにはなりません。
 
-**時計研究・追加採取・OS操作は引き続き保留。ここにある過去手順は実行許可ではない。**
+QPC（QueryPerformanceCounter）はWindowsの経過時間カウンターです。fake QPCは、その代わりに決めた数値を返す試験用部品です。
+UTC（Coordinated Universal Time）は協定世界時、SHA-256（Secure Hash Algorithm 256-bit）は内容照合用のハッシュ値です。
+JSON（JavaScript Object Notation）は、入力や検査結果を項目名と値の組で保存する形式です。
+CI（Continuous Integration）は変更ごとの自動試験を指します。全体の観測計画は、過去の記録でcampaignとも呼んでいます。
 
-各節の日付・「未完了」は執筆時点の記録を含みます。現在の状態は[プロジェクトREADME](../README.md)と[計画書の最新残件](../../261014/plan_mlops.md#remaining-work-latest)を優先してください。再実行用の入口は新配置へ更新し、当時の原文・コマンド・hashはGit `9479201`、work_log、review JSONに保持しています。
+時計研究と追加採取は保留中です。以下は部品の仕様と過去の試験記録であり、新しい時計調査を始める手順ではありません。
+
+<details>
+<summary>計算部品の詳細と過去の合成試験を表示</summary>
 
 ## 目次
 
@@ -18,7 +26,7 @@
 
 <a id="clock-rate-review"></a>
 
-## clock-rate-review
+## 保存値から時計の進み方を比べる
 
 <a id="clock-rate-review--保存済みbracketの経過時間componentを照合する"></a>
 
@@ -114,7 +122,7 @@ localの全480件は最終IO guard追加前の記録として保持し、CIの48
 
 <a id="clock-campaign-review"></a>
 
-## clock-campaign-review
+## 全観測期間の記録を照合する
 
 <a id="clock-campaign-review--時計資格の全観測期間をofflineで照合する"></a>
 
@@ -137,11 +145,12 @@ localの全480件は最終IO guard追加前の記録として保持し、CIの48
 #### 固定policyと入力hash
 
 既存設計本文は書き換えていない。そのSHAと既存rate policy SHAを、今回の`clock-campaign-offline-v1`へ結合した。
-本文に数値未定だった**QPC参照校正の区間を±100ppm（比0.9999〜1.0001）**と事前に固定した。
-これは当プロジェクトの設計値でOSの保証ではない。QPCに対するWSLの±1000ppmとは別の予算である。
-両者を加えれば最大約1100ppmとなり、250msあたり約0.275ms相当の尺度寄与になる。
-個々の要求のbracket誤差や非定常な進行を保証しない。過去p95の補正に使わない。
-すべてFractionで比較し、許容区間に一部重なるだけの場合は不足とする。
+当時の本文で未定だったQPCの参照校正の許容区間を、実装前に±100ppm（比0.9999〜1.0001）へ固定しました。
+ppm（parts per million）は100万分のいくつかを表す割合です。この値はプロジェクトの設計値で、OSの保証値ではありません。
+QPCに対してWSLへ認める±1000ppmとは、別の誤差の予算です。
+両者を加えると最大約1100ppmとなり、250msあたり約0.275msのずれに相当します。
+この計算で、個々の要求の読取誤差や時計の不規則な進み方を保証したとは扱いません。過去のp95の補正にも使いません。
+数値はすべて`Fraction`で比較し、入力の区間が許容区間に一部だけ重なる場合は、確認が不足していると判定します。
 
 canonical hashは`json.dumps(sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False)`のUTF-8 SHA-256。
 入力fileそのもののbytes/SHAも別にreportへ保存する。canonical hashとbyte hashを混同しない。
@@ -279,7 +288,7 @@ host/backend同期責任review・新PHC/UDPログ、別途許可後の修復/休
 
 <a id="clock-campaign-acquisition"></a>
 
-## clock-campaign-acquisition
+## 全観測期間を採取するための仕様
 
 <a id="clock-campaign-acquisition--全観測期間の採取protocol：次の実装に向けた契約"></a>
 
@@ -377,7 +386,7 @@ fixture成功だけで実採取の独立源、OS修復、保守許可、全時�
 
 <a id="clock-fake-acquisition"></a>
 
-## clock-fake-acquisition
+## 仮想の読取部品を使う採取試験
 
 <a id="clock-fake-acquisition--fake-readerから全campaign判定までの合成採取"></a>
 
@@ -527,7 +536,7 @@ catch-upや観測窓延長で遅延を隠さず、欠測・中断と既知違反
 
 <a id="clock-fixed-schedule"></a>
 
-## clock-fixed-schedule
+## 仮想時計の固定周期と区間の締切
 
 <a id="clock-fixed-schedule--fake-qpcの固定周期・phase-deadline"></a>
 
@@ -635,7 +644,7 @@ clock unitのrawはCIで使い捨て、代表原本はlocal保存であり16 art
 
 <a id="clock-raw-bundle"></a>
 
-## clock-raw-bundle
+## 記録原本をまとめて別環境で検算する
 
 <a id="clock-raw-bundle--合成時計raw原本の可搬bundle"></a>
 
@@ -732,7 +741,7 @@ archiveはcodeの自己完結した実行環境ではなく、対応するverifi
 
 <a id="chrony-runtime-control"></a>
 
-## chrony-runtime-control
+## chronydの実行ファイルと内部計算の照合
 
 <a id="chrony-runtime-control--chronydの配布build照合と内部計算の観測"></a>
 
@@ -844,3 +853,5 @@ T03は今回9件成功して自然停止未再発、T09は公式202610が404の�
 [CI索引](reviews/clock-validation.json#/reviews/20261103-chrony-runtime-ci-checks.json)で実artifact16member/hash・別process再計算・正常/TERM/対応復元cleanupまで確認した。
 17件のreader fixtureを含むコード回帰の受入であり、この文書の稼働uprobeをGitHub runnerで再現したことや、時計資格の合格ではない。
 初期local索引のCI_PENDINGは当時の記録として保持する。後続文書commitはこの実装CIが直接試験したcommitではない。
+
+</details>

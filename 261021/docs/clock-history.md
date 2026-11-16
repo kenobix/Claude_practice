@@ -1,10 +1,25 @@
 # 時計資料：原因調査の履歴（保留）
 
-[文書一覧・統合対応表](README.md)。2026-11-15に用途別へ統合。過去の結論・未解決事項・原本hashは保持。
+この文書は、実行記録の時刻が逆行した原因を調べた履歴です。通常の利用手順ではありません。
+時計の追加調査・採取・設定操作は保留しています。以下のコマンドは当時の記録で、再実行の許可を示すものではありません。
 
-**時計研究・追加採取・OS操作は引き続き保留。ここにある過去手順は実行許可ではない。**
+| 区別する内容 | 現在の扱い |
+|---|---|
+| 記録時刻の逆行 | 観測済み。運用証拠の受入を拒否する根拠として保持 |
+| 時計変更を要求したプロセスや管理層 | 観測区間ごとの記録を保持。別の時期・別のプロセスへ帰属させない |
+| `tick=11000`の内部原因、すべての失敗の原因 | 未解決。静的解析や未再発を原因確定の代わりにしない |
+| 現在の製品の終了判断 | 時計の問題とは分け、候補の配信不採用で終了 |
 
-各節の日付・「未完了」は執筆時点の記録を含みます。現在の状態は[プロジェクトREADME](../README.md)と[計画書の最新残件](../../261014/plan_mlops.md#remaining-work-latest)を優先してください。再実行用の入口は新配置へ更新し、当時の原文・コマンド・hashはGit `9479201`、work_log、review JSONに保持しています。
+UTC（Coordinated Universal Time）は協定世界時、WSL（Windows Subsystem for Linux）はWindows上でLinuxを動かす仕組みです。
+QPC（QueryPerformanceCounter）はWindowsの経過時間カウンターです。現在日時と経過時間を表す値を混同しません。
+SHA-256（Secure Hash Algorithm 256-bit）は保存内容を照合するハッシュ値です。
+
+記録に登場するPHC（PTP Hardware Clock）は時計参照用の装置です。PTPはPrecision Time Protocolの略です。
+UDP（User Datagram Protocol）は通信方式、PID（Process Identifier）とTID（Thread Identifier）は実行中のプロセスとスレッドの識別番号です。
+同じ表示名でも、同じ実行ファイルや管理元とは限りません。
+
+<details>
+<summary>過去の調査記録と索引を表示</summary>
 
 ## 目次
 
@@ -21,7 +36,7 @@
 
 <a id="backend-time-path-review"></a>
 
-## backend-time-path-review
+## 管理層から時刻を取得するコードの静的解析
 
 <a id="backend-time-path-review--backend時刻取得経路の静的照合と保守判断"></a>
 
@@ -103,7 +118,7 @@ T03の自然停止は今回観測しておらず、新しいphase/stackはない
 
 <a id="chrony-control-analysis"></a>
 
-## chrony-control-analysis
+## chronydの補正量と上限値の調査
 
 <a id="chrony-control-analysis--chronydの補正量とtick11000の追加調査"></a>
 
@@ -220,7 +235,7 @@ source/tests/CI/依存lock/実DB/registry/配信は変更せず、全suiteやDoc
 
 <a id="clock-admin-log-review"></a>
 
-## clock-admin-log-review
+## 管理者が採取したログの照合
 
 <a id="clock-admin-log-review--管理者採取ログの照合と入力待ちの整理"></a>
 
@@ -289,7 +304,7 @@ OS設定変更や同期service停止、future条件の緩和は行っていな�
 
 <a id="clock-followup"></a>
 
-## clock-followup
+## 時計調査の追加読取と未取得の情報
 
 <a id="clock-followup--時計調査の追加読取と残る採取（2026-11-03）"></a>
 
@@ -357,7 +372,7 @@ driverの周波数設定とoffset累積を順に呼ぶ。
 [sys_generic.c](https://github.com/mlichvar/chrony/blob/4.1/sys_generic.c)では双方が`update_slew`を呼び、
 基準周波数と残った時刻差の補正を合わせて制限する。
 したがって、同じchronydが短い間隔で異なるtick/freqを設定する観測はこの経路と整合する。
-**今回その関数呼出し自体や内部数値をtraceしたのではなく、経路の確定ではない。**
+今回は、その関数の呼出し自体や内部の数値を動作中に観測していません。そのため、実際に通った経路は確定できません。
 
 Microsoftの[Mariner2.0のpackage仕様](https://github.com/microsoft/azurelinux/blob/2.0/SPECS/chrony/chrony.spec)も取得した。
 PHC追従用の稼働設定と、system distroに見える`server time.windows.com`/`cmdport 0`のpackage既定設定を区別する根拠になる。
@@ -415,7 +430,7 @@ package照会は外側exit0でも内側rpmが127だったので、package検証�
 
 <a id="clock-host-cause-review"></a>
 
-## clock-host-cause-review
+## Windows側の同期状態とサービスの照合
 
 <a id="clock-host-cause-review--windows-peer・最終エラー・service-identityの照合"></a>
 
@@ -515,7 +530,7 @@ identity差、QPC/UTC逆転、query失敗、peer/global誤読、counter/認証�
 
 <a id="clock-origin-investigation"></a>
 
-## clock-origin-investigation
+## 記録時刻の逆行を要求した処理の調査
 
 <a id="clock-origin-investigation--utc逆行の呼出元の調査（2026-11-01）"></a>
 
@@ -615,7 +630,7 @@ T03の未再発も解決扱いにしない。HTTP部分書込/応答喪失、T07
 
 <a id="clock-process-ownership"></a>
 
-## clock-process-ownership
+## 時計を調整するプロセスと管理元の照合
 
 <a id="clock-process-ownership--時計調整プロセスの管理元照合（2026-11-01）"></a>
 
@@ -702,7 +717,7 @@ production source/test/workflow/lock未変更のため全suite・Docker/PG・実
 
 <a id="clock-resources-admin-review"></a>
 
-## clock-resources-admin-review
+## 時計装置・通信口の所有情報の照合
 
 <a id="clock-resources-admin-review--管理者phc・udp原本の照合とhost同期の残条件"></a>
 
@@ -824,7 +839,7 @@ OS/時計設定・実DB・registry・現配信・future拒否は不変。独立�
 
 <a id="initd-owner-correlation"></a>
 
-## initd-owner-correlation
+## initdとDocker Desktopの管理層の照合
 
 <a id="initd-owner-correlation--initdの時計書込とdocker-desktop管理層の照合"></a>
 
@@ -930,7 +945,7 @@ future拒否の緩和、時刻clamp、自動retry、OS/時計設定変更、実D
 
 <a id="interruption-clock-diagnostics"></a>
 
-## interruption-clock-diagnostics
+## 処理中断と時刻の異常を分けて調べる
 
 <a id="interruption-clock-diagnostics--t03t13の中断・時計診断"></a>
 
@@ -1023,3 +1038,5 @@ local全suiteは340件成功。最後の制御時計fixtureの固定後は対象
 実装`8869ee1`の[CI 41268250834](https://github.com/kenobix/Claude_practice/actions/runs/41268250834)でも全340件44.901秒、compileall、全system/PG試験・cleanupが成功した。
 artifact 13068077631の11,322 bytesのZIPとGitHub digest、9 memberを照合し、専用container群のcleanupも確認した。
 実Capital候補の精度・監視・配信の証拠には流用しない。
+
+</details>

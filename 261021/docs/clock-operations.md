@@ -1,10 +1,20 @@
 # 時計資料：手順と選定・保留事項
 
-[文書一覧・統合対応表](README.md)。2026-11-15に用途別へ統合。過去の結論・未解決事項・原本hashは保持。
+この文書は、時計の調査で検討した採取手順、外部の時刻源、保守案を保管する資料です。
+現在、時計研究・追加採取・設定操作は保留中です。過去の許可を、新しいサービス操作や再同期の許可として使いません。
+通常の製品利用は操作手順から確認してください。
 
-**時計研究・追加採取・OS操作は引き続き保留。ここにある過去手順は実行許可ではない。**
+UTC（Coordinated Universal Time）は協定世界時、NTP（Network Time Protocol）はネットワーク越しに時計を合わせる通信規約です。
+QPC（QueryPerformanceCounter）はWindowsの経過時間カウンターで、正しいUTC時刻を単独で返す仕組みではありません。
+WSL（Windows Subsystem for Linux）はWindows上のLinux環境です。PHC（PTP Hardware Clock）は時計参照用の装置で、PTPはPrecision Time Protocolを指します。
+NICT（National Institute of Information and Communications Technology）は情報通信研究機構です。
+保存記録の同一性にはSHA-256（Secure Hash Algorithm 256-bit）ハッシュを使います。
 
-各節の日付・「未完了」は執筆時点の記録を含みます。現在の状態は[プロジェクトREADME](../README.md)と[計画書の最新残件](../../261014/plan_mlops.md#remaining-work-latest)を優先してください。再実行用の入口は新配置へ更新し、当時の原文・コマンド・hashはGit `9479201`、work_log、review JSONに保持しています。
+外部のサイトに時刻が表示されることと、要求への応答が本物で、通信遅延を含む誤差の範囲まで分かることは別です。
+以下の資料は、その違いを検討した記録です。採取していない情報を確認済みとは扱いません。
+
+<details>
+<summary>保留中の採取手順・保守案・時刻源の検討記録を表示</summary>
 
 ## 目次
 
@@ -22,7 +32,7 @@
 
 <a id="clock-owner-admin-read"></a>
 
-## clock-owner-admin-read
+## 管理者権限でプロセスと所有情報を読む手順
 
 <a id="clock-owner-admin-read--windows管理者での限定した時計process読取"></a>
 
@@ -344,7 +354,7 @@ rawのpeer/IP/端末pathはprivate保存で、チャットへ全文貼付けやG
 
 <a id="clock-input-request"></a>
 
-## clock-input-request
+## 調査の再開に必要な資料
 
 <a id="clock-input-request--時計調査を再開するために必要な入力"></a>
 
@@ -456,7 +466,7 @@ tick11000の内部値とkernel書込、T03のphase/stackは自然再発時に対
 
 <a id="clock-qualification-plan"></a>
 
-## clock-qualification-plan
+## 時計を測定に使えるか確認する計画
 
 <a id="clock-qualification-plan--修復後の時計資格：事前に固定する受入手順-v1"></a>
 
@@ -578,7 +588,7 @@ policy、全sample/journal、command/cwd/終了値、生成/終了UTC・QPC/mono
 
 <a id="clock-source-readiness"></a>
 
-## clock-source-readiness
+## 独立した時刻・経過時間の参照元を選ぶ条件
 
 <a id="clock-source-readiness--独立utc源・qpc校正の選定前review"></a>
 
@@ -677,7 +687,7 @@ future拒否、失敗優先、時計資格incompleteは維持する。
 
 <a id="clock-host-maintenance-plan"></a>
 
-## clock-host-maintenance-plan
+## Windowsの同期サービスを比較する保守案
 
 <a id="clock-host-maintenance-plan--windows同期の保守比較案（未許可・未実施）"></a>
 
@@ -779,7 +789,7 @@ peerのNoAuth表示は独立UTC/elapsedの真正性や不確かさを満たす�
 
 <a id="clock-resync-result"></a>
 
-## clock-resync-result
+## 一度の再同期要求後に観測した結果
 
 <a id="clock-resync-result--1回のresync要求後の時刻設定・停止記録"></a>
 
@@ -871,7 +881,7 @@ code0は今回の終了値であり、意図どおり/恒久安定/停止原因�
 
 <a id="clock-host-runtime-review"></a>
 
-## clock-host-runtime-review
+## Windows側の設定と同期責任の照合
 
 <a id="clock-host-runtime-review--windows管理者ログのruntime設定・同期責任review"></a>
 
@@ -982,7 +992,7 @@ source不一致/client無効/provider差替え/status重複/JSON重複keyを拒�
 
 <a id="clock-task-definition-review"></a>
 
-## clock-task-definition-review
+## 時刻同期タスクの定義と停止原因の調査
 
 <a id="clock-task-definition-review--時刻同期タスクの定義と停止原因の境界"></a>
 
@@ -1061,7 +1071,7 @@ offline-task-review-v1ではlocal UTCが0.254948秒逆行し、MONOTONIC差は�
 
 <a id="clock-web-source-review"></a>
 
-## clock-web-source-review
+## Webサイトを時刻の参照元に使う条件
 
 <a id="clock-web-source-review--timeis・nictを時計の参照元に使う場合"></a>
 
@@ -1141,7 +1151,7 @@ time.is/accuracyの取得はtoolエラーで根拠に使わず、旧NICT資料�
 
 <a id="clock-nict-method-review"></a>
 
-## clock-nict-method-review
+## NICTの時刻通信を使うための検討
 
 <a id="clock-nict-method-review--nict-ntpの取得方法・不確かさのreview"></a>
 
@@ -1290,7 +1300,7 @@ source/schema/writer/lock/workflowを変更せず、受入済みsuite/CI/T09/T10
 
 <a id="time-api-options"></a>
 
-## time-api-options
+## 指定された時刻APIの確認記録
 
 <a id="time-api-options--指定された時刻apiの確認（2026-11-14）"></a>
 
@@ -1314,3 +1324,5 @@ HTTPSは接続先証明書の確認に役立つが、レスポンスの生成時
 
 将来、画面表示や手動の大幅なずれ確認に使う余地はあるが、現在の製品完成には採用必須ではない。
 追加のAPI試験やsource選定は今回ここで止める。保留を解除して調査を繰り返さない。
+
+</details>
