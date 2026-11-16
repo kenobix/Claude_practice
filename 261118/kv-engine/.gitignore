@@ -1,0 +1,5 @@
+/bin/
+/.tmp/
+/.cache/
+*.test
+coverage.out
