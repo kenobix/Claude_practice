@@ -1,0 +1,4 @@
+-r requirements.in
+pytest
+httpx
+setuptools==80.9.0

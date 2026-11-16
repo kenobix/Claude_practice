@@ -1,0 +1,24 @@
+name: ${COMPOSE_PROJECT_NAME:-ci-runner-261117}
+services:
+  db:
+    image: postgres:17.12-bookworm@sha256:40865bc877a289da75963d97d72b59633f639fc5af7a4e856bfa3714cae5b536
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ci_runner_261117}
+      POSTGRES_USER: ${POSTGRES_USER:-ci_runner_261117}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a local POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:${CI_DB_PORT:-55417}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+volumes:
+  pgdata:
