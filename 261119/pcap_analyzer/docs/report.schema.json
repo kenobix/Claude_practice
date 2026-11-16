@@ -12,14 +12,15 @@
     "classification_indices",
     "flows",
     "dns",
-    "diagnostics"
+    "diagnostics",
+    "unattributed_indices"
   ],
   "properties": {
     "schema_version": {
-      "const": "0.2.0"
+      "const": "0.3.0"
     },
     "phase": {
-      "const": 1
+      "const": "2a"
     },
     "input": {
       "type": "object",
@@ -62,7 +63,7 @@
           "const": "pcap-analyzer"
         },
         "version": {
-          "const": "0.1.0"
+          "const": "0.2.0"
         }
       }
     },
@@ -74,11 +75,12 @@
         "max_input_bytes",
         "max_records",
         "max_packet_bytes",
-        "max_diagnostics"
+        "max_diagnostics",
+        "max_flows"
       ],
       "properties": {
         "version": {
-          "const": "0.2"
+          "const": "0.3"
         },
         "max_input_bytes": {
           "type": "integer",
@@ -99,6 +101,11 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 10000
+        },
+        "max_flows": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
         }
       }
     },
@@ -119,7 +126,11 @@
         "end_ns",
         "duration_ns",
         "ipv4_fragment_count",
-        "timestamp_invalid_count"
+        "timestamp_invalid_count",
+        "flow_count",
+        "unattributed_packet_count",
+        "unattributed_captured_bytes",
+        "unattributed_original_bytes"
       ],
       "properties": {
         "packet_count": {
@@ -236,6 +247,22 @@
         "timestamp_invalid_count": {
           "type": "integer",
           "minimum": 0
+        },
+        "flow_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unattributed_packet_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unattributed_captured_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unattributed_original_bytes": {
+          "type": "integer",
+          "minimum": 0
         }
       }
     },
@@ -284,7 +311,75 @@
       }
     },
     "flows": {
-      "type": "null"
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "protocol",
+          "a",
+          "b",
+          "a_to_b",
+          "b_to_a",
+          "tcp_flag_counts"
+        ],
+        "properties": {
+          "protocol": {
+            "enum": [
+              6,
+              17
+            ]
+          },
+          "a": {
+            "$ref": "#/$defs/endpoint"
+          },
+          "b": {
+            "$ref": "#/$defs/endpoint"
+          },
+          "a_to_b": {
+            "$ref": "#/$defs/direction"
+          },
+          "b_to_a": {
+            "$ref": "#/$defs/direction"
+          },
+          "tcp_flag_counts": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/tcp_flags"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "protocol": {
+                  "const": 6
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "tcp_flag_counts": {
+                  "$ref": "#/$defs/tcp_flags"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "tcp_flag_counts": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        ]
+      }
     },
     "dns": {
       "type": "object",
@@ -337,8 +432,122 @@
           }
         }
       }
+    },
+    "unattributed_indices": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "uniqueItems": true
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "PCAP analyzer Phase 1 report v0.2.0"
+  "title": "PCAP analyzer Phase 2a report v0.3.0",
+  "$defs": {
+    "endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ip",
+        "port"
+      ],
+      "properties": {
+        "ip": {
+          "type": "string",
+          "format": "ipv4"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535
+        }
+      }
+    },
+    "direction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packets",
+        "captured_bytes",
+        "original_bytes",
+        "packet_indices"
+      ],
+      "properties": {
+        "packets": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "captured_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "original_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "packet_indices": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "tcp_flags": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "F",
+        "S",
+        "R",
+        "P",
+        "A",
+        "U",
+        "E",
+        "C",
+        "N"
+      ],
+      "properties": {
+        "F": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "S": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "R": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "P": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "A": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "U": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "E": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "C": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "N": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
 }

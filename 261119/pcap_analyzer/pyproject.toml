@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pcap-analyzer"
-version = "0.1.0"
-description = "Offline classic pcap header analysis and basic reporting"
+version = "0.2.0"
+description = "Offline classic pcap header analysis and bidirectional flow reporting"
 requires-python = ">=3.12,<3.13"
 dependencies = ["scapy==2.6.1"]
 

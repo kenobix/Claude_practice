@@ -147,3 +147,75 @@ Phase 2は①双方向キー/方向別bytes/根拠のフロー集計と上限、
 ③5秒窓/重複・ID再利用/追加・孤立応答、④終端/逆行での未確定・時間無効化、
 ⑤既存手計算期待値と新境界fixtureによる照合の順で進める。
 今回の成果はレビュー後にfeat/pcap-analyzerだけへ保存する。mainへのpush・マージとPR作成は行わない。
+
+
+# Phase 2前半 — 双方向フロー集計
+
+実施日: 2026-11-17（Asia/Tokyo）。DNS照合は今回の範囲外。
+
+## 開始確認
+
+- cwd=`/home/kenshin/work/Claude_practice-261119`、branch=`feat/pcap-analyzer`。
+- Git statusはclean、開始コミットはPhase 1の`0b03294`。
+- 指定計画・仕様・Schema・AGENTS・既存コードを確認し、既存100テストを最初に再実行して全件成功。
+- 以後の変更は261119/内のみ。root README・main・他worktreeは変更しない。
+
+## 実装内容
+
+- flows.pyを追加。キーはIP protocol番号と、IPv4の4 bytes/port整数で順序を固定した両端点。
+  初回パケットの向きやIP表示文字列の辞書順に依存せず、protocol/a/b順に出力する。
+  同一IPではportで比較し、両端点が同一ならa_to_bへ加算する。
+- 方向別packets/captured_bytes/original_bytes/packet_indicesを集計。
+  TCP flagsの9 bit（F/S/R/P/A/U/E/C/N）を独立計数し、SYN+ACKは両方へ1。
+  UDPのtcp_flag_countsはnull。ポート再利用・重複捕捉を含む端点集計でありTCP接続とは呼ばない。
+- PacketRecordへflow_eligibleとtcp_flagsを追加。分類とは独立して必要ヘッダーの完全性を伝える。
+  ヘッダー全体が完全・整合するtruncatedは帰属し、payload不足を補完せずcaplen/wirelenを別加算。
+  不正時刻fractionのみのmalformedもヘッダーが有効なら帰属する。
+  fragment、非TCP/UDP、ヘッダー/option領域不足、長さ矛盾は未帰属へ記録する。
+- フロー上限100000、CLI --max-flowsで1..100000に引下げ可。
+  新規キーで超過した完全レコードは全体に数えて未帰属へ記録し、次レコードを読まず
+  E_LIMIT_FLOWS / complete=false / 終了2で停止する。既存キーへの追加は上限時も許可。
+- summaryにflow_countと未帰属件数/捕捉長/元長を追加し、unattributed_indicesで根拠を保持。
+  すべての方向と未帰属で全件数/捕捉長/元長を分配し、根拠番号1..Nを重複なく覆う。
+  診断上限停止の前にもフロー帰属を済ませ、途中結果の整合性を保持する。
+- flows配列と端末の方向別フロー表・flags表示を統合。
+  現行Schema=0.3.0、phase="2a"、config版0.3、ツール版0.2.0へ更新した。
+  DNSはnot_implemented/events=null、時刻逆行の警告は維持する。
+- baseline.flows.jsonを初期の手計算フロー値・Phase 1の手定義基本値から定義。
+  解析出力から期待値を生成せず、旧expectedファイルも変更せず保持した。
+- README、仕様、fixture設計補足、AGENTSを更新。固定依存版は変更なし。
+  同じ専用venvへローカルeditable再導入し、ツール版を更新した。
+
+## テストと確認結果
+
+全153テスト成功（既存100件 + フロー53件）。既存テストは元の指標・分類・入力制限・
+時刻の検証を保持し、Schema版/flows型の変更に関係する期待と整合性検査のみ更新した。
+
+- 基本fixtureの全体JSONを手定義期待値と一致確認。4フロー、10件、680 captured/original bytes。
+  TCP両方向各2件/108 bytes、flags S=2/A=3、未帰属0。
+  全方向680+未帰属0=全体680 bytes、件数10+0=10、元長680+0=680。
+- IP数値順（192.0.2.2と192.0.2.10）、逆方向から始まる記録、同一IP/port、
+  port/IP/protocol違いの分離、UDP双方向、全9 flagsとSYN+ACKを検証。
+- 完全ヘッダーのtruncated（TCP/options/UDP）、wirelenだけが長い記録、不正時刻だけのmalformedの帰属を検証。
+  ヘッダー/option領域不足、offset/UDP長矛盾、caplen>wirelen/snaplen、fragment/ARPの除外を確認。
+- 混在例で方向別captured108+未帰属82=全体190 bytes、
+  original118+96=214 bytes、方向件数2+未帰属2=全体4件、根拠番号の分配を確認。
+- max_flowsを2本へ縮小し、3本目で停止すること、2本ちょうど/既存キー追加が成功することを確認。
+  超過パケットも含む3件162 bytes=方向108+未帰属54、4件目をScapyで読まないことを確認。
+  既定値・設定最大値100000と、それを超える設定の拒否を検証した。
+  10万本を実際に保持する負荷試験は未実施。
+- 診断上限停止、破損レコード、従来の読込/件数上限時もSchemaと件数・bytes・根拠の整合を確認。
+- 同じ入力のJSON再実行一致、flow配列順、端末表、CLI上限/終了コード、Schema必須項目とUDP flags制約を確認。
+- 既存の14保存fixtureは変更せず再利用。新規条件はテスト内の固定bytes/structから一時合成。
+  既存のsocket生成禁止下解析テストも成功。ライブ捕捉・ネットワーク送信・スキャンは行っていない。
+
+## 残る範囲と次の手順
+
+DNS本文・圧縮名検査、byte列の名前正規化、問い合わせ/応答照合は未実装。
+既存のpcapng/IPv6/VLAN等の未対応、チェックサム・option意味検証、TCP接続分割/再送推定の除外も維持。
+TShark比較、性能・大規模フロー負荷、実通信、VS Code GUIは未検証。
+
+Phase 2後半は①DNS境界/圧縮名検査とASCIIのみの正規化、②端点・ID・質問の照合キー、
+③5秒窓とquery重複/完了後再利用、④追加/孤立応答・記録終端/時刻逆行、
+⑤RCODE/TC・根拠・Schemaと手計算期待値の照合、の順で進める。
+今回の成果は差分とテストを確認してfeat/pcap-analyzerだけへcommit・pushする。

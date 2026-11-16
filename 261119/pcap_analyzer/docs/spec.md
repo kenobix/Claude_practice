@@ -1,8 +1,9 @@
-# PCAP解析仕様 v0.2（Phase 1実装 / Phase 2設計）
+# PCAP解析仕様 v0.3（Phase 2前半実装 / DNS照合設計）
 
 2026-11-17策定。元計画: [261014/plan_pcap_analyzer.md](../../../261014/plan_pcap_analyzer.md)。
 2026-11-17にPhase 1を実装。入力検査・L2/L3/L4分類・基本集計・JSON/端末表が実装済み。
-以下のフロー/DNS照合はPhase 2の設計契約であり未実装。DNS本文はPhase 1では検査しない。
+同日にPhase 2前半の双方向フロー集計・TCP flags・フロー数上限を実装。
+DNS本文検査と照合はPhase 2後半の設計契約であり、今回実装しない。
 
 ## 入力境界と停止
 
@@ -26,7 +27,7 @@
   入力ヘッダーが無効ならstderr診断のみ。読込開始後の失敗はcomplete=falseの途中JSONとstderr診断。
 - 診断コード案: E_INPUT、E_FORMAT、E_FORMAT_UNSUPPORTED、E_LINKTYPE、E_RECORD_HEADER、
   E_RECORD_DATA、E_LIMIT_BYTES、E_LIMIT_RECORDS、E_LIMIT_PACKET_BYTES、E_LIMIT_DIAGNOSTICS、E_INPUT_CHANGED。
-  E_LIMIT_FLOWS/E_LIMIT_DNSはPhase 2予定。
+  E_LIMIT_FLOWSは実装済み。E_LIMIT_DNSはPhase 2後半予定。
   上限停止で正常完了を装わない。生パケットや機密パスを診断へ埋め込まない。
 
 入力は安定した通常ファイルを用意する。O_NONBLOCKで開いてfstatし、FIFO/デバイスを拒否する。
@@ -51,11 +52,11 @@ TCP再構成・再送推定は行わない。チェックサム不一致のみ�
 | unsupported | ARP/IPv6/VLAN、IP fragment、非TCP/UDP（DNS質問数≠1はPhase 2） | 未対応範囲と番号 |
 | parsed | 対応ヘッダーを完全に検査できたもの | フローと対象DNSへ |
 
-Phase 2ではDNS候補の破損もpacket分類に反映する。Phase 1のparsedはTCP/UDPヘッダーまでの
+Phase 2ではDNS候補の破損もpacket分類に反映する。現行のparsedはTCP/UDPヘッダーまでの
 検査成功であり、DNSその他のアプリケーション本文の正常性を意味しない。UDP長はIPv4の
 宣言payload長と一致することを要求し、チェックサムは検証しない。
 
-Phase 2のフローは、非フラグメントのIPv4 TCP/UDPで
+実装済みフローは、非フラグメントのIPv4 TCP/UDPで
 両端点とヘッダー長が完全・整合なら分類にかかわらず捕捉長を加算できる。
 caplen<wirelenでもL4ヘッダーまで完全な例はフローに加算可能、DNS照合は不可。
 フローへ入らなかった捕捉bytesはsummary.unattributed_captured_bytesへ。
@@ -67,7 +68,8 @@ PacketRecord: packet_index（完全レコードをファイル順に1から）�
 classification、reason、protocol（下記カテゴリ）、src_ip/dst_ip/src_port/dst_port/ip_protocol（未取得はnull）。
 整数timestamp_nsは不正fraction時のみnull。該当レコードはmalformedとして数え、
 timestamp_invalid_countを増やして時刻範囲から除外する。件数・bytesは保持する。
-DNS抽出情報はPhase 2予定。
+flow_eligible（bool）とtcp_flags（TCPのみ9 bit整数）を追加。
+フローに必要なヘッダーが完全な場合だけflow_eligible=true。DNS抽出情報はPhase 2後半予定。
 
 | 指標 | 定義 |
 |---|---|
@@ -88,20 +90,55 @@ IPv4ヘッダーまで取得/検査できなければunknown。正常性は別�
 input.timestamp_precisionにus/nsを保存。µs入力をns精度で観測したと表現しない。
 隣接レコードの時刻が1回でも逆行すればファイル全体のDNS時間解析を無効にし、
 dns.time_analysis=disabled_timestamp_regressionとして警告を出す。
-Phase 1のeventsは未実装を示すnull、Phase 2の時間集計無効時は[]を予定する。
+現行のeventsは未実装を示すnull、DNS照合実装後の時間集計無効時は[]を予定する。
 ソートや前半の成功値の温存をしない。件数・バイト・フローは維持する。
 同一時刻は逆行ではなく、ファイル順に処理し0 msの一意応答を許可する。
 
-## フロー（Phase 2予定）
+## 双方向フロー（Phase 2前半実装済み）
 
 endpoint=(IPv4の4 bytes、port整数)。小さいendpointをa、大きいものをbとし、
-キー=(IP protocol番号、a、b)。表示IP文字列の辞書順は使わない。
-a→bとb→a別にpackets、captured_bytes、original_bytes、packet_indicesを集計。
-TCP flagsはセットされた各bitについて計数し、SYN+ACKは両方へ1。接続単位とは呼ばない。
-フロー数上限100000。根拠番号も最大レコード数の範囲に制約される。
-方向bytesの総和＋unattributed_captured_bytes=captured_bytes。
+キー=(IP protocol番号、a、b)。表示IP文字列の辞書順や最初の観測方向は使わない。
+protocolが違えば同じ両端点でも別フロー。IPが同じならportで比較する。
+両端点が完全に等しい場合はa→bに一意に加算する。port=0も有効なヘッダー値として扱う。
 
-## DNS照合（Phase 2予定）
+flows.pyがa_to_b/b_to_a別にpackets、captured_bytes、original_bytes、packet_indicesを保持する。
+根拠番号はファイル順。再送・重複捕捉もそのまま加算し、TCP接続単位とは呼ばない。
+TCP flagsはF/S/R/P/A/U/E/C/N（NS）の各bitを独立に計数し、SYN+ACKはSとAの両方へ1。
+方向を合わせたフロー全体のflag件数。bitがなければ0、UDPのtcp_flag_countsはnull。
+
+| 条件 | フローへの帰属 |
+|---|---|
+| 非fragmentのIPv4 TCP/UDP、IPv4ヘッダーとTCP/UDPヘッダー全体が完全・整合 | 帰属する |
+| caplen<wirelenだが上記ヘッダーが完全、payloadやフレーム末尾が不足 | 帰属する。実捕捉caplenと記録wirelenを別に加算 |
+| 不正時刻fractionだけでmalformed、ヘッダーは完全・整合 | 帰属する。時刻範囲からは従来どおり除外 |
+| Ethernet/IP/L4ヘッダー不足、TCP options部分不足、ヘッダー長の矛盾 | 帰属しない |
+| caplen>wirelen、caplen>snaplen | 記録長に矛盾があるため帰属しない |
+| IPv4 fragment（最初のfragmentを含む）、ARP/IPv6/VLAN/非TCP・UDP | 帰属しない |
+| ファイル本文が宣言caplenより短い部分レコード | 完全レコードでないため全体集計にも帰属集計にも入れない |
+
+classificationとは独立したflow_eligibleを使い、欠けたポートやflagsを推測しない。
+DNS本文は復号しないので、現時点では本文の正否による帰属判定はしない。
+
+フロー数上限100000。`--max-flows`で1..100000に引下げ可能。
+上限件数ちょうどと既存フローへの追加は可。次の新規キーを作る前に停止する。
+超過を起こした完全レコードは全体の件数・分類・時刻へ計数し、フローには作成/追加せず
+未帰属へ記録する。E_LIMIT_FLOWS、該当packet_index、complete=false、終了2を返し、
+次のレコードは読まない。診断上限・読込エラーで停止しても、計数済みのレコードは必ず分配済みにする。
+
+summaryにflow_count、unattributed_packet_count、unattributed_captured_bytes、
+unattributed_original_bytesを追加。未帰属番号はunattributed_indicesへ保存する。
+
+```text
+Σ方向別packets + unattributed_packet_count = packet_count
+Σ方向別captured_bytes + unattributed_captured_bytes = captured_bytes
+Σ方向別original_bytes + unattributed_original_bytes = original_bytes
+```
+
+各方向のpackets=packet_indicesの長さ。全方向の根拠番号と未帰属番号は互いに重ならず、
+全体の1..Nをちょうど1回ずつ覆う。空入力はflows=[]、未帰属件数/長さは0。
+flows配列はprotocol番号、aのIP bytes/port、bのIP bytes/portでソートし、決定的に出力する。
+
+## DNS照合（Phase 2後半予定）
 
 非フラグメントかつ非truncatedのUDP、src/dstの一方が53。DNSヘッダー12 bytes以上、
 質問/回答の境界、圧縮ポインターの参照先/ループ、RDLENGTHを検査する。初期opcode=0のみ。
@@ -136,7 +173,8 @@ DNS状態件数はqueryグループ/孤立・追加responseイベントの件数
 ## レポート契約
 
 [report.schema.json](report.schema.json) が現行のJSON Schema draft 2020-12契約。
-schema_version=0.2.0、phase=1、tool.version=0.1.0、config.version=0.2。
+schema_version=0.3.0、phase="2a"、tool.version=0.2.0、config.version=0.3。
+Phase 1からflowsの型・未帰属指標・max_flowsを追加する版変更であり、旧出力との互換は保証しない。
 入力SHA-256はファイル全体。読込を上限で停止してもhashは入力全体を識別する。
 
 summaryに件数、caplen/wirelen合計、分類/プロトコル別件数、parsed_ratio、時刻範囲、
@@ -144,11 +182,12 @@ fragment件数、不正時刻件数を出す。classification_indicesは各分�
 全完全レコードはちょうど1配列に現れ、分類件数と配列長が一致する。
 全生パケットや全PacketRecordは保持せず、最大100万件の根拠番号と上限付き診断だけを残す。
 
-flows=null、dns.status=not_implemented、dns.events=nullで未実装を表す。
+flowsは上記の双方向集計配列。dns.status=not_implemented、dns.events=nullでDNS未実装を表す。
 dns.time_analysisは通常not_implemented、逆行検出時はdisabled_timestamp_regression。
 Phase 0の将来用フロー/DNSレポートは[旧Schema](report.phase0.schema.json)と
 [契約例](../expected/baseline.report.json)として保管し、現行出力とは混同しない。
-Phase 1の手定義期待値は[baseline.phase1.json](../expected/baseline.phase1.json)。
+現行の手定義期待値は[baseline.flows.json](../expected/baseline.flows.json)。
+Phase 1の[baseline.phase1.json](../expected/baseline.phase1.json)も履歴として保持し、旧指標が変わっていないことを検証する。
 
 診断はpacket_index/code順、JSONキーはソートする。壁時計時刻、処理時間、絶対パスを
 出力へ埋め込まず、同一入力/設定で同一JSONとする。無効グローバルヘッダーと入力サイズ超過は
@@ -170,7 +209,8 @@ classic pcap → reader.py（厳密境界検査 + RawPcapReader）
 Phase 0でcli.pyの起動足場とfixture生成/検証を実装した。
 Phase 1は①コンテナ検証・診断・上限、②時刻/長さ/番号付きRecord、③Ethernet/IPv4/TCP/UDP分類、
 ④summary/JSONと意味整合テスト、⑤正常/空/破損/未対応/上限のCLI終了規則を実装済み。
-Phase 2でflows.py、DNS正規化、窓と終端処理、曖昧さ・逆行時撤回を実装する。
+Phase 2前半でflows.pyとフローのJSON/端末表を実装済み。
+後半でDNS正規化、窓と終端処理、曖昧さ・逆行時撤回を実装する。
 TSharkとの独立比較はPhase 3。性能や実通信への適用は未検証。
 
 Scapy APIの採用根拠: [公式RawPcapReader API](https://scapy.readthedocs.io/en/latest/api/scapy.utils.html#scapy.utils.RawPcapReader)。

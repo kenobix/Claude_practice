@@ -62,7 +62,15 @@ def assert_consistent(report):
     assert sorted(i for group in refs.values() for i in group) == list(range(1, n + 1))
     assert all(len(refs[key]) == value for key, value in summary["classification_counts"].items())
     assert all(d["packet_index"] is None or 1 <= d["packet_index"] <= n + 1 for d in report["diagnostics"])
-    assert report["flows"] is None
+    directions = [flow[key] for flow in report["flows"] for key in ("a_to_b", "b_to_a")]
+    assert summary["flow_count"] == len(report["flows"])
+    assert sum(d["packets"] for d in directions) + summary["unattributed_packet_count"] == n
+    assert sum(d["captured_bytes"] for d in directions) + summary["unattributed_captured_bytes"] == summary["captured_bytes"]
+    assert sum(d["original_bytes"] for d in directions) + summary["unattributed_original_bytes"] == summary["original_bytes"]
+    assert all(d["packets"] == len(d["packet_indices"]) for d in directions)
+    assert len(report["unattributed_indices"]) == summary["unattributed_packet_count"]
+    flow_refs = [i for d in directions for i in d["packet_indices"]]
+    assert sorted(flow_refs + report["unattributed_indices"]) == list(range(1, n + 1))
     assert report["dns"]["status"] == "not_implemented"
 
 
@@ -70,7 +78,10 @@ def test_active_schema_and_entire_baseline_contract():
     Draft202012Validator.check_schema(SCHEMA)
     expected = json.loads((ROOT / "expected/baseline.phase1.json").read_text())
     result = analyze(FIXTURES / "baseline.pcap")
-    assert result == expected
+    # Preserve every Phase 1 metric while allowing the versioned flow extension.
+    assert {key: result["summary"][key] for key in expected["summary"]} == expected["summary"]
+    for key in ("input", "classification_indices", "complete", "dns", "diagnostics"):
+        assert result[key] == expected[key]
     assert_consistent(result)
     assert result["input"]["sha256"] == hashlib.sha256((FIXTURES / "baseline.pcap").read_bytes()).hexdigest()
     assert "680" in render_table(result)
@@ -368,10 +379,10 @@ def test_changed_input_is_detected(tmp_path):
 
 def test_schema_rejects_unimplemented_results_and_unknown_fields():
     example = analyze(FIXTURES / "baseline.pcap")
-    example["flows"] = []
+    example["flows"] = None
     with pytest.raises(ValidationError):
         VALIDATOR.validate(example)
-    example["flows"] = None
+    example["flows"] = []
     example["summary"]["invented_metric"] = 0
     with pytest.raises(ValidationError):
         VALIDATOR.validate(example)

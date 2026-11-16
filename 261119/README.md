@@ -1,17 +1,18 @@
-# 保存済みPCAP解析ツール — Phase 1
+# 保存済みPCAP解析ツール — Phase 2前半（双方向フロー）
 
 作業日: 2026-11-17。`261119`は指定された作業ID。
 計画: [保存済みPCAP解析ツール](../261014/plan_pcap_analyzer.md)。
 
 classic pcapの入力検査、Ethernet/IPv4/TCP・UDPヘッダー検査、件数・長さ・時刻・分類の集計、
 JSONと端末表を実装した。これは通信量集計の中間版であり、計画全体のMVP完成ではない。
-フロー集計とDNS本文検査・問い合わせ/応答照合はPhase 2に残している。
+双方向フロー集計、方向別件数/長さ/根拠、TCP flags、フロー数上限を追加した。
+DNS本文検査・問い合わせ/応答照合はPhase 2後半に残している。
 
 ## 作業環境
 
 - worktree: `~/work/Claude_practice-261119`、branch: `feat/pcap-analyzer`
 - origin: `kenobix/Claude_practice`。mainへのpush・マージとPR作成は行わない。
-- Python 3.12.3、専用環境: `pcap_analyzer/.venv`、ツール版0.1.0
+- Python 3.12.3、専用環境: `pcap_analyzer/.venv`、ツール版0.2.0
 - Scapy 2.6.1 / pytest 8.4.2 / jsonschema 4.25.1
 - 依存は推移依存・pipを含め[requirements.lock](pcap_analyzer/requirements.lock)に固定。
   ローカルパッケージはeditable installで別途導入する。他プロジェクト・OSは変更しない。
@@ -37,7 +38,8 @@ python3.12 -m venv .venv
 .venv/bin/python -m pytest -q
 ```
 
-全100テスト成功（既存15件を維持し、旧CLI未実装テストを現動作に更新、機能テスト85件追加）。
+全153テスト成功。既存100件は分類・入力制限・時刻等の検査を維持し、版変更に伴う期待を更新。
+フローの正常系・方向・キー・flags・truncated帰属・除外・上限・決定性・Schemaの53件を追加した。
 生成した14種類の人工fixture、手計算期待値、4種類のmagic/時刻形式、不正なヘッダー、
 分類優先順位、caplen/wirelen、破損レコード、安全上限、Schema、決定性を検証する。
 インストールのPyPI接続とGitHub保存以外の処理はオフライン。ライブ捕捉・送信・スキャン・逆引き・外部照会なし。
@@ -50,11 +52,14 @@ Scapyの経路/インターフェース自動読込をプロセス内で無効�
 # 端末向け表示（既定）
 .venv/bin/pcap-analyzer fixtures/baseline.pcap
 
-# 決定的なJSON（schema_version=0.2.0）
+# 決定的なJSON（schema_version=0.3.0）
 .venv/bin/pcap-analyzer fixtures/baseline.pcap --format json
 
 # 3件で停止し、complete=falseの途中JSONと終了2を確認
 .venv/bin/pcap-analyzer fixtures/baseline.pcap --format json --max-records 3
+
+# 新規2本目のフローで停止。超過パケットは未帰属に入れ、終了2
+.venv/bin/pcap-analyzer fixtures/baseline.pcap --format json --max-flows 1
 
 # 破損した本文：完全レコード0件、E_RECORD_DATA、終了2
 .venv/bin/python -m pcap_analyzer fixtures/record_cutoff.pcap --format json
@@ -66,7 +71,7 @@ PCAP自体のサイズ864 bytesにはコンテナヘッダーも含む。
 `parsed`はL2/L3/L4ヘッダーまでの検査成功を意味し、DNS等の本文の正常性を意味しない。
 
 JSONの`classification_indices`にファイル順・1始まりの根拠番号を保存する。
-`flows=null`、`dns.status=not_implemented`、`dns.events=null`で未実装を明示する。
+`flows`に双方向の集計を出力する。DNSは`dns.status=not_implemented`、`dns.events=null`。
 時刻逆行では警告と`disabled_timestamp_regression`を記録し、並べ替えはしない。
 
 | 終了コード | 意味 / 出力 |
@@ -85,16 +90,42 @@ JSONの`classification_indices`にファイル順・1始まりの根拠番号を
 | 完全レコード | 100万件 | `--max-records` |
 | 1レコードの捕捉長 | 1 MiB | `--max-packet-bytes` |
 | 通常診断 | 1万件（ほかに終了診断1件） | `--max-diagnostics` |
+| 双方向フロー数 | 10万件 | `--max-flows` |
 
 すべて正整数。ちょうど上限は許可。診断上限は当該レコードを計数してから明示停止する。
 入力全体のSHA-256を上限確認後に計算し、パケットは逐次処理する。FIFO/デバイスは拒否。
 並行変更はサイズ/mtime/ctimeの変化を検出するが、不変スナップショットを保証しない。
 
+## フローの意味と整合性
+
+キーは(protocol番号、IPv4 bytes/portで昇順に固定した端点a/b)。最初の観測方向に依存しない。
+同じIP同士はportで比較し、両端点が完全に同じ場合はa_to_bへ加算する。
+方向ごとにpackets/captured_bytes/original_bytes/packet_indicesを保持する。
+TCP flagsはF/S/R/P/A/U/E/C/Nを独立に計数し、SYN+ACKはSとAへ各1。UDPのflagsはnull。
+同じ両端点の集計であり、単一TCP接続や一意のアプリケーション通信量とは呼ばない。
+
+基本例は4フロー。TCPは各方向2件/108 bytes、UDPはport53000で72/88 bytes、
+53001で72/0 bytes、53002で144/88 bytes。方向別合計680 bytes + 未帰属0 bytes = 全捕捉680 bytes。
+TCP flagsはS=2、A=3。件数も10+未帰属0=10、元長も680+0=680で一致する。
+
+非fragmentのIPv4 TCP/UDPでヘッダー全体が完全・整合していれば、payload不足のtruncatedも帰属する。
+不正時刻だけでmalformedとなったものも帰属可能。ヘッダー不足・長さ矛盾・fragment・未対応形式は未帰属。
+全分類は従来どおり維持する。summaryの未帰属件数/捕捉長/元長とunattributed_indicesに根拠を残す。
+
+上限を超える新規フローのパケットは全体に計数し、未帰属へ記録してE_LIMIT_FLOWSで停止する。
+上限ちょうどのフロー数と既存キーへの追加は許可する。途中結果でも次の等式を検証する。
+
+```text
+方向別件数の総和 + 未帰属件数 = 全件数
+方向別captured bytesの総和 + 未帰属captured bytes = 全captured bytes
+方向別original bytesの総和 + 未帰属original bytes = 全original bytes
+```
+
 ## 仕様・期待値・制限
 
 - [現行仕様とPhase 2の設計](pcap_analyzer/docs/spec.md)
 - [fixture設計と手計算](pcap_analyzer/docs/fixtures.md) / [fixture別期待値](pcap_analyzer/expected/fixtures.json)
-- [現行Schema](pcap_analyzer/docs/report.schema.json) / [Phase 1の基本例期待値](pcap_analyzer/expected/baseline.phase1.json)
+- [現行Schema](pcap_analyzer/docs/report.schema.json) / [現行フロー期待値](pcap_analyzer/expected/baseline.flows.json) / [Phase 1の旧期待値](pcap_analyzer/expected/baseline.phase1.json)
 - [Phase 0の将来レポート例](pcap_analyzer/expected/baseline.report.json) / [対応する旧Schema](pcap_analyzer/docs/report.phase0.schema.json)
 - [作業記録](work_log.md)
 
@@ -105,7 +136,7 @@ UDP長はIPv4の宣言payload長との一致を要求する。
 プロトコル件数は確認できたIPv4 protocol番号等で識別し、L4のtruncatedでもtcp/udpへ数え得る。
 分類の件数とは別の指標で、それぞれの合計が全レコード数と一致する。
 
-フロー、DNS正規化/窓処理/曖昧さの解消、端末のフロー表はPhase 2。
+DNS正規化/窓処理/曖昧さの解消はPhase 2後半。フロー集計と端末フロー表は今回実装済み。
 DNS25ms・未応答・重複queryの判定は依然として将来の手計算期待値である。
 TShark未導入のため独立比較は未実施。性能測定、実通信、他Python版、VS Code GUIは未検証。
 捕捉長と記録上の元長を回線上の実転送量と呼ばず、観測不足を障害や攻撃と断定しない。

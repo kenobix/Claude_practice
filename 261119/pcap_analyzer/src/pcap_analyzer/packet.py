@@ -89,13 +89,17 @@ def decode(data: bytes, *, index: int, timestamp_ns: int | None,
         udp_len = struct.unpack("!H", transport[4:6])[0]
         if udp_len < 8 or udp_len != declared_transport_len:
             issues["malformed"].append("udp_length_invalid")
-    if len(transport) >= minimum and not issues["malformed"]:
+    # An invalid timestamp does not invalidate otherwise complete flow headers.
+    # Capture-length contradictions and malformed network/transport headers do.
+    header_invalid = any(reason != "invalid_timestamp_fraction" for reason in issues["malformed"])
+    if len(transport) >= minimum and not header_invalid:
         if header.proto == 6:
             offset = (transport[12] >> 4) * 4
             if offset <= len(transport):
                 layer = TCP(transport[:offset])
-                fields.update(src_port=layer.sport, dst_port=layer.dport)
+                fields.update(src_port=layer.sport, dst_port=layer.dport,
+                              flow_eligible=True, tcp_flags=int(layer.flags))
         else:
             layer = UDP(transport[:8])
-            fields.update(src_port=layer.sport, dst_port=layer.dport)
+            fields.update(src_port=layer.sport, dst_port=layer.dport, flow_eligible=True)
     return finish()

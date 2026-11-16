@@ -3,7 +3,7 @@
 ルートのAGENTS.mdと今回のユーザー指示を適用する。
 
 - 作業は `feat/pcap-analyzer` の独立worktreeで行う。mainを変更しない。
-- 今回はPhase 1。確認済み成果をfeat/pcap-analyzerへcommit・pushする。mainへのpush・マージとPR作成は行わない。
+- 今回はPhase 2前半の双方向フロー集計。DNS照合は実装しない。確認済み成果をfeat/pcap-analyzerへcommit・pushする。mainへのpush・マージとPR作成は行わない。
 - 変更はこのディレクトリ内のみ。今回の指示に従いルートREADMEへの一覧追記は取り消した。
 - 依存導入は `pcap_analyzer/.venv` のみ。OSや他プロジェクトへ導入しない。
 - ライブ捕捉、送信、スキャン、逆引き、外部APIによる解析を行わない。

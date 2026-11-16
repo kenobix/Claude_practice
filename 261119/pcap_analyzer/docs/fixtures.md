@@ -63,3 +63,13 @@ NXDOMAIN/TC、完了後query再利用、additional/unmatched_response、window_i
 現時点でこれらのうちPhase 1の形式・ヘッダー・上限の境界は、追加機能テスト内で
 独立したbytes/structから合成して検証済み。保存fixtureは引き続き14ファイルである。
 DNS照合の解析挙動・性能は検証していない。
+
+## Phase 2前半の検証
+
+保存fixture14ファイルは変更せず、基本例の4フロー・方向別bytes・根拠番号を
+初期手計算期待値と照合した。現行全体期待値は[baseline.flows.json](../expected/baseline.flows.json)。
+TCPフラグS=2/A=3、全方向680 captured/original bytes、未帰属0。
+追加の一時fixtureはtests/test_flows.py内で固定bytes/structから生成し、
+IPバイト順・同一IP/port・各キー成分・UDP・9 flags・truncated・除外・途中停止を確認する。
+フロー数の停止境界は設定を1/2本に縮小して検証し、100000という既定値/設定上限も別に確認した。
+10万本を実際に保持する負荷試験は未実施。DNS照合の期待値は未実装のまま。

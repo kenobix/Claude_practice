@@ -6,6 +6,7 @@ MAX_INPUT_BYTES = 100 * 1024 * 1024
 MAX_RECORDS = 1_000_000
 MAX_PACKET_BYTES = 1024 * 1024
 MAX_DIAGNOSTICS = 10_000
+MAX_FLOWS = 100_000
 STATES = ("parsed", "unsupported", "truncated", "malformed")
 PROTOCOLS = ("tcp", "udp", "ipv4_fragment", "ipv4_other", "non_ipv4", "unknown")
 
@@ -16,12 +17,14 @@ class Config:
     max_records: int = MAX_RECORDS
     max_packet_bytes: int = MAX_PACKET_BYTES
     max_diagnostics: int = MAX_DIAGNOSTICS
+    max_flows: int = MAX_FLOWS
 
     def __post_init__(self):
         for name, ceiling in (("max_input_bytes", MAX_INPUT_BYTES),
                               ("max_records", MAX_RECORDS),
                               ("max_packet_bytes", MAX_PACKET_BYTES),
-                              ("max_diagnostics", MAX_DIAGNOSTICS)):
+                              ("max_diagnostics", MAX_DIAGNOSTICS),
+                              ("max_flows", MAX_FLOWS)):
             value = getattr(self, name)
             if type(value) is not int or not 1 <= value <= ceiling:
                 raise ValueError(f"{name} must be an integer in 1..{ceiling}")
@@ -54,3 +57,5 @@ class PacketRecord:
     src_port: int | None = None
     dst_port: int | None = None
     ip_protocol: int | None = None
+    flow_eligible: bool = False
+    tcp_flags: int | None = None
