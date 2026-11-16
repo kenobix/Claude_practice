@@ -38,7 +38,7 @@ Windows 11、RTX 5070 Ti 16GB、RAM 32GB、WSL2 Ubuntu 24.04の構成で、Strat
 
 ## 公開するもの／しないもの
 
-**この文書は、ユーザーが提示した実行ログの概要のみをGitHubに保存したもの。** ソース本体`is_prime.py`と`test_is_prime.py`はユーザーのWSL内にあり、このコミットには含まない。別途ユーザーの環境からコピーして差分確認の上コミットする。
+**この文書は、ユーザーが提示した実行ログの概要のみをGitHubに保存したもの。** ソース本体`is_prime.py`と`test_is_prime.py`はユーザーのWSL内にあり、このコミットには含まない。ユーザー方針によりPythonソースはpushせず、結果だけ記録する。
 
 以下は絶対に公開しない：実APIキー、`~/.config/opencode/opencode.json`（キーが含まれる可能性）、`strata-api-key`、Windowsユーザー固有の認証情報、58GBのモデル本体、`.venv/`、`.pytest_cache/`。
 
@@ -48,7 +48,7 @@ Windows 11、RTX 5070 Ti 16GB、RAM 32GB、WSL2 Ubuntu 24.04の構成で、Strat
 - **P2次**：CodexとStrataで小規模なバグ1〜2件を、独立の受入テスト・手戻り回数・作業時間で比較し、時間を区切る。
 - **P3本命**：Python/FastAPIからComfyUIの保存済みワークフローを呼び、Qwen画像からLTX/Wan動画への単一ジョブを完成させる。
 
-設計判断と却下・保留した案の一覧は[今後の優先順位・判断根拠](ai_learning_roadmap_20261116.md)に記録した。なお、既存の[261021/README](../261021/README.md)にあるMLOpsの配信受入不採用は、今回のStrataテストでは解消していない。
+なお、既存の[261021/README](../261021/README.md)にあるMLOpsの配信受入不採用は、今回のStrataテストでは解消していない。
 
 ## 出典
 
