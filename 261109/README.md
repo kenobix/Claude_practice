@@ -60,5 +60,5 @@
 
 この節は2026-11-14の整理後に確認した新しい結果。上の過去時点の「今後のモデル運用方針／残作業」を当時の記録として残したまま、進捗を補足する。
 
-- [Strata × OpenCode実験記録](strata_opencode_validation_20261116.md)：Windows/WSL API接続、32Kコンテキスト、AGENTS.md読み取り、実ファイル作成、pytest初回失敗の自己修正と最終29テスト成功。Pythonソースはpushせず、結果のみ記録。
+- [Strata × OpenCode実験記録](strata_opencode_validation.md)：Windows/WSL API接続、32Kコンテキスト、AGENTS.md読み取り、実ファイル作成、pytest初回失敗の自己修正と最終29テスト成功。Pythonソースはpushせず、結果のみ記録。
 - **更新された実験状況**：Qwen Image 2.1のLoRA、LTX-2.3 I2V、StrataローカルLLMは利用者の後続ログで動作確認済み。過去のWan／画像記録に記載された測定値と混同しない。StrataがVRAMとRAMをほぼ使い切るため、ComfyUIと同時起動しない。
