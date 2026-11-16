@@ -5095,3 +5095,22 @@ diff check/変更差分の秘密値scanも成功した。この検算結果を�
 - layout-v1は963相対リンク・欠落0/旧import0、docs9/src18/tests12/scripts7を維持。diff-check-v1も成功。最終証拠索引は生成済みの全receipt/log/公開しないprivateファイルのdescriptorを含むcutoffを設け、生成・検算・commit/push自身の後続receiptは同保存先へ残す。
 - integrity-v1は索引生成中のbuild-index-v2.logをcutoffへ含めたため、終了後のlog SHA差を検出してexit1。原本改変ではなく索引生成helperの自己収録不備。旧helperをbuild_index-v2.pyへ保全し、receipt未完了の生成logを除外する修正を行った。失敗logを消さず、新しい索引を生成して全descriptorを再検証する。
 - integrity-v2成功：最終cutoff53保存物/16receiptの全SHA・194原本不変・復元4case・製品source/tests/scripts/CI不変・private値非公開・初回失敗保持を確認。後続検算/commit/push receiptは同ignored保存先に残す。今回の対象は計画/README/capital/runbook/ログ/新証拠索引の6ファイルだけ。
+
+## 2026-11-16 基点77438f4：受入範囲改訂A/B・限定起動C1/C2
+
+- 前turnの20261115-acceptance-scopeを継続。22ケース表、初回承認の循環、T13b rejectedにも運用記録を要する不整合を整理。合成contract probe3件成功。実候補コピーのCSV外target拒否exit2・出力0・CLIによる監査DB/registry変更0を確認。初回helperのCSV列timestamp誤指定と編集cwd誤り、probeのsys.path不足、表headerをcaseとした失敗、candidate IDの末尾LFを誤って含めたhash検算失敗は各ログ・旧helperを保持した。scope-review-v3で22件と元candidate/hash/非定数3特徴、提案依存グラフの非循環を確認。
+- ユーザーは案A/BとC1/C2を明示承認。新たな運用測定・new attempt・reopen・採否tag・実配信は許可されていない。現在の精度合格/UTC逆行による配信保留を維持。
+- 製品にcapital-product-acceptance-v3の適用性導出、専用2版の試験許可validator、local追記専用held/rejected判断を追加。通常配信ゲートは試験許可を利用しない。runtime_tools product-acceptanceへscope/read/append入口を追加した。個別原本は既存NOFOLLOW reader、履歴はdir flock/期待head/連番/前hash/UTC順序/O_EXCL/fsyncで保護。
+- product-target-v1は編集cwd誤りで新testが存在せず0件だった。**0件成功を受入に使用しない**。v2は12件成功。v3は追加nonconstant fixtureのtraining row hash未更新により14件中1error。fixtureの再計算を修正し、v4は14件/8.633表示秒・exit0。実データ/閾値/未来拒否の変更ではない。
+- 通常sandboxのdeployment-regression-v1は既存DeploymentMetadataTestsのTestClient試験で先へ進まず、外側300秒でexit124（monotonic300.103805843秒）。原因はまだ断定しない。socketpair単体probeは成功しており、Docker socket拒否と同一原因にしない。次の限定診断は8秒ごとのfaulthandlerと個別開始/終了monotonicを保存する。過去T03の原因へ遡及適用しない。
+- C1準備cold-preflight-v1は停止元2volumeをreadonly mount→private cold tar→別volume PG復元→固定MLflow imageのschema head照合。PG17.6、MLflow3.17.1、head dc11669786a5一致、audit32,849観測/2,512予測を確認。元サービス起動0、8container不変、所有helper/volume回収成功。private tar/inspect/env内容は公開せずSHAのみ記録。
+- live-bind-v1は起動前のstat全要素比較で停止。readで変化し得るatimeを含む比較だったため、正式契約と同じdevice/inode/size/mtime/ctimeへ修正。初回は元サービス起動前、参照control未発行。元原本の変更を断定せず、修正版は同じ元hash/identityを再照合してから進める。
+- 保存先はdata/reports/20261116-acceptance/。全実行はcommand/cwd/exit/未資格UTC/monotonic/log SHAを保存。製品source変更の受入は同実装commitのCI/artifact/cleanupまで未完了とする。
+- 再開後確認：live-bind-v2は参照control発行後、終了確認でdocker psの短縮IDとinspectの完全IDを混在させKeyError。結果JSON保存前に失敗した。発行済みcontrolを再発行する操作は行わない。限定metadata診断も25秒でexit124、Starlette TestClient.__enter__→AnyIO portal待機とasyncio selector stackを保存。socketpair成功だけでは原因を説明できず、過去T03へ帰属しない。
+- 直後のsandbox外比較とlive receipt回収は自動承認レビューの利用上限で未実行。ユーザー再開後のlive receipt回収は自動レビューにより拒否された（実施済み元サービスの再起動は必要性/権限が不明確との理由）。迂回しない。停止後の現在状態・live headの再確認を未実施として残す。
+- 安全な代替としてoffline_checkpoint.pyで発行済み参照controlのNOFOLLOW読取、正式5入力identity/SHA、現source closure、194保護原本を照合し、20261116-product-acceptance-checks.jsonへ全保存物/receipt/hashと限界を記録。live照合の代用やC1/C2全完了にはしない。新契約14件は成功済みだが、全回帰/実装commit CI・試験専用二版harness・実保留判断の発行は未完了。未検証部分を含む差分は未commitで保持する。
+
+- 再開2026-11-16：ユーザーが元PG/MLflowの結果回収の再限定起動を明示再許可。live-recovery-approved-v1は成功。元live headと発行済みcontrol一致、5正式入力/両DB論理manifest不変、元2サービス停止、他6container不変。control再発行0/tag更新0/新運用0。
+- metadata-outside-v1はtest名未指定で0件、exit1として保存。v2で既存TestClient該当1件がsandbox外で1.622表示秒成功。環境差は確認したが内部原因・過去失敗原因の確定ではない。
+- close-candidate-v1はhelper作成cwd誤りで未実行exit2。v2で委任された判断に基づき当該候補の配信不採用を追記専用local記録へ発行。head ece3b490a552de4ff140660a59c3b6d27d83b6dde8fd2c6c35a44c1179f83b21。精度合格は維持、唯一のUTC逆行試行を受入れず、警告1336/234窓のriskは受容しない。remote tagは更新せずblocked。
+- 二版harness v1は現Dockerfile buildが150秒deadlineでtimeout。元container不変/所有resource cleanup成功。v2は依存固定の既存imageへ現sourceのみCOPYする方法へ変更。現Dockerfile全体の受入は実装CIで別途確認する。新fit/新運用測定は行わない。

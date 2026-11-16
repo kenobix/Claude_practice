@@ -585,12 +585,45 @@ def _entry_eligibility_review():
         raise SystemExit(f"error: eligibility operation stopped ({type(error).__name__}, code={eligibility_failure_code(error)}); retain evidence and inspect before explicit recovery") from None
 
 
+def _entry_product_acceptance():
+    """Local requirements and non-adoption only; no registry permission changes."""
+    import sys
+    from bike_mlops.deployment import product_scope, document, CandidateDispositionStore
+    from bike_mlops.operational_validation import _elig_json
+    parser=argparse.ArgumentParser(description="Product scope / local non-adoption decisions")
+    sub=parser.add_subparsers(dest="mode",required=True)
+    scope=sub.add_parser("scope")
+    scope.add_argument("--candidate-report",type=Path,required=True)
+    scope.add_argument("--reference",type=Path,required=True)
+    scope.add_argument("--candidate-id",required=True)
+    for command in ("read-disposition","append-disposition"):
+        item=sub.add_parser(command)
+        item.add_argument("--root",type=Path,required=True)
+        item.add_argument("--candidate-id",required=True)
+        item.add_argument("--expected-head",required=True,help="Retained SHA, or none for empty history")
+        if command=="append-disposition":item.add_argument("--request",type=Path,required=True)
+    args=parser.parse_args()
+    try:
+        if args.mode=="scope":
+            result=product_scope(document(args.candidate_report.read_bytes()),document(args.reference.read_bytes()),expected_candidate_id=args.candidate_id)
+        else:
+            store=CandidateDispositionStore(args.root,args.candidate_id)
+            head=None if args.expected_head=="none" else args.expected_head
+            result=(store.read(expected_head=head) if args.mode=="read-disposition" else
+                    store.append(expected_head=head,**_elig_json(args.request.read_bytes())))
+        print(json.dumps(result,ensure_ascii=False,sort_keys=True))
+    except (ValueError,OSError,KeyError,TypeError) as error:
+        print(f"Product acceptance stopped ({type(error).__name__}); preserve inputs/history before explicit review",file=sys.stderr)
+        raise SystemExit(2) from None
+
+
 def _dispatch_cli():
     import sys as _dispatch_sys
     commands = {'register': _entry_register_capital_candidate, 'seed': _entry_seed_capital_staging, 'plan': _entry_prepare_capital_operational_plan, 'benchmark': _entry_benchmark_capital_runtime, 'recheck': _entry_recheck_capital_measurement, 'record-operational': _entry_record_capital_operational_evidence, 'evidence': _entry_prepare_capital_deployment_evidence, 'decision': _entry_record_capital_deployment_decision, 'inspect': _entry_inspect_capital_operational_reports, 'pending-audit': _entry_inspect_capital_pending_audit, 'attempt-ledger': _entry_operational_attempt_ledger}
     commands['eligibility-review'] = _entry_eligibility_review
+    commands['product-acceptance'] = _entry_product_acceptance
     if len(_dispatch_sys.argv) < 2 or _dispatch_sys.argv[1] in {"-h", "--help"}:
-        print("Usage: runtime_tools.py <command> [options]\nCommands: register, seed, plan, benchmark, recheck, record-operational, evidence, decision, inspect, pending-audit, attempt-ledger, eligibility-review")
+        print("Usage: runtime_tools.py <command> [options]\nCommands: register, seed, plan, benchmark, recheck, record-operational, evidence, decision, inspect, pending-audit, attempt-ledger, eligibility-review, product-acceptance")
         return 0
     command = _dispatch_sys.argv.pop(1)
     if command not in commands:

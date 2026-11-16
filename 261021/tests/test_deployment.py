@@ -1784,6 +1784,160 @@ class CapitalHttpFixtureSafetyTests(_capital_decision_http_unittest.TestCase):
         self.assertEqual(error.exception.code, 143)
 
 
+
+
+class ProductAcceptanceContractsTests(_deployment_inspection_unittest.TestCase):
+    def setUp(self):
+        import tempfile
+        from test_monitoring import TrainingMonitorReferenceTests
+        self.fixture=TrainingMonitorReferenceTests(methodName='runTest')
+        self.fixture.setUp();self.addCleanup(self.fixture.doCleanups)
+        self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
+        self.root=_deployment_inspection_Path(self.tmp.name)
+        self.candidate=self.fixture.selection;self.cid=self.candidate['candidate_id']
+        self.store=evidence.CandidateDispositionStore(self.root,self.cid)
+        self.files={}
+        for key in ('candidate_report','final_report','operational_plan','operational_report','request_journal',
+                    'consumption_ledger','attempt_ledger','warning_review','acceptance_review'):
+            path=self.root/'data'/(key+'.json');path.parent.mkdir(exist_ok=True)
+            path.write_bytes(evidence.canonical_bytes(self.candidate if key=='candidate_report' else {'synthetic':key}))
+            self.files[key]=str(path.relative_to(self.root))
+        from datetime import datetime,timezone,timedelta
+        self.now=datetime.now(timezone.utc)-timedelta(minutes=2)
+        self.request={'decision':'held','reviewer':'synthetic reviewer','reason':'synthetic evidence held',
+                      'recorded_at_utc':self.now.isoformat(),'evidence_files':self.files,
+                      'registry_observation':'not_checked','limitations':['local judgment; no adoption permission']}
+        project='capital-test-012345abcdef'
+        self.context={'project':project,'source_sha256':'a'*64,'candidate_id':self.cid,
+                      'registry_uri':'http://127.0.0.1:51234','database_id':project+'-pg',
+                      'volumes':[project+'-pg-data',project+'-artifacts'],'protected_container_ids':['b'*64],
+                      'versions':[{'model_version':'1','artifact_sha256':'c'*64,'model_sha256':'e'*64},
+                                  {'model_version':'2','artifact_sha256':'d'*64,'model_sha256':'e'*64}]}
+        self.lease={'kind':'isolated-runtime-test-authorization','schema_version':1,
+                    'policy_sha256':evidence.PRODUCT_SCOPE_POLICY_SHA256,'context':self.context,
+                    'operations':['switch','retry','rollback','interrupt','timeout','metadata','unloadable'],
+                    'reviewer':'synthetic operator','reason':'registration-version contract only',
+                    'created_at_utc':self.now.isoformat(),'expires_at_utc':(self.now+timedelta(minutes=30)).isoformat()}
+    def authorize(self,lease=None,context=None,operation='switch'):
+        value=lease or self.lease
+        return evidence.validate_isolated_test_authorization(value,expected_sha256=evidence.digest(value),
+                    observed_context=context or self.context,operation=operation)
+    def scope(self):
+        return evidence.product_scope(evidence.document(evidence.canonical_bytes(self.fixture.selection)),
+              evidence.document(evidence.canonical_bytes(self.fixture.reference)),expected_candidate_id=self.fixture.selection['candidate_id'])
+    def test_scope_covers_22_cases_without_promoting_any(self):
+        result=self.scope();self.assertEqual(len(result['cases']),22)
+        self.assertTrue(all(v['status']=='not_evaluated' for v in result['cases'].values()))
+        self.assertFalse(result['adoption_authorized']);self.assertEqual(result['deployment_permission'],'blocked')
+    def test_scope_uses_actual_reference_and_mae_not_requested_na(self):
+        self.assertEqual(self.scope()['cases']['psi_v2_constant_shift']['candidate_requirement'],'same_candidate_isolated_observation')
+        self.fixture.selection['validation']['model']['mae']=None;self.fixture.refresh()
+        self.assertEqual(self.scope()['cases']['insufficient_labels_and_unset_reference']['candidate_requirement'],'same_candidate_isolated_observation')
+    def test_scope_foreign_candidate_or_reference_is_rejected(self):
+        self.fixture.selection['validation']['model']['mae']+=1
+        with self.assertRaises(ValueError):self.scope()
+    def test_two_registration_versions_are_test_only(self):
+        result=self.authorize();self.assertTrue(result['same_raw_model']);self.assertFalse(result['approval_evidence'])
+        self.assertEqual(result['deployment_permission'],'blocked')
+        with self.assertRaises(ValueError):
+            evidence.require_deployment_eligible('capital-bikeshare',result,model_name='bike-demand-capital',model_version='2')
+    def test_same_version_wrong_context_hash_and_production_port_refused(self):
+        import copy
+        for mutate in (lambda v:v['context']['versions'][1].update(model_version='1'),
+                       lambda v:v['context']['versions'][1].update(artifact_sha256='c'*64),
+                       lambda v:v['context'].update(registry_uri='http://127.0.0.1:5001'),
+                       lambda v:v['context'].update(volumes=['original-volume']),lambda v:v.update(schema_version=True)):
+            value=copy.deepcopy(self.lease);mutate(value)
+            with self.assertRaises(ValueError):self.authorize(value,value['context'])
+        with self.assertRaises(ValueError):self.authorize(context={**self.context,'source_sha256':'f'*64})
+        with self.assertRaises(ValueError):
+            evidence.validate_isolated_test_authorization(self.lease,expected_sha256='0'*64,observed_context=self.context,operation='switch')
+    def test_expired_future_and_unlisted_operations_refused(self):
+        import copy
+        from datetime import datetime,timezone,timedelta
+        value=copy.deepcopy(self.lease);value['expires_at_utc']=self.now.isoformat()
+        with self.assertRaises(ValueError):self.authorize(value)
+        value=copy.deepcopy(self.lease);value['created_at_utc']=(datetime.now(timezone.utc)+timedelta(hours=1)).isoformat()
+        with self.assertRaises(ValueError):self.authorize(value)
+        with self.assertRaises(ValueError):self.authorize(operation='benchmark')
+    def test_hold_and_reject_append_without_operational_gate_or_registry(self):
+        first=self.store.append(expected_head=None,**self.request)
+        original=(self.root/self.store.relative/'00000000.json').read_bytes()
+        second=self.store.append(expected_head=first['head_sha256'],**{**self.request,'decision':'rejected'})
+        self.assertEqual(len(second['events']),2)
+        self.assertEqual(original,(self.root/self.store.relative/'00000000.json').read_bytes())
+        self.assertEqual(self.store.read(expected_head=second['head_sha256']),second)
+        self.assertEqual(second['deployment_permission'],'blocked')
+    def test_stale_head_and_disappeared_series_refused(self):
+        first=self.store.append(expected_head=None,**self.request)
+        with self.assertRaises(ValueError):self.store.append(expected_head=None,**self.request)
+        (self.root/self.store.relative/'00000000.json').unlink()
+        with self.assertRaises(ValueError):self.store.read(expected_head=first['head_sha256'])
+    def test_partial_corrupt_unknown_and_symlink_history_fail_closed(self):
+        first=self.store.append(expected_head=None,**self.request)
+        path=self.root/self.store.relative/'00000000.json';raw=path.read_bytes()
+        for body in (b'{',raw.replace(b'"held"',b'"passed"'),raw.replace(b'"sequence":0',b'"sequence":true')):
+            path.write_bytes(body)
+            with self.assertRaises((ValueError,KeyError)):self.store.read(expected_head=first['head_sha256'])
+        path.write_bytes(raw);unknown=path.with_name('publishing.json');unknown.write_bytes(b'{}')
+        with self.assertRaises(ValueError):self.store.read(expected_head=first['head_sha256'])
+        unknown.unlink();path.unlink();path.symlink_to(self.root/self.files['candidate_report'])
+        with self.assertRaises(OSError):self.store.read(expected_head=first['head_sha256'])
+    def test_adoption_future_foreign_candidate_and_symlink_source_refused(self):
+        from datetime import datetime,timezone,timedelta
+        with self.assertRaises(ValueError):self.store.append(expected_head=None,**{**self.request,'decision':'adopted'})
+        with self.assertRaises(ValueError):self.store.append(expected_head=None,**{**self.request,'recorded_at_utc':(datetime.now(timezone.utc)+timedelta(hours=1)).isoformat()})
+        path=self.root/self.files['candidate_report'];original=path.read_bytes()
+        path.write_bytes(original.replace(self.cid.encode(),b'1'*64))
+        with self.assertRaises(ValueError):self.store.append(expected_head=None,**self.request)
+        path.unlink();path.symlink_to(self.root/self.files['warning_review'])
+        with self.assertRaises(OSError):self.store.append(expected_head=None,**self.request)
+    def test_busy_lock_and_utc_reversal_are_not_retried(self):
+        import os,fcntl
+        from datetime import timedelta
+        first=self.store.append(expected_head=None,**self.request)
+        fd=os.open(self.root/self.store.relative,os.O_RDONLY|os.O_DIRECTORY)
+        try:
+            fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            with self.assertRaises(BlockingIOError):self.store.append(expected_head=first['head_sha256'],**self.request)
+        finally:os.close(fd)
+        with self.assertRaises(ValueError):
+            self.store.append(expected_head=first['head_sha256'],**{**self.request,'recorded_at_utc':(self.now-timedelta(seconds=1)).isoformat()})
+    def test_source_changes_before_append_leave_no_event(self):
+        from unittest.mock import patch
+        from bike_mlops import operational_validation as ov
+        original=ov._elig_read;counter=0
+        def changing(root,path):
+            nonlocal counter
+            counter+=1;raw=original(root,path)
+            return raw+b' ' if counter>len(self.files) else raw
+        with patch.object(ov,'_elig_read',side_effect=changing):
+            with self.assertRaises(ValueError):self.store.append(expected_head=None,**self.request)
+        self.assertEqual(self.store.read(expected_head=None)['events'],[])
+    def test_nonconstant_scope_requires_replacement_observation(self):
+        self.fixture.frame['cnt']=list(range(len(self.fixture.frame)))
+        import test_monitoring as mt
+        self.fixture.train=self.fixture.frame.loc[self.fixture.mask].reset_index(drop=True)
+        self.fixture.features=mt.feature_frame_for_dataset(self.fixture.frame).loc[self.fixture.mask].reset_index(drop=True)
+        self.fixture.selection["training_row_keys_sha256"]=mt.refs.row_keys_sha256(self.fixture.train)
+        self.fixture.reference=mt.refs.make_training_reference(self.fixture.selection,self.fixture.train,self.fixture.features)
+        self.fixture.refresh()
+        self.assertEqual(self.scope()['cases']['psi_v2_constant_shift']['candidate_requirement'],'verify_nonconstant_frozen_bins_and_actual_psi')
+    def test_cli_disposition_roundtrip_and_no_second_genesis(self):
+        import subprocess,sys,json
+        request=self.root/'request.json';request.write_text(json.dumps(self.request))
+        project=_deployment_inspection_Path(__file__).resolve().parents[1]
+        argv=[sys.executable,'-m','scripts.runtime_tools','product-acceptance']
+        suffix=['--root',str(self.root),'--candidate-id',self.cid]
+        first=subprocess.run(argv+['append-disposition',*suffix,'--expected-head','none','--request',str(request)],cwd=project,capture_output=True,text=True,timeout=15)
+        self.assertEqual(first.returncode,0,first.stderr);head=json.loads(first.stdout)['head_sha256']
+        checked=subprocess.run(argv+['read-disposition',*suffix,'--expected-head',head],cwd=project,capture_output=True,text=True,timeout=15)
+        self.assertEqual(checked.returncode,0,checked.stderr)
+        duplicate=subprocess.run(argv+['append-disposition',*suffix,'--expected-head','none','--request',str(request)],cwd=project,capture_output=True,text=True,timeout=15)
+        self.assertEqual(duplicate.returncode,2)
+        self.assertNotIn(str(self.root),duplicate.stderr)
+
+
 if __name__ == "__main__":
     import unittest as _unittest_entry
     _unittest_entry.main()

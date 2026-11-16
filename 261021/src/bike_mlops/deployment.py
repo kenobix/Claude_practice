@@ -1191,3 +1191,262 @@ def inspect_state(path: _deployment_inspection_Path, url: str, profile: str, tar
                 except Exception:
                     pass
                 return dict(base, error_type=type(error).__name__)
+
+
+# ========================================================================
+# product_acceptance_scope / isolated_test_authorization / non_adoption
+# These contracts never grant normal deployment eligibility.
+# ========================================================================
+
+PRODUCT_SCOPE_POLICY = {
+    "policy_id": "capital-product-acceptance-v3",
+    "schema_version": 3,
+    "legacy_deployment_policy_sha256": READINESS_POLICY_SHA256,
+    "normal_deployment_permission": "blocked",
+    "conditional_cases": ["psi_v2_constant_shift", "insufficient_labels_and_unset_reference"],
+    "post_approval_cases": ["entry_runtime_database_identity", "approval_operation_metadata",
+                            "unloadable_version", "timeout_stage_outcome",
+                            "caddy_switch_and_rollback", "interrupted_deployment",
+                            "version_switch_preserves_saved_prediction"],
+}
+PRODUCT_SCOPE_POLICY_SHA256 = digest(PRODUCT_SCOPE_POLICY)
+
+
+def product_scope(candidate_document, reference_document, *, expected_candidate_id):
+    """Derive applicability from hash-bound frozen inputs, never a caller's N/A flag.
+
+    This is a requirements plan, not evidence that any required test passed.
+    Existing v2 consumers deliberately do not accept this as a deployment bundle.
+    """
+    from bike_mlops.evaluation import candidate_identity
+    from bike_mlops.monitoring import validate_training_reference
+    candidate, reference = unpack(candidate_document), unpack(reference_document)
+    if (hashlib.sha256(canonical_bytes(candidate_identity(candidate))[:-1]).hexdigest() != expected_candidate_id
+            or candidate.get("candidate_id") != expected_candidate_id
+            or candidate.get("candidate_identity") != candidate_identity(candidate)):
+        raise ValueError("Product scope candidate identity differs")
+    validate_training_reference(reference, candidate)
+    if candidate.get("monitor_reference", {}).get("sha256") != reference_document["sha256"]:
+        raise ValueError("Product scope reference file hash differs")
+    constant = any(v["mode"] == "constant_three_way" for v in reference["features"].values())
+    mae = candidate.get("validation", {}).get("model", {}).get("mae")
+    if mae is not None and (type(mae) not in {int, float} or not math.isfinite(mae) or mae < 0):
+        raise ValueError("Product scope MAE is invalid")
+    cases = {}
+    for category, members in CASES.items():
+        for case, outcome in members.items():
+            candidate_requirement = "same_candidate_isolated_observation"
+            if case == "psi_v2_constant_shift" and not constant:
+                candidate_requirement = "verify_nonconstant_frozen_bins_and_actual_psi"
+            if case == "insufficient_labels_and_unset_reference" and mae is not None:
+                candidate_requirement = "insufficient_labels_and_reject_missing_or_altered_reference"
+            cases[case] = {"category": category, "v2_outcome": outcome,
+                           "generic_feature_evidence_required": True,
+                           "candidate_requirement": candidate_requirement,
+                           "post_approval_verification_required": case in PRODUCT_SCOPE_POLICY["post_approval_cases"],
+                           "status": "not_evaluated"}
+    return {"kind": "capital-product-scope", "policy": PRODUCT_SCOPE_POLICY,
+            "policy_sha256": PRODUCT_SCOPE_POLICY_SHA256, "candidate_id": expected_candidate_id,
+            "candidate_report_sha256": candidate_document["sha256"],
+            "reference_file_sha256": reference_document["sha256"],
+            "facts": {"reference_modes": {k: v["mode"] for k, v in reference["features"].items()},
+                      "validation_mae": mae}, "cases": cases,
+            "deployment_permission": "blocked", "adoption_authorized": False}
+
+
+def validate_isolated_test_authorization(value, *, expected_sha256, observed_context, operation):
+    """Validate an operator-pinned lease against a harness-observed environment.
+
+    The caller supplies actual Docker/registry observations, not permission tags.
+    A lease is not a signature, and normal loader/approval paths never use it.
+    """
+    required = {"kind", "schema_version", "policy_sha256", "context", "operations",
+                "reviewer", "reason", "created_at_utc", "expires_at_utc"}
+    if (not isinstance(value, dict) or set(value) != required or digest(value) != expected_sha256
+            or value["kind"] != "isolated-runtime-test-authorization" or type(value["schema_version"]) is not int
+            or value["schema_version"] != 1 or value["policy_sha256"] != PRODUCT_SCOPE_POLICY_SHA256):
+        raise ValueError("Invalid isolated test authorization")
+    for key in ("reviewer", "reason"):
+        if not isinstance(value[key], str) or not value[key].strip() or len(value[key]) > 1000:
+            raise ValueError("Test authorization requires explicit reviewer and reason")
+    created = utc_time(value["created_at_utc"])
+    # Expiry can be in the future; creation cannot. Do not clamp or retry.
+    expiry_raw = value["expires_at_utc"]
+    if not isinstance(expiry_raw, str): raise ValueError("Invalid test lease expiry")
+    expiry = datetime.fromisoformat(expiry_raw.replace("Z", "+00:00"))
+    if expiry.tzinfo is None or expiry.utcoffset().total_seconds() != 0:
+        raise ValueError("Test lease expiry must be UTC")
+    now = datetime.now(timezone.utc)
+    if not created <= now < expiry or not 0 < (expiry-created).total_seconds() <= 3600:
+        raise ValueError("Test authorization expired or has invalid duration")
+    allowed = {"switch", "retry", "rollback", "interrupt", "timeout", "metadata", "unloadable"}
+    operations = value["operations"]
+    if (not isinstance(operations, list) or not operations or len(operations) != len(set(operations))
+            or not set(operations) <= allowed or operation not in operations):
+        raise ValueError("Operation is outside the isolated authorization")
+    context = value["context"]
+    keys = {"project", "source_sha256", "candidate_id", "registry_uri", "database_id",
+            "volumes", "protected_container_ids", "versions"}
+    if (not isinstance(context, dict) or set(context) != keys or context != observed_context
+            or not isinstance(context["project"], str)
+            or not re.fullmatch(r"capital-test-[0-9a-f]{12}", context["project"])):
+        raise ValueError("Isolated environment differs from authorization")
+    from urllib.parse import urlsplit
+    endpoint = urlsplit(context["registry_uri"])
+    if (endpoint.scheme != "http" or endpoint.hostname != "127.0.0.1" or not endpoint.port
+            or endpoint.port in {5000, 5001} or endpoint.username or endpoint.password
+            or endpoint.path or endpoint.query or endpoint.fragment):
+        raise ValueError("Test registry must be a dedicated loopback endpoint")
+    for key in ("source_sha256", "candidate_id"):
+        if not isinstance(context[key], str) or not _SHA.fullmatch(context[key]):
+            raise ValueError("Test identity is invalid")
+    if (not isinstance(context["database_id"], str) or not context["database_id"].startswith(context["project"]+"-")
+            or not isinstance(context["volumes"], list) or not context["volumes"]
+            or len(context["volumes"]) != len(set(context["volumes"]))):
+        raise ValueError("Test database/volume identity is invalid")
+    if any(not isinstance(v, str) or not v.startswith(context["project"]+"-") for v in context["volumes"]):
+        raise ValueError("Test volume is not owned by the isolated project")
+    protected = context["protected_container_ids"]
+    if (not isinstance(protected, list) or not protected or len(protected) != len(set(protected))
+            or any(not isinstance(v,str) or not _SHA.fullmatch(v) for v in protected)):
+        raise ValueError("Protected container inventory is required")
+    versions = context["versions"]
+    if not isinstance(versions, list) or len(versions) != 2:
+        raise ValueError("Two exact registered versions are required")
+    for version in versions:
+        if (not isinstance(version, dict) or set(version) != {"model_version", "artifact_sha256", "model_sha256"}
+                or not isinstance(version["model_version"], str) or not re.fullmatch(r"[1-9][0-9]*",version["model_version"])
+                or any(not isinstance(version[k],str) or not _SHA.fullmatch(version[k]) for k in ("artifact_sha256","model_sha256"))):
+            raise ValueError("Test version binding is invalid")
+    if versions[0]["model_version"] == versions[1]["model_version"] or versions[0]["artifact_sha256"] == versions[1]["artifact_sha256"]:
+        raise ValueError("Two distinct registered artifact versions are required")
+    return {"kind": "isolated-test-operation", "authorization_sha256": expected_sha256,
+            "scope": "test_only", "operation": operation, "project": context["project"],
+            "same_raw_model": versions[0]["model_sha256"] == versions[1]["model_sha256"],
+            "deployment_permission": "blocked", "approval_evidence": False}
+
+
+class CandidateDispositionStore:
+    """Local append-only non-adoption decisions. Never writes registry or attempts.
+
+    The hash chain requires an externally retained expected head to detect rollback.
+    Partial/unknown files fail closed; recovery is explicit, never deletion/retry.
+    """
+    def __init__(self, root, candidate_id):
+        if not isinstance(candidate_id,str) or not _SHA.fullmatch(candidate_id):
+            raise ValueError("Invalid disposition candidate")
+        self.root, self.candidate_id = Path(root), candidate_id
+        self.relative = f"data/evaluations/capital-bikeshare/dispositions/{candidate_id}"
+
+    def _attached(self, fd):
+        import os
+        from bike_mlops.operational_validation import _elig_directory
+        current=_elig_directory(self.root,self.relative)
+        try:
+            a,b=os.fstat(fd),os.fstat(current)
+            if (a.st_dev,a.st_ino)!=(b.st_dev,b.st_ino):raise ValueError("Disposition directory changed")
+        finally:os.close(current)
+
+    def _history(self, fd):
+        import os
+        self._attached(fd)
+        from bike_mlops.operational_validation import _elig_read_at, _elig_json
+        names = sorted(os.listdir(fd))
+        if len(names)>1000 or names != [f"{i:08d}.json" for i in range(len(names))]:
+            raise ValueError("Disposition history is incomplete or has unknown files")
+        events=[];head=None;last=None
+        for i,name in enumerate(names):
+            raw=_elig_read_at(fd,name);event=_elig_json(raw)
+            if canonical_bytes(event) != raw: raise ValueError("Noncanonical disposition event")
+            self._validate(event)
+            at=utc_time(event["recorded_at_utc"])
+            if event["sequence"] != i or event["previous_sha256"] != head or (last is not None and at<last):
+                raise ValueError("Disposition history chain or UTC order differs")
+            events.append(event);head=hashlib.sha256(raw).hexdigest();last=at
+        if sorted(os.listdir(fd)) != names: raise ValueError("Disposition history changed during read")
+        self._attached(fd)
+        return {"kind":"capital-candidate-disposition-history","candidate_id":self.candidate_id,
+                "events":events,"head_sha256":head,"deployment_permission":"blocked"}
+
+    def _validate(self,event):
+        keys={"schema_version","kind","candidate_id","sequence","previous_sha256","decision",
+              "reason","reviewer","recorded_at_utc","evidence","registry_observation","limitations"}
+        if (not isinstance(event,dict) or set(event)!=keys or type(event["schema_version"]) is not int
+                or event["schema_version"]!=1 or event["kind"]!="capital-candidate-disposition"
+                or event["candidate_id"]!=self.candidate_id or type(event["sequence"]) is not int
+                or event["sequence"]<0 or event["decision"] not in {"held","rejected"}):
+            raise ValueError("Invalid non-adoption disposition")
+        if event["previous_sha256"] is not None and (not isinstance(event["previous_sha256"],str) or not _SHA.fullmatch(event["previous_sha256"])):
+            raise ValueError("Invalid previous disposition head")
+        for key in ("reviewer","reason"):
+            if not isinstance(event[key],str) or not event[key].strip() or len(event[key])>2000:
+                raise ValueError("Disposition reviewer/reason required")
+        if event["registry_observation"] not in {"not_checked","live_matched","snapshot_only"}:
+            raise ValueError("Disposition registry observation is invalid")
+        if (not isinstance(event["limitations"],list) or not event["limitations"]
+                or any(not isinstance(v,str) or not v.strip() or len(v)>2000 for v in event["limitations"])):
+            raise ValueError("Disposition limitations required")
+        evidence=event["evidence"]
+        required={"candidate_report","final_report","operational_plan","operational_report",
+                  "request_journal","consumption_ledger","attempt_ledger","warning_review","acceptance_review"}
+        if not isinstance(evidence,dict) or set(evidence)!=required:
+            raise ValueError("Disposition evidence closure differs")
+        for item in evidence.values():
+            if (not isinstance(item,dict) or set(item)!={"sha256","bytes"} or type(item["bytes"]) is not int
+                    or item["bytes"]<=0 or not isinstance(item["sha256"],str) or not _SHA.fullmatch(item["sha256"])):
+                raise ValueError("Disposition evidence descriptor invalid")
+        utc_time(event["recorded_at_utc"])
+
+    def read(self, *, expected_head):
+        import os,fcntl
+        from bike_mlops.operational_validation import _elig_directory
+        try:fd=_elig_directory(self.root,self.relative)
+        except FileNotFoundError:
+            if expected_head is not None: raise ValueError("Disposition history disappeared") from None
+            return {"kind":"capital-candidate-disposition-history","candidate_id":self.candidate_id,
+                    "events":[],"head_sha256":None,"deployment_permission":"blocked"}
+        try:
+            fcntl.flock(fd,fcntl.LOCK_SH|fcntl.LOCK_NB)
+            result=self._history(fd)
+            if result["head_sha256"]!=expected_head:raise ValueError("Disposition head differs")
+            return result
+        finally:os.close(fd)
+
+    def append(self, *, expected_head, decision, reason, reviewer, recorded_at_utc,
+               evidence_files, registry_observation, limitations):
+        import os,fcntl
+        from bike_mlops.operational_validation import _elig_directory, _elig_read, _elig_write
+        # Sources are read via NOFOLLOW under the same root; only descriptors are published.
+        original={key:_elig_read(self.root,path) for key,path in evidence_files.items()}
+        event={"schema_version":1,"kind":"capital-candidate-disposition","candidate_id":self.candidate_id,
+               "sequence":0,"previous_sha256":expected_head,"decision":decision,"reason":reason,
+               "reviewer":reviewer,"recorded_at_utc":recorded_at_utc,
+               "evidence":{key:{"bytes":len(raw),"sha256":hashlib.sha256(raw).hexdigest()} for key,raw in original.items()},
+               "registry_observation":registry_observation,"limitations":limitations}
+        self._validate(event)
+        from bike_mlops.operational_validation import _elig_json
+        from bike_mlops.evaluation import candidate_identity
+        candidate=_elig_json(original["candidate_report"])
+        if (candidate.get("candidate_id")!=self.candidate_id
+                or hashlib.sha256(canonical_bytes(candidate_identity(candidate))[:-1]).hexdigest()!=self.candidate_id):
+            raise ValueError("Disposition candidate report identity differs")
+        fd=_elig_directory(self.root,self.relative,create=True)
+        try:
+            fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            history=self._history(fd)
+            if history["head_sha256"]!=expected_head:raise ValueError("Disposition head changed; review required")
+            if history["events"] and utc_time(recorded_at_utc)<utc_time(history["events"][-1]["recorded_at_utc"]):
+                raise ValueError("Disposition UTC order reversed")
+            if len(history["events"])>=1000:raise ValueError("Disposition history limit reached")
+            event["sequence"]=len(history["events"])
+            if any(_elig_read(self.root,evidence_files[k])!=v for k,v in original.items()):
+                raise ValueError("Disposition source changed before append")
+            # O_EXCL, fsync file+directory; a torn write stays visible and blocks readers.
+            self._attached(fd)
+            _elig_write(fd,f"{event['sequence']:08d}.json",event)
+            if any(_elig_read(self.root,evidence_files[k])!=v for k,v in original.items()):
+                raise ValueError("Disposition source changed during publication; preserve event for review")
+            result=self._history(fd)
+            if result["events"][-1]!=event:raise ValueError("Disposition publication is uncertain")
+            return result
+        finally:os.close(fd)
