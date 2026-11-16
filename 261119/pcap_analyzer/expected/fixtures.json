@@ -1,0 +1,36 @@
+{
+  "note": "Hand-calculated Phase 1/2 targets; not analyzer execution results",
+  "baseline.pcap": {
+    "records": 10,
+    "captured_bytes": 680,
+    "original_bytes": 680,
+    "file_bytes": 864,
+    "lengths": [54, 54, 54, 72, 88, 72, 72, 72, 88, 54],
+    "offset_us": [0, 10000, 20000, 1000000, 1025000, 2000000, 3000000, 3010000, 3020000, 8000000],
+    "classifications": {"parsed": 10, "unsupported": 0, "truncated": 0, "malformed": 0},
+    "flows": [
+      {"protocol": "tcp", "client_port": 40000, "server_port": 443, "forward_indices": [1, 3], "reverse_indices": [2, 10], "forward_bytes": 108, "reverse_bytes": 108},
+      {"protocol": "udp", "client_port": 53000, "server_port": 53, "forward_indices": [4], "reverse_indices": [5], "forward_bytes": 72, "reverse_bytes": 88},
+      {"protocol": "udp", "client_port": 53001, "server_port": 53, "forward_indices": [6], "reverse_indices": [], "forward_bytes": 72, "reverse_bytes": 0},
+      {"protocol": "udp", "client_port": 53002, "server_port": 53, "forward_indices": [7, 8], "reverse_indices": [9], "forward_bytes": 144, "reverse_bytes": 88}
+    ],
+    "dns_events": [
+      {"status": "matched", "query_indices": [4], "response_indices": [5], "response_time_ms": 25, "rcode": 0, "tc": false},
+      {"status": "no_response_observed", "query_indices": [6], "response_indices": [], "response_time_ms": null, "rcode": null, "tc": null},
+      {"status": "ambiguous", "query_indices": [7, 8], "response_indices": [9], "response_time_ms": null, "rcode": 0, "tc": false}
+    ]
+  },
+  "header_only.pcap": {"records": 0, "captured_bytes": 0, "original_bytes": 0, "complete": true},
+  "empty.pcap": {"error": "E_FORMAT", "exit_code": 2},
+  "capture_truncated.pcap": {"records": 1, "captured_bytes": 40, "original_bytes": 54, "classification": "truncated"},
+  "record_cutoff.pcap": {"records": 0, "error": "E_RECORD_DATA", "packet_index": 1, "actual_bytes": 40, "declared_caplen": 54, "complete": false, "exit_code": 2},
+  "header_cutoff.pcap": {"records": 0, "error": "E_RECORD_HEADER", "packet_index": 1, "complete": false, "exit_code": 2},
+  "malformed_length.pcap": {"records": 1, "captured_bytes": 55, "original_bytes": 54, "classification": "malformed"},
+  "unsupported_arp.pcap": {"records": 1, "captured_bytes": 42, "classification": "unsupported"},
+  "fragment.pcap": {"records": 1, "captured_bytes": 50, "classification": "unsupported", "reason": "ipv4_fragment"},
+  "nano.pcap": {"records": 1, "captured_bytes": 54, "timestamp_ns": 1700000000000000123, "precision": "ns"},
+  "big_endian.pcap": {"records": 1, "captured_bytes": 54, "timestamp_ns": 1700000000000123000, "precision": "us"},
+  "backward.pcap": {"records": 2, "captured_bytes": 160, "dns_time_analysis": "disabled_timestamp_regression"},
+  "unsupported_linktype.pcap": {"error": "E_LINKTYPE", "exit_code": 2},
+  "unsupported_pcapng.pcapng": {"error": "E_FORMAT_UNSUPPORTED", "exit_code": 2}
+}
