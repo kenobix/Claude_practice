@@ -5,7 +5,7 @@
     "tasks": [
       {"label": "kv: check", "type": "shell", "command": "make check", "options": {"cwd": "${workspaceFolder}/kv-engine"}, "group": {"kind": "build", "isDefault": true}, "problemMatcher": []},
       {"label": "kv: fmt", "type": "shell", "command": "make fmt", "options": {"cwd": "${workspaceFolder}/kv-engine"}, "problemMatcher": []},
-      {"label": "kv: test", "type": "shell", "command": "go test ./...", "options": {"cwd": "${workspaceFolder}/kv-engine"}, "group": "test", "problemMatcher": []}
+      {"label": "kv: test", "type": "shell", "command": "make test", "options": {"cwd": "${workspaceFolder}/kv-engine"}, "group": "test", "problemMatcher": []}
     ]
   }
 }

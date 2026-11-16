@@ -1,3 +1,3 @@
-// Package recovery will validate logs and rebuild the latest-key index.
-// No recovery is implemented at stage 0; see docs/durability.md.
+// Package recovery is reserved for log replay and recovery in stage 2 onward.
+// No persistence or crash recovery is implemented in stage 1.
 package recovery

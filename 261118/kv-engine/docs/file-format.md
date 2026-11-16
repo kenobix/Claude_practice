@@ -1,4 +1,4 @@
-# 追記ログ形式 v1（設計確定、未実装）
+# 追記ログ形式 v1（バイト処理実装済み、保存・復旧は未実装）
 
 ファイル名は `data.log`。全整数はunsigned little-endian。
 上限256 MiB = 268,435,456バイト（ファイルヘッダー込み）。分割・圧縮・paddingなし。
@@ -63,3 +63,18 @@ CRC衝突やレコード境界への外部truncateは検出できない。
 不完全例はDELETEの先頭10バイトだけを付けた64バイトで、直前境界54へ切り戻す。
 途中破損例は正常ログのPUT値（絶対offset 49）を `76` から `77` に変え、CRCは元のままとする。
 全長があってCRC不一致なのでoffset 16で停止し、DELETEを採用しない。
+
+## 段階1の実装API
+
+- `record.FileHeader() []byte` / `ReadFileHeader(io.Reader) error`: versionを含む固定ヘッダーを検査。
+- `record.Encode(Record) ([]byte, error)`: キー・値・op・非zero sequenceを検証してレコードを生成。
+- `record.Decode(io.Reader, expectedSequence uint64) (Record, error)`: 正確な次sequenceを呼び出し側が指定する。
+- 完全なレコード境界のEOFは `io.EOF`、短い最終レコードは `ErrIncomplete`、完全ヘッダーやCRC不正は `ErrCorrupt`。
+- 短いファイルヘッダーは `ErrCorrupt`（自動復旧対象ではない）、未知versionは `ErrUnsupportedVersion`。
+- readのI/Oエラーは原因をwrapし、不完全な末尾と区別する。
+- 全エラー時にゼロ値Recordを返す。成功時は正確に1レコードを消費する。エラー時も検証のため読んだバイトは消費するが、後続レコードの再探索はしない。
+- 固定32バイトのheaderを検証してから本文を最大1,048,836バイトだけ確保する。
+- versionはファイルヘッダーの属性。個々のレコードにversion fieldは追加していない。
+
+この段階ではdecodeを復旧器へ接続せず、truncate・索引再構築・ディスク同期も実装しない。
+fixtures.mdのhexは段階0のまま変更せず、Goテストでencode/decodeとの一致を検証している。

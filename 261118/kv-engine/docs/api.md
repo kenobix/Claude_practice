@@ -1,6 +1,34 @@
-# API・CLI契約 v1（設計確定、未実装）
+# API・CLI契約 v1
 
-## データとAPI
+## 段階1の実装と段階0からの差分
+
+`engine.NewMemory() *Memory`（ゼロ値も利用可）とMemoryのPut/Get/Delete/Closeを実装。
+ファイルI/Oは一切せず、Closeまたはプロセス終了でデータを失う。
+キー・値・エラー・コピー・sequenceの契約は以下の共通仕様に従う。
+不在DELETEもsequenceを進めるが、ログやtombstoneはまだ生成しない。
+ログ256 MiB上限は永続版の制限。メモリ版の総メモリ量には今回上限を設けない。
+
+段階0の単発CLIではメモリ状態を後続プロセスへ渡せないため、`kv memory`を追加した。
+stdinで1行1JSON objectを受け、stdoutも1行1JSONで返す。最初のエラーで終了し、操作列のrollbackはしない。
+起動時にstderrへ `{"event":"memory_only","persistent":false}` を出す。
+LF/CRLF、末尾改行のない最終行を受け付ける。空行は不正。1行上限2 MiB（改行込み）。
+JSONはUTF-8。未知field、型不正、同一行の複数object、未知opを拒否。
+JSONの文字列解釈・重複fieldはGo encoding/jsonに従う（重複は後の値を採用）。
+key必須、value_base64のnullは未指定と同じ。putには空文字を含む値指定が必要。
+
+| 入力例 | 成功stdout |
+|---|---|
+| `{"op":"put","key":"k","value_base64":"AP8="}` | `{"sequence":1}` |
+| `{"op":"get","key":"k"}` | `{"found":true,"value_base64":"AP8="}` |
+| `{"op":"delete","key":"k"}` | `{"sequence":2}` |
+
+バイナリ値のフレーミングのため、メモリCLIのgetはBase64で返す。空値は `value_base64:""`。
+Base64はGo標準のpadded base64、Strictモード。復号後1 MiB上限も確認。
+不存在はstdoutなし、stderrにnot_found、exit 3。メモリCLIのinspectと--dbは未対応、exit 2。
+入力不正exit 2、I/O失敗exit 6、sequence枯渇exit 7。help/versionはexit 0。
+以下の単発CLI・Open・Inspect・OSロック・耐久性は**段階2以降の仕様**であり現在利用できない。
+
+## 共通のデータとAPI
 
 キーは正しいUTF-8の1〜256バイト。NULを含むキーはCLIとの共通制約として拒否する。
 Unicode正規化をしない。バイト列が同じ場合のみ同一キー（例: 合成文字と結合文字は区別）。
@@ -66,4 +94,4 @@ inspectは有効なヘッダーとレコードを同じ規則で検証する。
 CLI inspectは別の読み取り専用scanを使用し、Openによる自動修復を通さない。
 すべてのCLI（inspect含む）は同じ排他ロックを取り、writerとの同時実行を拒否する。
 
-この文書のDB操作は今後の仕様。現在の実行ファイルは `-version` / `-h` の骨組みのみ。
+永続版の設計を記録した節と、冒頭の段階1の実装範囲を区別する。メモリ版の成功応答に保存保証はない。

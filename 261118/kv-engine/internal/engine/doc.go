@@ -1,3 +1,3 @@
-// Package engine will serialize operations and manage the index and log.
-// No storage operations are implemented at stage 0; see docs/api.md.
+// Package engine provides an in-memory KV store for stage 1.
+// Persistence, OS locking, and crash recovery are not implemented.
 package engine

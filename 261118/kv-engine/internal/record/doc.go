@@ -1,3 +1,3 @@
-// Package record will encode and validate the version-1 append-log format.
-// No record processing is implemented at stage 0; see docs/file-format.md.
+// Package record encodes and validates the version-1 log format in memory.
+// It performs no filesystem writes or crash recovery; see docs/file-format.md.
 package record

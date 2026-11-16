@@ -83,3 +83,78 @@ DB操作・ロック・同期・切り戻しは未実装であり、復旧テス
 前回のルートREADMEの追加1行だけを取り消した。他のルート変更なし。
 段階0の仕様・fixture・骨組みを確認し、まだ実テストがないことを再確認。
 261118/のみを最初のcommitへ含める。段階1の実装は次のcommitに分ける。
+
+## 段階1の実装と検証（2026-11-17 JST）
+
+### 保存と変更範囲
+
+段階0の保存commitは `dafe953`（chore(261118): initialize KV engine development environment）。
+`origin/feat/database-engine`へのpushが完了した。ルートREADMEには差分なし。
+今回も対象は261118/だけ。mainへのpush・merge、PR作成は行わない。
+Gitの共有管理領域がsandbox外のため、許可付きgit実行を使用した。
+
+### Go環境
+
+前回の一時toolchainと照合済みアーカイブは残っていた。
+再現スクリプト `kv-engine/scripts/setup-go.sh` でSHA-256を再確認し、
+ユーザー所有worktree内の `261118/.tools/go1.27.4/go` に新規導入した。
+再実行は既存版を確認して終了し、上書きしないことを確認した。
+Go本体・キャッシュ・GOPATHはGit管理外。OS全体やシェル起動設定は変更していない。
+makeとVS Codeタスクはgo-env.shを使うため、前回の/tmpと通常PATHに依存しない。
+実行版は `go version go1.27.4 linux/amd64`。標準ライブラリのみ。
+
+### 実装
+
+- Memory: Put/Get/Delete、上書き、空値と不在、UTF-8/NUL/サイズ検証、コピー、sequence、Close、mutex直列化。
+- record: file header、version、32バイトheader、sequence/op/長さ、CRC-32C、encode/decode。
+- decoder: header CRCと各上限を検証してから本文を最大1,048,836バイト確保する。
+  正常EOF、不完全なレコード、完全header/recordの破損、I/O失敗を区別する。
+- CLI: `kv memory`のJSON Lines session、Base64のバイナリ値、入力検証、エラーと終了コード。
+  終了時にデータが消えることをhelp/versionとstderrのmemory_onlyイベントで表示。
+- テスト: record/engine/cmd/kvの実テスト、公開hexと仕様の一致テスト、2種類のfuzz。
+
+### 段階0からの差分と理由
+
+- メモリ版の状態を同一プロセス内で確認するためJSON Linesの `kv memory` を追加。
+  getの出力はsessionのフレーミングのためBase64。永続版の単発CLIと生バイト出力は後段階の仕様として保持。
+- APIは `NewMemory` とMemory型。ディレクトリを開くOpen/Inspectはまだ追加していない。
+- 不在DELETEはsequenceを進めるが、追記ログもtombstoneも未生成。ログ256 MiB制限は永続版で適用予定。
+- CLI統合テストはrun/mainの配線を一緒に検証するためcmd/kvへ配置。testsには固定hexとの照合テストを置く。
+- バイト配置とfixtureは段階0から変更なし。設計差分はdocs/api.mdとfile-format.mdへ記録。
+
+### 検証結果
+
+- `make check`: fmt検査、go vet ./...、go test ./...、CLI buildがすべて成功。
+- 最終 `go test -json -count=1 ./...`: **32個のTest関数＋2個のFuzz関数**が成功。
+  サブテスト・fuzz seedを含むpassイベント116件、fail 0、テストskip 0。
+  4パッケージでテスト成功、internal/recoveryは予約のみで `[no test files]`。
+- `go test -race ./...`: 成功。メモリKVの並列呼び出しを含めrace報告なし。
+- `FuzzDecode`: 5秒、2 workers、62,819回、失敗なし。
+- `FuzzFileHeader`: 5秒、2 workers、59,550回、失敗なし。
+- キー1/256/257バイト、UTF-8/NUL、不在/空値、値0/1 MiB/+1を確認。
+- レコードの全切断位置、各バイトの1bit改変、CRCを付け直した不正長/op/sequence/reservedを検証。
+  不正な完全headerが不完全末尾扱いされず、本文read前に拒否されることを確認。
+- 未知version、短いfile header、I/Oエラー、複数レコード境界を検証。
+- 辞書の参照モデルを3 seed×1000操作で照合。各操作後に全16キーの値と不在を検証。
+- CLI実行プロセスのexit 0/2/3、入力I/O失敗、JSON/Base64不正、2 MiB行上限を検証。
+- READMEの利用例を実行し、Base64のバイナリ値と空値・sequenceの出力が説明と一致。
+- セットアップのshell構文・再実行、ローカルリンク、workspace JSON、全差分、秘密情報パターンを確認。
+- Go本体と生成CLIがgit check-ignoreで除外されることを確認。fixture原本は変更なし。
+
+### 未実装・未検証
+
+永続化、fsync、OSロック、ログ上限、起動時索引再構築、inspect、切り戻し、クラッシュ復旧は未実装。
+電源断・WSLホスト障害・装置flush・実ディスク容量不足・性能の検証はしていない。
+fuzzの短時間実行は、全入力や任意の障害への安全性を証明しない。
+メモリ版の総容量制限とメモリ使用量の実測も対象外。
+VS Code GUI・Codex拡張の有効化状態はCLIから未確認。
+
+### 段階2の実装順序
+
+1. Linux用LOCK管理とDBのOpen/Closeを作り、2プロセス競合と終了後再取得をt.TempDirでテスト。
+2. file I/Oの小さな注入層を設け、新規header作成・file/dir/parent Syncの順序を実装する。
+3. record encoderを追記へ接続し、write-all・256 MiB/sequence上限・Sync失敗時の停止状態を実装。
+4. Sync成功後だけ索引を更新し、成功sequenceを返す。GETは検証済み位置から読み取る。
+5. 通常起動のログ走査と索引再構築を接続し、PUT/DELETE列を再起動後の参照モデルと照合。
+6. 単発の永続版CLIと--dbを接続し、正常再起動とロック競合を実プロセスで検証。
+   不完全末尾の切り戻しとクラッシュ注入の本格実装・検証は計画の段階3で行う。
