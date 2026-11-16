@@ -1,3 +1,3 @@
-// Package recovery is reserved for log replay and recovery in stage 2 onward.
-// No persistence or crash recovery is implemented in stage 1.
+// Package recovery validates log snapshots and rebuilds the latest-key position index.
+// Scan never modifies files; the engine applies the narrowly defined incomplete-tail repair.
 package recovery

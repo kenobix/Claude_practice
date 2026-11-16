@@ -1,3 +1,3 @@
-// Package engine provides an in-memory KV store for stage 1.
-// Persistence, OS locking, and crash recovery are not implemented.
+// Package engine provides an in-memory KV and a Linux synchronous persistent KV.
+// Durability depends on the OS and storage sync contract; see docs/durability.md.
 package engine

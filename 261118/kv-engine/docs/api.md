@@ -1,5 +1,24 @@
 # API・CLI契約 v1
 
+## 段階2で利用可能になったAPIとCLI
+
+Linuxで `Open(dir)` / `OpenWithOptions(dir, Options)`、DB.Put/Get/Delete/Inspect/Close、
+読み取り専用 `engine.Inspect(dir)` を実装した。Report型は `recovery.Report`。
+Openはdata.logの作成を許可。OptionsのCreate=falseなら存在するログだけを開く。
+Options.Diagnosticsは末尾切り戻し前のJSON診断の出力先（nilならstderr）。診断失敗時は切り戻さない。
+新規DBはLOCK以外の項目がない既存ディレクトリにのみ作る。data.log/LOCKはregular fileを要求し、symlinkを拒否する。
+すべてのOpenとengine.InspectがLinuxの排他flockを取り、競合を即時拒否する。
+DB.InspectはOpen時走査と成功更新に基づくレポート。engine.Inspectは独立した読み取り専用走査。
+DB.Getはメモリの値コピーからではなく、索引に記録されたレコード位置から読み、再びCRCを検証する。
+CloseはログFDを閉じてからLOCKのFDを閉じる。Close失敗は返し、二回目以降はnil。
+
+以下の永続CLIは現在利用可能。put/get/delete/inspectを提供する。
+キー・引数・値上限を検証してからDBを開く。getも通常Openなので不完全末尾の復旧を行い得る。
+inspectだけは切り戻さず、異常でも走査レポートをstdoutへ出す（Open/lock自体の失敗ではレポートなし）。
+statusに `io_error` を追加した。原因I/Oエラーはexit 6。構造・CRC破損、未知version、不完全末尾のinspectはexit 5。
+CLIは操作後Closeが成功した後にstdoutへ返す。Sync後・Close失敗・stdout失敗の操作がログに残る可能性はある。
+復旧事前イベント名は `tail_truncate_planned`。処置前なので復旧完了と誤認しない名前にした。
+
 ## 段階1の実装と段階0からの差分
 
 `engine.NewMemory() *Memory`（ゼロ値も利用可）とMemoryのPut/Get/Delete/Closeを実装。
@@ -26,7 +45,7 @@ key必須、value_base64のnullは未指定と同じ。putには空文字を含�
 Base64はGo標準のpadded base64、Strictモード。復号後1 MiB上限も確認。
 不存在はstdoutなし、stderrにnot_found、exit 3。メモリCLIのinspectと--dbは未対応、exit 2。
 入力不正exit 2、I/O失敗exit 6、sequence枯渇exit 7。help/versionはexit 0。
-以下の単発CLI・Open・Inspect・OSロック・耐久性は**段階2以降の仕様**であり現在利用できない。
+以上は段階1から維持したメモリ専用モード。以下は段階2で実装した永続版の共通仕様。
 
 ## 共通のデータとAPI
 
@@ -34,7 +53,7 @@ Base64はGo標準のpadded base64、Strictモード。復号後1 MiB上限も確
 Unicode正規化をしない。バイト列が同じ場合のみ同一キー（例: 合成文字と結合文字は区別）。
 値は任意の0〜1,048,576バイト。不在と空値を区別し、外部依存を使わない。
 
-予定API（`internal/engine`、外部向け公開パッケージ化は後段階）:
+永続API（`internal/engine`、外部向け公開パッケージ化は後段階）:
 
 ```go
 Open(dir string) (*DB, error)
@@ -54,7 +73,7 @@ I/O失敗は原因をラップし `errors.Is` で識別できる設計にする�
 同一DBの全メソッドをmutexで直列化し、Closeとの競合も保護する。
 Closeは二度目以降nil。失敗状態でもFDを閉じ、ロック解放は最後に行う。
 
-## 予定CLI
+## 永続CLI
 
 ```text
 kv put     --db DIR --key KEY --value-file FILE
@@ -78,7 +97,7 @@ DBディレクトリ自体は事前に作成する。get/inspectは存在しな�
 
 stderrはエラー時に `{"error":"code","message":"..."}` を1行。
 破損診断は `offset`（ファイル先頭基準）と `last_valid_offset` を追加する。
-正常な復旧切り戻しの診断はstderrへ `event:"tail_truncated"`、旧サイズと境界を出す。
+正常な復旧切り戻しの診断はstderrへ `event:"tail_truncate_planned"`、旧サイズと境界を出す。
 exit: 0=成功、2=引数/入力、3=不在、4=ロック競合、5=破損/未対応形式、
 6=I/O/復旧必要/閉鎖状態、7=容量/sequence上限。help/versionはexit 0。
 成功JSONの出力失敗はexit 6となり、同期済み更新は残り得る。
@@ -94,4 +113,4 @@ inspectは有効なヘッダーとレコードを同じ規則で検証する。
 CLI inspectは別の読み取り専用scanを使用し、Openによる自動修復を通さない。
 すべてのCLI（inspect含む）は同じ排他ロックを取り、writerとの同時実行を拒否する。
 
-永続版の設計を記録した節と、冒頭の段階1の実装範囲を区別する。メモリ版の成功応答に保存保証はない。
+永続版の同期契約はdurability.mdを参照。メモリ版の成功応答に保存保証はない。

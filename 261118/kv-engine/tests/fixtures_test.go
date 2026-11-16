@@ -6,9 +6,11 @@ import (
 	"errors"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/kenobix/Claude_practice/261118/kv-engine/internal/engine"
 	"github.com/kenobix/Claude_practice/261118/kv-engine/internal/record"
 )
 
@@ -97,5 +99,46 @@ func TestCorruptFixture(t *testing.T) {
 	}
 	if !bytes.Equal(data, original) {
 		t.Fatal("decoder mutated input")
+	}
+}
+
+func TestDiskFixtureCompatibility(t *testing.T) {
+	for i, data := range fixtures(t) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "data.log")
+		if err := os.WriteFile(path, data, 0600); err != nil {
+			t.Fatal(err)
+		}
+		var diagnostic bytes.Buffer
+		db, err := engine.OpenWithOptions(dir, engine.Options{Diagnostics: &diagnostic})
+		if i == 2 {
+			if db != nil || !errors.Is(err, record.ErrCorrupt) {
+				t.Fatal(db, err)
+			}
+		} else {
+			if err != nil {
+				t.Fatal(err)
+			}
+			if i == 1 {
+				v, err := db.Get("k")
+				if err != nil || string(v) != "v" {
+					t.Fatal(v, err)
+				}
+			}
+			if err := db.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}
+		got, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := data
+		if i == 1 {
+			want = data[:54]
+		}
+		if !bytes.Equal(got, want) {
+			t.Fatal("fixture compatibility changed")
+		}
 	}
 }

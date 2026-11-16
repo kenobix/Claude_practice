@@ -158,3 +158,79 @@ VS Code GUI・Codex拡張の有効化状態はCLIから未確認。
 5. 通常起動のログ走査と索引再構築を接続し、PUT/DELETE列を再起動後の参照モデルと照合。
 6. 単発の永続版CLIと--dbを接続し、正常再起動とロック競合を実プロセスで検証。
    不完全末尾の切り戻しとクラッシュ注入の本格実装・検証は計画の段階3で行う。
+
+## 段階2: 永続KVの実装・検証（2026-11-17 JST）
+
+### 開始状態と方針
+
+worktreeは~/work/Claude_practice-261118、branchはfeat/database-engine、HEADはb669c7a。
+開始時の未コミット変更なし。ルートAGENTS、計画書、形式・耐久性仕様、既存コードとfixture/testを確認。
+今回も変更範囲は261118/のみ。形式v1とfixtureのhex原本は変更していない。
+Goは既存のworktree内Go 1.27.4 linux/amd64を使用し、OS全体のインストールなし。
+
+### 実装した内容
+
+- Linux flockによるLOCKの非待機排他取得。すべてのOpen/inspectが協調し、競合はErrLocked。
+  LOCKはunlinkせず、ログFDを閉じてからロックFDを閉じる。
+- 新規data.logはO_EXCLで作成、ヘッダーwrite-allとFile.Sync、DBディレクトリと親のSync。
+  既存ログは再初期化しない。新規作成はLOCK以外がない事前作成ディレクトリに限定。
+  LOCK/data.logのsymlink・非regular fileは拒否する。
+- 同期追記は検証済み末尾へのWriteAt。短いwriteを補完し、0バイトwrite、一部成功+error、Sync失敗を検出。
+  検証・256 MiB上限・sequence上限を先に確認し、File.Sync成功後だけ索引とsequenceを公開。
+- recovery.Scanで先頭から形式・CRC・sequenceを検証し、キー→最新PUTのoffset/sequence索引を再構築。
+  GETは索引位置から読み出してCRCを再確認する。値全体を索引には保持しない。
+- write/Sync/Get I/O失敗後はClose以外をErrRecoveryRequiredで拒否。
+- 正常EOF、完全ヘッダー/レコード破損、不完全末尾を区別。
+  正常prefix後のEOFに接した未完レコードのみ、診断→Truncate→Syncで復旧する。
+  短いfile header、CRC不一致、不正header、未知version、snapshot末尾前のread途絶は復旧しない。
+- 永続CLIのput/get/delete/inspectを追加。putはファイルまたはstdin、getは生バイト。
+  全引数と値を検証してからOpenし、get/inspectはログを作成しない。
+  inspectは不完全末尾も変更せず診断。エラー時の位置・最終正常境界をstderrへ出す。
+
+### 設計との差分
+
+限定的な末尾復旧とI/O注入テストは今回の依頼により段階3から前倒しした。
+処置前の診断名はtail_truncate_plannedとした。処置の成功を事前に示さないための変更。
+失敗したTruncate/SyncはOpen失敗とし、DBを公開しない。
+単発CLIは操作とCloseが成功してからstdoutへ返す。Close/stdout失敗でも同期済み更新は残り得る。
+DB.Inspectは現在の検証済み状態の集計、engine.Inspect/CLI inspectはログの独立した再走査。
+詳細はdocs/api.mdとdocs/durability.mdへ反映。
+
+### 検証結果
+
+- make check: gofmt差分なし、go vet ./...成功、go test ./...成功、CLI build成功。
+- go test -json -count=1 ./...: 51個のTest関数と2個のFuzz関数が成功。
+  サブテストと既存fuzz seedを含むpassイベント203件、fail 0、skip 0。5パッケージすべて成功。
+- go test -race ./...: 全5パッケージ成功、race報告なし。
+  今回は新しいfuzz探索をせず、既存fuzz seedを通常テストで再実行した。
+- 保存の実証: CLIをそれぞれ別プロセスで起動し、00 ff 0aの値、空値、上書き、ファイル入力、
+  DELETE、不在DELETE、inspectのsequence=5/live_keys=0、競合時exit 4、破損時exit 5を確認。
+- 128件の固定seed操作と8回のClose/Openを、辞書の全8キーと各操作後に照合。
+- 別プロセスのLOCK保持中はOpen/inspectを拒否し、通常終了後に同じLOCK inodeで再取得できた。
+- 実ファイル上のDELETEレコードの全36不完全位置で、inspectが不変、Openが正常境界へ復旧、
+  復旧後の次のDELETEがsequence=2になることを確認。
+- 初回ヘッダー→file Sync→DB dir Sync→parent Syncと、更新Sync前に索引を公開しないことを注入層で確認。
+- 短いwrite、0バイトwrite、部分write+ENOSPC、Sync EIO、Get EIO、初期化/dir Sync/Truncate/診断失敗を注入。
+  成功の誤報、失敗後の更新継続、ロックの残留がないことを確認。
+- 容量の一致/超過と上限超過ログを疎ファイルで検証。256 MiBの実データ負荷試験や実ディスク枯渇ではない。
+- 短いfile header、未知version、完全な末尾CRC不一致は原本を変えず拒否。
+- 段階0fixtureの一時コピーで、正常/不完全/破損のOpen結果と切り戻し後バイト列を照合。
+- README、作業ログ、仕様、ローカルリンク、workspace JSON、Gitの全差分と生成物除外を確認。
+
+### 未検証の耐久性条件
+
+今回の別プロセス試験は通常終了と再起動。kill -9、OS/WSLホストの停止、実機電源断は未実施。
+OS・WSL仮想ディスク・ホスト・装置がflush契約を守ることを前提とし、その全層を実測で証明していない。
+媒体故障、CRC衝突、協調しない外部編集/切り詰め、故意の改ざんは保証外。
+短い末尾と外部破損の識別不能性は引き続きある。性能・総メモリ量・全容量書込み時間は未計測。
+SQL、MVCC、複数writer、コンパクションは未実装。
+
+### 段階3の実験計画
+
+1. write前後、各部分write、Sync前後、索引更新前後、成功応答直前に親子ハンドシェイクの停止点を追加。
+2. 親プロセスに成功応答列を保持し、未応答は常に最大1操作としてkill/reopenするハーネスを作る。
+3. 復旧結果を成功応答列、または成功応答列+最後の未応答1操作の参照モデルと照合。
+   同期後・応答前の操作が全体として残る場合を許容し、部分値は許容しない。
+4. 初回作成・dir Sync・復旧Truncate/Sync中の停止、一部write+error、CRC/header途中破損を組み合わせる。
+5. seed、停止点、応答列、旧サイズ、正常境界、復旧結果、OS/FS/Goを再現可能な人工データで保存。
+6. プロセス停止試験と、別途計画するホスト停止/電源断/装置flush検証を分けて報告する。

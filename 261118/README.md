@@ -1,9 +1,10 @@
-# 自作KVエンジン: 段階1（メモリ版とレコード処理）
+# 自作KVエンジン: 段階2（Linux永続KV）
 
 作業日: 2026-11-17（JST）。ディレクトリ名は指定の `261118` を使用。
 [元計画](../261014/plan_database_engine.md)に基づく学習プロジェクト。
-メモリKV、JSON Lines CLI、バイナリレコード処理と実テストを実装済み。
-**メモリ版は終了すると全データを失う。永続DBは未完成。** 保存、fsync、復旧、OSロックは未実装。
+Linuxの単一writer、同期追記ログ、再起動時の索引再構築、限定的な末尾復旧、永続版CLIを実装。
+既存形式v1と公開fixtureの互換性を維持。電源断耐性の実証と本格的なクラッシュ実験は未実施。
+`kv memory`も維持するが、そのデータは終了すると消える。
 
 ## 作業環境
 
@@ -32,6 +33,26 @@ make fmt                       # フォーマット適用
 VS Codeから `code ../kv-engine.code-workspace` で専用workspaceを開く。
 Codexはルートと[作業指示](AGENTS.md)を読む前提で作業する。
 
+## 永続版CLIの例
+
+```bash
+kv_demo_dir=$(mktemp -d)
+printf 'hello' | ./bin/kv put --db "$kv_demo_dir" --key greeting --value-file -
+./bin/kv get --db "$kv_demo_dir" --key greeting
+printf '\n'
+./bin/kv inspect --db "$kv_demo_dir"
+./bin/kv delete --db "$kv_demo_dir" --key greeting
+./bin/kv get --db "$kv_demo_dir" --key greeting   # 不在: exit 3
+```
+
+各コマンドは別プロセス。put/deleteは `{"sequence":1}` のようなJSON、getは改行なしの生バイトを返す。
+`--value-file FILE` でバイナリファイル、`-` でstdinを読む。空入力も保存できる。
+DBディレクトリは事前作成する。新規data.logはLOCK以外にファイルがないディレクトリだけに作成する。
+get/inspectはdata.logを新規作成しない。ロック競合はexit 4、破損/不完全な末尾のinspectはexit 5。
+通常Openは不完全な最終レコードだけ診断後に切り戻す。**原本を調査する場合は最初にinspectを使う。**
+inspectも排他ロックを取り、LOCKファイルを作る場合があるが、data.logは変更しない。
+全I/Oテストは専用一時ディレクトリを使用し、普段使うデータは投入しない。
+
 ## メモリCLIの例
 
 ```bash
@@ -57,14 +78,14 @@ stdout:
 `AP8=` はバイナリ `00 ff`。stderrに `memory_only` / `persistent:false` を表示する。
 各行を順に処理し、最初のエラーで終了する。存在しないキーのgetはexit 3、空値のgetはexit 0。
 入力不正はexit 2、I/O失敗はexit 6、sequence枯渇はexit 7。
-プロセスをまたぐ共有はできないため、`kv put --db ...` 等の永続版コマンドはまだ提供しない。
+このメモリsessionはプロセスをまたいで共有しない。永続版とは別の動作確認用モード。
 
 ## 構成・仕様
 
-- `kv-engine/cmd/kv/`: メモリ版JSON Lines CLIと終了コードのテスト
-- `kv-engine/internal/engine/`: コピー境界・mutex・sequenceを持つメモリKVと参照モデルテスト
+- `kv-engine/cmd/kv/`: 永続版CLI、メモリ版CLI、実プロセスの保存・終了コードテスト
+- `kv-engine/internal/engine/`: メモリKV、Linux永続DB、OSロック、I/O注入、再起動・参照モデルテスト
 - `kv-engine/internal/record/`: ファイルヘッダー・レコードのencode/decode、境界値・破損・fuzzテスト
-- `kv-engine/internal/recovery/`: 段階2以降の予約パッケージ
+- `kv-engine/internal/recovery/`: 読み取り専用ログ走査、位置索引、破損位置・正常境界の診断
 - `kv-engine/tests/`: 公開hex fixtureとバイナリ仕様の一致テスト
 - `kv-engine/scripts/`: Goの再現セットアップと局所環境ラッパー
 - [API・CLI契約](kv-engine/docs/api.md)
@@ -76,4 +97,4 @@ stdout:
 最初の完成範囲は単一writer、追記ログ、復旧、CLI、定義した障害モデル内の永続性検証。
 SQL、B+Tree、MVCC、分散、ネットワークAPI、コンパクションは対象外。
 作業ブランチ `feat/database-engine` にcommit・pushする。mainへのpush・マージ、PR作成、公開ページ追加は行わない。
-ルートREADMEの一覧更新は統合時に行う。段階1の検証件数と未検証事項は[作業ログ](work_log.md)を参照。
+ルートREADMEの一覧更新は統合時に行う。段階2の検証件数と未検証事項は[作業ログ](work_log.md)を参照。

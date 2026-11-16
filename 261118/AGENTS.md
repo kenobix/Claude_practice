@@ -3,8 +3,8 @@
 上位の `../AGENTS.md` と `../261014/plan_database_engine.md` を読む。
 
 - 作業ブランチは `feat/database-engine`。mainや他worktreeを変更しない。
-- 現在の依頼は段階1（メモリKV・レコード処理・CLIと実テスト）。永続化・復旧は段階2以降。
-- ユーザーの最新指示に従い、段階0保存と段階1完了を別commitにし、feat/database-engineへpushする。mainへのpush・マージは禁止。PR作成は依頼なし。
+- 現在の依頼は段階2（永続KV・Linux排他ロック・限定的な末尾復旧と実ファイル検証）。
+- ユーザーの最新指示に従い、確認済みの節目でcommitし、feat/database-engineへpushする。mainへのpush・マージは禁止。PR作成は依頼なし。
 - 変更範囲はこのディレクトリ以下。前回のルートREADME追加行は取り消し、一覧更新は統合時に行う。
 - 標準ライブラリを優先。SQLite等をエンジンの代わりに使用しない。
 - 形式と復旧規則を変えるときは先にdocsを更新し、既存fixtureへの影響を示す。

@@ -1,4 +1,4 @@
-# 耐久性・ロック・復旧 v1（設計確定、未実装）
+# 耐久性・ロック・復旧 v1（段階2実装）
 
 ## 対象環境と保証の条件
 
@@ -15,7 +15,7 @@ fsyncエラー、ディレクトリ同期未対応、read errorを無視して�
 ## ファイルとOSロック
 
 DBディレクトリは利用者が事前に作成する（専用領域、同一ユーザー、symlinkや外部操作を避ける）。
-`LOCK` をO_CREATE|O_RDWRで開き、Linux `syscall.Flock(fd, LOCK_EX|LOCK_NB)` を使う予定。
+`LOCK` をO_CREATE|O_RDWRで開き、Linux `syscall.Flock(fd, LOCK_EX|LOCK_NB)` を使う。
 ファイル存在では所有判定しない。get/inspectも排他取得し、競合は即時ErrLocked。
 LOCKのFDはDBの生存中保持。LOCKはunlink/置換しない。全FDを閉じたときOSがロックを解放する。
 flockはadvisoryなので協調しない外部writerを防げない。
@@ -63,4 +63,23 @@ inspectは同じ検証をするが切り戻さない。開くだけで診断対�
 - [Linux flock(2)](https://man7.org/linux/man-pages/man2/flock.2.html): advisory lock、非待機取得、FDの生存期間。
 - [Go os.File.Sync](https://pkg.go.dev/os#File.Sync): ファイル内容のstable storageへのcommitを要求するAPI。
 
-上記は設計の根拠。今回このエンジンの同期・ロック実装を実測した結果ではない。
+上記は設計の根拠。同期呼び出し順序とロック競合はテストしたが、装置の電源断保証の実測ではない。
+
+## 段階2の実装上の補足
+
+- 追記は、ロックとmutexの下で検証済み末尾offsetへWriteAtする。O_APPENDは使わない。
+  書き込むのは常に末尾だけで、短いwriteを補完し、0バイトwriteや一部成功+errorは失敗状態にする。
+- data.log新規作成はO_EXCL。既存ファイルにはTRUNCを使わず、LOCKはunlinkしない。
+  data.log/LOCKのsymlinkと非regular fileは拒否。新規ログ作成先はLOCK以外に項目のない既存ディレクトリ。
+- ログ走査はStatで得た最大256 MiBのsnapshotに制限する。短いfile headerは起動拒否。
+  完全な正常prefixの後でのみ、EOFに接した短いrecord headerまたは検証済みheaderの短いbodyを復旧する。
+  snapshotのEOFより前に読み取りが途絶えた場合はI/Oエラーとし、復旧しない。
+- 復旧前に `tail_truncate_planned` とold_size/last_valid_offset/reasonを診断出力する。
+  診断失敗ではファイルを変更しない。Truncate/Sync失敗ではDBを返さずロックを解放する。
+- inspectはログをO_RDONLYで開き、修復・Syncをしない。LOCKは作成する場合がある。
+- 起動失敗時のFD、Close時のログ→LOCKの順を保つ。既存データを初期化し直さない。
+- Getでread/CRCエラーを検出した場合もDBを失敗状態にし、Close以外を拒否する。
+
+この限定的な末尾復旧は今回の依頼に従い段階3の予定から先に実装した。
+任意の外部truncateと追記中断は常に識別できない。協調しない外部編集や保存装置の故障は依然保証外。
+プロセスのkillや電源断は今回の実験に含めず、段階3で応答履歴と停止点の検証を進める。

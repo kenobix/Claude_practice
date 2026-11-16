@@ -1,4 +1,4 @@
-// Command kv provides a JSON Lines session for the stage-1 in-memory store.
+// Command kv provides synchronous persistent operations and an in-memory session.
 package main
 
 import (
@@ -14,6 +14,7 @@ import (
 
 	"github.com/kenobix/Claude_practice/261118/kv-engine/internal/engine"
 	"github.com/kenobix/Claude_practice/261118/kv-engine/internal/record"
+	"github.com/kenobix/Claude_practice/261118/kv-engine/internal/recovery"
 )
 
 const maxRequestSize = 2 << 20
@@ -26,13 +27,16 @@ type request struct {
 	Value *string `json:"value_base64"`
 }
 
-const usage = `Usage: kv memory | kv -version | kv -h
-Stage 1: memory only; all data is lost when the process exits.
-Send one JSON object per line:
+const usage = `Usage: kv put|get|delete|inspect --db DIR [--key KEY] [--value-file FILE]
+       kv memory | kv -version | kv -h
+Persistent put reads bytes from --value-file FILE (use - for stdin).
+Persistent mode (Linux): updates sync data.log before success.
+Memory mode only: all data is lost when the process exits.
+For kv memory, send one JSON object per line:
   {"op":"put","key":"k","value_base64":"dg=="}
   {"op":"get","key":"k"}
   {"op":"delete","key":"k"}
-The session stops at the first error. No database files are created.
+The memory session stops at the first error and creates no database files.
 `
 
 func main() { os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)) }
@@ -45,10 +49,13 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 		return 0
 	}
 	if len(args) == 1 && (args[0] == "-version" || args[0] == "--version") {
-		if _, err := fmt.Fprintln(out, "kv stage1 (memory only; not persistent)"); err != nil {
+		if _, err := fmt.Fprintln(out, "kv stage2 (synchronous log; Linux only)"); err != nil {
 			return fail(errOut, err)
 		}
 		return 0
+	}
+	if len(args) > 0 && (args[0] == "put" || args[0] == "get" || args[0] == "delete" || args[0] == "inspect") {
+		return runPersistent(args, in, out, errOut)
 	}
 	if len(args) != 1 || args[0] != "memory" {
 		return fail(errOut, fmt.Errorf("%w: use kv memory or kv -h", errInput))
@@ -167,13 +174,27 @@ func fail(out io.Writer, err error) int {
 		code, name = 2, "invalid_input"
 	case errors.Is(err, engine.ErrNotFound):
 		code, name = 3, "not_found"
+	case errors.Is(err, engine.ErrLocked):
+		code, name = 4, "locked"
+	case errors.Is(err, record.ErrCorrupt), errors.Is(err, record.ErrIncomplete), errors.Is(err, record.ErrUnsupportedVersion):
+		code, name = 5, "corrupt"
+	case errors.Is(err, engine.ErrLogFull):
+		code, name = 7, "log_full"
 	case errors.Is(err, engine.ErrSequenceExhausted):
 		code, name = 7, "sequence_exhausted"
 	}
+	var offset, last *int64
+	var problem *recovery.Problem
+	if errors.As(err, &problem) {
+		offset = &problem.Offset
+		last = &problem.LastValidOffset
+	}
 	if json.NewEncoder(out).Encode(struct {
-		Error   string `json:"error"`
-		Message string `json:"message"`
-	}{name, err.Error()}) != nil {
+		Error           string `json:"error"`
+		Message         string `json:"message"`
+		Offset          *int64 `json:"offset,omitempty"`
+		LastValidOffset *int64 `json:"last_valid_offset,omitempty"`
+	}{name, err.Error(), offset, last}) != nil {
 		return 6
 	}
 	return code
