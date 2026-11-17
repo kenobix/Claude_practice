@@ -56,6 +56,7 @@ make check
 
 OSページキャッシュはSIGKILL後も生存する。ホスト停止、電源断、WSL仮想ディスクと装置flushの保証は未検証。
 本ハーネスのackはライブラリ返却後のテスト応答で、製品CLIのClose/stdout周辺の停止試験ではない。
-次の優先単位は複合I/O障害の検証。部分write+ENOSPC後の修復失敗、Sync失敗後の再Open失敗等を組み合わせ、
-成功の誤報・失敗状態の更新継続・ack済みprefixの変更がないことを検証する。
+複合I/O障害は[後続単位](compound-io-experiments.md)で検証済み。部分write+ENOSPC後の修復失敗、
+Sync失敗後の再Open失敗を組み合わせ、成功の誤報・失敗状態の更新継続・成功済みprefixの変更がないことを確認した。
+次の優先単位はCloseと各APIの同時競合の専用検証。
 Close競合・製品CLI応答周辺、段階4の計測、段階5のデモも残り、段階3全体の完了とはしない。

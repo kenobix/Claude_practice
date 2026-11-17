@@ -87,4 +87,6 @@ inspectは同じ検証をするが切り戻さない。開くだけで診断対�
 0/8バイトの既存headerは破損として不変のまま拒否し、完全headerは空DBとして再開。
 復旧中断後も成功応答済みの正常prefixを保ち、二度目のOpenで不要な修復を行わないことを確認。
 [複数seedの更新停止試験](seeded-crash-experiments.md)では3 seed・48停止ケースと正常終了6ケースで成功応答履歴を照合した。
-ホスト停止・電源断、複合I/O障害、Close競合・製品CLI応答周辺は未検証。
+[複合I/O試験](compound-io-experiments.md)で更新失敗と再Open失敗の30組合せ、および対照を検証した。
+復旧Sync失敗時はTruncate済みでもOpenを失敗させる。注入を除いた再試行で正常prefixを再生できたが、
+これは失敗したSyncの電源断時保証ではない。ホスト停止・電源断、Close競合・製品CLI応答周辺は未検証。

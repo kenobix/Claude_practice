@@ -16,8 +16,10 @@ Linuxの単一writer、同期追記ログ、再起動時の索引再構築、限
   [Open中の停止条件・実測結果](kv-engine/docs/open-crash-experiments.md)に正常再開・破損拒否・復旧の再実行を記録。
 - 複数seed単位: 3 seed × PUT/DELETE × 8停止点と正常終了で、55件の成功履歴＋最後の1操作を照合済み。
   [操作列・復旧境界・観測結果](kv-engine/docs/seeded-crash-experiments.md)を記録。
-- 次の優先作業: 部分write/Sync失敗と復旧失敗を組み合わせた複合I/O障害の検証。
-  複合I/O障害、Close競合・CLI応答周辺、段階4の計測、段階5のデモは残課題。段階3全体は未完了。
+- 複合I/O単位: 更新ENOSPC/Sync失敗と再Openの読取・同期・復旧失敗を組み合わせた36ケースと正常対照が成功。
+  [失敗後の拒否・prefix保持・再試行](kv-engine/docs/compound-io-experiments.md)を記録。
+- 次の優先作業: CloseとPut/Get/Delete/Inspectの同時競合の専用検証。
+  CLI応答周辺、段階4の計測、段階5のデモ、電源断検証は残課題。段階3全体は未完了。
 
 ## 作業環境
 

@@ -74,7 +74,8 @@ Go 1.27.4 linux/amd64、Ubuntu 24.04/WSL2、ext4。[環境記録](../../README.m
 
 SIGKILLはOSページキャッシュを消さない。Sync前の完全headerやTruncate結果が残ったのは今回のプロセス障害の観測であり、
 電源断時・ホスト停止時の残存、ディレクトリ名の永続化、WSL/保存装置のflush保証を証明していない。
-今回の停止点は固定のAPI境界とheader8バイト地点だけ。全バイト中断・複数seed・同時Close・複合I/O故障は未検証。
+今回の停止点は固定のAPI境界とheader8バイト地点だけ。全バイト中断・同時Closeは未検証。
+複数seedと複合I/O故障は後続の別単位で扱った（下記）。
 
-次の優先単位は、複数seedの更新操作列と停止点を組み合わせた成功応答履歴照合。
-複合障害、CLI応答周辺、性能計測、デモは後続に残す。段階3全体の完了とは扱わない。
+後続の[複数seed試験](seeded-crash-experiments.md)と[複合I/O試験](compound-io-experiments.md)は実施済み。
+次はClose競合。CLI応答周辺、性能計測、デモは残る。段階3全体の完了とは扱わない。

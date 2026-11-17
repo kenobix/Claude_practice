@@ -390,3 +390,48 @@ Close競合、製品CLIのClose/stdout応答周辺、段階4の計測、段階5�
 SIGKILLはOSキャッシュを失わせない。ホスト停止・電源断・WSL仮想ディスク/装置flushの耐久性は未検証。
 差分・秘密情報・生成物を確認し、対象ファイルのみcommitして担当ブランチへ通常pushする。
 既存Draft PR #2の進捗を本単位の実績と次の作業へ更新し、Draftを維持する。反映結果は最終報告で確認する。
+
+## 段階3・複合I/O単位: 更新失敗と再Open失敗（2026-11-17 JST）
+
+### 状態と選択
+
+- cwd: /home/kenshin/work/Claude_practice-261118、branch: feat/database-engine、開始HEAD: 0c88924、開始時clean。
+- root/担当AGENTS、261014の計画、README/work_log、既存I/O抽象層・失敗状態・復旧・テスト・fixture仕様を確認。
+- Draft PR #2はDraft、担当ブランチとHEADが一致し、複数seed試験まで反映済み。
+- 段階0〜2、更新/Open停止試験、複数seed試験が完了。次の最優先だった複合I/O障害を1単位に選択。
+  既存diskOpsと辞書モデルに依存し、Close競合・製品CLI応答周辺・性能計測は次へ残す。
+- AGENTSは継続開発に適合しており更新不要。局所Go 1.27.4 linux/amd64を使用。開始時make checkは成功。
+
+### 実装と判定
+
+- compound_io_linux_test.goに実FDを包むテスト専用注入層と37ケースを追加。製品コード・形式v1・fixtureは変更なし。
+- PUT/DELETE各々で、更新のpartial_header/partial_body+ENOSPC、全write後のSync EIOを注入。
+  再Openではread、DB dir Sync、parent Sync、診断出力、Truncate、復旧SyncのEIOを適用可能な経路で注入。
+- 複合障害30ケース、再Openの追加障害なし6ケース、同じラッパーでの障害なし正常対照1ケース。
+- 4件の更新成功後、最後の1件がsequence=0と原因エラーを返すことを検査。
+  メモリreport/索引非公開、以後全APIのErrRecoveryRequiredとI/O停止、Closeまでの排他保持を確認。
+- 成功済みprefix全バイトと失敗後サイズ、inspect非変更、再Open失敗のDB=nil/EIOを検査。
+  診断JSONの境界、修復のTruncate/Sync/Write呼出し有無、FDのClose回数/実閉鎖、同じLOCK inodeでの再取得も確認。
+- 注入を除いて同じログを再試行し、辞書・live_keys・sequence、追加Openの修復不要、次の更新と再Openを確認。
+
+### 検証結果
+
+- 対象37ケースが成功。既存テストを含むmake check（fmt/vet/test/build）もすべて成功。
+- go test -json -count=1 ./...: Test関数61個（子helper含む）とFuzz関数2個の既存seedが成功。
+  サブテスト等を含むpassイベント335件、fail 0、skip 0、全5パッケージ成功。
+- go test -race ./...: 全5パッケージ成功。新しいfuzz探索は実施せず既存seedを再実行。
+- 正常prefixは197バイト・sequence4。部分header/body失敗後は207/236バイト。
+  read/dir/parent/診断/Truncate失敗では全バイト不変。復旧Sync失敗ではTruncate済み197バイトとなるがOpenは失敗。
+- 再試行では部分ログをsequence4へ復旧。更新Sync失敗で全長が残るPUT/DELETEは243/239バイト・sequence5で再生。
+  エラーになった操作の不在を仮定せず、辞書と正常prefixを確認。次sequence5/6の更新も再Open後に保持。
+- README・耐久性・検証計画・既存実験記録を更新し、compound-io-experiments.mdに故障モデルと観測表を記録。
+
+### 限界・次の1単位・保存
+
+次はCloseとPut/Get/Delete/Inspectの同時競合の専用検証。その後に製品CLIのClose/stdout応答周辺を扱う。
+段階4の計測、段階5のデモ、実デバイス障害・ホスト停止・電源断・WSL/装置flushの検証は未実施。
+今回のEIO/ENOSPCは注入で、実容量を枯渇させていない。全DBはt.TempDir内の人工データ。
+この単位では通常Closeを使い、新規SIGKILLケースは追加せず既存試験を再実行した。
+OSキャッシュが生存する条件の再試行成功を、失敗したSyncの電源断時保証と扱わない。段階3全体は未完了。
+差分・秘密情報・生成物を確認した後、261118/内の対象だけcommitし、担当ブランチへ通常pushする。
+Draft PR #2の進捗を更新してDraftを維持する。反映の実結果は最終報告で確認する。

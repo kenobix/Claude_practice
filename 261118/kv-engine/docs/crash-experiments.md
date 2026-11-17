@@ -2,7 +2,7 @@
 
 2026-11-17 JST。[詳細計画](../../../261014/plan_database_engine.md)の段階3を進める最初の単位。
 段階0〜2は完了し、末尾復旧とI/Oエラー注入は利用可能。最優先の未完了だった「実プロセス停止と応答履歴照合」を選択した。
-初回作成/復旧中の停止点は本ハーネスを再利用した[後続単位](open-crash-experiments.md)で追加した。複合障害は未実施。
+初回作成/復旧中の停止点は本ハーネスを再利用した[後続単位](open-crash-experiments.md)で追加した。複合I/O障害は[後続試験](compound-io-experiments.md)で限定検証した。
 
 ## 実験の契約
 
@@ -58,7 +58,7 @@ make check
 
 初回単位の停止点は固定8箇所、操作列も固定。初回header/file/dir/parent Sync中と復旧Truncate/Sync中は
 [後続単位](open-crash-experiments.md)で検証。複数seedとI/Oエラーの組合せ、Closeとの同時実行、製品CLI応答周辺は未検証。
-複数seedの更新停止試験は[後続記録](seeded-crash-experiments.md)で実施済み。次は複合I/O障害を検証する。
+複数seedの更新停止試験は[後続記録](seeded-crash-experiments.md)で実施済み。複合I/O障害も[後続試験](compound-io-experiments.md)で検証し、次はClose競合を扱う。
 
 SIGKILLはOSページキャッシュを消さない。ホストクラッシュ、WSL仮想ディスク、装置flush、電源断耐性は実証していない。
 この単位の成功を段階3全体やMVP全体の完了とは扱わない。
