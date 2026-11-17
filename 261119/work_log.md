@@ -454,3 +454,44 @@ CLI/JSON Schema/版番号/依存lock/既存fixture・期待値は変更なし。
 入力/フロー/診断/DNS上限停止の途中結果、根拠付きイベントとms表示を検証する。
 現APIは時刻順の観測だけを扱い、時刻逆行を許容して自動並べ替えたり成功値を温存したりしない。
 未知RDATAの全意味検査、TShark独立比較、性能/大規模負荷、デモ、VS Code GUIは未検証。
+
+# 継続単位 — PCAP専用の最小自動テスト
+
+実施日: 2026-11-17（Asia/Tokyo）。開始HEAD=cffa5a0、cwd=/home/kenshin/work/Claude_practice-261119、
+branch=feat/pcap-analyzer、初期statusはclean。ルート/担当AGENTS、261014計画、README/work_log、
+実装/テスト、Draft PR #3を確認。PRはDraftを維持し、DNS窓の内部APIまで完了、report接続は未完了。
+既知のテスト失敗や今回の確認で再現する不具合はなく、既存343テストは13.74秒で成功。
+今回の優先順位に従い、未整備だった担当プロジェクトのGitHub Actionsを1単位として選択した。
+DNSレポート統合など解析機能の追加には進まない。
+
+## 実装と制約
+
+- ユーザーが今回許可した範囲で`.github/workflows/pcap-analyzer-tests.yml`を新規追加。
+  既存bike-mlops workflowは変更しない。ほかの変更は261119内のREADME/本記録のみ。
+- pushはmain/feat/pcap-analyzer、pull_requestは各対象PRで、261119または専用workflowの変更時のみ起動。
+  mainへのpush・マージをこの作業で実行するものではない。
+- Ubuntu 24.04 / Python 3.12系列、1ジョブ、10分上限。同じrefの古い実行は中止する。
+- contents: readのみ、checkout persist-credentials=false。公式checkout v7.0.1/setup-python v7.1.0を
+  GitHub APIでコミットSHAに解決して固定。キャッシュ・成果物アップロード・secret・サービス追加なし。
+- ジョブ内で専用.venvを作り、requirements.lockとローカルパッケージを導入しpip check、pytest -qを実行。
+  生成済み人工fixtureと独立した期待値を既存テストで照合し、期待値の再生成/上書きを行わない。
+  ライブ捕捉・送信・スキャン・逆引き・外部解析照会は追加しない。
+
+## 検証結果と範囲
+
+- 既存343テスト成功（13.74秒）。正常/不正入力、長さ/時刻/上限/分類、Schema、決定性、
+  フロー件数・捕捉/元長と未帰属の整合、DNS内部API、socket生成禁止下のfixture生成/解析を含む。
+- 既存専用.venvのpip check成功。依存lock、解析コード、fixture、期待値、Schemaに変更なし。
+- 公式actionlint 1.7.12の配布SHA-256を照合し/tmp内で実行。専用workflowの静的検証成功。
+  検証用コピーでcontents権限を不正値に置換し、非0終了と権限エラーを確認（異常系）。
+- GitHubホスト上の実行はpush後に確認する。ローカル結果と静的検証をホスト上の成功と混同しない。
+  ホスト結果のURL・状態はDraft PRと完了報告に記載する。
+- READMEに起動条件/環境/権限/手順/限界を追記。恒久ルールは変わらないためAGENTSは変更なし。
+  差分・対象パス・秘密情報・生成物を確認してfeature branchへcommit・pushする。
+
+## 次の単位と残課題
+
+Phase 2は未完了。次はDNS窓APIのreport/CLI/Schema統合、全パケットでの窓進行、
+全ファイル時刻逆行時の既返却結果を含む無効化、上限停止時の途中結果と根拠・イベント表示。
+現CLIはDNS照合イベントを出力しない。未知RDATAの全意味検査、TShark比較、性能/負荷測定、
+デモ、VS Code GUIは未検証。CI導入をこれらの受入条件の完了扱いにしない。

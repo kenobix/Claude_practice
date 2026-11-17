@@ -1,0 +1,44 @@
+name: PCAP analyzer tests
+
+on:
+  push:
+    branches: [main, feat/pcap-analyzer]
+    paths:
+      - '261119/**'
+      - '.github/workflows/pcap-analyzer-tests.yml'
+  pull_request:
+    paths:
+      - '261119/**'
+      - '.github/workflows/pcap-analyzer-tests.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: 261119/pcap_analyzer
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Python 3.12
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - name: Install locked dependencies in project venv
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install --no-cache-dir -r requirements.lock
+          .venv/bin/python -m pip install --no-cache-dir --no-deps --no-build-isolation -e .
+          .venv/bin/python -m pip check
+      - name: Run offline synthetic and regression tests
+        run: .venv/bin/python -m pytest -q

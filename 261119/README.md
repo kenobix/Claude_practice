@@ -52,6 +52,23 @@ DNS候補の空payloadの分類変更に合わせ、既存1件の期待をparsed
 Scapyの経路/インターフェース自動読込をプロセス内で無効化し、socket生成禁止下でも解析をテストする。
 `.venv`、cache、egg-info等はGit対象外。人工PCAPと期待値は再現用成果物として保持する。
 
+## 自動テスト（GitHub Actions）
+
+[PCAP analyzer tests](../.github/workflows/pcap-analyzer-tests.yml)で上記の固定依存導入と全テストを実行する。
+`261119/**`またはこのworkflow自身の変更が対象。`feat/pcap-analyzer`と`main`へのpush、
+およびpull requestで起動する。mainへのpush・マージはこの作業では行わない。
+Ubuntu 24.04 / Python 3.12系列の1ジョブ、10分上限。依存導入はジョブ内の専用`.venv`に限定する。
+ActionsはコミットSHA固定、権限は`contents: read`のみ、checkoutの認証情報は保持しない。
+同じrefの古い実行は中止する。キャッシュ・成果物アップロード・外部サービス・追加secretは使わない。
+
+fixtureの再現性、正常/不正/境界入力、Schema、件数・バイト数・根拠、DNS内部API、
+socket生成禁止下でのfixture生成/解析を含む既存343テストを使用する。
+fixtureを生成し直して期待値を上書きする手順は追加しない。
+セットアップ時のGitHub/PyPI取得以外に、テストでライブ通信の捕捉・送信・スキャンを行わない。
+ローカルでは全343件成功、依存整合性とactionlint 1.7.12の静的検証を確認した。
+GitHubホスト上の実行結果は[Actions実行一覧](https://github.com/kenobix/Claude_practice/actions/workflows/pcap-analyzer-tests.yml)で確認する。
+CIの成功はPhase 2の未実装部分、TShark比較や性能測定の完了を意味しない。
+
 ## CLI
 
 ```bash
