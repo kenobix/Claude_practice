@@ -44,8 +44,8 @@ schema版は3。既存のrun/attempt/正式参照は残し、過去のログを�
 専用DB試験のTRUNCATE runs CASCADEはログも削除し、AFTER TRUNCATEで台帳をリセットする。これは本番運用の削除APIではない。
 DB所有者の直接操作・trigger無効化等からの保護は主張しない。一般の削除/保持期限APIは未実装。
 
-生ログをCLI・通常ログ・HTTP応答へ追加しない。今回の参照検証は専用DBで行う。
-HTTPログ取得、ページング/上限、UTF-8変換方針、表示時HTMLエスケープ、UIは次の単位で扱う。生bytesをHTMLとして返す経路はない。
+生ログをCLI・通常ログへ追加しない。後続単位で[正式ログ取得/最小HTML表示](log-access.md)を実装した。
+元bytesをそのままHTMLへ入れず、bounded read・文字変換/制御文字可視化・HTMLエスケープを行う。本格UIはP4の残件。
 認証情報のredaction機能ではなく、秘密注入しないローカル固定fixture専用の保存である。
 
 ## 検証と参照

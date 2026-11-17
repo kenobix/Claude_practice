@@ -4,7 +4,7 @@ P1の実行対象は管理下の公開サンプル1つ、固定workflow、外部
 コードの取得はサーバー許可設定から行い、受理したcommit SHAに固定する。
 P0用は `fixtures/isolation/` に実装済み。公式PythonベースのdigestをDockerfileに固定し、network noneで実測した。
 このfixtureは隔離検証だけに使い、API/Workerから実行する経路はない。P1用のローカル4fixtureは `fixtures/job/` に分離して実装した。
-[準備境界](container-preparation.md)でbuild/create/設定照合/回収を検証済み。[実行ライブラリ](fixture-execution.md)で4fixture・ガード・上限・回収まで検証済み。[条件付き結果確定](result-finalization.md)も実装済み。[上限付きログDB保存](log-storage.md)も結果確定へ接続済み。受理commit取得とログ取得/表示は未実装。
+[準備境界](container-preparation.md)でbuild/create/設定照合/回収を検証済み。[実行ライブラリ](fixture-execution.md)で4fixture・ガード・上限・回収まで検証済み。[条件付き結果確定](result-finalization.md)も実装済み。[上限付きログDB保存](log-storage.md)も結果確定へ接続済み。[正式ログ取得/最小HTML表示](log-access.md)も実装済み。受理commit取得と本格UIは未実装。
 
 | 名前 | 固定動作 | 期待結果 |
 |---|---|---|

@@ -39,6 +39,7 @@ APIは認証なしのローカル開発用途で、127.0.0.1に限定して起�
 | GET /runs?limit=20&cursor=... | 200、itemsとnext_cursor（最終ページnull） | limit/cursor不正422、DB503 |
 | GET /runs/{id} | 200、Run | UUID不正422、存在しないID404、DB503 |
 | GET /health/live | 200、phase=P1-intake | DB不要 |
+| GET /runs/{id}/logs | 正式ログの上限付きtext/HTMLページ（[仕様](log-access.md)） | 未確定409・ログなし404・範囲416・入力422・DB停止503 |
 | GET /health/ready | schema版3が確認できれば200 | 未設定/DB停止/未適用503 |
 
 Runはid、repository_id、ref、commit_sha、workflow_version、state、created_at、available_at、cancel_requested_at、completed_attempt_idを返す。

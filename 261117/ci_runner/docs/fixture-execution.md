@@ -56,7 +56,7 @@ Dockerログドライバはnone。観測バイト数はattachから読めた量�
 | runtime_preflight_rejected | GO前にガードが終了 |
 
 ExecutionResultはexit code、reason、合計上限内の生bytes、観測量、経過秒、GO送信有無、実値、image IDを返す。
-生ログはHTMLとして扱わない。UIが未実装のため表示時エスケープは後続タスク。
+生ログはHTMLとして扱わない。[正式ログ取得](log-access.md)ではbyte上限・文字変換/制御文字可視化・HTMLエスケープを行う。本格UIは未実装。
 DB照合の例外、壊れたack、未確認の終了、停止/回収の失敗は例外となり、正常結果を返さない。
 Docker終了状態exited/非running/PID0を確認し、attach/killプロセスとパイプを閉じた後、準備contextがcontainer/tagを回収する。
 失敗の途中でもcontextを閉じる。daemon断・Worker SIGKILL等で回収できない残存の可能性と所有ラベルは準備境界仕様を参照。

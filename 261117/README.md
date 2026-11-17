@@ -8,7 +8,7 @@ Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB pref
 内部ライブラリでDB再照合・実値ガード・時間/ログ/lease上限付きのローカル固定fixture実行も実装済み。
 ローカルfixture結果の条件付きDB確定（状態/exit/理由/終了時刻・正式attempt参照）も実装済み。
 別プロセスの一件実行入口で、取得→ローカル固定fixture実行/回収→条件付き確定まで接続済み。
-上限付きログを結果と同一transactionでDB保存する。ログ取得/表示、常駐Worker・受理commitの取得/実行・Webhook・UIは未実装で、P1全体は未完了。
+上限付きログを結果と同一transactionでDB保存する。正式ログの取得・最小HTML表示も実装済み。常駐Worker・受理commitの取得/実行・Webhook・履歴UIは未実装で、P1全体は未完了。
 GitHub Pagesへの公開対象ではない。常駐バックエンドの配置先は将来別途判断する。
 
 ## Python環境とテスト
@@ -188,7 +188,7 @@ Worker内部向けのauthorize_execution(claim)で、DBにある現在token・Wo
 Worker内部のprepare_fixture(permit, mode)はローカル固定fixtureをbuildし、
 制限付きcreateとinspect照合後に未起動コンテナを返すcontext manager。通常終了・例外時に自分のcontainer/tagを回収する。
 P0のテストハーネスには依存せず、任意イメージ・コマンド・mount・環境変数を受け付けない。
-API/claim-onceへは未接続。実行ライブラリの起動・実値確認・上限監視と、別の一件Workerへの接続は実装済み。受理SHAのコード取得は未実装。ログはDB永続化済みで、取得/表示は未実装。
+API/claim-onceへは未接続。実行ライブラリの起動・実値確認・上限監視と、別の一件Workerへの接続は実装済み。受理SHAのコード取得は未実装。ログはDB保存・正式参照の取得・最小HTML表示まで実装済み。
 設定確認を実行時強制の証拠としない。詳細と残存時のラベルは[準備境界仕様](ci_runner/docs/container-preparation.md)を参照。
 
 ## 上限付き固定fixture実行の検証
@@ -202,7 +202,7 @@ execute_fixture(claim, mode)はsuccess/failure/timeout/logsだけを扱う内部
 DB再照合とコンテナ内ガードの確認後、DBを再照合してから定型GOを送る。
 CPU/RAM/swap/PIDの実値を確認し、壁時計10秒・合計保持ログ1MiB・DB残leaseの上限を適用する。
 execute_fixtureだけではDBはrunningのまま。別途finalize_fixture(claim, result)で状態/exit/理由/終了時刻を原子的に確定できる。共有DBへ向けず上記スクリプトで検証する。
-実行中の取消/DB断の即時検知、heartbeat/自動復旧、ログ取得/表示は未実装。
+実行中の取消/DB断の即時検知、heartbeat/自動復旧は未実装。
 [実行仕様・証拠・限界](ci_runner/docs/fixture-execution.md)を参照。
 
 ## 固定fixtureの結果確定
@@ -235,5 +235,18 @@ API/claim-onceは結果確定へ自動接続しない。使い捨てDBのverify_
 
 結果確定と同じtransactionでstdout/stderrをDBへ保存する。合計1MiB/attempt、DB全体は最大64MiBのraw payload上限。
 ログ・容量台帳・run/attemptは一緒にcommitし、容量不足/失効/中断なら部分更新しない。同じ結果の再送でもログ不一致は拒否する。
-ログ取得API・表示・保持期限・自動削除は未実装。WAL/索引/履歴等を含むディスク総量保証ではない。
+正式ログ取得と最小HTML表示は実装済み。保持期限・自動削除は未実装。WAL/索引/履歴等を含むディスク総量保証ではない。
 詳細・旧版データ・容量不足時の動作は[ログ保存仕様](ci_runner/docs/log-storage.md)を参照。
+
+
+## 正式ログの参照
+
+`GET /runs/{run_id}/logs?stream=stdout&offset=0&limit=4096`は正式attemptのログだけを返す。
+text/plainが既定。`format=html`はHTMLエスケープ済みの最小pre表示。1回の読取は最大16384元bytes。
+X-Log-Next-Offsetで続き、X-Log-Attempt-Idで参照先、X-Log-Truncatedで保存時の打切りを確認する。
+不正UTF-8・文字途中のbyte境界は置換、制御文字は可視化し、元のDB保存内容は変えない。
+未確定409・ログなし404・範囲超過416・不正入力422・DB停止503を区別する。
+詳細は[ログ取得仕様](ci_runner/docs/log-access.md)。APIは引き続きloopback限定で運用する。
+
+P0〜P5全体の推定進捗は約30%（残約70%）、P1全体は未完了。
+[推定の根拠と完了判定](ci_runner/docs/progress.md)を参照。テスト件数や時間消化率による値ではない。

@@ -234,6 +234,7 @@ def test_persistence_after_api_and_db_restart(dedicated_database):
     receipt = finalize_fixture(claim, logged_report(claim))
     with api() as (client, _):
         original = client.get(f'/runs/{claim.run_id}').json()
+        assert client.get(f'/runs/{claim.run_id}/logs').text == 'fixed commit log'
         assert original['state'] == 'succeeded' and original['completed_attempt_id'] == str(claim.attempt_id)
     compose = ['docker','compose','--project-name',project,'-f',filename]
     subprocess.run(compose+['restart','db'],check=True,capture_output=True,timeout=30)
@@ -241,6 +242,8 @@ def test_persistence_after_api_and_db_restart(dedicated_database):
     with api() as (client, _):
         assert client.get(f'/runs/{claim.run_id}').json() == original
         assert client.get('/runs').json()['items'][0] == original
+        log_page = client.get(f'/runs/{claim.run_id}/logs')
+        assert log_page.text == 'fixed commit log' and log_page.headers['x-log-attempt-id'] == str(claim.attempt_id)
     assert saved(claim)['finished_at'] == receipt.finished_at
     with database.connect() as conn:
         assert conn.execute('SELECT stdout,observed_bytes FROM attempt_logs WHERE attempt_id=%s',

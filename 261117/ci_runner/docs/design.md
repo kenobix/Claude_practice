@@ -1,6 +1,6 @@
 # P0設計案：ジョブの正本と実行権
 
-状態: P0検証とP1前半（受付/取得API・DB永続化・冪等性）は実装済み。Workerの初回取得と実行前DB preflightは実装済み。[固定fixtureの未起動コンテナ準備](container-preparation.md)と[内部の上限付きfixture実行](fixture-execution.md)も実装済み。[条件付きfixture結果確定](result-finalization.md)も実装済み。上限付きログDB保存を結果確定へ接続済み。常駐実行・ログ取得/表示・Webhook等は未実装。
+状態: P0検証とP1前半（受付/取得API・DB永続化・冪等性）は実装済み。Workerの初回取得と実行前DB preflightは実装済み。[固定fixtureの未起動コンテナ準備](container-preparation.md)と[内部の上限付きfixture実行](fixture-execution.md)も実装済み。[条件付きfixture結果確定](result-finalization.md)も実装済み。上限付きログDB保存を結果確定へ接続済み。正式ログ取得/最小HTML表示も実装済み。常駐実行・Webhook・履歴UI等は未実装。
 実装したHTTP契約と競合・commit前後の障害証拠は[受付API仕様](intake-api.md)を参照。
 [Worker初回取得](worker-claim.md)は履歴なしの許可queuedだけを取得し、attempt番号1・initial・DB期限30秒を同時commitする。再試行と期限回収は未実装。
 [実行前DB preflight](execution-preflight.md)は現在の実行権を再確認するsnapshotを返すが、外部起動との原子性はない。ローカル固定fixtureでは起動前/ガード後にDB再照合し、時間/ログ/残leaseを監視する。実行中DB監視は未実装。
@@ -94,7 +94,7 @@ P0ではDB再起動後のschema保持、CPU/RAM/PID制限、時間/ログ上限�
 
 現在のP1実装では、[一件Worker](fixture-worker.md)が既存の取得・上限付きローカルfixture実行・条件付き結果確定を接続する。
 候補の読取transactionを終了後に固定imageを準備し、その後に初回取得する。image IDを固定してcreateし、containerとunique imageタグの回収後に結果確定する。
-claim-onceは取得だけを維持。常駐処理・受理commit取得・ログ取得/表示・自動復旧は未実装。
+claim-onceは取得だけを維持。常駐処理・受理commit取得・自動復旧は未実装。正式ログの参照境界は[ログ取得仕様](log-access.md)を参照。
 
 - [PostgreSQL 17 SELECT](https://www.postgresql.org/docs/17/sql-select.html): SKIP LOCKEDはキュー競合回避用途。一般の一貫した読取の代替にしない。
 - [FastAPI virtual environments](https://fastapi.tiangolo.com/virtual-environments/): プロジェクト専用Python環境を使用。

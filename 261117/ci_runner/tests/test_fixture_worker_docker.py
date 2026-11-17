@@ -29,7 +29,7 @@ def evidence(request):
     data = {'cases': []}
     yield data
     sources = [ROOT/'src/ci_runner'/name for name in
-               ('fixture_worker.py', 'worker.py', 'execution.py', 'container.py', 'preflight.py', 'finalization.py')]
+               ('fixture_worker.py', 'worker.py', 'execution.py', 'container.py', 'preflight.py', 'finalization.py', 'app.py', 'logs.py')]
     sources += [*sorted((ROOT/'fixtures/job').iterdir()), ROOT/'tests/test_fixture_worker_docker.py',
                 ROOT/'tests/test_fixture_worker_postgres.py']
     data.update(finished_at=datetime.now(timezone.utc).isoformat(),
@@ -86,6 +86,12 @@ def test_api_to_separate_worker_to_persisted_result(dedicated_database, mode, st
         assert detail['state'] == state and detail['completed_attempt_id'] == output['attempt_id']
         assert client.get('/runs/' + second['id']).json()['state'] == 'queued'
         assert client.post('/runs', json=payload()).json() == detail
+        for stream in ('stdout', 'stderr'):
+            log_page = client.get('/runs/' + first['id'] + '/logs', params={'stream': stream})
+            assert log_page.status_code == 200 and log_page.headers['x-log-attempt-id'] == output['attempt_id']
+            assert int(log_page.headers['x-log-bytes']) == min(4096, len(logs[stream]))
+            assert log_page.headers['x-log-truncated'] == str(logs['observed_bytes'] > retained).lower()
+        assert client.get('/runs/' + first['id'] + '/logs', params={'format': 'html'}).text.startswith('<pre>\n')
     after = resources()
     assert before == after
     evidence['cases'].append({'fixture': mode, 'receipt': output,

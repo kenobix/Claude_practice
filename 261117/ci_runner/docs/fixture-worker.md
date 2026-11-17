@@ -63,4 +63,4 @@ build1回・createのimage ID一致・正常確定・資源回収も確認する
 
 再現はscripts/verify_execution.py。通常pytest/ActionsはDockerを起動しない。
 最新の実行証拠はignored artifacts/fixture-worker-latest.json（source SHA-256・終了receipt・回収確認）、件数と実測はwork_log.mdに記録する。
-P1全体は未完了。ログ取得/表示時エスケープ、受理commitの対応付けも別単位で実装する。
+P1全体は未完了。正式ログ取得/最小HTML表示は後続単位で実装済み（[仕様](log-access.md)）。受理commit対応付けと本格UIは残件。

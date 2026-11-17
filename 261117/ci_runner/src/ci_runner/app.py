@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 import psycopg
@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from . import database, runs
+from . import database, logs, runs
 from .body_limit import RunBodyLimit
 from .models import Run, RunInput, RunPage
 from .settings import POLICY, SCHEMA_VERSION
@@ -64,6 +64,19 @@ def create_app(connection_factory=None):
     @app.get('/runs/{run_id}', response_model=Run)
     def detail(run_id: UUID):
         return runs.get_run(factory, run_id)
+
+    @app.get('/runs/{run_id}/logs', response_class=Response)
+    def log_page(run_id: UUID,
+                 stream: Literal['stdout', 'stderr'] = 'stdout',
+                 offset: Annotated[int, Query(ge=0, le=logs.MAX_LOG_BYTES)] = 0,
+                 limit: Annotated[int, Query(ge=1, le=logs.MAX_PAGE_BYTES)] = 4096,
+                 format: Literal['text', 'html'] = 'text'):
+        try:
+            page = logs.read_page(factory, run_id, stream, offset, limit)
+        except HTTPException as exc:
+            exc.headers = logs.SAFE_HEADERS | (exc.headers or {})
+            raise
+        return logs.response(page, stream, offset, format)
 
     return app
 

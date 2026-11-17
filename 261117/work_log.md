@@ -641,3 +641,63 @@ P1全体は未完了。次は正式attemptのログ取得APIと、安全なテ�
 保持期限/削除/容量運用、受理commit対応、常駐/heartbeat/期限回収/再試行も残件。
 64MiBはraw保持payloadだけで、DB行/索引/TOAST/WAL/backup/履歴/他資源を含む物理ディスクの上限保証ではない。
 64MiB実データ充填・DBディスク枯渇・長期保持/性能は未測定。容量不足時の自動復旧やCLIの結果復元も未実装。
+
+## 継続作業：正式ログ取得APIと安全な最小表示
+
+### 調査・作業単位の選択
+
+指定cwd・feat/ci-runner・開始HEAD 842c249、未コミット変更なし。
+ルート/担当AGENTS、261014計画、README/work_log、保存/確定/APIコード・設計・テストを確認。
+Draft PR #1はopen/Draft、開始HEADに対応するpush/PR両CIは成功（通常111件、DB/Docker対象外）。
+現在の重大障害/CI失敗は確認されないため、P1の未達必須条件「正式ログの参照とHTMLエスケープ」を1単位として選んだ。
+受理commit取得/常駐Worker/P2/本格UIへ範囲を広げない。
+
+### 実装と契約
+
+- GET /runs/{run_id}/logsを追加。UUID、stdout/stderr、byte offset 0〜1MiB、limit 1〜16KiB（既定4096）、format text/htmlを検証する。
+- 1回のパラメータ化SELECTでrun.completed_attempt_id→同じrunの終端attempt→保存ログを参照。DB substringでページだけを取得し、更新/予約/行ロックをしない。
+- 正式参照なし/非終端/状態不一致409、run/ログなし404、対象stream末尾超過416、入力422、DB停止503を区別。末尾ぴったり/空streamは200。
+- X-Log-*で正式attempt・元byte数/次位置・両streamの保持/観測量・保存時の切詰めを返す。ページ間でclientがattempt IDを照合できる。
+- UTF-8 errors=replace、LF/TAB以外のCc/Cf制御文字を可視化する。DB元bytesは変更しない。byte境界で分断した文字の完全復元は保証しない。
+- text/plainが既定、htmlはhtml.escape(quote=True)した固定preだけの最小表示。ログ由来の属性/script/style等を生成しない。
+- 成功/取得判定4xxはno-store/nosniff/制限CSP。422/503は共通JSONエラー。元ページ最大16KiB、変換後body最大98316 bytes。
+- migration/依存/実行制限/実行権/保存処理/workflowを変更しない。恒久ルール変更もなくAGENTS未変更。
+- README、参照/保存/受付/脅威モデル・各設計を更新。進捗推定の根拠をdocs/progress.mdへ記録。
+
+### 検証・対象外の区別
+
+実装初期の通常回帰：124 passed、114 deselected、既知TestClient警告1件（3.00秒）。
+新規は仕様を対象とした19件（通常13・実DB6）。数量を目的に追加しない。
+
+専用DBと実HTTPを含むverify_db.py：**212 passed、32 skipped、既知警告1件、67.13秒**。
+通常124件と実DB88件を含む。32 skipは準備5/P0隔離10/実行11/一件Worker6で、Dockerジョブ実行成功とは扱わない。
+
+- stream選択・ページ続き・0/末尾/1MiB・空stream・範囲超過、UTF-8 byte分断と不正文字変換を確認。
+- 取得前後のログ/台帳不変、未確定/別attemptログの非公開、旧ログ欠落、正式attempt切替と状態不一致を確認。
+- 終端結果をcommit直前で止め、実HTTP GETが待たずに409を返し、commit後に200となることを確認。
+- 既存のDB実停止/回復・API/DB再起動試験へ新routeを接続して確認。migration二重適用、readiness200、schema1/2/3保持も成功。
+- 人工的な過去/未確定attemptは専用DBの制御面fixtureであり、Worker retryの実装・実証ではない。
+
+変更したAPI参照経路だけを選び、PYTEST_ADDOPTSの-kでverify_execution.pyを別実行：
+**4 passed、240 deselected、既知警告1件、42.91秒**。
+固定4fixtureのHTTP投入→別プロセスWorker→保存→API再起動→両streamと最小HTML表示を確認。
+他のDocker故障/準備/P0隔離・cold build遅延試験は理由なく再実行せず、今回の成功件数へ混ぜない。
+最新fixture-worker証拠は選択した4ケース・failure0、app/logsを含む記録対象ソースSHA256と一致。生ログは証拠へ追加しない。
+
+最終レビューでHTML quoteの6倍展開がbody最大98316 bytesへ達する境界を補強し、対象通常試験のみ再実行：
+**13 passed、既知警告1件、0.99秒**。本番ソースはDB/Docker試験後に変更していない。
+HTMLParserで固定pre以外の要素なし、markup/quote escape・NUL/ESC/CR/双方向制御可視化と不正UTF-8を確認。
+Chromium/Chrome/Playwright/browser toolが利用できず、実ブラウザ上のCSP/スクリプト実行試験は未実施。
+OS/新規依存の導入は行わず、HTTPヘッダ/HTML構造の検証を実ブラウザ実証と混同しない。
+
+pip checkは破損なし、compileall成功。今回の試験失敗なし。
+専用session container/image・専用DB container/volume/networkの5照会は残存0。base image/build cacheは維持。
+
+### 完了判定・全体推定・次
+
+今回のログ参照/最小表示は完了。P0は既存の管理下fixture検証範囲で完了、P1全体とMVPは未完了。
+次の最優先単位は管理下の受理commitの固定取得と実行対象への対応付け。任意URL/コマンド/YAMLへ拡張しない。
+常駐/heartbeat/期限回収/再試行、Webhook、履歴/操作UI、保持期限/容量運用、比較計測・demo・第三者再現も残る。
+進捗はP0〜P5の計画工数中央値13/23/30/16/20/21hを重みとし、達成度100/80/15/0/0/10%と主観推定。
+38/123相当で約31%、報告は概算約30%・残約70%。実測工数・test件数・commit数による値ではなく、重複する基盤をP4へ再加算しない。
+MVPの全受入条件が揃ったら独立レビューと完成判定を提案し、発展課題へ自動的に進まない。
