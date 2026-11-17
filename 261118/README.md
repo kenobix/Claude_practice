@@ -28,8 +28,10 @@ Linuxの単一writer、同期追記ログ、再起動時の索引再構築、限
   [診断の完了条件・回帰試験](kv-engine/docs/recovery-diagnostics.md)を記録。
 - 段階3: [受入条件と根拠の対応表](kv-engine/docs/stage3-acceptance.md)を照合し、定義したプロセス障害・I/O注入モデル内で完了と判定。
   電源断・ホスト停止・装置flush・診断出力先の永続化は未検証。MVP全体の完成ではない。
-- 次の優先作業: 段階4の計測ハーネスと機械可読な結果。容量内の1千/1万/10万キーで起動・更新待ち時間・メモリを測る。
-  inspectと固定seedの参照モデルは実装済み。段階5の第三者向けデモも残る。
+- 段階4: [計測CLI・条件・実測表](kv-engine/docs/measurement.md)を整備。1千/1万/10万キーでwarm再Open・同期PUT・Goヒープを実測し、この範囲の受入条件を満たした。
+  生サンプルはJSON出力。RSS・cold start・環境間比較は未計測。
+- 次の優先作業: 段階5の第三者向けデモ（正常再起動・末尾復旧・破損拒否）と使い方/設計判断の整理。
+  MVP全体は未完了。全受入条件を満たした後は独立レビューを提案し、発展機能を自動追加しない。
 
 ## 作業環境
 
@@ -108,6 +110,7 @@ stdout:
 ## 構成・仕様
 
 - `kv-engine/cmd/kv/`: 永続版CLI、メモリ版CLI、実プロセスの保存・終了コードテスト
+- `kv-engine/cmd/kvbench/`: 専用一時DBでの計測CLI、JSON生サンプル、全キー再読取照合
 - `kv-engine/internal/engine/`: メモリKV、Linux永続DB、OSロック、I/O注入、再起動・参照モデルテスト
 - `kv-engine/internal/record/`: ファイルヘッダー・レコードのencode/decode、境界値・破損・fuzzテスト
 - `kv-engine/internal/recovery/`: 読み取り専用ログ走査、位置索引、破損位置・正常境界の診断

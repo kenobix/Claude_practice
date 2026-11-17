@@ -44,7 +44,7 @@ make check
 Makeなしなら `./scripts/go-env.sh go vet ./...`、`go test ./...`、`go build -o bin/kv ./cmd/kv` を
 それぞれラッパー経由で実行する。整形確認は `./scripts/go-env.sh gofmt -l cmd internal tests`。
 `make check` はfmt検査、vet、実テスト、CLI buildを実行する。テストの内容は[検証計画](testing.md)を参照。
-生成CLIは `bin/kv`、Git対象外。fuzzのキャッシュも.tools内。将来失敗したfuzzの再現入力は精査してfixtureとして保存する。
+生成CLIは `bin/kv` と計測用 `bin/kvbench`、Git対象外。[計測手順](measurement.md)を参照。fuzzのキャッシュも.tools内。将来失敗したfuzzの再現入力は精査してfixtureとして保存する。
 テストファイルやDBを作る場合は `t.TempDir()`、手動試験のDBは `mktemp -d` 以下。
 
 ## VS Code / Codex

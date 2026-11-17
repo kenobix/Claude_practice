@@ -18,3 +18,4 @@ test:
 
 build:
 	$(GO) build -o bin/kv ./cmd/kv
+	$(GO) build -o bin/kvbench ./cmd/kvbench

@@ -663,3 +663,64 @@ commit時点で今回のGitHub CIは未実行。push後の実結果とSHAをDraf
 OS全体のキャッシュ設定は変更せず、ページキャッシュを残す再Openをcold startと呼ばない。
 担当ディレクトリの対象文書だけcommit・担当ブランチへ通常pushする。
 commit時点で今回のリモートCIは未実行。実結果・SHAと段階3完了判定を既存Draft PR #2へ反映し、Draftを維持する。
+
+## 段階4・実DBの計測CLIと初回実測（2026-11-17 JST）
+
+### 現状と選択した1単位
+
+- cwd: /home/kenshin/work/Claude_practice-261118、branch: feat/database-engine、開始HEAD: 00c550e、開始時clean。
+- root/担当AGENTS、261014の計画、README/work_log、形式/耐久性/受入設計、既存コード・テスト・fixtureを確認。
+- Draft PR #2はDraft、HEADは担当ブランチと一致。最新commitのpush/PR両CIが成功。
+- 段階0〜3は定義したモデル内で完了。既知の未解決不具合・失敗は確認されず、段階4の計測を選択した。
+  inspectと固定seedの参照モデルは実装済みのため繰り返し実装しない。段階5のデモは今回に含めない。
+
+### 実装と測定条件
+
+- cmd/kvbenchにLinux計測CLIを追加。既存の作業親の中に毎回一意な専用DBを作り、自分のDBだけ清掃する。
+  利用者の既存DBを引数で受け取らず、既存ファイルを変更しない。
+- キー16 B、値128 B、1千/1万/10万キー。投入時も上書き時も製品engine.Putの毎回File.Syncを使う。
+  レコード長180 B、100回上書きを含む最大ログは18,018,016 Bで256 MiB内。全計画を事前容量検査する。
+- 同一プロセスでOpen時間3標本、同期上書きPUT100標本、Open前/後のGC後HeapAllocを採取。
+  Open時間にはLOCK/DB dir/parent Sync/検証走査/索引再構築を含み、GC/確認/Closeは含めない。
+  PUT時間にはencode/CRC/write/Sync/索引公開を含み、入力生成や出力は含めない。
+- 各Open後と上書き後の再Openで全キー・全値・sequence・件数・ログ長を照合。
+  条件・生ns/byte標本・build情報をJSON出力する。成功exit 0は照合・清掃・全出力の完了も要求する。
+- Makefileのbuildへbin/kvbenchを追加。既存CIのfmt/vet/test/build/raceに自動で含まれ、workflow変更不要。
+  計測仕様・JSON・実測表・ログ増加図をdocs/measurement.mdへ記録し、README/開発/耐久性/テスト文書を更新。
+- 製品engine、形式v1、fixture、依存関係は変更しない。恒久ルールが変わらないためAGENTS更新なし。
+
+### 実測結果
+
+- 開始13:05:00 UTC、Go 1.27.4 linux/amd64、Ubuntu 24.04.4 LTS / WSL2 / ext4 /dev/sdd。
+  AMD Ryzen 7 7735HS、ゲスト論理CPU/GOMAXPROCS各8。worktree内.toolsの専用mktemp親を使用。
+- 生JSON: /tmp/kv-stage4-measurements.json（Git外）。全ケースverified=true・exit 0、専用DB/親を清掃。
+- 1千キー: Open 4.844354/6.806166/4.697078 ms、heap差分中央値97,160 B、PUT p50/p95=2167.128/2556.227 µs。
+- 1万キー: Open 53.933590/58.779668/44.990533 ms、heap差分中央値814,968 B、PUT p50/p95=2423.592/3851.160 µs。
+- 10万キー: Open 535.433774/515.562117/511.833444 ms、heap差分中央値6,846,728 B、PUT p50/p95=3042.944/4862.579 µs。
+- PUT百分位は100標本のnearest-rank。Open/heapは3標本。同一プロセス/OSキャッシュ生存下の値で、cold startではない。
+  ヒープはRSSやOSキャッシュではない。単一実行の観測であり、性能優劣・環境間再現時間の保証をしない。
+
+### 正常・異常・境界と回帰検証
+
+- 新規Test関数4個：引数/容量の事前拒否、実DBの正常照合/清掃、実行/出力失敗、正常な件数でも値が違うDBの拒否。
+- 1/3キー、0/128/1 MiB値、2回Open/4回上書き（キー周回）を実ファイルで確認。
+  最大値で容量閾値を跨ぐ隣接件数、既存ファイル保持、不正親、短いstdout/help出力、失敗後のLOCK解放も確認。
+- 計測への干渉を避け、全体テスト/raceは大規模計測の終了後に実行した。
+- make check成功（fmt、go vet ./...、全テスト、両CLI build）。
+- go test -json -count=1 -timeout=3m ./...: 全6パッケージ成功、Test関数76個（子helper含む）、
+  Fuzz関数2個の既存seed。passイベント415、fail 0、skip 0。
+- go test -race -count=1 -timeout=3m ./...: 全6パッケージ成功。新しいfuzz探索は未実施。
+- CIの実DBテストは小規模。今回の1千/1万/10万件計測はローカル別実行で、CI成功を性能測定成功へ読み替えない。
+  Dockerや外部DB/ツールの統合検証は追加していない。
+
+### 判定・推定進捗・残課題
+
+- 段階4は既存inspect/固定seed照合に今回の機械可読な実測・条件・再現手順・図を合わせ、定義した指標の範囲で完了。
+- MVP全体は約85%完了・残り約15%と推定。計画工数中央値による重み付けでは段階0〜4の102/全118時間相当（約86%）を
+  丸めた目安で、実績工数・品質・残作業時間を実測した割合ではない。段階5のデモ/第三者向け成果物が未完了。
+- 電源断・ホスト停止・実装置/WSL flush、実媒体障害は未検証。今回も同期要求の計測と耐久性の証明を区別する。
+  cold start、RSS、長期負荷、複数環境比較も未計測。
+- 次の最優先は段階5の正常再起動/不完全末尾復旧/途中破損拒否デモと、読み順・保証・制限・設計判断の整理。
+  MVPの全受入条件を満たしたら発展課題へ自動で進まず、独立レビューを提案する。
+- 差分・秘密情報・生成物を確認後、担当内の対象だけcommit・feat/database-engineへ通常pushする。
+  commit時点で今回のGitHub CIは未実行。push後の実結果/SHAと段階4完了を既存Draft PR #2へ反映し、Draftを維持する。
