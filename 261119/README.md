@@ -53,6 +53,48 @@ DNS候補の空payloadの分類変更に合わせ、既存1件の期待をparsed
 Scapyの経路/インターフェース自動読込をプロセス内で無効化し、socket生成禁止下でも解析をテストする。
 `.venv`、cache、egg-info等はGit対象外。人工PCAPと期待値は再現用成果物として保持する。
 
+### 新規環境からの受入再現
+
+対象ブランチをチェックアウトしたリポジトリのルートで実行する。既存venvは使わず、
+コミット済みの内容を一時ディレクトリへ展開する。依存取得後の生成・解析・照合はオフラインで実行できる。
+
+```bash
+set -e
+repro_dir=$(mktemp -d /tmp/pcap-repro.XXXXXXXX)
+git archive HEAD 261119/pcap_analyzer | tar -x -C "$repro_dir"
+cd "$repro_dir/261119/pcap_analyzer"
+python3.12 -m venv .venv
+.venv/bin/python -m pip --isolated install --no-cache-dir -r requirements.lock
+.venv/bin/python -m pip --isolated install --no-cache-dir --no-deps --no-build-isolation -e .
+.venv/bin/python -m pip check
+.venv/bin/python scripts/generate_fixtures.py --output regenerated
+diff -qr fixtures regenerated
+
+for sample in baseline capture_truncated record_cutoff unsupported_pcapng backward; do
+  input=$sample.pcap
+  expected=0
+  case $sample in
+    record_cutoff) expected=2 ;;
+    unsupported_pcapng) input=$sample.pcapng; expected=2 ;;
+  esac
+  result=0
+  .venv/bin/pcap-analyzer "regenerated/$input" || result=$?
+  test "$result" -eq "$expected"
+done
+.venv/bin/python -m pytest -q
+```
+
+`diff`は出力なしが一致。pytestは保存版14ファイルのJSON CLI出力を既存の手定義期待値とSchemaで照合する。
+生成版と保存版はバイト単位で比較しており、既存fixtureと期待値は上書きしない。
+
+| 入力 | 表示で確認する結果 |
+|---|---|
+| `baseline.pcap` | 10件・680/680 bytes。DNS #4→#5 は25 ms、#6 は窓内で応答観測なし、#7・#8→#9 は曖昧で時間なし |
+| `capture_truncated.pcap` | 終了0・完全レコード1件。捕捉40/元長54 bytes、truncated 1。足りない14 bytesは補完しない |
+| `record_cutoff.pcap` | 終了2・`INCOMPLETE`・`E_RECORD_DATA`・完全レコード0件。途中の40 bytesは集計外 |
+| `unsupported_pcapng.pcapng` | 終了2・`E_FORMAT_UNSUPPORTED`。勝手に変換せずレポートなし |
+| `backward.pcap` | 終了0・2件。時刻逆行のためDNS時間結果を全体で破棄 |
+
 ## 自動テスト（GitHub Actions）
 
 [PCAP analyzer tests](../.github/workflows/pcap-analyzer-tests.yml)で上記の固定依存導入と全テストを実行する。
@@ -260,10 +302,10 @@ Phase 3は指定した人工入力の対応範囲で完了。Phase 4の[固定�
 500/5000/15000パケット各3回でSchema・手計算・bytes・決定性が一致。処理時間中央値は
 0.729/1.622/3.944秒、最大RSSの試行最大は54516/57292/65260 KiB（Linux/WSL2、環境依存）。
 正常双方向UDPと未対応/切詰め/長さ不正の混在でparsed40%。DNS/多数フロー/上限付近の性能は未実測。
-次は新規専用環境でのREADME通し再現と3分デモ/動画。Phase 4とMVP全体は未完成。
+新規専用環境での導入・生成・正常例と解析限界の通し再現を確認済み。3分動画が残っているため、Phase 4とMVP全体は未完成。
 
-推定進捗は約90%、残り約10%。計画の各Phase見積中間値（10/15/20/15/10、計70）を重みとし、
-Phase 0〜3完了=60、Phase 4は計測を済ませ暫定1/3=3.3として63.3/70≒90%の概算。
+推定進捗は約95%、残り約5%。計画の各Phase見積中間値（10/15/20/15/10、計70）を重みとし、
+Phase 0〜3完了=60、Phase 4は計測と通し再現を済ませ暫定2/3=6.7として66.7/70≒95%の概算。
 Phase 4内の配分は暫定判断であり、実測工数・残り時間ではない。
 Phase 4の結果で見直す。MVP全受入条件を満たした後は独立レビューと完成判定を提案し、
 発展機能へ自動的に進まない。
@@ -291,7 +333,7 @@ DNS名/質問抽出・RR構造検査とpacket分類/CLI診断への統合は実�
 フロー集計と端末フロー表は実装済み。
 人工baselineの25ms・未応答観測・重複queryはCLI出力も手計算一致を確認。
 TShark比較は14保存fixtureの共通項目/入力異常とDNS4ケースまで。DNS名表示は通常ASCIIラベルの共通部分に限定。
-性能測定は上記の固定UDP混在入力のみ。通し再現・デモ、実通信、Python 3.12以外、VS Code GUIは未検証。
+性能測定は上記の固定UDP混在入力のみ。実通信、Python 3.12以外、VS Code GUIは未検証。
 捕捉長と記録上の元長を回線上の実転送量と呼ばず、観測不足を障害や攻撃と断定しない。
 
 ## 固定規模CLI計測（Phase 4の一部）
