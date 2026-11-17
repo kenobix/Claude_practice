@@ -1,0 +1,136 @@
+{
+  "harness_sha256": "b3a5bda5ede380c1ae4b33eb9c84dc47f05c8746411d85bf3d923e7fe7868ad0",
+  "kernel": "6.6.87.2-microsoft-standard-WSL2",
+  "machine": "x86_64",
+  "measured_at_utc": "2026-11-17T14:38:53.397583+00:00",
+  "measurement_version": 1,
+  "os": "Linux",
+  "python": "3.12.3",
+  "results": [
+    {
+      "cycles": 100,
+      "expected_summary": {
+        "captured_bytes": 18300,
+        "classification_counts": {
+          "malformed": 100,
+          "parsed": 200,
+          "truncated": 100,
+          "unsupported": 100
+        },
+        "flow_count": 1,
+        "original_bytes": 18600,
+        "packet_count": 500,
+        "parsed_ratio": 0.4,
+        "unattributed_captured_bytes": 5700,
+        "unattributed_original_bytes": 5600,
+        "unattributed_packet_count": 200
+      },
+      "input_bytes": 26324,
+      "input_sha256": "5895c0cc41ad314e627cc7b262f0f26cce55b7dfd49e60bfb9e863c8ec4cf373",
+      "runs": [
+        {
+          "output_bytes": 48052,
+          "output_sha256": "77d533d9200ed5f73fd112ec48fcc2141f4d1a09d5dfb354ac70036c81d6f26e",
+          "peak_rss_kib": 54496,
+          "wall_time_ns": 728613308
+        },
+        {
+          "output_bytes": 48052,
+          "output_sha256": "77d533d9200ed5f73fd112ec48fcc2141f4d1a09d5dfb354ac70036c81d6f26e",
+          "peak_rss_kib": 54516,
+          "wall_time_ns": 963401201
+        },
+        {
+          "output_bytes": 48052,
+          "output_sha256": "77d533d9200ed5f73fd112ec48fcc2141f4d1a09d5dfb354ac70036c81d6f26e",
+          "peak_rss_kib": 54516,
+          "wall_time_ns": 657221037
+        }
+      ]
+    },
+    {
+      "cycles": 1000,
+      "expected_summary": {
+        "captured_bytes": 183000,
+        "classification_counts": {
+          "malformed": 1000,
+          "parsed": 2000,
+          "truncated": 1000,
+          "unsupported": 1000
+        },
+        "flow_count": 1,
+        "original_bytes": 186000,
+        "packet_count": 5000,
+        "parsed_ratio": 0.4,
+        "unattributed_captured_bytes": 57000,
+        "unattributed_original_bytes": 56000,
+        "unattributed_packet_count": 2000
+      },
+      "input_bytes": 263024,
+      "input_sha256": "ecdfb1da5f6658b57c6ba7ab8064bf21038d8b807e9ef2dc56cf2b4da8521032",
+      "runs": [
+        {
+          "output_bytes": 472475,
+          "output_sha256": "87026fc11bd78ac998cf4c847109e734ffc43cb743cefe1504ee9cd47e9dc62c",
+          "peak_rss_kib": 57196,
+          "wall_time_ns": 1605359623
+        },
+        {
+          "output_bytes": 472475,
+          "output_sha256": "87026fc11bd78ac998cf4c847109e734ffc43cb743cefe1504ee9cd47e9dc62c",
+          "peak_rss_kib": 57196,
+          "wall_time_ns": 1651118806
+        },
+        {
+          "output_bytes": 472475,
+          "output_sha256": "87026fc11bd78ac998cf4c847109e734ffc43cb743cefe1504ee9cd47e9dc62c",
+          "peak_rss_kib": 57292,
+          "wall_time_ns": 1622285662
+        }
+      ]
+    },
+    {
+      "cycles": 3000,
+      "expected_summary": {
+        "captured_bytes": 549000,
+        "classification_counts": {
+          "malformed": 3000,
+          "parsed": 6000,
+          "truncated": 3000,
+          "unsupported": 3000
+        },
+        "flow_count": 1,
+        "original_bytes": 558000,
+        "packet_count": 15000,
+        "parsed_ratio": 0.4,
+        "unattributed_captured_bytes": 171000,
+        "unattributed_original_bytes": 168000,
+        "unattributed_packet_count": 6000
+      },
+      "input_bytes": 789024,
+      "input_sha256": "a70df4167dcdacd288c47a1a047f16a1890c4e6347a1206b392e24e254f42069",
+      "runs": [
+        {
+          "output_bytes": 1431487,
+          "output_sha256": "1f9c1461936b1cdd66bb6ebb9f352e02ea3404e78f61a864ae840475679a43a1",
+          "peak_rss_kib": 65260,
+          "wall_time_ns": 4095124263
+        },
+        {
+          "output_bytes": 1431487,
+          "output_sha256": "1f9c1461936b1cdd66bb6ebb9f352e02ea3404e78f61a864ae840475679a43a1",
+          "peak_rss_kib": 65248,
+          "wall_time_ns": 3647911966
+        },
+        {
+          "output_bytes": 1431487,
+          "output_sha256": "1f9c1461936b1cdd66bb6ebb9f352e02ea3404e78f61a864ae840475679a43a1",
+          "peak_rss_kib": 65060,
+          "wall_time_ns": 3943957616
+        }
+      ]
+    }
+  ],
+  "scapy_version": "2.6.1",
+  "tool_version": "0.3.0"
+}

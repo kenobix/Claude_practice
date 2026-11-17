@@ -1,4 +1,4 @@
-# 保存済みPCAP解析ツール — Phase 3（独立比較）
+# 保存済みPCAP解析ツール — Phase 4（再現・計測・デモ）
 
 作業日: 2026-11-17。`261119`は指定された作業ID。
 計画: [保存済みPCAP解析ツール](../261014/plan_pcap_analyzer.md)。
@@ -42,7 +42,7 @@ python3.12 -m venv .venv
 .venv/bin/python -m pytest -q
 ```
 
-全442テスト成功（既存421件 + DNS独立比較21件）。
+全457テスト成功（既存442件 + 計測ハーネス15件）。
 DNS名/質問抽出40件とフロー・入力処理等の既存テストも再実行した。
 DNS候補の空payloadの分類変更に合わせ、既存1件の期待をparsedからmalformedへ更新した。
 既存100件は分類・入力制限・時刻等の検査を維持し、版変更に伴う期待を更新。
@@ -256,11 +256,15 @@ Phase 3では専用`.venv`に展開したTSharkと、8 fixtureの共通項目・
 [DNS独立比較とPhase 3完了判定](pcap_analyzer/docs/tshark_dns_comparison.md)で、
 baseline/backwardと追加の人工2レシピ（計32パケット）のDNS共通項目を照合した。
 一意な5ペアの応答時間（25ms、123ns、5秒、1ns等）が一致し、重複/期限外/逆行の相違も説明済み。
-Phase 3は指定した人工入力の対応範囲で完了。次はPhase 4の固定規模での時間・最大メモリ等の計測、
-再現手順と3分デモ/動画。これらは未実施で、MVP全体は未完成。
+Phase 3は指定した人工入力の対応範囲で完了。Phase 4の[固定規模CLI計測](pcap_analyzer/docs/benchmark.md)を実施した。
+500/5000/15000パケット各3回でSchema・手計算・bytes・決定性が一致。処理時間中央値は
+0.729/1.622/3.944秒、最大RSSの試行最大は54516/57292/65260 KiB（Linux/WSL2、環境依存）。
+正常双方向UDPと未対応/切詰め/長さ不正の混在でparsed40%。DNS/多数フロー/上限付近の性能は未実測。
+次は新規専用環境でのREADME通し再現と3分デモ/動画。Phase 4とMVP全体は未完成。
 
-推定進捗は約86%、残り約14%。計画の各Phase見積中間値（10/15/20/15/10、計70）を重みとし、
-Phase 0〜3完了=60、Phase 4未完了=0として60/70≒86%の概算。実測工数・残り時間ではない。
+推定進捗は約90%、残り約10%。計画の各Phase見積中間値（10/15/20/15/10、計70）を重みとし、
+Phase 0〜3完了=60、Phase 4は計測を済ませ暫定1/3=3.3として63.3/70≒90%の概算。
+Phase 4内の配分は暫定判断であり、実測工数・残り時間ではない。
 Phase 4の結果で見直す。MVP全受入条件を満たした後は独立レビューと完成判定を提案し、
 発展機能へ自動的に進まない。
 
@@ -287,5 +291,17 @@ DNS名/質問抽出・RR構造検査とpacket分類/CLI診断への統合は実�
 フロー集計と端末フロー表は実装済み。
 人工baselineの25ms・未応答観測・重複queryはCLI出力も手計算一致を確認。
 TShark比較は14保存fixtureの共通項目/入力異常とDNS4ケースまで。DNS名表示は通常ASCIIラベルの共通部分に限定。
-性能測定・デモ、実通信、Python 3.12以外、VS Code GUIは未検証。
+性能測定は上記の固定UDP混在入力のみ。通し再現・デモ、実通信、Python 3.12以外、VS Code GUIは未検証。
 捕捉長と記録上の元長を回線上の実転送量と呼ばず、観測不足を障害や攻撃と断定しない。
+
+## 固定規模CLI計測（Phase 4の一部）
+
+```bash
+cd ~/work/Claude_practice-261119/261119/pcap_analyzer
+.venv/bin/python scripts/benchmark.py > /tmp/pcap-benchmark.json
+```
+
+Linux専用。生成PCAP/CLI出力は一時ファイルのみ。各試行60秒上限、子プロセスを終了・回収する。
+[計測境界・手計算・条件・限界](pcap_analyzer/docs/benchmark.md)と
+[9試行の生データ](pcap_analyzer/docs/benchmark.result.json)を参照。
+CIでは小規模の実CLIと失敗/timeout等の経路を検査し、性能値の一致や速度閾値を要求しない。

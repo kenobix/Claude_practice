@@ -761,3 +761,53 @@ Draft PRはPhase 3完了の節目として更新し、Draftを維持する。mai
 これらを今回実施済みとはしない。MVP全体は未完成。OS/他worktree変更・ライブ捕捉/送信/scan/逆引きなし。
 推定進捗約86%・残約14%。計画の見積中間値を重みとしてPhase 0〜3完了60/全70≒86%の概算で、
 実測工数や残時間ではない。Phase 4の結果で見直す。MVP全受入後は独立レビューと完成判定を提案する。
+
+# 継続単位 — Phase 4 固定規模CLIの性能・最大RSS計測
+
+実施日: 2026-11-17（Asia/Tokyo）。開始HEAD=263b8c7、feat/pcap-analyzer、status clean。
+ルート/担当AGENTS、261014計画、README/log、仕様/Schema、実装/テスト、Draft PR #3、
+同SHAのpush/PR CI successを確認。Phase 0〜3完了、既知の失敗なし。
+依存を満たすPhase 4のうち固定規模計測を1単位として選択。全Phase 4を一度に完了とはしない。
+
+## 実装と検証
+
+scripts/benchmark.pyと手計算に基づく検査、tests/test_benchmark.pyを追加。
+structで固定5レコード（正常UDP両方向・未対応ARP header・payload切詰め・caplen>wirelen）を生成。
+文書用IP、固定MAC/port/時刻のみ。Scapyや製品encoderから期待を生成しない。
+500/5000/15000件各3回、実CLIの起動からJSON一時ファイル出力・終了確認までを計測。
+Linux wait4の当該子のru_maxrss KiBとperf_counter_ns差を記録し、親の累積RSSと混同しない。
+入力生成・Schema/期待値検査は測定外。10ms polling、OS cache、環境依存の限界を明記。
+規模3000サイクル、繰返し5、timeout120秒以下。既定は3回/各60秒、timeout時kill/wait。
+非0/stderr/不完全/Schema不適合/集計差/非決定性を成功扱いしない。
+PCAP/CLI JSONは一時領域のみ。必要な実測結果JSONと条件文書を成果物として保持する。
+
+最初の対象試験は13成功/1失敗。意図的な不完全レポートがSchemaで先に拒否され、
+ValidationErrorが検査APIのValueErrorへ統一されていないことが原因。変換して対象14件成功。
+出力hashの変化を見逃さないテストを追加し、最終追加15件。製品コードの不具合ではない。
+初期機能試行は回帰試験と並行したため性能記録に採用せず、回帰終了後に最終9試行を逐次実行。
+保存結果のハーネスSHA、版、時刻、全入力/出力hash、各時間・RSS・bytesを記録した。
+
+最終の全457件成功（46.53秒、既存442+計測15）、pip checkはNo broken requirements found。
+pipは利用不能な共通cacheを無効化する警告を出したが、OS/cache設定は変更しない。
+正常/異常/境界・最大生成規模・手計算・分類/方向/根拠・不完全/改変拒否・timeout子回収・
+CLI非0/stderr・非決定性検出を検証。速度閾値や試験件数自体を合格基準にしない。
+通常CIは小規模CLIとハーネス試験であり、この9回の性能計測・実TShark比較を実行しない。
+
+## 実測結果・判定
+
+Linux/WSL2 x86_64、Python3.12.3、Scapy2.6.1、tool0.3.0、既存固定依存。
+500/5000/15000件のwall time中央値0.728613/1.622286/3.943958秒、
+最大RSSの試行最大54516/57292/65260 KiB。各3回で出力hash一致、全9試行complete=true、stderr空。
+parsed40%、unsupported/truncated/malformed各20%、手計算・Schema・bytes分割一致。
+最大規模captured549000/original558000、方向a→b252000/264000・b→a126000/126000・
+未帰属171000/168000 bytes。DNS観測0、単一UDPフローの限定負荷であり、
+DNS/多数フロー/TCP/上限付近/他環境の性能は未実測。一般性能保証や線形性を主張しない。
+詳細はpcap_analyzer/docs/benchmark.md、全値はbenchmark.result.json。
+
+README/仕様/logを更新。製品コード/Schema/依存/AGENTS/CI workflowは変更なし。
+差分・対象範囲・秘密情報・生成物をレビュー後、担当branchへcommit/pushし最新CIを確認する。
+Draft PRはPhase 4開始と計測成果に更新しDraft維持。main/他worktree/OS変更・ライブ処理なし。
+Phase 4は一部完了、MVP未完成。次は新規専用環境でREADMEから正常例と解析限界の通し再現、
+その後3分デモ/動画。完了済み独立比較を理由なく再実施しない。
+推定約90%完了/約10%残。元計画重み70に対しPhase 0〜3=60、Phase 4暫定1/3=3.3で約63.3/70。
+Phase 4内配分は暫定判断で、実測工数/残時間ではない。MVP受入後は独立レビューと完成判定を提案する。
