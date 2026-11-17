@@ -22,6 +22,8 @@ python3 -m venv .venv
 ```
 
 Python 3.12系を使用する。`requirements.lock`は実際に導入した開発依存と推移依存の固定一覧。
+担当専用の[GitHub Actions](../.github/workflows/ci-runner-tests.yml)で通常テストを自動実行する。
+DB・Dockerの強制力はこのCIの対象外。実行条件・対象範囲・再現手順は[自動テスト仕様](ci_runner/docs/automated-tests.md)を参照。
 依存を更新するときだけ `pip install -r requirements-dev.in` の後、テストし `pip freeze --exclude-editable` で再生成する。
 `.venv`、`.env`、ログ・成果物はGit対象外。APIだけならDBなしで起動できる。
 

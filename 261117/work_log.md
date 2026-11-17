@@ -447,3 +447,49 @@ base image/build cacheは再利用用に残し、ignored最新証拠以外の生
 
 最終の待機観測補強後は **156 passed、14 skipped、既知警告1件 in 124.01s**。同時再送の実ロック待機も確認した。
 DB readiness200・再起動後schema保持と、最終の専用ラベル全7照会で残存0件を再確認。今回の両回帰とも失敗なし。
+
+## 継続作業：担当専用GitHub Actionsの最小導入
+
+### 調査と選択
+
+指定cwd・feat/ci-runner・開始HEAD 9f980e8、未コミット変更なしを確認。
+ルート/担当AGENTS、261014計画、README・既存設計/記録・実装/テスト、gh CLIでDraft PR #1を確認した。
+既存workflowは別プロジェクト専用のみ。過去の一時的な取得/実行認可拒否は原因未確定だが、
+認可条件を緩めず診断と安全側停止を維持し、直近の統合回帰は156件成功している。
+今回の新しい優先順位に従い、通常テスト自動化を1単位として選択した。P1機能追加は行わない。
+
+### 変更と境界
+
+- ユーザーが明示した例外範囲で.github/workflows/ci-runner-tests.ymlを新規追加。既存workflowは未変更。
+- 担当path filter、push担当branch/mainとpull_request（Draftを含む）、Ubuntu 24.04・Python 3.12系、10分上限の1ジョブ。
+- contents: read、checkoutのpersist-credentials: false、公式checkout v7.0.1/setup-python v7.1.0の40桁SHA固定。
+- gh APIでタグが指すcommit SHAとリポジトリのActions有効を確認。キャッシュ・秘密注入・特権・外部サービスは追加しない。
+- lock導入→追加依存なしeditable導入→pip check→strict-markersでDB/Docker除外pytest→compileall。
+- README・P1計画・自動テスト仕様を更新。恒久ルールは変更せず、AGENTS・アプリ・migration・依存定義は未変更。
+
+### 検証と未検証
+
+既存venv・許可された実行経路で **82 passed、88 deselected、既知TestClient警告1件 in 1.14s**。
+入力正常/異常・body/識別子境界・制限設定拒否・不正結果拒否等の既存検証を使用し、件数目的のテストは追加しない。
+pip checkは破損なし、compileall成功。最初の制限sandbox内実行は52件相当の出力後に停止し、
+自発的に終了しなかったため自分のpytestだけをTERMで終了した。停止原因は未確定で、この実行を成功に数えない。
+実行経路変更後の同じテストは上記の通り成功した。テストや期待結果を緩めていない。
+
+公式actionlint配布物のchecksum確認・ローカル実行を試みるツール呼出しは、自動承認審査が
+第三者実行ファイルのローカル実行リスクを理由に拒否した。ツール呼出し自体が拒否され、取得/実行とも未実施。
+迂回せずこの検査は省略し、GitHub側でのworkflow受付と結果をpush後に確認する。
+GitHub-hosted runner結果はcommit SHAを対応させてPRに記録する。ローカル結果から推定しない。
+今回はDB/Docker統合88件を再実行しない。アプリ変更がなく、過去の実測は過去の結果として保持する。
+
+### 残課題と次
+
+P0は既存の固定fixture検証範囲で完了、P1全体は未完了。
+次はclaim-onceを維持する別の一件実行入口で、取得→固定fixture実行→条件付き確定を接続する。
+image準備のlease予算、受理commitの取得/対応付け、容量上限付きログ永続化、P2のheartbeat/復旧は残件。
+DB/Dockerの自動化はこの最小CIの受入条件へ混ぜず、別途使い捨て資源・失敗時回収・runner差異を検討する。
+
+使い捨て/tmp venvでlock導入からの再現も試みたが、低速ダウンロード中に設定した180秒の上限で中断。
+依存解決エラーは観測されなかったが導入完了しておらず、fresh installの成功とは扱わない。
+TemporaryDirectoryの終了処理でvenvを削除済み。OSへパッケージは導入していない。
+変更文書の相対リンク、credential pattern、git diff --checkを確認。対象5ファイルだけをstageし、
+staged差分・秘密情報・生成物を確認後feat/ci-runnerへcommit/pushする。

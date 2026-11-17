@@ -1,0 +1,39 @@
+name: CI runner unit checks
+
+on:
+  push:
+    branches: [feat/ci-runner, main]
+    paths:
+      - "261117/**"
+      - ".github/workflows/ci-runner-tests.yml"
+  pull_request:
+    paths:
+      - "261117/**"
+      - ".github/workflows/ci-runner-tests.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-runner-unit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: 261117/ci_runner
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.lock
+      - run: python -m pip install --no-deps --no-build-isolation -e .
+      - run: python -m pip check
+      - run: python -m pytest -q --strict-markers -m "not integration and not docker"
+      - run: python -m compileall -q src tests scripts
