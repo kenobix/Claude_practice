@@ -6,7 +6,8 @@
 classic pcapの入力検査、Ethernet/IPv4/TCP・UDPヘッダー検査、件数・長さ・時刻・分類の集計、
 JSONと端末表を実装した。これは通信量集計の中間版であり、計画全体のMVP完成ではない。
 双方向フロー集計、方向別件数/長さ/根拠、TCP flags、フロー数上限を追加した。
-DNS本文検査・問い合わせ/応答照合はPhase 2後半に残している。
+DNS名の復号・正規化と単一質問抽出を内部APIとして追加した。
+回答領域の検査、CLIへのDNS統合、問い合わせ/応答照合は未実装。
 
 ## 作業環境
 
@@ -38,7 +39,8 @@ python3.12 -m venv .venv
 .venv/bin/python -m pytest -q
 ```
 
-全153テスト成功。既存100件は分類・入力制限・時刻等の検査を維持し、版変更に伴う期待を更新。
+全193テスト成功（既存153件 + DNS名/質問抽出40件）。
+既存100件は分類・入力制限・時刻等の検査を維持し、版変更に伴う期待を更新。
 フローの正常系・方向・キー・flags・truncated帰属・除外・上限・決定性・Schemaの53件を追加した。
 生成した14種類の人工fixture、手計算期待値、4種類のmagic/時刻形式、不正なヘッダー、
 分類優先順位、caplen/wirelen、破損レコード、安全上限、Schema、決定性を検証する。
@@ -121,6 +123,28 @@ TCP flagsはS=2、A=3。件数も10+未帰属0=10、元長も680+0=680で一致�
 方向別original bytesの総和 + 未帰属original bytes = 全original bytes
 ```
 
+## 今回の実装単位: DNS名と単一質問の内部API
+
+`src/pcap_analyzer/dns.py` に `decode_name(message, offset)` と `parse_question(message)` を追加。
+DNS照合に先行する依存部分だけを実装した。UDP payloadのbytesを入力し、
+ASCIIだけを小文字化したラベル列（終端root付き）、QTYPE/QCLASS、ID/QR/RCODE/TCを取り出す。
+ドット・バックスラッシュ・制御文字・非ASCII bytesは表示時に10進エスケープし、
+表示名からキーを復元しない。圧縮名の後の元メッセージ位置も保持する。
+
+ラベル/名前長、ポインターの範囲・循環、ヘッダー/質問の不足を検査する。
+後方ポインターのみ受理し、1名256ステップ、メッセージ65507 bytesまでに制限。
+opcode!=0、質問数!=1、未対応ラベル形式・過剰な参照連鎖はunsupported、
+境界矛盾はmalformedとしてDNSDecodeErrorへ分類する。
+これは完全なUDP payload上のDNS構造の検査であり、捕捉truncatedの分類は既存packet層で行う。
+
+**このAPIはCLIへ未統合。** 回答数・RDLENGTH・RDATAはまだ検証せず、
+質問抽出の成功はDNS本文全体の正常性を意味しない。ポインター参照先が既知のラベル境界かの
+証明も未実装。CLI/Schema/版番号/既存集計は変更せず、DNS出力は引き続きnot_implemented。
+
+次は回答/authority/additionalの境界・RDLENGTH検査と参照先の検証を追加し、
+その後packet分類へ統合する。続いて端点付き照合キー、5秒窓・重複/追加/孤立応答、
+記録終端/時刻逆行とレポートを実装する。TShark比較・計測・デモはさらに後の段階。
+
 ## 仕様・期待値・制限
 
 - [現行仕様とPhase 2の設計](pcap_analyzer/docs/spec.md)
@@ -136,7 +160,8 @@ UDP長はIPv4の宣言payload長との一致を要求する。
 プロトコル件数は確認できたIPv4 protocol番号等で識別し、L4のtruncatedでもtcp/udpへ数え得る。
 分類の件数とは別の指標で、それぞれの合計が全レコード数と一致する。
 
-DNS正規化/窓処理/曖昧さの解消はPhase 2後半。フロー集計と端末フロー表は今回実装済み。
+DNS名正規化・単一質問抽出は内部APIのみ実装済み。回答検査/CLI統合/窓処理/曖昧さの扱いは未実装。
+フロー集計と端末フロー表は実装済み。
 DNS25ms・未応答・重複queryの判定は依然として将来の手計算期待値である。
 TShark未導入のため独立比較は未実施。性能測定、実通信、他Python版、VS Code GUIは未検証。
 捕捉長と記録上の元長を回線上の実転送量と呼ばず、観測不足を障害や攻撃と断定しない。

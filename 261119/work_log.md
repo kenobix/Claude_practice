@@ -219,3 +219,46 @@ Phase 2後半は①DNS境界/圧縮名検査とASCIIのみの正規化、②端�
 ③5秒窓とquery重複/完了後再利用、④追加/孤立応答・記録終端/時刻逆行、
 ⑤RCODE/TC・根拠・Schemaと手計算期待値の照合、の順で進める。
 今回の成果は差分とテストを確認してfeat/pcap-analyzerだけへcommit・pushする。
+
+
+# 継続単位 — DNS名復号・単一質問抽出
+
+実施日: 2026-11-17（Asia/Tokyo）。開始HEAD=ac1d3ae、担当branch=feat/pcap-analyzer、
+worktree=/home/kenshin/work/Claude_practice-261119、初期Git statusはclean。
+
+## 現状整理と選択
+
+ルート/261119のAGENTS、261014計画、README、仕様・Schema、作業記録、既存コード・テストを確認。
+GitHub CLIでDraft PR #3を確認した。PR本文はPhase 1/100テスト時点で止まり、
+双方向フローを未完了としていた。既存153テストを再実行し全件成功した。
+
+完了済みは入力検査・基本集計・双方向フロー、未完了はDNS本文検査/照合とPhase 3/4。
+照合は名前の安全な復号・正規化に依存するため、今回の最優先実装単位を
+「DNS名と単一質問抽出の内部API」に限定した。回答領域、packet/CLI統合、窓処理は行わない。
+古いAGENTSのPhase 2前半限定を継続作業用ルールへ更新し、既存Draft PR更新を許可する内容に合わせた。
+
+## 実装と結果
+
+- dns.py: DNSName/DNSQuestion/DNSDecodeError、decode_name/parse_questionを追加。
+- 生bytesのラベル境界を保ち、終端rootを1つ保持。ASCII A-Zのみ小文字化。
+  ドット/バックスラッシュ/制御文字/非ASCIIは表示時に10進エスケープし、キーは表示から再構築しない。
+- 後方圧縮ポインター、符号化名の直後offset、ID/QR/RCODE/TC/QTYPE/QCLASSを保持。
+  RCODE/TCを成功や応答時間へ変換しない。
+- 名前255 bytes、メッセージ65507 bytes、1名256ステップに制限。
+  不足/範囲外/ヘッダー内/前方参照/循環を拒否し、未対応形式と構造不正を例外で区別。
+- 新規40テスト成功。最大長境界、圧縮/連鎖/循環、各不足、質問数/opcode、
+  byte正規化・型/class差、root/エスケープ、処理上限と既存人工DNS payloadを確認。
+- 既存153件を含め全193テスト成功。既存テストは変更していない。
+- CLI、JSON Schema 0.3.0、ツール版0.2.0、依存版、保存fixture/期待値は変更なし。
+  DNS出力は引き続きnot_implemented/events=null。ライブ捕捉・送信・スキャン・外部照会は未実施。
+- README/仕様へAPI境界と次段階を追記。差分・文書リンク・秘密情報・生成物を確認する。
+
+## 未完了と次の単位
+
+質問抽出の成功はDNS本文全体の正常性を意味しない。回答/authority/additional件数、
+RR境界/RDLENGTH/RDATA、ポインターが既知ラベル境界を指すことの証明は未検証・未実装。
+これらを次のレビュー単位として追加し、その後にpacket分類/CLIへ接続する。
+完全照合キー、5秒窓/再利用/重複・追加応答、終端/時刻逆行、DNSレポートはその後。
+TShark独立比較・性能/負荷計測・デモも未実施。今回の範囲から先へは進めない。
+
+成果は担当branchへcommit・pushし、Draft PR #3の完了/今後の予定とテスト数を実績へ更新する。

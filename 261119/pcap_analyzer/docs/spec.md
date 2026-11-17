@@ -3,7 +3,8 @@
 2026-11-17策定。元計画: [261014/plan_pcap_analyzer.md](../../../261014/plan_pcap_analyzer.md)。
 2026-11-17にPhase 1を実装。入力検査・L2/L3/L4分類・基本集計・JSON/端末表が実装済み。
 同日にPhase 2前半の双方向フロー集計・TCP flags・フロー数上限を実装。
-DNS本文検査と照合はPhase 2後半の設計契約であり、今回実装しない。
+継続単位としてDNS名復号・正規化・単一質問抽出の内部APIを実装済み（下記参照）。
+回答本文検査・CLI統合と照合は未実装。現行CLIの挙動/SchemaはPhase 2前半のまま。
 
 ## 入力境界と停止
 
@@ -137,6 +138,34 @@ unattributed_original_bytesを追加。未帰属番号はunattributed_indicesへ
 各方向のpackets=packet_indicesの長さ。全方向の根拠番号と未帰属番号は互いに重ならず、
 全体の1..Nをちょうど1回ずつ覆う。空入力はflows=[]、未帰属件数/長さは0。
 flows配列はprotocol番号、aのIP bytes/port、bのIP bytes/portでソートし、決定的に出力する。
+
+## DNS名復号・単一質問抽出（内部API実装済み）
+
+`dns.py` のdecode_nameはDNSメッセージ全体と名前開始offsetを受け、DNSNameを返す。
+labelsは元のbytesラベル列に終端root b""を1つ加えたtuple、end_offsetは元の符号化名の直後。
+ポインターを辿ってもend_offsetは最初のポインター直後を保つ。
+normalized_labelsは各bytesラベルのASCII A-Zのみ小文字化。Unicode/IDNA変換を行わない。
+displayは末尾ドット付きで、ドット/バックスラッシュ/空白・制御文字/非ASCIIを\DDD形式にする。
+表示名はキーに使わず、非ASCII bytesやラベル境界の差を保存する。
+
+検査: 通常ラベル最大63 bytes、展開後名最大255 bytes（root含む）、
+メッセージ最大65507 bytes（IPv4 UDP payloadの上限）、名前復号最大256ステップ。
+ポインターは同一メッセージ内のoffset>=12、かつ参照位置より前の対象のみ許可。
+範囲外/ヘッダー内/前方参照/循環/不足を拒否する。参照先が過去に解析済みのラベル先頭かの
+証明はまだ行わないため、完全な圧縮名検査を実装したとは扱わない。
+過剰な参照連鎖はunsupportedとして明示し、再帰や無制限の処理をしない。
+
+parse_questionは12 bytesのDNSヘッダー、opcode=0、QDCOUNT=1、名前、QTYPE/QCLASSだけを検査し、
+DNSQuestionを返す。保持値はdns_id/is_response/rcode/tc/name/qtype/qclass/end_offset。
+question_key=(normalized_labels, qtype, qclass)。IP/port/IDを組み合わせる完全照合キーは次の段階。
+opcode/質問数/未対応ラベル形式/処理上限はunsupported、境界不足・矛盾はmalformed。
+DNSDecodeErrorにclassification/reason/offsetを保持し、raw bytesをエラー文へ含めない。
+完全なUDP payloadに対するAPIなので、DNSフィールド不足を捕捉truncatedとは判定しない。
+
+この単位はanswer/authority/additional件数、RRのRDLENGTH/RDATAを検査しない。
+TC/RCODEは情報として保持するだけで、応答照合・成功判定・所要時間は計算しない。
+CLIのpacket分類やJSON Schemaへはまだ接続しない。既存153テストと出力契約を維持する。
+次の単位でRR境界・参照先検証を実装し、その後にpacket分類へ統合する。
 
 ## DNS照合（Phase 2後半予定）
 
