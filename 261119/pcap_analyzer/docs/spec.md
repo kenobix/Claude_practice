@@ -73,7 +73,7 @@ classification、reason、protocol（下記カテゴリ）、src_ip/dst_ip/src_p
 整数timestamp_nsは不正fraction時のみnull。該当レコードはmalformedとして数え、
 timestamp_invalid_countを増やして時刻範囲から除外する。件数・bytesは保持する。
 flow_eligible（bool）とtcp_flags（TCPのみ9 bit整数）を追加。
-フローに必要なヘッダーが完全な場合だけflow_eligible=true。DNS抽出情報はPhase 2後半予定。
+フローに必要なヘッダーが完全な場合だけflow_eligible=true。DNS構造検査に成功した質問をdns_questionへ保持する。
 
 | 指標 | 定義 |
 |---|---|
@@ -245,10 +245,10 @@ RCODE/TC/QRはキーに含めず、DNSObservationのkey/packet_index/timestamp_n
 
 ここではペアリング・窓・時間差計算を行わない。時刻逆行時のファイル全体の時間解析無効化は
 既存reportに維持し、report側が既返却結果を含め破棄する責務を持つ。observation自体は時刻を並べ替えない。
-JSON Schema/版番号/CLI出力は維持し、イベントとキーのJSON表現は今後のレポート統合で追加する。
-次の単位は下記の窓APIとreport/CLI/Schemaの接続、全時刻逆行時の結果無効化。
+キー抽出はJSON表現を扱わない。report側でイベントとキーをJSON/端末へ出力する（下記レポート契約）。
+下記の窓APIとreport/CLI/Schemaは接続済み。全有効時刻の逆行時は結果を無効化する。
 
-## DNS照合（窓内部API実装済み / レポート統合予定）
+## DNS照合（窓内部API・レポート統合済み）
 
 非フラグメントかつ非truncatedのUDP、src/dstの一方が53。DNSヘッダー12 bytes以上、
 質問/回答の境界、圧縮ポインターの参照先/ループ、RDLENGTHを検査する。初期opcode=0のみ。
@@ -382,7 +382,8 @@ Phase 1は①コンテナ検証・診断・上限、②時刻/長さ/番号付�
 ④summary/JSONと意味整合テスト、⑤正常/空/破損/未対応/上限のCLI終了規則を実装済み。
 Phase 2前半でflows.pyとフローのJSON/端末表を実装済み。
 後半でDNS正規化、窓と終端処理、曖昧さ・逆行時撤回とreport/CLI/Schemaを実装済み。
-次はPhase 2の受入条件をfixture横断で確認し、Phase 3比較に必要な観測項目を整理する。
+[Phase 2受入記録](phase2_acceptance.md)のCLI横断試験によりPhase 2完了と判定。
+次はPhase 3のTShark比較環境を選び、共通観測項目・コマンド・差分理由を検証する。
 TSharkとの独立比較はPhase 3。性能や実通信への適用は未検証。
 
 Scapy APIの採用根拠: [公式RawPcapReader API](https://scapy.readthedocs.io/en/latest/api/scapy.utils.html#scapy.utils.RawPcapReader)。

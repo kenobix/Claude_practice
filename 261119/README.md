@@ -42,7 +42,7 @@ python3.12 -m venv .venv
 .venv/bin/python -m pytest -q
 ```
 
-全370テスト成功（既存343件 + DNSレポート統合27件）。
+全386テスト成功（既存370件 + Phase 2 CLI受入16件）。
 DNS名/質問抽出40件とフロー・入力処理等の既存テストも再実行した。
 DNS候補の空payloadの分類変更に合わせ、既存1件の期待をparsedからmalformedへ更新した。
 既存100件は分類・入力制限・時刻等の検査を維持し、版変更に伴う期待を更新。
@@ -67,9 +67,10 @@ socket生成禁止下でのfixture生成/解析を含む全テストを使用す
 fixtureを生成し直して期待値を上書きする手順は追加しない。
 セットアップ時のGitHub/PyPI取得以外に、テストでライブ通信の捕捉・送信・スキャンを行わない。
 導入時は343件がローカル/ホスト双方で成功し、actionlint 1.7.12で静的検証済み。
-今回のDNS統合後のローカル結果は370件成功。ホスト結果は各commitの実行一覧で確認する。
+DNS統合後は370件成功。今回の受入試験追加後はローカル386件成功。
+ホスト結果は各commitの実行一覧で確認する。
 GitHubホスト上の実行結果は[Actions実行一覧](https://github.com/kenobix/Claude_practice/actions/workflows/pcap-analyzer-tests.yml)で確認する。
-CIの成功はPhase 2の受入確認、TShark比較や性能測定の完了を意味しない。
+CIの成功だけでTShark比較や性能測定の完了とはしない。Phase 2の判定根拠は下記の受入記録を参照。
 
 ## CLI
 
@@ -244,8 +245,11 @@ DNSキー上限の超過queryは件数へ含め、`unassigned_indices`へ根拠�
 同時にフロー数も超過すればE_LIMIT_FLOWSを優先するが、DNS未登録番号は失わない。
 
 未応答・曖昧・記録終端は観測状態であり、障害・損失・攻撃と断定しない。
-次はPhase 2受入条件をfixture横断で確認し、Phase 3のTShark独立比較へ進む準備をする。
-性能測定・デモはさらに後の段階。
+[Phase 2受入記録](pcap_analyzer/docs/phase2_acceptance.md)で計画の完了条件を確認し、Phase 2完了と判定した。
+既存14 fixtureのCLI横断確認に加え、同一DNS IDのport/名前/type/class分離と逆順応答、
+fragment・切詰め・不正DNS・孤立/遅い応答・期限後再利用が混在する例を検証した。
+次はPhase 3のTShark独立比較。TSharkは未導入であり、OSを変更しない実行環境の選択から始める。
+性能測定・デモはPhase 4で、MVP全体は未完成。
 
 ## 仕様・期待値・制限
 
@@ -254,6 +258,7 @@ DNSキー上限の超過queryは件数へ含め、`unassigned_indices`へ根拠�
 - [現行Schema](pcap_analyzer/docs/report.schema.json) / [Phase 2前半のフロー期待値](pcap_analyzer/expected/baseline.flows.json) / [Phase 1の旧期待値](pcap_analyzer/expected/baseline.phase1.json)
 - [Phase 0の将来レポート例](pcap_analyzer/expected/baseline.report.json) / [対応する旧Schema](pcap_analyzer/docs/report.phase0.schema.json)
 - [DNSの手定義期待値](pcap_analyzer/expected/baseline.dns.json)
+- [Phase 2 CLI横断期待値](pcap_analyzer/expected/phase2.fixtures.json) / [受入確認と完了判定](pcap_analyzer/docs/phase2_acceptance.md)
 - [作業記録](work_log.md)
 
 未対応: pcapng、圧縮pcap、IPv6、VLAN、Linux cooked capture、Wi-Fi、ライブ捕捉、

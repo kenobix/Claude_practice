@@ -547,3 +547,50 @@ DNS照合の機能接続は完了。次はPhase 2受入条件のfixture横断確
 Phase 3のTShark独立比較に必要な共通フィールド/環境/コマンドの整理。
 今回Phase 3実装や独立比較を実施済みとはしない。未知RDATAの全意味検査、性能/大規模負荷、
 デモ、実通信、Python 3.12以外、VS Code GUIは未検証。MVP全体は未完成。
+
+# 継続単位 — Phase 2 CLI受入試験と完了判定
+
+実施日: 2026-11-17（Asia/Tokyo）。開始HEAD=ea27bc8、cwd=/home/kenshin/work/Claude_practice-261119、
+branch=feat/pcap-analyzer、初期statusはclean。ルート/担当AGENTS、261014計画、README/work_log、
+実装・テスト・仕様・Draft PR #3を確認。前回のDNSレポート統合と370テスト成功、CI導入は完了済み。
+今回の確認で既知の不具合や失敗はなく、Phase 2の残る受入確認を1単位として選択した。
+
+## 実装・検証内容
+
+- phase2.fixtures.jsonに、既存14 fixtureのフロー数・未帰属件数/長さ・DNS件数と拒否条件を手定義。
+  元fixture設計・wire構造から定義し、解析結果から生成しない。旧fixture/期待値は変更なし。
+- test_phase2_acceptance.pyを追加。CLIプロセス経由のJSONをSchemaと意味整合で検証する。
+  既存の14 fixtureテストに不足していた、Phase 2のフロー/DNS/未帰属の横断期待値を確認。
+- 同じDNS ID=7を持つ6 queryと逆順の6 responseを構成。client port、名前、QTYPE、QCLASS、
+  bytesラベルを区別し、ASCII大小文字は同一視。12件738 bytes・2 flows、11/9/7/5/3/1nsと
+  根拠1→12,2→11,3→10,4→9,5→8,6→7の対応が手計算に一致。端末の制御文字エスケープも確認。
+- 孤立応答→query→fragment/truncated/不正DNS→窓進行TCP→遅い応答→同一キーの新query/response→
+  逆方向SYN+ACKの混在10件を検証。古いqueryを誤って成功にせず、新query8→response9のみ1nsで照合。
+  parsed7/unsupported1/truncated1/malformed1、captured576/original577 bytes。
+  TCP108+UDP407+未帰属61=576、元長108+408+61=577。SYN+ACKを含みS=2/A=1。
+- 一時PCAPは固定文書用IP・人工時刻・手組みDNS bytesからpytestのtmp_pathへ作成。
+  実通信・送信・スキャンなし。DNSキー実装やScapy DNS生成を期待値作成へ流用しない。
+- docs/phase2_acceptance.mdへ計画の完了条件と既存/新規試験の対応、14 fixtureの結果、
+  混在例の根拠・手計算、観測限界・次段階を記録。README/仕様の古い未来表現も整理。
+  恒久ルール変更はなくAGENTSは変更しない。
+
+## 結果と完了判定
+
+受入16件成功（20.86秒）、全386件成功（35.10秒、既存370+受入16）。
+その後、受入試験にfixture一覧の完全一致とJSON再実行の終了コード/空stderr確認を追加し、
+受入16件を再検証して成功（17.62秒）。
+解析コード・Schema・出力版・依存lock・CI workflowは変更せず、仕様を緩めない。
+上限/時刻逆行/終端/追加応答/曖昧さ/整数精度等は既存の境界・異常系テストを含めて成功。
+計画の「重複ID・順序逆転・記録終端・フラグメントを成功応答と混同しない」等を確認し、Phase 2完了と判定。
+この判定は対応範囲の人工入力での機能受入であり、全実通信の正しさや独立比較の完了を意味しない。
+差分・対象パス・秘密情報・生成物を確認して担当branchへcommit・pushする。
+ホストCIの実際の結果とPhase 2完了の節目はDraft PRと最終報告へ記載する。Draftは維持。
+
+## 次の単位と残課題
+
+次はPhase 3のTShark独立比較。command -vで未導入を確認。今回は導入・比較を行っていない。
+OS/他プロジェクトを変更しない実行環境を選び、版/設定/フィルター/コマンドを記録する。
+frame番号、caplen/wirelen、元精度に応じた時刻、IPv4、protocol/port/TCP flags等を同じfixtureで比較し、
+未対応/不正/切詰め時の比較可能範囲と差分を説明する。独自のDNS窓状態まで一致すると仮定しない。
+未知RDATA全意味、TShark比較、性能/大規模負荷、デモ、実通信、Python 3.12以外、GUIは未検証。
+Phase 3/4を含むMVP全体は未完成。mainへのpush/マージ・force pushは行わない。
