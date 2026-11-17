@@ -49,6 +49,9 @@ Makeなしなら `./scripts/go-env.sh go vet ./...`、`go test ./...`、`go buil
 
 ## VS Code / Codex
 
+GitHub上の自動検証は[専用CIの構成と確認方法](ci.md)を参照。
+ローカルと同じGoセットアップ・make checkにrace detectorを加え、担当パスの変更で実行する。
+
 ```bash
 code ~/work/Claude_practice-261118/261118/kv-engine.code-workspace
 ```

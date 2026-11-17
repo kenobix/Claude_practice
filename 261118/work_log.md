@@ -481,3 +481,46 @@ InspectはI/Oを行わないためI/O先行の注入点を持たず、Close先�
 OSキャッシュの生存下での再Open成功やrace detector成功を、電源断耐性・全並行実行の証明としない。
 差分・秘密情報・生成物を確認して261118/内の対象だけcommit・担当ブランチへ通常pushする。
 Draft PR #2の進捗を実績へ更新し、Draftを維持する。反映結果は最終報告で確認する。
+
+## 開発基盤単位: KV専用GitHub Actions（2026-11-17 JST）
+
+### 確認と選択
+
+- cwd: /home/kenshin/work/Claude_practice-261118、branch: feat/database-engine、開始HEAD: b28c223、開始時clean。
+- root/担当AGENTS、261014の担当計画、README/work_log、Goコード・実テスト・fixture仕様・Makefile・setupを確認。
+- Draft PR #2はDraftを維持し、担当ブランチとHEADが一致。既存workflowは他プロジェクト専用のみ。
+- 開始時make checkは成功し、既知の未解決不具合・テスト失敗は確認されなかった。
+  ユーザーの新しい優先順位に従い、CLI応答周辺より先に未整備の自動テスト導入を1単位として選択した。
+- 既存セットアップ・実テストを利用し、製品コード・形式v1・fixtureは変更しない。AGENTSの恒久ルールも変更不要。
+  ユーザーが今回許可した.github/workflows/の例外を利用し、既存workflowと他プロジェクトは変更しない。
+
+### 実装
+
+- .github/workflows/kv-engine.ymlを追加。main/担当ブランチのpush、main向けPRを担当パスで絞る。
+- ubuntu-24.04の1 job、15分上限、同一workflow/refの旧runをキャンセル。
+- contents: readのみ。公式checkout v7.0.1をSHA固定し、認証情報を永続化しない。
+- 既存setup-go.shのGo 1.27.4とSHA-256検証を再利用し、workspace内だけへ導入。
+- Go/gccの存在確認、make check、キャッシュ無効のraceテストを実行。raceはパッケージごと3分上限。
+- 外部Go依存なしの条件に合わせGOPROXY/GOSUMDBをoff、GOTOOLCHAIN=local、CGO_ENABLED=1。
+  secret・サービス・artifact・cache・追加OS導入は使わない。
+- README・検証/開発手順を更新し、docs/ci.mdにトリガー・権限・再現方法・限界を記録。
+
+### 検証
+
+- 局所Go 1.27.4 linux/amd64、gccあり。既存導入を再利用するsetupとCIと同じコマンド群が成功。
+- make check: fmt検査、vet、既存テスト、CLI buildが成功。
+- go test -json -count=1 -timeout=3m ./...: 全5パッケージ、passイベント356件、fail 0、skip 0。
+  既存のTest関数64個（子helper含む）とFuzz関数2個のseedを再実行。新規テスト関数やfuzz探索は追加しない。
+- go test -race -count=1 -timeout=3m ./...: 全5パッケージ成功。
+- 公式actionlint 1.7.12をチェックサム照合後/tmpへ展開し、新規workflowの静的検証が成功。
+  一時コピーの未知runnerを拒否する異常系と、未整形Goをfmt-checkが拒否し整形後に通す正常対照を確認。
+  負例は専用一時領域で自動除去し、製品コードやDBへ触れていない。
+
+### 未検証事項と次の作業
+
+この記録のcommit時点でGitHub runnerは未実行。push後に担当commitのrunを確認し、
+実結果とcommit SHAをDraft PR #2・完了報告へ記録する。ローカル成功をリモート成功と扱わない。
+ブランチ保護などのリポジトリ設定は変更しない。CIはホスト停止・電源断・装置flushを検証しない。
+段階0〜2は完了、段階3は引き続き未完了。次の最優先は製品CLIのClose/stdout成功応答周辺の停止・出力失敗試験。
+段階4の性能計測と段階5のデモも残る。今回の単位で次の機能実装には進まない。
+差分・秘密情報・生成物を確認後、担当ファイルだけcommit・担当ブランチへ通常pushする。

@@ -1,0 +1,49 @@
+name: KV engine checks
+
+on:
+  push:
+    branches: [main, feat/database-engine]
+    paths:
+      - '261118/**'
+      - '.github/workflows/kv-engine.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '261118/**'
+      - '.github/workflows/kv-engine.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kv-engine-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+        working-directory: 261118/kv-engine
+    env:
+      CGO_ENABLED: '1'
+      GOTOOLCHAIN: local
+      GOPROXY: 'off'
+      GOSUMDB: 'off'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install checksum-verified Go in workspace
+        run: sh scripts/setup-go.sh
+      - name: Report toolchain and check race prerequisites
+        run: |
+          ./scripts/go-env.sh go version
+          command -v gcc
+      - name: Format, vet, test and build
+        run: make check
+      - name: Race detector
+        run: ./scripts/go-env.sh go test -race -count=1 -timeout=3m ./...
