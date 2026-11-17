@@ -11,4 +11,4 @@ class RepositoryPolicy:
 
 POLICY = RepositoryPolicy()
 BODY_LIMIT = 4096
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3

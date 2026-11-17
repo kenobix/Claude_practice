@@ -18,7 +18,7 @@ Docker操作権限は信頼済みWorkerだけ。APIやジョブへsocketを渡�
 | 書込・資源枯渇 | read-only root、限定tmpfs 16MiB、CPU 0.5、RAM 128MiB、PID 64 | 書込拒否、OOM、CPU/PID実測 |
 | ネットワーク流出 | fetch段階を分離、実行コンテナはnetwork none | 外向き通信失敗を実測 |
 | 無限実行/大量ログ | 壁時計上限10秒、stdout+stderr合計1MiBで打切り、停止・強制kill・回収 | 長時間/大量ログfixture試験 |
-| ログによるディスク枯渇 | Docker側もlog-driver none等で別経路の無制限保存を避ける | アプリとdaemon両方のディスク確認 |
+| ログによるディスク枯渇 | log-driver none、DB保持payload合計1MiB/attempt・最大64MiBの条件付き予約 | DB競合/容量不足で確定拒否。WAL/履歴等を含む物理容量の上限は未検証 |
 | 古い実行結果 | token/DB時刻/状態/取消条件による確定、attempt別成果物 | 期限切れ完了・競合試験 |
 | パストラバーサル/XSS | ファイル名はサーバー生成、範囲外パスとsymlinkを拒否、表示時HTML escape | 悪意ある名前・内容の試験 |
 | Webhook偽装/再送 | raw body HMAC-SHA256定数時間比較、body上限、許可repo/ref、IDと業務キー | P3の署名fixture・再送試験 |
@@ -38,7 +38,7 @@ Docker inspectの値だけで有効と判断せず、実際の失敗・抑制と
 6. 制限が無効なら失敗として記録し、設定を修正するまでWorkerを有効化しない。
 
 PostgreSQL 17.12-bookwormのdigestはComposeに固定済み。P0 fixtureのPythonイメージもdigest固定で実測済み。
-表の制御はP0テストで実証したものと、P1以降の要件を含む。受付APIのrepository/SHA/4KiB/未知入力拒否は実装・検証済み。WorkerのDB実行権preflightと未起動コンテナ作成・設定照合・回収を別ライブラリに実装した。[固定fixture実行ライブラリ](fixture-execution.md)にDB再照合・実値ガード・上限監視・回収を接続済み。HTTP/claim-onceからは未接続。ローカルfixture結果の条件付きDB確定も実装済み。受理commit取得・ログ永続化・Worker入口への接続は未実装。
+表の制御はP0テストで実証したものと、P1以降の要件を含む。受付APIのrepository/SHA/4KiB/未知入力拒否は実装・検証済み。WorkerのDB実行権preflightと未起動コンテナ作成・設定照合・回収を別ライブラリに実装した。[固定fixture実行ライブラリ](fixture-execution.md)にDB再照合・実値ガード・上限監視・回収を接続済み。HTTP/claim-onceからは未接続。ローカルfixture結果の条件付きDB確定も実装済み。一件Workerへの接続と[上限付きログDB保存](log-storage.md)も実装済み。受理commit取得・ログ取得/表示・自動復旧は未実装。
 P0監視ハーネスとアプリ側の固定fixture実行監視を分離している。常駐Worker・実行中DB再照合・自動復旧の完成とは説明しない。nosuid/nodevや全setuid/全syscallの試験は未実施。
 
 参照: [Docker security](https://docs.docker.com/engine/security/)、[Rootless mode](https://docs.docker.com/engine/security/rootless/)。

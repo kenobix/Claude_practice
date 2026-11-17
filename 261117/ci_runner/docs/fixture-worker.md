@@ -14,8 +14,8 @@ P1の取得・隔離実行・結果確定を接続する単位で、常駐ルー
 6. 確定のCOMMIT成功後だけrun/attempt ID、state、exit_code、fixture_理由、DB終了時刻、replayedをstdout JSONに出す。
 7. どの段階も自動再試行せず、別のrunを続けて取得しない。Docker中にDB行ロックを保持しない。
 
-ジョブログ・token・DB接続文字列・生のdaemon/driver例外はCLIへ出さない。ログ保持は既存の合計1MiBだけで、
-今回その永続化は追加しない。受理SHAを固定取得する処理もまだないため、fixture_successを受理commit検査成功と扱わない。
+ジョブログ・token・DB接続文字列・生のdaemon/driver例外はCLIへ出さない。ログ保持は合計1MiBで、
+[結果確定と同じtransactionでDB保存](log-storage.md)する。受理SHAを固定取得する処理もまだないため、fixture_successを受理commit検査成功と扱わない。
 APIへDocker権限を追加せず、既存の入力許可・migration・lease30秒を変更しない。
 
 | プロセス終了 | 出力 | 意味 |
@@ -63,4 +63,4 @@ build1回・createのimage ID一致・正常確定・資源回収も確認する
 
 再現はscripts/verify_execution.py。通常pytest/ActionsはDockerを起動しない。
 最新の実行証拠はignored artifacts/fixture-worker-latest.json（source SHA-256・終了receipt・回収確認）、件数と実測はwork_log.mdに記録する。
-P1全体は未完了。ログ永続化/表示時エスケープ、受理commitの対応付けも別単位で実装する。
+P1全体は未完了。ログ取得/表示時エスケープ、受理commitの対応付けも別単位で実装する。

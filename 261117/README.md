@@ -8,7 +8,7 @@ Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB pref
 内部ライブラリでDB再照合・実値ガード・時間/ログ/lease上限付きのローカル固定fixture実行も実装済み。
 ローカルfixture結果の条件付きDB確定（状態/exit/理由/終了時刻・正式attempt参照）も実装済み。
 別プロセスの一件実行入口で、取得→ローカル固定fixture実行/回収→条件付き確定まで接続済み。
-常駐Worker・受理commitの取得/実行・ログ永続化・Webhook・UIは未実装で、P1全体は未完了。
+上限付きログを結果と同一transactionでDB保存する。ログ取得/表示、常駐Worker・受理commitの取得/実行・Webhook・UIは未実装で、P1全体は未完了。
 GitHub Pagesへの公開対象ではない。常駐バックエンドの配置先は将来別途判断する。
 
 ## Python環境とテスト
@@ -36,7 +36,7 @@ curl -i http://127.0.0.1:18117/health/ready
 ```
 
 liveは200。readyはDB未設定・DB停止・migration未適用なら503。
-本当のDB準備完了はスキーマ版2の確認後に200となる。一時検証DBでready=200を確認済み。
+本当のDB準備完了はスキーマ版3の確認後に200となる。一時検証DBでready=200を確認済み。
 
 ## PostgreSQLの起動・初期化
 
@@ -70,6 +70,7 @@ Composeは`.env`を読み込むがPythonは自動読込しない。
 verify_db.pyを使い、既存の開発DBへテストを手動で向けない。従来の制約テストはrollbackするがschemaは残る。migrationはtransactionとadvisory lockで直列化する。
 初期DDLは `migrations/001_initial.sql`。適用済み版は編集せず、後続版migrationを追加する。
 版1に加えて002_run_history.sqlの履歴indexを適用する。001は変更していない。
+003_attempt_logs.sqlでattempt別ログと容量台帳を追加する。既存履歴を保持し、過去ログはbackfillしない。
 適用ツールは番号順の前進適用と未知版の検出に対応し、downgradeは未実装。
 
 ## 他プロジェクトとの分離
@@ -135,12 +136,12 @@ CPU 0.5、RAM 128MiB（swapなし）、PID 64をcgroup実値と負荷で確認�
 テスト終了時に自分が作ったcontainer IDと一時イメージだけを削除し、global pruneや既存環境の変更はしない。
 Base image/build cacheは再利用用に残す。強制中断でfinallyも動かない場合は資源が残り得るため、JSONのsessionラベルで確認する。
 
-時間/ログの停止処理はP0検証用ハーネスの実測であり、未実装のWorkerにも適用済みという意味ではない。
+このP0検証用ハーネスの実測だけでWorker経路も検証済みとはしない。後続単位の固定fixture実行・一件Workerの検証は各仕様を参照する。
 コンテナ脱出や任意コードの完全隔離は保証しない。nosuid/nodevなど設定確認のみの項目と限界は隔離仕様に記載した。
 
 ## 受付APIの利用
 
-DATABASE_URL設定とmigration版2適用後、前述のUvicorn起動コマンドで利用できる。
+DATABASE_URL設定とmigration版3適用後、前述のUvicorn起動コマンドで利用できる。
 repositoryはkenobix/Claude_practice、refはrefs/heads/main、workflow版はfixture-v1に固定する。
 入力にref・workflow・URL・command・YAMLを追加できない。SHAは構文だけを検証し、実在確認や実行はまだ行わない。
 
@@ -187,7 +188,7 @@ Worker内部向けのauthorize_execution(claim)で、DBにある現在token・Wo
 Worker内部のprepare_fixture(permit, mode)はローカル固定fixtureをbuildし、
 制限付きcreateとinspect照合後に未起動コンテナを返すcontext manager。通常終了・例外時に自分のcontainer/tagを回収する。
 P0のテストハーネスには依存せず、任意イメージ・コマンド・mount・環境変数を受け付けない。
-API/claim-onceへは未接続。実行ライブラリの起動・実値確認・上限監視と、別の一件Workerへの接続は実装済み。受理SHAのコード取得・ログ永続化は未実装。
+API/claim-onceへは未接続。実行ライブラリの起動・実値確認・上限監視と、別の一件Workerへの接続は実装済み。受理SHAのコード取得は未実装。ログはDB永続化済みで、取得/表示は未実装。
 設定確認を実行時強制の証拠としない。詳細と残存時のラベルは[準備境界仕様](ci_runner/docs/container-preparation.md)を参照。
 
 ## 上限付き固定fixture実行の検証
@@ -201,14 +202,14 @@ execute_fixture(claim, mode)はsuccess/failure/timeout/logsだけを扱う内部
 DB再照合とコンテナ内ガードの確認後、DBを再照合してから定型GOを送る。
 CPU/RAM/swap/PIDの実値を確認し、壁時計10秒・合計保持ログ1MiB・DB残leaseの上限を適用する。
 execute_fixtureだけではDBはrunningのまま。別途finalize_fixture(claim, result)で状態/exit/理由/終了時刻を原子的に確定できる。共有DBへ向けず上記スクリプトで検証する。
-実行中の取消/DB断の即時検知、heartbeat/自動復旧、ログ永続化は未実装。
+実行中の取消/DB断の即時検知、heartbeat/自動復旧、ログ取得/表示は未実装。
 [実行仕様・証拠・限界](ci_runner/docs/fixture-execution.md)を参照。
 
 ## 固定fixtureの結果確定
 
 finalize_fixture(claim, result)はrun→attemptを短くロックし、現在token・DB期限・取消条件を満たすときだけ両方を確定する。
 確定済みの同じ状態/exit/理由の再送は終了時刻を変えず応答する。DB異常は成功扱いせず、同じ報告で再確認する。
-理由はfixture_接頭辞で記録する。受理commitのコード検査やログ永続化は未実装。
+理由はfixture_接頭辞で記録する。受理commitのコード検査は未実装。ログは同じtransactionでDB保存する。
 API/claim-onceは結果確定へ自動接続しない。使い捨てDBのverify_execution.pyで実行から確定までを検証する。
 詳細は[結果確定仕様](ci_runner/docs/result-finalization.md)を参照。
 
@@ -229,3 +230,10 @@ API/claim-onceは結果確定へ自動接続しない。使い捨てDBのverify_
 取得後の失敗はrunningに残る場合がある。DBで状態を照合し、自動再投入・手動SQLリセットで履歴を壊さない。
 常駐処理・自動再試行は追加しない。従来の`ci_runner.worker --claim-once`は取得だけを維持する。
 詳細と故障時の確認手順は[一件Worker仕様](ci_runner/docs/fixture-worker.md)を参照。
+
+## 上限付きログ保存
+
+結果確定と同じtransactionでstdout/stderrをDBへ保存する。合計1MiB/attempt、DB全体は最大64MiBのraw payload上限。
+ログ・容量台帳・run/attemptは一緒にcommitし、容量不足/失効/中断なら部分更新しない。同じ結果の再送でもログ不一致は拒否する。
+ログ取得API・表示・保持期限・自動削除は未実装。WAL/索引/履歴等を含むディスク総量保証ではない。
+詳細・旧版データ・容量不足時の動作は[ログ保存仕様](ci_runner/docs/log-storage.md)を参照。

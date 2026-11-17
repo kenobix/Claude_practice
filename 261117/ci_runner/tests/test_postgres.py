@@ -18,7 +18,7 @@ def test_migration_and_constraints(monkeypatch):
     for _ in range(2):
         subprocess.run([sys.executable, str(script)], check=True)
     with psycopg.connect(dsn) as conn:
-        assert conn.execute("SELECT version FROM schema_migrations ORDER BY version").fetchall() == [(1,), (2,)]
+        assert conn.execute("SELECT version FROM schema_migrations ORDER BY version").fetchall() == [(1,), (2,), (3,)]
         run_id = conn.execute(
             "INSERT INTO runs(repository_id, ref, commit_sha, workflow_version) "
             "VALUES ('fixture', 'refs/heads/main', %s, 'v1') RETURNING id", ('a' * 40,)

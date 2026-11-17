@@ -15,7 +15,7 @@ import pytest
 
 from ci_runner import database, runs
 from ci_runner.finalization import FinalizationDenied, finalize_fixture
-from test_finalization_input import report
+from test_finalization_input import report, logged_report
 from test_preflight import issue_claim
 from test_runs_postgres import dedicated_database, api, ROOT
 
@@ -98,6 +98,7 @@ def test_stale_or_canceled_report_never_overwrites(dedicated_database, change):
 @pytest.mark.parametrize('fault', ['after_attempt', 'between_updates_expiry', 'before_commit', 'after_commit'])
 def test_transaction_faults_and_commit_uncertainty(dedicated_database, fault):
     _, claim = issue_claim()
+    result = logged_report(claim)
     class Connection:
         def __init__(self, conn):
             self.conn = conn
@@ -119,11 +120,14 @@ def test_transaction_faults_and_commit_uncertainty(dedicated_database, fault):
         if fault == 'after_commit':
             raise psycopg.OperationalError('public injected missing commit acknowledgement')
     with pytest.raises(FinalizationDenied if fault == 'between_updates_expiry' else psycopg.OperationalError):
-        finalize_fixture(claim, report(claim), factory)
+        finalize_fixture(claim, result, factory)
     row = saved(claim)
     assert row['state'] == ('succeeded' if fault == 'after_commit' else 'running')
     assert row['run_state'] == row['state']
-    assert finalize_fixture(claim, report(claim)).replayed == (fault == 'after_commit')
+    with database.connect() as conn:
+        assert conn.execute('SELECT count(*) AS n FROM attempt_logs').fetchone()['n'] == (1 if fault == 'after_commit' else 0)
+        assert conn.execute('SELECT used_bytes FROM log_storage_budget').fetchone()['used_bytes'] == (16 if fault == 'after_commit' else 0)
+    assert finalize_fixture(claim, result).replayed == (fault == 'after_commit')
 
 
 def wait_for_lock(pid):
@@ -215,7 +219,11 @@ def test_process_kill_at_commit_boundary(dedicated_database, tmp_path, position)
             process.kill()
         process.wait(timeout=5)
     assert saved(claim)['state'] == ('running' if position == 'before_commit' else 'succeeded')
-    assert finalize_fixture(claim, report(claim)).replayed == (position == 'after_commit')
+    with database.connect() as conn:
+        logs = conn.execute('SELECT stdout FROM attempt_logs WHERE attempt_id=%s', (claim.attempt_id,)).fetchone()
+        assert logs == (None if position == 'before_commit' else {'stdout': b'fixed commit log'})
+        assert conn.execute('SELECT used_bytes FROM log_storage_budget').fetchone()['used_bytes'] == (0 if position == 'before_commit' else 16)
+    assert finalize_fixture(claim, logged_report(claim)).replayed == (position == 'after_commit')
 
 
 def test_persistence_after_api_and_db_restart(dedicated_database):
@@ -223,7 +231,7 @@ def test_persistence_after_api_and_db_restart(dedicated_database):
     if project != 'ci-runner-261117-p0-check' or filename != str(ROOT/'compose.yaml'):
         pytest.skip('restart requires the owned disposable Compose project')
     _, claim = issue_claim()
-    receipt = finalize_fixture(claim, report(claim))
+    receipt = finalize_fixture(claim, logged_report(claim))
     with api() as (client, _):
         original = client.get(f'/runs/{claim.run_id}').json()
         assert original['state'] == 'succeeded' and original['completed_attempt_id'] == str(claim.attempt_id)
@@ -234,4 +242,8 @@ def test_persistence_after_api_and_db_restart(dedicated_database):
         assert client.get(f'/runs/{claim.run_id}').json() == original
         assert client.get('/runs').json()['items'][0] == original
     assert saved(claim)['finished_at'] == receipt.finished_at
+    with database.connect() as conn:
+        assert conn.execute('SELECT stdout,observed_bytes FROM attempt_logs WHERE attempt_id=%s',
+                            (claim.attempt_id,)).fetchone() == {'stdout': b'fixed commit log', 'observed_bytes': 16}
+        assert conn.execute('SELECT used_bytes FROM log_storage_budget').fetchone()['used_bytes'] == 16
     assert runs.get_run(database.connect, claim.run_id).state == 'succeeded'

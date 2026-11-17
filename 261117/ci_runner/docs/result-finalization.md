@@ -18,7 +18,7 @@ GO送信済み、確認済みcgroup値、image ID形式、終了理由とexit co
 | log_limit | failed | fixture_log_limit | 137 |
 
 lease_expired、ガード拒否、GO未送信、不正な組合せは確定しない。復旧処理の対象としてrunningに残す。
-メモリ上のログ・経過時間・image IDは今回DBへ保存しない。ログ永続化・成果物管理は別単位で行う。
+後続単位で[上限付きログDB保存](log-storage.md)を同じtransactionへ接続した。経過時間・image ID・一般のファイル成果物は未保存。
 受理commitを取得・検査する経路はまだない。理由にfixture_を付け、ローカル固定fixtureの結果を記録していることを区別する。
 workflowはfixture-v1固定。受理SHAのコード検査成功という意味ではない。
 
@@ -42,9 +42,9 @@ lease条件は更新時に判定する。COMMIT応答受信時まで期限内で
 ## 再送と障害
 
 同じrun/attempt・token・Workerに対し、既存の正式結果が同じ状態/exit/reasonならreplayed=trueで返す。
-finished_atを更新せず、DB書込もしない。これは確定済みreceiptの再取得なので、後からleaseが切れていても応答する。
+stdout/stderr/observed_bytesも保存済みログと一致する必要がある。finished_atを更新せず、DB書込もしない。これは確定済みreceiptの再取得なので、後からleaseが切れていても応答する。
 新しい実行権を与える処理ではなく、失効後の新規結果を受理する例外ではない。
-ログ内容等の未保存フィールドの同一性は比較しない。状態/exit/reasonが異なる再送、古いtoken等の上書きは拒否する。
+ログ欠落/内容不一致・観測量不一致、状態/exit/reasonが異なる再送、古いtoken等の上書きは拒否する。過去のログなし結果を再送でbackfillしない。
 
 DB通信例外・COMMIT応答喪失では例外を返す。未保存と断定せず、同じClaimと結果で再送する。
 commit前ならrollback後に初回確定、commit後なら保存済みreceiptを返す。
@@ -76,7 +76,7 @@ DBのみの確定試験はverify_dbでも実行する。入力拒否試験はDB�
 この文書の実Docker試験は内部関数を順に呼ぶ検証。後続単位の[一件Worker](fixture-worker.md)では別プロセスで取得→実行/回収→確定まで接続した。
 P1全体は未完了。一件Workerでも失敗時のrunning残存・確定不明を自動回復しない。
 既存claim-once診断は変えない。一件Workerのimage準備は取得前へ分離し、container/imageの回収後に確定する。
-受理commit取得/対応付け、容量上限付きログ永続化、常駐ループ、heartbeat・期限回収・再試行は残件。
+受理commit取得/対応付け、ログ取得/表示、常駐ループ、heartbeat・期限回収・再試行は残件。
 
 参照: [PostgreSQLの行ロック](https://www.postgresql.org/docs/17/explicit-locking.html)、
 [READ COMMITTEDでの待機後の条件再評価](https://www.postgresql.org/docs/17/transaction-iso.html)。

@@ -587,3 +587,57 @@ P0は既存の管理下fixture検証範囲で完了、P1全体は未完了。
 受理commit取得/対応付け、表示時エスケープ、常駐/heartbeat/期限回収/再試行は残件。
 create・実行・回収は引き続き取得後leaseを消費し、失効なら実行/確定を拒否する。
 SIGTERM/SIGKILL・daemon断・操作timeout後の遅延完了ではラベル付き残存があり得る。自動回復や悪意あるdaemon操作者からの保護は未実装/未検証。
+
+## 継続作業：上限付きログDB永続化と結果確定の原子性
+
+### 調査・選択した1単位
+
+指定cwd・feat/ci-runner・開始HEAD a51ed1d、未コミット変更なし。ルート/担当AGENTS、261014計画、
+README/work_log・設計・実装/テスト、open/Draft PR #1と直近push/PR CI成功を確認した。
+重大な現在障害/CI失敗は確認されないため、次の依存タスク「容量上限付きログ永続化と結果確定」を選択。
+HTTPログ取得/表示、受理commit取得、常駐Worker/P2復旧へは進まない。
+
+### 実装と設計判断
+
+- migration 003でattempt_logsとlog_storage_budget、容量予約/不変性/専用DB TRUNCATE会計リセットのtriggerを追加。001/002は未変更。
+- 小容量のrawログをbyteaに保存し、ファイルとDBの二重更新やホストpathの問題を今回増やさない。一般のファイル成果物は別設計。
+- stdout/stderr合計1MiB/attempt、DB全体の既定/上限64MiBのraw保持payload。capacityはDB管理者の設定で、HTTP/ジョブ入力からは受け付けない。
+- Pythonでbytes型・長さ・観測量を接続前に検証。DB CHECKとsingleton台帳の条件付きUPDATEで、直接INSERTの上限と並行時の総量を強制する。
+- 現在token/DB期限/取消を確認し、attempt更新→ログ/台帳→DB期限を再確認するrun更新を同じtransactionでcommit。capacity不足・失効・中断は全体rollback。
+- 正式ログはcompleted_attempt_idから参照する。再送は状態/exit/reasonに加えbytes/観測量も完全一致を要求し、行/終了時刻/台帳を変更しない。
+- 通常UPDATE/DELETEを拒否。容量不足はWorker終了1・成功receiptなし、run/attemptは通常runningに残る。自動再試行/削除/復旧はしない。
+- schema版を3へ更新し、ready・migration適用/二重適用/再起動確認も版3へ更新。過去のrun/attempt/正式参照を保持し、過去ログを捏造しない。
+- 過去のログなし終端結果への新finalizer再送は拒否し、状態を変えない。履歴GETは維持する。
+- README・設計・受付仕様/脅威モデル/fixture仕様を更新。恒久ルール・依存・Docker制限・workflowは未変更、AGENTSも未変更。
+
+### 検証結果
+
+通常回帰：111 passed、112 deselected、既知TestClient警告1件（1.71秒）。
+専用DB＋実Docker＋既存全回帰：**209 passed、15 skipped、既知警告1件、223.55秒**。
+15 skippedは未変更の準備5/P0隔離10で、今回は別実行もしない。
+
+- 0/1MiB境界、SQL直接INSERTの超過/観測量不正、NUL/不正UTF-8/HTML風文字列のバイナリ保持、再送時不変性、別ログ/観測量の拒否。
+- 小容量4バイトの台帳に2つの4バイト結果を同時確定し、1件だけ成功・used4・他方running/ログなしを確認。full時の同じ報告再送は二重予約しない。64MiBを実データで埋める試験ではない。
+- ログ書込直後・commit前/後の通信異常、commit前/後の別プロセスSIGKILLでログ/台帳/結果が同じ確定結果に従うことを確認。
+- API/DB再起動後も非空ログ・観測量・容量台帳を保持。schema1/2/3保持、migration二重適用、readiness200を確認。
+- 実Dockerの4fixtureで結果と実stdout/stderr/観測量の一致を確認。大量出力は保持1MiB/観測量超過として保存。
+- 実Dockerでquota0時はcontainer/image回収後にWorker終了1、成功receiptなし、次run queued、ログ/台帳予約なしを確認。
+
+全回帰開始後、schema2の終端attempt/正式参照を含む移行保持、過去のログ欠落再送拒否1件、
+既存の通信/2更新間失効試験に非空ログのrollback確認を補強した。本番ソースとDDLは全回帰後に変更していない。
+その最終試験状態を対象に絞り、PYTEST_ADDOPTSの-kでverify_db.pyを別実行：
+**37 passed、188 deselected、既知警告1件、17.76秒**。単一transactionで移行前履歴を作る専用schemaはrollbackで除去した。
+今回の新規19件は仕様境界/故障を対象とし、ログ全体表示やテスト件数増加のための模倣テストは追加しない。
+
+pip checkは破損なし（ユーザーcache権限通知のみ）、compileall成功。今回の試験失敗なし。
+fixture-worker最新証拠は6ケース、実行最新証拠は11ケースでfailure0。記録対象ソースSHA256と現在ソースの一致を確認。
+生ログを証拠JSONへ追加せず、保存量/観測量と状態だけを記録する。
+最終の専用session container/image・専用DB container/volume/networkの5照会は残存0。
+OS/既存データ/他worktreeを変更せず、base image/build cache以外の一時資源は回収した。
+
+### 限界・次の1単位
+
+P1全体は未完了。次は正式attemptのログ取得APIと、安全なテキスト応答/表示・バイナリ変換方針を設計・検証する。
+保持期限/削除/容量運用、受理commit対応、常駐/heartbeat/期限回収/再試行も残件。
+64MiBはraw保持payloadだけで、DB行/索引/TOAST/WAL/backup/履歴/他資源を含む物理ディスクの上限保証ではない。
+64MiB実データ充填・DBディスク枯渇・長期保持/性能は未測定。容量不足時の自動復旧やCLIの結果復元も未実装。

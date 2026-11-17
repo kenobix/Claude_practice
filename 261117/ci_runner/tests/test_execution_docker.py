@@ -109,6 +109,10 @@ def test_four_bounded_fixtures(dedicated_database, owned_resources, evidence, mo
     with database.connect() as conn:
         assert conn.execute('SELECT state FROM attempts WHERE id=%s', (claim.attempt_id,)).fetchone()['state'] == 'running'
     receipt = finalize_fixture(claim, result)
+    with database.connect() as conn:
+        logs = conn.execute('SELECT stdout,stderr,observed_bytes FROM attempt_logs WHERE attempt_id=%s',
+                            (claim.attempt_id,)).fetchone()
+    assert logs == {'stdout': result.stdout, 'stderr': result.stderr, 'observed_bytes': result.observed_bytes}
     assert receipt.state == {'success': 'succeeded', 'failure': 'failed', 'timeout': 'timed_out', 'logs': 'failed'}[mode]
     assert finalize_fixture(claim, result).replayed
     with database.connect() as conn:

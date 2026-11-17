@@ -14,6 +14,10 @@ def report(claim, reason='completed', exit_code=0):
                            claim.run_id, claim.attempt_id)
 
 
+def logged_report(claim):
+    return replace(report(claim), stdout=b'fixed commit log', observed_bytes=16)
+
+
 @pytest.mark.parametrize('changes', [
     {'run_id': uuid4()}, {'attempt_id': uuid4()}, {'released': False},
     {'verified_limits': {}}, {'image_id': 'arbitrary:latest'},
@@ -27,3 +31,17 @@ def test_invalid_result_never_connects(changes):
         pytest.fail('invalid report connected to DB')
     with pytest.raises(FinalizationDenied):
         finalize_fixture(claim, replace(report(claim), **changes), forbidden)
+
+
+@pytest.mark.parametrize('changes', [
+    {'stdout': 'text'}, {'stderr': bytearray()}, {'observed_bytes': True},
+    {'observed_bytes': -1}, {'observed_bytes': 2**63},
+    {'stdout': b'x', 'observed_bytes': 0},
+    {'stdout': b'x'*1048576, 'stderr': b'y', 'observed_bytes': 1048577},
+])
+def test_invalid_log_payload_is_rejected_before_db(changes):
+    current = permit()
+    def forbidden():
+        pytest.fail('invalid log payload connected to DB')
+    with pytest.raises(FinalizationDenied, match='invalid retained logs'):
+        finalize_fixture(current, replace(report(current), **changes), forbidden)

@@ -5,7 +5,7 @@ import re
 from uuid import UUID
 
 from . import database
-from .execution import ExecutionResult, EXPECTED_LIMITS
+from .execution import ExecutionResult, EXPECTED_LIMITS, LOG_LIMIT
 from .settings import POLICY
 from .worker import Claim, validate_worker_id
 
@@ -27,6 +27,12 @@ class FinalizationReceipt:
 
 def outcome(claim: Claim, result: ExecutionResult):
     validate_worker_id(claim.worker_id)
+    if (type(result.stdout) is not bytes or type(result.stderr) is not bytes
+            or type(result.observed_bytes) is not int
+            or not 0 <= result.observed_bytes <= 9223372036854775807
+            or len(result.stdout) + len(result.stderr) > LOG_LIMIT
+            or len(result.stdout) + len(result.stderr) > result.observed_bytes):
+        raise FinalizationDenied('invalid retained logs')
     if (result.run_id != claim.run_id or result.attempt_id != claim.attempt_id
             or result.released is not True or result.verified_limits != EXPECTED_LIMITS
             or not re.fullmatch(r'sha256:[0-9a-f]{64}', result.image_id)
@@ -45,7 +51,7 @@ def outcome(claim: Claim, result: ExecutionResult):
 
 
 def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=None):
-    """Persist a report after execution/cleanup; no Docker calls or log storage.
+    """Persist a report and bounded opaque logs after execution/cleanup.
 
     Lock run then attempt. Fresh DB-clock guards fence both updates. Identical
     committed reports can be acknowledged after expiry without writing again.
@@ -71,6 +77,11 @@ def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=N
                     and attempt['exit_code'] == result.exit_code and attempt['reason'] == reason
                     and attempt['finished_at'] is not None)
         if replayed:
+            logs = conn.execute('SELECT stdout,stderr,observed_bytes FROM attempt_logs WHERE attempt_id=%s',
+                                (claim.attempt_id,)).fetchone()
+            if logs is None or (logs['stdout'], logs['stderr'], logs['observed_bytes']) != (
+                    result.stdout, result.stderr, result.observed_bytes):
+                raise FinalizationDenied('persisted logs do not match the report')
             finished_at = attempt['finished_at']
         else:
             if (run['state'] != 'running' or run['cancel_requested_at'] is not None
@@ -84,6 +95,8 @@ def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=N
                 (state, result.exit_code, reason, claim.attempt_id, claim.lease_token)).fetchone()
             if saved is None:
                 raise FinalizationDenied('execution lease is expired')
+            conn.execute('INSERT INTO attempt_logs(attempt_id,stdout,stderr,observed_bytes) VALUES (%s,%s,%s,%s)',
+                         (claim.attempt_id, result.stdout, result.stderr, result.observed_bytes))
             changed = conn.execute(
                 'UPDATE runs SET state=%s,completed_attempt_id=%s '
                 "WHERE id=%s AND state='running' AND cancel_requested_at IS NULL "

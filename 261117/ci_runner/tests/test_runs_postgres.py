@@ -44,9 +44,11 @@ def dedicated_database(monkeypatch):
     with psycopg.connect(dsn) as conn:
         # Allowed only under the explicitly disposable test DB contract above.
         conn.execute('TRUNCATE runs CASCADE')
+        conn.execute('UPDATE log_storage_budget SET capacity_bytes=67108864 WHERE singleton')
     yield DisposableDatabase(dsn)
     with psycopg.connect(dsn) as conn:
         conn.execute('TRUNCATE runs CASCADE')
+        conn.execute('UPDATE log_storage_budget SET capacity_bytes=67108864 WHERE singleton')
 
 
 @contextmanager

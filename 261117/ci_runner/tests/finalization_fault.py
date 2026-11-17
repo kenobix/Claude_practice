@@ -7,7 +7,7 @@ import time
 from ci_runner import database
 from ci_runner.finalization import finalize_fixture
 from ci_runner.worker import Claim
-from test_finalization_input import report
+from test_finalization_input import logged_report
 
 
 def barrier(position):
@@ -31,4 +31,4 @@ if __name__ == '__main__':
                            'started_at,lease_expires_at FROM attempts WHERE run_id=%s',
                            (os.environ['CI_FINALIZE_RUN_ID'],)).fetchone()
     claim = Claim(**row)
-    finalize_fixture(claim, report(claim), fault_connection)
+    finalize_fixture(claim, logged_report(claim), fault_connection)

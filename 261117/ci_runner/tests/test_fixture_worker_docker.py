@@ -70,6 +70,16 @@ def test_api_to_separate_worker_to_persisted_result(dedicated_database, mode, st
         assert saved['finished_at'].isoformat() == output['finished_at']
         assert str(saved['lease_token']) not in result.stdout + result.stderr
         assert conn.execute('SELECT count(*) AS n FROM attempts').fetchone()['n'] == 1
+        logs = conn.execute('SELECT stdout,stderr,observed_bytes FROM attempt_logs WHERE attempt_id=%s',
+                            (UUID(output['attempt_id']),)).fetchone()
+        retained = len(logs['stdout'])+len(logs['stderr'])
+        assert retained <= 1048576 and logs['observed_bytes'] >= retained
+        if mode == 'success':
+            assert json.loads(logs['stdout']) == {'ok': True}
+        elif mode == 'failure':
+            assert logs['stderr'] == b'fixed failure\n'
+        elif mode == 'logs':
+            assert retained == 1048576 and logs['observed_bytes'] > retained
     # A fresh API process observes the Worker commit; the next run remains queued.
     with api() as (client, _):
         detail = client.get('/runs/' + first['id']).json()
@@ -79,8 +89,33 @@ def test_api_to_separate_worker_to_persisted_result(dedicated_database, mode, st
     after = resources()
     assert before == after
     evidence['cases'].append({'fixture': mode, 'receipt': output,
+                              'persisted_log_bytes': retained, 'observed_bytes': logs['observed_bytes'],
                               'owned_resources_before': before, 'owned_resources_after': after,
                               'api_restarted': True, 'next_run_state': 'queued'})
+
+
+def test_full_log_budget_has_no_success_receipt(dedicated_database, request):
+    if os.environ.get('CI_RUN_EXECUTION_TESTS') != '1':
+        pytest.skip('run scripts/verify_execution.py for one-job Worker integration')
+    evidence = request.getfixturevalue('evidence')
+    first, second = seed_pair()
+    with database.connect() as conn:
+        conn.execute('UPDATE log_storage_budget SET capacity_bytes=0')
+    before = resources()
+    result = invoke()
+    assert result.returncode == 1 and result.stdout == ''
+    assert json.loads(result.stderr)['stage'] == 'finalization'
+    with database.connect() as conn:
+        assert conn.execute('SELECT state,completed_attempt_id FROM runs WHERE id=%s', (first.id,)).fetchone() == {
+            'state': 'running', 'completed_attempt_id': None}
+        assert conn.execute('SELECT state FROM runs WHERE id=%s', (second.id,)).fetchone()['state'] == 'queued'
+        assert conn.execute('SELECT count(*) AS n FROM attempt_logs').fetchone()['n'] == 0
+        assert conn.execute('SELECT used_bytes FROM log_storage_budget').fetchone()['used_bytes'] == 0
+    after = resources()
+    assert before == after
+    evidence['cases'].append({'fixture': 'log_budget_full', 'worker_exit': result.returncode,
+                              'success_receipt': False, 'state': 'running',
+                              'owned_resources_before': before, 'owned_resources_after': after})
 
 
 def test_build_longer_than_lease_precedes_claim(dedicated_database, monkeypatch, request):

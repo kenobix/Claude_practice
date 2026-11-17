@@ -39,7 +39,7 @@ APIは認証なしのローカル開発用途で、127.0.0.1に限定して起�
 | GET /runs?limit=20&cursor=... | 200、itemsとnext_cursor（最終ページnull） | limit/cursor不正422、DB503 |
 | GET /runs/{id} | 200、Run | UUID不正422、存在しないID404、DB503 |
 | GET /health/live | 200、phase=P1-intake | DB不要 |
-| GET /health/ready | schema版2が確認できれば200 | 未設定/DB停止/未適用503 |
+| GET /health/ready | schema版3が確認できれば200 | 未設定/DB停止/未適用503 |
 
 Runはid、repository_id、ref、commit_sha、workflow_version、state、created_at、available_at、cancel_requested_at、completed_attempt_idを返す。
 lease tokenやDB接続情報は返さない。新規はqueued、日時はDB時刻、取消・正式結果参照はnull。
@@ -69,7 +69,7 @@ created_at DESC, id DESCのkeyset方式。limitは1〜100、既定20。
 
 001は未変更。002_run_history.sqlで並び順に対応するindexだけを追加した。
 migrate.pyは番号順の前進適用とadvisory transaction lockを使用し、未知の適用版を検出したら停止する。
-DDLと版記録を同じtransactionでcommitする。readyは版2を要求する。downgradeは対象外。
+DDLと版記録を同じtransactionでcommitする。readyは版3を要求する。downgradeは対象外。
 
 ## 実DB検証（2026-11-17）
 
