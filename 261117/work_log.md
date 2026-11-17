@@ -171,3 +171,45 @@ heartbeat/自動期限回収/複数Worker/古い結果と取消競合はP2。物
 最終の専用ラベル照会で初回失敗の一時イメージタグが1件残っていたため、sessionラベルの一致を確認してそのタグだけ削除した。
 再照会で今回の隔離container/imageとDBのcontainer/volume/networkはすべて0件。ベースイメージ/build cacheは既定どおり残した。
 001の内容が開始HEADと完全一致すること、回帰証拠の全ソースSHA-256とcleanup成功、相対リンク、Python構文、git diff --checkを確認した。
+
+## 継続作業：Worker初回取得の1単位
+
+開始: ~/work/Claude_practice-261117、feat/ci-runner、HEAD 43c2035、未コミット変更なし。
+ルート/日付AGENTS、261014計画、README、設計・P1計画・既存ソース/テストを確認した。
+GitHub CLIでDraft PR #1を確認し、headが開始HEADと一致、P1受付APIが未完了表示のままであることを確認。
+通常サンドボックスのghは接続エラーだったが、許可されたネットワーク経路で読み取り成功。
+
+完了済みはP0と受付API。未完了の固定ジョブ実行は、queued取得・attempt/token/DB期限発行が前提になるため、今回はその初回取得だけを選択した。
+Worker常駐ループ・コンテナ実行・結果確定・再試行・Webhookには進んでいない。
+
+### 実装
+
+- worker.pyにclaim_nextと--claim-once診断CLIを追加。HTTPアプリからは呼び出さない。
+- 許可repository/ref/workflow、queued、DB時刻でavailable_at到達済み、取消要求なし、attempt履歴なしを取得条件とする。
+- run行をFOR UPDATE SKIP LOCKEDで取得し、初回attempt番号1・initial理由・worker ID・DB生成UUID token・DB時刻の30秒leaseとrun runningを同時commitする。
+- 履歴ありqueuedを初回として扱わず、再試行理由/番号/予算の後続実装まで取得しない。再試行・復旧を実装済みとはしない。
+- tokenはCLI/reprに出さず、不正worker IDはDB接続前に拒否。DB異常時は成功応答を出さず、commit結果不明の可能性を残す。
+- migration・依存・API応答形式は未変更。古い段階限定のAGENTSを継続開発向けに更新し、既存Draft PR更新の方針を明記。
+
+### 検証
+
+初回verify_db.pyは48 passed、10 skipped、1 warning in 31.78s。
+実DB停止時のWorker CLI失敗とtoken非出力の確認を追加した最終実行は48 passed、10 skipped、1 warning in 28.21s。
+新規Worker関連9ケースと既存39ケースの合計で、Docker隔離10件は別実行のためskip。TestClient非推奨警告は既知。
+
+- 別Workerプロセスが取得し、API GET/POST再送でrunningを確認。終了後FOR UPDATE NOWAIT成功でロック解放を確認。
+- 初回attempt/worker ID/initial理由を保存し、DB上で開始と期限の差が30秒、期限がDB現在時刻より未来であることを確認。
+- 対象なし、未来/取消要求/未許可workflow/終端/履歴ありの除外、実DB停止・未設定での失敗を確認。
+- ロック中の先頭を飛ばして別プロセスが次行を取得。2接続の取得競合でも発行は1attempt。これは複数Worker実行・復旧全体の完成ではない。
+- attempt INSERT直後とcommit直前の例外でqueued/attemptなしへrollbackし、再取得時も番号1になることを確認。
+- Worker SIGKILL・通信分断は今回未実験。既存の受付API故障試験と混同しない。
+
+仕様・限界はdocs/worker-claim.md、残りの順序はdocs/p1-plan.mdに記録。
+次は固定fixture実行境界の本番側実装とpreflight、続いて実行・停止/回収・条件付き結果保存。
+P1全体は未完了。heartbeat/期限回収/再試行/取消競合の故障検証はP2へ残す。
+
+既存P0のverify_isolation.pyは別実行で10 passed in 37.85s。既知のTestClient警告以外の失敗なし。
+専用ラベル照会でDBのcontainer/volume/networkと隔離用container/imageはすべて残存0件。
+既存migrationの内容が開始HEADと一致、相対文書リンク・Python構文・pip check・差分の空白検査も確認した。
+差分/秘密情報/生成物を確認して担当ブランチへcommit・pushした後、Draft PR #1の進捗を受付API・初回取得の実績に合わせて更新する。
+今回の単位はここで終了し、コンテナ実行の実装には進まない。

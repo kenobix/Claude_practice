@@ -1,7 +1,8 @@
 # P1前半：受付API・永続化・冪等性
 
 実装済み: POST /runs、GET /runs、GET /runs/{id}、許可設定・入力上限・履歴ページング。
-未実装: Worker、Webhook、clone、ジョブコンテナ実行、取消・手動retry・成果物管理。
+Worker初回取得は後続で実装済み（[取得仕様](worker-claim.md)）。
+未実装: 常駐Worker、Webhook、clone、ジョブコンテナ実行、取消・手動retry・成果物管理。
 P1全体の完了条件（実行から結果保存）はまだ満たしていない。
 
 ## 許可設定と入力
@@ -42,7 +43,7 @@ APIは認証なしのローカル開発用途で、127.0.0.1に限定して起�
 
 Runはid、repository_id、ref、commit_sha、workflow_version、state、created_at、available_at、cancel_requested_at、completed_attempt_idを返す。
 lease tokenやDB接続情報は返さない。新規はqueued、日時はDB時刻、取消・正式結果参照はnull。
-GETは保存済みの状態を返す。現在アプリからqueued以外へ変更する操作はない。
+GETは保存済みの状態を返す。HTTP APIに状態変更操作はないが、別プロセスの初回取得でrunningへ遷移する。
 同じrunが既にfailed等でもPOST再送は状態を変更しない。retryは別操作として今後実装する。
 
 ## transactionと競合

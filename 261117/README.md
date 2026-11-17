@@ -3,7 +3,8 @@
 作業日: 2026-11-17。worktree: `~/work/Claude_practice-261117`、branch: `feat/ci-runner`。
 基準: [開発計画](../261014/plan_ci_runner.md)。**P0完了（現在環境・管理下の固定fixtureによる開発検証範囲）**。
 ヘルスチェック・受付/履歴API・PostgreSQL永続化・冪等性を実装済み（P1前半）。
-Worker・アプリからのコンテナ実行・Webhook・UIは未実装で、P1全体は未完了。
+Workerの初回queued取得・attempt/token/DB期限発行も実装済み。
+常駐Worker・コンテナ実行・結果保存・Webhook・UIは未実装で、P1全体は未完了。
 GitHub Pagesへの公開対象ではない。常駐バックエンドの配置先は将来別途判断する。
 
 ## Python環境とテスト
@@ -88,10 +89,11 @@ verify_db.pyを使い、既存の開発DBへテストを手動で向けない。
 - [fixture仕様](ci_runner/docs/fixtures.md)
 - [隔離仕様・制限ごとの実測証拠](ci_runner/docs/isolation.md) / [生の証拠JSON](ci_runner/docs/isolation-evidence.json)
 - [受付APIの契約・競合設計・故障検証](ci_runner/docs/intake-api.md)
+- [Worker初回取得の仕様・検証と限界](ci_runner/docs/worker-claim.md)
 - [P1進捗と次の単一Worker実装順序](ci_runner/docs/p1-plan.md)
 - [調査・検証結果](work_log.md)
 
-受付・永続化・冪等性は実装済み。次は単一Workerの取得・固定fixture実行・結果保存へ進む。認証なしAPIはloopback限定を維持する。
+受付・永続化・冪等性は実装済み。初回取得は実装済み。次は固定fixtureの実行境界を実装してから、実行・結果保存へ進む。認証なしAPIはloopback限定を維持する。
 
 ## 一時DBでの再検証
 
@@ -145,3 +147,15 @@ SHAは構文例。新規201、同じ業務キーの再送200で同じrunを返�
 bodyはJSONで4KiBまで。DB未設定・停止・query失敗は503で受理を返さない。
 commit結果が不明な接続断では、未保存と断定せず同じ業務キーで再送する。
 詳細なHTTP契約・ページングの限界・障害実験は受付API仕様を参照。
+
+## Worker取得だけの診断
+
+```bash
+.venv/bin/python -m ci_runner.worker --worker-id local-worker-1 --claim-once
+```
+
+DATABASE_URL設定済みの使い捨て開発DBに限って利用する。
+許可設定に合う初回queuedを1件だけrunningにし、attempt番号1・DB生成token・30秒leaseを同時commitする。
+対象なしはclaimed=false。tokenは出力しない。DB停止時はexit 1で成功応答を出さない。
+取得後の実行・結果保存・期限回収はまだなく、コマンド終了後もrunningが残る。
+検証と回収をまとめて行う場合はscripts/verify_db.pyを使用する。詳細はWorker初回取得仕様を参照。

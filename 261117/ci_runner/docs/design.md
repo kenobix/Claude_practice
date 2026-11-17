@@ -1,7 +1,8 @@
 # P0設計案：ジョブの正本と実行権
 
-状態: P0検証とP1前半（受付/取得API・DB永続化・冪等性）は実装済み。Worker・Webhook・ジョブ実行等は未実装。
+状態: P0検証とP1前半（受付/取得API・DB永続化・冪等性）は実装済み。Workerの初回取得は実装済み。常駐実行・結果保存・Webhook等は未実装。
 実装したHTTP契約と競合・commit前後の障害証拠は[受付API仕様](intake-api.md)を参照。
+[Worker初回取得](worker-claim.md)は履歴なしの許可queuedだけを取得し、attempt番号1・initial・DB期限30秒を同時commitする。再試行と期限回収は未実装。
 計画書のP1/P2/P3/P4にまたがる条件を先に定義する。数値は実験初期値であり保証ではない。
 
 ## 状態遷移
@@ -84,7 +85,7 @@ run.completed_attempt_idを現在の有効attemptの確定transactionでのみ�
 
 P1前半ではcommit前/後のAPI SIGKILL、実DB停止、10 HTTP同時投入と一意キー競合待ち、API再起動後の保持を実測済み。
 P0ではDB再起動後のschema保持、CPU/RAM/PID制限、時間/ログ上限と回収を固定fixtureで実測済み。
-run/attemptへの反映とWorker障害回復・競合は未実装・未検証。[隔離実測](isolation.md)と[P1計画](p1-plan.md)を参照。
+初回取得時のrun/attempt同時更新、rollback、ロック解放と取得競合は検証済み。ジョブ結果の反映・Worker障害回復は未実装・未検証。[隔離実測](isolation.md)と[P1計画](p1-plan.md)を参照。
 復旧45秒は未測定の仮目標。実装も測定も未実施。
 
 ## 参照

@@ -204,6 +204,11 @@ def test_actual_database_stop_returns_503_and_recovers(dedicated_database):
                 assert response.json() == {'detail': 'database unavailable'}
                 assert response.headers['retry-after'] == '1'
             assert client.get('/health/ready').status_code == 503
+            worker = subprocess.run(
+                [sys.executable, '-m', 'ci_runner.worker', '--claim-once', '--worker-id', 'db-stop-check'],
+                capture_output=True, text=True, timeout=5, cwd=ROOT)
+            assert worker.returncode == 1 and worker.stdout == ''
+            assert worker.stderr == 'database unavailable; claim outcome may be unknown\n'
         finally:
             subprocess.run(compose + ['up', '-d', '--wait', 'db'], check=True, capture_output=True, timeout=60)
         assert client.get('/health/ready').status_code == 200
