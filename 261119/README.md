@@ -42,7 +42,7 @@ python3.12 -m venv .venv
 .venv/bin/python -m pytest -q
 ```
 
-全421テスト成功（既存406件 + 入力異常比較15件）。
+全442テスト成功（既存421件 + DNS独立比較21件）。
 DNS名/質問抽出40件とフロー・入力処理等の既存テストも再実行した。
 DNS候補の空payloadの分類変更に合わせ、既存1件の期待をparsedからmalformedへ更新した。
 既存100件は分類・入力制限・時刻等の検査を維持し、版変更に伴う期待を更新。
@@ -67,8 +67,9 @@ socket生成禁止下でのfixture生成/解析を含む全テストを使用す
 fixtureを生成し直して期待値を上書きする手順は追加しない。
 セットアップ時の依存取得以外に、テストでライブ通信の捕捉・送信・スキャンを行わない。
 導入時は343件がローカル/ホスト双方で成功し、actionlint 1.7.12で静的検証済み。
-DNS統合後は370件、Phase 2受入追加後は386件、比較ハーネス追加後は406件、入力異常比較追加後はローカル421件成功。
-TShark実体の14 fixture比較はローカル明示実行で、通常CIの実行対象には含めない。
+DNS統合後は370件、Phase 2受入追加後は386件、比較ハーネス追加後は406件、入力異常比較追加後は421件、DNS比較追加後はローカル442件成功。
+TShark実体の14保存fixture比較とDNS4ケース比較はローカル明示実行。
+通常CIは保存した参照行の再生とハーネスを検証し、TShark実体を導入・起動しない。
 ホスト結果は各commitの実行一覧で確認する。
 GitHubホスト上の実行結果は[Actions実行一覧](https://github.com/kenobix/Claude_practice/actions/workflows/pcap-analyzer-tests.yml)で確認する。
 CIの成功だけでTShark比較や性能測定の完了とはしない。Phase 2の判定根拠は下記の受入記録を参照。
@@ -252,13 +253,15 @@ fragment・切詰め・不正DNS・孤立/遅い応答・期限後再利用が�
 Phase 3では専用`.venv`に展開したTSharkと、8 fixtureの共通項目・残る6 fixtureの入力異常/形式差を比較済み。
 [独立比較の環境・コマンド・結果・未比較範囲](pcap_analyzer/docs/tshark_comparison.md)を参照。
 空入力/未対応形式を扱う範囲、途切れたレコードの拒否、長さ矛盾の分類を説明し、未説明差分0。
-次はDNS共通フィールド・一意な応答時間と、独自窓状態との相違の比較。
-性能測定・デモはPhase 4で、MVP全体は未完成。
+[DNS独立比較とPhase 3完了判定](pcap_analyzer/docs/tshark_dns_comparison.md)で、
+baseline/backwardと追加の人工2レシピ（計32パケット）のDNS共通項目を照合した。
+一意な5ペアの応答時間（25ms、123ns、5秒、1ns等）が一致し、重複/期限外/逆行の相違も説明済み。
+Phase 3は指定した人工入力の対応範囲で完了。次はPhase 4の固定規模での時間・最大メモリ等の計測、
+再現手順と3分デモ/動画。これらは未実施で、MVP全体は未完成。
 
-推定進捗は約80%、残り約20%。計画の各Phase見積中間値（10/15/20/15/10、計70）を重みとし、
-Phase 0〜2完了=45、Phase 3は共通項目/異常入力が完了しDNS比較が残るため暫定2/3=10、
-Phase 4未完了=0として55/70≒79%を丸めた概算。実測工数・残り時間・正しさの確率ではない。
-DNS比較とPhase 4の結果で見直す。MVP全受入条件を満たした後は独立レビューと完成判定を提案し、
+推定進捗は約86%、残り約14%。計画の各Phase見積中間値（10/15/20/15/10、計70）を重みとし、
+Phase 0〜3完了=60、Phase 4未完了=0として60/70≒86%の概算。実測工数・残り時間ではない。
+Phase 4の結果で見直す。MVP全受入条件を満たした後は独立レビューと完成判定を提案し、
 発展機能へ自動的に進まない。
 
 ## 仕様・期待値・制限
@@ -269,6 +272,7 @@ DNS比較とPhase 4の結果で見直す。MVP全受入条件を満たした後�
 - [Phase 0の将来レポート例](pcap_analyzer/expected/baseline.report.json) / [対応する旧Schema](pcap_analyzer/docs/report.phase0.schema.json)
 - [DNSの手定義期待値](pcap_analyzer/expected/baseline.dns.json)
 - [Phase 2 CLI横断期待値](pcap_analyzer/expected/phase2.fixtures.json) / [受入確認と完了判定](pcap_analyzer/docs/phase2_acceptance.md)
+- [DNS独立比較・Phase 3判定](pcap_analyzer/docs/tshark_dns_comparison.md) / [TShark DNS参照行](pcap_analyzer/docs/tshark_dns.result.json)
 - [作業記録](work_log.md)
 
 未対応: pcapng、圧縮pcap、IPv6、VLAN、Linux cooked capture、Wi-Fi、ライブ捕捉、
@@ -282,5 +286,6 @@ DNS名/質問抽出・RR構造検査とpacket分類/CLI診断への統合は実�
 照合キー/向き判定・窓処理・DNSイベントのCLI/Schema統合は実装済み。
 フロー集計と端末フロー表は実装済み。
 人工baselineの25ms・未応答観測・重複queryはCLI出力も手計算一致を確認。
-TShark比較は14保存fixtureの共通項目/入力異常まで。DNS独立比較、性能測定、実通信、Python 3.12以外、VS Code GUIは未検証。
+TShark比較は14保存fixtureの共通項目/入力異常とDNS4ケースまで。DNS名表示は通常ASCIIラベルの共通部分に限定。
+性能測定・デモ、実通信、Python 3.12以外、VS Code GUIは未検証。
 捕捉長と記録上の元長を回線上の実転送量と呼ばず、観測不足を障害や攻撃と断定しない。

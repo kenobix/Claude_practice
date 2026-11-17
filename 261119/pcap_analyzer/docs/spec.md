@@ -385,8 +385,9 @@ Phase 2前半でflows.pyとフローのJSON/端末表を実装済み。
 [Phase 2受入記録](phase2_acceptance.md)のCLI横断試験によりPhase 2完了と判定。
 Phase 3では専用.venvへTSharkを展開し、8 fixtureの共通フィールドと残る6 fixtureの入力異常/形式差を独立比較済み。
 比較条件と除外理由は[tshark_comparison.md](tshark_comparison.md)へ記録する。
-未説明差分は0。次の単位はDNS共通フィールド/一意な応答時間と独自状態の相違の確認。
-Phase 3全体、性能や実通信への適用は未検証。
+DNS共通フィールド/一意な応答時間の独立比較と、独自状態との相違の説明も完了。
+[Phase 3の判定と範囲](tshark_dns_comparison.md)で未説明差分0を確認し、人工入力の対応範囲でPhase 3完了と判定。
+次はPhase 4の再現・時間/最大メモリ等の計測・デモ。性能や実通信への適用は未検証。
 
 Scapy APIの採用根拠: [公式RawPcapReader API](https://scapy.readthedocs.io/en/latest/api/scapy.utils.html#scapy.utils.RawPcapReader)。
 インストール版2.6.1のソースも確認し、メタデータがsec/usec/wirelen/caplen、nanoで精度を判別することを検証する。

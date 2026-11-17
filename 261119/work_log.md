@@ -702,3 +702,62 @@ CLI受入試験は実プロセスの0/2、JSON Schema、partial/拒否/分類と
 Phase 0〜2完了45 + Phase 3は共通/異常入力確認済みで暫定2/3の10 + Phase 4未完了0 =55、
 55/70≒79%を丸めた成果物完了度の概算。実測工数や残時間の推定ではなく、残る検証結果で見直す。
 MVP全条件達成後は独立レビュー・完成判定を提案し、計画外の発展機能へ自動的に進まない。
+
+# 継続単位 — DNS独立比較とPhase 3完了判定
+
+実施日: 2026-11-17（Asia/Tokyo）。開始HEAD=49f1e6b、cwd=/home/kenshin/work/Claude_practice-261119、
+branch=feat/pcap-analyzer、初期statusはclean。ルート/担当AGENTS、261014計画、README/work_log、
+設計/Schema、実装/テスト、Draft PR #3と同commitのpush/PR CI successを確認。
+既知の不具合や失敗はなく、Phase 3受入に残るDNS共通項目/一意な応答時間の独立比較を1単位として選択。
+完了済み14 fixtureの独立比較環境・スクリプト・結果を作り直さず、Phase 4の計測は開始しない。
+
+## 実装・検証方法
+
+- scripts/compare_dns_tshark.pyを追加。既存baseline/backwardと、structのみで組む人工2レシピを比較。
+  専用.venvの既存TShark 4.2.2を使用し、名前解決なし-r/-n、空config/plugin/extcap、再構成なし。
+  DNSの未来フレーム参照response_inも検証するため-2の2 pass。filterは指定しない。
+- IP/port、DNS ID/QR、通常ASCII質問名（大小文字正規化）/QTYPE/QCLASS、TC、応答RCODEを照合。
+  一意にmatchedなイベントだけresponse_to/response_inと整数ns時間を照合する。
+  decimal秒は符号付き整数nsに変換。表示名から製品のbytesラベルキーを再構築しない。
+- expected/tshark.dns_cases.jsonへ固定wire構造・手計算とTShark 4.2.2の観測に基づく期待を手定義。
+  compact eventsの形式は[status,query_indices,response_indices,ns,rcode,tc]。
+  自動生成/上書きせず、結果はdocs/tshark_dns.result.jsonへ別に保存する。
+- 追加PCAPは一時ディレクトリ内のみ。文書用IP・架空ASCII名・固定MAC/port/時刻・checksum0。
+  Scapyや解析器のDNS encoderを生成へ流用しない。保存済み14 fixtureに変更なし。
+  解析器JSONは現行Schemaで検証。通常CIは保存した実TShark行を再生し、TShark実体を実行しない。
+  製品の解析本体/Schema/版/依存/CI workflowに変更なし。恒久ルール変更なしでAGENTSも維持。
+
+## 実測結果
+
+TShark 4.2.2（4.2.2-1.1build3）の実体比較は終了0、stderr空、未説明差分0。
+4ケース32パケット、captured2185/original2186 bytes、DNS対象24観測（query13/response11）。
+一意な5ペアはbaseline4→5=25ms、metadata1→2=25ms、4→5=123ns、6→7=5秒、late_reuse3→4=1nsで一致。
+metadataは12件813/814 bytes、parsed9/unsupported1/truncated1/malformed1、query4/response5。
+NXDOMAINとTCを応答metadataへ保持。fragment10、cap69/wire70の11、不完全DNS header12を照合から除外。
+late_reuseは8件532/532 bytes、query4/response3。baseline/backwardの旧集計も維持。
+
+説明した相違:
+- baseline query7,8→response9でTSharkは7→9の20msを示すが、解析器は窓内重複をambiguousとし時間なし。
+- backwardでTSharkは-100msを示すが、解析器は全ファイルの時間結果を撤回し件数を残す。
+- 期限外5秒+1nsはTSharkが対応付けても、解析器はno_response_observed + unmatched_response。
+  期限後の同じキーの新query3→response4は1nsで照合する。
+- 応答後に同じ窓でquery再利用があればambiguousへ変更して時間を撤回。
+  追加応答・孤立応答・記録終端も独自の根拠と状態を保持する。
+- TSharkがfragment/捕捉不足から部分DNSを抽出しても、解析器の対象範囲を広げない。
+
+最初のDNS対象17件成功（1.44秒）。実行エラー/警告/timeout追加後は全441件成功（30.04秒）、pip check成功。
+レビューで一意queryのresponse_in照合と改変検出を追加し、最終の全442件成功（30.39秒、既存421+DNS21）。
+最終スクリプトで実体比較を再実行し、保存した結果JSONとbyte単位で一致。
+正常系・異常系・境界（1ns/123ns/5秒端/1ns外/逆行）、Schema・件数/bytes整合、
+変更された質問/ID/class/RCODE/TC/参照/時間や状態・欠落行を見逃さないことを検証した。
+非ASCII/root等のTShark表示形式の独立比較、全RDATA意味、他版TShark、実通信は未検証。
+
+## 判定・次の単位
+
+docs/tshark_dns_comparison.mdに計画の受入条件と証拠・範囲を整理し、指定の人工入力/対応範囲でPhase 3完了と判定。
+README/仕様/既存比較文書を更新。差分・秘密情報・生成物を確認して担当branchへcommit/pushし、最新CIを確認する。
+Draft PRはPhase 3完了の節目として更新し、Draftを維持する。mainへのpush/merge・force pushなし。
+次はPhase 4の固定規模人工入力による時間・最大メモリ・状態割合の計測、再現手順と3分デモ/動画。
+これらを今回実施済みとはしない。MVP全体は未完成。OS/他worktree変更・ライブ捕捉/送信/scan/逆引きなし。
+推定進捗約86%・残約14%。計画の見積中間値を重みとしてPhase 0〜3完了60/全70≒86%の概算で、
+実測工数や残時間ではない。Phase 4の結果で見直す。MVP全受入後は独立レビューと完成判定を提案する。
