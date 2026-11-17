@@ -77,7 +77,9 @@ inspectは同じ検証をするが切り戻さない。開くだけで診断対�
   完全な正常prefixの後でのみ、EOFに接した短いrecord headerまたは検証済みheaderの短いbodyを復旧する。
   snapshotのEOFより前に読み取りが途絶えた場合はI/Oエラーとし、復旧しない。
 - 復旧前に `tail_truncate_planned` とold_size/last_valid_offset/reasonを診断出力する。
+  LFを含むイベント全体のwrite完了を検査し、短いwrite/nilも失敗とする。全長受理後のerrorも無視しない。
   診断失敗ではファイルを変更しない。Truncate/Sync失敗ではDBを返さずロックを解放する。
+  [診断完了条件の試験](recovery-diagnostics.md)で、切り戻し・ログSync非実行と全バイト不変を検証した。
 - inspectはログをO_RDONLYで開き、修復・Syncをしない。LOCKは作成する場合がある。
 - 起動失敗時のFD、Close時のログ→LOCKの順を保つ。既存データを初期化し直さない。
 - Getでread/CRCエラーを検出した場合もDBを失敗状態にし、Close以外を拒否する。
@@ -95,4 +97,5 @@ inspectは同じ検証をするが切り戻さない。開くだけで診断対�
 [Close競合試験](close-concurrency.md)ではI/O先行・Close先行・同時開始の18ケースを検証した。
 Closeは進行中I/Oを待ち、data.log→LOCKの順で閉じる。Closeが先に進むと他のAPIはErrClosedとなる。
 最初のCloseだけが閉鎖エラーを返し、同時/繰返しCloseはnilとなる。
-ホスト停止・電源断、製品CLI応答周辺は未検証。
+製品CLI応答周辺は[後続試験](cli-response-experiments.md)で検証済み。
+ホスト停止・電源断・診断出力先の永続化は未検証。

@@ -172,8 +172,17 @@ func openDisk(dir string, options Options, ops diskOps) (db *DB, err error) {
 			LastValidOffset int64  `json:"last_valid_offset"`
 			Reason          string `json:"reason"`
 		}{"tail_truncate_planned", info.Size(), state.Report.ValidBytes, scanErr.Error()}
-		if err = json.NewEncoder(diagnostic).Encode(event); err != nil {
-			return nil, fmt.Errorf("recovery diagnostic: %w", err)
+		encoded, encodeErr := json.Marshal(event)
+		if encodeErr != nil {
+			return nil, fmt.Errorf("recovery diagnostic: %w", encodeErr)
+		}
+		encoded = append(encoded, '\n')
+		n, writeErr := diagnostic.Write(encoded)
+		if writeErr == nil && n != len(encoded) {
+			writeErr = io.ErrShortWrite
+		}
+		if writeErr != nil {
+			return nil, fmt.Errorf("recovery diagnostic: %w", writeErr)
 		}
 		if err = file.Truncate(state.Report.ValidBytes); err != nil {
 			return nil, err

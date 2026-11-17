@@ -6,6 +6,8 @@ Linuxで `Open(dir)` / `OpenWithOptions(dir, Options)`、DB.Put/Get/Delete/Inspe
 読み取り専用 `engine.Inspect(dir)` を実装した。Report型は `recovery.Report`。
 Openはdata.logの作成を許可。OptionsのCreate=falseなら存在するログだけを開く。
 Options.Diagnosticsは末尾切り戻し前のJSON診断の出力先（nilならstderr）。診断失敗時は切り戻さない。
+LFを含む全イベントのwrite成功を要求し、短いwrite/nilはio.ErrShortWrite、全長write+errorも失敗とする。
+この場合OpenはDB=nilで失敗し、ログを変更しない。[回帰試験](recovery-diagnostics.md)を参照。
 新規DBはLOCK以外の項目がない既存ディレクトリにのみ作る。data.log/LOCKはregular fileを要求し、symlinkを拒否する。
 すべてのOpenとengine.InspectがLinuxの排他flockを取り、競合を即時拒否する。
 DB.InspectはOpen時走査と成功更新に基づくレポート。engine.Inspectは独立した読み取り専用走査。

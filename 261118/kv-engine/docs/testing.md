@@ -135,3 +135,11 @@ Close EIO時のstdout抑止、4操作の出力失敗、空値GET、製品バイ�
 短いJSON writeをexit 0にしていた問題を再現し、io.ErrShortWrite→exit 6へ修正した。
 [故障モデル・実測・限界](cli-response-experiments.md)を参照。
 次は段階3の受入条件と各実験の対応表を整理し、定義した故障モデル内の完了可否を判断する。
+
+## 復旧前診断の短い出力（修正・検証済み）
+
+受入条件照合中、診断Writerの短いwrite/nilを見逃して切り戻す不具合を検出した。
+TestRecoveryDiagnosticCompletionで、0/部分write、部分/全長write+EIO、正常全長writeの5ケースを確認。
+失敗時のDB=nil・ErrShortWrite/EIO、Truncate/ログSync非実行・ログ全体不変、FD/LOCK解放を要求する。
+完全なWriterでの再試行・冪等な再Open、イベントfieldとLFも確認。[故障モデル・結果](recovery-diagnostics.md)を参照。
+この安全性問題を先に修正したため、段階3の完了判定は次の単位に残す。

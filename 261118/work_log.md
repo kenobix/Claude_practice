@@ -574,3 +574,47 @@ OSキャッシュの生存下でのプロセス停止であり、ホスト停止
 この作業だけで段階3全体を完了扱いせず、性能計測・デモへは進まない。
 差分・秘密情報・生成物を確認後、261118/内の対象だけcommitして担当ブランチへ通常pushする。
 push後のCIはcommit時点で未実行。実結果とSHAを既存Draft PR #2と最終報告へ記録し、Draftを維持する。
+
+## 段階3・復旧前診断の完了検査（2026-11-17 JST）
+
+### 状態確認と優先順位
+
+- cwd: /home/kenshin/work/Claude_practice-261118、branch: feat/database-engine、開始HEAD: 5a9bc58、開始時clean。
+- root/担当AGENTS、261014の担当計画、README/work_log、engine/recovery/record/CLIと既存テスト・fixture仕様を確認。
+- Draft PR #2のHEADが担当ブランチと一致し、前回のpush/PR両CIはsuccess。CI導入済み。
+- 次の候補だった段階3の受入条件照合中に、復旧前診断の短いwrite/nilを見逃す問題を発見した。
+  安全性・データ整合性の問題を最優先とするユーザー指示に従い、この修正を今回の1単位へ選び直した。
+  受入条件の対応表・完了判定と段階4〜5は今回進めない。恒久ルールは変わらずAGENTSの更新不要。
+
+### 再現・修正と回帰試験
+
+- 既存のjson.EncoderはWriterのerrorを検査するが、短いwrite/nilを検出しない。
+  診断が0バイトまたは一部だけでもOpenが成功して64→54バイトへ切り戻す2ケースを再現した。
+- disk_linux.goで診断イベントをJSON+LFへ変換し、1回のWriteで全長受理・errorなしを確認してからTruncate/Syncへ進む。
+  短いwrite/nilはio.ErrShortWrite、部分/全長write+EIOは原因を保持した失敗とし、DB=nilでログを変更せず終了する。
+- diagnostic_linux_test.goに5ケースを追加：0/nil、部分/nil、部分/EIO、全長/EIO、全長/nil。
+  正常系ではTruncate/ログSync各1回。失敗系では各0回と元の64バイト全体の不変を確認。
+- 各ケースで診断呼出し1回、イベントfieldとLF、実FD閉鎖1回、LOCK再取得を確認。
+  完全なWriterで再試行すれば54バイトの正常prefixへ復旧でき、k=v・sequence 1・live_keys=1を保持。
+  次のOpenは診断不要で、全バイトが不変。全DBは専用t.TempDir内の人工データ。
+- README/API/耐久性/検証計画を更新し、docs/recovery-diagnostics.mdに故障モデルと観測表を記録。
+  耐久性文書末尾の古い「CLI応答周辺は未検証」も、実施済みの後続実験への参照へ訂正。
+- ログ形式v1・fixture・CLIの応答形式・依存関係・workflow・他worktree・OS設定は変更しない。
+
+### 検証結果
+
+- 修正前はzero/partialの2ケースが失敗、他3ケースが成功。修正後は5ケースすべて成功。
+- make check（fmt検査・go vet ./...・全テスト・CLI build）が成功。
+- go test -json -count=1 -timeout=3m ./...: 全5パッケージ成功。Test関数72個（子helper含む）、Fuzz関数2個の既存seed。
+  passイベント411件、fail 0、skip 0。件数増加のためのケースや新しいfuzz探索は追加しない。
+- go test -race -count=1 -timeout=3m ./...: 全5パッケージ成功。Goは局所導入1.27.4 linux/amd64。
+- 今回の製品コード変更に対する回帰確認として既存SIGKILL・CLI・複合I/O・fixture試験も再実行した。
+  新たな停止点は追加していない。診断先のEIOは注入で、実媒体障害を起こしていない。
+
+### 未検証事項・次の1単位・保存
+
+診断Writerの全長受理は診断先のfsyncや永続化を意味しない。ホスト停止・電源断・WSL/装置flushも未検証。
+Writerの契約違反を防御する変更であり、任意のWriter内部故障を検出できる主張はしない。
+段階0〜2は完了、段階3は完了判定前。次の最優先は受入条件と実験・故障モデル・未検証事項の対応表と完了判定。
+差分・秘密情報・生成物を確認後、261118/内の対象だけcommit・担当ブランチへ通常pushする。
+commit時点で今回のGitHub CIは未実行。push後の実結果とSHAをDraft PR #2と最終報告へ記録し、Draftを維持する。
