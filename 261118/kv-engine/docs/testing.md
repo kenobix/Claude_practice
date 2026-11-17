@@ -108,7 +108,7 @@ ENOSPCやEIOは注入であり、実ディスクの空き容量を枯渇させ�
 親の55件のack履歴と最後の1操作を辞書・sequenceで照合し、件数・ログ長・切り戻し診断も確認。
 全キー/不在キー、2度目のOpenの冪等性、次の更新と再Openを検証する。
 [実験条件と実測表](seeded-crash-experiments.md)に再現手順と限界を記録。
-複合I/O障害は下記で実施。Close競合は下記で実施済み。製品CLI応答周辺は残課題。
+複合I/O障害は下記で実施。Close競合は下記で実施済み。製品CLI応答周辺は後続単位で実施済み（末尾参照）。
 
 ## 段階3の複合I/O単位（実施済み）
 
@@ -117,7 +117,7 @@ ENOSPCやEIOは注入であり、実ディスクの空き容量を枯渇させ�
 失敗後の全操作拒否・I/O停止、メモリ索引非公開、prefix全バイト保持、診断・修復境界、FD/LOCK解放を確認。
 注入を除いて同じログを再試行し、参照辞書・sequence・次の更新と再Openを照合する。
 [故障モデルと実測結果](compound-io-experiments.md)に限定した検証で、実デバイス故障や電源断は未検証。
-Closeと各APIの同時競合は下記で検証済み。製品CLI応答周辺、性能計測、デモは残る。
+Closeと各APIの同時競合は下記で検証済み。製品CLI応答周辺は後続単位で実施済み。性能計測、デモは残る。
 
 ## 段階3のClose競合単位（実施済み）
 
@@ -125,4 +125,13 @@ close_linux_test.goでI/O先行6ケース、Close先行8ケース、barrier同�
 実FDの同期・読取り・閉鎖をchannelで待機させ、成功/EIOと競合させる。
 Closeまでの排他保持、FD閉鎖1回、同時Closeの冪等性、ErrClosed後のI/O非実行を確認する。
 同時開始は各ラウンド64 API+8 Close。成功更新sequence順の参照辞書と再Open結果を照合し、Inspectの一貫性も検査する。
-[契約・観測・未検証条件](close-concurrency.md)を参照。次は製品CLIのClose/stdout応答周辺。
+[契約・観測・未検証条件](close-concurrency.md)を参照。CLI応答境界も後続単位で実施済み（下記）。
+
+## 段階3のCLI応答単位（実施済み）
+
+製品と同じCLI処理を使い、PUT/DELETE×Close前後・stdout前/部分/全出力後の10点でSIGKILL。
+親が受け取った応答、LOCK、成功済みprefix・最後の更新・2回の再Openを照合する。
+Close EIO時のstdout抑止、4操作の出力失敗、空値GET、製品バイナリの/dev/full出力失敗も検証。
+短いJSON writeをexit 0にしていた問題を再現し、io.ErrShortWrite→exit 6へ修正した。
+[故障モデル・実測・限界](cli-response-experiments.md)を参照。
+次は段階3の受入条件と各実験の対応表を整理し、定義した故障モデル内の完了可否を判断する。

@@ -524,3 +524,53 @@ Draft PR #2の進捗を実績へ更新し、Draftを維持する。反映結果�
 段階0〜2は完了、段階3は引き続き未完了。次の最優先は製品CLIのClose/stdout成功応答周辺の停止・出力失敗試験。
 段階4の性能計測と段階5のデモも残る。今回の単位で次の機能実装には進まない。
 差分・秘密情報・生成物を確認後、担当ファイルだけcommit・担当ブランチへ通常pushする。
+
+## 段階3・CLI応答境界単位（2026-11-17 JST）
+
+### 状態確認・選択
+
+- cwd: /home/kenshin/work/Claude_practice-261118、branch: feat/database-engine、開始HEAD: 3560a9f、開始時clean。
+- root/担当AGENTS、261014担当計画、README/work_log、CLI・engine・既存テスト・fixture仕様・耐久性契約を確認。
+- Draft PR #2のHEADと担当ブランチが一致。前回導入した専用CIのpush/PR両runはsuccess。
+- 既知の未解決不具合は記録されておらず、CIも整備済み。次の優先単位だったCLIのClose/stdout周辺を選択。
+  段階0〜2、更新/Open停止・複数seed・複合I/O・Close競合に依存し、受入条件整理・段階4〜5は次へ残す。
+- AGENTSの恒久ルールに変更はなく更新不要。他worktree・既存workflow・OS設定は変更しない。
+
+### 実装と発見した問題
+
+- PUT/DELETE/inspectで、JSON出力先が短いwriteとnil errorを返すと、不完全な応答にもexit 0を返していた。
+  修正前のzero/shortの6ケースで再現。GETは既に検出していた。
+- 永続CLIのstdoutをcompleteResponseWriterで検査し、短いwriteをio.ErrShortWrite→exit 6へ統一。
+  通常のJSONとGET生バイトは維持。短いnil writeはWriter契約違反の注入で、実ディスク障害とは区別する。
+- runPersistentWithOpenと最小persistentDB interfaceを追加し、引数で実DBのCloseラッパーを渡せるようにした。
+  製品CLIの環境変数・flagへ停止設定を追加せず、制御はテスト実行ファイル内だけで行う。
+- response_linux_test.go: 4操作×6出力モード、Close EIOの3操作、空値GETを検証。
+- response_crash_linux_test.go: PUT/DELETE×5停止点（Close前後・stdout前/部分/全出力後）、
+  正常終了2ケース、未知停止点拒否、製品バイナリの/dev/full失敗2ケースを検証。追加の実ケースは計43。
+- すべて実DB・専用t.TempDir。親子ハンドシェイク、期限、SIGKILL/Wait確認とFD cleanupを使用。
+  成功済みprefix・辞書・sequence・件数・バイト長・LOCKと、2回の再Open後の全バイト不変を検査。
+- README/API/耐久性/検証計画と実験記録への参照を更新し、cli-response-experiments.mdに故障モデルと観測表を記録。
+  レコード形式v1・fixture・engine本体・依存関係は変更しない。
+
+### 実行結果
+
+- make check（fmt検査・go vet ./...・全テスト・CLI build）が成功。
+- go test -json -count=1 -timeout=3m ./...: 全5パッケージ成功。Test関数71個（子helper含む）、Fuzz関数2個の既存seed。
+  passイベント405件、fail 0、skip 0。新しいfuzz探索は実施していない。
+- go test -race -count=1 -timeout=3m ./...: 全5パッケージ成功。Go 1.27.4 linux/amd64を局所導入から使用。
+- 追加10 SIGKILLケースはすべてsequence 4を再生。成功済み3操作の146バイトprefixを保持。
+  PUT後192バイト・live_keys=3、DELETE後188バイト・live_keys=2。keep/empty/不在も一致。
+- before_closeはLOCK保持、それ以降は解放済み。stdoutは0/部分5/完全15バイト。
+  部分/完全の応答は親がkill前に受信。完全なJSON受信後でも、SIGKILLをexit 0と取り違えない。
+- Close EIOはstdoutなし・exit 6・Close呼出し1回、stdoutの各失敗もexit 6。
+  別製品プロセスの/dev/full失敗でも同期済みPUT/DELETEが残り、再読取りで確認できた。
+
+### 未検証・次の1単位・保存
+
+停止ケースは実engineと製品共通のCLI処理をテスト実行ファイルで動かす。製品バイナリ自体への停止制御は追加していない。
+Close EIOは実Close後の付加エラー、EPIPEはWriter注入。LOCK閉鎖失敗・実pipeのSIGPIPE・実媒体障害は未検証。
+OSキャッシュの生存下でのプロセス停止であり、ホスト停止・電源断・WSL/装置flush耐性を証明しない。
+次は段階3の受入条件を各実験・故障モデル・未検証条件へ対応付け、完了可否を判断する単位。
+この作業だけで段階3全体を完了扱いせず、性能計測・デモへは進まない。
+差分・秘密情報・生成物を確認後、261118/内の対象だけcommitして担当ブランチへ通常pushする。
+push後のCIはcommit時点で未実行。実結果とSHAを既存Draft PR #2と最終報告へ記録し、Draftを維持する。

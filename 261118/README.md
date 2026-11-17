@@ -22,7 +22,9 @@ Linuxの単一writer、同期追記ログ、再起動時の索引再構築、限
   [閉鎖順序・失敗応答・成功履歴の照合](kv-engine/docs/close-concurrency.md)を記録。
 - 開発基盤: [専用GitHub Actions](../.github/workflows/kv-engine.yml)で整形・vet・全テスト・CLI build・race detectorを自動実行。
   [CIの対象・権限・確認方法](kv-engine/docs/ci.md)を参照。リモート実行結果はDraft PR #2のChecksで確認する。
-- 次の優先作業: 製品CLIのClose/stdout成功応答周辺の停止・出力失敗試験。
+- CLI応答単位: Close/stdout周辺の10 SIGKILLケース、Close・出力失敗と再Openを検証。
+  短いJSON出力を成功扱いする問題を修正。[応答境界・実験結果・限界](kv-engine/docs/cli-response-experiments.md)を記録。
+- 次の優先作業: 段階3の受入条件と実験・故障モデルの対応表を整理し、完了可否を判断する。
   段階4の計測、段階5のデモ、電源断検証も残課題。段階3全体は未完了。
 
 ## 作業環境

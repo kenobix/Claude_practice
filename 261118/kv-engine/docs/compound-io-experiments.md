@@ -62,3 +62,6 @@ CloseとPut/Get/Delete/Inspectの同時競合は[後続単位](close-concurrency
 次の優先単位は製品CLIのClose/stdout応答周辺の停止・出力失敗試験。
 製品CLIのClose/stdout応答周辺、段階4の計測、段階5のデモ、ホスト停止/電源断の検証は残課題。
 段階3全体の完了とはしない。
+
+後続の[CLI応答境界単位](cli-response-experiments.md)も実施済み。
+現在の次の作業は段階3の受入条件・実験対応表と完了判定。上記の「次」の記述は実験当時の順序を示す。

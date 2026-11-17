@@ -101,6 +101,9 @@ stderrはエラー時に `{"error":"code","message":"..."}` を1行。
 exit: 0=成功、2=引数/入力、3=不在、4=ロック競合、5=破損/未対応形式、
 6=I/O/復旧必要/閉鎖状態、7=容量/sequence上限。help/versionはexit 0。
 成功JSONの出力失敗はexit 6となり、同期済み更新は残り得る。
+短いwrite（0バイト/nilを含む）も出力失敗とし、不完全なJSONを成功扱いしない。
+呼出し元は完全な応答とexit 0を確認する。応答途中や異常終了時は未成功更新の不在を仮定しない。
+[Close・stdout境界の実験](cli-response-experiments.md)で停止時の許容結果を示す。
 
 inspectは有効なヘッダーとレコードを同じ規則で検証する。
 出力項目は `format_version`, `log_bytes`, `valid_bytes`, `record_count`, `put_count`,

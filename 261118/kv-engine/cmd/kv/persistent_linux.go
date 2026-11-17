@@ -15,6 +15,32 @@ import (
 )
 
 func runPersistent(args []string, in io.Reader, out, errOut io.Writer) int {
+	return runPersistentWithOpen(args, in, out, errOut, func(dir string, options engine.Options) (persistentDB, error) {
+		return engine.OpenWithOptions(dir, options)
+	})
+}
+
+type persistentDB interface {
+	Put(string, []byte) (uint64, error)
+	Get(string) ([]byte, error)
+	Delete(string) (uint64, error)
+	Close() error
+}
+
+// JSON's Encoder checks errors, but does not reject a short write with nil error.
+type completeResponseWriter struct{ io.Writer }
+
+func (w completeResponseWriter) Write(p []byte) (int, error) {
+	n, err := w.Writer.Write(p)
+	if err == nil && n != len(p) {
+		err = io.ErrShortWrite
+	}
+	return n, err
+}
+
+// Explicit dependency injection keeps fault controls out of the shipped CLI.
+func runPersistentWithOpen(args []string, in io.Reader, out, errOut io.Writer, open func(string, engine.Options) (persistentDB, error)) int {
+	out = completeResponseWriter{out}
 	op := args[0]
 	flags := flag.NewFlagSet(op, flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
@@ -83,7 +109,7 @@ func runPersistent(args []string, in io.Reader, out, errOut io.Writer) int {
 		}
 		return 0
 	}
-	db, err := engine.OpenWithOptions(*dir, engine.Options{Create: op == "put" || op == "delete", Diagnostics: errOut})
+	db, err := open(*dir, engine.Options{Create: op == "put" || op == "delete", Diagnostics: errOut})
 	if err != nil {
 		return fail(errOut, err)
 	}
@@ -101,10 +127,7 @@ func runPersistent(args []string, in io.Reader, out, errOut io.Writer) int {
 		return fail(errOut, err)
 	}
 	if op == "get" {
-		n, err := out.Write(value)
-		if err == nil && n != len(value) {
-			err = io.ErrShortWrite
-		}
+		_, err := out.Write(value)
 		if err != nil {
 			return fail(errOut, err)
 		}

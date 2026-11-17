@@ -79,3 +79,6 @@ SIGKILLはOSページキャッシュを消さない。Sync前の完全headerやT
 
 後続の[複数seed試験](seeded-crash-experiments.md)と[複合I/O試験](compound-io-experiments.md)は実施済み。
 [Close競合試験](close-concurrency.md)も実施済み。次はCLI応答周辺。性能計測、デモは残る。段階3全体の完了とは扱わない。
+
+後続の[CLI応答境界単位](cli-response-experiments.md)も実施済み。
+現在の次の作業は段階3の受入条件・実験対応表と完了判定。上記の「次」の記述は実験当時の順序を示す。
