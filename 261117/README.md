@@ -11,6 +11,9 @@ Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB pref
 上限付きログを結果と同一transactionでDB保存する。正式ログの取得・最小HTML表示も実装済み。常駐Worker・受理commitの取得/実行・Webhook・履歴UIは未実装で、P1全体は未完了。
 GitHub Pagesへの公開対象ではない。常駐バックエンドの配置先は将来別途判断する。
 
+受理commit実行への接続は、許可main上にP1固定fixtureが存在しないため停止中（2026-11-17調査）。
+[確認証拠・取得契約案・再開条件](ci_runner/docs/commit-source-readiness.md)を参照。許可refやmainを無断で変更しない。
+
 ## Python環境とテスト
 
 ```bash

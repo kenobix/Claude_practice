@@ -701,3 +701,45 @@ pip checkは破損なし、compileall成功。今回の試験失敗なし。
 進捗はP0〜P5の計画工数中央値13/23/30/16/20/21hを重みとし、達成度100/80/15/0/0/10%と主観推定。
 38/123相当で約31%、報告は概算約30%・残約70%。実測工数・test件数・commit数による値ではなく、重複する基盤をP4へ再加算しない。
 MVPの全受入条件が揃ったら独立レビューと完成判定を提案し、発展課題へ自動的に進まない。
+
+## 継続作業：受理commit sourceの前提確認・安全契約案・外部依存で停止
+
+### 現状と選択
+
+指定cwd・feat/ci-runner・開始HEAD aaadaa77c703925e1ec7ebcac5153a1d7ae1fdc5、未コミット変更なし。
+ルート/担当AGENTS、261014計画、README/work_log・設計・固定fixture/Worker/テスト構成を確認。
+既存Draft PR #1はopen/Draft、開始HEADのpush/PR CIはともに成功（通常124件、DB/Dockerは対象外）。
+次のP1必須条件である受理commitの固定取得/実行対象への対応付けを調査対象に選んだ。
+
+### 確認証拠と停止理由
+
+- POLICYはkenobix/Claude_practice・refs/heads/main・fixture-v1固定。GitHub APIでrepositoryはpublic/default_branch mainを確認。
+- 2026-11-17T14:16:07.832500+00:00の確認でmain HEADはb4c460a52d5afc4d3623a35cc99655095d3a8e1b（committer date 2026-11-16T15:22:39Z）。local origin/mainも同じ。
+- 固定したmain SHAでcontents/261117/ci_runner/fixtures/job/fixture.pyを照会するとHTTP404。local ls-treeでも対象なし。
+- 作業HEADには同pathが追跡済み。2151 bytes、SHA256 9c567875e01f89cc15eb23d1b3d2d40c2c23239cc414ff12a1b1c3902dd3f7ff。
+- merge-base --is-ancestor HEAD origin/mainは終了1で、担当HEADは許可mainのancestorではない。
+- 現在のローカルfixture結果を受理commit実行成功と扱わない。mainへ反映するか許可先を変える判断が必要だが、今回main push/mergeと無断の仕様緩和は禁止されている。
+- ユーザーの「重大な問題や外部依存で進められない場合は、理由を記録して停止する」に従い、この接続実装は停止。別branch・他日付のコードへ読み替えたり、追加機能で解消済みに見せたりしない。
+
+### 作成したレビュー可能な成果と未実装
+
+commit-source-readiness.mdにimmutableな照会対象/結果と、未実装の最小取得契約案を記録した。
+既存の固定path/digestを候補に、ref所属/commit/tree/blobの対応、通常ファイル/size/digest検証、
+取得先/timeout/応答量制限・失敗時回収・候補runとSHAの再照合・検証bytesからの固定buildを定義してから実装する案。
+現行sourceはguardを含むため、digest承認を省いて任意のmainコードへ置換しない。可変workload対応はguard分離の別設計が必要。
+README・P1計画・進捗文書に停止状態と再開条件を反映。恒久ルールの変更はなくAGENTSは未変更。
+
+アプリ/テスト/migration/依存/workflow/許可設定/実行経路は未変更。取得実装・ネットワーク制限の実効性・受理SHA実行の成功は未実装/未検証。
+GitHub/ローカルのmetadataとbytes hashを確認しただけで、リモートsourceのcheckout/import/実行はしていない。
+404とancestor終了1はreadinessの否定結果として記録し、実行成功やアプリのテスト失敗とは扱わない。
+コード変更がないため、完了済みのlocal pytest/DB/Docker検証は繰り返さない。今回の文書commitに対応する自動CIはpush後に照合する。
+他worktree/既存データ/OS設定を変更せず、一時container/volumeを作らない。新規依存も導入しない。
+
+### 完了判定と再開条件
+
+調査・契約案・停止理由の記録という1単位で終了し、P1/MVPの機能完了は宣言しない。
+推奨対応は許可repo/mainへ管理下の固定fixtureを通常レビュー経由で公開すること（agentはmain反映を行わない）。
+別の管理下repository/ref/path/workflowを使う場合は明示的な許可設定変更の判断が必要。
+次回はmain HEADとsourceの存在/ref所属/digestを再確認し、前提が揃ってから取得/誤対応拒否/通信異常の実装単位を進める。
+全体概算は約30%・残約70%を据置き。文書追加で実装済み機能の割合を増やさない。
+MVPの全受入条件を満たした後に独立レビューと完成判定を提案し、発展課題へ自動移行しない。

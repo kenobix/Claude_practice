@@ -42,3 +42,5 @@ WebhookはP3、UI/成果物管理はP4。任意repo・外部PR・秘密注入・
 claim-onceを維持した[別の一件実行入口](fixture-worker.md)で取得→実行/回収→条件付き確定を接続済み。
 一件Workerの取得前image準備・ID固定の受渡しも実装済み。[上限付きログDB保存](log-storage.md)も結果確定と同一transactionへ接続済み。[正式ログ取得/最小HTML表示](log-access.md)も実装済み。次は受理commitの固定取得/対応付けを設計し、P1の残受入条件を確認する。
 受理SHAのコード取得/実行対象への対応付けは未実装。現在はローカル固定4fixtureだけを実行し、受理commitの検査完了ではない。
+2026-11-17の調査では許可main上にP1 fixtureがなく、接続実装は外部前提不足で停止。
+[sourceの確認証拠・固定digest契約案・再開条件](commit-source-readiness.md)を満たしてから進める。main反映や許可ref変更は自動で行わない。
