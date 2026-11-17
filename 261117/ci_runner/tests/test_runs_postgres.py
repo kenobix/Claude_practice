@@ -16,6 +16,9 @@ import httpx
 import psycopg
 import pytest
 
+from ci_runner.preflight import authorize_execution
+from ci_runner.worker import claim_next
+
 @dataclass
 class DisposableDatabase:
     dsn: str = field(repr=False)  # pytest failure output must never show credentials
@@ -193,6 +196,9 @@ def test_actual_database_stop_returns_503_and_recovers(dedicated_database):
     compose = ['docker', 'compose', '--project-name', project, '-f', filename]
     with api() as (client, _):
         saved = client.post('/runs', json=payload()).json()
+        claim = claim_next('db-stop-check')
+        assert authorize_execution(claim).run_id == claim.run_id
+        saved = client.get('/runs/' + saved['id']).json()
         try:
             subprocess.run(compose + ['stop', 'db'], check=True, capture_output=True, timeout=30)
             for method, path, kwargs in [
@@ -204,6 +210,8 @@ def test_actual_database_stop_returns_503_and_recovers(dedicated_database):
                 assert response.json() == {'detail': 'database unavailable'}
                 assert response.headers['retry-after'] == '1'
             assert client.get('/health/ready').status_code == 503
+            with pytest.raises(psycopg.OperationalError):
+                authorize_execution(claim)
             worker = subprocess.run(
                 [sys.executable, '-m', 'ci_runner.worker', '--claim-once', '--worker-id', 'db-stop-check'],
                 capture_output=True, text=True, timeout=5, cwd=ROOT)

@@ -3,7 +3,7 @@
 作業日: 2026-11-17。worktree: `~/work/Claude_practice-261117`、branch: `feat/ci-runner`。
 基準: [開発計画](../261014/plan_ci_runner.md)。**P0完了（現在環境・管理下の固定fixtureによる開発検証範囲）**。
 ヘルスチェック・受付/履歴API・PostgreSQL永続化・冪等性を実装済み（P1前半）。
-Workerの初回queued取得・attempt/token/DB期限発行も実装済み。
+Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB preflightを実装済み。
 常駐Worker・コンテナ実行・結果保存・Webhook・UIは未実装で、P1全体は未完了。
 GitHub Pagesへの公開対象ではない。常駐バックエンドの配置先は将来別途判断する。
 
@@ -90,6 +90,7 @@ verify_db.pyを使い、既存の開発DBへテストを手動で向けない。
 - [隔離仕様・制限ごとの実測証拠](ci_runner/docs/isolation.md) / [生の証拠JSON](ci_runner/docs/isolation-evidence.json)
 - [受付APIの契約・競合設計・故障検証](ci_runner/docs/intake-api.md)
 - [Worker初回取得の仕様・検証と限界](ci_runner/docs/worker-claim.md)
+- [実行前DB preflightとsnapshotの限界](ci_runner/docs/execution-preflight.md)
 - [P1進捗と次の単一Worker実装順序](ci_runner/docs/p1-plan.md)
 - [調査・検証結果](work_log.md)
 
@@ -159,3 +160,10 @@ DATABASE_URL設定済みの使い捨て開発DBに限って利用する。
 対象なしはclaimed=false。tokenは出力しない。DB停止時はexit 1で成功応答を出さない。
 取得後の実行・結果保存・期限回収はまだなく、コマンド終了後もrunningが残る。
 検証と回収をまとめて行う場合はscripts/verify_db.pyを使用する。詳細はWorker初回取得仕様を参照。
+
+## 実行前DB preflight
+
+Worker内部向けのauthorize_execution(claim)で、DBにある現在token・Worker・状態・取消要求・lease期限・許可設定を再照合する。
+有効な初回attemptだけに、DBから読み直した固定commit等のExecutionPermitを返す。DB異常や条件不一致なら返さない。
+この照合はsnapshotであり、照合後の取消/失効を防ぐ予約ではない。実際の起動直前の再確認と実行中監視は今後必要。
+Dockerの作成・起動や結果保存にはまだ接続していない。通常の検証はscripts/verify_db.pyを使用する。

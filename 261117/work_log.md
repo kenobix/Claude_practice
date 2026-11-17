@@ -213,3 +213,50 @@ P1全体は未完了。heartbeat/期限回収/再試行/取消競合の故障検
 既存migrationの内容が開始HEADと一致、相対文書リンク・Python構文・pip check・差分の空白検査も確認した。
 差分/秘密情報/生成物を確認して担当ブランチへcommit・pushした後、Draft PR #1の進捗を受付API・初回取得の実績に合わせて更新する。
 今回の単位はここで終了し、コンテナ実行の実装には進まない。
+
+## 継続作業：実行前DB preflightの1単位
+
+開始: ~/work/Claude_practice-261117、feat/ci-runner、HEAD 75daa32、未コミット変更なし。
+ルート/日付AGENTS、261014計画、README、work_log、既存コード/テストとDraft PR #1を確認した。
+PRはDraft、headは開始HEADと一致、レビュー/コメントはなし。既存の受付API・初回取得の完了表示は確認済み。
+
+未完了の固定fixture実行には、取得した実行権がまだ有効かの確認が必要。
+今回はその依存を先に閉じる「実行前DB preflight」を選択し、コンテナ作成/起動や結果保存には進まない。
+
+### 実装と設計境界
+
+- preflight.pyにauthorize_execution(claim)と内部ExecutionPermitを追加。
+- run/attempt/Worker/token/番号、両state=running、取消なし、終了/正式結果なし、現在の許可設定、初回attemptを照合。
+- leaseはDBのclock_timestamp()とDB上の期限で判定する。手元のClaimの期限を延長しても期限切れを回避できない。
+- DBから再取得した固定repository/ref/commit/workflowと実行権snapshotを返す。tokenはreprに出さない。
+- DB書込・lease延長はせず、DB異常やcontext終了時の通信失敗でも許可を返さない。
+- snapshotなので照合後の取消/失効は起こり得る。Docker起動との原子性・継続監視は保証しない。
+- API・claim-once CLI・依存・migrationは未変更。新しいHTTP起動経路やホストでのジョブ実行もない。
+- README、AGENTS、設計、取得仕様とP1計画を更新し、詳細はdocs/execution-preflight.mdへ記録した。
+
+### 検証と途中の失敗
+
+初回verify_db.pyは67 passed、10 skipped、1 warning in 29.79s。
+専用DB実停止時にも有効な取得済みClaimから許可が返らないことを追加して再実行したところ、認可テストの準備でclaim_nextがNoneとなり、66 passed、1 failed、10 skippedだった。
+失敗はWorker ID不一致の認可判定前に発生した。取得不可となった瞬間のDB状態は記録できておらず、原因は確定していない。
+投入直後のavailable_at条件と認可試験を分離するため、認可用fixtureのavailable_atをDB時刻より1日前に明示し、取得不能時にはstate/期限/DB現在時刻/attempt数を診断表示するようにした。
+取得をリトライして隠す変更や本番SQLの条件緩和はせず、既存Workerの時刻条件/取得試験も維持した。
+その最終実行は67 passed、10 skipped、1 warning in 30.59s。新規認可19ケースと既存48ケース。
+
+- 有効な実行情報の返却、DB状態/期限の非変更、戻った後のrun/attempt行のNOWAITロック取得を確認。
+- 提示ID/token/Worker/番号不一致、取消、終端、token交代、許可設定変更、結果参照ありを拒否。
+- DB期限切れに対する偽の未来時刻、手元だけ過去の期限、新attemptに対する古いClaimの拒否/正本判定を確認。
+- DB未設定、connection context終了時の注入通信エラー、専用DB実停止で許可なしを確認。
+- 一度成功したsnapshotの後で取消をcommitすると次の照合が拒否されることを確認。取消APIや実行中監視の完成とはしない。
+- API/Worker既存回帰、migration再適用、DB再起動後のschema保持も確認した。既知のTestClient非推奨警告1件。
+
+### 残課題と次の単位
+
+P1全体は未完了。次は固定fixtureの制限付きコンテナ作成・設定照合を本番側へ用意し、後続の起動直前にDB preflightとcgroup等の実値確認を接続する。
+実行中の時間/ログ/lease監視、停止/回収、条件付き結果確定、再試行と復旧は未実装。
+認可用fixtureの単発取得不可の根本原因は未特定。再発時に追加した診断で調査する。
+今回の1単位をcommit/push後、Draft PRの最新進捗・テスト結果・残課題を更新し、この実行を終了する。
+
+既存P0隔離回帰は別実行で10 passed in 41.46s。過去の証拠JSONは変更していない。
+最終的な専用ラベル照会・差分と秘密情報/生成物の確認後にcommit/pushし、PR #1をDraftのまま更新する。
+最終照会では今回のDB container/volume/networkとP0 container/imageの残存はすべて0件。P0実測JSONのfailure/cleanup errorも0件だった。
