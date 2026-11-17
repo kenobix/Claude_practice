@@ -4,7 +4,8 @@
 2026-11-17にPhase 1を実装。入力検査・L2/L3/L4分類・基本集計・JSON/端末表が実装済み。
 同日にPhase 2前半の双方向フロー集計・TCP flags・フロー数上限を実装。
 継続単位としてDNS名復号・正規化・単一質問抽出の内部APIを実装済み（下記参照）。
-回答本文検査・CLI統合と照合は未実装。現行CLIの挙動/SchemaはPhase 2前半のまま。
+次の継続単位でRR構造と圧縮参照先の検査APIも追加済み（下記参照）。
+CLI統合と照合は未実装。現行CLIの挙動/SchemaはPhase 2前半のまま。
 
 ## 入力境界と停止
 
@@ -165,7 +166,43 @@ DNSDecodeErrorにclassification/reason/offsetを保持し、raw bytesをエラ�
 この単位はanswer/authority/additional件数、RRのRDLENGTH/RDATAを検査しない。
 TC/RCODEは情報として保持するだけで、応答照合・成功判定・所要時間は計算しない。
 CLIのpacket分類やJSON Schemaへはまだ接続しない。既存153テストと出力契約を維持する。
-次の単位でRR境界・参照先検証を実装し、その後にpacket分類へ統合する。
+全体構造検査には以下のparse_messageを使用する。packet分類への統合は未実装。
+
+## DNSメッセージのRR構造（内部API実装済み）
+
+parse_message(message)はopcode=0/QDCOUNT=1の完全なUDP payloadを入力とし、
+DNSMessage(question, answers, authorities, additionals)を返す。各セクションはwire順のtuple。
+各DNSResourceRecordはname/rtype/rclass/ttl/rdata/rdata_offset/end_offsetを持つ。
+名前の後の固定10 bytesを読み、RDLENGTHに従って本文範囲を検査する。
+宣言した全RRを読み終えてメッセージ末尾と一致することを要求し、余分なbytesはmalformed。
+TC=1/NXDOMAINでも構造境界を緩めず、TC/RCODEを保持するだけで成功/照合は判定しない。
+
+parse_messageは名前の解析成功時にラベル先頭・root・圧縮ポインター位置を登録し、
+以後の圧縮参照先をその集合に制限する。label内、type/class/TTL等の数値領域、
+不透明なRDATA内部をたまたま名前として解釈しない。未登録参照は安全のためunsupported
+（dns_pointer_target_unverified）とし、未知RR仕様を不正と断定しない。
+単独decode_name/parse_questionの従来APIはこのメッセージ全体の参照先証明を行わない。
+
+以下の名前を含むRDATAのwire形状は検査し、名前の境界を参照先として登録する。
+
+| RR type | 検査するRDATA |
+|---|---|
+| NS(2)/CNAME(5)/PTR(12) | 名前1つ、符号化長がRDLENGTHと一致 |
+| MX(15) | preference 2 bytesと名前1つ |
+| SOA(6) | 名前2つと32 bit整数5つの計20 bytes |
+
+名前の符号化bytesはRDLENGTHを跨いで読まない。圧縮参照の展開先だけは以前の検証済み名へ辿れる。
+その他のRDATAは宣言長だけを確認してraw bytesで保持し、内部の名前を推測しない。
+Aのアドレス長、未知RRの内部構造、EDNSの意味など全RDATA仕様の妥当性は保証しない。
+
+既存のメッセージ65507 bytes・各名256ステップに加え、全3領域合計1024 RR、
+メッセージ全体で名前復号16384ステップまで。各ラベル/root/ポインターを1ステップとし、
+追跡先の展開も加算する。ちょうど上限は可。上限超過はunsupported
+（dns_record_work_limit/dns_message_work_limit）。現在は内部APIの固定上限で、CLI設定は未追加。
+境界不足はmalformedとしてDNSDecodeErrorに理由/offsetを残す。
+
+この単位は内部APIのみで、CLI・Schema 0.3.0・PacketRecord・フロー帰属・入力上限・時刻精度を維持する。
+次はUDP DNS候補のpacket分類へ接続し、その後に照合キー/窓処理とDNSレポートを追加する。
 
 ## DNS照合（Phase 2後半予定）
 

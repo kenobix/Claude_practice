@@ -262,3 +262,49 @@ RR境界/RDLENGTH/RDATA、ポインターが既知ラベル境界を指すこと
 TShark独立比較・性能/負荷計測・デモも未実施。今回の範囲から先へは進めない。
 
 成果は担当branchへcommit・pushし、Draft PR #3の完了/今後の予定とテスト数を実績へ更新する。
+
+
+# 継続単位 — DNSのRR構造と圧縮参照先検証
+
+実施日: 2026-11-17（Asia/Tokyo）。開始HEAD=82ec2ad、cwd=/home/kenshin/work/Claude_practice-261119、
+branch=feat/pcap-analyzer、初期statusはclean。
+
+ルート/担当AGENTS、261014計画、README/work_log、仕様、既存コード・テストとDraft PR #3を確認。
+AGENTSは継続利用可能な内容のため変更なし。既存193テストを再実行し全件成功した。
+名前・質問抽出まで完了しており、次の依存部分であるRR構造/参照先検証を1単位として選択。
+CLI統合・DNS照合は今回実施せず、次の作業へ残した。
+
+## 実装
+
+- dns.pyへparse_messageとDNSMessage/DNSResourceRecordを追加。
+  answer/authority/additionalの宣言件数、名前、固定10 bytes、RDLENGTHを検査し、
+  raw RDATAと開始/終了offsetを保持する。全セクション終了後の余分なbytesも拒否する。
+- メッセージ文脈では検証済みのラベル先頭/root/ポインター位置だけを圧縮参照先として許可。
+  ラベル内部・固定数値・不透明RDATAへの未検証参照はunsupported。
+  従来のdecode_name/parse_question単独APIの契約は維持する。
+- NS/CNAME/PTRの名前、MXのpreference+名前、SOAの名前2つ+20 bytesをwire形状として検査。
+  名前の符号化bytesがRDLENGTHを跨がないよう制限し、それらの名前境界も参照先へ登録。
+  他RDATAは不透明bytes。Aのアドレス長やEDNS等、全RRの意味的妥当性は保証しない。
+- 既存のメッセージ/各名上限に加え、全3領域合計1024 RR・名前復号計16384ステップに制限。
+  上限超過はunsupported、構造不足/矛盾はmalformedのDNSDecodeErrorを返す。
+  TC/RCODEは境界検査を緩めず保持するだけで、DNS成功/所要時間を判定しない。
+
+## 検証
+
+新規42件を追加し、全235テスト成功（既存193件は変更せず維持）。
+3領域、圧縮A例、複数RR、名前を含む5種のRDATA、pointer/rootの再参照、
+各領域のヘッダー/RDATA不足、RDLENGTH内境界、未検証参照先、余剰bytes、
+TC/NXDOMAIN、処理上限と既存人工DNS記録を検証した。
+追加テスト初回に処理上限の期待値を5ステップと数え誤ったため、
+質問3 + pointer/追跡先4 = 7ステップへ手計算を訂正し、上限ちょうどと1少ない値で再検証した。
+既存CLI/Schema/ツール版/依存/fixture/期待値/packet分類/フロー帰属/時刻精度は変更なし。
+READMEと仕様へ実装範囲・固定上限・未検証の意味検査・次の単位を追記した。
+ライブ捕捉・送信・スキャン・外部照会は行わず、GitHubは担当PRの確認/更新と保存だけに使用。
+
+## 次の作業と残課題
+
+次の1単位は非fragment・非truncatedのUDP port53候補へのparse_message接続と、
+DNS構造不正/未対応のpacket分類への反映（フロー帰属と分類の優先順位を維持）。
+その後に完全照合キー、5秒窓・重複/追加/孤立応答、終端/時刻逆行、DNSレポートへ進む。
+未知RDATAの意味検査、TShark独立比較、性能/負荷、デモは未実施。
+差分・秘密情報・生成物を確認して担当branchへcommit・pushし、PR #3の進捗を更新する。
