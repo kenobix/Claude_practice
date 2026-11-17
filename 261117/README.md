@@ -1,14 +1,14 @@
 # CIジョブ実行基盤：環境整備とP0設計準備
 
 作業日: 2026-11-17。worktree: `~/work/Claude_practice-261117`、branch: `feat/ci-runner`。
-基準: [開発計画](../261014/plan_ci_runner.md)。**P0完了（現在環境・管理下の固定fixtureによる開発検証範囲）**。
+基準: [開発計画](../261014/plan_ci_runner.md)。**P0完了（現在環境・管理下の固定fixtureによる開発検証範囲）**。**P1完了（管理下fixtureの受付から結果保存・単一Worker停止まで）**。
 ヘルスチェック・受付/履歴API・PostgreSQL永続化・冪等性を実装済み（P1前半）。
 Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB preflightを実装済み。
 固定fixtureのコンテナ作成・設定照合・回収まで実装済み。
 内部ライブラリでDB再照合・実値ガード・時間/ログ/lease上限付きのローカル固定fixture実行も実装済み。
 ローカルfixture結果の条件付きDB確定（状態/exit/理由/終了時刻・正式attempt参照）も実装済み。
 別プロセスの一件実行入口で、取得→ローカル固定fixture実行/回収→条件付き確定まで接続済み。
-上限付きログを結果と同一transactionでDB保存する。正式ログの取得・最小HTML表示も実装済み。受理commitの固定fixtureを一件実行し、sourceとimageの由来を結果に保存できる。常駐Worker・Webhook・履歴UIは未実装で、P1全体は未完了。
+上限付きログを結果と同一transactionでDB保存する。正式ログの取得・最小HTML表示も実装済み。受理commitの固定fixtureを一件実行し、sourceとimageの由来を結果に保存できる。常駐Workerは検証済みcommitを順に実行する。Webhook・履歴UIは後続フェーズで扱う。
 GitHub Pagesへの公開対象ではない。常駐バックエンドの配置先は将来別途判断する。
 
 ## 受理commitのsourceを検証する
@@ -45,6 +45,19 @@ CI_RUN_LIVE_COMMIT_SOURCE=1 .venv/bin/python scripts/verify_execution.py
 結果の `commit_*` 理由は受理commit経路、`fixture_*` はローカル開発経路を表す。
 正式attemptの `attempt_sources` にrun ID・受理SHA・main SHA・blob SHA・source SHA-256・image IDを保存する。
 詳細は[一件Worker仕様](ci_runner/docs/fixture-worker.md)を参照。
+
+## 単一Workerを常駐させる
+
+```bash
+.venv/bin/python -m ci_runner.fixture_worker --worker-id commit-worker-1 --serve
+```
+
+専用DB・migration 004・Docker・GitHub HTTPSの条件は一件実行と同じ。
+空キューは1秒ごとに確認し、受理commitだけを一件ずつ処理する。結果確定後にstdoutへ1行ずつ出力する。
+停止はWorker PIDにSIGTERMを送る。取得やbuildの途中なら完了・回収を待ち、claimを開始済みの一件は
+既存の時間・lease上限で確定または失敗、回収してから終了する。
+取得拒否・GitHubレート制限・DB/Docker異常・確定不明は終了1となる。再起動する前にDB状態を照合する。
+[常駐と停止の仕様](ci_runner/docs/fixture-worker.md#常駐実行と停止)。
 
 ## Python環境とテスト
 

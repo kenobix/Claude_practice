@@ -72,7 +72,7 @@ commit応答が失われれば結果不明になり得るため、DBエラーを
 
 DB期限/状態/token/取消要求の再確認はpreflightとして実装済み。内部の固定fixture実行ライブラリへ準備・起動前/ガード後DB照合・実値確認と上限監視を接続済み。claim-once CLIからは呼ばない。
 取得を済ませてから任意のホストコマンドを呼ぶ実装は行わない。
-条件付きfixture結果確定と[別の一件Worker入口](fixture-worker.md)への接続も実装済み。claim-once自体は取得だけを維持し、常駐接続は未実装。P1全体は未完了。
+条件付きfixture結果確定と[別の一件Worker入口](fixture-worker.md)への接続も実装済み。claim-once自体は取得だけを維持する。受理commitの常駐入口はfixture_workerの --serve。
 heartbeat、自動lease回収、基盤障害の再試行、古い報告拒否・取消競合の故障実験はP2で完成させる。
 
 参考: [PostgreSQL SELECT](https://www.postgresql.org/docs/17/sql-select.html)、

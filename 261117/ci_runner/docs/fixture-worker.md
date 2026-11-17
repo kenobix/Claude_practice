@@ -1,7 +1,7 @@
-# 固定fixtureを一件実行するWorker
+# 固定fixtureを実行するWorker
 
 `src/ci_runner/fixture_worker.py`はAPIから独立した信頼済みプロセス。
-P1の取得・隔離実行・結果確定を接続する単位で、常駐ループやP2の復旧処理を含めない。
+P1の取得・隔離実行・結果確定を接続し、一件実行と常駐の入口を持つ。P2の復旧処理は未実装。
 従来の[claim-once](worker-claim.md)の意味は変更しない。
 
 ## ローカル開発経路
@@ -64,7 +64,7 @@ build1回・createのimage ID一致・正常確定・資源回収も確認する
 
 再現はscripts/verify_execution.py。通常pytest/ActionsはDockerを起動しない。
 最新の実行証拠はignored artifacts/fixture-worker-latest.json（source SHA-256・終了receipt・回収確認）、件数と実測はwork_log.mdに記録する。
-P1全体は未完了。正式ログ取得/最小HTML表示は後続単位で実装済み（[仕様](log-access.md)）。ローカル経路の実測記録は上記の範囲。本格UIは後続フェーズで扱う。
+正式ログ取得/最小HTML表示は実装済み（[仕様](log-access.md)）。ローカル経路の実測記録は上記の範囲。本格UIは後続フェーズで扱う。
 
 ## 受理commitの固定fixture経路
 
@@ -93,3 +93,19 @@ Docker base imageやbuild cacheは既存の運用どおり再利用され得る�
 `CI_RUN_LIVE_COMMIT_SOURCE=gh` では試験のHTTP取得だけを認証済みの `gh` に切り替える。
 実GitHubの応答を既存のcommit/tree/blob検証に渡し、同じCLI入口から専用DBと実Dockerで実行する。
 テスト用通信の切替はWorkerの公開引数やDocker build contextに含めない。
+
+
+## 常駐実行と停止
+
+- `--serve` は常に受理commit経路を使う。`--run-once` と同時には指定できない。
+  一件の確定・回収とreceiptの出力を終えてから次の処理へ進む。空キューは1秒間隔で読み、空のreceiptは出力しない。
+  保存済みのチェック失敗・timeoutは処理済みなので次へ進める。
+- Worker PIDへのSIGTERM/SIGINTは停止フラグだけを設定する。取得後およびbuild後にフラグを確認し、
+  claimに入る前なら専用リソースを解放して終了0。claimに入った一件は既存の認可・実行上限と結果確定に従い、
+  終了・回収後に次のrunを開始せず終了0。停止要求とclaim開始が並行した場合は進行中の一件として扱う。
+- 停止待ちには進行中の取得・build・実行・回収の操作期限が適用される。外部監視から停止するときは
+  Worker PIDを対象にし、同時にDocker/Curl子プロセスへシグナルを送らない。
+  SIGKILLやdaemon障害で残り得る資源とrunning attemptの自動回復はP2。
+- 取得拒否、claim競合、DB障害、Docker障害、確定失敗では安全な失敗情報を出して終了1。
+  先頭が取得できないときは後続に読み替えない。GitHub匿名APIの制限がかかったときも同じ扱い。
+  runの状態と正式attemptを照合してから運用者が再開する。

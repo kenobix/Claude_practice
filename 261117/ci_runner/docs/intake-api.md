@@ -2,7 +2,7 @@
 
 実装済み: POST /runs、GET /runs、GET /runs/{id}、許可設定・入力上限・履歴ページング。
 Worker初回取得は後続で実装済み（[取得仕様](worker-claim.md)）。
-未実装: 常駐Worker、Webhook、clone、ジョブコンテナ実行、取消・手動retry・成果物管理。
+受付APIとは別の単一Workerで固定fixtureを実行できる。Webhook、取消・手動retry・一般成果物管理は未実装。
 P1全体の完了条件（実行から結果保存）はまだ満たしていない。
 
 ## 許可設定と入力

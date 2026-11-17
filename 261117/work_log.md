@@ -797,3 +797,24 @@ MVPの全受入条件を満たした後に独立レビューと完成判定を�
   専用DB readiness 200、PostgreSQL 17.12、再起動後のmigration 1〜4保持、専用DB資源の回収も確認。
   匿名HTTPS経由の大量ログモードは枯渇したAPI枠のため完了できなかった。実GitHub・実Dockerによる4モード完了は
   認証済みghを通信に使う試験からの結果であり、通常のWorker取得設定を変更していない。
+
+## 単一Workerの常駐・停止とP1受入
+
+開始HEAD `cbaebed9ee8935a4ab53f95d934d5595292c63c3` のpush/PR CIは成功。
+Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐と停止を今回の一単位に選んだ。
+
+- `fixture_worker --serve` は検証済みcommitの一件実行を繰り返す。
+  空キューは1秒間隔、保存済みの結果は逐次出力。障害・取得拒否・確定不明は終了1とし自動再試行しない。
+- SIGTERM/SIGINTで停止を要求する。取得後・build後の確認で新規claimを避け、claim中/取得済みの一件は
+  既存の制限内で確定・回収まで進める。実行権の延長・期限回収・自動再試行はP2。
+- 通常回帰は163 passed、135 deselected、既知警告1件。pip check、compileall成功。
+- 専用PostgreSQL・実Docker・通常の匿名GitHub HTTPSによる選択回帰は53 passed、245 deselected、
+  既知警告1件（147.41秒）。今回は認証済みghの試験経路へ切り替えず、4モードすべてを確認した。
+  実稼働中の常駐WorkerにSIGTERMを送り、timeoutの結果・由来を確定し、コンテナと専用image tagを回収。
+  次のrunがqueued・attemptなしのまま、API再起動後に結果とHTMLログを参照できることを確認。
+- 同一runのclaim競合、SHA不一致、DB実停止、容量不足・競合、確定rollbackと再送、入力/HTTP冪等性を選択回帰。
+  P0隔離・Docker準備を含む全件統合は今回再実行していない。基準commitの全件統合と今回の範囲を区別する。
+- P1は管理下fixtureの受入を完了。rawログの1MiB/attemptと台帳上限・Dockerログ無効を確認した範囲。
+  ホストディスク総量や64MiB実データの満杯試験は未実測。MVP全体は計画工数を重みとする概算35%。
+  次の作業はP2のDB時刻に基づくlease更新と、失効/古いtoken/DB断での拒否を検証する。
+専用DBのreadiness 200、PostgreSQL 17.12、再起動後のmigration 1〜4保持、専用DBコンテナ・network・volumeの回収を確認。

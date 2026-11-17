@@ -1,8 +1,8 @@
 # P1実装進捗と単一Worker実装計画
 
 前提: [P0隔離実測](isolation.md)は現在環境の管理下fixtureについて完了。
-下表1〜4は実装・実DB検証済み（P1前半）。5は初回取得、6はDB照合・準備・ローカル固定fixtureの実値ガード/上限付き実行/回収まで実装・検証済み。7は条件付きのローカルfixture結果確定まで実装済み。受理commitの固定fixture実行も一件Workerへ接続済み。常駐ループ、Webhook・本格UIは未実装。ログ永続化と正式参照の取得/最小HTML表示は接続済み。
-受付契約と障害検証は[受付API仕様](intake-api.md)。P1全体の完了条件は未達。
+下表1〜4は実装・実DB検証済み（P1前半）。5は初回取得、6はDB照合・準備・ローカル固定fixtureの実値ガード/上限付き実行/回収まで実装・検証済み。7は条件付きのローカルfixture結果確定まで実装済み。受理commitの固定fixture実行も一件Workerへ接続済み。単一Workerの常駐と停止を接続済み。Webhook・本格UIは未実装。ログ永続化と正式参照の取得/最小HTML表示は接続済み。
+受付契約と障害検証は[受付API仕様](intake-api.md)。管理下fixtureと現在の検証環境におけるP1の受入は完了。
 継続開発のための[通常テスト自動化](automated-tests.md)を追加済み。DB/Docker統合試験と区別する。
 
 ## 順序と受入条件
@@ -36,7 +36,7 @@ WebhookはP3、UI/成果物管理はP4。任意repo・外部PR・秘密注入・
 
 1. **初回取得は完了**。固定Worker IDを持つ別プロセスでqueuedを1件取得し、DB時刻のlease・新token・attempt番号を同じtransactionで永続化する。取得後停止の状態を記録し、APIにはDocker権限を与えない。
 2. **DB実行権preflightは完了**。起動前の現在token・状態・DB期限・取消要求を再照合するsnapshotを返す。未起動コンテナの設定検証/回収も完了。起動前とガード後のDB再照合・実値確認も内部実行ライブラリに接続済み。固定イメージ/commit以外を実行せず、preflight不一致・DB断では開始を拒否する。テスト用ハーネスを本番からimportしない。
-3. **内部の固定fixture実行は完了**。合計ログ保持1MiB・10秒/DB残leaseで停止し回収、4fixtureと拒否系を専用DB/実Dockerで確認。API/claim-once・常駐処理へは未接続。
+3. **内部の固定fixture実行は完了**。合計ログ保持1MiB・10秒/DB残leaseで停止し回収、4fixtureと拒否系を専用DB/実Dockerで確認。API/claim-onceへは未接続。
 4. **内部の条件付き結果確定は完了**。token・状態・DB期限・取消条件を確認し、run/attemptの結果を同時commit。再送・競合・commit前後SIGKILL・再起動後の保持を検証。lease失効後の自動回復はP2の残件と明記する。
 
 claim-onceを維持した[別の一件実行入口](fixture-worker.md)で取得→実行/回収→条件付き確定を接続済み。
@@ -46,4 +46,18 @@ PR #4で許可mainに固定fixtureを公開済み。読み取り専用で受理S
 検証したrun ID/SHAだけを原子的にclaimする一件Workerを追加。取得と固定Dockerfileによるbuildはclaim前に行う。
 受理commitの固定fixture経路では、正式attemptの結果・ログ・source/imageの由来を同じtransactionで保存する。
 [一件Worker仕様](fixture-worker.md#受理commitの固定fixture経路)。
-P1の残件は常駐Workerの停止方針と一連の受入確認。heartbeat、期限監視、再試行はP2で扱う。
+`--serve` は受理commit経路を直列に使用し、SIGTERM/SIGINTで新規受付を止める。heartbeat、期限監視、再試行はP2で扱う。
+
+## P1受入判定
+
+| 計画書の受入項目 | 確認した証拠 |
+|---|---|
+| 手動投入・一覧・詳細・入力上限 | 通常のAPI入力試験、実PostgreSQLのHTTP冪等性・同時投入、commit前後のプロセス停止、DB停止と復旧の回帰。 |
+| 単一Workerと制限付き実行 | 許可mainの受理commitを匿名HTTPSで取得し、同一run/SHAをclaimして実Dockerで4モードを完了。別プロセスの常駐Workerに稼働中SIGTERMを送り、現在のrunだけを確定・回収し次をqueuedに保持。 |
+| 終了理由・保持・HTML表示 | 成功・失敗・timeout・ログ超過の状態、終了コード、正式attempt、source/imageの由来を保存。Worker終了・API再起動後に結果とログ、最小HTML表示を照会。 |
+| 大量ログと回収 | Dockerの永続ログ無効、保持1MiB/attempt、raw payload台帳64MiB上限。実Dockerでログ超過停止と一時資源回収、容量不足の確定拒否、実DBで容量境界・予約競合・rollbackを確認。 |
+
+管理下fixtureにおけるP1は完了。容量判定はジョブログのraw payloadを対象とし、WAL・索引・Docker cache等を含む
+ホスト総ディスク容量の測定・保証は対象外。64MiB実データによる満杯試験は行っていない。
+[P1作業ログ](../../work_log.md)と[上限付きログ保存仕様](log-storage.md)を参照。
+次はP2の実行権更新と、期限切れ・古いtoken・DB断時の拒否を検証する。

@@ -3,7 +3,7 @@
 今回の1単位は `src/ci_runner/execution.py` の `execute_fixture(claim, mode)`。
 先行する[DB preflight](execution-preflight.md)と[制限付きコンテナ準備](container-preparation.md)をつなぐ内部ライブラリ。
 固定ローカルのsuccess/failure/timeout/logsだけを実行する。任意コード・コマンド・イメージ・YAMLは受け付けない。
-HTTP API・claim-once CLIからは呼ばず、常駐ループ・heartbeatは未実装。後続の[条件付きDB結果確定](result-finalization.md)を内部関数として実装済み。
+HTTP API・claim-once CLIからは呼ばず、受理commitは専用の常駐Workerから実行する。heartbeatはP2。後続の[条件付きDB結果確定](result-finalization.md)を内部関数として実装済み。
 受理commitの取得/実行コードへの対応付けは未実装。DB確定時も理由はfixture_接頭辞であり、受理commitの検査成功とは扱わない。
 
 ## 起動と処理開始の区別
@@ -92,7 +92,7 @@ execute_fixture単体ではrun/attemptはrunningのまま。後続のfinalize_fi
 ## 次の1単位
 
 条件付き結果確定と[一件だけのWorker入口](fixture-worker.md)による取得→実行/回収→確定の接続は後続単位で実装済み。
-受理commit取得/対応付け、常駐Worker接続、実行中DB監視・heartbeat・期限回収・再試行等も残件。P1全体は未完了。
+受理commit取得と常駐Workerへの接続は実装済み。実行中DB監視・heartbeat・期限回収・再試行はP2の残件。
 
 参照: [Docker startのattach/interactive](https://docs.docker.com/reference/cli/docker/container/start/)、
 [Python selectors](https://docs.python.org/3.12/library/selectors.html)、
