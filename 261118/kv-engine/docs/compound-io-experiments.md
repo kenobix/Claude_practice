@@ -58,6 +58,7 @@ make check
 プロセスは通常Closeで終了し、この単位で新しいSIGKILLは行わない。既存の停止試験は全体テストで再実行する。
 Sync失敗後のバイト残存・Truncate後の状態はOSキャッシュが生存する条件の観測で、電源断耐性の証明ではない。
 失敗後の再Openが通ることだけを、失敗したSyncの電源断時保証や装置flush成功と扱わない。
-次の優先単位はCloseとPut/Get/Delete/Inspectの同時競合の専用検証。
+CloseとPut/Get/Delete/Inspectの同時競合は[後続単位](close-concurrency.md)で検証済み。
+次の優先単位は製品CLIのClose/stdout応答周辺の停止・出力失敗試験。
 製品CLIのClose/stdout応答周辺、段階4の計測、段階5のデモ、ホスト停止/電源断の検証は残課題。
 段階3全体の完了とはしない。

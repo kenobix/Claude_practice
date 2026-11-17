@@ -18,8 +18,10 @@ Linuxの単一writer、同期追記ログ、再起動時の索引再構築、限
   [操作列・復旧境界・観測結果](kv-engine/docs/seeded-crash-experiments.md)を記録。
 - 複合I/O単位: 更新ENOSPC/Sync失敗と再Openの読取・同期・復旧失敗を組み合わせた36ケースと正常対照が成功。
   [失敗後の拒否・prefix保持・再試行](kv-engine/docs/compound-io-experiments.md)を記録。
-- 次の優先作業: CloseとPut/Get/Delete/Inspectの同時競合の専用検証。
-  CLI応答周辺、段階4の計測、段階5のデモ、電源断検証は残課題。段階3全体は未完了。
+- Close競合単位: I/O先行・Close先行・全API同時開始の18ケースを検証済み。
+  [閉鎖順序・失敗応答・成功履歴の照合](kv-engine/docs/close-concurrency.md)を記録。
+- 次の優先作業: 製品CLIのClose/stdout成功応答周辺の停止・出力失敗試験。
+  段階4の計測、段階5のデモ、電源断検証も残課題。段階3全体は未完了。
 
 ## 作業環境
 

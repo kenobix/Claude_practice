@@ -435,3 +435,49 @@ SIGKILLはOSキャッシュを失わせない。ホスト停止・電源断・WS
 OSキャッシュが生存する条件の再試行成功を、失敗したSyncの電源断時保証と扱わない。段階3全体は未完了。
 差分・秘密情報・生成物を確認した後、261118/内の対象だけcommitし、担当ブランチへ通常pushする。
 Draft PR #2の進捗を更新してDraftを維持する。反映の実結果は最終報告で確認する。
+
+## 段階3・Close競合単位（2026-11-17 JST）
+
+### 状態確認と選択
+
+- cwd: /home/kenshin/work/Claude_practice-261118、branch: feat/database-engine、開始HEAD: 7b8a1ee、開始時clean。
+- root/担当AGENTS、261014の計画、README/work_log、既存のmutex/Close/I/O抽象層・並列テスト・fixture仕様を確認。
+- Draft PR #2はDraft、担当ブランチ/HEADが一致し、複合I/O試験まで反映済み。
+- 段階0〜2と更新/Open停止・複数seed・複合I/O試験が完了。次の最優先だったClose競合を1単位に選択。
+  既存diskOpsと辞書モデルを再利用し、製品CLI応答周辺と段階4〜5は次へ残す。
+- AGENTSは継続運用に適合しており変更不要。Goは局所導入1.27.4 linux/amd64。OS・他worktreeは変更なし。
+
+### 実装と既存契約の確認
+
+- close_linux_test.goに実FDを包むchannel待合せとatomic counterを追加。製品コード・形式v1・fixtureは変更しない。
+- I/O先行6ケース: Put/DeleteのSync、GetのReadAt内部で停止し、Closeを競合させる。各々成功/EIOを検証。
+  停止中にmutex保持・file Close未実行・LOCK保持を確認し、解除後の結果とClose後の再Openを照合。
+- Close先行8ケース: Close内部で停止して各APIと追加7件のCloseを開始。Close成功/EIOの双方を検証。
+  EIOは実File.Close後に付加する注入であり、最初のCloseのみエラー、他のCloseと繰返しCloseはnil。
+  APIはErrClosedとゼロ結果、追加I/Oなし、ログ不変。LOCKはdata.log Close待機中も保持される。
+- 同時開始4ケース: 各64 API+8 Closeを共通barrierから開始。成功かErrClosedのみ許容する。
+  成功更新をsequence順に並べ、辞書と再Open結果を照合。Inspect成功時も同じprefixの件数/live_keysを要求。
+- Close回数1、実FD閉鎖、flock再取得を全ケースで確認。タイムアウトとcleanupを設け、sleepで順序を推測しない。
+
+### 検証結果
+
+- 追加18ケースは全成功。make check（gofmt検査、go vet ./...、go test ./...、CLI build）も成功。
+- go test -json -count=1 ./...: Test関数64個（子helper含む）とFuzz関数2個の既存seedが成功。
+  サブテスト等を含むpassイベント356件、fail 0、skip 0、全5パッケージ成功。
+- go test -race ./...: 全5パッケージ成功。新しいfuzz探索は行わず既存seedを再実行。
+- 同時開始の最終通常テストで成功更新19/21/0/5件、成功Inspect 10/12/0/1件を観測。
+  件数は固定せず、Closeが先なら全操作拒否も許容。両順序は固定I/O待合せケースで別途確認。
+- I/O先行のPut/Deleteは全長write済みのため、Sync EIOでも今回の再Openではsequence4を再生。
+  Get EIOは元のsequence3を保持。Close先行では全APIを拒否し元のsequence3とログを維持。
+- README・耐久性・検証計画・既存実験記録を更新し、close-concurrency.mdに契約・観測と限界を記録。
+
+### 残課題・次の単位・保存
+
+次は製品CLIのClose/stdout成功応答周辺の停止・出力失敗試験。
+段階4の性能計測、段階5のデモ、ホスト停止・電源断・WSL/装置flushの検証は残る。段階3全体は未完了。
+今回のEIOは注入値で、LOCKのCloseエラーや実デバイス障害・全スケジュールを網羅していない。
+InspectはI/Oを行わないためI/O先行の注入点を持たず、Close先行と同時開始で確認した。
+全DBはt.TempDir内の人工データ。新規SIGKILLは追加せず、既存試験を全体テストで再実行。
+OSキャッシュの生存下での再Open成功やrace detector成功を、電源断耐性・全並行実行の証明としない。
+差分・秘密情報・生成物を確認して261118/内の対象だけcommit・担当ブランチへ通常pushする。
+Draft PR #2の進捗を実績へ更新し、Draftを維持する。反映結果は最終報告で確認する。

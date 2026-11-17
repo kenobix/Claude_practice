@@ -57,8 +57,8 @@ make check
 ## 未検証事項と次の単位
 
 初回単位の停止点は固定8箇所、操作列も固定。初回header/file/dir/parent Sync中と復旧Truncate/Sync中は
-[後続単位](open-crash-experiments.md)で検証。複数seedとI/Oエラーの組合せ、Closeとの同時実行、製品CLI応答周辺は未検証。
-複数seedの更新停止試験は[後続記録](seeded-crash-experiments.md)で実施済み。複合I/O障害も[後続試験](compound-io-experiments.md)で検証し、次はClose競合を扱う。
+[後続単位](open-crash-experiments.md)で検証。複数seedとI/Oエラーの組合せ、製品CLI応答周辺は未検証。
+複数seedの更新停止試験は[後続記録](seeded-crash-experiments.md)で実施済み。複合I/O障害も[後続試験](compound-io-experiments.md)で検証した。[Close競合](close-concurrency.md)も実施済みで、次はCLI応答周辺を扱う。
 
 SIGKILLはOSページキャッシュを消さない。ホストクラッシュ、WSL仮想ディスク、装置flush、電源断耐性は実証していない。
 この単位の成功を段階3全体やMVP全体の完了とは扱わない。

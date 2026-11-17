@@ -37,7 +37,7 @@ Go標準ライブラリのLinux用実装を選び、他OS対応は将来の判�
 8. 同期済みsequenceを返し、CLIがstdoutへ成功応答を書く。
 
 ログのサイズを伸ばす通常追記はファイル同期を行う。新しい名前や置換を作らないので、毎操作の親Syncは不要。
-Open中はGET・更新・Inspect・Closeを直列化。複数操作のトランザクションは提供しない。
+DBハンドルの生存中はGET・更新・Inspect・Closeを直列化。複数操作のトランザクションは提供しない。
 
 ## 失敗状態
 
@@ -89,4 +89,8 @@ inspectは同じ検証をするが切り戻さない。開くだけで診断対�
 [複数seedの更新停止試験](seeded-crash-experiments.md)では3 seed・48停止ケースと正常終了6ケースで成功応答履歴を照合した。
 [複合I/O試験](compound-io-experiments.md)で更新失敗と再Open失敗の30組合せ、および対照を検証した。
 復旧Sync失敗時はTruncate済みでもOpenを失敗させる。注入を除いた再試行で正常prefixを再生できたが、
-これは失敗したSyncの電源断時保証ではない。ホスト停止・電源断、Close競合・製品CLI応答周辺は未検証。
+これは失敗したSyncの電源断時保証ではない。
+[Close競合試験](close-concurrency.md)ではI/O先行・Close先行・同時開始の18ケースを検証した。
+Closeは進行中I/Oを待ち、data.log→LOCKの順で閉じる。Closeが先に進むと他のAPIはErrClosedとなる。
+最初のCloseだけが閉鎖エラーを返し、同時/繰返しCloseはnilとなる。
+ホスト停止・電源断、製品CLI応答周辺は未検証。
