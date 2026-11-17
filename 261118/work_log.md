@@ -783,3 +783,57 @@ commit時点で今回のリモートCIは未実行。実結果・SHAと段階3�
 全受入条件を満たした後は独立レビューを提案し、発展課題へ自動で進まない。
 差分/秘密情報/生成物を確認後、対象のみcommit・feat/database-engineへ通常pushする。
 commit時点で今回のリモートCIは未実行。実結果/SHAと段階5の進捗を既存Draft PR #2へ記録し、Draftを維持する。
+
+
+## 2026-11-17: 管理対象ソースからの導入再現とMVP受入照合
+
+### 選択理由と開始時点
+
+- HEAD b0152c4b36deb88b36c8d93e459624e8b6156ea8、feat/database-engine、未コミット変更なし。
+  Draft PR #2を維持。基準commitのpush 44092543548 / PR 44092559373はsuccess、全step成功を確認。
+- root/担当AGENTS、261014計画、README/設計/fixture/コード/テスト/PRを照合。
+  段階0〜4と段階5デモ/説明書は完了。既知の未解決不具合・CI失敗は見つからず、
+  残る「クリーン環境の導入再現とMVP条件照合」を1単位に選んだ。新機能は追加しない。
+
+### 変更と実行結果
+
+- docs/mvp-acceptance.mdに段階0〜5・最小範囲の条件と既存テスト/実験の対応表、状態図、
+  導入再現手順、今回の失敗と調整、技術的な確認/本人確認/対象外条件を記載。
+  README・開発・デモ・設計判断・耐久性・テスト文書から参照。AGENTSは恒久ルール変更がなく据置。
+- Git archive b0152c4の261118だけをmktemp専用領域へ展開。.git/.tools/binを持ち込まず、
+  toolchain/cacheも新設。アーカイブSHA-256はd4c5b0baa2231994cde64e40b4403cb2ef2f5d2b1c7c9fd263b474144f024593。
+  Go導入/試験終了後も57管理対象ファイルがアーカイブと一致した。
+- Linux x86_64、Ubuntu 24.04.4 LTS / WSL2 / ext4 (/tmp、/dev/sdd)、Go 1.27.4、Python 3.12.3、
+  gcc 13.3.0、Make 4.3。ホストOSツールとFSは既存環境を共有する分離ソース検証で、新OSではない。
+- オンラインGo取得は約180秒、12,686,565/70,680,823 Bでcurl exit 28。失敗として記録。
+  setupのtrapが中途stagingを清掃。既存の取得済み公式アーカイブを指定する文書化済みの方法へ切替え、
+  同じSHA-256で再照合した新規Go導入は成功。既存インストールのコピーやOS全体の変更なし。
+- 初回make checkはvet成功、4パッケージ成功、2パッケージ失敗。cmd/kvの3 Testとtestsの1 Testは
+  子buildが親/tmp/.gitの無効なVCS情報取得でexit 128となった。エンジンの不具合とは異なる導入環境の問題。
+  親/tmp/.gitを変更せず、Gitを含まない配布ソース検証に限ってGOFLAGS=-buildvcs=falseを設定。
+  ソースrevisionはcommit/archive hashで記録。通常worktree/CIの設定・DB仕様・assertionは緩和しない。
+- 調整後make check: fmt/vet/test/両CLI build成功、全6パッケージ成功。
+  初回成功の4パッケージは新設キャッシュの結果、初回失敗2パッケージは再実行成功。
+- go test -race -count=1 -timeout=3m ./...: 全6パッケージ成功。
+  ネストした製品CLI/選択Goハーネスは通常buildと区別する。
+- READMEの入口make demoもexit 0。3 scenario_pass、2実SIGKILL、demo_passのcleanup=true/power_loss_verified=false。
+  after_ack: ack=6/sequence=6・275 B。partial_body: ack=5/sequence=5・268→229 B。
+  別fixture DBは不完全64→54 B・k=v・次GET診断なし、破損offset=16・exit 5・91 B不変。
+- 新規テスト関数・fuzz探索・大規模性能計測は追加しない。通常テストの新しいpassイベント数は採取せず、
+  基準commitの417件を今回採取した数とは扱わない。全6パッケージ成功という出力を記録。
+- /tmp/kv-acceptance-*.log と /tmp/kv-acceptance-demo.jsonlに実行記録を保存（Git外）。
+  今回だけの一時ソース/toolchain領域は検証後に清掃し、既存アーカイブや他worktreeを変更しない。
+  製品コード・テスト・形式v1・fixture・Go依存・workflowは変更なし。
+
+### 判定と次の最優先
+
+導入再現と技術的受入根拠の照合は完了。基準commitの別GitHub新規runnerではオンライン導入を含めて成功しているが、
+今回のローカル取得失敗を成功扱いしない。Docker/外部DB/電源断の検証もしていない。
+本人への説明確認（書込み順、応答前停止、復旧可能な末尾）を質問し、回答未受領のため未確認のまま残す。
+段階5/MVP全体は最終完了を保留。独立レビューは未実施であり、新しい必須機能として追加するものではない。
+推定全体進捗約98%・残り約2%。技術的な成果物/導入再現/条件照合が揃い、本人の確認と最終判定が残ることからの
+作業量の目安で、実工数・品質・確定残時間の実測ではない。
+次は本人による説明確認とMVP最終判定。全受入条件を満たした後に独立レビューを提案し、発展課題へ自動で進まない。
+電源断/ホスト停止/WSL・装置flush/診断先の永続化、全故障/seed/スケジュールは依然未検証。
+差分・リンク・秘密情報・生成物を確認し、対象文書だけcommit・feat/database-engineへ通常pushする。
+commit時点で本単位のリモートCIは未実行。push後に最新SHAの結果を確認しDraft PR #2へ記録する。

@@ -168,3 +168,4 @@ tests/demo_linux_test.goが製品CLIをt.TempDirへbuildし、Python 3のscripts
 不在バイナリでは失敗・DB未生成・既存ファイル保持を検査。Python不在は明示的にテスト失敗とする。
 [デモ条件・出力・未検証事項](demo.md)を参照。既存CIがこの実プロセス統合試験を対象に含む。
 クリーン環境の初期導入、本人の理解、Docker/外部DB、電源断はこの試験の成功から判定しない。
+後続の[管理対象ソースからの導入再現・MVP受入照合](mvp-acceptance.md)を参照。
