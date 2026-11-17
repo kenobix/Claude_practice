@@ -7,7 +7,8 @@ classic pcapの入力検査、Ethernet/IPv4/TCP・UDPヘッダー検査、件数
 JSONと端末表を実装した。これは通信量集計の中間版であり、計画全体のMVP完成ではない。
 双方向フロー集計、方向別件数/長さ/根拠、TCP flags、フロー数上限を追加した。
 DNS名の復号・正規化と単一質問抽出を内部APIとして追加した。
-DNSメッセージのRR構造検査も内部APIへ追加済み。CLIへのDNS統合と問い合わせ/応答照合は未実装。
+DNSメッセージのRR構造検査を完全なUDP port 53候補のパケット分類とCLI診断へ統合済み。
+問い合わせ/応答照合は未実装。
 
 ## 作業環境
 
@@ -39,8 +40,9 @@ python3.12 -m venv .venv
 .venv/bin/python -m pytest -q
 ```
 
-全235テスト成功（既存193件 + DNSメッセージ構造検査42件）。
-DNS名/質問抽出40件とフロー・入力処理等の既存テストもそのまま再実行した。
+全271テスト成功（既存235件 + DNSパケット分類統合36件）。
+DNS名/質問抽出40件とフロー・入力処理等の既存テストも再実行した。
+DNS候補の空payloadの分類変更に合わせ、既存1件の期待をparsedからmalformedへ更新した。
 既存100件は分類・入力制限・時刻等の検査を維持し、版変更に伴う期待を更新。
 フローの正常系・方向・キー・flags・truncated帰属・除外・上限・決定性・Schemaの53件を追加した。
 生成した14種類の人工fixture、手計算期待値、4種類のmagic/時刻形式、不正なヘッダー、
@@ -71,10 +73,12 @@ Scapyの経路/インターフェース自動読込をプロセス内で無効�
 基本例の結果は10パケット、捕捉680 bytes、記録上の元長680 bytes、TCP4件、UDP6件、
 全件parsed、観測時刻1700000000000000000〜1700000008000000000 ns（幅8秒、元精度µs）。
 PCAP自体のサイズ864 bytesにはコンテナヘッダーも含む。
-`parsed`はL2/L3/L4ヘッダーまでの検査成功を意味し、DNS等の本文の正常性を意味しない。
+`parsed`は対応ヘッダーと、対象UDP port 53ならDNS構造の検査成功を意味する。
+全RDATAの意味、名前解決の成功や問い合わせ/応答の対応は保証しない。
 
 JSONの`classification_indices`にファイル順・1始まりの根拠番号を保存する。
-`flows`に双方向の集計を出力する。DNSは`dns.status=not_implemented`、`dns.events=null`。
+`flows`に双方向の集計を出力する。DNS構造エラーは既存の分類/diagnosticsに番号付きで出力する。
+`dns.status=not_implemented`、`dns.events=null`は問い合わせ/応答照合の未実装を表す。
 時刻逆行では警告と`disabled_timestamp_regression`を記録し、並べ替えはしない。
 
 | 終了コード | 意味 / 出力 |
@@ -149,14 +153,19 @@ NS/CNAME/PTR、MX、SOAの名前フィールドもRDLENGTH内で検査・登録�
 1メッセージ1024 RR・名前復号計16384ステップまでに制限する。
 循環・不足・長さ矛盾はmalformed、参照先の未検証や処理上限はunsupported。
 
-**内部APIはCLIへ未統合。** parse_questionは引き続き質問だけの抽出APIであり、
+**parse_messageはpacket分類とCLIへ統合済み。** parse_questionは引き続き質問だけの抽出APIであり、
 全体の構造検査にはparse_messageを使う。単独decode_nameは参照先の由来を証明しない。
 A等の内容を含む全RDATAの意味、EDNS等の追加仕様は検証しない。
 構造検査成功を名前解決の成功やサーバー正常と扱わない。
-CLI/Schema/版番号/既存集計は維持し、DNS出力は引き続きnot_implemented。
+非fragmentのIPv4 UDPでsrc/dstのいずれかが53、既存ヘッダー/長さ/時刻検査に問題がなく、
+truncatedでない候補だけにparse_messageを適用する。完全UDP内のDNS不足はmalformed、
+対象外opcode/質問数/参照先・DNS処理上限はunsupported。既存の優先順位を維持する。
+DNS本文が不正でも検証済みのL4ヘッダーによるフロー帰属は維持する。
+DNS候補の空payloadは従来のparsedからmalformedへ変更。port 53以外/TCPは本文を検査しない。
+Ethernet paddingをDNS本文へ含めない。診断上限では従来どおり途中結果と終了2を返す。
+JSONの形状/版番号は維持し、Schemaに分類範囲と照合statusの説明を追加した。
 
-次の実装単位は非fragment・非truncatedのUDP port53候補へのparse_message接続と、
-DNS構造エラー/未対応のpacket分類への統合。その後、端点付き照合キー、
+次の実装単位は検証済みDNS質問と端点/IDを組み合わせた照合キー・向き判定。続いて、
 5秒窓・重複/追加/孤立応答、記録終端/時刻逆行とレポートを実装する。
 TShark比較・計測・デモはさらに後の段階。
 
@@ -175,7 +184,8 @@ UDP長はIPv4の宣言payload長との一致を要求する。
 プロトコル件数は確認できたIPv4 protocol番号等で識別し、L4のtruncatedでもtcp/udpへ数え得る。
 分類の件数とは別の指標で、それぞれの合計が全レコード数と一致する。
 
-DNS名/質問抽出・RR構造検査は内部APIのみ実装済み。CLI統合/窓処理/曖昧さの扱いは未実装。
+DNS名/質問抽出・RR構造検査とpacket分類/CLI診断への統合は実装済み。
+照合キー/窓処理/曖昧さの扱いとDNSイベント出力は未実装。
 フロー集計と端末フロー表は実装済み。
 DNS25ms・未応答・重複queryの判定は依然として将来の手計算期待値である。
 TShark未導入のため独立比較は未実施。性能測定、実通信、他Python版、VS Code GUIは未検証。

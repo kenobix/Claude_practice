@@ -108,6 +108,7 @@ def render_table(report: dict) -> str:
                  ("Unattributed packets", s["unattributed_packet_count"]),
                  ("Unattributed captured bytes", s["unattributed_captured_bytes"]),
                  ("Unattributed original bytes", s["unattributed_original_bytes"]),
+                 ("DNS structure", "checked for complete UDP port-53 candidates"),
                  ("DNS matching", "not implemented (Phase 2b)")])
     lines = [f"{label:<28} {value if value is not None else 'n/a'}" for label, value in rows]
     if report["flows"]:

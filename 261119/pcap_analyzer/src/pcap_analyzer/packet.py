@@ -1,10 +1,12 @@
 """Validate available L2/L3/L4 bytes before extracting headers with Scapy.
 
-Only header slices enter Scapy. Application payload (including DNS) is deferred.
+Only header slices enter Scapy. Complete UDP port-53 payloads enter the bounded
+DNS structure decoder; query/response matching is handled separately.
 """
 
 import struct
 
+from .dns import DNSDecodeError, parse_message
 from .models import PacketRecord
 from .offline import configure_offline
 
@@ -102,4 +104,11 @@ def decode(data: bytes, *, index: int, timestamp_ns: int | None,
         else:
             layer = UDP(transport[:8])
             fields.update(src_port=layer.sport, dst_port=layer.dport, flow_eligible=True)
+            # DNS body validity does not invalidate already verified flow headers.
+            # Do not interpret capture shortages or metadata errors as bad DNS.
+            if 53 in (layer.sport, layer.dport) and not any(issues.values()):
+                try:
+                    parse_message(transport[8:udp_len])
+                except DNSDecodeError as error:
+                    issues[error.classification].append(error.reason)
     return finish()

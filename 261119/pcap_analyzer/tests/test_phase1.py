@@ -147,7 +147,7 @@ def test_global_header_rejection(tmp_path, content, code):
 
 @pytest.mark.parametrize("frame,wirelen,snaplen,state,protocol", [
     (ipv4(), 54, 65535, "parsed", "tcp"),
-    (ipv4(UDP, 17), 42, 65535, "parsed", "udp"),
+    (ipv4(UDP, 17), 42, 65535, "malformed", "udp"),  # Empty port-53 DNS body.
     (ipv4() + b"\x00" * 6, 60, 65535, "parsed", "tcp"),
     (ipv4()[:40], 54, 65535, "truncated", "tcp"),
     (ipv4() + b"\x00", 54, 65535, "malformed", "tcp"),

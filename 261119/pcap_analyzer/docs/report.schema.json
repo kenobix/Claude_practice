@@ -267,6 +267,7 @@
       }
     },
     "classification_indices": {
+      "description": "Exclusive packet classifications, including structure validation of otherwise parsed UDP port-53 candidates. DNS errors do not invalidate verified flow headers.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -382,6 +383,7 @@
       }
     },
     "dns": {
+      "description": "Query/response matching status only. DNS structure errors are reported through packet classifications and diagnostics; matching remains unimplemented.",
       "type": "object",
       "additionalProperties": false,
       "required": [

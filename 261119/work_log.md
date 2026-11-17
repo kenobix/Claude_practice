@@ -308,3 +308,51 @@ DNS構造不正/未対応のpacket分類への反映（フロー帰属と分類�
 その後に完全照合キー、5秒窓・重複/追加/孤立応答、終端/時刻逆行、DNSレポートへ進む。
 未知RDATAの意味検査、TShark独立比較、性能/負荷、デモは未実施。
 差分・秘密情報・生成物を確認して担当branchへcommit・pushし、PR #3の進捗を更新する。
+
+
+# 継続単位 — DNS構造検査のpacket分類・CLI診断への統合
+
+実施日: 2026-11-17（Asia/Tokyo）。開始HEAD=26ee33c、
+cwd=/home/kenshin/work/Claude_practice-261119、branch=feat/pcap-analyzer、初期statusはclean。
+ルート/担当AGENTS、261014計画、README/work_log、仕様/Schema、既存コード・テスト、Draft PR #3を確認。
+AGENTSは現状でも継続利用可能で変更なし。既存235テストは実装前に全件成功（11.80秒）。
+
+## 選択と実装
+
+入力・基本集計・フローとDNS内部構造検査は完了済み。照合キー/窓/イベント・Phase 3/4は未完了。
+内部検査と照合処理の依存境界となるpacket分類/CLI統合を1つの実装単位として選択した。
+
+- packet.py: 非fragment IPv4 UDPのsrc/dstいずれかport53、既存の長さ/時刻/ヘッダーに問題がなく、
+  捕捉不足なしの候補にparse_messageを接続。UDPの宣言範囲を使いEthernet paddingは除く。
+- DNS構造不足/矛盾をmalformed、未対応opcode/質問数/参照先・DNS処理上限をunsupportedへ反映。
+  生payloadや入力パスを診断へ入れず、既存diagnosticsにreason/根拠番号を出す。
+- DNS本文不正でも検証済みのflow_eligibleは維持。既存の分類優先順位・入力上限・整数nsは維持。
+  truncated/不正時刻/fragment/記録長矛盾等はDNS構造検査へ渡さない。
+- report.py: 端末へDNS構造検査の適用範囲を表示。既存の分類件数/根拠/診断がJSONにも反映される。
+  Schemaへ分類範囲とdns.statusが照合状態であることの説明を追加。JSON形状/版番号は維持。
+  DNS結果保持、照合キー、応答照合、窓処理、イベント出力はこの単位に追加しない。
+
+## 検証結果
+
+新規36件を追加し、全271テスト成功（24.19秒）。
+両方向/両port53、TC/NXDOMAIN、圧縮RRと全3領域、空DNS・名前/RR/RDATA不足、
+opcode/質問数/未対応label/参照先/1024 RR上限、非候補の検査除外、paddingの切り離しを検証。
+混合3レコードはparsed/malformed/unsupported各1、捕捉/元長167 bytes=61+45+61、
+同一フロー帰属167 bytes+未帰属0 bytes=全167 bytes、根拠[1,2,3]で一致。
+診断上限停止時も上記の件数/長さ分配を維持し、complete=false/終了2を確認。
+通常DNS不正のCLI終了0・安全な診断・同一入力JSON決定性・Schema/参照整合も確認。
+
+実装直後の既存テストで空port53 UDPをparsedとする旧期待1件が失敗したため、
+今回の仕様変更どおりmalformedへ更新。その他の既存234件は変更せず成功。
+既存14 fixtureと手定義期待値・依存lock・PacketRecordは変更なし。
+Python 3.12.3、pip checkはNo broken requirements found（環境のpip cache権限警告のみ、OS変更なし）。
+README/仕様を更新。全差分・秘密情報・生成物を確認し、担当branchへcommit・push、Draft PR進捗を更新する。
+ライブ捕捉・送信・スキャン・外部解析照会は行わない。
+
+## 残課題と次の単位
+
+次は検証済み質問のラベルbytes/QTYPE/QCLASS・IDとclient/server端点からの照合キー・QR/port向き判定。
+その後に5秒窓/重複・再利用/追加・孤立応答、終端/時刻逆行、RCODE/TCと根拠のイベント/Schemaを実装する。
+現在dns.status=not_implemented/events=nullは照合未実装を表す。構造検査成功を名前解決成功と呼ばない。
+未知RDATA等の全意味検査、TShark独立比較、性能/大規模負荷、デモ、VS Code GUIは未検証。
+今回の単位を完了後、これらの先の実装には進まない。

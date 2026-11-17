@@ -5,7 +5,8 @@
 同日にPhase 2前半の双方向フロー集計・TCP flags・フロー数上限を実装。
 継続単位としてDNS名復号・正規化・単一質問抽出の内部APIを実装済み（下記参照）。
 次の継続単位でRR構造と圧縮参照先の検査APIも追加済み（下記参照）。
-CLI統合と照合は未実装。現行CLIの挙動/SchemaはPhase 2前半のまま。
+DNS構造検査をpacket分類/CLI診断へ統合済み。照合は未実装。
+JSONの形状/版は維持し、Schemaへ分類範囲と照合statusの説明を追記。
 
 ## 入力境界と停止
 
@@ -51,11 +52,11 @@ TCP再構成・再送推定は行わない。チェックサム不一致のみ�
 |---|---|---|
 | malformed | caplen>wirelen、IHL<5、total length<IHL、UDP length<8、矛盾したTCP offset | 理由と番号。DNS照合除外 |
 | truncated | caplen<wirelen、対象ヘッダー/宣言IP長に必要な捕捉bytes不足 | 不足を補完しない。DNS照合除外 |
-| unsupported | ARP/IPv6/VLAN、IP fragment、非TCP/UDP（DNS質問数≠1はPhase 2） | 未対応範囲と番号 |
-| parsed | 対応ヘッダーを完全に検査できたもの | フローと対象DNSへ |
+| unsupported | ARP/IPv6/VLAN、IP fragment、非TCP/UDP、DNS質問数≠1等 | 未対応範囲と番号 |
+| parsed | 対応ヘッダーと対象DNSの構造を検査できたもの | フローと対象DNSへ |
 
-Phase 2ではDNS候補の破損もpacket分類に反映する。現行のparsedはTCP/UDPヘッダーまでの
-検査成功であり、DNSその他のアプリケーション本文の正常性を意味しない。UDP長はIPv4の
+DNS候補の構造不正/未対応もpacket分類に反映する（適用条件は下記）。
+parsedはDNSの全RDATAの意味や名前解決成功、他アプリケーション本文の正常性を保証しない。UDP長はIPv4の
 宣言payload長と一致することを要求し、チェックサムは検証しない。
 
 実装済みフローは、非フラグメントのIPv4 TCP/UDPで
@@ -119,7 +120,7 @@ TCP flagsはF/S/R/P/A/U/E/C/N（NS）の各bitを独立に計数し、SYN+ACKは
 | ファイル本文が宣言caplenより短い部分レコード | 完全レコードでないため全体集計にも帰属集計にも入れない |
 
 classificationとは独立したflow_eligibleを使い、欠けたポートやflagsを推測しない。
-DNS本文は復号しないので、現時点では本文の正否による帰属判定はしない。
+DNS本文の構造不正/未対応も、検証済みヘッダーによるフロー帰属を無効にしない。
 
 フロー数上限100000。`--max-flows`で1..100000に引下げ可能。
 上限件数ちょうどと既存フローへの追加は可。次の新規キーを作る前に停止する。
@@ -165,8 +166,8 @@ DNSDecodeErrorにclassification/reason/offsetを保持し、raw bytesをエラ�
 
 この単位はanswer/authority/additional件数、RRのRDLENGTH/RDATAを検査しない。
 TC/RCODEは情報として保持するだけで、応答照合・成功判定・所要時間は計算しない。
-CLIのpacket分類やJSON Schemaへはまだ接続しない。既存153テストと出力契約を維持する。
-全体構造検査には以下のparse_messageを使用する。packet分類への統合は未実装。
+全体構造検査には以下のparse_messageを使用し、packet分類へ接続する。
+parse_question単独APIは引き続き質問抽出だけを保証する。
 
 ## DNSメッセージのRR構造（内部API実装済み）
 
@@ -201,8 +202,25 @@ Aのアドレス長、未知RRの内部構造、EDNSの意味など全RDATA仕�
 （dns_record_work_limit/dns_message_work_limit）。現在は内部APIの固定上限で、CLI設定は未追加。
 境界不足はmalformedとしてDNSDecodeErrorに理由/offsetを残す。
 
-この単位は内部APIのみで、CLI・Schema 0.3.0・PacketRecord・フロー帰属・入力上限・時刻精度を維持する。
-次はUDP DNS候補のpacket分類へ接続し、その後に照合キー/窓処理とDNSレポートを追加する。
+## DNS構造検査のpacket分類/CLI統合（実装済み）
+
+非fragmentのIPv4 UDP、src/dstいずれかのportが53、L2/L3/L4ヘッダーと記録長・時刻が
+正常、捕捉不足なしの候補だけにparse_messageを適用する。malformed/truncatedの既存理由は
+上書きせず、欠けた本文をDNS不正と推測しない。不正時刻のパケットもDNS検査対象から除外。
+UDP宣言長までのpayloadを渡し、Ethernet paddingは含めない。TCP port53は対象外。
+QRとport方向の照合資格判定は次の単位で扱い、この段階では両向きとも構造だけを検査する。
+
+DNSDecodeErrorのclassification/reasonを既存のpacket分類・P_MALFORMED/P_UNSUPPORTED診断へ反映。
+完全なUDP payload内でのDNSフィールド不足はmalformed。質問数/opcode/未検証参照先や
+固定処理上限はunsupported。無制限処理を避けるこれらのDNS上限は入力全体の停止条件ではなく、
+そのパケットのunsupported理由となる。通常診断上限に達した場合はE_LIMIT_DIAGNOSTICSで停止する。
+空のport53 UDP本文は従来parsedからmalformedへ変更。既存14 fixtureの期待集計は維持。
+
+DNS本文に問題があっても完全なL4ヘッダーのflow_eligibleは維持し、件数/捕捉長/元長と根拠を
+従来どおり分配する。通常診断上限で停止したパケットも分配済み。完全レコードのDNS構造不正だけなら
+コンテナ処理complete=true/終了0で、診断をJSON/端末へ出力する。
+DNS解析結果の保持・イベント/照合は追加せず、PacketRecordとJSON形状、入力上限、整数nsを維持する。
+次は検証済み質問と端点/IDからの照合キー・向き判定、その後に窓処理とDNSレポートを追加する。
 
 ## DNS照合（Phase 2後半予定）
 
@@ -248,7 +266,8 @@ fragment件数、不正時刻件数を出す。classification_indicesは各分�
 全完全レコードはちょうど1配列に現れ、分類件数と配列長が一致する。
 全生パケットや全PacketRecordは保持せず、最大100万件の根拠番号と上限付き診断だけを残す。
 
-flowsは上記の双方向集計配列。dns.status=not_implemented、dns.events=nullでDNS未実装を表す。
+flowsは上記の双方向集計配列。dns.status=not_implemented、dns.events=nullでDNS照合の未実装を表す。
+DNS構造検査結果はpacket分類/diagnosticsへ反映し、このstatusと区別する。
 dns.time_analysisは通常not_implemented、逆行検出時はdisabled_timestamp_regression。
 Phase 0の将来用フロー/DNSレポートは[旧Schema](report.phase0.schema.json)と
 [契約例](../expected/baseline.report.json)として保管し、現行出力とは混同しない。
