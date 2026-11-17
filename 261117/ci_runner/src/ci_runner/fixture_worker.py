@@ -37,16 +37,24 @@ def run_once(worker_id, mode='success', connection_factory=None):
     worker.validate_worker_id(worker_id)
     if mode not in container.MODES:
         raise ValueError('unknown fixed fixture mode')
+    claim = None
+    stage = 'queue'
     try:
-        claim = worker.claim_next(worker_id, connection_factory)
+        if not worker.has_queued_candidate(connection_factory):
+            return None
+        stage = 'image'
+        with container.prepare_image() as image:
+            stage = 'claim'
+            claim = worker.claim_next(worker_id, connection_factory)
+            if claim is not None:
+                stage = 'execution'
+                result = execution.execute_fixture(claim, mode, connection_factory, prepared_image=image)
+            stage = 'image_cleanup'
+        # Both container and unique image tag must be released before persistence.
     except EXPECTED_FAILURES:
-        raise OneShotFailed('claim') from None
+        raise OneShotFailed(stage, claim) from None
     if claim is None:
         return None
-    try:
-        result = execution.execute_fixture(claim, mode, connection_factory)
-    except EXPECTED_FAILURES:
-        raise OneShotFailed('execution', claim) from None
     try:
         # execute_fixture returns only after its resource context has exited.
         return finalization.finalize_fixture(claim, result, connection_factory)

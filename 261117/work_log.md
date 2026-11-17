@@ -541,3 +541,49 @@ P0は既存の管理下fixture検証範囲で完了、P1全体は未完了。
 その後に容量上限付きログ永続化/表示時エスケープ、受理commitの取得/対応付けを進める。
 実行中の取消/DB断即時検知・プロセス停止からの自動回復・heartbeat等は今回未実装/未検証。
 CLI再起動は同じ結果報告の再送ではなく、メモリ結果の復元機能もない。running残存時はDBを照合し、無条件に再キュー/成功へ変更しない。
+
+## 継続作業：取得前の固定image準備・ID固定の受渡し
+
+### 調査と選択した1単位
+
+指定cwd・feat/ci-runner・開始HEAD 124247c・未コミット変更なし。ルート/担当AGENTS、261014計画、
+README/work_log・設計・取得/実行/確定コードとテスト、Draft PR #1と前回push/PR CI成功を確認。
+既知の残件である取得後buildのlease消費を対象に、取得前準備と安全な内部受渡しだけを選択した。
+既存CIを作り直したり、ログ保存/受理commit取得/常駐Worker/P2復旧へ範囲を広げたりしない。
+
+### 実装・安全境界
+
+- has_queued_candidateは読取専用のhint。claim_nextと同じSQL対象条件を共有し、transactionを終了してからbuildする。予約/認可/lease発行はしない。
+- 空候補ならDockerなしで終了。候補があればprepare_imageで固定sourceをbuildし、unique tag/session/IDを検証してからclaimする。準備失敗ならattemptなし。
+- build中の競合/取消で候補は変わり得るため、取得時のSKIP LOCKED/許可条件を維持。取得できなければ自分のタグを回収して終了する。
+- PreparedImageは内部contextのhandle。prepare_fixtureでタグID・所有sessionを再照合し、検証済みID/--pull=neverでcreate。再buildしない。
+- 借用側はcontainerを、外側のimage contextはunique tagを回収。imageのID/所有者が変わったタグは削除を拒否。両回収後にだけ条件付き確定へ進む。
+- queue/image/image_cleanupの失敗段階を追加。token・生例外・ログ非出力、自動再試行なし、確定不明のDB照合契約を維持する。
+- execute_fixtureの準備済みimageなしの内部互換経路はbuild/create/回収を維持。API/claim-onceは実行へ接続しない。
+- lease30秒、起動前/GO前DB再照合、実値ガード・制限、結果の条件付き更新は緩めない。migration/依存/workflowは未変更。
+- README・関係設計文書を更新。恒久ルール変更なしでAGENTSは未変更。
+
+### 検証
+
+最初の通常回帰は98 passed、99 deselected、既知警告1件（2.48秒）。その後image handle拒否等を補強した。
+専用DB＋実Docker＋既存回帰のverify_execution.pyは **190 passed、15 skipped、既知TestClient警告1件、213.41秒**。
+15 skippedは準備5件と未変更のP0隔離10件。準備は別実行し、P0隔離10件は今回は再実行しない。
+
+- 実build後に31秒遅延を注入。その間attempt0・queued、別接続のFOR UPDATE NOWAIT成功を確認。build後のstarted_at、新規lease30秒をDBで確認。
+- 同じ試験でbuild1回、createで指定したIDとinspect IDの一致、正常確定、2件目queued、自分のcontainer/image集合が前後で不変を確認。
+- これは遅延注入による順序/予算の検証。既存cacheを破壊したcold build性能計測とは主張しない。
+- 実Dockerの固定4modeは別プロセスWorkerで継続成功。従来のガード拒否・DB停止・失効・結果確定/競合/故障試験も成功。
+- 空キューのDockerなし、image準備失敗時の全run queued/attempt0、競合で対象なしの回収、回収失敗後に確定しないことを確認。
+- 不正handle/タグ、別image ID、所有者変更を通常テストで拒否。image回収時のタグ差替え拒否を全回帰開始後に1件補強し、変更したtest_container.py全43件を別途実行して成功（0.37秒）。本番ソースは全回帰後に変更していない。
+- 最終のverify_preparation.pyは **48 passed、19.44秒**。上記43通常テストと5実Docker（既存4＋借用image寿命/消滅handle拒否）を含む。
+- DB readiness200、migration二重適用、DB再起動後schema1/2保持を確認。pip checkは破損なし（cache権限通知のみ）、compileall成功。今回の試験失敗なし。
+- ignored fixture-worker-latest.jsonは5ケース、execution-latest.jsonは11ケースでfailure0。現在の本番/対象試験ソースSHA256との一致を確認。
+- 最終の専用session container/image・専用DB container/volume/networkの5照会はすべて0。base image/build cacheを残し、global prune・OS変更・他資源の変更はしない。
+
+### 残件と次の1単位
+
+P0は既存の管理下fixture検証範囲で完了、P1全体は未完了。
+次は容量上限付きログ永続化と結果確定との対応（attempt別保存・正式参照・失敗時の未確定扱い）を設計・検証する。
+受理commit取得/対応付け、表示時エスケープ、常駐/heartbeat/期限回収/再試行は残件。
+create・実行・回収は引き続き取得後leaseを消費し、失効なら実行/確定を拒否する。
+SIGTERM/SIGKILL・daemon断・操作timeout後の遅延完了ではラベル付き残存があり得る。自動回復や悪意あるdaemon操作者からの保護は未実装/未検証。

@@ -14,6 +14,16 @@ from .settings import POLICY
 
 LEASE_SECONDS = 30
 
+CANDIDATE_SQL = (
+    "SELECT r.id FROM runs r WHERE r.state='queued' "
+    'AND r.cancel_requested_at IS NULL AND r.available_at <= clock_timestamp() '
+    'AND r.repository_id=%s AND r.ref=%s AND r.workflow_version=%s '
+    # Retry cause/budget is not implemented: never mislabel a retry as initial.
+    'AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.run_id=r.id) '
+    'ORDER BY r.available_at, r.created_at, r.id '
+    'LIMIT 1'
+)
+
 
 @dataclass(frozen=True)
 class Claim:
@@ -32,18 +42,20 @@ def validate_worker_id(value: str) -> str:
     return value
 
 
+def has_queued_candidate(connection_factory=None):
+    """Read-only hint, not a reservation or authorization; closes before build."""
+    with (connection_factory or database.connect)() as conn:
+        present = conn.execute(CANDIDATE_SQL, (POLICY.repository_id, POLICY.ref,
+                                              POLICY.workflow_version)).fetchone() is not None
+    return present
+
+
 def claim_next(worker_id: str, connection_factory=None) -> Claim | None:
     validate_worker_id(worker_id)
     factory = connection_factory or database.connect
     with factory() as conn:
         run = conn.execute(
-            "SELECT r.id FROM runs r WHERE r.state='queued' "
-            'AND r.cancel_requested_at IS NULL AND r.available_at <= clock_timestamp() '
-            'AND r.repository_id=%s AND r.ref=%s AND r.workflow_version=%s '
-            # Retry cause/budget is not implemented: never mislabel a retry as initial.
-            'AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.run_id=r.id) '
-            'ORDER BY r.available_at, r.created_at, r.id '
-            'LIMIT 1 FOR UPDATE OF r SKIP LOCKED',
+            CANDIDATE_SQL + ' FOR UPDATE OF r SKIP LOCKED',
             (POLICY.repository_id, POLICY.ref, POLICY.workflow_version)).fetchone()
         if run is None:
             return None

@@ -36,7 +36,7 @@ class ExecutionResult:
         return self.observed_bytes > len(self.stdout) + len(self.stderr)
 
 
-def execute_fixture(claim: Claim, mode='success', connection_factory=None):
+def execute_fixture(claim: Claim, mode='success', connection_factory=None, *, prepared_image=None):
     """Run only server-owned local fixtures. Returns after owned-resource cleanup.
 
     Starts a trusted guard, then rechecks DB before releasing fixed workload.
@@ -45,7 +45,8 @@ def execute_fixture(claim: Claim, mode='success', connection_factory=None):
     if mode not in container.MODES:
         raise container.ContainerRejected('unknown fixed fixture mode')
     permit = authorize_execution(claim, connection_factory)
-    with container.prepare_fixture(permit, mode) as prepared:
+    options = {} if prepared_image is None else {'prepared_image': prepared_image}
+    with container.prepare_fixture(permit, mode, **options) as prepared:
         # Budget starts before the DB round trip: query/commit/network delay may
         # shorten local authority but must never extend the DB-issued lease.
         measured = time.monotonic()

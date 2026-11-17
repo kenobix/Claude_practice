@@ -60,3 +60,15 @@ def test_owned_lifecycle_and_failure_cleanup(monkeypatch, failure):
             assert real_docker('inspect', name, check=False).returncode != 0
         for tag in tags:
             assert real_docker('image', 'inspect', tag, check=False).returncode != 0
+
+
+def test_borrowed_image_lifetime_and_stale_handle_rejection():
+    with container.prepare_image() as image:
+        with container.prepare_fixture(permit(), prepared_image=image) as prepared:
+            assert prepared.image_id == image.image_id
+        assert container.docker('inspect', prepared.container_id, check=False).returncode != 0
+        assert container.docker('image', 'inspect', image.tag, check=False).returncode == 0
+    assert container.docker('image', 'inspect', image.tag, check=False).returncode != 0
+    with pytest.raises(container.ContainerRejected):
+        with container.prepare_fixture(permit(), prepared_image=image):
+            pytest.fail('expired image scope created a container')

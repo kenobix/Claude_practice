@@ -224,7 +224,8 @@ API/claim-onceは結果確定へ自動接続しない。使い捨てDBのverify_
 待機中の初回runを最大1件取得し、ローカル固定fixtureを実行して回収後にDB確定する。
 `--fixture-mode`は運用者が選ぶsuccess（既定）/failure/timeout/logsだけ。受理SHAのコードは取得・実行しない。
 終了0はWorker操作完了であり、ジョブ成功判定はJSONのstate/exit_codeによる。基盤障害・認可拒否・確定不明は終了1。
-冷えたimageのbuildも30秒leaseに含まれ、期限内に終わらなければ拒否する。leaseを延長して成功扱いにはしない。
+空キューを読取確認し、候補があれば固定imageを準備してから取得する。buildは30秒leaseを消費しない。
+取得後は検証したimage IDでcreateし、起動前/GO前のDB再照合を維持する。create・実行・回収が期限を超えれば拒否する。
 取得後の失敗はrunningに残る場合がある。DBで状態を照合し、自動再投入・手動SQLリセットで履歴を壊さない。
 常駐処理・自動再試行は追加しない。従来の`ci_runner.worker --claim-once`は取得だけを維持する。
 詳細と故障時の確認手順は[一件Worker仕様](ci_runner/docs/fixture-worker.md)を参照。

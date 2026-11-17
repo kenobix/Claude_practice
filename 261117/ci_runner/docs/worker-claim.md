@@ -5,6 +5,9 @@
 
 ## 条件とtransaction
 
+一件Workerのhas_queued_candidateは同じ対象条件を使う読取専用のhint。予約/認可/attempt発行はせず、transactionを終了してからimageを準備する。
+候補の有無は変わり得るため、build後は以下のclaim_nextの取得条件と排他を改めて適用する。claim-onceの動作は変更しない。
+
 `src/ci_runner/worker.py` のclaim_next(worker_id)を信頼済みWorker側から呼ぶ。
 worker_idは1〜64文字のASCII識別子に制限し、DB接続より前に検証する。
 

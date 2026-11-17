@@ -9,7 +9,7 @@ HTTP API・claim-once CLIからは呼ばず、常駐ループ・heartbeatは未�
 ## 起動と処理開始の区別
 
 1. DBから現在token/状態/取消/期限/固定policyを確認し、固定fixtureのコンテナを準備する。
-2. build/create後、DBを再照合する。DB異常・失効ならコンテナを起動しない。
+2. 準備済みimageがあればID/所有sessionを再照合してcreateする。指定なしの内部互換経路はbuildも行う。create後にDBを再照合し、DB異常・失効なら起動しない。一件Workerはimageを取得前に準備して渡す。
 3. Docker startで**信頼済み固定ガード**を起動する。ガードはcgroup等を読み、確認結果をstdoutに出してstdinを待つ。
 4. Worker側で確認結果を厳密に照合し、DBを再照合する。取消・失効・DB異常なら処理開始のGOを送らず回収する。
 5. 一致時だけ定型 `GO\n` を送って4種類のfixtureのうち指定した1つを開始し、stdinを閉じる。

@@ -88,14 +88,59 @@ def remove_owned(name, session):
     docker('rm', '--force', '--volumes', info['Id'])
 
 
-@contextmanager
-def prepare_fixture(permit: ExecutionPermit, mode='success'):
-    """Prepare local reviewed fixture, not the submitted commit's repository code.
+@dataclass(frozen=True)
+class PreparedImage:
+    image_id: str
+    session: str
+    tag: str
 
-    A permit is only a DB snapshot. This function never authorizes actual start;
-    later execution must recheck DB authority and effective runtime restrictions.
-    Own resources are removed on normal return and exception. SIGKILL may orphan
-    labeled resources; no global prune or cleanup by run ID is performed.
+
+def inspect_prepared_image(prepared):
+    """Check this session's pinned identity; never accept an arbitrary image/tag."""
+    if (not isinstance(prepared, PreparedImage)
+            or not re.fullmatch('[0-9a-f]{32}', prepared.session)
+            or prepared.tag != f'ci-runner-fixed-fixture:{prepared.session}'
+            or not re.fullmatch('sha256:[0-9a-f]{64}', prepared.image_id)):
+        raise ContainerRejected('invalid prepared image handle')
+    image = json.loads(docker('image', 'inspect', prepared.tag).stdout)[0]
+    if (image['Id'] != prepared.image_id
+            or image['Config']['Labels'].get(LABEL) != prepared.session):
+        raise ContainerRejected('prepared image identity or ownership changed')
+    return image
+
+
+@contextmanager
+def prepare_image():
+    """Build only the local fixed source; release the owned unique tag on exit."""
+    session = uuid4().hex
+    tag = f'ci-runner-fixed-fixture:{session}'
+    prepared = None
+    try:
+        docker('build', '--network=none', '--label', f'{LABEL}={session}',
+               '--tag', tag, str(ROOT / 'fixtures/job'), timeout=180)
+        image = json.loads(docker('image', 'inspect', tag).stdout)[0]
+        prepared = PreparedImage(image['Id'], session, tag)
+        inspect_prepared_image(prepared)
+        yield prepared
+    finally:
+        result = docker('image', 'inspect', tag, check=False)
+        if result.returncode == 0:
+            image = json.loads(result.stdout)[0]
+            if (image['Config']['Labels'].get(LABEL) != session
+                    or (prepared is not None and image['Id'] != prepared.image_id)):
+                raise ContainerRejected('refusing cleanup of an unowned or replaced image tag')
+            docker('image', 'rm', tag)
+        elif 'No such image:' not in result.stderr and 'No such object:' not in result.stderr:
+            raise ContainerRejected('image cleanup inspection failed')
+
+
+@contextmanager
+def prepare_fixture(permit: ExecutionPermit, mode='success', *, prepared_image=None):
+    """Create/inspect an unstarted fixture, borrowing an optional live image scope.
+
+    Direct callers retain the original build/create/cleanup lifecycle. The
+    one-job Worker builds before claim and keeps that image alive until cleanup.
+    Neither path grants execution authority; execution must recheck the DB.
     """
     if mode not in MODES:
         raise ContainerRejected('unknown fixed fixture mode')
@@ -105,18 +150,18 @@ def prepare_fixture(permit: ExecutionPermit, mode='success'):
             or permit.attempt_no != 1 or not re.fullmatch('[0-9a-f]{40}', permit.commit_sha)
             or not isinstance(permit.run_id, UUID) or not isinstance(permit.attempt_id, UUID)):
         raise ContainerRejected('unsupported fixture preparation request')
+    if prepared_image is None:
+        with prepare_image() as image:
+            with prepare_fixture(permit, mode, prepared_image=image) as prepared:
+                yield prepared
+        return
+    image = inspect_prepared_image(prepared_image)
     session = uuid4().hex
     name = f'ci-runner-prepare-{session}'
-    tag = f'ci-runner-fixed-fixture:{session}'
     labels = {LABEL: session, 'dev.ci-runner.run': str(permit.run_id),
               'dev.ci-runner.attempt': str(permit.attempt_id)}
     attempted_create = False
     try:
-        docker('build', '--network=none', '--label', f'{LABEL}={session}',
-               '--tag', tag, str(ROOT / 'fixtures/job'), timeout=180)
-        image = json.loads(docker('image', 'inspect', tag).stdout)[0]
-        if not re.fullmatch('sha256:[0-9a-f]{64}', image['Id']):
-            raise ContainerRejected('invalid fixture image identity')
         options = [item for key, value in labels.items() for item in ('--label', f'{key}={value}')]
         attempted_create = True  # Also inspect for cleanup if create response is lost.
         cid = docker('create', '--name', name, *options, '--pull=never',
@@ -132,16 +177,5 @@ def prepare_fixture(permit: ExecutionPermit, mode='success'):
             raise ContainerRejected('container identity mismatch')
         yield PreparedContainer(cid, image['Id'], permit.run_id, permit.attempt_id)
     finally:
-        try:
-            if attempted_create:
-                remove_owned(name, session)
-        finally:
-            # Unique tag only; never force-remove a shared image or build cache.
-            result = docker('image', 'inspect', tag, check=False)
-            if result.returncode == 0:
-                image = json.loads(result.stdout)[0]
-                if image['Config']['Labels'].get(LABEL) != session:
-                    raise ContainerRejected('refusing cleanup of an unowned image tag')
-                docker('image', 'rm', tag)
-            elif 'No such image:' not in result.stderr and 'No such object:' not in result.stderr:
-                raise ContainerRejected('image cleanup inspection failed')
+        if attempted_create:
+            remove_owned(name, session)

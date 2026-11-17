@@ -1,4 +1,4 @@
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 import json
 import os
 import subprocess
@@ -14,6 +14,12 @@ from test_finalization_input import report
 from test_runs_postgres import ROOT, dedicated_database
 
 pytestmark = pytest.mark.integration
+
+
+@pytest.fixture(autouse=True)
+def simulated_image(monkeypatch):
+    # DB orchestration faults do not claim to build or run a real fixture.
+    monkeypatch.setattr(container, 'prepare_image', lambda: nullcontext(object()))
 
 
 def invoke(mode='success', env=None):
@@ -43,13 +49,27 @@ def test_missing_db_process_never_reports_success(dedicated_database):
     env.pop('DATABASE_URL', None)
     result = invoke(env=env)
     assert result.returncode == 1 and result.stdout == ''
-    assert json.loads(result.stderr) == {'status': 'incomplete', 'stage': 'claim',
+    assert json.loads(result.stderr) == {'status': 'incomplete', 'stage': 'queue',
                                        'detail': 'inspect DB state; no automatic retry'}
+
+
+def test_image_failure_keeps_all_runs_queued(dedicated_database, monkeypatch):
+    first, second = seed_pair()
+    @contextmanager
+    def fail():
+        raise container.ContainerRejected('public injected build failure')
+        yield
+    monkeypatch.setattr(container, 'prepare_image', fail)
+    with pytest.raises(fixture_worker.OneShotFailed, match='image'):
+        fixture_worker.run_once('worker-1')
+    with database.connect() as conn:
+        assert conn.execute('SELECT count(*) AS n FROM runs WHERE state=%s', ('queued',)).fetchone()['n'] == 2
+        assert conn.execute('SELECT count(*) AS n FROM attempts').fetchone()['n'] == 0
 
 
 def test_execution_failure_retains_running_attempt_and_next_queued_run(dedicated_database, monkeypatch):
     first, second = seed_pair()
-    def refused(*args):
+    def refused(*args, **kwargs):
         raise container.ContainerRejected('public injected cleanup failure')
     monkeypatch.setattr(execution, 'execute_fixture', refused)
     with pytest.raises(fixture_worker.OneShotFailed) as error:
@@ -64,10 +84,15 @@ def test_execution_failure_retains_running_attempt_and_next_queued_run(dedicated
 
 def test_lost_claim_commit_response_never_starts_execution(dedicated_database, monkeypatch):
     first, second = seed_pair()
+    calls = 0
     @contextmanager
     def factory():
+        nonlocal calls
+        calls += 1
         with database.connect() as conn:
             yield conn
+        if calls != 2:
+            return
         raise psycopg.OperationalError('public injected lost claim commit response')
     monkeypatch.setattr(execution, 'execute_fixture', lambda *a: pytest.fail('unknown claim was executed'))
     with pytest.raises(fixture_worker.OneShotFailed) as error:
@@ -105,15 +130,15 @@ def test_finalization_commit_fault_never_acquires_another_job(dedicated_database
         calls += 1
         with database.connect() as conn:
             yield conn
-            if calls == 2 and position == 'before':
+            if calls == 3 and position == 'before':
                 raise psycopg.OperationalError('public injected pre-commit disconnect')
-        if calls == 2 and position == 'after':
+        if calls == 3 and position == 'after':
             raise psycopg.OperationalError('public injected lost commit response')
     # Test DB orchestration only; this is not evidence of Docker execution.
-    monkeypatch.setattr(execution, 'execute_fixture', lambda claim, *a: report(claim))
+    monkeypatch.setattr(execution, 'execute_fixture', lambda claim, *a, **k: report(claim))
     with pytest.raises(fixture_worker.OneShotFailed) as error:
         fixture_worker.run_once('worker-1', connection_factory=factory)
-    assert calls == 2 and error.value.stage == 'finalization'
+    assert calls == 3 and error.value.stage == 'finalization'
     client = TestClient(app)
     detail = client.get('/runs/' + str(first.id)).json()
     assert detail['state'] == state

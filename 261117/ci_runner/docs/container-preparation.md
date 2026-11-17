@@ -17,6 +17,17 @@ ExecutionPermitのrepository/ref/workflow・SHA形式・初回番号と識別子
 「受理commitを取得・検証した」「そのcommitの検査に成功した」とは扱わない。
 固定commitの取得/対応付けもP1残件である。
 
+## 取得前image準備と内部での受渡し
+
+prepare_image()は固定ローカルsourceだけをbuildし、unique tag・session・image IDを持つPreparedImageを返す内部context。
+一件Workerは候補を読取確認後、このcontextを開いてからrunを取得する。準備失敗時はattemptを作らない。
+prepare_fixture(permit, mode, prepared_image=image)は借用したimageを再buildせず、タグのIDと所有sessionを再照合し、
+--pull=neverと検証済みIDでcreateする。形の不正なhandle・別所有者・IDの差替え・寿命後のタグ欠落は拒否する。
+タグの再照合後に別主体がタグを変更しても、createはタグではなくIDを参照する。daemon操作権限を持つ悪意ある主体からの保護は保証しない。
+借用側はcontainerだけを回収し、image context側は同じsession/IDのunique tagだけを回収する。タグが差し替わったら削除を拒否する。
+一件Workerは両回収に成功した後だけ結果確定へ進む。SIGTERM/SIGKILL・daemon断・非同期の遅延完了による残存の限界は維持する。
+prepared_imageなしの従来呼出しは内部でimage contextを開き、build/create/回収する互換経路。認可チェックは省略しない。
+
 ## 作成時に照合する設定
 
 | 項目 | 設定・inspect条件 |

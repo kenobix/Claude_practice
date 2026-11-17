@@ -3,12 +3,15 @@ import hashlib
 import json
 import os
 import subprocess
+import threading
+import time
+from datetime import timedelta
 from uuid import UUID
 
 import pytest
 
-from ci_runner import container, database
-from test_fixture_worker_postgres import invoke
+from ci_runner import container, database, fixture_worker
+from test_fixture_worker_postgres import invoke, seed_pair
 from test_runs_postgres import ROOT, api, dedicated_database, payload
 
 pytestmark = [pytest.mark.integration, pytest.mark.docker]
@@ -78,3 +81,52 @@ def test_api_to_separate_worker_to_persisted_result(dedicated_database, mode, st
     evidence['cases'].append({'fixture': mode, 'receipt': output,
                               'owned_resources_before': before, 'owned_resources_after': after,
                               'api_restarted': True, 'next_run_state': 'queued'})
+
+
+def test_build_longer_than_lease_precedes_claim(dedicated_database, monkeypatch, request):
+    if os.environ.get('CI_RUN_EXECUTION_TESTS') != '1':
+        pytest.skip('run scripts/verify_execution.py for one-job Worker integration')
+    evidence = request.getfixturevalue('evidence')
+    first, second = seed_pair()
+    before = resources()
+    real = container.docker
+    built, created, identities = [], [], []
+    build_ready_at = None
+    def observe(*args, **kwargs):
+        nonlocal build_ready_at
+        result = real(*args, **kwargs)
+        if args[0] == 'build':
+            built.append(args[args.index('--tag')+1])
+            with database.connect() as conn:
+                # The read-only queue hint must have released its transaction.
+                assert conn.execute('SELECT id FROM runs FOR UPDATE NOWAIT').fetchall()
+                assert conn.execute('SELECT count(*) AS n FROM attempts').fetchone()['n'] == 0
+            started = time.monotonic()
+            # Inject latency, not untrusted workload or daemon/host settings.
+            threading.Event().wait(31)
+            assert time.monotonic()-started >= 31
+            with database.connect() as conn:
+                assert conn.execute('SELECT count(*) AS n FROM attempts').fetchone()['n'] == 0
+                assert conn.execute('SELECT state FROM runs WHERE id=%s', (first.id,)).fetchone()['state'] == 'queued'
+                build_ready_at = conn.execute('SELECT clock_timestamp() AS t').fetchone()['t']
+        if args[:2] == ('image', 'inspect') and result.returncode == 0:
+            identities.append(json.loads(result.stdout)[0]['Id'])
+        if args[0] == 'create':
+            created.append(args[-2])
+        return result
+    monkeypatch.setattr(container, 'docker', observe)
+    receipt = fixture_worker.run_once('worker-1')
+    assert receipt.state == 'succeeded' and receipt.run_id == first.id
+    assert len(built) == len(created) == 1 and set(identities) == set(created)
+    with database.connect() as conn:
+        attempt = conn.execute('SELECT started_at,lease_expires_at FROM attempts').fetchone()
+        assert attempt['started_at'] >= build_ready_at
+        assert attempt['lease_expires_at']-attempt['started_at'] == timedelta(seconds=30)
+        assert conn.execute('SELECT state FROM runs WHERE id=%s', (second.id,)).fetchone()['state'] == 'queued'
+    after = resources()
+    assert before == after
+    evidence['cases'].append({'fixture': 'delayed_build', 'injected_delay_seconds': 31,
+                              'attempts_during_build': 0, 'build_count': len(built),
+                              'created_image_id': created[0], 'lease_seconds': 30,
+                              'claim_after_build': True, 'state': receipt.state,
+                              'owned_resources_before': before, 'owned_resources_after': after})

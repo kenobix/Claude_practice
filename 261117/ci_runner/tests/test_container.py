@@ -112,3 +112,48 @@ def test_unavailable_or_timed_out_docker_is_rejected(monkeypatch, error):
     with pytest.raises(container.ContainerRejected, match='unavailable or timed out') as caught:
         container.docker('info')
     assert 'public-test-canary' not in str(caught.value)
+
+
+@pytest.mark.parametrize('change', [{'image_id': 'unreviewed:latest'}, {'session': '../host'},
+                                   {'tag': 'external:latest'}])
+def test_invalid_image_handle_never_contacts_docker(monkeypatch, change):
+    image = container.PreparedImage('sha256:'+'a'*64, 'b'*32, 'ci-runner-fixed-fixture:'+'b'*32)
+    monkeypatch.setattr(container, 'docker', lambda *a, **k: pytest.fail('invalid handle contacted Docker'))
+    with pytest.raises(container.ContainerRejected):
+        container.inspect_prepared_image(replace(image, **change))
+
+
+@pytest.mark.parametrize('changed', ['identity', 'owner'])
+def test_rebound_or_unowned_image_never_creates_container(monkeypatch, changed):
+    import json
+    prepared = container.PreparedImage('sha256:'+'a'*64, 'b'*32, 'ci-runner-fixed-fixture:'+'b'*32)
+    image = {'Id': prepared.image_id, 'Config': {'Labels': {container.LABEL: prepared.session}}}
+    if changed == 'identity':
+        image['Id'] = 'sha256:'+'c'*64
+    else:
+        image['Config']['Labels'] = {}
+    def inspect(*args, **kwargs):
+        assert args == ('image', 'inspect', prepared.tag)
+        return SimpleNamespace(stdout=json.dumps([image]))
+    monkeypatch.setattr(container, 'docker', inspect)
+    with pytest.raises(container.ContainerRejected, match='identity or ownership'):
+        with container.prepare_fixture(permit(), prepared_image=prepared):
+            pytest.fail('changed image yielded a container')
+
+
+def test_cleanup_never_removes_a_rebound_image_tag(monkeypatch):
+    import json
+    rebound = False
+    def fake(*args, **kwargs):
+        if args[0] == 'build':
+            return SimpleNamespace(returncode=0, stdout='')
+        assert args[:2] == ('image', 'inspect'), 'rebound tag must never be removed'
+        tag = args[2]
+        session = tag.split(':')[1]
+        image = {'Id': 'sha256:'+('b' if rebound else 'a')*64,
+                 'Config': {'Labels': {container.LABEL: session}}}
+        return SimpleNamespace(returncode=0, stdout=json.dumps([image]))
+    monkeypatch.setattr(container, 'docker', fake)
+    with pytest.raises(container.ContainerRejected, match='replaced image tag'):
+        with container.prepare_image():
+            rebound = True
