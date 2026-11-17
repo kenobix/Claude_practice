@@ -15,6 +15,203 @@
     "udp.dstport",
     "tcp.flags"
   ],
+  "input_cases": [
+    {
+      "analyzer": {
+        "captured_bytes": 0,
+        "classification_counts": {
+          "malformed": 0,
+          "parsed": 0,
+          "truncated": 0,
+          "unsupported": 0
+        },
+        "error_code": "E_FORMAT",
+        "exit_code": 2,
+        "original_bytes": 0,
+        "packet_count": 0,
+        "packet_index": null
+      },
+      "differences": [],
+      "exclusions": [],
+      "explanation": "The analyzer requires a complete classic pcap header; TShark 4.2.2 accepts this zero-byte file as zero frames.",
+      "fixture": "empty.pcap",
+      "rows": [],
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tshark": {
+        "captured_bytes": 0,
+        "exit_code": 0,
+        "original_bytes": 0,
+        "packet_count": 0,
+        "stderr": ""
+      }
+    },
+    {
+      "analyzer": {
+        "captured_bytes": 0,
+        "classification_counts": {
+          "malformed": 0,
+          "parsed": 0,
+          "truncated": 0,
+          "unsupported": 0
+        },
+        "error_code": "E_RECORD_DATA",
+        "exit_code": 2,
+        "original_bytes": 0,
+        "packet_count": 0,
+        "packet_index": 1
+      },
+      "differences": [],
+      "exclusions": [],
+      "explanation": "Both reject an incomplete record body. The analyzer identifies the body boundary and planned packet index; neither counts the partial body as a frame.",
+      "fixture": "record_cutoff.pcap",
+      "rows": [],
+      "sha256": "12b02bec56660b67a43669337033fe3fea6d0350fc5f0e7f56f008f1b0d89dd9",
+      "tshark": {
+        "captured_bytes": 0,
+        "exit_code": 2,
+        "original_bytes": 0,
+        "packet_count": 0,
+        "stderr": "tshark: The file \"<fixture>\" appears to have been cut short in the middle of a packet.\n"
+      }
+    },
+    {
+      "analyzer": {
+        "captured_bytes": 0,
+        "classification_counts": {
+          "malformed": 0,
+          "parsed": 0,
+          "truncated": 0,
+          "unsupported": 0
+        },
+        "error_code": "E_RECORD_HEADER",
+        "exit_code": 2,
+        "original_bytes": 0,
+        "packet_count": 0,
+        "packet_index": 1
+      },
+      "differences": [],
+      "exclusions": [],
+      "explanation": "Both reject an incomplete record header. The analyzer distinguishes it from a short body; TShark uses the same cut-short diagnostic for both.",
+      "fixture": "header_cutoff.pcap",
+      "rows": [],
+      "sha256": "819aad43d59a28dbd236cb32d5ab2df5a374f01dc02c95a70973127ebcb02e84",
+      "tshark": {
+        "captured_bytes": 0,
+        "exit_code": 2,
+        "original_bytes": 0,
+        "packet_count": 0,
+        "stderr": "tshark: The file \"<fixture>\" appears to have been cut short in the middle of a packet.\n"
+      }
+    },
+    {
+      "analyzer": {
+        "captured_bytes": 55,
+        "classification_counts": {
+          "malformed": 1,
+          "parsed": 0,
+          "truncated": 0,
+          "unsupported": 0
+        },
+        "error_code": null,
+        "exit_code": 0,
+        "original_bytes": 54,
+        "packet_count": 1,
+        "packet_index": null
+      },
+      "differences": [],
+      "exclusions": [
+        {
+          "fields": "L4 ports/flags",
+          "packet_index": 1,
+          "reason": "caplen_exceeds_wirelen"
+        }
+      ],
+      "explanation": "Both read the complete record and preserve caplen 55 and wirelen 54. The analyzer classifies the contradiction as malformed and excludes it from flows; TShark still extracts TCP fields. Exit 0 does not imply a valid packet.",
+      "fixture": "malformed_length.pcap",
+      "rows": [
+        {
+          "frame.cap_len": 55,
+          "frame.len": 54,
+          "frame.number": 1,
+          "frame.time_epoch": 1700000000000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.proto": 6,
+          "ip.src": "192.0.2.1",
+          "tcp.dstport": 443,
+          "tcp.flags": 16,
+          "tcp.srcport": 40000,
+          "udp.dstport": null,
+          "udp.srcport": null
+        }
+      ],
+      "sha256": "187928d940d9a73dc5e11d40285efac9fcacb4ad0e081385c8103dfb9b44a515",
+      "tshark": {
+        "captured_bytes": 55,
+        "exit_code": 0,
+        "original_bytes": 54,
+        "packet_count": 1,
+        "stderr": ""
+      }
+    },
+    {
+      "analyzer": {
+        "captured_bytes": 0,
+        "classification_counts": {
+          "malformed": 0,
+          "parsed": 0,
+          "truncated": 0,
+          "unsupported": 0
+        },
+        "error_code": "E_LINKTYPE",
+        "exit_code": 2,
+        "original_bytes": 0,
+        "packet_count": 0,
+        "packet_index": null
+      },
+      "differences": [],
+      "exclusions": [],
+      "explanation": "The analyzer accepts only Ethernet link type 1; TShark accepts this raw-IP link type 101 header with zero frames. This does not verify raw-IP packet decoding.",
+      "fixture": "unsupported_linktype.pcap",
+      "rows": [],
+      "sha256": "7fc34f2f51797bc1deb12f9f856941cf6e997187a347bd09ed065dc34bbe969d",
+      "tshark": {
+        "captured_bytes": 0,
+        "exit_code": 0,
+        "original_bytes": 0,
+        "packet_count": 0,
+        "stderr": ""
+      }
+    },
+    {
+      "analyzer": {
+        "captured_bytes": 0,
+        "classification_counts": {
+          "malformed": 0,
+          "parsed": 0,
+          "truncated": 0,
+          "unsupported": 0
+        },
+        "error_code": "E_FORMAT_UNSUPPORTED",
+        "exit_code": 2,
+        "original_bytes": 0,
+        "packet_count": 0,
+        "packet_index": null
+      },
+      "differences": [],
+      "exclusions": [],
+      "explanation": "The analyzer explicitly rejects pcapng; TShark accepts this section-header-only pcapng with zero frames. No interface or packet blocks are present.",
+      "fixture": "unsupported_pcapng.pcapng",
+      "rows": [],
+      "sha256": "4be0e39adfcb63f0796c8a77b7c61f325ba2bad764f64b975ff3d8ae33185f70",
+      "tshark": {
+        "captured_bytes": 0,
+        "exit_code": 0,
+        "original_bytes": 0,
+        "packet_count": 0,
+        "stderr": ""
+      }
+    }
+  ],
   "matched": true,
   "name_resolution": false,
   "preferences": [

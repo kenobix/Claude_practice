@@ -1,0 +1,32 @@
+{
+  "empty.pcap": {
+    "analyzer": {"exit_code": 2, "error_code": "E_FORMAT", "packet_index": null, "packet_count": 0, "captured_bytes": 0, "original_bytes": 0, "classification_counts": {"parsed": 0, "unsupported": 0, "truncated": 0, "malformed": 0}},
+    "tshark": {"exit_code": 0, "packet_count": 0, "captured_bytes": 0, "original_bytes": 0, "stderr": ""},
+    "explanation": "The analyzer requires a complete classic pcap header; TShark 4.2.2 accepts this zero-byte file as zero frames."
+  },
+  "record_cutoff.pcap": {
+    "analyzer": {"exit_code": 2, "error_code": "E_RECORD_DATA", "packet_index": 1, "packet_count": 0, "captured_bytes": 0, "original_bytes": 0, "classification_counts": {"parsed": 0, "unsupported": 0, "truncated": 0, "malformed": 0}},
+    "tshark": {"exit_code": 2, "packet_count": 0, "captured_bytes": 0, "original_bytes": 0, "stderr": "tshark: The file \"<fixture>\" appears to have been cut short in the middle of a packet.\n"},
+    "explanation": "Both reject an incomplete record body. The analyzer identifies the body boundary and planned packet index; neither counts the partial body as a frame."
+  },
+  "header_cutoff.pcap": {
+    "analyzer": {"exit_code": 2, "error_code": "E_RECORD_HEADER", "packet_index": 1, "packet_count": 0, "captured_bytes": 0, "original_bytes": 0, "classification_counts": {"parsed": 0, "unsupported": 0, "truncated": 0, "malformed": 0}},
+    "tshark": {"exit_code": 2, "packet_count": 0, "captured_bytes": 0, "original_bytes": 0, "stderr": "tshark: The file \"<fixture>\" appears to have been cut short in the middle of a packet.\n"},
+    "explanation": "Both reject an incomplete record header. The analyzer distinguishes it from a short body; TShark uses the same cut-short diagnostic for both."
+  },
+  "malformed_length.pcap": {
+    "analyzer": {"exit_code": 0, "error_code": null, "packet_index": null, "packet_count": 1, "captured_bytes": 55, "original_bytes": 54, "classification_counts": {"parsed": 0, "unsupported": 0, "truncated": 0, "malformed": 1}},
+    "tshark": {"exit_code": 0, "packet_count": 1, "captured_bytes": 55, "original_bytes": 54, "stderr": ""},
+    "explanation": "Both read the complete record and preserve caplen 55 and wirelen 54. The analyzer classifies the contradiction as malformed and excludes it from flows; TShark still extracts TCP fields. Exit 0 does not imply a valid packet."
+  },
+  "unsupported_linktype.pcap": {
+    "analyzer": {"exit_code": 2, "error_code": "E_LINKTYPE", "packet_index": null, "packet_count": 0, "captured_bytes": 0, "original_bytes": 0, "classification_counts": {"parsed": 0, "unsupported": 0, "truncated": 0, "malformed": 0}},
+    "tshark": {"exit_code": 0, "packet_count": 0, "captured_bytes": 0, "original_bytes": 0, "stderr": ""},
+    "explanation": "The analyzer accepts only Ethernet link type 1; TShark accepts this raw-IP link type 101 header with zero frames. This does not verify raw-IP packet decoding."
+  },
+  "unsupported_pcapng.pcapng": {
+    "analyzer": {"exit_code": 2, "error_code": "E_FORMAT_UNSUPPORTED", "packet_index": null, "packet_count": 0, "captured_bytes": 0, "original_bytes": 0, "classification_counts": {"parsed": 0, "unsupported": 0, "truncated": 0, "malformed": 0}},
+    "tshark": {"exit_code": 0, "packet_count": 0, "captured_bytes": 0, "original_bytes": 0, "stderr": ""},
+    "explanation": "The analyzer explicitly rejects pcapng; TShark accepts this section-header-only pcapng with zero frames. No interface or packet blocks are present."
+  }
+}

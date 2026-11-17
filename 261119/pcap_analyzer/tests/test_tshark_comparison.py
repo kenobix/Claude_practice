@@ -8,7 +8,7 @@ import pytest
 
 from pcap_analyzer.models import Config, InputError
 from pcap_analyzer.reader import PcapSource
-from test_phase1 import ROOT, FIXTURES
+from test_phase1 import ROOT, FIXTURES, capture, ipv4
 
 spec = importlib.util.spec_from_file_location("compare_tshark", ROOT / "scripts/compare_tshark.py")
 comparison = importlib.util.module_from_spec(spec)
@@ -119,3 +119,70 @@ def test_analyzer_input_error_is_an_explicit_comparison_failure(monkeypatch, cap
     assert error.value.code == 2
     output = capsys.readouterr()
     assert output.out == "" and "synthetic incomplete fixture" in output.err
+
+
+def synthetic_tool_result(path):
+    # TShark 4.2.2's observed contract, manually stated independently of the
+    # evaluator and expectation JSON. No TShark invocation occurs in pytest.
+    if path.name in ("record_cutoff.pcap", "header_cutoff.pcap"):
+        return subprocess.CompletedProcess([], 2, "", f'tshark: The file "{path}" appears to have been cut short in the middle of a packet.\n')
+    output = line(**{"frame.cap_len": "55", "tcp.flags": "0x0010"}) if path.name == "malformed_length.pcap" else ""
+    return subprocess.CompletedProcess([], 0, output, "")
+
+
+@pytest.mark.parametrize("name", tuple(comparison.INPUT_CASES))
+def test_six_input_outcomes_and_common_fields(name):
+    assert set(comparison.FIXTURES).isdisjoint(comparison.INPUT_CASES)
+    assert set(comparison.FIXTURES) | set(comparison.INPUT_CASES) == {p.name for p in FIXTURES.iterdir()}
+    path = FIXTURES / name
+    records, error = comparison.read_records(path)
+    result = comparison.evaluate_input_case(path, records, error, synthetic_tool_result(path), comparison.INPUT_CASES[name])
+    assert result["differences"] == []
+    assert str(path) not in str(result)
+    if name == "malformed_length.pcap":
+        assert result["exclusions"] == [{"packet_index": 1, "fields": "L4 ports/flags",
+                                         "reason": "caplen_exceeds_wirelen"}]
+        assert records[0].flow_eligible is False
+    else:
+        assert result["exclusions"] == [] and result["rows"] == []
+
+
+@pytest.mark.parametrize("code,stdout,stderr", [
+    (0, "", ""),  # A cut-short input must not suddenly be accepted.
+    (2, "", "permission denied\n"),
+    (2, "", 'tshark: The file "other.pcap" appears to have been cut short in the middle of a packet.\n'),
+    (2, "", '<expected>additional warning\n'),
+    (-11, "", ""),
+    (2, line(), '<expected>'),  # Nonzero exit must not hide unexpected frames.
+])
+def test_known_bad_input_never_hides_unrelated_failure_or_frames(code, stdout, stderr):
+    path = FIXTURES / "record_cutoff.pcap"
+    records, error = comparison.read_records(path)
+    stderr = stderr.replace("<expected>", synthetic_tool_result(path).stderr)
+    result = subprocess.CompletedProcess([], code, stdout, stderr)
+    checked = comparison.evaluate_input_case(path, records, error, result, comparison.INPUT_CASES[path.name])
+    assert checked["differences"]
+
+
+def test_unexpected_analyzer_error_is_a_difference():
+    path = FIXTURES / "empty.pcap"
+    result = comparison.evaluate_input_case(path, [], InputError("E_INPUT", "synthetic failure"),
+                                            synthetic_tool_result(path), comparison.INPUT_CASES[path.name])
+    assert result["differences"] == [{"field": "analyzer.error_code", "expected": "E_FORMAT", "observed": "E_INPUT"}]
+
+
+def test_complete_prefix_is_retained_before_incomplete_record(tmp_path):
+    path = tmp_path / "prefix.pcap"
+    path.write_bytes(capture([(ipv4(), 54, 1700000000, 0)]) + b"\x00" * 8)
+    records, error = comparison.read_records(path)
+    assert len(records) == 1 and records[0].captured_len == 54
+    assert records[0].classification == "parsed"
+    assert error.code == "E_RECORD_HEADER" and error.packet_index == 2
+
+
+def test_comparison_cli_returns_one_for_an_unexpected_difference(monkeypatch, capsys):
+    monkeypatch.setattr(comparison, "run_suite", lambda _: {"matched": False, "input_cases": [{"differences": ["synthetic"]}]})
+    monkeypatch.setattr(sys, "argv", ["compare_tshark.py"])
+    assert comparison.main() == 1
+    output = capsys.readouterr()
+    assert '"matched": false' in output.out and output.err == ""

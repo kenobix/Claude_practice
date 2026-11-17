@@ -13,7 +13,7 @@ import re
 import subprocess
 import tempfile
 
-from pcap_analyzer.models import Config, InputError
+from pcap_analyzer.models import Config, InputError, STATES
 from pcap_analyzer.reader import PcapSource
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,6 +24,7 @@ FIELDS = ("frame.number", "frame.time_epoch", "frame.cap_len", "frame.len",
           "udp.srcport", "udp.dstport", "tcp.flags")
 PREFERENCES = ("ip.defragment:FALSE", "tcp.desegment_tcp_streams:FALSE",
                "tcp.analyze_sequence_numbers:FALSE")
+INPUT_CASES = json.loads((ROOT / "expected/tshark.input_cases.json").read_text())
 
 
 def epoch_ns(value):
@@ -88,6 +89,42 @@ def field_args(path):
     return args
 
 
+def read_records(path):
+    """Keep complete prefix records when a known input boundary is invalid."""
+    records = []
+    try:
+        with PcapSource(path, Config()) as source:
+            for record in source:
+                records.append(record)
+    except InputError as error:
+        return records, error
+    return records, None
+
+
+def evaluate_input_case(path, records, error, result, expected):
+    """Match explicit outcomes, never accept an arbitrary nonzero tool exit."""
+    rows = parse_rows(result.stdout)
+    differences, exclusions = compare(records, rows)
+    analyzer = {"exit_code": 2 if error else 0, "error_code": error.code if error else None,
+                "packet_index": error.packet_index if error else None,
+                "packet_count": len(records), "captured_bytes": sum(r.captured_len for r in records),
+                "original_bytes": sum(r.original_len for r in records),
+                "classification_counts": {s: sum(r.classification == s for r in records) for s in STATES}}
+    tshark = {"exit_code": result.returncode, "packet_count": len(rows),
+              "captured_bytes": sum(r["frame.cap_len"] for r in rows),
+              "original_bytes": sum(r["frame.len"] for r in rows),
+              # Only the known synthetic fixture path is normalized. Preserve
+              # every other diagnostic byte so unrelated failures remain visible.
+              "stderr": result.stderr.replace(str(path), "<fixture>")}
+    for side, observed in (("analyzer", analyzer), ("tshark", tshark)):
+        for key, value in expected[side].items():
+            if observed[key] != value:
+                differences.append({"field": side + "." + key, "expected": value, "observed": observed[key]})
+    return {"fixture": path.name, "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "analyzer": analyzer, "tshark": tshark, "rows": rows,
+            "differences": differences, "exclusions": exclusions, "explanation": expected["explanation"]}
+
+
 def run_suite(tshark_root):
     tshark_root = Path(tshark_root).resolve()
     executable = tshark_root / "usr/bin/tshark"
@@ -102,10 +139,10 @@ def run_suite(tshark_root):
                "WIRESHARK_PLUGIN_DIR": config, "WIRESHARK_EXTCAP_DIR": config,
                "WIRESHARK_DATA_DIR": str(tshark_root / "usr/share/wireshark")}
 
-        def run(args):
+        def run(args, *, check=True):
             result = subprocess.run([str(executable), *args], env=env, capture_output=True,
                                     text=True, encoding="utf-8", errors="strict", timeout=30)
-            if result.returncode:
+            if check and result.returncode:
                 raise ValueError("TShark failed: " + result.stderr.strip())
             return result
 
@@ -123,9 +160,16 @@ def run_suite(tshark_root):
                             "original_bytes": sum(r["frame.len"] for r in rows),
                             "rows": rows, "differences": differences, "exclusions": exclusions,
                             "stderr": result.stderr})
+        input_cases = []
+        for name, expected in INPUT_CASES.items():
+            path = ROOT / "fixtures" / name
+            records, error = read_records(path)
+            result = run(field_args(path), check=False)
+            input_cases.append(evaluate_input_case(path, records, error, result, expected))
         return {"tshark_version": version, "fields": FIELDS, "preferences": PREFERENCES,
                 "name_resolution": False, "display_filter": None, "capture_filter": None,
-                "results": results, "matched": all(not r["differences"] for r in results)}
+                "results": results, "input_cases": input_cases,
+                "matched": all(not r["differences"] for r in results + input_cases)}
 
 
 def main():

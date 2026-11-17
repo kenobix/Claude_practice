@@ -647,3 +647,58 @@ caplen>wirelen・未対応link type・pcapng）の拒否/部分復号差と、DN
 TSharkのexpert情報やDNS対応付けと独自の分類・5秒窓状態が一致するとは仮定しない。
 未説明差が残らないことを確認するまでPhase 3全体を完了扱いにしない。
 性能・負荷・デモ（Phase 4）、実通信、他OS/Python、GUIは未検証。MVP全体は未完成。
+
+# 継続単位 — Phase 3の入力異常・形式差6 fixtureの独立比較
+
+実施日: 2026-11-17（Asia/Tokyo）。開始HEAD=3b221cc、cwd=/home/kenshin/work/Claude_practice-261119、
+branch=feat/pcap-analyzer、初期statusはclean。ルート/担当AGENTS、261014計画、README/work_log、
+仕様/Schema、実装・テスト、Draft PR #3と最新commitのpush/PR CI successを確認。
+Phase 0〜2とPhase 3前半8 fixture比較、CIは完了済み。既知の不具合や失敗はなく、
+Phase 3の必須受入に残る入力異常6 fixtureの独立比較を1単位として選択。DNS比較は次へ残す。
+
+## 実装
+
+- compare_tshark.pyにread_records/evaluate_input_caseを追加。入力境界エラーまでの完全prefixを保持し、
+  エラーcode/予定packet番号・分類・完全レコード件数/長さと、TShark終了値・診断・抽出値を照合する。
+  analyzer.exit_codeはPcapSourceの成否から既存CLI規則へ対応させた値で、CLIの実起動は受入試験で別に確認。
+- expected/tshark.input_cases.jsonへ仕様/固定wire構造とTShark 4.2.2で観測した挙動を手定義。
+  解析結果から期待値を自動上書きしない。従来8件は変更せず、追加6件を別のinput_casesへ記録する。
+- 既知の途切れ2件だけはTShark終了2とcut-short診断全文・出力件数を期待する。
+  診断内の対象fixture絶対パスだけを<fixture>へ置換。他のファイル名・追加警告・permission denied・
+  signal終了・予想外の終了値/フレームは差分とする。全ての非0を握り潰さない。
+  version照会や従来8件での予想外の非0、timeout、出力形式異常は引き続き実行失敗扱い。
+- README/仕様/比較文書と結果JSONを更新。対応形式、入力制限、分類・フロー/DNS規則、
+  Schema/ツール版、既存fixture/期待値、Python依存、CI workflowは変更しない。
+  AGENTSの恒久ルール変更はなく更新しない。専用.venvの既存TSharkを使い、OS/他worktree変更なし。
+
+## 実測と回帰確認
+
+TShark 4.2.2（Ubuntu 4.2.2-1.1build3）、同じ固定設定（-r/-n、空profile/plugin/extcap、
+再構成/sequence解析なし、capture/display filterなし）で14 fixtureを明示実行。スクリプト終了0、未説明差分0。
+従来8件のresultsは前commitと完全一致。追加6件は次のとおり。
+
+- empty: 解析器E_FORMAT/2、TShark 0、いずれも0件。解析器は24-byte classic pcap header必須。
+- record_cutoff/header_cutoff: 双方終了2・0件、解析器はE_RECORD_DATA/E_RECORD_HEADERと位置1を区別、
+  TSharkは同じcut-short診断。部分本文40 bytesはcaptured合計へ加えない。
+- malformed_length: 双方0・1件・captured55/original54。解析器はmalformedでフローへ帰属せず、
+  TSharkはTCP fieldsも抽出する。完全レコード処理の終了0をpacket正常の意味にしない。
+- linktype101/pcapng: 解析器E_LINKTYPE/E_FORMAT_UNSUPPORTED・2、TShark 0・0件。
+  対応範囲の相違。fixtureはheaderのみなので、TSharkのraw-IP/pcapng packet復号を検証したとはしない。
+
+14 fixtureの完全レコード合計18件、captured1135/original1148 bytes。記録に不正長も含み、実転送量ではない。
+対象51件成功（18.22秒、ハーネス35件 + 既存CLI受入16件）、全421件成功（45.81秒、既存406+追加15）、
+pip check成功。6入力・固定fixture一覧の完全性、任意の異常を成功扱いしない条件、予想外の解析エラー、
+正常prefix後の不完全headerの保持/位置2、比較CLI差分終了1を検証。
+CLI受入試験は実プロセスの0/2、JSON Schema、partial/拒否/分類とフロー/bytes整合を引き続き確認。
+通常CIはハーネス試験。TShark実体での14件比較はローカル明示実行で、CI実行とは区別する。
+差分・秘密情報・生成物・対象パス確認後に担当branchへcommit/pushし、最新CIを確認する。
+
+## 完了状況・推定進捗・次の単位
+
+保存14 fixtureの共通フィールド/入力異常の独立比較は完了。Phase 3全体はDNS比較が未完了。
+次はDNS ID・質問・RCODE/TC・一意な応答時間の共通部分を独立比較し、独自5秒窓状態との相違を説明する。
+性能/最大メモリ・負荷・再現デモ/動画はPhase 4、実通信/他OS/Python/GUIは未検証。MVPは未完成。
+推定約80%完了・約20%残。元計画の見積中間値(10+15+20+15+10=70)を重みとして、
+Phase 0〜2完了45 + Phase 3は共通/異常入力確認済みで暫定2/3の10 + Phase 4未完了0 =55、
+55/70≒79%を丸めた成果物完了度の概算。実測工数や残時間の推定ではなく、残る検証結果で見直す。
+MVP全条件達成後は独立レビュー・完成判定を提案し、計画外の発展機能へ自動的に進まない。

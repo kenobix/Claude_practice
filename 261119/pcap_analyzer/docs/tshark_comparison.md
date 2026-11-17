@@ -1,7 +1,8 @@
-# Phase 3 前半: TSharkとの共通フィールド比較
+# Phase 3: TSharkとの共通フィールド・入力異常比較
 
 Phase 2の人工入力に対する受入完了後、独立した復号器で共通項目を確認する。
-今回の単位はコンテナが完全な8 fixture。Phase 3全体の完了判定はまだ行わない。
+前半の完全コンテナ8 fixtureに加え、今回の単位で残る6 fixtureの入力異常・形式差を比較した。
+DNS共通フィールドの比較は残っており、Phase 3全体の完了判定はまだ行わない。
 解析器の対応形式・分類・DNS窓規則・Schemaは変更しない。
 
 ## 実行環境と再現
@@ -64,9 +65,12 @@ capture/display filterはどちらも未指定、1 passで、再構成を行わ�
 plugin/extcapのディレクトリも空の一時ディレクトリへ指定し、継承した`WIRESHARK_*`設定を除く。
 個人のWireshark profileは使わない。`LC_ALL=C`、`TZ=UTC`。実際のTShark版全文、固定設定、
 各入力SHA-256、抽出値、未比較理由、差分を結果JSONに記録する。
-終了0は比較一致、1は差分、2は環境/実行/抽出異常。欠落や実行失敗を成功扱いしない。
+スクリプトの終了0は共通フィールドと明示した期待挙動の一致、1は未説明の差分、
+2は環境/実行/抽出異常。欠落や実行失敗を成功扱いしない。
+入力異常6件ではTSharkの終了値と診断を期待値へ照合するため、予想した終了2も比較対象とする。
+任意の非0終了を許容しない。版照会と従来8件の予想外の非0終了は、従来どおりスクリプト終了2。
 
-## 実測結果（2026-11-17）
+## 前半8 fixtureの実測結果（2026-11-17）
 
 [実行結果JSON](tshark_comparison.result.json)へ全抽出値と比較結果を保存した。
 8 fixture / 17 records、比較対象の全フィールドに差分なし、全実行stderr空、終了0。
@@ -91,8 +95,44 @@ backwardは1700000001000000000→1700000000900000000nsの逆行を保持した�
 比較ハーネスは手定義のTShark行で整数精度、異常出力、件数/flags/IP差分検出、
 部分TCPの除外範囲、未導入/非0終了/timeoutを20テストで検証。
 既存386件を含む全406件成功（28.97秒）、pip check成功。
-通常CIはハーネスをテストする。TSharkの取得と実体での8 fixture比較はローカルの明示実行で、
+通常CIはハーネスをテストする。TSharkの取得と実体でのfixture比較はローカルの明示実行で、
 CIが独立比較まで実施したとはしない。CI workflowとPython依存lockは変更なし。
+
+## 今回追加した6 fixture（2026-11-17）
+
+同じTShark 4.2.2で残る6 fixtureを実行し、[期待挙動](../expected/tshark.input_cases.json)と照合した。
+解析器側は仕様とwire構造、TShark側は同版で確認した挙動を手で定義し、結果から自動上書きしない。
+TSharkの終了0を「classic pcapとして妥当」「全packet正常」と解釈しない。
+
+| fixture | 解析器の結果 | TSharkの結果 | 説明 |
+|---|---|---|---|
+| empty | E_FORMAT / 終了2 / 0件 | 終了0 / 0件 | 解析器は24-byteのclassic pcap headerを要求。TSharkはこの空入力を0件として扱った |
+| record_cutoff | E_RECORD_DATA / 終了2 / 0件 | 終了2 / 0件 / cut-short診断 | 宣言54に対し本文40 bytes。双方とも部分本文を完全packetへ数えない |
+| header_cutoff | E_RECORD_HEADER / 終了2 / 0件 | 終了2 / 0件 / cut-short診断 | レコードheader 8/16 bytes。解析器は本文不足と区別、TSharkは同じ診断文 |
+| malformed_length | 終了0 / malformed 1件 / 55・54 bytes | 終了0 / 1件 / cap_len=55・len=54 | 完全レコードは読めるが長さ矛盾。解析器はフロー除外、TSharkはTCP fieldsも抽出 |
+| unsupported_linktype | E_LINKTYPE / 終了2 / 0件 | 終了0 / 0件 | link type 101 headerのみ。TSharkのraw-IP packet復号までは検証していない |
+| unsupported_pcapng | E_FORMAT_UNSUPPORTED / 終了2 / 0件 | 終了0 / 0件 | section headerのみのpcapng。interface/packet blockはなく、その復号は未検証 |
+
+`input_cases`へ解析器のerror code/位置・分類・件数/長さ、TSharkの終了値/件数/長さ/抽出値/診断、
+説明と未説明差分を保存した。解析器側はPcapSourceの実測で、`analyzer.exit_code`はreaderの成否を
+既存CLIの0/2規則へ対応させた値。CLI実プロセス・Schema・partial/拒否の確認は、併行実行した
+既存のPhase 2 CLI受入16件で別に確認した。
+
+途切れ2件の診断は、対象fixtureの絶対パスだけを`<fixture>`へ置換して保存/完全一致照合する。
+cut-short診断の別ファイル名、追加警告、permission denied、異なる終了値やsignal終了、
+不意のstdoutフレームを許容しない。共通のIP/長さ/時刻の差分検査も続ける。
+`malformed_length`のL4は長さ矛盾のため未比較とし、TSharkが示すTCP値をフローへ採用しない。
+
+14 fixtureのスクリプト実行は終了0、未説明差分0。従来8件の結果は前commitと一致。
+追加6件は完全レコード1件（captured55/original54）、途切れを含む他5件は完全レコード0件。
+全14件の完全レコード合計18件、captured1135/original1148 bytes。部分レコード本文40 bytesは加算しない。
+これは不正な長さも記録どおりに保持した合計で、回線上の転送量ではない。
+
+対象テスト51件成功（18.22秒、比較ハーネス35件 + CLI受入16件）。
+追加15件では6入力、予想外の終了/診断/フレーム、解析器の予想外のエラー、
+完全prefix保持と次の失敗位置、比較CLIの差分終了1を確認。
+全421件成功（45.81秒、既存406件 + 追加15件）、pip check成功。
+通常CIはこれらのハーネス試験であり、TShark実体の起動成功を意味しない。
 
 ## 比較の定義と限界
 
@@ -105,8 +145,7 @@ CIが独立比較まで実施したとはしない。CI workflowとPython依存l
 - `unsupported_arp`: frame情報を比較。IPv4/portsはなし。ARPをparsedへ変更しない。
 - `backward`: レコード順の時刻をそのまま比較。TSharkのDNS対応付けを独自窓規則へ流用しない。
 
-8 fixtureはbaseline/header_only/nano/big_endian/backward/capture_truncated/fragment/unsupported_arp。
-残る6 fixture（空入力、レコード本文/ヘッダー途切れ、caplen>wirelen、未対応link type、pcapng）は
-次の比較単位。独自の4分類とTSharkのexpert情報の一対一一致は要求しない。
-DNS ID/質問/RCODE/TC/一意な応答時間の共通部分と、独自状態との相違の確認も残る。
+独自の4分類とTSharkのexpert情報の一対一一致は要求しない。
+保存fixture14件の共通フィールド/入力異常比較は完了。
+次はDNS ID/質問/RCODE/TC/一意な応答時間の共通部分と、独自状態との相違の確認。
 性能・負荷・デモ、実通信、他OS、他Pythonは今回の検証対象ではない。
