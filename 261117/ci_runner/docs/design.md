@@ -62,6 +62,7 @@ run.completed_attempt_idを現在の有効attemptの確定transactionでのみ�
 | deliveries | hook/delivery一意、body SHA-256、結果、runへのFK |
 | artifacts | attempt FK、サーバー生成名、サイズCHECK、SHA-256、保存キー一意 |
 | attempt_logs / log_storage_budget | attempt別の不変byteaログ、合計1MiB/attempt・最大64MiBのraw保持payload台帳 |
+| attempt_sources | 受理commitの正式attempt別source・imageの由来。runとattemptの組はFKで対応 |
 | schema_migrations | 適用版とDB時刻、transactionでDDLと同時記録 |
 
 基礎DDLは `../migrations/001_initial.sql`（未変更）。版2で履歴用(created_at DESC, id DESC) indexを追加。版3でログと容量台帳を追加（[仕様](log-storage.md)）。UUIDはDB生成。日時はtimestamptz。
@@ -94,7 +95,7 @@ P0ではDB再起動後のschema保持、CPU/RAM/PID制限、時間/ログ上限�
 
 現在のP1実装では、[一件Worker](fixture-worker.md)が既存の取得・上限付きローカルfixture実行・条件付き結果確定を接続する。
 候補の読取transactionを終了後に固定imageを準備し、その後に初回取得する。image IDを固定してcreateし、containerとunique imageタグの回収後に結果確定する。
-claim-onceは取得だけを維持。常駐処理・受理commit取得・自動復旧は未実装。正式ログの参照境界は[ログ取得仕様](log-access.md)を参照。
+claim-onceは取得だけを維持。受理commit経路では検証・buildを前置し、同じrun ID/SHAだけをclaimして既存の実行権照合を通す。migration 004で正式結果と同時に由来を保存する。常駐処理・自動復旧は未実装。正式ログの参照境界は[ログ取得仕様](log-access.md)を参照。
 
 - [PostgreSQL 17 SELECT](https://www.postgresql.org/docs/17/sql-select.html): SKIP LOCKEDはキュー競合回避用途。一般の一貫した読取の代替にしない。
 - [FastAPI virtual environments](https://fastapi.tiangolo.com/virtual-environments/): プロジェクト専用Python環境を使用。

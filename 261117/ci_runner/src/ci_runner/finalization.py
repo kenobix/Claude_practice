@@ -1,10 +1,10 @@
-"""Atomic, fenced outcome persistence for trusted local fixture reports only."""
+"""Atomic, fenced outcome persistence for trusted fixed fixture reports."""
 from dataclasses import dataclass
 from datetime import datetime
 import re
 from uuid import UUID
 
-from . import database
+from . import commit_source, database
 from .execution import ExecutionResult, EXPECTED_LIMITS, LOG_LIMIT
 from .settings import POLICY
 from .worker import Claim, validate_worker_id
@@ -59,6 +59,19 @@ def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=N
     This is a trusted internal API, not a cryptographic proof of execution.
     """
     state, reason = outcome(claim, result)
+    source = result.verified_source
+    provenance = None
+    if source is not None:
+        try:
+            commit_source.validate_verified_source(source)
+        except commit_source.SourceRejected:
+            raise FinalizationDenied('invalid verified source in result') from None
+        if source.run_id != claim.run_id:
+            raise FinalizationDenied('source does not match the claimed run')
+        reason = 'commit_' + reason.removeprefix('fixture_')
+        provenance = {'commit_sha': source.commit_sha, 'main_sha': source.main_sha,
+                      'blob_sha': source.blob_sha, 'source_sha256': commit_source.DIGEST,
+                      'image_id': result.image_id}
     factory = connection_factory or database.connect
     with factory() as conn:
         run = conn.execute('SELECT * FROM runs WHERE id=%s FOR UPDATE', (claim.run_id,)).fetchone()
@@ -72,6 +85,8 @@ def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=N
                 or attempt['attempt_no'] != claim.attempt_no or claim.attempt_no != 1
                 or attempt['retry_kind'] != 'initial'):
             raise FinalizationDenied('fixture report is not current')
+        if source is not None and run['commit_sha'] != source.commit_sha:
+            raise FinalizationDenied('source SHA does not match the claimed run')
         replayed = (run['completed_attempt_id'] == claim.attempt_id
                     and run['state'] == attempt['state'] == state
                     and attempt['exit_code'] == result.exit_code and attempt['reason'] == reason
@@ -82,6 +97,13 @@ def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=N
             if logs is None or (logs['stdout'], logs['stderr'], logs['observed_bytes']) != (
                     result.stdout, result.stderr, result.observed_bytes):
                 raise FinalizationDenied('persisted logs do not match the report')
+            if provenance is not None:
+                saved_source = conn.execute(
+                    'SELECT commit_sha,main_sha,blob_sha,source_sha256,image_id '
+                    'FROM attempt_sources WHERE attempt_id=%s AND run_id=%s',
+                    (claim.attempt_id, claim.run_id)).fetchone()
+                if saved_source != provenance:
+                    raise FinalizationDenied('persisted source does not match the report')
             finished_at = attempt['finished_at']
         else:
             if (run['state'] != 'running' or run['cancel_requested_at'] is not None
@@ -97,6 +119,11 @@ def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=N
                 raise FinalizationDenied('execution lease is expired')
             conn.execute('INSERT INTO attempt_logs(attempt_id,stdout,stderr,observed_bytes) VALUES (%s,%s,%s,%s)',
                          (claim.attempt_id, result.stdout, result.stderr, result.observed_bytes))
+            if provenance is not None:
+                conn.execute(
+                    'INSERT INTO attempt_sources(attempt_id,run_id,commit_sha,main_sha,blob_sha,source_sha256,image_id) '
+                    'VALUES (%(attempt_id)s,%(run_id)s,%(commit_sha)s,%(main_sha)s,%(blob_sha)s,%(source_sha256)s,%(image_id)s)',
+                    {**provenance, 'attempt_id': claim.attempt_id, 'run_id': claim.run_id})
             changed = conn.execute(
                 'UPDATE runs SET state=%s,completed_attempt_id=%s '
                 "WHERE id=%s AND state='running' AND cancel_requested_at IS NULL "

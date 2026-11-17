@@ -10,16 +10,18 @@ from uuid import UUID
 import psycopg
 
 from . import database
-from .settings import POLICY
+from .settings import POLICY, SCHEMA_VERSION
 
 LEASE_SECONDS = 30
 
-CANDIDATE_SQL = (
+ELIGIBLE_SQL = (
     "SELECT r.id, r.commit_sha FROM runs r WHERE r.state='queued' "
     'AND r.cancel_requested_at IS NULL AND r.available_at <= clock_timestamp() '
     'AND r.repository_id=%s AND r.ref=%s AND r.workflow_version=%s '
     # Retry cause/budget is not implemented: never mislabel a retry as initial.
     'AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.run_id=r.id) '
+)
+CANDIDATE_SQL = ELIGIBLE_SQL + (
     'ORDER BY r.available_at, r.created_at, r.id '
     'LIMIT 1'
 )
@@ -50,13 +52,20 @@ def has_queued_candidate(connection_factory=None):
     return present
 
 
-def claim_next(worker_id: str, connection_factory=None) -> Claim | None:
+def claim_next(worker_id: str, connection_factory=None, *, target: tuple[UUID, str] | None = None) -> Claim | None:
+    """Claim the next candidate, or only the exact verified run and SHA."""
     validate_worker_id(worker_id)
     factory = connection_factory or database.connect
+    params = (POLICY.repository_id, POLICY.ref, POLICY.workflow_version)
+    sql = CANDIDATE_SQL
+    if target is not None:
+        # This path must be able to persist the provenance before we grant a lease.
+        sql = (ELIGIBLE_SQL + 'AND r.id=%s AND r.commit_sha=%s '
+               'AND EXISTS (SELECT 1 FROM schema_migrations WHERE version=%s)')
+        params += (*target, SCHEMA_VERSION)
     with factory() as conn:
         run = conn.execute(
-            CANDIDATE_SQL + ' FOR UPDATE OF r SKIP LOCKED',
-            (POLICY.repository_id, POLICY.ref, POLICY.workflow_version)).fetchone()
+            sql + ' FOR UPDATE OF r SKIP LOCKED', params).fetchone()
         if run is None:
             return None
         row = conn.execute(

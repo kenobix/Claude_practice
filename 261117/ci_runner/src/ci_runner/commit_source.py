@@ -43,6 +43,21 @@ def _oid(value):
     return value
 
 
+def validate_verified_source(source: VerifiedSource):
+    """Check the in-process handoff before building or recording its bytes."""
+    if not isinstance(source, VerifiedSource) or not isinstance(source.run_id, UUID):
+        raise SourceRejected('invalid verified source handle')
+    for oid in (source.commit_sha, source.main_sha, source.blob_sha):
+        _oid(oid)
+    contents = source.contents
+    if (type(contents) is not bytes or len(contents) != SIZE
+            or hashlib.sha256(contents).hexdigest() != DIGEST):
+        raise SourceRejected('source does not match approved bytes')
+    git_header = f'blob {SIZE}\0'.encode('ascii')
+    if hashlib.sha1(git_header + contents, usedforsecurity=False).hexdigest() != source.blob_sha:
+        raise SourceRejected('Git blob SHA mismatch')
+
+
 def _object(value):
     if not isinstance(value, dict):
         raise SourceRejected('invalid GitHub response')
@@ -136,12 +151,9 @@ def _verify(run_id, commit_sha, github):
         contents = base64.b64decode(encoded.replace('\n', ''), validate=True)
     except ValueError:
         raise SourceRejected('invalid source encoding') from None
-    if len(contents) != SIZE or hashlib.sha256(contents).hexdigest() != DIGEST:
-        raise SourceRejected('source does not match approved bytes')
-    git_header = f'blob {SIZE}\0'.encode('ascii')
-    if hashlib.sha1(git_header + contents, usedforsecurity=False).hexdigest() != oid:
-        raise SourceRejected('Git blob SHA mismatch')
-    return VerifiedSource(run_id, commit_sha, main_sha, oid, contents)
+    source = VerifiedSource(run_id, commit_sha, main_sha, oid, contents)
+    validate_verified_source(source)
+    return source
 
 
 def _candidate(factory):

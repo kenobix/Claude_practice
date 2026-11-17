@@ -1,12 +1,15 @@
 """Worker-only preparation boundary. Creates but never starts a fixed fixture."""
 from contextlib import contextmanager
 from dataclasses import dataclass
+import hashlib
 import json
 from pathlib import Path
 import re
 import subprocess
+from tempfile import TemporaryDirectory
 from uuid import UUID, uuid4
 
+from . import commit_source
 from .preflight import ExecutionPermit
 from .settings import POLICY
 from .worker import validate_worker_id
@@ -16,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 TMPFS = {'/tmp': 'rw,noexec,nosuid,nodev,size=16m,mode=1777'}
 MODES = frozenset(('success', 'failure', 'timeout', 'logs'))
 ENTRYPOINT = ['python', '-I', '-B', '/opt/fixture.py']
+DOCKERFILE_SHA256 = 'c6a7de570c22087ae5be90fd1d15cee425281ab10e939af526e6049abaddfecf'
 
 
 class ContainerRejected(Exception):
@@ -93,6 +97,17 @@ class PreparedImage:
     image_id: str
     session: str
     tag: str
+    verified_source: commit_source.VerifiedSource | None = None
+
+
+def _source_labels(source):
+    if source is None:
+        return {}
+    return {'dev.ci-runner.source-run': str(source.run_id),
+            'dev.ci-runner.source-commit': source.commit_sha,
+            'dev.ci-runner.source-main': source.main_sha,
+            'dev.ci-runner.source-blob': source.blob_sha,
+            'dev.ci-runner.source-sha256': commit_source.DIGEST}
 
 
 def inspect_prepared_image(prepared):
@@ -103,35 +118,59 @@ def inspect_prepared_image(prepared):
             or not re.fullmatch('sha256:[0-9a-f]{64}', prepared.image_id)):
         raise ContainerRejected('invalid prepared image handle')
     image = json.loads(docker('image', 'inspect', prepared.tag).stdout)[0]
+    labels = image['Config']['Labels']
     if (image['Id'] != prepared.image_id
-            or image['Config']['Labels'].get(LABEL) != prepared.session):
+            or labels.get(LABEL) != prepared.session
+            or any(labels.get(key) != value
+                   for key, value in _source_labels(prepared.verified_source).items())):
         raise ContainerRejected('prepared image identity or ownership changed')
     return image
 
 
 @contextmanager
-def prepare_image():
-    """Build only the local fixed source; release the owned unique tag on exit."""
+def _build_context(source):
+    if source is None:
+        yield ROOT / 'fixtures/job'
+        return
+    commit_source.validate_verified_source(source)
+    dockerfile = (ROOT / 'fixtures/job/Dockerfile').read_bytes()
+    if hashlib.sha256(dockerfile).hexdigest() != DOCKERFILE_SHA256:
+        raise ContainerRejected('fixed Dockerfile digest mismatch')
+    with TemporaryDirectory(prefix='ci-runner-source-') as directory:
+        context = Path(directory)
+        (context / 'Dockerfile').write_bytes(dockerfile)
+        (context / 'fixture.py').write_bytes(source.contents)
+        yield context
+
+
+@contextmanager
+def prepare_image(*, verified_source: commit_source.VerifiedSource | None = None):
+    """Build a fixed fixture; release the owned unique tag on exit."""
     session = uuid4().hex
     tag = f'ci-runner-fixed-fixture:{session}'
     prepared = None
+    attempted_build = False
     try:
-        docker('build', '--network=none', '--label', f'{LABEL}={session}',
-               '--tag', tag, str(ROOT / 'fixtures/job'), timeout=180)
+        with _build_context(verified_source) as context:
+            labels = {LABEL: session, **_source_labels(verified_source)}
+            options = [item for key, value in labels.items() for item in ('--label', f'{key}={value}')]
+            attempted_build = True
+            docker('build', '--network=none', *options, '--tag', tag, str(context), timeout=180)
         image = json.loads(docker('image', 'inspect', tag).stdout)[0]
-        prepared = PreparedImage(image['Id'], session, tag)
+        prepared = PreparedImage(image['Id'], session, tag, verified_source)
         inspect_prepared_image(prepared)
         yield prepared
     finally:
-        result = docker('image', 'inspect', tag, check=False)
-        if result.returncode == 0:
-            image = json.loads(result.stdout)[0]
-            if (image['Config']['Labels'].get(LABEL) != session
-                    or (prepared is not None and image['Id'] != prepared.image_id)):
-                raise ContainerRejected('refusing cleanup of an unowned or replaced image tag')
-            docker('image', 'rm', tag)
-        elif 'No such image:' not in result.stderr and 'No such object:' not in result.stderr:
-            raise ContainerRejected('image cleanup inspection failed')
+        if attempted_build:
+            result = docker('image', 'inspect', tag, check=False)
+            if result.returncode == 0:
+                image = json.loads(result.stdout)[0]
+                if (image['Config']['Labels'].get(LABEL) != session
+                        or (prepared is not None and image['Id'] != prepared.image_id)):
+                    raise ContainerRejected('refusing cleanup of an unowned or replaced image tag')
+                docker('image', 'rm', tag)
+            elif 'No such image:' not in result.stderr and 'No such object:' not in result.stderr:
+                raise ContainerRejected('image cleanup inspection failed')
 
 
 @contextmanager
@@ -156,6 +195,9 @@ def prepare_fixture(permit: ExecutionPermit, mode='success', *, prepared_image=N
                 yield prepared
         return
     image = inspect_prepared_image(prepared_image)
+    source = prepared_image.verified_source
+    if source is not None and (permit.run_id, permit.commit_sha) != (source.run_id, source.commit_sha):
+        raise ContainerRejected('prepared source does not match the execution permit')
     session = uuid4().hex
     name = f'ci-runner-prepare-{session}'
     labels = {LABEL: session, 'dev.ci-runner.run': str(permit.run_id),

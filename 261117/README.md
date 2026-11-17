@@ -8,7 +8,7 @@ Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB pref
 内部ライブラリでDB再照合・実値ガード・時間/ログ/lease上限付きのローカル固定fixture実行も実装済み。
 ローカルfixture結果の条件付きDB確定（状態/exit/理由/終了時刻・正式attempt参照）も実装済み。
 別プロセスの一件実行入口で、取得→ローカル固定fixture実行/回収→条件付き確定まで接続済み。
-上限付きログを結果と同一transactionでDB保存する。正式ログの取得・最小HTML表示も実装済み。受理commitの取得と検証は読み取り専用で実装済み。取得済みsourceのDocker実行への接続・常駐Worker・Webhook・履歴UIは未実装で、P1全体は未完了。
+上限付きログを結果と同一transactionでDB保存する。正式ログの取得・最小HTML表示も実装済み。受理commitの固定fixtureを一件実行し、sourceとimageの由来を結果に保存できる。常駐Worker・Webhook・履歴UIは未実装で、P1全体は未完了。
 GitHub Pagesへの公開対象ではない。常駐バックエンドの配置先は将来別途判断する。
 
 ## 受理commitのsourceを検証する
@@ -25,6 +25,26 @@ blob・2151 bytes・承認済みSHA-256を照合する。I/O前後のrun ID/SHA�
 候補なしは `verified: false`、取得や照合の失敗は終了1。検証結果にはsource本文を出力しない。
 このコマンドはrunをclaimせず、実行権やleaseを発行しない。
 [取得契約と検証範囲](ci_runner/docs/commit-source-readiness.md)。
+
+## 受理commitの固定fixtureを一件実行する
+
+専用DBで migration 004 まで適用し、許可main上のfixtureを含むSHAでrunを投入する。
+WorkerにDocker権限とGitHub HTTPS接続を用意し、`ci_runner/` から実行する。
+
+```bash
+.venv/bin/python -m ci_runner.fixture_worker --worker-id commit-worker-1 --run-once --verified-commit
+# 使い捨てDB・実Docker・実GitHubで回帰と受理commitの4モードを再検証
+CI_RUN_LIVE_COMMIT_SOURCE=1 .venv/bin/python scripts/verify_execution.py
+```
+
+匿名GitHub APIの枠が足りない場合は、既存の認証済み `gh` を使う試験用の
+`CI_RUN_LIVE_COMMIT_SOURCE=gh` でも再検証できる。Workerの通常の通信設定は維持する。
+
+取得したbytesと固定Dockerfileだけで先にbuildし、同じrun ID/SHAを条件に30秒leaseを発行する。
+競合で取得できなくなった場合は別runへ進まず、専用image tagを回収する。
+結果の `commit_*` 理由は受理commit経路、`fixture_*` はローカル開発経路を表す。
+正式attemptの `attempt_sources` にrun ID・受理SHA・main SHA・blob SHA・source SHA-256・image IDを保存する。
+詳細は[一件Worker仕様](ci_runner/docs/fixture-worker.md)を参照。
 
 ## Python環境とテスト
 
@@ -156,7 +176,7 @@ Base image/build cacheは再利用用に残す。強制中断でfinallyも動か
 
 ## 受付APIの利用
 
-DATABASE_URL設定とmigration版3適用後、前述のUvicorn起動コマンドで利用できる。
+DATABASE_URL設定とmigration版4適用後、前述のUvicorn起動コマンドで利用できる。
 repositoryはkenobix/Claude_practice、refはrefs/heads/main、workflow版はfixture-v1に固定する。
 入力にref・workflow・URL・command・YAMLを追加できない。SHAは構文だけを検証し、実在確認や実行はまだ行わない。
 
@@ -203,7 +223,7 @@ Worker内部向けのauthorize_execution(claim)で、DBにある現在token・Wo
 Worker内部のprepare_fixture(permit, mode)はローカル固定fixtureをbuildし、
 制限付きcreateとinspect照合後に未起動コンテナを返すcontext manager。通常終了・例外時に自分のcontainer/tagを回収する。
 P0のテストハーネスには依存せず、任意イメージ・コマンド・mount・環境変数を受け付けない。
-API/claim-onceへは未接続。実行ライブラリの起動・実値確認・上限監視と、別の一件Workerへの接続は実装済み。受理SHAの読み取り専用の取得検証は実装済み。Dockerへの接続は未実装。ログはDB保存・正式参照の取得・最小HTML表示まで実装済み。
+API/claim-onceへは未接続。実行ライブラリの起動・実値確認・上限監視と、別の一件Workerへの接続は実装済み。受理SHAの取得検証から固定Docker実行まで一件Workerで接続済み。ログはDB保存・正式参照の取得・最小HTML表示まで実装済み。
 設定確認を実行時強制の証拠としない。詳細と残存時のラベルは[準備境界仕様](ci_runner/docs/container-preparation.md)を参照。
 
 ## 上限付き固定fixture実行の検証
@@ -224,7 +244,7 @@ execute_fixtureだけではDBはrunningのまま。別途finalize_fixture(claim,
 
 finalize_fixture(claim, result)はrun→attemptを短くロックし、現在token・DB期限・取消条件を満たすときだけ両方を確定する。
 確定済みの同じ状態/exit/理由の再送は終了時刻を変えず応答する。DB異常は成功扱いせず、同じ報告で再確認する。
-理由はfixture_接頭辞で記録する。受理commitのコード検査は未実装。ログは同じtransactionでDB保存する。
+ローカル経路はfixture_、受理commit経路はcommit_接頭辞で理由を記録する。ログと受理commitの由来は結果と同じtransactionでDB保存する。
 API/claim-onceは結果確定へ自動接続しない。使い捨てDBのverify_execution.pyで実行から確定までを検証する。
 詳細は[結果確定仕様](ci_runner/docs/result-finalization.md)を参照。
 

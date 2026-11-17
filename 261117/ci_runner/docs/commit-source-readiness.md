@@ -1,6 +1,6 @@
 # 受理commitの固定取得と検証
 
-状態: **主ブランチへのfixture公開と読み取り専用の取得検証は完了**。Workerへの接続は未実装。
+状態: **主ブランチへのfixture公開・固定取得検証・一件Worker接続は実装済み**。
 
 ## 2026-11-18の公開・取得検証
 
@@ -25,8 +25,9 @@ curl 8.4以上で各応答1 MiB、各リクエスト5秒、取得全体30秒を�
 取得対象は通常の初回claimと同じ許可条件に合うキュー先頭。DB transactionは通信前に閉じ、
 取得後に別transactionで先頭のrun IDとcommit SHAを再照合する。消失、競合取得、別runへの変更は拒否。
 検証結果は不変のsource bytesとrun ID、受理SHA、main snapshot、blob IDを含む。この再照合は予約ではない。
-後続の接続では、claim前に検証したrunと同じrun ID/SHAを条件付きでclaimし、検証bytesを固定build contextへ
-渡し、正式結果へsourceとimageの由来を記録する必要がある。既存の制限・lease・fencingを維持する。
+一件Workerは検証済みのbytesで固定imageをbuildした後、同じrun ID/SHAを条件付きでclaimする。
+既存の制限・lease・fencingを維持し、正式結果と同じtransactionでsourceとimageの由来を保存する。
+[実行手順と停止時の挙動](fixture-worker.md#受理commitの固定fixture経路)。
 
 ## 公開前の調査記録（2026-11-17）
 

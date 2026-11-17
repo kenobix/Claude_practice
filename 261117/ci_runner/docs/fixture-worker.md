@@ -1,10 +1,10 @@
-# 一件だけ実行するローカル固定fixture Worker
+# 固定fixtureを一件実行するWorker
 
 `src/ci_runner/fixture_worker.py`はAPIから独立した信頼済みプロセス。
 P1の取得・隔離実行・結果確定を接続する単位で、常駐ループやP2の復旧処理を含めない。
 従来の[claim-once](worker-claim.md)の意味は変更しない。
 
-## 契約と境界
+## ローカル開発経路
 
 1. CLIはworker-idと明示的な--run-onceを必須にする。任意URL・コマンド・YAML・image・環境注入・run ID指定は受け付けない。
 2. 運用者のfixture-modeはsuccess/failure/timeout/logsだけ。既定success。モードはHTTP要求や受理repositoryから取得しない。
@@ -15,8 +15,8 @@ P1の取得・隔離実行・結果確定を接続する単位で、常駐ルー
 7. どの段階も自動再試行せず、別のrunを続けて取得しない。Docker中にDB行ロックを保持しない。
 
 ジョブログ・token・DB接続文字列・生のdaemon/driver例外はCLIへ出さない。ログ保持は合計1MiBで、
-[結果確定と同じtransactionでDB保存](log-storage.md)する。受理SHAを固定取得する処理もまだないため、fixture_successを受理commit検査成功と扱わない。
-APIへDocker権限を追加せず、既存の入力許可・migration・lease30秒を変更しない。
+[結果確定と同じtransactionでDB保存](log-storage.md)する。受理commit経路の実行結果は下記の `commit_*` 理由で識別する。
+APIへDocker権限を追加せず、既存の入力許可とlease30秒を維持する。
 
 | プロセス終了 | 出力 | 意味 |
 |---|---|---|
@@ -29,7 +29,8 @@ APIへDocker権限を追加せず、既存の入力許可・migration・lease30�
 
 | 止まった段階 | DBの可能性と対応 |
 |---|---|
-| queue | 読取専用の候補確認失敗。image準備・取得へ進まない |
+| queue | ローカル経路の候補確認失敗。image準備・取得へ進まない |
+| source | 受理commit経路の候補確認・GitHub取得・照合の失敗。image準備・取得へ進まない |
 | image | 固定imageのbuild/検証失敗。runを取得せず、attemptを作らない |
 | claim | COMMIT前ならqueued、COMMIT後の応答喪失ならrunning。Claimを受け取れずrun ID不明の場合もある。後続実行へ進まない |
 | execution | 取消/期限/preflight拒否、Docker障害や回収失敗は通常running・正式結果なし。期限後の新規確定は禁止 |
@@ -63,4 +64,32 @@ build1回・createのimage ID一致・正常確定・資源回収も確認する
 
 再現はscripts/verify_execution.py。通常pytest/ActionsはDockerを起動しない。
 最新の実行証拠はignored artifacts/fixture-worker-latest.json（source SHA-256・終了receipt・回収確認）、件数と実測はwork_log.mdに記録する。
-P1全体は未完了。正式ログ取得/最小HTML表示は後続単位で実装済み（[仕様](log-access.md)）。受理commit対応付けと本格UIは残件。
+P1全体は未完了。正式ログ取得/最小HTML表示は後続単位で実装済み（[仕様](log-access.md)）。ローカル経路の実測記録は上記の範囲。本格UIは後続フェーズで扱う。
+
+## 受理commitの固定fixture経路
+
+`--run-once --verified-commit` は許可mainのsnapshotから検証した固定fixtureを実行する。
+curl 8.4以上とGitHub HTTPS接続、migration 004適用済みの専用DBが必要。
+`--fixture-mode` は運用者が選ぶ既存4モードで、受付APIは実行指示を受け取らない。
+
+1. DB transactionを閉じてから[固定取得](commit-source-readiness.md)を実施する。
+2. sourceとGit blob digestを再確認する。承認固定Dockerfile（SHA-256
+   `c6a7de570c22087ae5be90fd1d15cee425281ab10e939af526e6049abaddfecf`）と検証済みbytesだけを
+   一時contextに置き、`--network=none` でbuildする。base imageはDockerfileにdigest固定。
+   contextを削除し、imageタグ・ID・sessionとsourceラベルを照合する。
+3. 由来保存用のmigration版をDBで確認し、検証したrun IDとSHAの組だけにDBの行ロックと30秒leaseを適用する。
+   候補が取得済み・ロック中・SHA不一致・取消済みなどで取得できなければ、別runを選ばず終了1。
+4. 起動前とGO前を含む既存のDB実行権照合でsourceとの一致も再確認する。既存のCPU・メモリ・PID、
+   時間・ログ制限とnetwork noneを使う。コンテナ・専用image tagを回収してから確定する。
+5. token・run・attempt・leaseによる結果確定のtransactionにログと `attempt_sources` を含める。
+   由来はrun ID・受理SHA・main snapshot・blob SHA・source digest・実行image ID。
+   受理commitの理由は `commit_*`、ローカルの理由は `fixture_*`。同じ結果の再送にはログと由来の一致が必要。
+
+権限消失やDB断は成功扱いせず、claim済みの場合はrunningが残り得る。自動回復はP2。
+Workerはsource本文をDB・ログ・応答に保存せず、一時build contextは削除する。
+Docker base imageやbuild cacheは既存の運用どおり再利用され得る。
+
+実GitHub試験は `CI_RUN_LIVE_COMMIT_SOURCE=1` で通常の匿名HTTPS・別プロセスCLIを使う。
+`CI_RUN_LIVE_COMMIT_SOURCE=gh` では試験のHTTP取得だけを認証済みの `gh` に切り替える。
+実GitHubの応答を既存のcommit/tree/blob検証に渡し、同じCLI入口から専用DBと実Dockerで実行する。
+テスト用通信の切替はWorkerの公開引数やDocker build contextに含めない。

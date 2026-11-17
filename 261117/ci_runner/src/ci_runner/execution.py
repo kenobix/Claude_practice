@@ -1,4 +1,4 @@
-"""Bounded local-fixture execution, not a Worker loop or DB result finalizer."""
+"""Bounded fixed-fixture execution with database authorization."""
 from dataclasses import dataclass
 import json
 import os
@@ -8,6 +8,7 @@ import time
 from uuid import UUID
 
 from . import container
+from .commit_source import VerifiedSource
 from .preflight import ExecutionDenied, authorize_execution
 from .worker import Claim
 
@@ -30,34 +31,45 @@ class ExecutionResult:
     image_id: str
     run_id: UUID
     attempt_id: UUID
+    verified_source: VerifiedSource | None = None
 
     @property
     def truncated(self):
         return self.observed_bytes > len(self.stdout) + len(self.stderr)
 
 
+def _authorize(claim, connection_factory, source):
+    permit = authorize_execution(claim, connection_factory)
+    if source is not None and (permit.run_id, permit.commit_sha) != (source.run_id, source.commit_sha):
+        raise ExecutionDenied('verified source no longer matches the claimed run')
+    return permit
+
+
 def execute_fixture(claim: Claim, mode='success', connection_factory=None, *, prepared_image=None):
-    """Run only server-owned local fixtures. Returns after owned-resource cleanup.
+    """Run only a fixed fixture. Returns after owned container cleanup.
 
     Starts a trusted guard, then rechecks DB before releasing fixed workload.
     No polling, heartbeat, repository fetch, DB finalization, or public API.
     """
     if mode not in container.MODES:
         raise container.ContainerRejected('unknown fixed fixture mode')
-    permit = authorize_execution(claim, connection_factory)
+    if prepared_image is not None and not isinstance(prepared_image, container.PreparedImage):
+        raise container.ContainerRejected('invalid prepared image handle')
+    source = prepared_image.verified_source if prepared_image is not None else None
+    permit = _authorize(claim, connection_factory, source)
     options = {} if prepared_image is None else {'prepared_image': prepared_image}
     with container.prepare_fixture(permit, mode, **options) as prepared:
         # Budget starts before the DB round trip: query/commit/network delay may
         # shorten local authority but must never extend the DB-issued lease.
         measured = time.monotonic()
-        permit = authorize_execution(claim, connection_factory)
+        permit = _authorize(claim, connection_factory, source)
         lease_deadline = measured + permit.remaining_lease_seconds
         if lease_deadline <= time.monotonic():
             raise ExecutionDenied('execution lease expired during authorization')
-        return _run(prepared, claim, connection_factory, lease_deadline)
+        return _run(prepared, claim, connection_factory, lease_deadline, source)
 
 
-def _run(prepared, claim, connection_factory, lease_deadline):
+def _run(prepared, claim, connection_factory, lease_deadline, source):
     process = stop = None
     selector = selectors.DefaultSelector()
     out, err, handshake = bytearray(), bytearray(), bytearray()
@@ -105,7 +117,7 @@ def _run(prepared, claim, connection_factory, lease_deadline):
                         raise container.ContainerRejected('runtime restrictions do not match')
                     limits = acknowledgement['limits']
                     measured = time.monotonic()
-                    permit = authorize_execution(claim, connection_factory)
+                    permit = _authorize(claim, connection_factory, source)
                     lease_deadline = min(lease_deadline, measured + permit.remaining_lease_seconds)
                     if time.monotonic() >= min(wall_deadline, lease_deadline) or reason != 'completed':
                         raise ExecutionDenied('execution budget expired before release')
@@ -132,7 +144,7 @@ def _run(prepared, claim, connection_factory, lease_deadline):
             reason = 'check_failure'
         return ExecutionResult(state['ExitCode'], reason, bytes(out), bytes(err), observed,
                                time.monotonic() - started, released, limits, prepared.image_id,
-                               prepared.run_id, prepared.attempt_id)
+                               prepared.run_id, prepared.attempt_id, source)
     finally:
         selector.close()
         # Free attach pipes before the preparation context issues blocking rm.

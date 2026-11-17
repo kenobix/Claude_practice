@@ -19,7 +19,9 @@ pytestmark = pytest.mark.integration
 @pytest.fixture(autouse=True)
 def simulated_image(monkeypatch):
     # DB orchestration faults do not claim to build or run a real fixture.
-    monkeypatch.setattr(container, 'prepare_image', lambda: nullcontext(object()))
+    session = 'b' * 32
+    image = container.PreparedImage('sha256:' + 'a'*64, session, f'ci-runner-fixed-fixture:{session}')
+    monkeypatch.setattr(container, 'prepare_image', lambda: nullcontext(image))
 
 
 def invoke(mode='success', env=None):

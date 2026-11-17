@@ -767,3 +767,33 @@ MVPの全受入条件を満たした後に独立レビューと完成判定を�
   修正後の `verify_execution.py` は取得25件・実DB照合2件・既存Dockerの4モードを選択し、
   31 passed、240 deselected、既知警告1件。専用DB readiness 200、再起動後のmigration保持と
   専用コンテナ・network・volumeの回収を確認。取得済みsourceを使ったDocker実行は未検証。
+
+## 受理commitを固定fixtureで実行・確定する一件Worker
+
+- 開始時のfeat/ci-runnerは `8791396c2da9d530dd2ef031ccc7360d303020d3`。Draft PR #1のpush/PR CIは成功。
+- `--verified-commit` は既存のGitHub取得検証を使用。検証済みsourceとdigest固定のローカルDockerfileだけを
+  一時build contextに配置し、network noneでbuildする。context削除後、image ID・所有session・run/SHA/blob/digest
+  のラベルを再照合する。コンテナcreateは検証済みimage IDを使用する。
+- 取得とbuildを30秒lease発行前に終える。migration 004の適用と同じrun ID/SHAを条件にDBで原子的にclaimし、
+  競合・SHA変更時は別runに切り替えない。起動前とGO前に現在のDB実行権とsourceの対応を再確認する。
+- 既存のCPU/RAM/PID、時間、ログ保持、token/lease、コンテナ・専用タグ回収を維持。
+  migration 004の `attempt_sources` へrun、受理SHA、main snapshot、blob SHA、source digest、image IDを
+  ログ・正式結果と一緒に保存する。再送時は由来も一致させる。既存migrationは未変更。
+- P1は約95%の見積り。残件は単一Workerの常駐と停止方針、P1全体の最終受入。
+  heartbeat・失効回収・再試行はP2。取得したfixtureをホスト上で実行していない。
+- 初回の統合回帰は268 passed、15 skipped、2 failed。実GitHubから取得した受理SHAについて成功・失敗・
+  timeoutを確認。既存の取消試験が渡す模擬imageをPreparedImage型へ合わせ、取消前にDockerが呼ばれないことを再検証した。
+  大量ログケースと後の一部ケースは匿名取得で拒否。GitHubのref/blob照会はHTTP 403かつ枠の残り0だった。
+  取得拒否は固定の理由をCLIへ返し、別runやローカルfixtureへフォールバックしない。
+- 最終の通常回帰は154 passed、134 deselected、既知警告1件。pip check、compileallも成功。
+- 最終統合回帰は `CI_RUN_LIVE_COMMIT_SOURCE=gh .venv/bin/python scripts/verify_execution.py`。
+  認証済みghで実GitHubのcommit/tree/blob応答を取得し、通常の検証・CLI入口・実Docker・DB確定を通した。
+  許可mainの公開commit `3eb342a89fc0eb990c0a48a79dbea42e8be44283` の4モードで
+  `succeeded/0`、`failed/1`、`timed_out/137`、`failed/137 (commit_log_limit)` を確認。
+  由来の保存、APIプロセス再起動後の結果/ログ参照、各ケースの専用image・container回収も確認。
+  競合claim、SHA不一致、migration未適用、実DB停止時の開始拒否と回収、由来INSERT後の障害による
+  全rollback、由来が異なる再送の拒否を検証した。
+- 最終統合回帰は273 passed、15 skipped、既知警告1件（311.53秒）。skipは別実行の準備5件・P0隔離10件。
+  専用DB readiness 200、PostgreSQL 17.12、再起動後のmigration 1〜4保持、専用DB資源の回収も確認。
+  匿名HTTPS経由の大量ログモードは枯渇したAPI枠のため完了できなかった。実GitHub・実Dockerによる4モード完了は
+  認証済みghを通信に使う試験からの結果であり、通常のWorker取得設定を変更していない。

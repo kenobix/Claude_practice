@@ -61,7 +61,7 @@ def verify():
         subprocess.run(compose + ['restart', 'db'], env=env, check=True)
         subprocess.run(compose + ['up', '-d', '--wait', 'db'], env=env, check=True)
         with psycopg.connect(env['DATABASE_URL'], connect_timeout=3) as conn:
-            assert conn.execute('SELECT version FROM schema_migrations ORDER BY version').fetchall() == [(1,), (2,), (3,)]
+            assert conn.execute('SELECT version FROM schema_migrations ORDER BY version').fetchall() == [(1,), (2,), (3,), (4,)]
             print('PostgreSQL:', conn.execute('SHOW server_version').fetchone()[0])
             print('migration persists after restart')
         subprocess.run(['docker', 'image', 'inspect', 'postgres:17.12-bookworm',
