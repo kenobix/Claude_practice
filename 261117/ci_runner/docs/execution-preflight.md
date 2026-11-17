@@ -59,7 +59,7 @@ scripts/verify_db.pyで使い捨て専用DBを作成し、既存テストとtest
 
 ## 次の1単位
 
-固定fixture用の制限付きコンテナ作成・設定照合を本番側へ用意する。
+[固定fixture用の制限付きコンテナ作成・設定照合](container-preparation.md)は後続単位で実装済み。DB照合からの自動接続はまだない。
 その後に、このDB preflightとcgroup等の実値確認を起動直前へ接続し、上限付き実行・停止/回収・結果保存を進める。
 P1全体は未完了。再試行、heartbeat、期限回収はP2へ残す。
 

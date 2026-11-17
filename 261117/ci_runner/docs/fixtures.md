@@ -3,7 +3,8 @@
 P1の実行対象は管理下の公開サンプル1つ、固定workflow、外部依存なしのPythonとする。公開サンプルへの接続は未実装。
 コードの取得はサーバー許可設定から行い、受理したcommit SHAに固定する。
 P0用は `fixtures/isolation/` に実装済み。公式PythonベースのdigestをDockerfileに固定し、network noneで実測した。
-このfixtureは隔離検証だけに使い、API/Workerから実行する経路はない。P1用イメージは別途実装する。
+このfixtureは隔離検証だけに使い、API/Workerから実行する経路はない。P1用のローカルsuccess fixtureは `fixtures/job/` に分離して実装した。
+[準備境界](container-preparation.md)でbuild/create/設定照合/回収を検証済み。起動と残り3fixture、受理commit取得は未実装。
 
 | 名前 | 固定動作 | 期待結果 |
 |---|---|---|

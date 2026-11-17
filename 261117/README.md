@@ -4,7 +4,8 @@
 基準: [開発計画](../261014/plan_ci_runner.md)。**P0完了（現在環境・管理下の固定fixtureによる開発検証範囲）**。
 ヘルスチェック・受付/履歴API・PostgreSQL永続化・冪等性を実装済み（P1前半）。
 Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB preflightを実装済み。
-常駐Worker・コンテナ実行・結果保存・Webhook・UIは未実装で、P1全体は未完了。
+固定fixtureのコンテナ作成・設定照合・回収まで実装済み。
+常駐Worker・コンテナ起動/実行・結果保存・Webhook・UIは未実装で、P1全体は未完了。
 GitHub Pagesへの公開対象ではない。常駐バックエンドの配置先は将来別途判断する。
 
 ## Python環境とテスト
@@ -91,10 +92,11 @@ verify_db.pyを使い、既存の開発DBへテストを手動で向けない。
 - [受付APIの契約・競合設計・故障検証](ci_runner/docs/intake-api.md)
 - [Worker初回取得の仕様・検証と限界](ci_runner/docs/worker-claim.md)
 - [実行前DB preflightとsnapshotの限界](ci_runner/docs/execution-preflight.md)
+- [固定fixtureのコンテナ作成・設定照合](ci_runner/docs/container-preparation.md)
 - [P1進捗と次の単一Worker実装順序](ci_runner/docs/p1-plan.md)
 - [調査・検証結果](work_log.md)
 
-受付・永続化・冪等性は実装済み。初回取得は実装済み。次は固定fixtureの実行境界を実装してから、実行・結果保存へ進む。認証なしAPIはloopback限定を維持する。
+受付・永続化・冪等性は実装済み。初回取得は実装済み。次はDB再照合と実値確認を伴う上限付きfixture実行、その後に結果保存へ進む。認証なしAPIはloopback限定を維持する。
 
 ## 一時DBでの再検証
 
@@ -167,3 +169,16 @@ Worker内部向けのauthorize_execution(claim)で、DBにある現在token・Wo
 有効な初回attemptだけに、DBから読み直した固定commit等のExecutionPermitを返す。DB異常や条件不一致なら返さない。
 この照合はsnapshotであり、照合後の取消/失効を防ぐ予約ではない。実際の起動直前の再確認と実行中監視は今後必要。
 Dockerの作成・起動や結果保存にはまだ接続していない。通常の検証はscripts/verify_db.pyを使用する。
+
+## 固定fixtureのコンテナ準備（起動なし）
+
+```bash
+# ci_runner/から。Docker権限が必要
+.venv/bin/python scripts/verify_preparation.py
+```
+
+Worker内部のprepare_fixture(permit)はローカル固定success fixtureをbuildし、
+制限付きcreateとinspect照合後に未起動コンテナを返すcontext manager。通常終了・例外時に自分のcontainer/tagを回収する。
+P0のテストハーネスには依存せず、任意イメージ・コマンド・mount・環境変数を受け付けない。
+API/claim-onceへは未接続。受理SHAのコード取得・起動・実行時cgroup確認・監視・結果保存は未実装。
+設定確認を実行時強制の証拠としない。詳細と残存時のラベルは[準備境界仕様](ci_runner/docs/container-preparation.md)を参照。

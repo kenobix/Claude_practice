@@ -260,3 +260,48 @@ P1全体は未完了。次は固定fixtureの制限付きコンテナ作成・�
 既存P0隔離回帰は別実行で10 passed in 41.46s。過去の証拠JSONは変更していない。
 最終的な専用ラベル照会・差分と秘密情報/生成物の確認後にcommit/pushし、PR #1をDraftのまま更新する。
 最終照会では今回のDB container/volume/networkとP0 container/imageの残存はすべて0件。P0実測JSONのfailure/cleanup errorも0件だった。
+
+## 継続作業：固定fixtureの未起動コンテナ準備（2026-11-17）
+
+### 調査・選択した1単位
+
+cwdは指定worktree、feat/ci-runner、開始HEAD c46e035、未コミット変更なし。
+ルート/担当AGENTS、261014計画、README、既存コード/テスト/設計/過去記録、gh CLIでDraft PR #1を確認。
+受付・初回claim・DB preflightは完了、コンテナ準備/起動/実行/結果保存は未完了だった。
+依存順で最優先の「固定fixtureの制限付きcreate・設定照合・回収」だけを選択した。
+main/他worktree/他日付ディレクトリには変更しない。
+
+### 実装・判断
+
+- アプリ側container.pyを新設し、P0テストハーネスには依存しない。prepare_fixtureは未起動のcontext manager。
+- 固定ローカルDockerfileだけをnetwork noneでbuildし、タグでなく取得したimage IDでcreate（pull never）。公式Pythonの既存P0同一base digestを固定。
+- 非root/cap-drop/NNP/read-only/tmpfs/CPU/RAM/swap/PID/network none/private namespace/log none等を明示し、inspect不一致を拒否。
+- 追加image/command/mount/envの入力引数を設けず、permitの固定policyと形式を検証。tokenはラベルへ渡さない。
+- ランダムsession名と所有ラベルで、自分のcontainer/tagだけを通常終了・例外時に回収。create成功後の応答喪失も生成名から回収。
+- API/CLIから自動起動へは接続しない。受理commitの取得は未実装で、ローカルsuccess fixtureの準備を受理commitの検査成功としない。
+- 設定照合と実行時の制限強制を区別。SIGKILL/daemon断/timeout後の遅延完了の残存可能性も仕様へ記載。
+- AGENTS/README/設計/脅威モデル/fixture仕様/P1計画を現状へ更新。依存追加・migration変更なし。
+
+### 検証
+
+最初の通常新規テスト35件成功、実Dockerと合わせ39 passed in 14.88s。
+CLI不在・timeoutの拒否2件と、実際のpermitラベル検証を補強した最終準備試験は41 passed in 13.73s（通常37 + 実Docker4）。
+実Dockerの4件は正常、呼出側例外、inspect設定不一致注入、create成功後の応答喪失注入。
+正常ケースでcreated/PID0/非runningと設定一式を確認。各ケース終了後、固有container/tagの不存在を確認した。
+固定fixtureの実行は今回一切していない。P0プローブの実行は専用Docker内だけ。
+
+専用DB回帰の初回は102 passed、14 skipped、既知のTestClient警告1件 in 38.45s。
+追加2件を含む最終DB回帰は104 passed、14 skipped、既知のTestClient警告1件 in 32.70s。
+14 skippedは別opt-inのP0隔離10件と準備4件。DB readiness=200、migration二重適用・DB再起動後schema保持も確認。
+既存P0隔離回帰は10 passed in 38.99s。過去のコミット済み証拠JSONは変更せず、ignored最新実測JSONに記録。
+pip checkはNo broken requirements found（ユーザーcache権限によるcache無効化メッセージあり、OS変更なし）。
+
+### 残課題と次の1単位
+
+P1全体は未完了。次は起動直前のDB再照合・cgroup等の実値確認を伴う上限付きfixture実行。
+時間/合計ログ上限、停止/回収を統合し、その次に現在token/DB期限/取消条件での結果確定へ進む。
+受理commitの取得/対応付け、残り3fixture、常駐Worker、heartbeat/期限回収/再試行/キャンセル競合は未実装。
+以前の認可fixture取得不可の根本原因は未特定。本番SQL緩和やリトライで隠さず既存診断を維持。
+
+最終専用ラベル照会で準備/P0のcontainer・一時image、および専用DBのcontainer/volume/networkは全て0件。P0証拠のfailure/cleanup errorも0件。
+ローカル文書リンク、compileall、diff whitespaceを確認済み。対象内の差分・秘密情報・生成物を確認してfeature branchへcommit/pushし、Draft PR #1の進捗を更新する。

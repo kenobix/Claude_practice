@@ -1,6 +1,6 @@
 # P0設計案：ジョブの正本と実行権
 
-状態: P0検証とP1前半（受付/取得API・DB永続化・冪等性）は実装済み。Workerの初回取得と実行前DB preflightは実装済み。常駐実行・結果保存・Webhook等は未実装。
+状態: P0検証とP1前半（受付/取得API・DB永続化・冪等性）は実装済み。Workerの初回取得と実行前DB preflightは実装済み。[固定fixtureの未起動コンテナ準備](container-preparation.md)も実装済み。常駐実行・結果保存・Webhook等は未実装。
 実装したHTTP契約と競合・commit前後の障害証拠は[受付API仕様](intake-api.md)を参照。
 [Worker初回取得](worker-claim.md)は履歴なしの許可queuedだけを取得し、attempt番号1・initial・DB期限30秒を同時commitする。再試行と期限回収は未実装。
 [実行前DB preflight](execution-preflight.md)は現在の実行権を再確認するsnapshotを返すが、外部起動との原子性や実行中監視はまだ実装していない。
