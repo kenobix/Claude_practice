@@ -389,7 +389,8 @@ DNS共通フィールド/一意な応答時間の独立比較と、独自状態�
 [Phase 3の判定と範囲](tshark_dns_comparison.md)で未説明差分0を確認し、人工入力の対応範囲でPhase 3完了と判定。
 Phase 4の[固定規模CLI計測](benchmark.md)で人工UDP混在入力の時間・最大RSS・状態割合を実測済み。
 計測経路はLinux専用の開発用スクリプトで、製品API/Schema/上限を変更しない。
-次はREADME通し再現と3分デモ/動画。DNS/多数フロー/上限付近の性能や実通信への適用は未検証。
+新規環境でのREADME通し再現と[3分デモ動画](demo.mp4)は完了。[MVP受入記録](mvp_acceptance.md)を独立レビューへ引き継ぐ。
+DNS/多数フロー/上限付近の性能や実通信への適用は未検証。
 
 Scapy APIの採用根拠: [公式RawPcapReader API](https://scapy.readthedocs.io/en/latest/api/scapy.utils.html#scapy.utils.RawPcapReader)。
 インストール版2.6.1のソースも確認し、メタデータがsec/usec/wirelen/caplen、nanoで精度を判別することを検証する。
