@@ -8,11 +8,23 @@ Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB pref
 内部ライブラリでDB再照合・実値ガード・時間/ログ/lease上限付きのローカル固定fixture実行も実装済み。
 ローカルfixture結果の条件付きDB確定（状態/exit/理由/終了時刻・正式attempt参照）も実装済み。
 別プロセスの一件実行入口で、取得→ローカル固定fixture実行/回収→条件付き確定まで接続済み。
-上限付きログを結果と同一transactionでDB保存する。正式ログの取得・最小HTML表示も実装済み。常駐Worker・受理commitの取得/実行・Webhook・履歴UIは未実装で、P1全体は未完了。
+上限付きログを結果と同一transactionでDB保存する。正式ログの取得・最小HTML表示も実装済み。受理commitの取得と検証は読み取り専用で実装済み。取得済みsourceのDocker実行への接続・常駐Worker・Webhook・履歴UIは未実装で、P1全体は未完了。
 GitHub Pagesへの公開対象ではない。常駐バックエンドの配置先は将来別途判断する。
 
-受理commit実行への接続は、許可main上にP1固定fixtureが存在しないため停止中（2026-11-17調査）。
-[確認証拠・取得契約案・再開条件](ci_runner/docs/commit-source-readiness.md)を参照。許可refやmainを無断で変更しない。
+## 受理commitのsourceを検証する
+
+PR #4で許可mainに固定fixtureが公開された。専用開発DBにmainのSHAでrunを投入した後、
+`ci_runner/` から以下を実行する（curl 8.4以上、GitHub HTTPS接続が必要）。
+
+```bash
+.venv/bin/python -m ci_runner.commit_source
+```
+
+先頭の取得可能なrunについて固定mainのsnapshotを取得し、受理SHAの所属・commit・tree・通常ファイル・
+blob・2151 bytes・承認済みSHA-256を照合する。I/O前後のrun ID/SHAが一致するときだけ検証結果を返す。
+候補なしは `verified: false`、取得や照合の失敗は終了1。検証結果にはsource本文を出力しない。
+このコマンドはrunをclaimせず、実行権やleaseを発行しない。
+[取得契約と検証範囲](ci_runner/docs/commit-source-readiness.md)。
 
 ## Python環境とテスト
 
@@ -191,7 +203,7 @@ Worker内部向けのauthorize_execution(claim)で、DBにある現在token・Wo
 Worker内部のprepare_fixture(permit, mode)はローカル固定fixtureをbuildし、
 制限付きcreateとinspect照合後に未起動コンテナを返すcontext manager。通常終了・例外時に自分のcontainer/tagを回収する。
 P0のテストハーネスには依存せず、任意イメージ・コマンド・mount・環境変数を受け付けない。
-API/claim-onceへは未接続。実行ライブラリの起動・実値確認・上限監視と、別の一件Workerへの接続は実装済み。受理SHAのコード取得は未実装。ログはDB保存・正式参照の取得・最小HTML表示まで実装済み。
+API/claim-onceへは未接続。実行ライブラリの起動・実値確認・上限監視と、別の一件Workerへの接続は実装済み。受理SHAの読み取り専用の取得検証は実装済み。Dockerへの接続は未実装。ログはDB保存・正式参照の取得・最小HTML表示まで実装済み。
 設定確認を実行時強制の証拠としない。詳細と残存時のラベルは[準備境界仕様](ci_runner/docs/container-preparation.md)を参照。
 
 ## 上限付き固定fixture実行の検証

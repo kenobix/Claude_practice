@@ -15,7 +15,7 @@ from .settings import POLICY
 LEASE_SECONDS = 30
 
 CANDIDATE_SQL = (
-    "SELECT r.id FROM runs r WHERE r.state='queued' "
+    "SELECT r.id, r.commit_sha FROM runs r WHERE r.state='queued' "
     'AND r.cancel_requested_at IS NULL AND r.available_at <= clock_timestamp() '
     'AND r.repository_id=%s AND r.ref=%s AND r.workflow_version=%s '
     # Retry cause/budget is not implemented: never mislabel a retry as initial.

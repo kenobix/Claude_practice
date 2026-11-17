@@ -1,7 +1,7 @@
 # P1実装進捗と単一Worker実装計画
 
 前提: [P0隔離実測](isolation.md)は現在環境の管理下fixtureについて完了。
-下表1〜4は実装・実DB検証済み（P1前半）。5は初回取得、6はDB照合・準備・ローカル固定fixtureの実値ガード/上限付き実行/回収まで実装・検証済み。7は条件付きのローカルfixture結果確定まで実装済み。受理commitの取得/実行、常駐ループ、Webhook・本格UIは未実装。ログ永続化と正式参照の取得/最小HTML表示は接続済み。
+下表1〜4は実装・実DB検証済み（P1前半）。5は初回取得、6はDB照合・準備・ローカル固定fixtureの実値ガード/上限付き実行/回収まで実装・検証済み。7は条件付きのローカルfixture結果確定まで実装済み。検証済みsourceのDocker実行への接続、常駐ループ、Webhook・本格UIは未実装。ログ永続化と正式参照の取得/最小HTML表示は接続済み。
 受付契約と障害検証は[受付API仕様](intake-api.md)。P1全体の完了条件は未達。
 継続開発のための[通常テスト自動化](automated-tests.md)を追加済み。DB/Docker統合試験と区別する。
 
@@ -40,7 +40,8 @@ WebhookはP3、UI/成果物管理はP4。任意repo・外部PR・秘密注入・
 4. **内部の条件付き結果確定は完了**。token・状態・DB期限・取消条件を確認し、run/attemptの結果を同時commit。再送・競合・commit前後SIGKILL・再起動後の保持を検証。lease失効後の自動回復はP2の残件と明記する。
 
 claim-onceを維持した[別の一件実行入口](fixture-worker.md)で取得→実行/回収→条件付き確定を接続済み。
-一件Workerの取得前image準備・ID固定の受渡しも実装済み。[上限付きログDB保存](log-storage.md)も結果確定と同一transactionへ接続済み。[正式ログ取得/最小HTML表示](log-access.md)も実装済み。次は受理commitの固定取得/対応付けを設計し、P1の残受入条件を確認する。
-受理SHAのコード取得/実行対象への対応付けは未実装。現在はローカル固定4fixtureだけを実行し、受理commitの検査完了ではない。
-2026-11-17の調査では許可main上にP1 fixtureがなく、接続実装は外部前提不足で停止。
-[sourceの確認証拠・固定digest契約案・再開条件](commit-source-readiness.md)を満たしてから進める。main反映や許可ref変更は自動で行わない。
+一件Workerの取得前image準備・ID固定の受渡しも実装済み。[上限付きログDB保存](log-storage.md)も結果確定と同一transactionへ接続済み。[正式ログ取得/最小HTML表示](log-access.md)も実装済み。
+PR #4で許可mainに固定fixtureを公開済み。読み取り専用で受理SHAの所属・commit/tree/blob・承認済みbytesを検証し、
+取得後にrun ID/SHAを再照合する処理を実装済み。[取得仕様と検証範囲](commit-source-readiness.md)。
+次は検証対象を条件付きclaimに結び、検証bytesから固定imageを構築し、実行結果に由来を記録する。
+現在の一件Workerは管理下ローカルfixtureの開発検証経路。受理commitを使用したコンテナ実行は未検証。

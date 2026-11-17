@@ -743,3 +743,27 @@ GitHub/ローカルのmetadataとbytes hashを確認しただけで、リモー�
 次回はmain HEADとsourceの存在/ref所属/digestを再確認し、前提が揃ってから取得/誤対応拒否/通信異常の実装単位を進める。
 全体概算は約30%・残約70%を据置き。文書追加で実装済み機能の割合を増やさない。
 MVPの全受入条件を満たした後に独立レビューと完成判定を提案し、発展課題へ自動移行しない。
+
+## 2026-11-18 受理commitの固定source取得とrun照合
+
+- `git fetch origin` 後、PR #4のmainへのマージを確認。origin/mainは
+  `3eb342a89fc0eb990c0a48a79dbea42e8be44283`。固定pathは通常ファイル100644、2151 bytes、
+  blob `a2352427ae73ed9337e933d1dcefd49968b3fe8b`。SHA-256は承認値
+  `9c567875e01f89cc15eb23d1b3d2d40c2c23239cc414ff12a1b1c3902dd3f7ff` と一致した。
+- 読み取り専用の `ci_runner.commit_source` を追加。許可mainのsnapshot、受理SHAの所属、固定commit/tree/blob、
+  通常ファイルの種別・サイズ・承認済みSHA-256・Git blob IDを照合。curl 8.4以上で固定HTTPS先、
+  200のみ、各応答1 MiB、各5秒、取得全体30秒。リダイレクト追従と圧縮展開なし。
+- キュー先頭のrun IDとSHAを取得前後に別transactionで確認し、違うrunやSHAには検証結果を渡さない。
+  claimやlease発行はせず、Docker隔離・DB実行権・ログ保持上限の実装は維持した。
+- 実GitHub HTTPSでmainマージcommitの取得と、許可main外のPR #4の元commit（97e8381）の拒否を確認。
+  sourceをホストで実行・import・展開していない。
+- 専用unit 25件成功。固定ref/commit、ancestor、許可外commit、symlink、submodule、byte改ざん、
+  Git blob ID不一致、サイズ、リダイレクト、通信異常、deadline、run ID/SHA不一致を確認。
+  最終コードの通常回帰は149 passed、122 deselected、既知警告1件。pip checkも成功。
+- P1は未完了。次は検証済みrun/SHAの条件付きclaim、取得したbytesを使う固定build、
+  結果への由来記録と一連のP1受入試験。README・固定取得仕様・P1計画・進捗を更新。
+- 初回の実DB/Docker全回帰は252 passed、15 skipped、4 failed。失敗4件は新規CLIテストが
+  pytestのargvを読み込んだため。引数を明示できるように修正し通常回帰で解消した。
+  修正後の `verify_execution.py` は取得25件・実DB照合2件・既存Dockerの4モードを選択し、
+  31 passed、240 deselected、既知警告1件。専用DB readiness 200、再起動後のmigration保持と
+  専用コンテナ・network・volumeの回収を確認。取得済みsourceを使ったDocker実行は未検証。

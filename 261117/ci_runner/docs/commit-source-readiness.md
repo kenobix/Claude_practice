@@ -1,9 +1,34 @@
-# 受理commit接続の前提調査と停止判断
+# 受理commitの固定取得と検証
 
-状態: **外部前提不足で実行接続は停止**。2026-11-17の調査・設計単位。
-取得コードや実行接続を実装済みとは扱わず、既存のPOLICY・workflow・API・Workerは変更しない。
+状態: **主ブランチへのfixture公開と読み取り専用の取得検証は完了**。Workerへの接続は未実装。
 
-## 確認した証拠
+## 2026-11-18の公開・取得検証
+
+[PR #4](https://github.com/kenobix/Claude_practice/pull/4)のマージを確認。
+`origin/main` のsnapshotは `3eb342a89fc0eb990c0a48a79dbea42e8be44283`。
+同commitの固定pathは通常ファイル（100644）、2151 bytes、blob `a2352427ae73ed9337e933d1dcefd49968b3fe8b`。
+SHA-256は下の承認候補と一致。実GitHub HTTPSで同snapshotの取得成功と、許可mainに
+属さないPR #4の元commit `97e8381ed94a7f7dd87e322616ad8db6227185f3` の拒否を確認した。
+
+`ci_runner.commit_source` は公開GitHub REST APIを利用する。固定repoのmain refを一度解決し、
+異なる受理SHAは固定SHA同士のcompareでbaseとmerge baseが受理SHA、statusがahead、behindが0の
+場合に限る。その後、受理SHAのGit commitと、固定pathを構成する非再帰tree、blobをIDでたどる。
+通常ファイル100644・承認済みサイズ・SHA-256・Git blob IDをすべて照合する。
+main所属とcommit/treeの関連付けはGitHub APIの応答をHTTPS上で信頼する。取得したblobのbytesはローカルで検証する。
+[GitHub Compare API](https://docs.github.com/en/rest/commits/commits#compare-two-commits)。
+
+curl 8.4以上で各応答1 MiB、各リクエスト5秒、取得全体30秒を上限にする。HTTP 200のみ受理し、
+リダイレクト・圧縮展開・ページの追加取得は行わない。大きなtreeやcompare、レート制限、通信異常は
+取得拒否になる。sourceはメモリで保持し、ファイル展開・checkout・実行を行わない。
+[curlの応答サイズ上限](https://curl.se/docs/manpage.html#--max-filesize)。
+
+取得対象は通常の初回claimと同じ許可条件に合うキュー先頭。DB transactionは通信前に閉じ、
+取得後に別transactionで先頭のrun IDとcommit SHAを再照合する。消失、競合取得、別runへの変更は拒否。
+検証結果は不変のsource bytesとrun ID、受理SHA、main snapshot、blob IDを含む。この再照合は予約ではない。
+後続の接続では、claim前に検証したrunと同じrun ID/SHAを条件付きでclaimし、検証bytesを固定build contextへ
+渡し、正式結果へsourceとimageの由来を記録する必要がある。既存の制限・lease・fencingを維持する。
+
+## 公開前の調査記録（2026-11-17）
 
 観測時刻: 2026-11-17T14:16:07.832500+00:00。
 
@@ -26,7 +51,7 @@ branchの状態は変わり得るため、次回は固定main HEADと必要フ�
 現在のfixture_workerは管理下ローカル4fixtureの開発検証経路。fixture_理由を受理SHAのコード検査成功と扱わない。
 受付APIのSHA検証は構文だけで、存在/許可ref所属は未実装。取込済みrunを成功/再キューへ書換えない。
 
-## レビュー用の最小取得契約（提案・未実装）
+## 公開前の最小取得契約案
 
 公開済みsourceが用意された後の小さな実装範囲を以下に限定する。今回これを既存設定へ適用したとは扱わない。
 
@@ -43,7 +68,7 @@ branchの状態は変わり得るため、次回は固定main HEADと必要フ�
 将来変更可能なworkloadを受け付ける場合は、信頼済みguardとworkloadの分離を別途設計・検証する。
 この最小契約はリポジトリ全体の任意コード検査や、外部PRの安全な実行保証ではない。
 
-## 再開に必要な対応
+## 公開前に定めた再開条件（履歴）
 
 - 推奨: 許可repo/main上へ管理下の固定fixtureを通常レビュー経由で公開する。候補sourceは[調査時の担当commit](https://github.com/kenobix/Claude_practice/blob/aaadaa77c703925e1ec7ebcac5153a1d7ae1fdc5/261117/ci_runner/fixtures/job/fixture.py)。このagentはmainへのpush/mergeを行わない。
 - 別sourceを採用する場合は、管理下repository/ref/path/workflow/digestを明示して許可設定の変更を判断する。担当branchや他の日付のプログラムへ無断で読み替えない。
