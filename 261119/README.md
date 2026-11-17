@@ -9,7 +9,7 @@ JSONと端末表を実装した。これは通信量集計の中間版であり�
 DNS名の復号・正規化と単一質問抽出を内部APIとして追加した。
 DNSメッセージのRR構造検査を完全なUDP port 53候補のパケット分類とCLI診断へ統合済み。
 検証済み質問の引継ぎ、端点/ID/質問の照合キーとQR/portによる方向判定も内部APIで実装済み。
-5秒窓による問い合わせ/応答照合は未実装。
+5秒窓による問い合わせ/応答照合は内部APIで実装済み。CLIのDNSイベント出力は未実装。
 
 ## 作業環境
 
@@ -41,7 +41,7 @@ python3.12 -m venv .venv
 .venv/bin/python -m pytest -q
 ```
 
-全311テスト成功（既存271件 + DNS照合キー/向き判定40件）。
+全343テスト成功（既存311件 + DNS窓処理32件）。
 DNS名/質問抽出40件とフロー・入力処理等の既存テストも再実行した。
 DNS候補の空payloadの分類変更に合わせ、既存1件の期待をparsedからmalformedへ更新した。
 既存100件は分類・入力制限・時刻等の検査を維持し、版変更に伴う期待を更新。
@@ -79,7 +79,7 @@ PCAP自体のサイズ864 bytesにはコンテナヘッダーも含む。
 
 JSONの`classification_indices`にファイル順・1始まりの根拠番号を保存する。
 `flows`に双方向の集計を出力する。DNS構造エラーは既存の分類/diagnosticsに番号付きで出力する。
-`dns.status=not_implemented`、`dns.events=null`は問い合わせ/応答照合の未実装を表す。
+`dns.status=not_implemented`、`dns.events=null`はDNS照合のCLI/レポート統合が未実装であることを表す。
 時刻逆行では警告と`disabled_timestamp_regression`を記録し、並べ替えはしない。
 
 | 終了コード | 意味 / 出力 |
@@ -181,8 +181,28 @@ DNSObservationはkey・根拠番号・整数ns・QR/RCODE/TCを保持する不�
 API入力は既存decoderが生成したPacketRecordとし、任意モデルの外部入力検証APIとはしない。
 CLI/Schemaは維持し、DNSイベント出力は引き続き未実装。
 
-次の実装単位はこの観測値を受け取る5秒窓の状態管理（重複query・完了後再利用を含む）。
-その後、追加/孤立応答、記録終端/時刻逆行、上限・レポート統合を実装する。
+## DNS窓処理（内部API）
+
+`dns_windows.DNSWindowCollector`へ時刻順のDNSObservationを`add`し、
+DNS以外の有効パケット時刻も`advance(ns)`で伝え、最後の有効時刻で`finish(end_ns)`する。
+各呼出しは確定済みDNSEventのtupleを返す。イベント履歴は呼出し側が受け取り、collectorは保持しない。
+最初のqueryから閉区間5秒（端を含む）で、重複queryでも延長しない。
+matched/ambiguous/additional_response/unmatched_response/no_response_observed/window_incompleteを区別する。
+query再利用で時間値を撤回できるよう、孤立応答以外は窓閉鎖/finishまで確定出力しない。
+
+完了キーも期限まで保持し、未完了と合わせ100000キーを上限とする（内部APIで引下げ可）。
+上限超過はE_LIMIT_DNS。参照数は呼出し元readerの100万レコード上限に従う。
+期限管理はheapで行い、全キーを各パケットで走査しない。期限の同時刻は登録順で処理する。
+イベントの根拠はtuple、応答時間は整数ns。応答ごとにRCODE/TCを保持する。
+追加応答には独立イベントを作り、最初の応答のみ主イベントに記録する。
+曖昧なグループは全query番号を保持し、追加応答のイベントにも同じquery番号を付け、時間値を出さない。
+
+時刻逆行・不正時刻・逆順の根拠番号は例外で拒否する。ファイル全体の逆行を検出した呼出し側は、
+既に返された結果を含め全DNS時間結果を破棄する必要がある。このreport接続は未実装。
+finish後は再利用不可。CLI/Schema/既存集計は維持する。
+
+次の単位はreport/CLI/Schemaへの統合。全パケットによる窓進行、時刻逆行時の全結果無効化、
+入力/フロー/診断/DNS上限での途中結果、根拠とイベント表示を一緒に検証する。
 TShark比較・計測・デモはさらに後の段階。
 
 ## 仕様・期待値・制限
@@ -201,8 +221,8 @@ UDP長はIPv4の宣言payload長との一致を要求する。
 分類の件数とは別の指標で、それぞれの合計が全レコード数と一致する。
 
 DNS名/質問抽出・RR構造検査とpacket分類/CLI診断への統合は実装済み。
-照合キー/向き判定は内部APIで実装済み。窓処理/曖昧さの扱いとDNSイベント出力は未実装。
+照合キー/向き判定と窓処理は内部APIで実装済み。DNSイベントのCLI/Schema統合は未実装。
 フロー集計と端末フロー表は実装済み。
-DNS25ms・未応答・重複queryの判定は依然として将来の手計算期待値である。
+人工baselineの25ms・未応答観測・重複queryは内部APIで手計算一致を確認。現CLIにはまだ出力しない。
 TShark未導入のため独立比較は未実施。性能測定、実通信、他Python版、VS Code GUIは未検証。
 捕捉長と記録上の元長を回線上の実転送量と呼ばず、観測不足を障害や攻撃と断定しない。

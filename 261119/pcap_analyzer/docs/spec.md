@@ -5,7 +5,8 @@
 同日にPhase 2前半の双方向フロー集計・TCP flags・フロー数上限を実装。
 継続単位としてDNS名復号・正規化・単一質問抽出の内部APIを実装済み（下記参照）。
 次の継続単位でRR構造と圧縮参照先の検査APIも追加済み（下記参照）。
-DNS構造検査をpacket分類/CLI診断へ統合済み。照合は未実装。
+DNS構造検査をpacket分類/CLI診断へ統合済み。照合キーと窓処理は内部APIで実装済み。
+DNS照合のレポート/CLI統合は未実装。
 JSONの形状/版は維持し、Schemaへ分類範囲と照合statusの説明を追記。
 
 ## 入力境界と停止
@@ -242,11 +243,11 @@ RCODE/TC/QRはキーに含めず、DNSObservationのkey/packet_index/timestamp_n
 不変値として等値比較・hashが可能で、最初の観測方向やファイル順にキーが依存しない。
 
 ここではペアリング・窓・時間差計算を行わない。時刻逆行時のファイル全体の時間解析無効化は
-既存reportに維持し、将来collectorが履歴を撤回する責務を持つ。observation自体は時刻を並べ替えない。
+既存reportに維持し、report側が既返却結果を含め破棄する責務を持つ。observation自体は時刻を並べ替えない。
 JSON Schema/版番号/CLI出力は維持し、イベントとキーのJSON表現は今後のレポート統合で追加する。
-次の単位は5秒窓の状態管理、続いて終端/時刻逆行・上限/イベント出力。
+次の単位は下記の窓APIとreport/CLI/Schemaの接続、全時刻逆行時の結果無効化。
 
-## DNS照合（Phase 2後半予定）
+## DNS照合（窓内部API実装済み / レポート統合予定）
 
 非フラグメントかつ非truncatedのUDP、src/dstの一方が53。DNSヘッダー12 bytes以上、
 質問/回答の境界、圧縮ポインターの参照先/ループ、RDLENGTHを検査する。初期opcode=0のみ。
@@ -278,6 +279,38 @@ DNS状態件数はqueryグループ/孤立・追加responseイベントの件数
 全eventにquery_indices、response_indicesを添付。対応なしなら片方は[]。
 時間値が算出不可ならnull。障害、損失、攻撃と断定しない。
 
+### 窓APIの呼出し契約
+
+`dns_windows.DNSWindowCollector(max_keys=100000)`は非減少の整数ns・ファイル順に
+DNSObservationをaddする内部API。max_keysは1..100000へ引下げ可能でbool/非整数を拒否する。
+readerの最大100万完全レコード以下の入力を前提とし、任意長のイベントストリームAPIにはしない。
+addのpacket_indexは正整数・狭義増加。advance(ns)はDNS以外を含む有効パケット時刻を伝える。
+不正/逆行時刻と逆順番号は状態更新前にValueError、finish後の操作はRuntimeError。
+時刻逆行時は呼出し側が既に返されたイベントも含めファイル全体の時間結果を破棄する。
+全パケットでの逆行検知・警告・DNS結果無効化は次のreport統合で接続する。
+
+各呼出しは確定済みの不変DNSEvent tupleを返す。collector内に出力履歴を貯めない。
+matchedの応答時間はfloatを使わずresponse_time_nsへ整数差を保持し、JSONのms変換は統合時に定義する。
+イベントはkey/status/query_indices/response_indices/response_time_ns/rcode/tcを保持する。
+孤立応答は直ちに出力する。他は閉区間窓終了またはfinishまで確定を遅らせ、
+完了後query再利用で暫定時間が成功値として残ることを防ぐ。
+
+主イベントには全query番号と最初のresponse番号を記録し、2つ目以降のresponseは
+additional_responseとして別イベントへ記録。各responseのRCODE/TCを保存する。
+曖昧化後も追加応答の時間値はnullで、各イベントのquery番号はグループ全queryを参照する。
+1呼出し内のイベントは主イベントの最初の根拠番号、追加イベントは応答番号を基準に安定ソート。
+呼出しを跨ぐ最終レポートの全体ソートはreport統合時に行う。
+
+期限heapにはqueryグループごとに1要素だけを登録。重複query/responseで期限を延長しない。
+advanceはdeadline<現在時刻のキーだけを確定/削除し、同時刻応答を受理できるようdeadline==現在を保持。
+未完了/完了を合わせた保持キー上限で新規queryを拒否し、InputError(E_LIMIT_DNS, packet_index)を返す。
+既存キーと孤立応答は上限時にも扱える。期限切れ削除後に新規キーの容量を判定する。
+上限で履歴を勝手に捨てず、失敗した新規queryを登録しない。CLIの停止/途中レポートは統合時に接続する。
+
+finish(end_ns)は観測した最後の有効パケット時刻（DNS以外も含む）で全保持窓を確定・解放し、終端状態にする。
+末尾が窓端ちょうどならno_response_observed、手前ならwindow_incomplete。重複queryは終端でもambiguous。
+既知の整数nsと読めた範囲だけの観測結果であり、サーバー障害・損失と断定しない。
+
 ## レポート契約
 
 [report.schema.json](report.schema.json) が現行のJSON Schema draft 2020-12契約。
@@ -290,7 +323,7 @@ fragment件数、不正時刻件数を出す。classification_indicesは各分�
 全完全レコードはちょうど1配列に現れ、分類件数と配列長が一致する。
 全生パケットや全PacketRecordは保持せず、最大100万件の根拠番号と上限付き診断だけを残す。
 
-flowsは上記の双方向集計配列。dns.status=not_implemented、dns.events=nullでDNS照合の未実装を表す。
+flowsは上記の双方向集計配列。dns.status=not_implemented、dns.events=nullでDNS照合のレポート統合が未実装であることを表す。
 DNS構造検査結果はpacket分類/diagnosticsへ反映し、このstatusと区別する。
 dns.time_analysisは通常not_implemented、逆行検出時はdisabled_timestamp_regression。
 Phase 0の将来用フロー/DNSレポートは[旧Schema](report.phase0.schema.json)と

@@ -404,3 +404,53 @@ Draft PR #3を実績に合わせて更新する。ライブ捕捉・送信・ス
 続いて追加/孤立応答・終端/時刻逆行・キー上限停止・イベント/Schema/CLI統合を実装する。
 現状は観測値をreportへ集約しておらず、照合結果や応答時間は出力しない。
 未知RDATA全意味検査、TShark独立比較、性能/大規模負荷、デモ、VS Code GUIは未検証。
+
+
+# 継続単位 — DNS閉区間5秒窓の状態管理（内部API）
+
+実施日: 2026-11-17（Asia/Tokyo）。開始HEAD=4a99324、cwd=/home/kenshin/work/Claude_practice-261119、
+branch=feat/pcap-analyzer、初期statusはclean。ルート/担当AGENTS、261014計画、README/work_log、
+仕様/Schema、既存コード・テストとDraft PR #3を確認。AGENTSは継続利用可能で変更なし。
+既存311テストを再実行し成功（20.59秒）。
+
+## 選択と実装
+
+入力/基本集計/フロー、DNS構造検査/packet分類、検証済み観測値・照合キーまで完了済み。
+次の依存部分である5秒窓の状態管理を1単位として選択。安全に検証できる窓APIとするため、
+追加/孤立応答・終端処理・保持キー上限も内部処理に含める。CLI/JSON接続は今回実施しない。
+
+- dns_windows.py: DNSWindowCollector、DNSEventを追加。add/advance/finishは確定イベントtupleを返し、
+  collectorは出力済みイベント履歴を保持しない。最初のquery時刻から閉区間5秒、重複で延長しない。
+- 最初の一意応答の時間を整数nsで保持。窓内重複query・完了後再利用はambiguousとし時間値なし。
+  成功値の後からの撤回漏れを防ぐため、孤立応答以外は窓閉鎖/finishまで確定を遅らせる。
+- additional_response/unmatched_responseを区別し、各応答のRCODE/TCと根拠番号を保持。
+  主イベントは全query番号と最初の応答、追加イベントは各追加応答を参照する。
+- 非DNSの有効時刻をadvance可能。finishは観測終端が窓端以上かにより
+  no_response_observed/window_incompleteを区別し、保持窓を解放して再利用不可とする。
+- 保持キーは未完了/完了合計100000（内部APIで引下げ可）。新規キー超過はE_LIMIT_DNS、
+  既存キーは保持して失敗。期限heapで期限切れを処理し、毎回全キー走査を行わない。
+  窓内の参照数は呼出し元readerの100万レコード上限を前提とする。
+- 不正/逆行時刻、逆順packet_indexを状態更新前に拒否。既返却イベントを含めたファイル全体の
+  時間結果破棄は呼出し側の責務として明記。reportへの無効化接続は次の単位。
+
+## 検証結果
+
+新規32件を追加し、全343テスト成功（13.37秒）。既存311件のテスト/期待値は変更なし。
+窓の始端/終端と1ns内外、未応答観測の終端条件、重複query/完了後再利用、期限延長なし、
+追加/孤立応答、RCODE/TC、一意応答時間0/25ms/5秒、キー容量ちょうどと超過・期限後解放、
+不正設定/時刻/番号、finish後操作、同一期限の決定性を確認した。
+既存人工baselineを全パケットの時刻で進め、matched(4→5, 25000000ns)、
+no_response_observed(query6)、ambiguous(query7,8/response9)が手計算期待と一致。
+既存の分類/フローの件数・捕捉長・元長・根拠整合、14 fixture、CLI/Schemaも再実行で成功。
+
+README/仕様へAPI境界・上限・時間逆行時の呼出し側責務と次の作業を記載。
+CLI/JSON Schema/版番号/依存lock/既存fixture・期待値は変更なし。現CLIはDNSイベント未出力。
+差分・秘密情報・生成物を確認して担当branchへcommit・pushし、Draft PR #3の実績を更新する。
+ライブ捕捉・送信・スキャン・外部解析照会は行わない。
+
+## 次の単位と残課題
+
+次は窓APIをreport/CLI/Schemaへ接続し、全パケットでの窓進行、全体時刻逆行時の結果無効化、
+入力/フロー/診断/DNS上限停止の途中結果、根拠付きイベントとms表示を検証する。
+現APIは時刻順の観測だけを扱い、時刻逆行を許容して自動並べ替えたり成功値を温存したりしない。
+未知RDATAの全意味検査、TShark独立比較、性能/大規模負荷、デモ、VS Code GUIは未検証。
