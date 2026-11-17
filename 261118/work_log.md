@@ -234,3 +234,59 @@ SQL、MVCC、複数writer、コンパクションは未実装。
 4. 初回作成・dir Sync・復旧Truncate/Sync中の停止、一部write+error、CRC/header途中破損を組み合わせる。
 5. seed、停止点、応答列、旧サイズ、正常境界、復旧結果、OS/FS/Goを再現可能な人工データで保存。
 6. プロセス停止試験と、別途計画するホスト停止/電源断/装置flush検証を分けて報告する。
+
+## 段階3の初回単位: 更新停止点とSIGKILLハーネス（2026-11-17 JST）
+
+### 現状・優先順位・選択
+
+- cwd: /home/kenshin/work/Claude_practice-261118、branch: feat/database-engine、開始HEAD: cfe1e05。
+  開始時はclean。root/担当AGENTS、261014のDB計画、README/work_log、既存コードとテストを確認。
+- Draft PR: [#2](https://github.com/kenobix/Claude_practice/pull/2)。段階1時点の進捗で段階2が未完了のまま。
+  ghは利用可能。sandbox内のAPI接続は失敗し、ネットワーク許可付きghで読取に成功した。
+- 段階0〜2は完了。段階3の限定末尾復旧・I/O注入は実装済みで、実プロセス停止と親側応答履歴の照合が未完了。
+- 最優先の1単位として「既存DBの更新停止点とSIGKILL復旧ハーネス」を選択した。
+  初回作成/復旧中の停止と複合障害はこのハーネスに依存するため次へ残し、段階4〜5を先に進めない。
+- 担当AGENTSの古い段階2限定指示を、1単位ずつ選び検証・記録・担当ブランチへ保存する継続運用へ更新。
+
+### 実装と既存設計との整合
+
+- 新規crash_linux_test.goで既存diskOpsの実ログFDを包み、製品コードを変更せず停止点を注入。
+  製品CLIに環境変数や停止コマンドを追加せず、レコード形式とfixtureを維持した。
+- 親子JSONプロトコルで1操作ずつ送信。親が受信したack列を保存し、停止時の未応答を最大1操作に制限。
+- PUT/DELETEそれぞれbefore_write、partial_header、partial_body、after_write、before_sync、
+  after_sync、before_ack、after_ackの8点、計16ケースを実装。
+- sleepで位置を推測せず、子の停止通知後にSIGKILLし、WaitStatusで実際のシグナルも確認。
+  contextの15秒期限とcleanupで、異常終了時にも子プロセスとLOCKを残さない。
+- 正常終了の再Open、未知停止点の非zero終了とログ不変もテスト。
+- 復旧後は成功応答列、またはそれ+最後の未応答1操作の辞書とsequenceを照合。
+  バイナリ/空値/不在、余分なキー、部分値を検査し、ロック再取得後の次の更新も確認。
+- ackはライブラリAPI成功を返すテスト用応答。製品CLIのClose/stdout周辺の停止検証とは区別する。
+
+### 実行結果
+
+- 開始時の既存make checkは成功。
+- 追加したTestCrash系: 16 SIGKILLケース、正常EOF終了、未知停止点拒否が成功。
+- 最終make check: gofmt差分なし、go vet ./...、go test ./...、buildが全成功。
+- go test -json -count=1 ./...: 55個のTest関数（子用helperを含む）と2個のFuzz関数が成功。
+  サブテストと既存fuzz seedを含むpassイベント223件、fail 0、skip 0。5パッケージすべて成功。
+- go test -race ./...: 全5パッケージ成功。新しいfuzz探索は実施していない。
+- 観測: 部分header/bodyはsequence 5に復旧し、239/268バイトを正常境界229へ切り戻した。
+  Sync後・応答前は未応答でもsequence 6が残り、応答後の操作もsequence 6として再生できた。
+  Sync前の全長レコードも今回のSIGKILLでは残った。これは電源断時の保証とはしない。
+- 実験条件・再現コマンド・各停止点の観測表はdocs/crash-experiments.mdに記録。
+- テスト起動コマンドを一度module外で実行してgo.mod未検出となったため、module内で実行し直して検証した。
+  テスト関数の失敗や未実行の成功扱いはない。
+- 差分、秘密情報パターン、リンクとGit除外を確認。変更は261118/のみ、DB/Go本体/CLI生成物は追加しない。
+
+### PRと今回の終了範囲
+
+既存Draft PR #2の古い進捗を、段階2完了・段階3のこの単位のみ完了へ更新する。
+Draft維持。mainへのpush/merge、force pushは行わない。PR反映の実結果は最終報告で示す。
+今回は選択した更新停止点ハーネスまでで終了し、段階3全体の完了とはしない。
+
+### 残課題・次の1単位
+
+次は初回header/file/dir/parent Syncおよび復旧Truncate/Syncの停止点を追加し、本ハーネスを再利用する。
+残りは複数seed・複合I/O障害、Close同時競合、製品CLI応答周辺、段階4の計測、段階5のデモ。
+ホスト停止・WSL仮想ディスク・実機電源断・装置flushの検証、性能計測は未実施。
+SIGKILL中もOSページキャッシュは生存するため、電源断耐性を証明したとは主張しない。
