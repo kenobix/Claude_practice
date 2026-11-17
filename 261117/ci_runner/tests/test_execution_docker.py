@@ -12,6 +12,7 @@ import psycopg
 import pytest
 
 from ci_runner import container, database, execution
+from ci_runner.finalization import finalize_fixture
 from ci_runner.preflight import ExecutionDenied
 from test_preflight import issue_claim
 from test_runs_postgres import dedicated_database
@@ -26,7 +27,7 @@ def evidence(request):
     yield report
     if os.environ.get('CI_RUN_EXECUTION_TESTS') == '1':
         sources = [ROOT / 'src/ci_runner' / name for name in
-                   ('execution.py', 'container.py', 'preflight.py')]
+                   ('execution.py', 'container.py', 'preflight.py', 'finalization.py')]
         sources += [*sorted((ROOT / 'fixtures/job').iterdir()), Path(__file__),
                     ROOT / 'scripts/verify_execution.py']
         report.update(finished_at=datetime.now(timezone.utc).isoformat(),
@@ -107,6 +108,12 @@ def test_four_bounded_fixtures(dedicated_database, owned_resources, evidence, mo
     # Execution does not pretend that the DB result was finalized.
     with database.connect() as conn:
         assert conn.execute('SELECT state FROM attempts WHERE id=%s', (claim.attempt_id,)).fetchone()['state'] == 'running'
+    receipt = finalize_fixture(claim, result)
+    assert receipt.state == {'success': 'succeeded', 'failure': 'failed', 'timeout': 'timed_out', 'logs': 'failed'}[mode]
+    assert finalize_fixture(claim, result).replayed
+    with database.connect() as conn:
+        row = conn.execute('SELECT state,completed_attempt_id FROM runs WHERE id=%s', (claim.run_id,)).fetchone()
+    assert row == {'state': receipt.state, 'completed_attempt_id': claim.attempt_id}
 
 
 @pytest.mark.parametrize('fault', ['cancel', 'db_error', 'expired', 'db_stop'])

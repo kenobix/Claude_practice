@@ -16,6 +16,8 @@ import httpx
 import psycopg
 import pytest
 
+from ci_runner.finalization import finalize_fixture
+from test_finalization_input import report
 from ci_runner.preflight import authorize_execution
 from ci_runner.worker import claim_next
 
@@ -212,6 +214,8 @@ def test_actual_database_stop_returns_503_and_recovers(dedicated_database):
             assert client.get('/health/ready').status_code == 503
             with pytest.raises(psycopg.OperationalError):
                 authorize_execution(claim)
+            with pytest.raises(psycopg.OperationalError):
+                finalize_fixture(claim, report(claim))
             worker = subprocess.run(
                 [sys.executable, '-m', 'ci_runner.worker', '--claim-once', '--worker-id', 'db-stop-check'],
                 capture_output=True, text=True, timeout=5, cwd=ROOT)

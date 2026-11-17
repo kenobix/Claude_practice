@@ -5,6 +5,7 @@ import os
 import selectors
 import subprocess
 import time
+from uuid import UUID
 
 from . import container
 from .preflight import ExecutionDenied, authorize_execution
@@ -27,6 +28,8 @@ class ExecutionResult:
     released: bool
     verified_limits: dict
     image_id: str
+    run_id: UUID
+    attempt_id: UUID
 
     @property
     def truncated(self):
@@ -127,7 +130,8 @@ def _run(prepared, claim, connection_factory, lease_deadline):
         elif reason == 'completed' and state['ExitCode'] != 0:
             reason = 'check_failure'
         return ExecutionResult(state['ExitCode'], reason, bytes(out), bytes(err), observed,
-                               time.monotonic() - started, released, limits, prepared.image_id)
+                               time.monotonic() - started, released, limits, prepared.image_id,
+                               prepared.run_id, prepared.attempt_id)
     finally:
         selector.close()
         # Free attach pipes before the preparation context issues blocking rm.

@@ -1,6 +1,6 @@
 # P0設計案：ジョブの正本と実行権
 
-状態: P0検証とP1前半（受付/取得API・DB永続化・冪等性）は実装済み。Workerの初回取得と実行前DB preflightは実装済み。[固定fixtureの未起動コンテナ準備](container-preparation.md)と[内部の上限付きfixture実行](fixture-execution.md)も実装済み。常駐実行・結果保存・Webhook等は未実装。
+状態: P0検証とP1前半（受付/取得API・DB永続化・冪等性）は実装済み。Workerの初回取得と実行前DB preflightは実装済み。[固定fixtureの未起動コンテナ準備](container-preparation.md)と[内部の上限付きfixture実行](fixture-execution.md)も実装済み。[条件付きfixture結果確定](result-finalization.md)も実装済み。常駐実行・ログ永続化・Webhook等は未実装。
 実装したHTTP契約と競合・commit前後の障害証拠は[受付API仕様](intake-api.md)を参照。
 [Worker初回取得](worker-claim.md)は履歴なしの許可queuedだけを取得し、attempt番号1・initial・DB期限30秒を同時commitする。再試行と期限回収は未実装。
 [実行前DB preflight](execution-preflight.md)は現在の実行権を再確認するsnapshotを返すが、外部起動との原子性はない。ローカル固定fixtureでは起動前/ガード後にDB再照合し、時間/ログ/残leaseを監視する。実行中DB監視は未実装。
@@ -65,7 +65,7 @@ run.completed_attempt_idを現在の有効attemptの確定transactionでのみ�
 
 基礎DDLは `../migrations/001_initial.sql`（未変更）。版2で履歴用(created_at DESC, id DESC) indexを追加。UUIDはDB生成。日時はtimestamptz。
 状態CHECKだけでは遷移順・期限・取消優先・正式結果の整合性を保証しない。
-それらはP1/P2の条件付き更新と競合統合テストで検証する。実DB適用・二重適用・業務キー一意制約・状態CHECK・再起動後のschema保持は検証済み。遷移競合は未検証。
+それらはP1/P2の条件付き更新と競合統合テストで検証する。実DB適用・二重適用・業務キー一意制約・状態CHECK・再起動後のschema保持は検証済み。ローカルfixtureの結果確定と条件付き取消SQLの競合を検証済み。取消API/期限回収等は未実装。
 現在のDDLはSHA-1の40桁commitを許容し、他形式は将来再検討する。
 
 ## 故障・中断時の期待動作
@@ -86,7 +86,7 @@ run.completed_attempt_idを現在の有効attemptの確定transactionでのみ�
 
 P1前半ではcommit前/後のAPI SIGKILL、実DB停止、10 HTTP同時投入と一意キー競合待ち、API再起動後の保持を実測済み。
 P0ではDB再起動後のschema保持、CPU/RAM/PID制限、時間/ログ上限と回収を固定fixtureで実測済み。
-初回取得時のrun/attempt同時更新、rollback、ロック解放と取得競合は検証済み。ジョブ結果の反映・Worker障害回復は未実装・未検証。[隔離実測](isolation.md)と[P1計画](p1-plan.md)を参照。
+初回取得時のrun/attempt同時更新、rollback、ロック解放と取得競合は検証済み。ローカルfixtureの結果反映・再送・commit境界SIGKILL・取消/期限競合も検証済み。Worker全体の障害回復は未実装・未検証。[隔離実測](isolation.md)と[P1計画](p1-plan.md)を参照。
 復旧45秒は未測定の仮目標。実装も測定も未実施。
 
 ## 参照

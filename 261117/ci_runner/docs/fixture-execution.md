@@ -3,8 +3,8 @@
 今回の1単位は `src/ci_runner/execution.py` の `execute_fixture(claim, mode)`。
 先行する[DB preflight](execution-preflight.md)と[制限付きコンテナ準備](container-preparation.md)をつなぐ内部ライブラリ。
 固定ローカルのsuccess/failure/timeout/logsだけを実行する。任意コード・コマンド・イメージ・YAMLは受け付けない。
-HTTP API・claim-once CLIからは呼ばず、常駐ループ・結果のDB確定・heartbeatは今回実装しない。
-受理commitの取得/実行コードへの対応付けは未実装。返却値を「受理commitの検査結果」として保存する経路はない。
+HTTP API・claim-once CLIからは呼ばず、常駐ループ・heartbeatは未実装。後続の[条件付きDB結果確定](result-finalization.md)を内部関数として実装済み。
+受理commitの取得/実行コードへの対応付けは未実装。DB確定時も理由はfixture_接頭辞であり、受理commitの検査成功とは扱わない。
 
 ## 起動と処理開始の区別
 
@@ -86,12 +86,12 @@ verify_executionは既存verify_dbを使い、使い捨て専用DBを作って�
 - 通常テストで任意mode・認可拒否・DB往復による残時間消費を確認する。
 
 DB認可と外部のGO送信は単一transactionではない。照合後の取消/失効を原子的に防いだとは説明しない。
-実行結果をDBへ確定する機能はなく、実行後もrun/attemptはrunningのまま。
+execute_fixture単体ではrun/attemptはrunningのまま。後続のfinalize_fixtureを明示的に呼ぶと条件付きで確定できる。
 検証スクリプトの使い捨てDBだけで試し、共有DBへ手動実行しない。
 
 ## 次の1単位
 
-現在token・状態・DB期限・取消条件を満たす場合だけ、結果をattempt/runへ原子的に確定する処理と故障試験。
+条件付き結果確定は後続単位で実装済み。次は一件だけのWorker入口で取得→実行→確定を接続する。
 受理commit取得/対応付け、常駐Worker接続、実行中DB監視・heartbeat・期限回収・再試行等も残件。P1全体は未完了。
 
 参照: [Docker startのattach/interactive](https://docs.docker.com/reference/cli/docker/container/start/)、

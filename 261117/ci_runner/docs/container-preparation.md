@@ -69,6 +69,6 @@ cd ~/work/Claude_practice-261117/261117/ci_runner
 
 起動前/ガード後DB再照合とcgroup実値確認を伴う上限付き実行は後続単位で実装済み。
 実値不一致の拒否、時間/合計ログ/DB残lease上限、停止/回収を検証済み。
-続いて現在token/DB期限/取消条件に従う結果確定を実装する。P1全体は未完了。
+現在token/DB期限/取消条件に従うfixture結果確定も実装済み。次は一件だけのWorker入口へ接続する。P1全体は未完了。
 
 参照: [Docker create（起動を伴わない作成）](https://docs.docker.com/reference/cli/docker/container/create/)。

@@ -390,3 +390,60 @@ DB readiness=200、migration再適用、DB再起動後のschema保持も確認�
 base image/build cacheは再利用用に残す。生成された最新証拠JSONはignored artifacts内だけで、過去のコミット済み証拠を上書きしていない。
 文書リンク/compileall/diff whitespace・依存整合を確認。差分/秘密情報/生成物とstaged scopeを監査後、feature branchへcommit/pushしDraft PRの進捗を更新する。
 一時的な成功fixtureの再認可拒否の原因は未確定のまま残す。診断追加以外の条件緩和や再試行はしていない。
+
+## 継続作業：現在の実行権に基づくfixture結果確定（2026-11-17）
+
+### 調査・選択した1単位
+
+cwdは指定worktree、branch feat/ci-runner、開始HEAD 7ce9cf5、未コミット変更なし。
+ルート/担当AGENTS、261014計画、README/work_log、既存コード・schema・試験・設計、gh CLIでDraft PR #1を確認。
+受付・初回取得・固定fixtureの上限実行まで完了済み。次の依存タスクとして「条件付きDB結果確定」だけを選んだ。
+常駐Worker、受理commit取得、ログ永続化へは進まない。変更は261117内だけ。
+
+### 実装・設計判断
+
+- finalize_fixtureを信頼済み内部ライブラリとして追加。ExecutionResultへrun/attempt IDを追加し、結果の取り違えを接続前に拒否する。
+- GO済み・確認済みcgroup値・image ID形式・終了理由とexit codeの組合せを検証。lease_expired/ガード拒否は終端確定しない。
+- run→attemptの順に短く行ロック。現在token/Worker/初回番号/policy、running、取消なし、結果未設定を確認する。
+- attemptの終端状態・exit/reason・DB終了時刻、runの終端状態・正式attempt参照を同一transactionで更新。
+- 両UPDATEでDBのclock_timestampによるlease条件を確認。2更新間の失効も全体rollback。
+- 同じ確定済みの状態/exit/reasonはreplayed=true、終了時刻も変えず返す。期限後のreceipt再取得は新規完了受理や権限延長と区別する。
+- contextのCOMMIT完了後だけreceiptを返し、COMMIT応答不明なら同じ報告で再確認する。
+- 理由はfixture_success/fixture_check_failure/fixture_timeout/fixture_log_limitとし、受理commitの検査完了とは扱わない。
+- 生ログ・image ID・実行時間のDB保存は今回含めず、API/claim-onceや常駐処理へ自動接続しない。
+- 001を含むmigration・依存は未変更。README/AGENTS/設計/実行仕様とP1計画を更新。
+
+### 検証
+
+入力拒否の通常テスト12件は12 passed in 0.31s。
+専用DB・実Dockerを含む全回帰は **156 passed、14 skipped、既知TestClient警告1件 in 119.45s**。
+新規38件（入力12・DB26）と既存118件。14 skippedは別実行の準備4件とP0隔離10件。
+
+- 4種類の状態/exit/reason/正式attempt/DB終了時刻、同じ結果の再送、期限後receipt、別結果の上書き拒否、確定後ロック解放を確認。
+- 不正ID/token/Worker/番号、取消、失効、終端、policy変更、新attemptに対する古い結果を拒否し、既存状態を保持。
+- attemptだけ書いた直後の通信例外と2更新間の失効で部分更新なし。commit前/後の注入通信異常でも再送が整合。
+- pg_stat_activityで実接続のLock待機を観測し、取消/期限先行の拒否、確定先行の取消変更0件、並行再送のreplayedを確認。
+- 別プロセスをcommit前/後でSIGKILLし、rollback/保持と再送を確認。テスト専用barrierはHTTP等から設定できない。
+- APIプロセス再起動と専用DB再起動後、GET一覧/詳細・DBの終了時刻が保持されることを確認。
+- 専用DB実停止でreceiptなし。既存API/claim/preflight回帰も確認。
+- 実Dockerの成功/失敗/timeout/logs結果を回収後に確定し、同じ結果の再送とrun状態を確認。
+- DB readiness200、migration二重適用、検証末尾のDB再起動後schema保持も確認。
+
+既存準備回帰は **41 passed in 12.68s**。P0隔離回帰は **10 passed in 34.49s**。
+pip checkは依存破損なし（ユーザーcache権限の無効化通知のみ）。文書リンク・compileall・diff whitespaceも確認済み。
+実行証拠JSONのfailure0、11件の回収確認とソースSHA256の一致を確認した。過去のコミット済み証拠は変更しない。
+
+### 残課題・次の単位
+
+次はclaim-onceを維持した別の一件実行入口で、取得→固定fixture実行→条件付き確定を接続する。
+image事前準備による取得後遅延の削減、容量上限付きログ永続化、受理commit取得/対応付け、常駐処理、heartbeat/期限回収/再試行等も残件。
+P1全体は未完了。過去の取得/実行認可の一時拒否の原因未確定事項は既存記録と診断を維持。今回の156件の実行では失敗なし。
+
+最終ラベル照会で準備/実行/P0 container・一時image、専用DB container/volume/networkはすべて0件。P0証拠もfailure/cleanup error0件。
+base image/build cacheは再利用用に残し、ignored最新証拠以外の生成物を追加しない。対象差分・秘密情報・staged scope確認後、担当branchへcommit/pushしDraft PR #1を更新する。
+
+差分レビューで、確定先行の競合試験を補強した。取消接続に加え同時再送接続もpg_stat_activityでLock待機を確認してからcommitを解放する。
+この最終試験状態で全回帰を再実行し、結果を以下へ追記する。実装の認可条件・lease値・期待結果は変更していない。
+
+最終の待機観測補強後は **156 passed、14 skipped、既知警告1件 in 124.01s**。同時再送の実ロック待機も確認した。
+DB readiness200・再起動後schema保持と、最終の専用ラベル全7照会で残存0件を再確認。今回の両回帰とも失敗なし。

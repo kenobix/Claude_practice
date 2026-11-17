@@ -6,7 +6,8 @@
 Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB preflightを実装済み。
 固定fixtureのコンテナ作成・設定照合・回収まで実装済み。
 内部ライブラリでDB再照合・実値ガード・時間/ログ/lease上限付きのローカル固定fixture実行も実装済み。
-常駐Worker・受理commitの取得/実行・結果保存・Webhook・UIは未実装で、P1全体は未完了。
+ローカルfixture結果の条件付きDB確定（状態/exit/理由/終了時刻・正式attempt参照）も実装済み。
+常駐Worker・受理commitの取得/実行・ログ永続化・Webhook・UIは未実装で、P1全体は未完了。
 GitHub Pagesへの公開対象ではない。常駐バックエンドの配置先は将来別途判断する。
 
 ## Python環境とテスト
@@ -93,12 +94,13 @@ verify_db.pyを使い、既存の開発DBへテストを手動で向けない。
 - [受付APIの契約・競合設計・故障検証](ci_runner/docs/intake-api.md)
 - [Worker初回取得の仕様・検証と限界](ci_runner/docs/worker-claim.md)
 - [実行前DB preflightとsnapshotの限界](ci_runner/docs/execution-preflight.md)
+- [現在token/期限/取消条件を守る結果確定](ci_runner/docs/result-finalization.md)
 - [上限付き固定fixture実行とDB認可ゲート](ci_runner/docs/fixture-execution.md)
 - [固定fixtureのコンテナ作成・設定照合](ci_runner/docs/container-preparation.md)
 - [P1進捗と次の単一Worker実装順序](ci_runner/docs/p1-plan.md)
 - [調査・検証結果](work_log.md)
 
-受付・永続化・冪等性は実装済み。初回取得は実装済み。次は現在token/DB期限/取消条件を守る結果のDB確定へ進む。認証なしAPIはloopback限定を維持する。
+受付・永続化・冪等性は実装済み。初回取得は実装済み。次は一件だけのWorker入口で取得→実行→確定を接続する。認証なしAPIはloopback限定を維持する。
 
 ## 一時DBでの再検証
 
@@ -170,7 +172,7 @@ DATABASE_URL設定済みの使い捨て開発DBに限って利用する。
 Worker内部向けのauthorize_execution(claim)で、DBにある現在token・Worker・状態・取消要求・lease期限・許可設定を再照合する。
 有効な初回attemptだけに、DBから読み直した固定commit等のExecutionPermitを返す。DB異常や条件不一致なら返さない。
 この照合はsnapshotであり、照合後の取消/失効を防ぐ予約ではない。内部経路では起動前/ガード後の再確認とローカル上限監視を行う。実行中DB再照合は今後必要。
-内部の固定fixture実行ライブラリに接続済み。結果保存・API/claim-onceへの接続は未実装。通常の検証はscripts/verify_db.pyを使用する。
+内部の固定fixture実行ライブラリに接続済み。結果確定ライブラリも実装済み。API/claim-onceへの接続は未実装。通常の検証はscripts/verify_db.pyを使用する。
 
 ## 固定fixtureのコンテナ準備（起動なし）
 
@@ -182,7 +184,7 @@ Worker内部向けのauthorize_execution(claim)で、DBにある現在token・Wo
 Worker内部のprepare_fixture(permit, mode)はローカル固定fixtureをbuildし、
 制限付きcreateとinspect照合後に未起動コンテナを返すcontext manager。通常終了・例外時に自分のcontainer/tagを回収する。
 P0のテストハーネスには依存せず、任意イメージ・コマンド・mount・環境変数を受け付けない。
-API/claim-onceへは未接続。実行ライブラリの起動・実値確認・上限監視は実装済み。受理SHAのコード取得・結果保存は未実装。
+API/claim-onceへは未接続。実行ライブラリの起動・実値確認・上限監視は実装済み。受理SHAのコード取得・ログ永続化・Worker入口への接続は未実装。
 設定確認を実行時強制の証拠としない。詳細と残存時のラベルは[準備境界仕様](ci_runner/docs/container-preparation.md)を参照。
 
 ## 上限付き固定fixture実行の検証
@@ -195,6 +197,14 @@ API/claim-onceへは未接続。実行ライブラリの起動・実値確認・
 execute_fixture(claim, mode)はsuccess/failure/timeout/logsだけを扱う内部ライブラリ。
 DB再照合とコンテナ内ガードの確認後、DBを再照合してから定型GOを送る。
 CPU/RAM/swap/PIDの実値を確認し、壁時計10秒・合計保持ログ1MiB・DB残leaseの上限を適用する。
-実行結果はメモリ上に返すだけでDBはrunningのまま。共有DBへ向けず上記スクリプトで検証する。
-実行中の取消/DB断の即時検知、heartbeat/自動復旧、結果の永続化は未実装。
+execute_fixtureだけではDBはrunningのまま。別途finalize_fixture(claim, result)で状態/exit/理由/終了時刻を原子的に確定できる。共有DBへ向けず上記スクリプトで検証する。
+実行中の取消/DB断の即時検知、heartbeat/自動復旧、ログ永続化は未実装。
 [実行仕様・証拠・限界](ci_runner/docs/fixture-execution.md)を参照。
+
+## 固定fixtureの結果確定
+
+finalize_fixture(claim, result)はrun→attemptを短くロックし、現在token・DB期限・取消条件を満たすときだけ両方を確定する。
+確定済みの同じ状態/exit/理由の再送は終了時刻を変えず応答する。DB異常は成功扱いせず、同じ報告で再確認する。
+理由はfixture_接頭辞で記録する。受理commitのコード検査やログ永続化は未実装。
+API/claim-onceは結果確定へ自動接続しない。使い捨てDBのverify_execution.pyで実行から確定までを検証する。
+詳細は[結果確定仕様](ci_runner/docs/result-finalization.md)を参照。

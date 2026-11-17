@@ -60,7 +60,7 @@ scripts/verify_db.pyで使い捨て専用DBを作成し、既存テストとtest
 ## 次の1単位
 
 [固定fixture用の制限付きコンテナ作成・設定照合](container-preparation.md)は後続単位で実装済み。DB照合からの自動接続はまだない。
-上限付き実行と停止/回収も後続単位で実装済み。次はDB条件付き結果確定へ進める。
+上限付き実行と停止/回収も後続単位で実装済み。DB条件付きfixture結果確定も実装済み。次は一件だけのWorker実行入口へ接続する。
 P1全体は未完了。再試行、heartbeat、期限回収はP2へ残す。
 
 参考: [PostgreSQL clock_timestamp](https://www.postgresql.org/docs/17/functions-datetime.html)、

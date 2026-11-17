@@ -1,6 +1,6 @@
 # CI runner 開発指示
 
-- 対象計画は `../261014/plan_ci_runner.md`。現在はP0・受付API・Worker初回取得・実行前DB preflight・固定fixtureの準備・DB再照合/実値ガード付き上限実行まで実装済み。次の単位は進捗と依存関係を確認して選ぶ。ジョブ実行・Webhook・復旧等は完了証拠と区別する。
+- 対象計画は `../261014/plan_ci_runner.md`。現在はP0・受付API・Worker初回取得・実行前DB preflight・固定fixtureの準備・DB再照合/実値ガード付き上限実行・条件付きDB結果確定まで実装済み。次の単位は進捗と依存関係を確認して選ぶ。ジョブ実行・Webhook・復旧等は完了証拠と区別する。
 - 変更は原則この日付ディレクトリ内。ルートの共通CI・AGENTS.md、他worktreeは変更しない。
 - 今回の依頼では261117/の変更をfeat/ci-runnerへcommit・pushする。mainへのpush・マージ、force pushはしない。対応する既存Draft PRの進捗はユーザー指示に従って更新し、Draftを維持する。
 - Pythonは `ci_runner/.venv` に分離し、依存変更時はrequirements.lockを更新する。
@@ -12,4 +12,4 @@
 - DBの故障試験は `ci_runner/scripts/verify_db.py` の使い捨て専用DBだけで実施する。CI_TEST_DISPOSABLEを共有DBへ設定しない。001 migrationは変更せず後続版を追加する。
 - 一度の継続作業ではレビュー可能な未完了単位を1つ実装・検証して区切る。Workerのclaim-onceは初回取得だけで、実行や自動復旧を行わない点を維持する。
 - 本番側のコンテナ準備の実Docker試験は `ci_runner/scripts/verify_preparation.py`。未起動の設定検証に限り、起動/実行時の制限強制を検証済みとしない。
-- 固定fixture実行の統合試験は `ci_runner/scripts/verify_execution.py`。使い捨てDBと実Dockerだけを使用し、受理commit検査やDB結果確定と混同しない。API/claim-onceは実行へ未接続。
+- 固定fixture実行の統合試験は `ci_runner/scripts/verify_execution.py`。使い捨てDBと実Dockerだけを使用し、ローカルfixtureのDB結果確定までを含む。受理commit検査やログ永続化の完成と混同しない。API/claim-onceは実行へ未接続。
