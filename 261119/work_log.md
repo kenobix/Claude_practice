@@ -356,3 +356,51 @@ README/仕様を更新。全差分・秘密情報・生成物を確認し、担�
 現在dns.status=not_implemented/events=nullは照合未実装を表す。構造検査成功を名前解決成功と呼ばない。
 未知RDATA等の全意味検査、TShark独立比較、性能/大規模負荷、デモ、VS Code GUIは未検証。
 今回の単位を完了後、これらの先の実装には進まない。
+
+
+# 継続単位 — DNS照合キー・QR/port方向判定
+
+実施日: 2026-11-17（Asia/Tokyo）。開始HEAD=b5b4654、
+cwd=/home/kenshin/work/Claude_practice-261119、branch=feat/pcap-analyzer、初期statusはclean。
+ルート/担当AGENTS、261014計画、README/work_log、仕様/Schema、既存コード・テストとDraft PR #3を確認。
+AGENTSは継続利用可能で変更なし。既存271テストを再実行し成功（13.59秒）。
+
+## 選択した単位と実装
+
+入力/基本集計/双方向フロー、DNS名/質問/RR構造検査とpacket分類/CLI診断は完了済み。
+DNS窓処理には検証済み質問・端点/IDによる同一性と向き判定が必要なため、この内部APIを1単位として選択。
+窓処理・応答照合・イベント出力、Phase 3/4には進めない。
+
+- models.py/packet.py: 全DNS構造検査成功後だけDNSQuestionをPacketRecord.dns_questionへ引き継ぐ。
+  質問のbytesラベル/ID/type/class/QR/RCODE/TCのみ保持し、RR/RDATAや生パケットはレコードへ残さない。
+  解析を二重実行せず、逐次処理と既存分類/フロー帰属を維持。
+- dns.py: 不変なDNSKey/DNSObservationとobservation(record)を追加。
+  decoder生成Recordのparsed/UDP17/flow_eligible/有効時刻/質問/端点を要求し、対象外はNone。
+  queryはdst53、responseはsrc53を要求。両port53でもQRでclient/serverを決定する。
+  向き不一致は構造不正とはせず、parsed分類とフロー帰属を維持し照合対象からだけ除外。
+- キーは役割順の(client IPv4 packed bytes/port、server IPv4 packed bytes/port、ID、
+  正規化ラベルtuple、QTYPE、QCLASS)。端点のソートやUnicode変換、表示名からの復元を行わない。
+  観測値に根拠番号/整数ns/QR/RCODE/TCを保持し、応答ペア・名前解決成功・時間差は判定しない。
+- JSON形状/Schema/版番号/CLI出力・既存fixture/手定義期待値・依存lockは変更なし。
+  DNS出力のnot_implemented/events=nullは照合未実装を表す。
+
+## 検証
+
+新規40件を追加し、全311テスト成功（13.50秒）。既存271件のコード・期待は変更なし。
+client/server両IP・client port・ID・名前・QTYPE/QCLASSの分離、逆方向のキー一致、
+ASCIIのみの正規化/非ASCII区別/ラベル境界/root、RCODE/TCをキーへ混入しないこと、
+port0/53/65535・両port53・同一端点、方向不一致の除外とparsed維持を検証。
+不足フィールド、truncated/不正時刻/fragment/TCP/他port/構造検査失敗からの質問引継ぎ除外も確認。
+人工baselineから根拠番号[4,5,6,7,8,9]の6観測・3キーを取得し、独立に定義した対応関係と一致。
+繰返し入力のキー決定性と整数ns保持を確認したが、25ms等の応答時間の算出は未実装。
+既存CLI/Schema/フローの件数・捕捉長・元長・根拠整合テストも成功。
+
+README/仕様へAPI境界と次の単位を記載。差分・秘密情報・生成物を確認して担当branchへcommit・pushし、
+Draft PR #3を実績に合わせて更新する。ライブ捕捉・送信・スキャン・外部解析照会は行わない。
+
+## 残課題と次の単位
+
+次はDNSObservationを受ける5秒窓の状態管理（最初のquery基準の閉区間、query重複、完了後再利用）。
+続いて追加/孤立応答・終端/時刻逆行・キー上限停止・イベント/Schema/CLI統合を実装する。
+現状は観測値をreportへ集約しておらず、照合結果や応答時間は出力しない。
+未知RDATA全意味検査、TShark独立比較、性能/大規模負荷、デモ、VS Code GUIは未検証。

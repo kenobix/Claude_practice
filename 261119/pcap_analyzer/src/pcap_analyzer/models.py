@@ -1,6 +1,10 @@
 """Bounded input configuration and normalized records."""
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .dns import DNSQuestion
 
 MAX_INPUT_BYTES = 100 * 1024 * 1024
 MAX_RECORDS = 1_000_000
@@ -59,3 +63,4 @@ class PacketRecord:
     ip_protocol: int | None = None
     flow_eligible: bool = False
     tcp_flags: int | None = None
+    dns_question: "DNSQuestion | None" = None

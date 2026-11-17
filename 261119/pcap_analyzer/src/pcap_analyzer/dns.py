@@ -7,6 +7,11 @@ not evidence of a truncated capture (which the packet layer handles).
 
 import struct
 from dataclasses import dataclass
+from ipaddress import IPv4Address
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .models import PacketRecord
 
 MAX_DNS_MESSAGE_BYTES = 65507
 MAX_NAME_STEPS = 256
@@ -54,6 +59,54 @@ class DNSQuestion:
     @property
     def question_key(self):
         return self.name.normalized_labels, self.qtype, self.qclass
+
+
+@dataclass(frozen=True)
+class DNSKey:
+    """Role-ordered key, independent of display spelling and capture direction."""
+
+    client: tuple[bytes, int]
+    server: tuple[bytes, int]
+    dns_id: int
+    labels: tuple[bytes, ...]
+    qtype: int
+    qclass: int
+
+
+@dataclass(frozen=True)
+class DNSObservation:
+    key: DNSKey
+    packet_index: int
+    timestamp_ns: int
+    is_response: bool
+    rcode: int
+    tc: bool
+
+
+def observation(record: "PacketRecord") -> DNSObservation | None:
+    """Prepare one validated packet for a future windowed matcher.
+
+    Input is a decoder-produced PacketRecord, not an arbitrary untrusted model.
+    Queries require destination port 53, responses source port 53; QR determines
+    roles even when both ports are 53. Ineligible packets return None without
+    changing packet classification. This function performs no pairing or timing.
+    """
+    question = record.dns_question
+    if (record.classification != "parsed" or record.protocol != "udp"
+            or record.ip_protocol != 17 or not record.flow_eligible
+            or record.timestamp_ns is None or question is None):
+        return None
+    if record.src_ip is None or record.dst_ip is None or record.src_port is None or record.dst_port is None:
+        return None
+    if (record.src_port if question.is_response else record.dst_port) != 53:
+        return None
+    source = (IPv4Address(record.src_ip).packed, record.src_port)
+    destination = (IPv4Address(record.dst_ip).packed, record.dst_port)
+    client, server = (destination, source) if question.is_response else (source, destination)
+    key = DNSKey(client, server, question.dns_id, question.name.normalized_labels,
+                 question.qtype, question.qclass)
+    return DNSObservation(key, record.packet_index, record.timestamp_ns,
+                          question.is_response, question.rcode, question.tc)
 
 
 def _check_size(message: bytes):

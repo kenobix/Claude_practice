@@ -159,7 +159,7 @@ displayは末尾ドット付きで、ドット/バックスラッシュ/空白�
 
 parse_questionは12 bytesのDNSヘッダー、opcode=0、QDCOUNT=1、名前、QTYPE/QCLASSだけを検査し、
 DNSQuestionを返す。保持値はdns_id/is_response/rcode/tc/name/qtype/qclass/end_offset。
-question_key=(normalized_labels, qtype, qclass)。IP/port/IDを組み合わせる完全照合キーは次の段階。
+question_key=(normalized_labels, qtype, qclass)。IP/port/IDを組み合わせる完全照合キーは下記の内部API。
 opcode/質問数/未対応ラベル形式/処理上限はunsupported、境界不足・矛盾はmalformed。
 DNSDecodeErrorにclassification/reason/offsetを保持し、raw bytesをエラー文へ含めない。
 完全なUDP payloadに対するAPIなので、DNSフィールド不足を捕捉truncatedとは判定しない。
@@ -208,7 +208,7 @@ Aのアドレス長、未知RRの内部構造、EDNSの意味など全RDATA仕�
 正常、捕捉不足なしの候補だけにparse_messageを適用する。malformed/truncatedの既存理由は
 上書きせず、欠けた本文をDNS不正と推測しない。不正時刻のパケットもDNS検査対象から除外。
 UDP宣言長までのpayloadを渡し、Ethernet paddingは含めない。TCP port53は対象外。
-QRとport方向の照合資格判定は次の単位で扱い、この段階では両向きとも構造だけを検査する。
+packet分類では両向きとも構造を検査し、QR/port方向の照合資格は下記observationで判定する。
 
 DNSDecodeErrorのclassification/reasonを既存のpacket分類・P_MALFORMED/P_UNSUPPORTED診断へ反映。
 完全なUDP payload内でのDNSフィールド不足はmalformed。質問数/opcode/未検証参照先や
@@ -219,8 +219,32 @@ DNSDecodeErrorのclassification/reasonを既存のpacket分類・P_MALFORMED/P_U
 DNS本文に問題があっても完全なL4ヘッダーのflow_eligibleは維持し、件数/捕捉長/元長と根拠を
 従来どおり分配する。通常診断上限で停止したパケットも分配済み。完全レコードのDNS構造不正だけなら
 コンテナ処理complete=true/終了0で、診断をJSON/端末へ出力する。
-DNS解析結果の保持・イベント/照合は追加せず、PacketRecordとJSON形状、入力上限、整数nsを維持する。
-次は検証済み質問と端点/IDからの照合キー・向き判定、その後に窓処理とDNSレポートを追加する。
+構造検査に成功した質問だけをPacketRecord.dns_questionへ保持する（下記）。
+JSON形状、入力上限、整数nsを維持し、窓処理とDNSレポートは未実装。
+
+## DNS照合キー・向き判定（内部API実装済み）
+
+packet.decodeはparse_messageがメッセージ全体の検査を終えた場合だけDNSQuestionを
+PacketRecord.dns_questionへ引き継ぐ。RR検査に失敗した場合もNoneのまま。
+質問のみを残し、RR/RDATAや生パケットをレコードへ保持しない。既存の逐次処理を維持する。
+
+dns.observation(record)はdecoder生成PacketRecordを受け、以下の全条件を満たせば
+不変なDNSObservation、満たさなければNoneを返す。モデルを任意生成する外部入力APIではない。
+parsed、udp/protocol17、flow_eligible、整数nsが有効、検査済み質問・両端点が存在することを要求。
+QR=0のqueryはdst53、QR=1のresponseはsrc53でなければ除外する。両port53でもQRで決定する。
+向き不一致はpacketの構造不正とはせず、既存parsed分類・フロー帰属を変更しない。
+不正時刻/truncated/fragment/不正DNS等からは質問を引き継がず、観測値を生成しない。
+
+DNSKeyはclient/serverの各(IPv4 packed bytes, port整数)、dns_id、正規化ラベルtuple、qtype/qclass。
+queryでは送信元をclient、応答では宛先をclientとする。フローキーと異なり端点をソートしない。
+ASCII以外のbytesとラベル境界を維持し、rootは末尾b""一つ。表示名から復元しない。
+RCODE/TC/QRはキーに含めず、DNSObservationのkey/packet_index/timestamp_ns/is_response/rcode/tcへ保持。
+不変値として等値比較・hashが可能で、最初の観測方向やファイル順にキーが依存しない。
+
+ここではペアリング・窓・時間差計算を行わない。時刻逆行時のファイル全体の時間解析無効化は
+既存reportに維持し、将来collectorが履歴を撤回する責務を持つ。observation自体は時刻を並べ替えない。
+JSON Schema/版番号/CLI出力は維持し、イベントとキーのJSON表現は今後のレポート統合で追加する。
+次の単位は5秒窓の状態管理、続いて終端/時刻逆行・上限/イベント出力。
 
 ## DNS照合（Phase 2後半予定）
 

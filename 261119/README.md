@@ -8,7 +8,8 @@ JSONと端末表を実装した。これは通信量集計の中間版であり�
 双方向フロー集計、方向別件数/長さ/根拠、TCP flags、フロー数上限を追加した。
 DNS名の復号・正規化と単一質問抽出を内部APIとして追加した。
 DNSメッセージのRR構造検査を完全なUDP port 53候補のパケット分類とCLI診断へ統合済み。
-問い合わせ/応答照合は未実装。
+検証済み質問の引継ぎ、端点/ID/質問の照合キーとQR/portによる方向判定も内部APIで実装済み。
+5秒窓による問い合わせ/応答照合は未実装。
 
 ## 作業環境
 
@@ -40,7 +41,7 @@ python3.12 -m venv .venv
 .venv/bin/python -m pytest -q
 ```
 
-全271テスト成功（既存235件 + DNSパケット分類統合36件）。
+全311テスト成功（既存271件 + DNS照合キー/向き判定40件）。
 DNS名/質問抽出40件とフロー・入力処理等の既存テストも再実行した。
 DNS候補の空payloadの分類変更に合わせ、既存1件の期待をparsedからmalformedへ更新した。
 既存100件は分類・入力制限・時刻等の検査を維持し、版変更に伴う期待を更新。
@@ -165,8 +166,23 @@ DNS候補の空payloadは従来のparsedからmalformedへ変更。port 53以外
 Ethernet paddingをDNS本文へ含めない。診断上限では従来どおり途中結果と終了2を返す。
 JSONの形状/版番号は維持し、Schemaに分類範囲と照合statusの説明を追加した。
 
-次の実装単位は検証済みDNS質問と端点/IDを組み合わせた照合キー・向き判定。続いて、
-5秒窓・重複/追加/孤立応答、記録終端/時刻逆行とレポートを実装する。
+## DNS照合キーと向き判定（内部API）
+
+`PacketRecord.dns_question`へ全体構造検査に成功したDNSQuestionだけを引き継ぐ。
+質問のbytesラベル・ID・QTYPE/QCLASS・QR/RCODE/TCを保持し、RR/RDATAや生パケットを残さない。
+`dns.observation(record)`は照合対象ならDNSObservation、対象外ならNoneを返す。
+queryはdst port53、responseはsrc port53を要求し、両port53でもQRで役割を決める。
+向きが合わないDNSも構造上のparsed分類とフロー帰属は維持する。
+
+DNSKeyは(clientのIPv4 packed bytes/port、serverのIPv4 packed bytes/port、ID、
+ASCIIのみ小文字化したラベルtuple、QTYPE、QCLASS)。フローと違い端点をソートしない。
+DNSObservationはkey・根拠番号・整数ns・QR/RCODE/TCを保持する不変値で、応答照合や時間計算は行わない。
+不正時刻/truncated/fragment/不正DNS等は除外し、同じ入力から同じキーを得る。
+API入力は既存decoderが生成したPacketRecordとし、任意モデルの外部入力検証APIとはしない。
+CLI/Schemaは維持し、DNSイベント出力は引き続き未実装。
+
+次の実装単位はこの観測値を受け取る5秒窓の状態管理（重複query・完了後再利用を含む）。
+その後、追加/孤立応答、記録終端/時刻逆行、上限・レポート統合を実装する。
 TShark比較・計測・デモはさらに後の段階。
 
 ## 仕様・期待値・制限
@@ -185,7 +201,7 @@ UDP長はIPv4の宣言payload長との一致を要求する。
 分類の件数とは別の指標で、それぞれの合計が全レコード数と一致する。
 
 DNS名/質問抽出・RR構造検査とpacket分類/CLI診断への統合は実装済み。
-照合キー/窓処理/曖昧さの扱いとDNSイベント出力は未実装。
+照合キー/向き判定は内部APIで実装済み。窓処理/曖昧さの扱いとDNSイベント出力は未実装。
 フロー集計と端末フロー表は実装済み。
 DNS25ms・未応答・重複queryの判定は依然として将来の手計算期待値である。
 TShark未導入のため独立比較は未実施。性能測定、実通信、他Python版、VS Code GUIは未検証。

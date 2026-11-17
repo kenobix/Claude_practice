@@ -108,7 +108,7 @@ def decode(data: bytes, *, index: int, timestamp_ns: int | None,
             # Do not interpret capture shortages or metadata errors as bad DNS.
             if 53 in (layer.sport, layer.dport) and not any(issues.values()):
                 try:
-                    parse_message(transport[8:udp_len])
+                    fields["dns_question"] = parse_message(transport[8:udp_len]).question
                 except DNSDecodeError as error:
                     issues[error.classification].append(error.reason)
     return finish()
