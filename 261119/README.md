@@ -1,4 +1,4 @@
-# 保存済みPCAP解析ツール — Phase 2（フロー・UDP DNS照合）
+# 保存済みPCAP解析ツール — Phase 3（独立比較）
 
 作業日: 2026-11-17。`261119`は指定された作業ID。
 計画: [保存済みPCAP解析ツール](../261014/plan_pcap_analyzer.md)。
@@ -42,14 +42,14 @@ python3.12 -m venv .venv
 .venv/bin/python -m pytest -q
 ```
 
-全386テスト成功（既存370件 + Phase 2 CLI受入16件）。
+全406テスト成功（既存386件 + TShark比較ハーネス20件）。
 DNS名/質問抽出40件とフロー・入力処理等の既存テストも再実行した。
 DNS候補の空payloadの分類変更に合わせ、既存1件の期待をparsedからmalformedへ更新した。
 既存100件は分類・入力制限・時刻等の検査を維持し、版変更に伴う期待を更新。
 フローの正常系・方向・キー・flags・truncated帰属・除外・上限・決定性・Schemaの53件を追加した。
 生成した14種類の人工fixture、手計算期待値、4種類のmagic/時刻形式、不正なヘッダー、
 分類優先順位、caplen/wirelen、破損レコード、安全上限、Schema、決定性を検証する。
-インストールのPyPI接続とGitHub保存以外の処理はオフライン。ライブ捕捉・送信・スキャン・逆引き・外部照会なし。
+依存取得（PyPI/Ubuntu配布）とGitHub保存以外の処理はオフライン。ライブ捕捉・送信・スキャン・逆引き・外部照会なし。
 Scapyの経路/インターフェース自動読込をプロセス内で無効化し、socket生成禁止下でも解析をテストする。
 `.venv`、cache、egg-info等はGit対象外。人工PCAPと期待値は再現用成果物として保持する。
 
@@ -65,9 +65,10 @@ ActionsはコミットSHA固定、権限は`contents: read`のみ、checkoutの�
 fixtureの再現性、正常/不正/境界入力、Schema、件数・バイト数・根拠、DNS内部API、
 socket生成禁止下でのfixture生成/解析を含む全テストを使用する。
 fixtureを生成し直して期待値を上書きする手順は追加しない。
-セットアップ時のGitHub/PyPI取得以外に、テストでライブ通信の捕捉・送信・スキャンを行わない。
+セットアップ時の依存取得以外に、テストでライブ通信の捕捉・送信・スキャンを行わない。
 導入時は343件がローカル/ホスト双方で成功し、actionlint 1.7.12で静的検証済み。
-DNS統合後は370件成功。今回の受入試験追加後はローカル386件成功。
+DNS統合後は370件、Phase 2受入追加後は386件、比較ハーネス追加後はローカル406件成功。
+TShark実体の8 fixture比較はローカル明示実行で、通常CIの実行対象には含めない。
 ホスト結果は各commitの実行一覧で確認する。
 GitHubホスト上の実行結果は[Actions実行一覧](https://github.com/kenobix/Claude_practice/actions/workflows/pcap-analyzer-tests.yml)で確認する。
 CIの成功だけでTShark比較や性能測定の完了とはしない。Phase 2の判定根拠は下記の受入記録を参照。
@@ -248,7 +249,9 @@ DNSキー上限の超過queryは件数へ含め、`unassigned_indices`へ根拠�
 [Phase 2受入記録](pcap_analyzer/docs/phase2_acceptance.md)で計画の完了条件を確認し、Phase 2完了と判定した。
 既存14 fixtureのCLI横断確認に加え、同一DNS IDのport/名前/type/class分離と逆順応答、
 fragment・切詰め・不正DNS・孤立/遅い応答・期限後再利用が混在する例を検証した。
-次はPhase 3のTShark独立比較。TSharkは未導入であり、OSを変更しない実行環境の選択から始める。
+Phase 3前半として、専用`.venv`に展開したTSharkと8 fixtureの共通項目を比較する。
+[独立比較の環境・コマンド・結果・未比較範囲](pcap_analyzer/docs/tshark_comparison.md)を参照。
+次は残る6 fixtureの入力異常/形式差と、DNS共通フィールド・応答時間の比較。
 性能測定・デモはPhase 4で、MVP全体は未完成。
 
 ## 仕様・期待値・制限
@@ -272,5 +275,5 @@ DNS名/質問抽出・RR構造検査とpacket分類/CLI診断への統合は実�
 照合キー/向き判定・窓処理・DNSイベントのCLI/Schema統合は実装済み。
 フロー集計と端末フロー表は実装済み。
 人工baselineの25ms・未応答観測・重複queryはCLI出力も手計算一致を確認。
-TShark未導入のため独立比較は未実施。性能測定、実通信、Python 3.12以外、VS Code GUIは未検証。
+TShark比較はPhase 3前半の8 fixtureに限定。残る入力異常/DNS比較、性能測定、実通信、Python 3.12以外、VS Code GUIは未検証。
 捕捉長と記録上の元長を回線上の実転送量と呼ばず、観測不足を障害や攻撃と断定しない。

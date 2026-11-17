@@ -1,0 +1,379 @@
+{
+  "capture_filter": null,
+  "display_filter": null,
+  "fields": [
+    "frame.number",
+    "frame.time_epoch",
+    "frame.cap_len",
+    "frame.len",
+    "ip.src",
+    "ip.dst",
+    "ip.proto",
+    "tcp.srcport",
+    "tcp.dstport",
+    "udp.srcport",
+    "udp.dstport",
+    "tcp.flags"
+  ],
+  "matched": true,
+  "name_resolution": false,
+  "preferences": [
+    "ip.defragment:FALSE",
+    "tcp.desegment_tcp_streams:FALSE",
+    "tcp.analyze_sequence_numbers:FALSE"
+  ],
+  "results": [
+    {
+      "captured_bytes": 680,
+      "differences": [],
+      "exclusions": [],
+      "fixture": "baseline.pcap",
+      "original_bytes": 680,
+      "packet_count": 10,
+      "rows": [
+        {
+          "frame.cap_len": 54,
+          "frame.len": 54,
+          "frame.number": 1,
+          "frame.time_epoch": 1700000000000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.proto": 6,
+          "ip.src": "192.0.2.1",
+          "tcp.dstport": 443,
+          "tcp.flags": 2,
+          "tcp.srcport": 40000,
+          "udp.dstport": null,
+          "udp.srcport": null
+        },
+        {
+          "frame.cap_len": 54,
+          "frame.len": 54,
+          "frame.number": 2,
+          "frame.time_epoch": 1700000000010000000,
+          "ip.dst": "192.0.2.1",
+          "ip.proto": 6,
+          "ip.src": "198.51.100.53",
+          "tcp.dstport": 40000,
+          "tcp.flags": 18,
+          "tcp.srcport": 443,
+          "udp.dstport": null,
+          "udp.srcport": null
+        },
+        {
+          "frame.cap_len": 54,
+          "frame.len": 54,
+          "frame.number": 3,
+          "frame.time_epoch": 1700000000020000000,
+          "ip.dst": "198.51.100.53",
+          "ip.proto": 6,
+          "ip.src": "192.0.2.1",
+          "tcp.dstport": 443,
+          "tcp.flags": 16,
+          "tcp.srcport": 40000,
+          "udp.dstport": null,
+          "udp.srcport": null
+        },
+        {
+          "frame.cap_len": 72,
+          "frame.len": 72,
+          "frame.number": 4,
+          "frame.time_epoch": 1700000001000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.proto": 17,
+          "ip.src": "192.0.2.1",
+          "tcp.dstport": null,
+          "tcp.flags": null,
+          "tcp.srcport": null,
+          "udp.dstport": 53,
+          "udp.srcport": 53000
+        },
+        {
+          "frame.cap_len": 88,
+          "frame.len": 88,
+          "frame.number": 5,
+          "frame.time_epoch": 1700000001025000000,
+          "ip.dst": "192.0.2.1",
+          "ip.proto": 17,
+          "ip.src": "198.51.100.53",
+          "tcp.dstport": null,
+          "tcp.flags": null,
+          "tcp.srcport": null,
+          "udp.dstport": 53000,
+          "udp.srcport": 53
+        },
+        {
+          "frame.cap_len": 72,
+          "frame.len": 72,
+          "frame.number": 6,
+          "frame.time_epoch": 1700000002000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.proto": 17,
+          "ip.src": "192.0.2.1",
+          "tcp.dstport": null,
+          "tcp.flags": null,
+          "tcp.srcport": null,
+          "udp.dstport": 53,
+          "udp.srcport": 53001
+        },
+        {
+          "frame.cap_len": 72,
+          "frame.len": 72,
+          "frame.number": 7,
+          "frame.time_epoch": 1700000003000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.proto": 17,
+          "ip.src": "192.0.2.1",
+          "tcp.dstport": null,
+          "tcp.flags": null,
+          "tcp.srcport": null,
+          "udp.dstport": 53,
+          "udp.srcport": 53002
+        },
+        {
+          "frame.cap_len": 72,
+          "frame.len": 72,
+          "frame.number": 8,
+          "frame.time_epoch": 1700000003010000000,
+          "ip.dst": "198.51.100.53",
+          "ip.proto": 17,
+          "ip.src": "192.0.2.1",
+          "tcp.dstport": null,
+          "tcp.flags": null,
+          "tcp.srcport": null,
+          "udp.dstport": 53,
+          "udp.srcport": 53002
+        },
+        {
+          "frame.cap_len": 88,
+          "frame.len": 88,
+          "frame.number": 9,
+          "frame.time_epoch": 1700000003020000000,
+          "ip.dst": "192.0.2.1",
+          "ip.proto": 17,
+          "ip.src": "198.51.100.53",
+          "tcp.dstport": null,
+          "tcp.flags": null,
+          "tcp.srcport": null,
+          "udp.dstport": 53002,
+          "udp.srcport": 53
+        },
+        {
+          "frame.cap_len": 54,
+          "frame.len": 54,
+          "frame.number": 10,
+          "frame.time_epoch": 1700000008000000000,
+          "ip.dst": "192.0.2.1",
+          "ip.proto": 6,
+          "ip.src": "198.51.100.53",
+          "tcp.dstport": 40000,
+          "tcp.flags": 16,
+          "tcp.srcport": 443,
+          "udp.dstport": null,
+          "udp.srcport": null
+        }
+      ],
+      "sha256": "15d498f6b295f4325b1add47e408ce26564aa14a506c5f10cde30143f65912b6",
+      "stderr": ""
+    },
+    {
+      "captured_bytes": 0,
+      "differences": [],
+      "exclusions": [],
+      "fixture": "header_only.pcap",
+      "original_bytes": 0,
+      "packet_count": 0,
+      "rows": [],
+      "sha256": "acc530668c8bc60b2d229281130b1899bfc81d70fdada5c34b3236c628f739c8",
+      "stderr": ""
+    },
+    {
+      "captured_bytes": 54,
+      "differences": [],
+      "exclusions": [],
+      "fixture": "nano.pcap",
+      "original_bytes": 54,
+      "packet_count": 1,
+      "rows": [
+        {
+          "frame.cap_len": 54,
+          "frame.len": 54,
+          "frame.number": 1,
+          "frame.time_epoch": 1700000000000000123,
+          "ip.dst": "198.51.100.53",
+          "ip.proto": 6,
+          "ip.src": "192.0.2.1",
+          "tcp.dstport": 443,
+          "tcp.flags": 16,
+          "tcp.srcport": 40000,
+          "udp.dstport": null,
+          "udp.srcport": null
+        }
+      ],
+      "sha256": "5f646f26d5ebd82a89983018c165d872804d0a4a0d5d7e7d925ffa1923ef8fe1",
+      "stderr": ""
+    },
+    {
+      "captured_bytes": 54,
+      "differences": [],
+      "exclusions": [],
+      "fixture": "big_endian.pcap",
+      "original_bytes": 54,
+      "packet_count": 1,
+      "rows": [
+        {
+          "frame.cap_len": 54,
+          "frame.len": 54,
+          "frame.number": 1,
+          "frame.time_epoch": 1700000000000123000,
+          "ip.dst": "198.51.100.53",
+          "ip.proto": 6,
+          "ip.src": "192.0.2.1",
+          "tcp.dstport": 443,
+          "tcp.flags": 16,
+          "tcp.srcport": 40000,
+          "udp.dstport": null,
+          "udp.srcport": null
+        }
+      ],
+      "sha256": "f1a9bf2def38d2c6558ab531c4c6ac9acc032f7f3eb65f997213adddcdf80b23",
+      "stderr": ""
+    },
+    {
+      "captured_bytes": 160,
+      "differences": [],
+      "exclusions": [],
+      "fixture": "backward.pcap",
+      "original_bytes": 160,
+      "packet_count": 2,
+      "rows": [
+        {
+          "frame.cap_len": 72,
+          "frame.len": 72,
+          "frame.number": 1,
+          "frame.time_epoch": 1700000001000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.proto": 17,
+          "ip.src": "192.0.2.1",
+          "tcp.dstport": null,
+          "tcp.flags": null,
+          "tcp.srcport": null,
+          "udp.dstport": 53,
+          "udp.srcport": 53000
+        },
+        {
+          "frame.cap_len": 88,
+          "frame.len": 88,
+          "frame.number": 2,
+          "frame.time_epoch": 1700000000900000000,
+          "ip.dst": "192.0.2.1",
+          "ip.proto": 17,
+          "ip.src": "198.51.100.53",
+          "tcp.dstport": null,
+          "tcp.flags": null,
+          "tcp.srcport": null,
+          "udp.dstport": 53000,
+          "udp.srcport": 53
+        }
+      ],
+      "sha256": "0a1fa91aa194cb15b6262cf0ef17073c52a6684e5263d994e334909b01e6dd28",
+      "stderr": ""
+    },
+    {
+      "captured_bytes": 40,
+      "differences": [],
+      "exclusions": [
+        {
+          "fields": "L4 ports/flags",
+          "packet_index": 1,
+          "reason": "capture_shorter_than_original"
+        }
+      ],
+      "fixture": "capture_truncated.pcap",
+      "original_bytes": 54,
+      "packet_count": 1,
+      "rows": [
+        {
+          "frame.cap_len": 40,
+          "frame.len": 54,
+          "frame.number": 1,
+          "frame.time_epoch": 1700000000000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.proto": 6,
+          "ip.src": "192.0.2.1",
+          "tcp.dstport": 443,
+          "tcp.flags": null,
+          "tcp.srcport": 40000,
+          "udp.dstport": null,
+          "udp.srcport": null
+        }
+      ],
+      "sha256": "a44760ce9b3d895b4becbf4ff2b5f5c6e422326979bae4acd1692977db18f069",
+      "stderr": ""
+    },
+    {
+      "captured_bytes": 50,
+      "differences": [],
+      "exclusions": [
+        {
+          "fields": "L4 ports/flags",
+          "packet_index": 1,
+          "reason": "ipv4_fragment"
+        }
+      ],
+      "fixture": "fragment.pcap",
+      "original_bytes": 50,
+      "packet_count": 1,
+      "rows": [
+        {
+          "frame.cap_len": 50,
+          "frame.len": 50,
+          "frame.number": 1,
+          "frame.time_epoch": 1700000000000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.proto": 17,
+          "ip.src": "192.0.2.1",
+          "tcp.dstport": null,
+          "tcp.flags": null,
+          "tcp.srcport": null,
+          "udp.dstport": 53,
+          "udp.srcport": 53000
+        }
+      ],
+      "sha256": "1888ffa27fb2856f292212ab249d8eba0415353e35a63ef7a111148b8a10d544",
+      "stderr": ""
+    },
+    {
+      "captured_bytes": 42,
+      "differences": [],
+      "exclusions": [
+        {
+          "fields": "L4 ports/flags",
+          "packet_index": 1,
+          "reason": "ethernet_type_unsupported"
+        }
+      ],
+      "fixture": "unsupported_arp.pcap",
+      "original_bytes": 42,
+      "packet_count": 1,
+      "rows": [
+        {
+          "frame.cap_len": 42,
+          "frame.len": 42,
+          "frame.number": 1,
+          "frame.time_epoch": 1700000000000000000,
+          "ip.dst": "",
+          "ip.proto": null,
+          "ip.src": "",
+          "tcp.dstport": null,
+          "tcp.flags": null,
+          "tcp.srcport": null,
+          "udp.dstport": null,
+          "udp.srcport": null
+        }
+      ],
+      "sha256": "b5832df102cd97dbf6c428d79270cdb083b8fa192a302d975afa380266f481ee",
+      "stderr": ""
+    }
+  ],
+  "tshark_version": "TShark (Wireshark) 4.2.2 (Git v4.2.2 packaged as 4.2.2-1.1build3).\n\nCopyright 1998-2024 Gerald Combs <gerald@wireshark.org> and contributors.\nLicensed under the terms of the GNU General Public License (version 2 or later).\nThis is free software; see the file named COPYING in the distribution. There is\nNO WARRANTY; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\nCompiled (64-bit) using GCC 13.2.0, with GLib 2.80.0, with libpcap, with POSIX\ncapabilities (Linux), with libnl 3, with zlib 1.3, with PCRE2, with Lua 5.2.4,\nwith GnuTLS 3.8.3 and PKCS #11 support, with Gcrypt 1.10.3, with Kerberos (MIT),\nwith MaxMind, with nghttp2 1.59.0, with nghttp3 0.8.0, with brotli, with LZ4,\nwith Zstandard, with Snappy, with libxml2 2.9.14, with libsmi 0.4.8, with binary\nplugins.\n\nRunning on Linux 6.6.87.2-microsoft-standard-WSL2, with AMD Ryzen 7 7735HS with\nRadeon Graphics (with SSE4.2), with 28066 MB of physical memory, with GLib\n2.80.0, with libpcap 1.10.4 (with TPACKET_V3), with zlib 1.3, with PCRE2 10.42\n2022-12-11, with c-ares 1.27.0, with GnuTLS 3.8.3, with Gcrypt 1.10.3, with\nnghttp2 1.59.0, with nghttp3 0.8.0, with brotli 1.1.0, with LZ4 1.9.4, with\nZstandard 1.5.5, with libsmi 0.4.8, with LC_TYPE=C, binary plugins supported.\n"
+}

@@ -594,3 +594,56 @@ frame番号、caplen/wirelen、元精度に応じた時刻、IPv4、protocol/por
 未対応/不正/切詰め時の比較可能範囲と差分を説明する。独自のDNS窓状態まで一致すると仮定しない。
 未知RDATA全意味、TShark比較、性能/大規模負荷、デモ、実通信、Python 3.12以外、GUIは未検証。
 Phase 3/4を含むMVP全体は未完成。mainへのpush/マージ・force pushは行わない。
+
+# 継続単位 — Phase 3前半のTShark共通フィールド比較
+
+実施日: 2026-11-17（Asia/Tokyo）。開始HEAD=d6c0432、cwd=/home/kenshin/work/Claude_practice-261119、
+branch=feat/pcap-analyzer、初期statusはclean。ルート/担当AGENTS、261014計画、README/work_log、
+実装・テスト・Schema、Draft PR #3（Draft維持、既存CI success）を確認。
+既知の失敗・不具合はなく、専用CIとPhase 2受入は完了済みなので繰り返して実装しない。
+次のPhase 3から「独立比較の実行環境と、完全コンテナ8 fixtureの共通項目比較」を1単位として選択した。
+
+## 実装・環境
+
+- TSharkは未導入。Docker CLIはあるがdaemon接続権限不足。管理者権限は要求せず、
+  Ubuntu 24.04 amd64配布deb18件を専用.venv/tsharkへデータ展開した。
+  全件をAPTメタデータのSHA-256と照合し、版・取得パス・hashをdocs/tshark-packages.jsonへ保存。
+  apt-get downloadの大きなlibwireshark取得は切断で終了100、curlの途中取得もtimeout終了28。
+  最終的に公式HTTPSの再開取得が成功し、全18件のhash一致後に展開した。
+  冗長な途中取得ファイルは専用.venvから削除。OSインストールやmaintainer scriptは実行しない。
+  wireshark-common/dumpcap、sudo、setcap、OS/他プロジェクト変更はなし。
+- scripts/compare_tshark.pyを追加。固定された人工fixtureだけを-rで読ませ、-nで名前解決なし。
+  空のconfig/plugin/extcapディレクトリと配布dataを指定、継承したWIRESHARK設定は除外。
+  IP/TCP再構成とTCP sequence解析を無効化、capture/display filterなし、1 pass。
+- frame番号・captured/original長・整数ns時刻・IPv4端点/protocolを全レコードで比較。
+  flow_eligibleならports/TCP flagsも比較。partial TCP/fragment/ARPはL4未比較理由を明示。
+  decimal epochを整数演算で変換し、float丸めを避ける。実行失敗/timeout/抽出異常は終了2、差分は1。
+- TShark版全文、入力hash、設定、抽出行、差分、未比較理由をdocs/tshark_comparison.result.jsonへ保存。
+  docs/tshark_comparison.mdへ環境再現・コマンド・結果・限界を記載。README/仕様も更新。
+  解析実装・Schema/版・旧fixture/期待値・Python lock・CI workflowは変更しない。
+  恒久ルール変更はなくAGENTSは変更しない。
+
+## 実行結果
+
+TShark 4.2.2（Ubuntu 4.2.2-1.1build3）で8 fixture/17 recordsの共通比較が終了0、差分なし、stderr空。
+baseline=10件680/680 bytes、header_only=0、nano/big_endian各1件54/54、backward=2件160/160、
+capture_truncated=1件40/54、fragment=1件50/50、ARP=1件42/42。
+合計captured1080/original1094 bytes。L4除外は上記3 fixture各1件、その他の共通項目は比較する。
+nano=1700000000000000123ns、big_endian=1700000000000123000ns、
+backwardは1秒→0.9秒の順序逆行を維持。baselineのSYN+ACKはflags=0x12で一致。
+同コマンド再実行の結果JSONも保存結果とbyte単位で一致した。
+
+ハーネスの手定義行による正常/異常/境界試験、既存回帰試験を実施。
+最初の17件追加時は全403件成功（30.17秒）、外部実行失敗/timeout追加後は全405件成功（40.59秒）。
+pip check成功。さらにレビューで解析側InputErrorも比較終了2へ変換する処理と回帰試験を追加した。
+最終の全406件成功（28.97秒、既存386+追加20）。
+TShark実体の比較はローカル明示実行で、通常CIはハーネスを検証する。
+差分・秘密情報・生成物・対象パスを確認し担当branchへcommit/push、Draft PRの進捗を更新する。
+
+## 残課題・次の単位
+
+Phase 2は完了済み、Phase 3は前半のみ完了。次は残る6 fixture（空・本文/ヘッダー途切れ・
+caplen>wirelen・未対応link type・pcapng）の拒否/部分復号差と、DNS共通フィールド/一意な応答時間の比較。
+TSharkのexpert情報やDNS対応付けと独自の分類・5秒窓状態が一致するとは仮定しない。
+未説明差が残らないことを確認するまでPhase 3全体を完了扱いにしない。
+性能・負荷・デモ（Phase 4）、実通信、他OS/Python、GUIは未検証。MVP全体は未完成。

@@ -383,8 +383,9 @@ Phase 1は①コンテナ検証・診断・上限、②時刻/長さ/番号付�
 Phase 2前半でflows.pyとフローのJSON/端末表を実装済み。
 後半でDNS正規化、窓と終端処理、曖昧さ・逆行時撤回とreport/CLI/Schemaを実装済み。
 [Phase 2受入記録](phase2_acceptance.md)のCLI横断試験によりPhase 2完了と判定。
-次はPhase 3のTShark比較環境を選び、共通観測項目・コマンド・差分理由を検証する。
-TSharkとの独立比較はPhase 3。性能や実通信への適用は未検証。
+Phase 3前半では専用.venvへTSharkを展開し、8 fixtureの共通フィールドを独立比較する。
+比較条件と除外理由は[tshark_comparison.md](tshark_comparison.md)へ記録する。
+残る入力異常/形式差・DNSフィールド比較は次の単位。Phase 3全体、性能や実通信への適用は未検証。
 
 Scapy APIの採用根拠: [公式RawPcapReader API](https://scapy.readthedocs.io/en/latest/api/scapy.utils.html#scapy.utils.RawPcapReader)。
 インストール版2.6.1のソースも確認し、メタデータがsec/usec/wirelen/caplen、nanoで精度を判別することを検証する。
