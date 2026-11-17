@@ -4,7 +4,7 @@
 [元計画](../261014/plan_database_engine.md)に基づく学習プロジェクト。
 Linuxの単一writer、同期追記ログ、再起動時の索引再構築、限定的な末尾復旧、永続版CLIを実装。
 既存形式v1と公開fixtureの互換性を維持。段階3の初回として、PUT/DELETE×8停止点のSIGKILL復旧試験を実装。
-初回作成9点・復旧処理4点のOpen中停止試験も追加。電源断耐性は未検証。
+初回作成9点・復旧処理4点のOpen中停止試験と、3 seedの更新停止48ケース・正常終了6ケースも検証。電源断耐性は未検証。
 `kv memory`も維持するが、そのデータは終了すると消える。
 
 ## 進捗と次の作業
@@ -14,7 +14,9 @@ Linuxの単一writer、同期追記ログ、再起動時の索引再構築、限
   [停止点・参照モデル・実験結果](kv-engine/docs/crash-experiments.md)に範囲と再現手順を記録。
 - 段階3の次の単位として、初回header/file/dir/parent Syncと復旧Truncate/Syncの停止点を検証済み。
   [Open中の停止条件・実測結果](kv-engine/docs/open-crash-experiments.md)に正常再開・破損拒否・復旧の再実行を記録。
-- 次の優先作業: 複数seedの操作列に更新停止点を組み合わせ、成功応答履歴との照合を広げる。
+- 複数seed単位: 3 seed × PUT/DELETE × 8停止点と正常終了で、55件の成功履歴＋最後の1操作を照合済み。
+  [操作列・復旧境界・観測結果](kv-engine/docs/seeded-crash-experiments.md)を記録。
+- 次の優先作業: 部分write/Sync失敗と復旧失敗を組み合わせた複合I/O障害の検証。
   複合I/O障害、Close競合・CLI応答周辺、段階4の計測、段階5のデモは残課題。段階3全体は未完了。
 
 ## 作業環境

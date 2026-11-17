@@ -340,3 +340,53 @@ SIGKILL中もOSページキャッシュは生存するため、ホスト停止/�
 WSL仮想ディスク/保存装置のflush保証は未検証。Sync前の残存を電源断保証としない。
 commit・担当ブランチへの通常push後、Draft PR #2の進捗を本単位完了と次の作業へ更新する。
 Draft維持、main変更・force pushなし。PR反映の実結果は最終報告で確認する。
+
+## 段階3・複数seed単位: 操作履歴と更新停止点（2026-11-17 JST）
+
+### 状態確認と選択
+
+- cwd: /home/kenshin/work/Claude_practice-261118、branch: feat/database-engine、開始HEAD: 512c031。開始時clean。
+- root/担当AGENTS、261014の計画、README/work_log、既存コード・テスト・形式/耐久性仕様・fixtureを確認。
+- Draft PR #2はDraftのまま、更新中16点とOpen中13点が反映済み。次の優先項目は複数seedの更新停止試験。
+- 段階0〜2と既存停止ハーネスは完了済み。そのハーネスに依存する「複数seed×更新停止点」の1単位を選択。
+  複合I/O障害、Close競合、製品CLI応答周辺、段階4〜5には進めない。
+- 担当AGENTSは現在の継続運用に適合しており変更不要。Goは局所導入1.27.4 linux/amd64。
+- 読取コマンドの一部にmodule cwdとルート相対パスを混在させ、ファイル未検出となったため、正しいmodule相対パスで読み直した。
+  開始時のmake checkは成功。OS設定・他worktreeは変更していない。
+
+### 実装と設計整合
+
+- seeded_crash_linux_test.goを追加し、実ファイル・子プロセス・SIGKILLハンドシェイクを再利用。
+  製品コード・レコード形式v1・公開fixtureは変更なし。
+- seed 42/261118/20261117ごとに6固定操作+48乱数操作+target最終PUTを生成する。
+  親が受信した55件のackを保存し、最後のPUT/DELETEを8停止点で止める。48 SIGKILLと正常終了6ケース。
+- 空値/バイナリ、上書き/削除/不在、UTF-8/256バイトキー、0/1/17/4096バイト値を含む。
+- 全ack、または全ack+最後の未応答1操作の辞書・sequenceだけを許容。
+  同期後の操作の残存、不完全操作の非公開、全キー/余分なキー/未使用キーを照合。
+- 形式の算術からログ長・PUT/DELETE件数を算出し、encodeや位置索引を正解にしない。
+  inspect非変更、切り戻し診断・正常prefixの全バイト、二度目Openの辞書/report/ログ不変も検査。
+  次sequenceのPUT後も再Openし、全辞書とsequenceを再確認。
+- 成功ログはseed・停止点・ack数・復旧sequence・ログ長・修復有無を表示。失敗時は全生成操作列を追加表示。
+
+### 検証結果
+
+- 追加54ケースすべて成功。3 seed×2操作×8停止点=48 SIGKILL、正常終了6。
+- make check: gofmt検査、go vet ./...、go test ./...、CLI buildすべて成功。
+- go test -json -count=1 ./...: Test関数59個（子helperを含む）、Fuzz関数2個の既存seedが成功。
+  サブテスト等を含むpassイベント297件、fail 0、skip 0、全5パッケージ成功。
+- go test -race ./...: 全5パッケージ成功。新しいfuzz探索は実施せず既存seedを実行。
+- before_write/部分writeはsequence55、全長write後〜応答前は56、応答後/正常終了は56へ復旧。
+  正常prefixはseed順に61,241 / 28,261 / 40,514バイト。
+  部分header/bodyはprefix+10/+39バイトから正しい境界へ切り戻された。
+  次の更新sequence56または57も追加再Open後に保持。
+- README、testing/durability、既存実験記録を更新し、seeded-crash-experiments.mdに観測表を記録。
+
+### 残課題・次の単位
+
+次は複合I/O障害の検証。部分write+ENOSPC後のTruncate/Sync失敗や、更新Sync失敗後の再Open失敗を組み合わせ、
+成功の誤報・失敗後の操作継続・ack済みprefixの変更がないかを検証する。
+Close競合、製品CLIのClose/stdout応答周辺、段階4の計測、段階5のデモは残る。
+今回も任意の操作番号・任意バイト位置・全seedを網羅せず、段階3全体の完了とはしない。
+SIGKILLはOSキャッシュを失わせない。ホスト停止・電源断・WSL仮想ディスク/装置flushの耐久性は未検証。
+差分・秘密情報・生成物を確認し、対象ファイルのみcommitして担当ブランチへ通常pushする。
+既存Draft PR #2の進捗を本単位の実績と次の作業へ更新し、Draftを維持する。反映結果は最終報告で確認する。

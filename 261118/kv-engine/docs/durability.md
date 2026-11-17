@@ -86,4 +86,5 @@ inspectは同じ検証をするが切り戻さない。開くだけで診断対�
 [更新停止の実験](crash-experiments.md)に加え、[Open中の停止試験](open-crash-experiments.md)で初回作成9点と復旧4点を検証した。
 0/8バイトの既存headerは破損として不変のまま拒否し、完全headerは空DBとして再開。
 復旧中断後も成功応答済みの正常prefixを保ち、二度目のOpenで不要な修復を行わないことを確認。
-ホスト停止・電源断や、複数seed・複合障害は未検証。
+[複数seedの更新停止試験](seeded-crash-experiments.md)では3 seed・48停止ケースと正常終了6ケースで成功応答履歴を照合した。
+ホスト停止・電源断、複合I/O障害、Close競合・製品CLI応答周辺は未検証。
