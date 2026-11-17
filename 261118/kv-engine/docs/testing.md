@@ -79,5 +79,22 @@ ENOSPCやEIOは注入であり、実ディスクの空き容量を枯渇させ�
 停止後の独立inspect、限定末尾復旧、空値/不在/バイナリ値、次の更新とsequenceも確認。
 
 再現コマンドと実測表は[クラッシュ実験](crash-experiments.md)に記載。
-未完了: 新規作成/復旧中の停止、複数seed・複合障害、Closeとの競合試験。
+新規作成/復旧中の停止は次の単位で実施済み（下記）。複数seed・複合障害、Closeとの競合試験は未完了。
 このSIGKILL試験中もOSのページキャッシュは生存する。電源断耐性の証明にはしない。
+
+## 段階3のOpen単位: 初回作成・末尾復旧中のSIGKILL（実施済み）
+
+`internal/engine/open_crash_linux_test.go`にOpen前から有効なテスト専用I/Oラッパーを追加。
+既存の親子プロトコル・SIGKILL確認・子の期限/cleanupを再利用し、製品コードは変更しない。
+
+- 初回作成: header write前/途中/直後、File.Sync前後、DB dir Sync前後、parent Sync前後の9点。
+  未完成headerは2回Openしても拒否・不変、完全headerは空DBからsequence=1で更新・再Open可能。
+- 末尾復旧: Truncate前後と復旧File.Sync前後の4点。
+  まず3件をack済みにした別writerを部分DELETE中にSIGKILLし、そのログを開く復旧プロセスもSIGKILLする。
+  元の成功応答列、切り戻し境界、診断、2回目のOpenの冪等性、次sequence=4を確認。
+- 正常対照: 同じFDラッパーと同期経路で停止だけを無効化し、初回作成・復旧が完了することを確認。
+  未知のOpen停止点はファイルを作る前に拒否する。
+- 13停止ケース。復旧4ケースは各2回killするため、この単位のSIGKILLは合計17回。
+
+停止点別の観測・再現手順は[Open実験記録](open-crash-experiments.md)を参照。
+次は複数seedの操作列と停止点の照合を追加する。ホスト停止・電源断は引き続き未検証。

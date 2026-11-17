@@ -107,7 +107,15 @@ func runCrashWorker(dir string) error {
 	var file *crashLog
 	ops := defaultOps()
 	ops.wrap = func(raw *os.File) logFile { file = &crashLog{File: raw, events: encoder}; return file }
-	db, err := openDisk(dir, Options{}, ops)
+	options := Options{}
+	if point := os.Getenv("KV_CRASH_OPEN_POINT"); point != "" {
+		var err error
+		ops, options, err = openCrashOps(dir, point, encoder)
+		if err != nil {
+			return err
+		}
+	}
+	db, err := openDisk(dir, options, ops)
 	if err != nil {
 		return err
 	}
@@ -165,13 +173,23 @@ type crashChild struct {
 
 func startCrashChild(t *testing.T, dir string) *crashChild {
 	t.Helper()
+	child := startCrashChildAtOpen(t, dir, "")
+	if event := child.read(t); event.Event != "ready" {
+		t.Fatalf("worker not ready: %+v", event)
+	}
+	return child
+}
+
+// The Open checkpoint is armed before the worker calls Open, so readiness is not assumed.
+func startCrashChildAtOpen(t *testing.T, dir, point string) *crashChild {
+	t.Helper()
 	exe, err := os.Executable()
 	if err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	child := &crashChild{cmd: exec.CommandContext(ctx, exe, "-test.run=^TestCrashWorker$")}
-	child.cmd.Env = append(os.Environ(), "KV_CRASH_WORKER=1", "KV_CRASH_DIR="+dir)
+	child.cmd.Env = append(os.Environ(), "KV_CRASH_WORKER=1", "KV_CRASH_DIR="+dir, "KV_CRASH_OPEN_POINT="+point)
 	child.input, err = child.cmd.StdinPipe()
 	if err != nil {
 		cancel()
@@ -199,9 +217,6 @@ func startCrashChild(t *testing.T, dir string) *crashChild {
 		child.input.Close()
 		cancel()
 	})
-	if event := child.read(t); event.Event != "ready" {
-		t.Fatalf("worker not ready: %+v", event)
-	}
 	return child
 }
 func (c *crashChild) wait() error { err := c.cmd.Wait(); c.waited = true; return err }

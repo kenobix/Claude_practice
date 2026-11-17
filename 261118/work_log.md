@@ -290,3 +290,53 @@ Draft維持。mainへのpush/merge、force pushは行わない。PR反映の実�
 残りは複数seed・複合I/O障害、Close同時競合、製品CLI応答周辺、段階4の計測、段階5のデモ。
 ホスト停止・WSL仮想ディスク・実機電源断・装置flushの検証、性能計測は未実施。
 SIGKILL中もOSページキャッシュは生存するため、電源断耐性を証明したとは主張しない。
+
+## 段階3・Open単位: 初回作成と復旧中のSIGKILL（2026-11-17 JST）
+
+### 現状確認と選択
+
+- cwd: /home/kenshin/work/Claude_practice-261118、branch: feat/database-engine、開始HEAD: 4f04044。開始時clean。
+- root/担当AGENTS、261014のDB計画、README/work_log、既存Open・更新停止ハーネス・形式/耐久性仕様・テストを確認。
+- Draft PR #2は正しい担当ブランチ・Draft状態、レビュー/コメントなし。前回の更新停止16ケースまで反映済み。
+- 段階0〜2、更新中停止と限定末尾復旧/I/O注入が完了。初回作成・復旧中の停止が最優先の未完了。
+  既存の親子ハーネスに依存する「Open中の停止試験」を今回の1単位に選び、複数seed等には進めない。
+- AGENTSはすでに継続開発の1単位運用へ更新済みで、今回は変更不要。
+- Goは既存の局所toolchain 1.27.4 linux/amd64、OS設定と他worktreeの変更なし。
+
+### 実装
+
+- テスト専用のopenCrashLogで実ファイルWriteAt/Sync/Truncateと実ディレクトリSyncを包む。
+- 既存子プロセス起動をOpen前の停止点指定に対応させ、ready前に停止したことを通知で確認する。
+  通常更新ハーネスのプロトコル・15秒期限・cleanup・SIGKILL確認を再利用。
+- 初回作成9点: header write前/先頭8バイト後/全体write後、file/DB dir/parent Sync前後。
+- 復旧4点: Truncate前後、復旧Sync前後。別writerで3件のackと部分DELETEを作りwriterをkillしてから、
+  そのログを開く復旧プロセスもkillする（各ケース2回）。
+- 正常系対照は同じFDラッパー/ディレクトリ同期経路で停止だけを無効化し、作成/復旧完了を確認。
+  未知のOpen停止点をI/O開始前に拒否する異常系も追加。
+- 製品コード、ログ形式v1、fixtureは変更していない。製品CLIに停止環境変数は追加しない。
+
+### 結果
+
+- 開始時の既存make check: 成功。
+- 新規13停止ケース（9初期化+4復旧）: 成功。本単位で17回SIGKILL。正常対照2件・未知停止点拒否1件も成功。
+- make check: fmt検査、go vet ./...、go test ./...、CLI buildが全成功。
+- go test -json -count=1 ./...: 58個のTest関数（子helperを含む）と2個のFuzz関数が成功。
+  サブテストと既存fuzz seedを含むpassイベント242件、fail 0、skip 0、全5パッケージ成功。
+- go test -race ./...: 全5パッケージ成功。新しいfuzz探索は実施せず既存seedを再実行。
+- 初期化0/8バイトheaderはinspectと2回のOpenでもcorrupt・不変。ロックを再取得できた。
+  完全16バイトheaderは正常な空DBとなり、PUT sequence=1と再Open後の00 ff読出しが成功。
+- 復旧前の部分ログ189バイト、正常prefix150バイト、ack=3。Truncate前killは189のまま再修復、
+  Truncate後/Sync前後killは150のまま正常Open。全ケースでackの辞書とsequence=3を保持。
+  2度目のOpenは追加修復せずログ不変、次の更新sequence=4が成功。
+- 詳細表と再現手順はdocs/open-crash-experiments.mdへ追加。README・耐久性・検証計画・初回実験記録を更新。
+- リンク、差分、秘密情報パターン、生成物除外を確認し、261118/内の対象だけを保存する。
+
+### 残課題・次の単位・PR
+
+次は複数seedの更新操作列と停止点を組み合わせ、成功応答履歴との照合を拡張する。
+その後に複合I/O故障、Close競合、製品CLI応答周辺、段階4の性能計測、段階5のデモを残す。
+初回作成の全バイト位置とAPI内部の任意位置を網羅した試験ではなく、段階3全体の完了とはしない。
+SIGKILL中もOSページキャッシュは生存するため、ホスト停止/電源断、ディレクトリ名の永続性、
+WSL仮想ディスク/保存装置のflush保証は未検証。Sync前の残存を電源断保証としない。
+commit・担当ブランチへの通常push後、Draft PR #2の進捗を本単位完了と次の作業へ更新する。
+Draft維持、main変更・force pushなし。PR反映の実結果は最終報告で確認する。
