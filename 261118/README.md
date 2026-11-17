@@ -30,8 +30,11 @@ Linuxの単一writer、同期追記ログ、再起動時の索引再構築、限
   電源断・ホスト停止・装置flush・診断出力先の永続化は未検証。MVP全体の完成ではない。
 - 段階4: [計測CLI・条件・実測表](kv-engine/docs/measurement.md)を整備。1千/1万/10万キーでwarm再Open・同期PUT・Goヒープを実測し、この範囲の受入条件を満たした。
   生サンプルはJSON出力。RSS・cold start・環境間比較は未計測。
-- 次の優先作業: 段階5の第三者向けデモ（正常再起動・末尾復旧・破損拒否）と使い方/設計判断の整理。
-  MVP全体は未完了。全受入条件を満たした後は独立レビューを提案し、発展機能を自動追加しない。
+- 段階5: [3本の再現デモ](kv-engine/docs/demo.md)と[実装の読み順・設計判断・振り返り](kv-engine/docs/design-decisions.md)を整備。
+  製品CLIの別プロセス操作、既存SIGKILLハーネス、fixtureコピーの復旧/破損拒否を区別して検証した。
+- 次の優先作業: クリーン環境で導入からデモを再現し、計画全体の受入条件を最終照合する。
+  本人による書込み順序の説明も確認項目。段階5/MVPの最終完了判定は保留。
+  全受入条件を満たした後は独立レビューを提案し、発展機能を自動追加しない。
 
 ## 作業環境
 
@@ -41,7 +44,7 @@ Linuxの単一writer、同期追記ログ、再起動時の索引再構築、限
 - Ubuntu 24.04.4 LTS / WSL2 / x86_64、kernel `6.6.87.2-microsoft-standard-WSL2`
 - 保存先: `/dev/sdd` 上の ext4（`rw,relatime,discard,data=ordered`。観測値であり電源断耐性の証明ではない）
 - システムのGo/gofmt: 未導入。SHA-256確認済みGo 1.27.4を `261118/.tools/go1.27.4/go` に配置（Git管理外）。
-- Git、GNU Make、curl、Python 3、VS Code Remote CLIは利用可能。
+- Git、GNU Make、curl、Python 3、VS Code Remote CLIは利用可能。デモとその統合テストにPython 3（標準ライブラリ）を使用。
 - Go module: `github.com/kenobix/Claude_practice/261118/kv-engine`、Go 1.27.4で固定。外部依存なし。
 
 ## 開発手順
@@ -59,6 +62,17 @@ make fmt                       # フォーマット適用
 [ユーザー領域のセットアップと検証コマンド](kv-engine/docs/development.md)を参照。
 VS Codeから `code ../kv-engine.code-workspace` で専用workspaceを開く。
 Codexはルートと[作業指示](AGENTS.md)を読む前提で作業する。
+
+## 保存・停止・復旧を試す
+
+Goセットアップ後、module内で `make demo` を実行する（Python 3が必要）。
+人工データの専用一時DBだけを使い、正常再起動・部分write中の実SIGKILL・不完全末尾復旧・CRC破損拒否を検査する。
+[3〜5分の説明順と期待出力](kv-engine/docs/demo.md)を参照。成功は最後の `demo_pass` とexit 0で確認する。
+製品CLIに停止設定は加えず、SIGKILLは既存テストハーネスで行う。
+
+書込み順序は「全write → File.Sync → 索引公開 → 操作成功 → Close → CLI stdout」。
+成功応答後の残存はOS/FS/仮想化/装置の同期契約が前提で、電源断耐性は未検証。
+[設計判断と既知の制限](kv-engine/docs/design-decisions.md)に、索引・同期・破損時停止の選択をまとめた。
 
 ## 永続版CLIの例
 

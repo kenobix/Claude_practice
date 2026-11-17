@@ -16,6 +16,7 @@
   外部Go依存やtoolchain自動取得を必要とする変更は、そのまま通過させない。
 - `CGO_ENABLED=1`とgccの存在を確認してrace detectorを実行する。複数OS/Go版のmatrixとcacheは設けない。
 - テストDBは既存テストどおり`t.TempDir()`。実データ、他worktreeを使用しない。
+- デモ統合テストはrunnerのPython 3（標準ライブラリのみ）を使用。不在はテスト失敗とし、OSへ追加インストールしない。
 
 ## 実行内容と結果の確認
 
@@ -49,4 +50,6 @@ gh pr checks 2
 コミット作成時点ではリモートrunは未実行。push後の実結果はDraft PR #2の進捗・Checksと完了報告で示す。
 workflow追加だけではブランチ保護の必須checkにはならず、リポジトリ設定は変更しない。
 GitHub上での成功も定義済みプロセス障害モデル内の結果であり、電源断や装置flushの証明ではない。
-段階3の製品CLI応答周辺試験、段階4の性能計測、段階5のデモは引き続き未完了。
+段階3の[CLI応答試験](cli-response-experiments.md)、段階4の[限定条件の計測](measurement.md)、
+段階5の[再現デモ](demo.md)は後続単位で実施済み。CIも実製品プロセス/Python/既存SIGKILLハーネスのデモ統合試験を行う。
+大規模性能測定をCIで再実行するものではない。段階5/MVP全体の最終受入判定は未完了。

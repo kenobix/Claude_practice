@@ -1,7 +1,7 @@
 GO ?= ./scripts/go-env.sh go
 GOFMT ?= ./scripts/go-env.sh gofmt
 
-.PHONY: check fmt fmt-check vet test build
+.PHONY: check fmt fmt-check vet test build demo
 check: fmt-check vet test build
 
 fmt:
@@ -19,3 +19,6 @@ test:
 build:
 	$(GO) build -o bin/kv ./cmd/kv
 	$(GO) build -o bin/kvbench ./cmd/kvbench
+
+demo: build
+	python3 scripts/demo.py

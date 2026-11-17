@@ -3,6 +3,7 @@
 ## 依存条件とユーザー領域のセットアップ
 
 Linux x86_64、Go **1.27.4**、標準ライブラリのみ。外部Go依存とgo.sumはない。
+デモとそのGo統合テストにPython 3（標準ライブラリのみ）も必要。OS全体へ自動導入しない。
 セットアップにsh、curl、tar、sha256sum、mktemp、GNU mvを使う。Makeは任意。
 OS全体へのインストール、sudo、シェル起動設定の変更は行わない。
 
@@ -60,3 +61,9 @@ worktreeは `~/work/Claude_practice-261118`、ブランチは `feat/database-eng
 `kv: check` / `kv: fmt` / `kv: test` タスクは局所toolchainを使うmakeを起動するため恒久PATH変更不要。
 rootと261118のAGENTS.mdに従う。VS Code GUI・Codex拡張の有効化状態はCLIから未確認。
 エディタ拡張の自動インストールや全体設定は変更していない。
+
+## 第三者向けデモ
+
+`make demo` は両CLIをbuildし、[デモスクリプト](demo.md)を実行する。
+`make check`の実テストもPython 3と製品CLIを起動してデモを照合する。
+クリーン環境の導入からの最終受入は別作業で確認する。既存キャッシュ上の成功をその代わりにしない。

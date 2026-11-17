@@ -724,3 +724,62 @@ commit時点で今回のリモートCIは未実行。実結果・SHAと段階3�
   MVPの全受入条件を満たしたら発展課題へ自動で進まず、独立レビューを提案する。
 - 差分・秘密情報・生成物を確認後、担当内の対象だけcommit・feat/database-engineへ通常pushする。
   commit時点で今回のGitHub CIは未実行。push後の実結果/SHAと段階4完了を既存Draft PR #2へ反映し、Draftを維持する。
+
+## 段階5・3本の再現デモと第三者向け説明（2026-11-17 JST）
+
+### 現状と選択した1単位
+
+- cwd: /home/kenshin/work/Claude_practice-261118、branch: feat/database-engine、開始HEAD: abffc5f、開始時clean。
+- root/担当AGENTS、261014計画、README/work_log、API/形式/耐久性/受入文書、コード・fixture・既存テストを確認。
+- Draft PR #2はDraft、HEAD一致。前回のpush/PR両CIはsuccess。段階0〜4は定義した範囲で完了。
+- 既知の未解決不具合・失敗を確認せず、段階5のデモ・説明書を今回の1単位として選択。
+  クリーン環境でのMVP全受入照合・最終完了判定は次へ残す。機能拡張やAGENTS恒久ルール変更は不要。
+
+### 実装と説明書
+
+- scripts/demo.py（Python標準ライブラリ）とmake demoを追加。人工データの専用TemporaryDirectoryと
+  既存Goハーネスのt.TempDirだけを使い、利用者DBを引数として受け取らない。
+- normal: 製品CLIの別プロセスPUT/上書き/空値/バイナリ/DELETE/不在/inspectを照合。
+  続いて既存TestCrashRecoveryCheckpointsのput/after_ackを選択し、実SIGKILLの証拠を表示。
+- tail: 同じハーネスのput/partial_bodyによる実停止を確認。別の公開fixtureコピーをCLI inspectで
+  不変診断し、GETによる診断→復旧→再GETの冪等性を確認する。両者が別DBであることを明記。
+- corrupt: 公開CRC破損fixtureコピーをinspect/2回のGETで拒否し、後続DELETE非採用・全91 B不変を照合。
+- 各CLIに期限・期待exit/応答/値/境界の検査。JSONLにcli/sigkill/fixture/scenario_passを表示し、
+  全成功・清掃後のみdemo_passを返す。失敗時はdemo_failed/exit 1で停止。
+- docs/demo.mdに前提・操作・3〜5分の説明順・実験表・限界、docs/design-decisions.mdに
+  読む順序、走査/索引・毎回/まとめ同期・破損時停止/修復の判断、振り返りを整理。
+- README/開発/テスト/CI文書を更新。CI文書の過去の未完了記述も後続実績への参照へ訂正。
+  製品engine/CLI、形式v1、fixture原本、Go依存、workflowは変更しない。
+
+### 実行結果
+
+- Go 1.27.4 linux/amd64、Python 3.12.3、Ubuntu 24.04.4 LTS / WSL2 / ext4。
+- 新規Test関数2個：実製品build→Python→CLI/既存SIGKILL試験の統合、バイナリ不在の拒否/既存sentinel保持。
+  TMPDIRはt.TempDir配下。3シナリオ・2停止点の実行・demo_passと清掃をGo側でも確認。
+- 対象テスト成功後、make buildとmktemp -d親を使った手動スクリプト実行がexit 0。
+  記録: /tmp/kv-stage5-demo.jsonl（Git外）。親も空になりrmdir成功。
+- after_ack: ack=6/recovered_sequence=6、275 B正常。partial_body: ack=5/recovered_sequence=5、268→229 B。
+- 不完全fixture: inspect exit 5、64 B不変→GET時診断後54 B、k=v、次GET診断なし。
+  破損fixture: offset/valid_bytes=16、record_count=0、inspect/GET exit 5、91 B全体不変。
+- make check成功（fmt/vet/全テスト/両CLI build）。
+- go test -json -count=1 -timeout=3m ./...: 全6パッケージ成功。
+  Test関数78個（子helper含む）、Fuzz関数2個の既存seed。passイベント417、fail 0、skip 0。
+  Python内部で選択実行するGoテストのJSONはデモが照合し、外側の417件へ二重加算しない。
+- go test -race -count=1 -timeout=3m ./...: 全6パッケージ成功。
+  デモ内でbuildする製品CLI/選択Goハーネスは通常buildであり、race付きバイナリ実行と取り違えない。
+- 新しいfuzz探索や大規模性能測定は繰り返さない。追加した実プロセス連携の回帰確認として既存テストを実行。
+  CIのmake check/raceは同じ統合試験を含む。Docker/外部DBの検証は追加していない。
+
+### 完了状況・推定進捗・残課題
+
+今回のデモ/説明書単位は完了。段階5/MVP全体は最終受入前で未完了。
+ローカルの既存toolchain/キャッシュでの成功を、クリーン環境の導入からMVP全条件を照合した結果と扱わない。
+新規runnerのGo取得・照合・統合試験の実結果はpush後のCIとPRへ別に記録する。
+本人が書込み順序を説明できることは自動テストから判定しない。
+電源断・ホスト停止・WSL/装置flush・診断先永続化は未検証のまま。実SIGKILLとfixtureコピーも区別する。
+全体は約95%完了・残り約5%と推定。段階0〜4完了と今回のデモ/説明書整備を根拠に、残る最終受入・判定の
+作業量を仮置きした目安であり、実工数・品質・確定残時間を測った割合ではない。
+次の最優先はクリーン環境の導入/デモ再現と計画全体の最終受入照合。本人の説明確認も項目に残す。
+全受入条件を満たした後は独立レビューを提案し、発展課題へ自動で進まない。
+差分/秘密情報/生成物を確認後、対象のみcommit・feat/database-engineへ通常pushする。
+commit時点で今回のリモートCIは未実行。実結果/SHAと段階5の進捗を既存Draft PR #2へ記録し、Draftを維持する。
