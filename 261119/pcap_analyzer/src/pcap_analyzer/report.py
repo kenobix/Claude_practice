@@ -5,6 +5,7 @@ from dataclasses import asdict
 
 from . import __version__
 from .flows import FlowCollector
+from .dns_report import DNSReport
 from .models import Config, InputError, PROTOCOLS, STATES
 from .reader import PcapSource
 
@@ -12,6 +13,7 @@ from .reader import PcapSource
 def analyze(path, config: Config | None = None) -> dict:
     config = config or Config()
     flows = FlowCollector(config.max_flows)
+    dns = DNSReport(config.max_dns_keys)
     with PcapSource(path, config) as source:
         summary = {
             "packet_count": 0, "captured_bytes": 0, "original_bytes": 0,
@@ -22,18 +24,16 @@ def analyze(path, config: Config | None = None) -> dict:
             "timestamp_invalid_count": 0,
         }
         report = {
-            "schema_version": "0.3.0", "phase": "2a",
+            "schema_version": "0.4.0", "phase": "2b",
             "input": {"sha256": source.sha256, "size_bytes": source.size_bytes,
                       "timestamp_precision": "ns" if source.nano else "us", "linktype": 1},
             "tool": {"name": "pcap-analyzer", "version": __version__},
-            "config": {"version": "0.3", **asdict(config)},
+            "config": {"version": "0.4", **asdict(config)},
             "complete": True, "summary": summary,
             "classification_indices": {state: [] for state in STATES},
             "flows": [],
-            "dns": {"status": "not_implemented", "time_analysis": "not_implemented", "events": None},
             "diagnostics": [],
         }
-        previous_timestamp = None
 
         def diagnostic(code, reason, index):
             if len(report["diagnostics"]) >= config.max_diagnostics:
@@ -49,20 +49,23 @@ def analyze(path, config: Config | None = None) -> dict:
                 summary["protocol_counts"][record.protocol] += 1
                 report["classification_indices"][record.classification].append(record.packet_index)
                 summary["ipv4_fragment_count"] += record.protocol == "ipv4_fragment"
-                regressed = False
                 if record.timestamp_ns is None:
                     summary["timestamp_invalid_count"] += 1
                 else:
                     t = record.timestamp_ns
                     summary["start_ns"] = t if summary["start_ns"] is None else min(summary["start_ns"], t)
                     summary["end_ns"] = t if summary["end_ns"] is None else max(summary["end_ns"], t)
-                    regressed = previous_timestamp is not None and t < previous_timestamp
-                    previous_timestamp = t
-                first_regression = regressed and report["dns"]["time_analysis"] != "disabled_timestamp_regression"
-                if first_regression:
-                    report["dns"]["time_analysis"] = "disabled_timestamp_regression"
-                # Account for this record before any diagnostic-limit failure.
+                dns_error = None
+                first_regression = False
+                try:
+                    first_regression = dns.add(record)
+                except InputError as error:
+                    dns_error = error
+                # Both collectors account for this record before stopping. Flow
+                # limits take precedence if both limits occur on the same record.
                 flows.add(record)
+                if dns_error:
+                    raise dns_error
                 if record.reason:
                     diagnostic("P_" + record.classification.upper(), record.reason, record.packet_index)
                 if first_regression:
@@ -78,6 +81,7 @@ def analyze(path, config: Config | None = None) -> dict:
             summary["parsed_ratio"] = summary["classification_counts"]["parsed"] / count
         if summary["start_ns"] is not None:
             summary["duration_ns"] = summary["end_ns"] - summary["start_ns"]
+        report["dns"] = dns.finish(report["complete"])
         report["flows"] = flows.to_list()
         summary["flow_count"] = len(report["flows"])
         summary["unattributed_packet_count"] = flows.unattributed["packets"]
@@ -109,7 +113,9 @@ def render_table(report: dict) -> str:
                  ("Unattributed captured bytes", s["unattributed_captured_bytes"]),
                  ("Unattributed original bytes", s["unattributed_original_bytes"]),
                  ("DNS structure", "checked for complete UDP port-53 candidates"),
-                 ("DNS matching", "not implemented (Phase 2b)")])
+                 ("DNS matching", report["dns"]["status"]),
+                 ("DNS timing", report["dns"]["time_analysis"]),
+                 ("DNS queries / responses", f"{report['dns']['query_count']} / {report['dns']['response_count']}")])
     lines = [f"{label:<28} {value if value is not None else 'n/a'}" for label, value in rows]
     if report["flows"]:
         lines.append("Flows (endpoint aggregates; not TCP connections):")
@@ -122,6 +128,15 @@ def render_table(report: dict) -> str:
         if flow["tcp_flag_counts"] is not None:
             flags = " ".join(f"{flag}={count}" for flag, count in flow["tcp_flag_counts"].items())
             lines.append(f"    TCP flags: {flags}")
+    for event in report["dns"]["events"]:
+        key = event["key"]
+        lines.append(f"DNS {event['status']}: {key['name']} id={key['id']} "
+                     f"query_group={event['query_group']} queries={event['query_indices']} "
+                     f"responses={event['response_indices']} response_time_ms={event['response_time_ms']} "
+                     f"rcode={event['rcode']} tc={event['tc']}")
+    if report["dns"]["time_analysis"] == "disabled_timestamp_regression":
+        lines.append("DNS timing results discarded for the entire processed input due to timestamp regression.")
+    lines.append("DNS states describe observations within a 5-second window, not server health or packet loss.")
     for item in report["diagnostics"]:
         index = f" packet #{item['packet_index']}" if item["packet_index"] is not None else ""
         lines.append(f"{item['code']}{index}: {item['reason']}")

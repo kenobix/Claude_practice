@@ -31,8 +31,13 @@ def test_valid_dns_flags_and_both_port_directions(tmp_path, sport, dport, flags)
     assert result["classification_indices"]["parsed"] == [1]
     assert result["diagnostics"] == []
     assert result["summary"]["start_ns"] == 1700000000000123000
-    # Structure validation does not claim a DNS match or successful resolution.
-    assert result["dns"] == {"status": "not_implemented", "time_analysis": "not_implemented", "events": None}
+    # A single packet cannot establish a matched pair, including NXDOMAIN/TC.
+    eligible = sport == 53 if flags & 0x8000 else dport == 53
+    events = result["dns"]["events"]
+    assert len(events) == int(eligible)
+    if events:
+        assert events[0]["status"] == ("unmatched_response" if flags & 0x8000 else "window_incomplete")
+        assert events[0]["response_time_ns"] is None
 
 
 @pytest.mark.parametrize("payload,state,reason", [

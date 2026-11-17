@@ -71,7 +71,7 @@ def assert_consistent(report):
     assert len(report["unattributed_indices"]) == summary["unattributed_packet_count"]
     flow_refs = [i for d in directions for i in d["packet_indices"]]
     assert sorted(flow_refs + report["unattributed_indices"]) == list(range(1, n + 1))
-    assert report["dns"]["status"] == "not_implemented"
+    assert report["dns"]["status"] == ("complete" if report["complete"] else "partial")
 
 
 def test_active_schema_and_entire_baseline_contract():
@@ -80,7 +80,7 @@ def test_active_schema_and_entire_baseline_contract():
     result = analyze(FIXTURES / "baseline.pcap")
     # Preserve every Phase 1 metric while allowing the versioned flow extension.
     assert {key: result["summary"][key] for key in expected["summary"]} == expected["summary"]
-    for key in ("input", "classification_indices", "complete", "dns", "diagnostics"):
+    for key in ("input", "classification_indices", "complete", "diagnostics"):
         assert result[key] == expected[key]
     assert_consistent(result)
     assert result["input"]["sha256"] == hashlib.sha256((FIXTURES / "baseline.pcap").read_bytes()).hexdigest()

@@ -8,10 +8,9 @@ import heapq
 from dataclasses import dataclass, field
 
 from .dns import DNSKey, DNSObservation
-from .models import InputError
+from .models import InputError, MAX_DNS_KEYS
 
 WINDOW_NS = 5_000_000_000
-MAX_DNS_KEYS = 100_000
 
 
 @dataclass(frozen=True)

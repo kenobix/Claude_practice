@@ -1,4 +1,4 @@
-# PCAP解析仕様 v0.3（Phase 2前半実装 / DNS照合設計）
+# PCAP解析仕様 v0.4（Phase 2 フロー・DNS照合実装）
 
 2026-11-17策定。元計画: [261014/plan_pcap_analyzer.md](../../../261014/plan_pcap_analyzer.md)。
 2026-11-17にPhase 1を実装。入力検査・L2/L3/L4分類・基本集計・JSON/端末表が実装済み。
@@ -6,8 +6,8 @@
 継続単位としてDNS名復号・正規化・単一質問抽出の内部APIを実装済み（下記参照）。
 次の継続単位でRR構造と圧縮参照先の検査APIも追加済み（下記参照）。
 DNS構造検査をpacket分類/CLI診断へ統合済み。照合キーと窓処理は内部APIで実装済み。
-DNS照合のレポート/CLI統合は未実装。
-JSONの形状/版は維持し、Schemaへ分類範囲と照合statusの説明を追記。
+DNS照合のreport/CLI/Schema統合、逆行時の全結果無効化と上限途中結果を実装済み。
+JSONの形状/版を更新し、Schemaへ照合イベント・根拠参照・上限停止の契約を追加。
 
 ## 入力境界と停止
 
@@ -31,7 +31,7 @@ JSONの形状/版は維持し、Schemaへ分類範囲と照合statusの説明を
   入力ヘッダーが無効ならstderr診断のみ。読込開始後の失敗はcomplete=falseの途中JSONとstderr診断。
 - 診断コード案: E_INPUT、E_FORMAT、E_FORMAT_UNSUPPORTED、E_LINKTYPE、E_RECORD_HEADER、
   E_RECORD_DATA、E_LIMIT_BYTES、E_LIMIT_RECORDS、E_LIMIT_PACKET_BYTES、E_LIMIT_DIAGNOSTICS、E_INPUT_CHANGED。
-  E_LIMIT_FLOWSは実装済み。E_LIMIT_DNSはPhase 2後半予定。
+  E_LIMIT_FLOWSは実装済み。E_LIMIT_DNSも実装済み。
   上限停止で正常完了を装わない。生パケットや機密パスを診断へ埋め込まない。
 
 入力は安定した通常ファイルを用意する。O_NONBLOCKで開いてfstatし、FIFO/デバイスを拒否する。
@@ -94,7 +94,8 @@ IPv4ヘッダーまで取得/検査できなければunknown。正常性は別�
 input.timestamp_precisionにus/nsを保存。µs入力をns精度で観測したと表現しない。
 隣接レコードの時刻が1回でも逆行すればファイル全体のDNS時間解析を無効にし、
 dns.time_analysis=disabled_timestamp_regressionとして警告を出す。
-現行のeventsは未実装を示すnull、DNS照合実装後の時間集計無効時は[]を予定する。
+eventsは通常配列。逆行検出時は確定済みを含め全件破棄して[]、event_countsはnull。
+query_count/response_countは時刻に依存しない対象観測件数として維持する。
 ソートや前半の成功値の温存をしない。件数・バイト・フローは維持する。
 同一時刻は逆行ではなく、ファイル順に処理し0 msの一意応答を許可する。
 
@@ -221,7 +222,7 @@ DNS本文に問題があっても完全なL4ヘッダーのflow_eligibleは維�
 従来どおり分配する。通常診断上限で停止したパケットも分配済み。完全レコードのDNS構造不正だけなら
 コンテナ処理complete=true/終了0で、診断をJSON/端末へ出力する。
 構造検査に成功した質問だけをPacketRecord.dns_questionへ保持する（下記）。
-JSON形状、入力上限、整数nsを維持し、窓処理とDNSレポートは未実装。
+入力上限・整数nsを維持する。窓処理とDNSレポートは下記契約で統合済み。
 
 ## DNS照合キー・向き判定（内部API実装済み）
 
@@ -287,10 +288,12 @@ readerの最大100万完全レコード以下の入力を前提とし、任意�
 addのpacket_indexは正整数・狭義増加。advance(ns)はDNS以外を含む有効パケット時刻を伝える。
 不正/逆行時刻と逆順番号は状態更新前にValueError、finish後の操作はRuntimeError。
 時刻逆行時は呼出し側が既に返されたイベントも含めファイル全体の時間結果を破棄する。
-全パケットでの逆行検知・警告・DNS結果無効化は次のreport統合で接続する。
+全有効パケット時刻での逆行検知・DNS結果無効化をreportへ接続済み。
+不正fractionは時刻として使わず、逆行の判定や窓進行から除く。
 
 各呼出しは確定済みの不変DNSEvent tupleを返す。collector内に出力履歴を貯めない。
-matchedの応答時間はfloatを使わずresponse_time_nsへ整数差を保持し、JSONのms変換は統合時に定義する。
+matchedの応答時間はfloatを使わずresponse_time_nsへ整数差を保持し、JSONでは整数nsを正とし、表示用response_time_ms=ns/1000000も付ける。
+絶対timestampは引き続き整数nsであり、float timestampによる差分計算は行わない。
 イベントはkey/status/query_indices/response_indices/response_time_ns/rcode/tcを保持する。
 孤立応答は直ちに出力する。他は閉区間窓終了またはfinishまで確定を遅らせ、
 完了後query再利用で暫定時間が成功値として残ることを防ぐ。
@@ -299,13 +302,13 @@ matchedの応答時間はfloatを使わずresponse_time_nsへ整数差を保持�
 additional_responseとして別イベントへ記録。各responseのRCODE/TCを保存する。
 曖昧化後も追加応答の時間値はnullで、各イベントのquery番号はグループ全queryを参照する。
 1呼出し内のイベントは主イベントの最初の根拠番号、追加イベントは応答番号を基準に安定ソート。
-呼出しを跨ぐ最終レポートの全体ソートはreport統合時に行う。
+呼出しを跨ぐ最終レポートも同じ根拠番号順で全体ソートする。
 
 期限heapにはqueryグループごとに1要素だけを登録。重複query/responseで期限を延長しない。
 advanceはdeadline<現在時刻のキーだけを確定/削除し、同時刻応答を受理できるようdeadline==現在を保持。
 未完了/完了を合わせた保持キー上限で新規queryを拒否し、InputError(E_LIMIT_DNS, packet_index)を返す。
 既存キーと孤立応答は上限時にも扱える。期限切れ削除後に新規キーの容量を判定する。
-上限で履歴を勝手に捨てず、失敗した新規queryを登録しない。CLIの停止/途中レポートは統合時に接続する。
+上限で履歴を勝手に捨てず、失敗した新規queryを登録しない。CLIの停止/途中レポートへ接続済み。
 
 finish(end_ns)は観測した最後の有効パケット時刻（DNS以外も含む）で全保持窓を確定・解放し、終端状態にする。
 末尾が窓端ちょうどならno_response_observed、手前ならwindow_incomplete。重複queryは終端でもambiguous。
@@ -314,8 +317,8 @@ finish(end_ns)は観測した最後の有効パケット時刻（DNS以外も含
 ## レポート契約
 
 [report.schema.json](report.schema.json) が現行のJSON Schema draft 2020-12契約。
-schema_version=0.3.0、phase="2a"、tool.version=0.2.0、config.version=0.3。
-Phase 1からflowsの型・未帰属指標・max_flowsを追加する版変更であり、旧出力との互換は保証しない。
+schema_version=0.4.0、phase="2b"、tool.version=0.3.0、config.version=0.4。
+DNS照合イベント・状態件数・max_dns_keysを追加する版変更であり、旧出力との互換は保証しない。
 入力SHA-256はファイル全体。読込を上限で停止してもhashは入力全体を識別する。
 
 summaryに件数、caplen/wirelen合計、分類/プロトコル別件数、parsed_ratio、時刻範囲、
@@ -323,12 +326,38 @@ fragment件数、不正時刻件数を出す。classification_indicesは各分�
 全完全レコードはちょうど1配列に現れ、分類件数と配列長が一致する。
 全生パケットや全PacketRecordは保持せず、最大100万件の根拠番号と上限付き診断だけを残す。
 
-flowsは上記の双方向集計配列。dns.status=not_implemented、dns.events=nullでDNS照合のレポート統合が未実装であることを表す。
-DNS構造検査結果はpacket分類/diagnosticsへ反映し、このstatusと区別する。
-dns.time_analysisは通常not_implemented、逆行検出時はdisabled_timestamp_regression。
+flowsは上記の双方向集計配列。dns.statusはcomplete/partialで、入力処理のcompleteと一致する。
+時間解析の有効性は別のdns.time_analysis（enabled/disabled_timestamp_regression）で示す。
+DNS構造検査結果はpacket分類/diagnosticsへ反映し、DNS照合状態とは区別する。
+query_count/response_countは構造・QR/port方向・時刻が有効な対象観測数（重複を含む）。
+無効化後も件数を維持し、それ以降の対象観測を数える。event_countsは6状態のイベント数。
+これはpacket分類の内訳でもquery件数でもない。無効化時のnullは「0件」の意味ではない。
+
+JSONの各イベントはkey/status/query_group/query_indices/response_indices/response_time_ns/
+response_time_ms/rcode/tcを持つ。keyはclient/serverのIPv4文字列とport、id、qtype/qclass、
+正規化labels_hex（末尾rootは空文字）と安全にエスケープした表示用name。
+表示名からキーを復元せず、非ASCII・dot・backslash・制御bytesも元ラベルで区別する。
+孤立応答のquery_groupはnull。それ以外は主イベントの最初のquery根拠番号。
+主イベントだけに全query_indicesを記録し、additional_responseはquery_indices=[]と
+query_groupで主イベントへリンクする。応答番号は各イベントに一度だけ記録する。
+内部DNSEventが共有するquery tupleをJSONへ繰り返し複製せず、参照出力をレコード数に比例させる。
+query_group参照先の存在・キー一致、全イベントの根拠と件数・状態数はSchema以外の意味整合テストでも検証。
+
+--max-dns-keysは1..100000（既定/最大100000）へ引下げ可。完了キーも窓期限まで数える。
+E_LIMIT_DNSでは超過queryも全体/フロー/対象query件数へ計上し、DNS未登録の根拠を
+unassigned_indicesへ残す。既存履歴は維持しcomplete=false、dns.status=partial、終了2。
+同一パケットでフロー数も超過した場合はE_LIMIT_FLOWSを優先し、DNS未登録番号も維持する。
+DNS処理後にフローへ必ず分配してから停止し、診断上限時も計数済みの完全レコードを欠落させない。
+有効な時刻は非DNS/unsupported/truncated/malformedでも窓進行に使う。
+入力不完全/読込/各上限停止時は読めた最後の有効時刻で終端処理し、未読時間は推測しない。
+partialの時間値/状態は処理済みprefixの結果であり、未読末尾を含む全ファイルの時刻整合性を保証しない。
+時間解析有効時はquery_indicesとresponse_indicesとunassigned_indicesが対象観測を重複なく分配する。
+無効化時はevents=[]/event_counts=null、件数と根拠付き警告を保持する。
+通常診断上限やフロー上限が先に停止診断となっても、time_analysisで無効化を明示する。
 Phase 0の将来用フロー/DNSレポートは[旧Schema](report.phase0.schema.json)と
 [契約例](../expected/baseline.report.json)として保管し、現行出力とは混同しない。
-現行の手定義期待値は[baseline.flows.json](../expected/baseline.flows.json)。
+DNSの手定義期待値は[baseline.dns.json](../expected/baseline.dns.json)。
+旧フローの全指標は[baseline.flows.json](../expected/baseline.flows.json)を履歴として照合する。
 Phase 1の[baseline.phase1.json](../expected/baseline.phase1.json)も履歴として保持し、旧指標が変わっていないことを検証する。
 
 診断はpacket_index/code順、JSONキーはソートする。壁時計時刻、処理時間、絶対パスを
@@ -344,7 +373,7 @@ classic pcap → reader.py（厳密境界検査 + RawPcapReader）
                     ↓ packet.py（長さ検査 + Ether/IP/TCP/UDP復号）
                     ↓ models.py / PacketRecord
                     ├→ flows.py（方向別集計）
-                    ├→ dns.py（照合窓・根拠・曖昧さ）
+                    ├→ dns.py → dns_windows.py → dns_report.py（構造・窓・根拠・レポート）
                     └→ report.py（分類整合・JSON / 端末表）← cli.py
 ```
 
@@ -352,7 +381,8 @@ Phase 0でcli.pyの起動足場とfixture生成/検証を実装した。
 Phase 1は①コンテナ検証・診断・上限、②時刻/長さ/番号付きRecord、③Ethernet/IPv4/TCP/UDP分類、
 ④summary/JSONと意味整合テスト、⑤正常/空/破損/未対応/上限のCLI終了規則を実装済み。
 Phase 2前半でflows.pyとフローのJSON/端末表を実装済み。
-後半でDNS正規化、窓と終端処理、曖昧さ・逆行時撤回を実装する。
+後半でDNS正規化、窓と終端処理、曖昧さ・逆行時撤回とreport/CLI/Schemaを実装済み。
+次はPhase 2の受入条件をfixture横断で確認し、Phase 3比較に必要な観測項目を整理する。
 TSharkとの独立比較はPhase 3。性能や実通信への適用は未検証。
 
 Scapy APIの採用根拠: [公式RawPcapReader API](https://scapy.readthedocs.io/en/latest/api/scapy.utils.html#scapy.utils.RawPcapReader)。

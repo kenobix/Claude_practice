@@ -495,3 +495,55 @@ Phase 2は未完了。次はDNS窓APIのreport/CLI/Schema統合、全パケッ�
 全ファイル時刻逆行時の既返却結果を含む無効化、上限停止時の途中結果と根拠・イベント表示。
 現CLIはDNS照合イベントを出力しない。未知RDATAの全意味検査、TShark比較、性能/負荷測定、
 デモ、VS Code GUIは未検証。CI導入をこれらの受入条件の完了扱いにしない。
+
+# 継続単位 — DNS窓APIのレポート・CLI・Schema統合
+
+実施日: 2026-11-17（Asia/Tokyo）。開始HEAD=b2b9aee、cwd=/home/kenshin/work/Claude_practice-261119、
+branch=feat/pcap-analyzer、初期statusはclean。AGENTS/261014計画/README/work_log/仕様/実装・テストと
+Draft PR #3を確認。前回の専用CI導入・343件成功は確認済みで、CIを作り直さない。
+既知の失敗はなく、次の依存部分であるDNS内部APIのreport/CLI/Schema接続を1単位として選択。
+
+## 実装
+
+- dns_report.pyを追加。全有効パケット時刻で窓を進め、最後の観測時刻で確定する。
+  時刻逆行では窓と確定済みイベントを全破棄し、以後のquery/response件数のみ維持。
+  不正fractionは時刻として使わない。非DNS・不正/未対応等の有効時刻も窓進行/逆行検出に使う。
+- JSONへ6状態のイベント・状態件数、端点/ID/ラベルhex/QTYPE/QCLASSキー、安全な表示名、
+  整数response_time_nsと表示ms、根拠、RCODE/TCを追加。端末にも根拠/時間/状態を表示する。
+- JSONの追加応答はquery_groupで主イベントの最初のquery番号へリンクし、query_indicesを空にする。
+  内部APIの共有query tupleを毎回JSONへ展開せず、重複query×追加responseの参照膨張を避ける。
+  主イベントに全query番号、各応答番号はそれぞれ1回だけ保持する。
+- max_dns_keysをConfig/CLIへ追加（既定/最大100000、引下げのみ）。超過queryも全体とフローと
+  対象観測数に計上し、未登録の根拠はunassigned_indices。E_LIMIT_DNS、complete=false、終了2。
+  フロー上限と同時ならE_LIMIT_FLOWSを優先するが、DNS未登録番号は失わない。
+- 読込/件数/診断/フロー/DNS上限での途中結果はdns.status=partial。時刻解析有効性は別項目。
+  途中結果は処理済みprefixの結果で、未読末尾の時刻整合性は保証しない。
+- schema_version=0.4.0、phase=2b、tool=0.3.0、config=0.4へ更新。依存lockは変更なし。
+  baseline.dns.jsonはfixture設計から手定義し、解析結果から生成/上書きしない。
+  旧baseline.flows/phase1の期待値は保持し、全件数・バイト数・時刻・フロー・根拠等を引き続き照合。
+  既存テストの未実装DNS/版依存部分のみ新契約へ更新。AGENTSの恒久ルール変更なし。
+
+## 検証結果
+
+- 全370テスト成功（19.41秒、既存343件+統合27件）。開発途中の旧Schema/旧DNS期待による失敗は、
+  新契約へ明示更新した後に既存343件でも成功（13.83秒）。未検証を成功扱いしない。
+- 人工baseline: 10パケット、captured/original各680 bytes、4 flowsを維持。
+  DNS対象query4件/response2件、matched(4→5,25000000ns/25ms)、
+  no_response_observed(query6)、ambiguous(query7,8/response9)が独立期待値と一致。
+- 閉区間5秒端/1ns外、整数1ns→0.000001ms、非DNS終端の窓端直前/ちょうど、RCODE/TC、
+  追加応答リンク、重複100query+100responseで根拠200件に収まることを検証。
+- 一旦窓閉鎖/孤立応答を出した後の非DNS時刻逆行で、全イベント/状態数を無効化し対象件数を維持。
+  不正時刻の除外、診断上限停止時の逆行無効化、DNS上限とフロー同時超過、破損末尾、
+  読込OSErrorのprefix保持/機密パス非露出を確認。
+- Schema適合と不整合な時間値/状態/metadataの拒否、CLI JSON/端末/終了コード/引下げ・不正設定、
+  同じ入力の決定性、対象query/responseの根拠分配、全体/方向別/未帰属bytesの整合を検証。
+- 既存14 fixtureとsocket禁止下の生成/解析テストも全体テストに含む。TShark/性能測定は未実施。
+  README/仕様を更新。差分・秘密情報・生成物を確認して担当branchへcommit・pushし、
+  Draft PRへ機能とCI実行結果を記載する。CIのホスト結果はpush後に確認して報告する。
+
+## 残課題・次の単位
+
+DNS照合の機能接続は完了。次はPhase 2受入条件のfixture横断確認と完了判定、
+Phase 3のTShark独立比較に必要な共通フィールド/環境/コマンドの整理。
+今回Phase 3実装や独立比較を実施済みとはしない。未知RDATAの全意味検査、性能/大規模負荷、
+デモ、実通信、Python 3.12以外、VS Code GUIは未検証。MVP全体は未完成。

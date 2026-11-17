@@ -17,10 +17,10 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "0.3.0"
+      "const": "0.4.0"
     },
     "phase": {
-      "const": "2a"
+      "const": "2b"
     },
     "input": {
       "type": "object",
@@ -63,7 +63,7 @@
           "const": "pcap-analyzer"
         },
         "version": {
-          "const": "0.2.0"
+          "const": "0.3.0"
         }
       }
     },
@@ -76,11 +76,12 @@
         "max_records",
         "max_packet_bytes",
         "max_diagnostics",
-        "max_flows"
+        "max_flows",
+        "max_dns_keys"
       ],
       "properties": {
         "version": {
-          "const": "0.3"
+          "const": "0.4"
         },
         "max_input_bytes": {
           "type": "integer",
@@ -103,6 +104,11 @@
           "maximum": 10000
         },
         "max_flows": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "max_dns_keys": {
           "type": "integer",
           "minimum": 1,
           "maximum": 100000
@@ -383,28 +389,455 @@
       }
     },
     "dns": {
-      "description": "Query/response matching status only. DNS structure errors are reported through packet classifications and diagnostics; matching remains unimplemented.",
       "type": "object",
       "additionalProperties": false,
       "required": [
         "status",
         "time_analysis",
+        "query_count",
+        "response_count",
+        "unassigned_indices",
+        "event_counts",
         "events"
       ],
       "properties": {
         "status": {
-          "const": "not_implemented"
+          "enum": [
+            "complete",
+            "partial"
+          ]
         },
         "time_analysis": {
           "enum": [
-            "not_implemented",
+            "enabled",
             "disabled_timestamp_regression"
           ]
         },
+        "query_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "response_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unassigned_indices": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true,
+          "maxItems": 1
+        },
+        "event_counts": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "matched",
+                "ambiguous",
+                "additional_response",
+                "unmatched_response",
+                "no_response_observed",
+                "window_incomplete"
+              ],
+              "properties": {
+                "matched": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "ambiguous": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "additional_response": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "unmatched_response": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "no_response_observed": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "window_incomplete": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "events": {
-          "type": "null"
+          "type": "array",
+          "maxItems": 1000000,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "status",
+              "key",
+              "query_group",
+              "query_indices",
+              "response_indices",
+              "response_time_ns",
+              "response_time_ms",
+              "rcode",
+              "tc"
+            ],
+            "properties": {
+              "status": {
+                "enum": [
+                  "matched",
+                  "ambiguous",
+                  "additional_response",
+                  "unmatched_response",
+                  "no_response_observed",
+                  "window_incomplete"
+                ]
+              },
+              "key": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "client",
+                  "server",
+                  "id",
+                  "labels_hex",
+                  "name",
+                  "qtype",
+                  "qclass"
+                ],
+                "properties": {
+                  "client": {
+                    "$ref": "#/$defs/endpoint"
+                  },
+                  "server": {
+                    "$ref": "#/$defs/endpoint"
+                  },
+                  "id": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  },
+                  "labels_hex": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 128,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^(?:[0-9a-f]{2}){0,63}$"
+                    },
+                    "contains": {
+                      "const": ""
+                    },
+                    "minContains": 1,
+                    "maxContains": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1021
+                  },
+                  "qtype": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  },
+                  "qclass": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  }
+                }
+              },
+              "query_group": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1
+              },
+              "query_indices": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "uniqueItems": true,
+                "maxItems": 1000000
+              },
+              "response_indices": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "uniqueItems": true,
+                "maxItems": 1
+              },
+              "response_time_ns": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 5000000000
+              },
+              "response_time_ms": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 5000
+              },
+              "rcode": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 15
+              },
+              "tc": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "matched"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "query_indices": {
+                      "minItems": 1,
+                      "maxItems": 1
+                    },
+                    "response_indices": {
+                      "minItems": 1
+                    },
+                    "response_time_ns": {
+                      "type": "integer"
+                    },
+                    "response_time_ms": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "response_time_ns": {
+                      "type": "null"
+                    },
+                    "response_time_ms": {
+                      "type": "null"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "ambiguous"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "query_indices": {
+                      "minItems": 2
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "additional_response",
+                        "unmatched_response"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "query_indices": {
+                      "maxItems": 0
+                    },
+                    "response_indices": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "unmatched_response"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "query_group": {
+                      "type": "null"
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "query_group": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "no_response_observed",
+                        "window_incomplete"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "query_indices": {
+                      "minItems": 1,
+                      "maxItems": 1
+                    },
+                    "response_indices": {
+                      "maxItems": 0
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "response_indices": {
+                      "minItems": 1
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "rcode": {
+                      "type": "integer"
+                    },
+                    "tc": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "rcode": {
+                      "type": "null"
+                    },
+                    "tc": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            ]
+          }
         }
-      }
+      },
+      "description": "Eligible observations in the processed prefix; counts survive timing invalidation. Additional responses link to a primary event via query_group without repeating query indices.",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "time_analysis": {
+                "const": "disabled_timestamp_regression"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "event_counts": {
+                "type": "null"
+              },
+              "events": {
+                "maxItems": 0
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "event_counts": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "matched",
+                  "ambiguous",
+                  "additional_response",
+                  "unmatched_response",
+                  "no_response_observed",
+                  "window_incomplete"
+                ],
+                "properties": {
+                  "matched": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "ambiguous": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "additional_response": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "unmatched_response": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "no_response_observed": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "window_incomplete": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     },
     "diagnostics": {
       "type": "array",
@@ -445,7 +878,7 @@
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "PCAP analyzer Phase 2a report v0.3.0",
+  "title": "PCAP analyzer Phase 2b report v0.4.0",
   "$defs": {
     "endpoint": {
       "type": "object",
@@ -551,5 +984,41 @@
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "complete": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "dns": {
+            "properties": {
+              "status": {
+                "const": "complete"
+              },
+              "unassigned_indices": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "dns": {
+            "properties": {
+              "status": {
+                "const": "partial"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

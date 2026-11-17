@@ -1,0 +1,115 @@
+{
+  "status": "complete",
+  "time_analysis": "enabled",
+  "query_count": 4,
+  "response_count": 2,
+  "unassigned_indices": [],
+  "event_counts": {
+    "matched": 1,
+    "ambiguous": 1,
+    "additional_response": 0,
+    "unmatched_response": 0,
+    "no_response_observed": 1,
+    "window_incomplete": 0
+  },
+  "events": [
+    {
+      "status": "matched",
+      "key": {
+        "client": {
+          "ip": "192.0.2.1",
+          "port": 53000
+        },
+        "server": {
+          "ip": "198.51.100.53",
+          "port": 53
+        },
+        "id": 1,
+        "labels_hex": [
+          "6578616d706c65",
+          "74657374",
+          ""
+        ],
+        "name": "example.test.",
+        "qtype": 1,
+        "qclass": 1
+      },
+      "query_group": 4,
+      "query_indices": [
+        4
+      ],
+      "response_indices": [
+        5
+      ],
+      "response_time_ns": 25000000,
+      "response_time_ms": 25.0,
+      "rcode": 0,
+      "tc": false
+    },
+    {
+      "status": "no_response_observed",
+      "key": {
+        "client": {
+          "ip": "192.0.2.1",
+          "port": 53001
+        },
+        "server": {
+          "ip": "198.51.100.53",
+          "port": 53
+        },
+        "id": 2,
+        "labels_hex": [
+          "6578616d706c65",
+          "74657374",
+          ""
+        ],
+        "name": "example.test.",
+        "qtype": 1,
+        "qclass": 1
+      },
+      "query_group": 6,
+      "query_indices": [
+        6
+      ],
+      "response_indices": [],
+      "response_time_ns": null,
+      "response_time_ms": null,
+      "rcode": null,
+      "tc": null
+    },
+    {
+      "status": "ambiguous",
+      "key": {
+        "client": {
+          "ip": "192.0.2.1",
+          "port": 53002
+        },
+        "server": {
+          "ip": "198.51.100.53",
+          "port": 53
+        },
+        "id": 3,
+        "labels_hex": [
+          "6578616d706c65",
+          "74657374",
+          ""
+        ],
+        "name": "example.test.",
+        "qtype": 1,
+        "qclass": 1
+      },
+      "query_group": 7,
+      "query_indices": [
+        7,
+        8
+      ],
+      "response_indices": [
+        9
+      ],
+      "response_time_ns": null,
+      "response_time_ms": null,
+      "rcode": 0,
+      "tc": false
+    }
+  ]
+}

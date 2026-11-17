@@ -1,4 +1,4 @@
-# 保存済みPCAP解析ツール — Phase 2前半（双方向フロー）
+# 保存済みPCAP解析ツール — Phase 2（フロー・UDP DNS照合）
 
 作業日: 2026-11-17。`261119`は指定された作業ID。
 計画: [保存済みPCAP解析ツール](../261014/plan_pcap_analyzer.md)。
@@ -9,13 +9,14 @@ JSONと端末表を実装した。これは通信量集計の中間版であり�
 DNS名の復号・正規化と単一質問抽出を内部APIとして追加した。
 DNSメッセージのRR構造検査を完全なUDP port 53候補のパケット分類とCLI診断へ統合済み。
 検証済み質問の引継ぎ、端点/ID/質問の照合キーとQR/portによる方向判定も内部APIで実装済み。
-5秒窓による問い合わせ/応答照合は内部APIで実装済み。CLIのDNSイベント出力は未実装。
+5秒窓による問い合わせ/応答照合をJSON/端末表へ統合済み。
+時刻逆行時は全DNS結果を破棄し、キー数上限では途中結果と根拠を返す。
 
 ## 作業環境
 
 - worktree: `~/work/Claude_practice-261119`、branch: `feat/pcap-analyzer`
 - origin: `kenobix/Claude_practice`。mainへのpush・マージとPR作成は行わない。
-- Python 3.12.3、専用環境: `pcap_analyzer/.venv`、ツール版0.2.0
+- Python 3.12.3、専用環境: `pcap_analyzer/.venv`、ツール版0.3.0
 - Scapy 2.6.1 / pytest 8.4.2 / jsonschema 4.25.1
 - 依存は推移依存・pipを含め[requirements.lock](pcap_analyzer/requirements.lock)に固定。
   ローカルパッケージはeditable installで別途導入する。他プロジェクト・OSは変更しない。
@@ -41,7 +42,7 @@ python3.12 -m venv .venv
 .venv/bin/python -m pytest -q
 ```
 
-全343テスト成功（既存311件 + DNS窓処理32件）。
+全370テスト成功（既存343件 + DNSレポート統合27件）。
 DNS名/質問抽出40件とフロー・入力処理等の既存テストも再実行した。
 DNS候補の空payloadの分類変更に合わせ、既存1件の期待をparsedからmalformedへ更新した。
 既存100件は分類・入力制限・時刻等の検査を維持し、版変更に伴う期待を更新。
@@ -62,12 +63,13 @@ ActionsはコミットSHA固定、権限は`contents: read`のみ、checkoutの�
 同じrefの古い実行は中止する。キャッシュ・成果物アップロード・外部サービス・追加secretは使わない。
 
 fixtureの再現性、正常/不正/境界入力、Schema、件数・バイト数・根拠、DNS内部API、
-socket生成禁止下でのfixture生成/解析を含む既存343テストを使用する。
+socket生成禁止下でのfixture生成/解析を含む全テストを使用する。
 fixtureを生成し直して期待値を上書きする手順は追加しない。
 セットアップ時のGitHub/PyPI取得以外に、テストでライブ通信の捕捉・送信・スキャンを行わない。
-ローカルでは全343件成功、依存整合性とactionlint 1.7.12の静的検証を確認した。
+導入時は343件がローカル/ホスト双方で成功し、actionlint 1.7.12で静的検証済み。
+今回のDNS統合後のローカル結果は370件成功。ホスト結果は各commitの実行一覧で確認する。
 GitHubホスト上の実行結果は[Actions実行一覧](https://github.com/kenobix/Claude_practice/actions/workflows/pcap-analyzer-tests.yml)で確認する。
-CIの成功はPhase 2の未実装部分、TShark比較や性能測定の完了を意味しない。
+CIの成功はPhase 2の受入確認、TShark比較や性能測定の完了を意味しない。
 
 ## CLI
 
@@ -75,7 +77,7 @@ CIの成功はPhase 2の未実装部分、TShark比較や性能測定の完了�
 # 端末向け表示（既定）
 .venv/bin/pcap-analyzer fixtures/baseline.pcap
 
-# 決定的なJSON（schema_version=0.3.0）
+# 決定的なJSON（schema_version=0.4.0）
 .venv/bin/pcap-analyzer fixtures/baseline.pcap --format json
 
 # 3件で停止し、complete=falseの途中JSONと終了2を確認
@@ -83,6 +85,9 @@ CIの成功はPhase 2の未実装部分、TShark比較や性能測定の完了�
 
 # 新規2本目のフローで停止。超過パケットは未帰属に入れ、終了2
 .venv/bin/pcap-analyzer fixtures/baseline.pcap --format json --max-flows 1
+
+# DNS新規2キー目で停止。超過queryも全体/フローへ計数、DNS未登録番号を出し終了2
+.venv/bin/pcap-analyzer fixtures/baseline.pcap --format json --max-dns-keys 1
 
 # 破損した本文：完全レコード0件、E_RECORD_DATA、終了2
 .venv/bin/python -m pcap_analyzer fixtures/record_cutoff.pcap --format json
@@ -96,8 +101,11 @@ PCAP自体のサイズ864 bytesにはコンテナヘッダーも含む。
 
 JSONの`classification_indices`にファイル順・1始まりの根拠番号を保存する。
 `flows`に双方向の集計を出力する。DNS構造エラーは既存の分類/diagnosticsに番号付きで出力する。
-`dns.status=not_implemented`、`dns.events=null`はDNS照合のCLI/レポート統合が未実装であることを表す。
-時刻逆行では警告と`disabled_timestamp_regression`を記録し、並べ替えはしない。
+`dns.status`は入力処理に合わせcomplete/partial、`time_analysis`はenabled/disabled_timestamp_regression。
+`events`へmatched/ambiguous/additional_response/unmatched_response/no_response_observed/window_incompleteを出す。
+baselineはquery4→response5の25ms、query6の未応答観測、query7,8/response9の曖昧判定となる。
+時刻逆行では確定済みを含め全DNSイベントを破棄し、状態件数をnullにする。query/response件数は維持する。
+入力途中で停止した場合は処理済み範囲の結果だけであり、未読末尾の時刻整合性を保証しない。
 
 | 終了コード | 意味 / 出力 |
 |---|---|
@@ -114,6 +122,7 @@ JSONの`classification_indices`にファイル順・1始まりの根拠番号を
 | 入力ファイル | 100 MiB | `--max-input-bytes` |
 | 完全レコード | 100万件 | `--max-records` |
 | 1レコードの捕捉長 | 1 MiB | `--max-packet-bytes` |
+| DNS保持キー（完了履歴込み） | 10万件 | `--max-dns-keys` |
 | 通常診断 | 1万件（ほかに終了診断1件） | `--max-diagnostics` |
 | 双方向フロー数 | 10万件 | `--max-flows` |
 
@@ -196,7 +205,7 @@ ASCIIのみ小文字化したラベルtuple、QTYPE、QCLASS)。フローと違�
 DNSObservationはkey・根拠番号・整数ns・QR/RCODE/TCを保持する不変値で、応答照合や時間計算は行わない。
 不正時刻/truncated/fragment/不正DNS等は除外し、同じ入力から同じキーを得る。
 API入力は既存decoderが生成したPacketRecordとし、任意モデルの外部入力検証APIとはしない。
-CLI/Schemaは維持し、DNSイベント出力は引き続き未実装。
+DNSイベントは下記窓APIを経由してCLI/Schemaへ統合済み。
 
 ## DNS窓処理（内部API）
 
@@ -215,19 +224,36 @@ query再利用で時間値を撤回できるよう、孤立応答以外は窓閉
 曖昧なグループは全query番号を保持し、追加応答のイベントにも同じquery番号を付け、時間値を出さない。
 
 時刻逆行・不正時刻・逆順の根拠番号は例外で拒否する。ファイル全体の逆行を検出した呼出し側は、
-既に返された結果を含め全DNS時間結果を破棄する必要がある。このreport接続は未実装。
-finish後は再利用不可。CLI/Schema/既存集計は維持する。
+既に返された結果を含め全DNS時間結果を破棄する。dns_report.pyでこの責務を実装済み。
+finish後は再利用不可。既存の分類・フロー・時刻精度は維持する。
 
-次の単位はreport/CLI/Schemaへの統合。全パケットによる窓進行、時刻逆行時の全結果無効化、
-入力/フロー/診断/DNS上限での途中結果、根拠とイベント表示を一緒に検証する。
-TShark比較・計測・デモはさらに後の段階。
+## DNS出力と観測限界
+
+全有効パケット時刻で窓を進め、根拠順にイベントを出力する。
+一意な対応だけに整数`response_time_ns`と表示用`response_time_ms`を付け、それ以外はnull。
+RCODE/TCは各応答の観測値であり、NXDOMAINも応答として数える。
+keyはclient/serverのIPv4/port、ID、正規化ラベルのhex配列、QTYPE/QCLASSを保持する。
+`name`はエスケープ済み表示専用。入力の制御文字等をそのまま端末へ出さない。
+
+主イベントの`query_indices`は全query番号を一度だけ保持する。
+追加応答は`query_indices=[]`とし、`query_group`（主イベントの最初のquery番号）で参照する。
+これにより重複query×追加response数の組合せで根拠リストが増大するのを避ける。
+各応答番号は一度だけ出力し、孤立応答のquery_groupはnull。
+`event_counts`は6状態のイベント件数であり、パケット分類やquery件数の内訳とは異なる。
+DNSキー上限の超過queryは件数へ含め、`unassigned_indices`へ根拠を記録する。
+同時にフロー数も超過すればE_LIMIT_FLOWSを優先するが、DNS未登録番号は失わない。
+
+未応答・曖昧・記録終端は観測状態であり、障害・損失・攻撃と断定しない。
+次はPhase 2受入条件をfixture横断で確認し、Phase 3のTShark独立比較へ進む準備をする。
+性能測定・デモはさらに後の段階。
 
 ## 仕様・期待値・制限
 
 - [現行仕様とPhase 2の設計](pcap_analyzer/docs/spec.md)
 - [fixture設計と手計算](pcap_analyzer/docs/fixtures.md) / [fixture別期待値](pcap_analyzer/expected/fixtures.json)
-- [現行Schema](pcap_analyzer/docs/report.schema.json) / [現行フロー期待値](pcap_analyzer/expected/baseline.flows.json) / [Phase 1の旧期待値](pcap_analyzer/expected/baseline.phase1.json)
+- [現行Schema](pcap_analyzer/docs/report.schema.json) / [Phase 2前半のフロー期待値](pcap_analyzer/expected/baseline.flows.json) / [Phase 1の旧期待値](pcap_analyzer/expected/baseline.phase1.json)
 - [Phase 0の将来レポート例](pcap_analyzer/expected/baseline.report.json) / [対応する旧Schema](pcap_analyzer/docs/report.phase0.schema.json)
+- [DNSの手定義期待値](pcap_analyzer/expected/baseline.dns.json)
 - [作業記録](work_log.md)
 
 未対応: pcapng、圧縮pcap、IPv6、VLAN、Linux cooked capture、Wi-Fi、ライブ捕捉、
@@ -238,8 +264,8 @@ UDP長はIPv4の宣言payload長との一致を要求する。
 分類の件数とは別の指標で、それぞれの合計が全レコード数と一致する。
 
 DNS名/質問抽出・RR構造検査とpacket分類/CLI診断への統合は実装済み。
-照合キー/向き判定と窓処理は内部APIで実装済み。DNSイベントのCLI/Schema統合は未実装。
+照合キー/向き判定・窓処理・DNSイベントのCLI/Schema統合は実装済み。
 フロー集計と端末フロー表は実装済み。
-人工baselineの25ms・未応答観測・重複queryは内部APIで手計算一致を確認。現CLIにはまだ出力しない。
-TShark未導入のため独立比較は未実施。性能測定、実通信、他Python版、VS Code GUIは未検証。
+人工baselineの25ms・未応答観測・重複queryはCLI出力も手計算一致を確認。
+TShark未導入のため独立比較は未実施。性能測定、実通信、Python 3.12以外、VS Code GUIは未検証。
 捕捉長と記録上の元長を回線上の実転送量と呼ばず、観測不足を障害や攻撃と断定しない。

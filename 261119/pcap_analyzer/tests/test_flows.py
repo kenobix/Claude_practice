@@ -37,7 +37,11 @@ def report_for(tmp_path, frames, *, wirelens=None, config=None):
 def test_entire_baseline_flow_contract():
     expected = json.loads((ROOT / "expected/baseline.flows.json").read_text())
     report = analyze(FIXTURES / "baseline.pcap")
-    assert report == expected
+    # Keep the complete pre-DNS packet/flow contract; DNS and versions extend it.
+    for key in ("input", "complete", "summary", "classification_indices", "flows", "unattributed_indices", "diagnostics"):
+        assert report[key] == expected[key]
+    for key in ("max_input_bytes", "max_records", "max_packet_bytes", "max_diagnostics", "max_flows"):
+        assert report["config"][key] == expected["config"][key]
     assert_consistent(report)
     assert report["flows"][0]["tcp_flag_counts"] == {"F": 0, "S": 2, "R": 0, "P": 0, "A": 3, "U": 0, "E": 0, "C": 0, "N": 0}
 
