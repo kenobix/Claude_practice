@@ -140,11 +140,20 @@ def test_six_input_outcomes_and_common_fields(name):
     assert result["differences"] == []
     assert str(path) not in str(result)
     if name == "malformed_length.pcap":
-        assert result["exclusions"] == [{"packet_index": 1, "fields": "L4 ports/flags",
-                                         "reason": "caplen_exceeds_wirelen"}]
-        assert records[0].flow_eligible is False
+        assert result["exclusions"] == [{"packet_index": 1, "fields": "all packet fields",
+                                         "reason": "E_RECORD_LENGTH"}]
+        assert records == [] and error.packet_index == 1
     else:
         assert result["exclusions"] == [] and result["rows"] == []
+
+
+def test_length_conflict_comparison_still_rejects_unexpected_tshark_rows():
+    path = FIXTURES / "malformed_length.pcap"
+    records, error = comparison.read_records(path)
+    result = synthetic_tool_result(path)
+    result.stdout += line(**{"frame.number": "2"})
+    actual = comparison.evaluate_input_case(path, records, error, result, comparison.INPUT_CASES[path.name])
+    assert any(difference["field"] == "tshark.packet_count" for difference in actual["differences"])
 
 
 @pytest.mark.parametrize("code,stdout,stderr", [

@@ -13,15 +13,12 @@ from .offline import configure_offline
 configure_offline()
 
 from scapy.layers.inet import IP, TCP, UDP
-from scapy.layers.l2 import Ether
 
 
 def decode(data: bytes, *, index: int, timestamp_ns: int | None,
            caplen: int, wirelen: int, snaplen: int) -> PacketRecord:
     issues = {"malformed": [], "truncated": [], "unsupported": []}
     fields = {"protocol": "unknown"}
-    if caplen > wirelen:
-        issues["malformed"].append("caplen_exceeds_wirelen")
     if caplen > snaplen:
         issues["malformed"].append("caplen_exceeds_snaplen")
     if timestamp_ns is None:
@@ -40,10 +37,16 @@ def decode(data: bytes, *, index: int, timestamp_ns: int | None,
     if len(data) < 14:
         issues["truncated"].append("ethernet_header_missing")
         return finish()
-    ethernet = Ether(data[:14])
-    if ethernet.type != 0x0800:
+    # IEEE 802.3 uses a length through 1500. EtherTypes start at 1536.
+    length_or_type = struct.unpack_from("!H", data, 12)[0]
+    if length_or_type != 0x0800:
         fields["protocol"] = "non_ipv4"
-        issues["unsupported"].append("ethernet_type_unsupported")
+        if length_or_type <= 1500:
+            issues["unsupported"].append("ieee_802_3_unsupported")
+        elif length_or_type < 1536:
+            issues["malformed"].append("ethernet_length_type_reserved")
+        else:
+            issues["unsupported"].append("ethernet_type_unsupported")
         return finish()
     ip = data[14:]
     if ip:

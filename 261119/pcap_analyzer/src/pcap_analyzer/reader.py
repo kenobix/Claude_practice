@@ -83,6 +83,9 @@ class PcapSource:
             if len(header) != 16:
                 raise InputError("E_RECORD_HEADER", f"record header has {len(header)} bytes; expected 16", index)
             sec, fraction, caplen, wirelen = struct.unpack(self.endian + "IIII", header)
+            if caplen > wirelen:
+                raise InputError("E_RECORD_LENGTH",
+                                 f"record declares caplen={caplen} greater than wirelen={wirelen}", index)
             available = self.size_bytes - position - 16
             if caplen > available:
                 raise InputError("E_RECORD_DATA", f"record declares caplen={caplen}; only {available} bytes available", index)

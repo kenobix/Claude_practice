@@ -150,7 +150,6 @@ def test_global_header_rejection(tmp_path, content, code):
     (ipv4(UDP, 17), 42, 65535, "malformed", "udp"),  # Empty port-53 DNS body.
     (ipv4() + b"\x00" * 6, 60, 65535, "parsed", "tcp"),
     (ipv4()[:40], 54, 65535, "truncated", "tcp"),
-    (ipv4() + b"\x00", 54, 65535, "malformed", "tcp"),
     (ipv4(), 54, 40, "malformed", "tcp"),
     (b"", 0, 65535, "truncated", "unknown"),
     (ETH[:13], 13, 65535, "truncated", "unknown"),
@@ -171,6 +170,11 @@ def test_global_header_rejection(tmp_path, content, code):
     (ipv4(b"abcd", 17, frag=1), 38, 65535, "unsupported", "ipv4_fragment"),
     (ETH[:12] + b"\x86\xdd" + b"\x00" * 40, 54, 65535, "unsupported", "non_ipv4"),
     (ETH[:12] + b"\x81\x00" + b"\x00" * 40, 54, 65535, "unsupported", "non_ipv4"),
+    (ETH[:12] + b"\x05\xdc" + bytes(1500), 1514, 65535, "unsupported", "non_ipv4"),
+    (ETH[:12] + b"\x05\xdd" + bytes(46), 60, 65535, "malformed", "non_ipv4"),
+    (ETH[:12] + b"\x05\xff" + bytes(46), 60, 65535, "malformed", "non_ipv4"),
+    (ETH[:12] + b"\x06\x00" + bytes(46), 60, 65535, "unsupported", "non_ipv4"),
+    (ETH[:12] + b"\x00\x2e" + bytes(6), 60, 65535, "truncated", "non_ipv4"),
     (ETH[:12] + b"\x08\x06", 24, 65535, "truncated", "non_ipv4"),
     (ipv4(version_ihl=0x44)[:25], 54, 65535, "malformed", "unknown"),
 ])
@@ -268,6 +272,54 @@ def test_partial_tail_retains_only_complete_records(tmp_path):
     assert "40 bytes" in report["diagnostics"][0]["reason"]
 
 
+def test_cli_continues_after_ieee_802_3_frame(tmp_path):
+    dot3 = ETH[:12] + b"\x00\x2e\xaa\xaa\x03\x00\x00\x00\x08\x00" + bytes(38)
+    path = saved(tmp_path, capture([(ipv4(), 54, 1, 0), (dot3, 60, 2, 0), (ipv4(), 54, 3, 0)]))
+    result = subprocess.run([sys.executable, "-m", "pcap_analyzer", str(path), "--format", "json"],
+                            capture_output=True, text=True, timeout=10)
+    assert result.returncode == 0, result.stderr
+    assert result.stderr == ""
+    report = json.loads(result.stdout)
+    assert_consistent(report)
+    assert report["complete"]
+    assert [report["summary"][key] for key in ("packet_count", "captured_bytes", "original_bytes")] == [3, 168, 168]
+    assert report["summary"]["protocol_counts"]["non_ipv4"] == 1
+    assert report["classification_indices"] == {"parsed": [1, 3], "unsupported": [2],
+                                                "truncated": [], "malformed": []}
+    assert report["flows"][0]["a_to_b"]["packet_indices"] == [1, 3]
+    assert report["unattributed_indices"] == [2]
+    assert report["diagnostics"] == [{"code": "P_UNSUPPORTED", "packet_index": 2,
+                                      "reason": "ieee_802_3_unsupported"}]
+
+
+def test_cli_record_length_conflict_preserves_only_valid_prefix(tmp_path):
+    path = saved(tmp_path, capture([(ipv4(), 54, 1, 0), (ipv4() + b"\x00", 54, 2, 0),
+                                    (ipv4(), 54, 3, 0)]))
+    result = subprocess.run([sys.executable, "-m", "pcap_analyzer", str(path), "--format", "json"],
+                            capture_output=True, text=True, timeout=10)
+    assert result.returncode == 2
+    assert result.stderr.startswith("E_RECORD_LENGTH: ")
+    report = json.loads(result.stdout)
+    assert_consistent(report)
+    assert not report["complete"]
+    assert [report["summary"][key] for key in ("packet_count", "captured_bytes", "original_bytes")] == [1, 54, 54]
+    assert report["summary"]["end_ns"] == 1_000_000_000
+    assert report["classification_indices"] == {"parsed": [1], "unsupported": [], "truncated": [], "malformed": []}
+    assert report["flows"][0]["a_to_b"]["packet_indices"] == [1]
+    assert report["diagnostics"] == [{"code": "E_RECORD_LENGTH", "packet_index": 2,
+                                      "reason": "record declares caplen=55 greater than wirelen=54"}]
+
+
+def test_record_length_conflict_stops_before_scapy_reads_body(monkeypatch):
+    def forbidden(*args, **kwargs):
+        raise AssertionError("must reject a contradictory record header before reading its body")
+    monkeypatch.setattr(RawPcapReader, "_read_packet", forbidden)
+    report = analyze(FIXTURES / "malformed_length.pcap")
+    assert not report["complete"]
+    assert report["summary"]["packet_count"] == 0
+    assert report["diagnostics"][0]["code"] == "E_RECORD_LENGTH"
+
+
 def test_diagnostic_limit_is_explicit_and_bounded(tmp_path):
     data = capture([(b"", 0, i, 0) for i in range(10)])
     report = analyze(saved(tmp_path, data), Config(max_diagnostics=1))
@@ -307,7 +359,7 @@ def test_same_input_determinism_and_additive_counts(tmp_path):
     ("unsupported_linktype.pcap", 2, False, "E_LINKTYPE"),
     ("unsupported_pcapng.pcapng", 2, False, "E_FORMAT_UNSUPPORTED"),
     ("capture_truncated.pcap", 0, True, None),
-    ("malformed_length.pcap", 0, True, None),
+    ("malformed_length.pcap", 2, True, "E_RECORD_LENGTH"),
 ])
 def test_cli_exit_codes_json_and_stderr(name, exit_code, has_json, code):
     result = subprocess.run([sys.executable, "-m", "pcap_analyzer", str(FIXTURES / name), "--format", "json"],

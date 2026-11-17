@@ -104,7 +104,15 @@ def read_records(path):
 def evaluate_input_case(path, records, error, result, expected):
     """Match explicit outcomes, never accept an arbitrary nonzero tool exit."""
     rows = parse_rows(result.stdout)
-    differences, exclusions = compare(records, rows)
+    if error and error.code == expected["analyzer"]["error_code"] == "E_RECORD_LENGTH":
+        # TShark may decode a record that our container contract rejects.
+        # Compare the accepted prefix and still check both tools' full counts below.
+        prefix = rows[:error.packet_index - 1]
+        differences, exclusions = compare(records, prefix)
+        exclusions.extend({"packet_index": row["frame.number"], "fields": "all packet fields",
+                           "reason": "E_RECORD_LENGTH"} for row in rows[len(prefix):])
+    else:
+        differences, exclusions = compare(records, rows)
     analyzer = {"exit_code": 2 if error else 0, "error_code": error.code if error else None,
                 "packet_index": error.packet_index if error else None,
                 "packet_count": len(records), "captured_bytes": sum(r.captured_len for r in records),

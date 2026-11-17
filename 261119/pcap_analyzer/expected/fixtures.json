@@ -25,7 +25,7 @@
   "capture_truncated.pcap": {"records": 1, "captured_bytes": 40, "original_bytes": 54, "classification": "truncated"},
   "record_cutoff.pcap": {"records": 0, "error": "E_RECORD_DATA", "packet_index": 1, "actual_bytes": 40, "declared_caplen": 54, "complete": false, "exit_code": 2},
   "header_cutoff.pcap": {"records": 0, "error": "E_RECORD_HEADER", "packet_index": 1, "complete": false, "exit_code": 2},
-  "malformed_length.pcap": {"records": 1, "captured_bytes": 55, "original_bytes": 54, "classification": "malformed"},
+  "malformed_length.pcap": {"records": 0, "captured_bytes": 0, "original_bytes": 0, "declared_caplen": 55, "declared_wirelen": 54, "error": "E_RECORD_LENGTH", "packet_index": 1, "complete": false, "exit_code": 2},
   "unsupported_arp.pcap": {"records": 1, "captured_bytes": 42, "classification": "unsupported"},
   "fragment.pcap": {"records": 1, "captured_bytes": 50, "classification": "unsupported", "reason": "ipv4_fragment"},
   "nano.pcap": {"records": 1, "captured_bytes": 54, "timestamp_ns": 1700000000000000123, "precision": "ns"},

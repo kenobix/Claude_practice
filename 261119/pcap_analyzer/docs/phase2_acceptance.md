@@ -32,7 +32,7 @@ TSharkによる独立比較はPhase 3、性能/メモリ計測・デモはPhase 
 | empty | E_FORMAT、終了2、JSONなし |
 | capture_truncated | 0 flows、未帰属1件40/54 bytes、DNS対象0 |
 | record_cutoff / header_cutoff | 0 flows、0 DNS、partial、E_RECORD_DATA / E_RECORD_HEADER、終了2 |
-| malformed_length | 0 flows、未帰属1件55/54 bytes、DNS対象0 |
+| malformed_length | E_RECORD_LENGTH・終了2・partial、完全レコード/フロー/未帰属/DNS対象は全て0 |
 | unsupported_arp | 0 flows、未帰属1件42/42 bytes、DNS対象0 |
 | fragment | 0 flows、未帰属1件50/50 bytes、DNS対象0 |
 | nano / big_endian | 各1 flow、未帰属0、DNS対象0（元精度の検査も既存テストで維持） |

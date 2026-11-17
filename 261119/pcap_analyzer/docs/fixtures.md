@@ -39,7 +39,7 @@ UDP queryは14+20+8+30=72、responseは圧縮A回答16を加え88 bytes。
 | capture_truncated.pcap | 完全レコードだがcaplen40/wirelen54、truncated、TCPヘッダー不足 |
 | record_cutoff.pcap | 宣言54に実本文40、完全レコード0件、E_RECORD_DATAで不完全 |
 | header_cutoff.pcap | レコードヘッダーが8/16 bytes、E_RECORD_HEADER |
-| malformed_length.pcap | caplen55/wirelen54、malformed |
+| malformed_length.pcap | 本文55 bytes、caplen55/wirelen54の矛盾。E_RECORD_LENGTHで終了2、完全レコード0件 |
 | unsupported_arp.pcap | 42 bytes、unsupported |
 | fragment.pcap | 50 bytes、MF=1、unsupported、L4/DNS除外 |
 | nano.pcap | little endian ns、整数時刻1700000000000000123 |
@@ -50,7 +50,8 @@ UDP queryは14+20+8+30=72、responseは圧縮A回答16を加え88 bytes。
 
 Phase 0では生成の決定性、コンテナbytes・メタデータ、Scapy復号、手計算との一致を確認した。
 Phase 1では上表の入力検査・分類・集計・整数時刻・エラー終了も解析器で確認済み。
-DNS照合だけは未実装で、基本例の25ms/未応答/ambiguousは将来の期待である。
+現在はDNS照合も実装済み。独立レビュー後の修正では、保存fixtureのバイト列を維持し、
+malformed_lengthの受入期待値をレコード破損として更新した。IEEE 802.3混在例はテスト内で生成する。
 [Phase 1の全体期待値](../expected/baseline.phase1.json)は手計算から定義し、
 解析コードや生成スクリプトはこのファイルを上書きしない。
 

@@ -105,28 +105,28 @@
     },
     {
       "analyzer": {
-        "captured_bytes": 55,
+        "captured_bytes": 0,
         "classification_counts": {
-          "malformed": 1,
+          "malformed": 0,
           "parsed": 0,
           "truncated": 0,
           "unsupported": 0
         },
-        "error_code": null,
-        "exit_code": 0,
-        "original_bytes": 54,
-        "packet_count": 1,
-        "packet_index": null
+        "error_code": "E_RECORD_LENGTH",
+        "exit_code": 2,
+        "original_bytes": 0,
+        "packet_count": 0,
+        "packet_index": 1
       },
       "differences": [],
       "exclusions": [
         {
-          "fields": "L4 ports/flags",
+          "fields": "all packet fields",
           "packet_index": 1,
-          "reason": "caplen_exceeds_wirelen"
+          "reason": "E_RECORD_LENGTH"
         }
       ],
-      "explanation": "Both read the complete record and preserve caplen 55 and wirelen 54. The analyzer classifies the contradiction as malformed and excludes it from flows; TShark still extracts TCP fields. Exit 0 does not imply a valid packet.",
+      "explanation": "The analyzer rejects the record header before counting a frame because caplen 55 exceeds wirelen 54. TShark accepts that record and extracts fields. The TShark-only row is excluded from common packet-field comparison, and both tools' input outcomes are checked independently.",
       "fixture": "malformed_length.pcap",
       "rows": [
         {

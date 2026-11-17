@@ -4,7 +4,7 @@
 計画: [保存済みPCAP解析ツール](../261014/plan_pcap_analyzer.md)。
 
 classic pcapの入力検査、Ethernet/IPv4/TCP・UDPヘッダー検査、件数・長さ・時刻・分類の集計、
-JSONと端末表を実装した。計画のMVP受入条件を満たし、独立レビュー待ち。
+JSONと端末表を実装した。Draft PR #3の独立レビュー指摘を修正し、再レビュー待ち。
 初めて使う場合は[3分デモ動画](pcap_analyzer/docs/demo.mp4)と[新規環境からの受入再現](#新規環境からの受入再現)を参照。
 双方向フロー集計、方向別件数/長さ/根拠、TCP flags、フロー数上限を追加した。
 DNS名の復号・正規化と単一質問抽出を内部APIとして追加した。
@@ -12,6 +12,9 @@ DNSメッセージのRR構造検査を完全なUDP port 53候補のパケット�
 検証済み質問の引継ぎ、端点/ID/質問の照合キーとQR/portによる方向判定も内部APIで実装済み。
 5秒窓による問い合わせ/応答照合をJSON/端末表へ統合済み。
 時刻逆行時は全DNS結果を破棄し、キー数上限では途中結果と根拠を返す。
+DNSの問い合わせ・応答は孤立応答も含めて10000観測まで照合する。超過時はE_LIMIT_DNS_OBSERVATIONSと途中結果を返す。
+孤立応答の最大RSSとJSONサイズは[修正前後の計測記録](pcap_analyzer/docs/dns_observation_limit.md)を参照。
+IEEE 802.3のフレームは未対応として集計を継続する。caplenがwirelenを超えるPCAPレコードはE_RECORD_LENGTHで停止し、先行レコードだけを集計する。
 
 ## 作業環境
 
@@ -43,7 +46,7 @@ python3.12 -m venv .venv
 .venv/bin/python -m pytest -q
 ```
 
-全457テスト成功（既存442件 + 計測ハーネス15件）。
+独立レビュー修正後に全465テスト成功。IEEE 802.3混在・予約値境界、レコード長矛盾での正常prefix保持と本文読込前の停止、DNS観測数上限を検証した。
 DNS名/質問抽出40件とフロー・入力処理等の既存テストも再実行した。
 DNS候補の空payloadの分類変更に合わせ、既存1件の期待をparsedからmalformedへ更新した。
 既存100件は分類・入力制限・時刻等の検査を維持し、版変更に伴う期待を更新。
@@ -71,11 +74,11 @@ python3.12 -m venv .venv
 .venv/bin/python scripts/generate_fixtures.py --output regenerated
 diff -qr fixtures regenerated
 
-for sample in baseline capture_truncated record_cutoff unsupported_pcapng backward; do
+for sample in baseline capture_truncated record_cutoff malformed_length unsupported_pcapng backward; do
   input=$sample.pcap
   expected=0
   case $sample in
-    record_cutoff) expected=2 ;;
+    record_cutoff|malformed_length) expected=2 ;;
     unsupported_pcapng) input=$sample.pcapng; expected=2 ;;
   esac
   result=0
@@ -93,6 +96,7 @@ done
 | `baseline.pcap` | 10件・680/680 bytes。DNS #4→#5 は25 ms、#6 は窓内で応答観測なし、#7・#8→#9 は曖昧で時間なし |
 | `capture_truncated.pcap` | 終了0・完全レコード1件。捕捉40/元長54 bytes、truncated 1。足りない14 bytesは補完しない |
 | `record_cutoff.pcap` | 終了2・`INCOMPLETE`・`E_RECORD_DATA`・完全レコード0件。途中の40 bytesは集計外 |
+| `malformed_length.pcap` | 終了2・`INCOMPLETE`・`E_RECORD_LENGTH`・完全レコード0件。caplen55とwirelen54が矛盾 |
 | `unsupported_pcapng.pcapng` | 終了2・`E_FORMAT_UNSUPPORTED`。勝手に変換せずレポートなし |
 | `backward.pcap` | 終了0・2件。時刻逆行のためDNS時間結果を全体で破棄 |
 
@@ -320,7 +324,7 @@ Phase 0〜4の全受入条件を[受入記録](pcap_analyzer/docs/mvp_acceptance
 - [DNS独立比較・Phase 3判定](pcap_analyzer/docs/tshark_dns_comparison.md) / [TShark DNS参照行](pcap_analyzer/docs/tshark_dns.result.json)
 - [作業記録](work_log.md)
 
-未対応: pcapng、圧縮pcap、IPv6、VLAN、Linux cooked capture、Wi-Fi、ライブ捕捉、
+未対応: pcapng、圧縮pcap、IEEE 802.3 LLC/SNAP、IPv6、VLAN、Linux cooked capture、Wi-Fi、ライブ捕捉、
 IP再構成、TCP再構成/再送推定、TLS復号。IPv4 fragmentは独立計数しL4/DNSから除外する。
 ヘッダーの長さ・捕捉境界を検査するがチェックサムや個々のoptionの意味は検証しない。
 UDP長はIPv4の宣言payload長との一致を要求する。

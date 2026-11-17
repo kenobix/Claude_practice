@@ -120,7 +120,7 @@ def test_complete_header_with_only_recorded_wire_truncation_is_attributed(tmp_pa
     assert report["flows"][0]["a_to_b"]["original_bytes"] == 60
 
 
-@pytest.mark.parametrize("kind", ["tcp_short", "tcp_options_short", "udp_short", "ip_short", "tcp_offset_invalid", "udp_length_invalid", "caplen_wirelen", "caplen_snaplen", "fragment", "fragment_truncated", "arp"])
+@pytest.mark.parametrize("kind", ["tcp_short", "tcp_options_short", "udp_short", "ip_short", "tcp_offset_invalid", "udp_length_invalid", "caplen_snaplen", "fragment", "fragment_truncated", "arp"])
 def test_ineligible_packets_are_unattributed(tmp_path, kind):
     data = bytearray(frame())
     wirelen, snaplen = 54, 65535
@@ -141,8 +141,6 @@ def test_ineligible_packets_are_unattributed(tmp_path, kind):
         data = bytearray(frame(protocol=17))
         data[38:40] = b"\x00\x07"
         wirelen = 42
-    elif kind == "caplen_wirelen":
-        wirelen = 53
     elif kind == "caplen_snaplen":
         snaplen = 40
     elif kind in ("fragment", "fragment_truncated"):

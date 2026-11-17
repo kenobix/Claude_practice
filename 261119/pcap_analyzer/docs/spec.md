@@ -21,7 +21,8 @@ JSONの形状/版を更新し、Schemaへ照合イベント・根拠参照・上
 - snaplenは1以上。グローバルヘッダー24 bytes、レコードヘッダー16 bytesを検査。
   secは符号なし整数、fractionはµsなら0..999999、nsなら0..999999999。
 - 空ファイル・不足グローバルヘッダー・不正magic/version/snaplenは失敗。ヘッダーのみは正常0件。
-- caplen > snaplen、caplen > wirelenは長さ矛盾。完全に読めたレコードはmalformedとして計数。
+- caplen > wirelenはレコードヘッダーの破損。本文読込前にE_RECORD_LENGTHで停止し、当該レコードと後続を集計しない。診断に予定packet_indexと宣言された両方の長さを残す。
+- caplen > snaplenは本文が完全ならmalformedとして計数する。
   大きな宣言長を無制限にメモリ確保しない。ファイルサイズ・上限を照合して順次処理する。
 - 末尾の部分レコードヘッダー・宣言caplen未満の本文は入力不完全。読めた完全レコードのみ集計し、
   diagnosticsに失敗位置（1始まりの予定packet_index）、実読込長、宣言長を残す。部分本文は通常集計へ混ぜない。
@@ -29,9 +30,9 @@ JSONの形状/版を更新し、Schemaへ照合イベント・根拠参照・上
 - 終了コード: 0=完全な入力を処理、2=形式/読込/上限/不完全エラー。Phase 0で使った3は現CLIでは使用しない。
   unsupported/truncated/malformedパケットがあってもコンテナを最後まで処理できれば0。
   入力ヘッダーが無効ならstderr診断のみ。読込開始後の失敗はcomplete=falseの途中JSONとstderr診断。
-- 診断コード案: E_INPUT、E_FORMAT、E_FORMAT_UNSUPPORTED、E_LINKTYPE、E_RECORD_HEADER、
+- 診断コード: E_INPUT、E_FORMAT、E_FORMAT_UNSUPPORTED、E_LINKTYPE、E_RECORD_HEADER、E_RECORD_LENGTH、
   E_RECORD_DATA、E_LIMIT_BYTES、E_LIMIT_RECORDS、E_LIMIT_PACKET_BYTES、E_LIMIT_DIAGNOSTICS、E_INPUT_CHANGED。
-  E_LIMIT_FLOWSは実装済み。E_LIMIT_DNSも実装済み。
+  DNSとフローの上限にはE_LIMIT_DNS、E_LIMIT_DNS_OBSERVATIONS、E_LIMIT_FLOWSを使う。
   上限停止で正常完了を装わない。生パケットや機密パスを診断へ埋め込まない。
 
 入力は安定した通常ファイルを用意する。O_NONBLOCKで開いてfstatし、FIFO/デバイスを拒否する。
@@ -42,6 +43,8 @@ hash後と読込終端にサイズ/mtime/ctimeの変化を検出して失敗扱�
 ## 復号範囲と分類
 
 Ethernet II（ヘッダー14 bytes、FCSやpreambleの追加はしない）のIPv4を対象とする。
+ヘッダーの長さ／種別フィールドは0〜1500をIEEE 802.3の長さとして扱い、LLC/SNAPの復号範囲外としてunsupportedにする。
+1501〜1535は予約値なのでmalformed、1536以上はEtherTypeとして判定する。
 IPv4 version/IHL/total length、TCP data offset、UDP lengthを検査する。
 IPv4/TCP optionsはヘッダー全体長と捕捉境界を検査しScapyへ渡す。個々のoptionの意味は検証しない。Ethernet paddingは捕捉バイト数に含める。
 IPv4のMF=1またはfragment offset>0はIP段階でfragment件数を計数し、TCP/UDP/DNSを解析しない。
@@ -51,9 +54,9 @@ TCP再構成・再送推定は行わない。チェックサム不一致のみ�
 
 | 状態 | 条件例 | 後段 |
 |---|---|---|
-| malformed | caplen>wirelen、IHL<5、total length<IHL、UDP length<8、矛盾したTCP offset | 理由と番号。DNS照合除外 |
+| malformed | caplen>snaplen、L2の予約値、IHL<5、total length<IHL、UDP length<8、矛盾したTCP offset | 理由と番号。DNS照合除外 |
 | truncated | caplen<wirelen、対象ヘッダー/宣言IP長に必要な捕捉bytes不足 | 不足を補完しない。DNS照合除外 |
-| unsupported | ARP/IPv6/VLAN、IP fragment、非TCP/UDP、DNS質問数≠1等 | 未対応範囲と番号 |
+| unsupported | IEEE 802.3、ARP/IPv6/VLAN、IP fragment、非TCP/UDP、DNS質問数≠1等 | 未対応範囲と番号 |
 | parsed | 対応ヘッダーと対象DNSの構造を検査できたもの | フローと対象DNSへ |
 
 DNS候補の構造不正/未対応もpacket分類に反映する（適用条件は下記）。
@@ -88,7 +91,7 @@ flow_eligible（bool）とtcp_flags（TCPのみ9 bit整数）を追加。
 
 protocol_countsは排他的なtcp/udp/ipv4_fragment/ipv4_other/non_ipv4/unknownで合計=N。
 IPv4ヘッダーが検査できればprotocol番号でtcp/udpを識別するため、L4がtruncatedでもtcp/udp件数に入る。
-fragmentはtcp/udpへ重複計数しない。EtherTypeがIPv4以外ならnon_ipv4、
+fragmentはtcp/udpへ重複計数しない。L2の長さ／種別フィールドがIPv4のEtherType以外ならnon_ipv4、
 IPv4ヘッダーまで取得/検査できなければunknown。正常性は別のclassification_countsで表す。
 
 input.timestamp_precisionにus/nsを保存。µs入力をns精度で観測したと表現しない。
@@ -117,9 +120,9 @@ TCP flagsはF/S/R/P/A/U/E/C/N（NS）の各bitを独立に計数し、SYN+ACKは
 | caplen<wirelenだが上記ヘッダーが完全、payloadやフレーム末尾が不足 | 帰属する。実捕捉caplenと記録wirelenを別に加算 |
 | 不正時刻fractionだけでmalformed、ヘッダーは完全・整合 | 帰属する。時刻範囲からは従来どおり除外 |
 | Ethernet/IP/L4ヘッダー不足、TCP options部分不足、ヘッダー長の矛盾 | 帰属しない |
-| caplen>wirelen、caplen>snaplen | 記録長に矛盾があるため帰属しない |
+| caplen>snaplen | 記録長に矛盾があるため帰属しない |
 | IPv4 fragment（最初のfragmentを含む）、ARP/IPv6/VLAN/非TCP・UDP | 帰属しない |
-| ファイル本文が宣言caplenより短い部分レコード | 完全レコードでないため全体集計にも帰属集計にも入れない |
+| caplen>wirelen、ファイル本文が宣言caplenより短い部分レコード | 破損したレコードとして停止し、全体集計にも帰属集計にも入れない |
 
 classificationとは独立したflow_eligibleを使い、欠けたポートやflagsを推測しない。
 DNS本文の構造不正/未対応も、検証済みヘッダーによるフロー帰属を無効にしない。
@@ -346,7 +349,11 @@ query_group参照先の存在・キー一致、全イベントの根拠と件数
 --max-dns-keysは1..100000（既定/最大100000）へ引下げ可。完了キーも窓期限まで数える。
 E_LIMIT_DNSでは超過queryも全体/フロー/対象query件数へ計上し、DNS未登録の根拠を
 unassigned_indicesへ残す。既存履歴は維持しcomplete=false、dns.status=partial、終了2。
-同一パケットでフロー数も超過した場合はE_LIMIT_FLOWSを優先し、DNS未登録番号も維持する。
+時間解析が有効な間は、同一キーや孤立応答も含め、DNS問い合わせと応答の合計10000観測までを照合に取り込む。
+この固定上限は保留中の根拠と確定イベントの両方を制限する。10001件目は全体・フロー・対象観測件数に残し、DNSでは
+unassigned_indicesへ記録する。E_LIMIT_DNS_OBSERVATIONS、complete=false、dns.status=partial、終了2。
+キー上限と観測数上限に同時に達する場合は観測数上限を優先する。フロー数も超過した場合はE_LIMIT_FLOWSを優先し、DNS未登録番号も維持する。
+時刻逆行を同じレコードで検出した場合は、時間解析を無効化して既存結果を破棄するため、観測数上限では停止しない。
 DNS処理後にフローへ必ず分配してから停止し、診断上限時も計数済みの完全レコードを欠落させない。
 有効な時刻は非DNS/unsupported/truncated/malformedでも窓進行に使う。
 入力不完全/読込/各上限停止時は読めた最後の有効時刻で終端処理し、未読時間は推測しない。
@@ -370,7 +377,7 @@ stdout空・stderr診断・終了2。読込開始後の不完全レコードや�
 
 ```text
 classic pcap → reader.py（厳密境界検査 + RawPcapReader）
-                    ↓ packet.py（長さ検査 + Ether/IP/TCP/UDP復号）
+                    ↓ packet.py（Ethernet種別・境界検査 + IP/TCP/UDP復号）
                     ↓ models.py / PacketRecord
                     ├→ flows.py（方向別集計）
                     ├→ dns.py → dns_windows.py → dns_report.py（構造・窓・根拠・レポート）

@@ -130,6 +130,37 @@ def test_dns_limit_preserves_history_and_flow_byte_partition():
     assert result["summary"]["unattributed_captured_bytes"] == 0
 
 
+def test_dns_observation_budget_applies_to_orphans_but_not_non_dns(tmp_path, monkeypatch):
+    monkeypatch.setattr("pcap_analyzer.dns_report.MAX_DNS_OBSERVATIONS", 2)
+    response = dns_frame(response=True)
+    rows = [(0, response), (1, response), (2, frame())]
+    config = Config(max_dns_keys=1)
+    exact = report_at(tmp_path, rows, config)
+    assert exact["complete"] and exact["dns"]["event_counts"]["unmatched_response"] == 2
+    stopped = report_at(tmp_path, rows + [(3, response), (4, frame())], config)
+    assert not stopped["complete"]
+    assert stopped["summary"]["packet_count"] == 4
+    assert stopped["dns"]["response_count"] == 3
+    assert stopped["dns"]["events"] == exact["dns"]["events"]
+    assert stopped["dns"]["unassigned_indices"] == [4]
+    assert stopped["diagnostics"][-1]["code"] == "E_LIMIT_DNS_OBSERVATIONS"
+    assert stopped["diagnostics"][-1]["packet_index"] == 4
+
+
+def test_dns_observation_budget_preserves_pending_window_and_regression(tmp_path, monkeypatch):
+    monkeypatch.setattr("pcap_analyzer.dns_report.MAX_DNS_OBSERVATIONS", 1)
+    rows = [(1, dns_frame())]
+    stopped = report_at(tmp_path, rows + [(2, dns_frame(response=True))])
+    assert not stopped["complete"]
+    assert stopped["dns"]["events"][0]["status"] == "window_incomplete"
+    assert stopped["dns"]["unassigned_indices"] == [2]
+    regressed = report_at(tmp_path, rows + [(0, dns_frame(response=True)), (2, dns_frame())])
+    assert regressed["complete"]
+    assert regressed["dns"]["time_analysis"] == "disabled_timestamp_regression"
+    assert regressed["dns"]["query_count"] == 2 and regressed["dns"]["response_count"] == 1
+    assert regressed["dns"]["unassigned_indices"] == []
+
+
 @pytest.mark.parametrize("config,packets,code", [(Config(max_flows=1), 4, "E_LIMIT_FLOWS"),
                                                 (Config(max_records=4), 4, "E_LIMIT_RECORDS")])
 def test_other_limit_partial_results_include_last_counted_query(config, packets, code):

@@ -32,8 +32,9 @@ def generate(path, cycles):
         ip = struct.pack("!BBHHHBBH4s4s", 0x45, 0, 20 + size, 0, 0, 64, 17, 0, src, dst)
         return ethernet + ip + struct.pack("!4H", *ports, size, 0)
     forward, backward = udp(), udp(True)
+    bad_udp_length = forward[:-4] + struct.pack("!HH", 9, 0) + b"\x00"
     rows = [(forward, 42), (backward, 42), (ethernet[:12] + b"\x08\x06", 14),
-            (udp(missing=True), 46), (forward + b"\x00", 42)]
+            (udp(missing=True), 46), (bad_udp_length, 43)]
     with path.open("wb") as stream:
         stream.write(struct.pack("<IHHIIII", 0xA1B23C4D, 2, 4, 0, 0, 65535, 1))
         for index in range(5 * cycles):
@@ -50,10 +51,10 @@ def verify(report, cycles):
         raise ValueError("CLI output does not satisfy report schema") from error
     s = report["summary"]
     expected = {"packet_count": 5 * cycles, "captured_bytes": 183 * cycles,
-                "original_bytes": 186 * cycles, "flow_count": 1,
+                "original_bytes": 187 * cycles, "flow_count": 1,
                 "unattributed_packet_count": 2 * cycles,
                 "unattributed_captured_bytes": 57 * cycles,
-                "unattributed_original_bytes": 56 * cycles,
+                "unattributed_original_bytes": 57 * cycles,
                 "parsed_ratio": 0.4,
                 "classification_counts": {"parsed": 2 * cycles, "unsupported": cycles,
                                           "truncated": cycles, "malformed": cycles}}

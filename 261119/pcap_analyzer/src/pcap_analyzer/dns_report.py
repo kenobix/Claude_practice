@@ -8,6 +8,7 @@ from .models import InputError
 
 DNS_STATES = ("matched", "ambiguous", "additional_response", "unmatched_response",
               "no_response_observed", "window_incomplete")
+MAX_DNS_OBSERVATIONS = 10_000
 
 
 class DNSReport:
@@ -45,6 +46,11 @@ class DNSReport:
         if self._disabled:
             return first_regression
         try:
+            # Bound both pending evidence and finalized events, even when
+            # orphan responses do not consume any active key slots.
+            if self.query_count + self.response_count > MAX_DNS_OBSERVATIONS:
+                raise InputError("E_LIMIT_DNS_OBSERVATIONS",
+                                 f"DNS timing exceeds {MAX_DNS_OBSERVATIONS} observations", record.packet_index)
             self._events.extend(self._windows.add(item) if item else self._windows.advance(ns))
         except InputError:
             self.unassigned_indices.append(record.packet_index)

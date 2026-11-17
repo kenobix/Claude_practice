@@ -72,7 +72,7 @@ def test_dns_failure_preserves_flow_and_safe_diagnostics(tmp_path, payload, stat
     ("other_port", "parsed", True), ("tcp", "parsed", True),
     ("fragment", "unsupported", False), ("short_payload", "truncated", True),
     ("short_tail", "truncated", True), ("invalid_time", "malformed", True),
-    ("cap_wire", "malformed", False), ("snaplen", "malformed", False),
+    ("snaplen", "malformed", False),
     ("udp_length", "malformed", False), ("short_header", "truncated", False),
 ])
 def test_non_candidates_never_enter_dns_decoder(monkeypatch, case, state, eligible):
@@ -95,8 +95,6 @@ def test_non_candidates_never_enter_dns_decoder(monkeypatch, case, state, eligib
         wirelen += 1
     elif case == "invalid_time":
         timestamp = None
-    elif case == "cap_wire":
-        wirelen -= 1
     elif case == "snaplen":
         snaplen = len(data) - 1
     elif case == "udp_length":

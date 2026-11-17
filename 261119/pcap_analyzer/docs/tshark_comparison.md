@@ -98,7 +98,7 @@ backwardは1700000001000000000→1700000000900000000nsの逆行を保持した�
 通常CIはハーネスをテストする。TSharkの取得と実体でのfixture比較はローカルの明示実行で、
 CIが独立比較まで実施したとはしない。CI workflowとPython依存lockは変更なし。
 
-## 今回追加した6 fixture（2026-11-17）
+## 入力異常を含む6 fixture（2026-11-17初回、独立レビュー修正後に再実行）
 
 同じTShark 4.2.2で残る6 fixtureを実行し、[期待挙動](../expected/tshark.input_cases.json)と照合した。
 解析器側は仕様とwire構造、TShark側は同版で確認した挙動を手で定義し、結果から自動上書きしない。
@@ -109,7 +109,7 @@ TSharkの終了0を「classic pcapとして妥当」「全packet正常」と解�
 | empty | E_FORMAT / 終了2 / 0件 | 終了0 / 0件 | 解析器は24-byteのclassic pcap headerを要求。TSharkはこの空入力を0件として扱った |
 | record_cutoff | E_RECORD_DATA / 終了2 / 0件 | 終了2 / 0件 / cut-short診断 | 宣言54に対し本文40 bytes。双方とも部分本文を完全packetへ数えない |
 | header_cutoff | E_RECORD_HEADER / 終了2 / 0件 | 終了2 / 0件 / cut-short診断 | レコードheader 8/16 bytes。解析器は本文不足と区別、TSharkは同じ診断文 |
-| malformed_length | 終了0 / malformed 1件 / 55・54 bytes | 終了0 / 1件 / cap_len=55・len=54 | 完全レコードは読めるが長さ矛盾。解析器はフロー除外、TSharkはTCP fieldsも抽出 |
+| malformed_length | E_RECORD_LENGTH / 終了2 / 0件 | 終了0 / 1件 / cap_len=55・len=54 | 解析器は本文読込前にヘッダーの矛盾を検出。TSharkはTCP fieldsも抽出 |
 | unsupported_linktype | E_LINKTYPE / 終了2 / 0件 | 終了0 / 0件 | link type 101 headerのみ。TSharkのraw-IP packet復号までは検証していない |
 | unsupported_pcapng | E_FORMAT_UNSUPPORTED / 終了2 / 0件 | 終了0 / 0件 | section headerのみのpcapng。interface/packet blockはなく、その復号は未検証 |
 
@@ -121,14 +121,15 @@ TSharkの終了0を「classic pcapとして妥当」「全packet正常」と解�
 途切れ2件の診断は、対象fixtureの絶対パスだけを`<fixture>`へ置換して保存/完全一致照合する。
 cut-short診断の別ファイル名、追加警告、permission denied、異なる終了値やsignal終了、
 不意のstdoutフレームを許容しない。共通のIP/長さ/時刻の差分検査も続ける。
-`malformed_length`のL4は長さ矛盾のため未比較とし、TSharkが示すTCP値をフローへ採用しない。
+`malformed_length`はTSharkだけが返す行の全パケットフィールドを共通項目の比較から除外する。
+両側の件数・長さ・終了状態は個別の手定義期待値と照合する。
 
-14 fixtureのスクリプト実行は終了0、未説明差分0。従来8件の結果は前commitと一致。
-追加6件は完全レコード1件（captured55/original54）、途切れを含む他5件は完全レコード0件。
-全14件の完全レコード合計18件、captured1135/original1148 bytes。部分レコード本文40 bytesは加算しない。
-これは不正な長さも記録どおりに保持した合計で、回線上の転送量ではない。
+修正後も14 fixtureのスクリプト実行は終了0、未説明差分0。
+変更はmalformed_lengthの解析器側の契約と比較除外理由に限り、TShark抽出行はすべて再実行前と一致した。
+解析器の全14件で受理したレコードは合計17件、captured1080/original1094 bytes。
+TSharkの追加1件（55/54 bytes）は解析器の合計から除外する。
 
-対象テスト51件成功（18.22秒、比較ハーネス35件 + CLI受入16件）。
+初回は対象テスト51件成功（18.22秒、比較ハーネス35件 + CLI受入16件）。
 追加15件では6入力、予想外の終了/診断/フレーム、解析器の予想外のエラー、
 完全prefix保持と次の失敗位置、比較CLIの差分終了1を確認。
 全421件成功（45.81秒、既存406件 + 追加15件）、pip check成功。

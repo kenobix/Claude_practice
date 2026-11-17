@@ -105,7 +105,7 @@ def test_timestamp_metadata(fixtures, name):
         assert ("ns" if reader.nano else "us") == EXPECTED[name]["precision"]
 
 
-@pytest.mark.parametrize("name", ["capture_truncated.pcap", "malformed_length.pcap", "unsupported_arp.pcap", "fragment.pcap"])
+@pytest.mark.parametrize("name", ["capture_truncated.pcap", "unsupported_arp.pcap", "fragment.pcap"])
 def test_boundary_fixture_metadata(fixtures, name):
     with RawPcapReader(str(fixtures / name)) as reader:
         records = list(reader)
@@ -126,6 +126,14 @@ def test_cutoff_fixtures_encode_actual_short_reads(fixtures):
     assert (fixtures / "empty.pcap").read_bytes() == b""
     with RawPcapReader(str(fixtures / "header_only.pcap")) as reader:
         assert list(reader) == []
+
+
+def test_length_conflict_fixture_encodes_complete_body(fixtures):
+    name = "malformed_length.pcap"
+    data = (fixtures / name).read_bytes()
+    expected = EXPECTED[name]
+    assert struct.unpack("<IIII", data[24:40])[2:] == (expected["declared_caplen"], expected["declared_wirelen"])
+    assert len(data[40:]) == expected["declared_caplen"]
 
 
 def test_backward_fixture_preserves_file_order(fixtures):
