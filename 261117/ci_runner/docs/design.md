@@ -91,5 +91,8 @@ P0ではDB再起動後のschema保持、CPU/RAM/PID制限、時間/ログ上限�
 
 ## 参照
 
+現在のP1実装では、[一件Worker](fixture-worker.md)が既存の取得・上限付きローカルfixture実行・条件付き結果確定を接続する。
+claim-onceは取得だけを維持。常駐処理・受理commit取得・ログ永続化・自動復旧は未実装。
+
 - [PostgreSQL 17 SELECT](https://www.postgresql.org/docs/17/sql-select.html): SKIP LOCKEDはキュー競合回避用途。一般の一貫した読取の代替にしない。
 - [FastAPI virtual environments](https://fastapi.tiangolo.com/virtual-environments/): プロジェクト専用Python環境を使用。

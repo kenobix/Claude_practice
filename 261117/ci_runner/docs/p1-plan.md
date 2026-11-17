@@ -17,7 +17,7 @@
 | 6 | 固定コンテナ実行と制限 | 受理commitを固定取得し、取得段階とnetwork noneの実行を分離。P0の非root/cap/read-only/tmpfs/CPU/RAM/PID制限を本番経路へ実装し、実値不一致なら開始拒否。stdout/stderr合計1MiB・時間10秒、停止・回収を統合する |
 | 7 | 結果確定とP1完了試験 | 現在token・running・lease内・取消要求なしをDB更新条件にし、exit 0/1・timeout・log_limitを保存。正常/失敗/長時間/大量ログの4fixtureで履歴・終了理由が再起動後も残り、一時資源とログ容量が回収される |
 
-受付・取得APIと故障試験は完了。「初回queuedの原子的な取得とattempt発行」は完了（[仕様・検証](worker-claim.md)）。実行前DB preflightも完了（[仕様と限界](execution-preflight.md)）。[固定fixtureの制限付きコンテナ作成・設定照合](container-preparation.md)も完了。[上限付き固定fixture実行](fixture-execution.md)も完了。[条件付き結果確定](result-finalization.md)も完了。次は一件だけのWorker入口へ接続する。
+受付・取得APIと故障試験は完了。「初回queuedの原子的な取得とattempt発行」は完了（[仕様・検証](worker-claim.md)）。実行前DB preflightも完了（[仕様と限界](execution-preflight.md)）。[固定fixtureの制限付きコンテナ作成・設定照合](container-preparation.md)も完了。[上限付き固定fixture実行](fixture-execution.md)も完了。[条件付き結果確定](result-finalization.md)も完了。[一件Worker入口](fixture-worker.md)へ接続済み。
 再取得防止、失敗時rollback、取得後のロック解放は専用DBで確認済み。履歴ありのqueuedは再試行の理由・予算を実装するまで取得しない。
 DDL変更が必要なら001を上書きせず後続migrationを追加し、適用ツールも後続版対応する。
 入力の許可設定と実行境界をテスト用ハーネスへ依存させず、アプリ側で明示的に強制する。
@@ -39,5 +39,6 @@ WebhookはP3、UI/成果物管理はP4。任意repo・外部PR・秘密注入・
 3. **内部の固定fixture実行は完了**。合計ログ保持1MiB・10秒/DB残leaseで停止し回収、4fixtureと拒否系を専用DB/実Dockerで確認。API/claim-once・常駐処理へは未接続。
 4. **内部の条件付き結果確定は完了**。token・状態・DB期限・取消条件を確認し、run/attemptの結果を同時commit。再送・競合・commit前後SIGKILL・再起動後の保持を検証。lease失効後の自動回復はP2の残件と明記する。
 
-次はclaim-onceを維持した別の一件実行入口で取得→実行→確定を接続する。容量上限付きログ永続化も残件。
+claim-onceを維持した[別の一件実行入口](fixture-worker.md)で取得→実行/回収→条件付き確定を接続済み。
+次はcold buildが取得後のleaseを消費しないよう、取得前image準備と安全な受渡しを設計・検証する。容量上限付きログ永続化も残件。
 受理SHAのコード取得/実行対象への対応付けは未実装。現在はローカル固定4fixtureだけを実行し、受理commitの検査完了ではない。

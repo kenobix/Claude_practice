@@ -7,6 +7,7 @@ Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB pref
 固定fixtureのコンテナ作成・設定照合・回収まで実装済み。
 内部ライブラリでDB再照合・実値ガード・時間/ログ/lease上限付きのローカル固定fixture実行も実装済み。
 ローカルfixture結果の条件付きDB確定（状態/exit/理由/終了時刻・正式attempt参照）も実装済み。
+別プロセスの一件実行入口で、取得→ローカル固定fixture実行/回収→条件付き確定まで接続済み。
 常駐Worker・受理commitの取得/実行・ログ永続化・Webhook・UIは未実装で、P1全体は未完了。
 GitHub Pagesへの公開対象ではない。常駐バックエンドの配置先は将来別途判断する。
 
@@ -102,7 +103,7 @@ verify_db.pyを使い、既存の開発DBへテストを手動で向けない。
 - [P1進捗と次の単一Worker実装順序](ci_runner/docs/p1-plan.md)
 - [調査・検証結果](work_log.md)
 
-受付・永続化・冪等性は実装済み。初回取得は実装済み。次は一件だけのWorker入口で取得→実行→確定を接続する。認証なしAPIはloopback限定を維持する。
+受付・永続化・冪等性、初回取得、一件だけのWorkerによるローカル固定fixture実行/確定は実装済み。認証なしAPIはloopback限定を維持する。
 
 ## 一時DBでの再検証
 
@@ -186,7 +187,7 @@ Worker内部向けのauthorize_execution(claim)で、DBにある現在token・Wo
 Worker内部のprepare_fixture(permit, mode)はローカル固定fixtureをbuildし、
 制限付きcreateとinspect照合後に未起動コンテナを返すcontext manager。通常終了・例外時に自分のcontainer/tagを回収する。
 P0のテストハーネスには依存せず、任意イメージ・コマンド・mount・環境変数を受け付けない。
-API/claim-onceへは未接続。実行ライブラリの起動・実値確認・上限監視は実装済み。受理SHAのコード取得・ログ永続化・Worker入口への接続は未実装。
+API/claim-onceへは未接続。実行ライブラリの起動・実値確認・上限監視と、別の一件Workerへの接続は実装済み。受理SHAのコード取得・ログ永続化は未実装。
 設定確認を実行時強制の証拠としない。詳細と残存時のラベルは[準備境界仕様](ci_runner/docs/container-preparation.md)を参照。
 
 ## 上限付き固定fixture実行の検証
@@ -210,3 +211,20 @@ finalize_fixture(claim, result)はrun→attemptを短くロックし、現在tok
 理由はfixture_接頭辞で記録する。受理commitのコード検査やログ永続化は未実装。
 API/claim-onceは結果確定へ自動接続しない。使い捨てDBのverify_execution.pyで実行から確定までを検証する。
 詳細は[結果確定仕様](ci_runner/docs/result-finalization.md)を参照。
+
+## 一件だけの固定fixture Worker
+
+```bash
+# ci_runner/から。migration済みの専用DBのDATABASE_URLとDocker権限が必要
+.venv/bin/python -m ci_runner.fixture_worker --worker-id fixture-worker-1 --run-once
+# 全回帰と一件Workerの実Docker検証（使い捨て専用DBを作成・回収）
+.venv/bin/python scripts/verify_execution.py
+```
+
+待機中の初回runを最大1件取得し、ローカル固定fixtureを実行して回収後にDB確定する。
+`--fixture-mode`は運用者が選ぶsuccess（既定）/failure/timeout/logsだけ。受理SHAのコードは取得・実行しない。
+終了0はWorker操作完了であり、ジョブ成功判定はJSONのstate/exit_codeによる。基盤障害・認可拒否・確定不明は終了1。
+冷えたimageのbuildも30秒leaseに含まれ、期限内に終わらなければ拒否する。leaseを延長して成功扱いにはしない。
+取得後の失敗はrunningに残る場合がある。DBで状態を照合し、自動再投入・手動SQLリセットで履歴を壊さない。
+常駐処理・自動再試行は追加しない。従来の`ci_runner.worker --claim-once`は取得だけを維持する。
+詳細と故障時の確認手順は[一件Worker仕様](ci_runner/docs/fixture-worker.md)を参照。

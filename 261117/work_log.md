@@ -493,3 +493,51 @@ DB/Dockerの自動化はこの最小CIの受入条件へ混ぜず、別途使い
 TemporaryDirectoryの終了処理でvenvを削除済み。OSへパッケージは導入していない。
 変更文書の相対リンク、credential pattern、git diff --checkを確認。対象5ファイルだけをstageし、
 staged差分・秘密情報・生成物を確認後feat/ci-runnerへcommit/pushする。
+
+## 継続作業：別プロセスで一件だけ実行する固定fixture Worker
+
+### 調査・今回の1単位
+
+指定cwd・feat/ci-runner・開始HEAD acf3081・未コミット変更なしを確認。
+ルート/担当AGENTS、261014のP1計画、README/work_log、取得/実行/確定コードと試験・設計を確認。
+既存Draft PR #1はopen/Draft、前回CIのpush/PR両チェック成功。前回導入時のGitHubログでの82件成功と
+新規依存導入成功はPR記録を確認した。今回理由なく再導入せず既存venvを使用する。
+原因未確定の過去の認可拒否は診断・fail closedを維持。現在の不具合/CI失敗は確認されないため、
+P1の次の依存タスク「取得→固定fixture実行/回収→条件付き確定を一件Worker入口で接続」を選択した。
+
+### 実装と判断
+
+- fixture_worker.run_onceとpython -m ci_runner.fixture_workerを追加。--worker-id/--run-onceを必須とし、運用者の固定4modeだけを受け付ける。
+- 取得は1回、空ならDockerなしで終了。取得COMMIT後に同じClaimで実行し、回収後に同じ結果を条件付き確定する。
+- 既存worker --claim-onceは取得だけのまま。API・入力許可・Docker設定・migration001/002・依存・workflowは未変更。
+- 状態/exit_code/fixture_理由/DB終了時刻をstdout JSONへ返す。チェック失敗・時間切れの保存成功もWorker操作の終了0とし、ジョブ状態で判定する。
+- 認可拒否・基盤障害・回収失敗・確定不明はstderrの段階/既知IDだけ、終了1。生例外・token・ジョブログ・DSNは出さない。
+- どの段階も自動再試行せず、別runを続けて取得しない。取得/確定COMMITの応答喪失を未保存と断定せず、DB照合が必要とする。
+- claim後のbuildも30秒leaseを消費する契約は維持。cold buildで失効したら停止/確定拒否し、leaseを緩めない。
+- 常駐ループ・受理commit取得・ログ永続化・heartbeat/期限回収/再試行へは進まない。
+- README、P1計画、取得/実行/確定/共通設計と新規一件Worker仕様を更新。恒久ルールの変更はなくAGENTSは未変更。
+
+### 検証結果
+
+最初の通常回帰は追加途中の10件を含み92 passed、97 deselected、既知警告1件（1.45秒）。
+その後、明示フラグ/モード拒否2件と取得応答不明/取消先行2件を追加し、以下の全回帰で検証した。
+**scripts/verify_execution.py：179 passed、14 skipped、既知TestClient警告1件、176.97秒**。
+今回追加は23件（通常12・専用DB7・実Docker4）。14 skippedは未変更の準備4件・P0隔離10件で、今回は別実行もしない。
+
+- 通常：空キュー、入力拒否、明示--run-once不足、各段階停止と再試行なし、接続factoryの引継ぎ、回収失敗後の確定拒否、確定不能のガード/lease結果、token/生診断非出力。
+- 専用DB：DockerのないPATHの空キュー、DB未設定、実行失敗時のrunning残存/次run queued、取得COMMIT応答喪失後に実行しないこと、取消先行の起動拒否。
+- 専用DB：確定COMMIT前/後の通信例外注入でrunning/保存済みを照会し、次runを取得しない。合成実行結果を使い、隔離実行の実証とは分ける。
+- 実Docker：HTTP投入→別Workerプロセス→success/exit1/timeout/log_limit確定→別API再起動後の参照・同じ投入の再送を確認。
+- 実Docker：4ケースとも2件目queued・attempt総数1件、DBの理由/終了時刻とreceipt一致、token非出力、session container/image集合が実行前後で不変。
+- 既存の受付/claim/preflight/実行/確定/競合/故障試験も同じ回帰で成功。DB readiness200、migration二重適用、DB再起動後schema1/2保持を確認。
+- pip checkは破損なし（ユーザーcache権限通知のみ）、compileall成功。今回の試験失敗なし。
+- ignoredのfixture-worker-latest.jsonは4ケース・failure0、execution-latest.jsonは11ケース・failure0。両証拠のsource SHA-256が現在ソースと一致。
+- 専用ラベルのcontainer/image、専用DB container/volume/networkの5照会で残存0。global pruneや他資源の変更は行わない。
+
+### 未完了・次の最優先単位
+
+P0は既存の管理下fixture検証範囲で完了、P1全体は未完了。
+次はcold buildが取得後のleaseを消費しないよう、取得前image準備と同一imageの安全な受渡しを設計・検証する。
+その後に容量上限付きログ永続化/表示時エスケープ、受理commitの取得/対応付けを進める。
+実行中の取消/DB断即時検知・プロセス停止からの自動回復・heartbeat等は今回未実装/未検証。
+CLI再起動は同じ結果報告の再送ではなく、メモリ結果の復元機能もない。running残存時はDBを照合し、無条件に再キュー/成功へ変更しない。

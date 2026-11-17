@@ -91,7 +91,7 @@ execute_fixture単体ではrun/attemptはrunningのまま。後続のfinalize_fi
 
 ## 次の1単位
 
-条件付き結果確定は後続単位で実装済み。次は一件だけのWorker入口で取得→実行→確定を接続する。
+条件付き結果確定と[一件だけのWorker入口](fixture-worker.md)による取得→実行/回収→確定の接続は後続単位で実装済み。
 受理commit取得/対応付け、常駐Worker接続、実行中DB監視・heartbeat・期限回収・再試行等も残件。P1全体は未完了。
 
 参照: [Docker startのattach/interactive](https://docs.docker.com/reference/cli/docker/container/start/)、
