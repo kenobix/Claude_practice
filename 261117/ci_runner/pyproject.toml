@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ci-runner-261117"
 version = "0.1.0"
-description = "CI runner intake API; no job execution"
+description = "CI runner intake API and bounded local-fixture execution"
 requires-python = ">=3.12,<3.13"
 dynamic = ["dependencies"]
 

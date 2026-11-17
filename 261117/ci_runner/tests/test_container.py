@@ -22,7 +22,7 @@ def configuration():
         'Id': 'c' * 64, 'Image': image['Id'], 'Mounts': [],
         'State': {'Status': 'created', 'Pid': 0, 'Running': False},
         'Config': {'User': '65534:65534', 'WorkingDir': '/tmp',
-                   'Entrypoint': container.ENTRYPOINT.copy(), 'Cmd': None,
+                   'Entrypoint': container.ENTRYPOINT.copy(), 'Cmd': ['success'], 'OpenStdin': True,
                    'Env': image['Config']['Env'].copy(), 'Labels': labels.copy()},
         'HostConfig': {'NanoCpus': 500_000_000, 'Memory': 134217728,
                        'MemorySwap': 134217728, 'PidsLimit': 64, 'NetworkMode': 'none',

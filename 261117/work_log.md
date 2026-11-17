@@ -305,3 +305,88 @@ P1全体は未完了。次は起動直前のDB再照合・cgroup等の実値確�
 
 最終専用ラベル照会で準備/P0のcontainer・一時image、および専用DBのcontainer/volume/networkは全て0件。P0証拠のfailure/cleanup errorも0件。
 ローカル文書リンク、compileall、diff whitespaceを確認済み。対象内の差分・秘密情報・生成物を確認してfeature branchへcommit/pushし、Draft PR #1の進捗を更新する。
+
+## 継続作業：DB認可ゲート付きの上限実行（2026-11-17）
+
+### 調査と今回の1単位
+
+cwdは指定worktree、branch feat/ci-runner、開始HEAD f6189e7、未コミット変更なし。
+ルートと担当AGENTS、261014計画、README/work_log、既存実装・試験・P1設計、gh CLIでDraft PR #1を確認した。
+受付・初回取得・DB preflight・未起動コンテナ準備が完了済み。起動/上限監視/結果確定が未完了。
+依存順で「起動前DB再照合・実値確認を伴う固定fixtureの上限付き実行」だけを実装した。
+結果確定、常駐ループ、受理commit取得へは進まない。変更は261117内だけ。
+
+### 実装と境界
+
+- execution.pyのexecute_fixtureは内部ライブラリ。APIとclaim-once CLIから呼ばない。
+- DB認可→制限付き準備→DB再認可→固定ガード起動→cgroup/権限確認→DB再認可→定型GOで処理開始。
+- ローカルの固定4fixtureだけを実装。任意コード/URL/YAML/image/command/env/mountは受け付けない。
+- ガードでCPU 0.5/RAM128MiB/swap0/PID64、uid/gid65534、CapEff/CapBnd0、NNP1/seccomp2を確認する。
+- 非root/cap-drop/read-only/tmpfs/network none/log none等の設定は既存準備境界で検証。
+- DBが返す残leaseをDB呼出前の単調時計へ加算し、往復待ちで期限を延長しない。lease延長処理は追加しない。
+- 10秒/残leaseの早い期限、合計ログ保持1MiBで非同期killしattachを排出。exited/PID0を確認後、所有資源を回収。
+- 実行結果はメモリ上だけ。run/attemptはrunningのままで、受理commitの取得・検査完了とは扱わない。
+- DB照合とGOは原子的でなく、GO後の取消/DB断の即時検知も未実装。10秒と取得済みleaseのローカル上限までに停止する設計。
+- 最終確認でDB応答待ち中のガードも独立して止まる必要を認め、GO待ちにSIGALRM 10秒を追加。GO受信後は解除しホスト監視へ移す。
+- README/AGENTS/実行仕様/P1計画/既存設計を更新。依存追加やmigration変更なし。
+
+### 検証と実測
+
+通常の新規実行制御3件と既存準備37件は40 passed in 0.36s。
+最初の専用DB＋実Docker統合は116 passed、14 skipped、既知のTestClient警告1件 in 88.61s。
+ガード後の実DB停止とソースSHA付き証拠記録を加えた実行は117 passed、14 skipped、同警告1件 in 93.15s。
+
+- success exit0・stdout13 bytes、failure exit1・stderr14 bytes。
+- timeoutは10.462秒でexit137。ログfixtureは観測4MiBに対し合計保持1MiB（stdout573440/stderr475136 bytes）、exit137。
+- 実コンテナmemoryを64MiBへ変え、テスト内だけinspect memory照合を迂回して、独立cgroupガードのexit78/GOなしを実証。
+- ガードack後の取消commit・期限切れcommit・DB通信例外注入・専用DB実停止ではGOなし。異常を成功と返さず、資源を回収。
+- DB leaseを3秒に短縮すると3.150秒でlease_expired、exit137。DB往復遅延で残時間を消費する通常テストも確認。
+- 実Dockerで固有container/tagの不存在を各ケースで確認。ignored artifacts/execution-latest.jsonにimage ID、ソースSHA256、実値、サイズ、時間、回収件数を記録。
+- 追加した独立ガード待機期限の最終試験結果は以下へ追記する。
+
+既存準備回帰は41 passed in 18.04s、既存P0隔離回帰は10 passed in 46.44s。
+P0のコミット済み証拠JSONは変更しない。pip checkは依存破損なし（cache権限による無効化通知のみ）。
+
+### 残課題・次の1単位
+
+次は現在token・状態・DB期限・取消条件によるrun/attemptの原子的な結果確定と故障試験。
+受理commitの取得/対応付け、常駐Workerへの接続、実行中DB監視、heartbeat/期限回収/再試行等は残件。
+P1全体は未完了。以前の認可fixture取得不可の根本原因は未特定のまま、診断を維持。今回の回帰では再発しなかった。
+
+独立GO待ち期限の試験追加後、117 passed・1 failed・14 skipped（116.40s）。失敗はstdinを開いたinteractive Docker CLIのprocess.wait(18)がtimeoutしたもの。
+修正試験でも117 passed・1 failed・14 skipped（93.09s）で、起動完了前のdocker waitが初期exit code0を返す競合を確認した。
+ガードのackで起動を同期してからdaemonの終了コード/PID0を確認するよう試験を修正。実装の停止期限や期待exit142は緩和していない。
+
+ackで同期した単独試験でもdocker waitが18秒timeoutし、試験手順だけでなくガード実装にも不備があると判明。
+LinuxのコンテナPID1ではデフォルト終了シグナルが無視されるため、alarmを予約しただけでは止まらなかった。
+Docker公式run/attach資料でもPID1の扱いを確認。SIGALRMにos._exit(124)の明示handlerを設定し、独立停止の期待値をexit124へ変更した。
+CLI timeoutをガード停止と誤認しないよう、起動ack→daemon wait→exited/PID0→stdin close/CLI回収の順で実証する。
+
+明示handlerの単独試験はGOなしでexit124/PID0とcontainer/tag回収に成功。
+その後の全回帰は117 passed・1 failed・14 skipped（142.09s）。ガード独立停止を含む他ケースは成功したが、success fixtureのガード後authorize_executionがExecutionDeniedとなった。
+この実行では並行した準備回帰も40.26sに延びていた。build/起動中の30秒lease消費が考えられるが、拒否時DB状態の記録がなく原因は未確定。
+実装の認可条件やleaseを緩めず、正常fixtureの認可拒否時にDB状態・DB時刻/期限・token一致の真偽だけを記録する診断を追加した。token/DSN実値は出さない。
+リトライは入れず、Docker buildの競合を避けて統合回帰を単独で再実行する。準備回帰の最終41 passed in 40.26sはこの状態で維持されている。
+
+### 最終結果
+
+診断追加後、Dockerの他回帰と並行せずに実施した全回帰は **118 passed、14 skipped、既知のTestClient警告1件 in 107.47s**。
+既存104件＋新規通常3件＋新規DB/Docker11件。14 skippedは別実行の準備4件/P0隔離10件。
+DB readiness=200、migration再適用、DB再起動後のschema保持も確認した。
+最終imageでの準備回帰は **41 passed in 40.26s**。P0回帰は **10 passed in 46.44s**（P0ソースの変更なし）。
+
+| 最終実測 | 結果 |
+|---|---|
+| success / failure | exit0・stdout13 bytes / exit1・stderr14 bytes |
+| timeout | 10.290秒、exit137 |
+| logs | 観測4194304 bytes、保持1048576 bytes（stdout606208 + stderr442368）、exit137 |
+| DB lease3秒 | 3.186秒、lease_expired、exit137 |
+| 実memory64MiBへの変更 | ガードexit78、GOなし |
+| GOなし独立ガード | 明示SIGALRM handlerでexit124、PID0、GOなし |
+| ガード後の取消/失効/通信例外/実DB停止 | GOなし、例外、所有資源回収 |
+
+最新実行証拠のソースSHA256が現在コードと一致し、11ケース・11件のcontainer/tag回収確認・failure0を確認。
+専用ラベルの最終照会で準備/実行/P0のcontainer・一時image、DB container/volume/networkはすべて残存0件。
+base image/build cacheは再利用用に残す。生成された最新証拠JSONはignored artifacts内だけで、過去のコミット済み証拠を上書きしていない。
+文書リンク/compileall/diff whitespace・依存整合を確認。差分/秘密情報/生成物とstaged scopeを監査後、feature branchへcommit/pushしDraft PRの進捗を更新する。
+一時的な成功fixtureの再認可拒否の原因は未確定のまま残す。診断追加以外の条件緩和や再試行はしていない。

@@ -1,7 +1,7 @@
 # P1実装進捗と単一Worker実装計画
 
 前提: [P0隔離実測](isolation.md)は現在環境の管理下fixtureについて完了。
-下表1〜4は実装・実DB検証済み（P1前半）。5は初回取得、6は実行前DB照合と未起動コンテナ作成/設定照合/回収まで実装・検証済み。常駐ループ・コンテナ起動/実行・7の結果保存・Webhookは未実装。
+下表1〜4は実装・実DB検証済み（P1前半）。5は初回取得、6はDB照合・準備・ローカル固定fixtureの実値ガード/上限付き実行/回収まで実装・検証済み。受理commitの取得/実行、常駐ループ、7の結果保存・Webhookは未実装。
 受付契約と障害検証は[受付API仕様](intake-api.md)。P1全体の完了条件は未達。
 
 ## 順序と受入条件
@@ -16,7 +16,7 @@
 | 6 | 固定コンテナ実行と制限 | 受理commitを固定取得し、取得段階とnetwork noneの実行を分離。P0の非root/cap/read-only/tmpfs/CPU/RAM/PID制限を本番経路へ実装し、実値不一致なら開始拒否。stdout/stderr合計1MiB・時間10秒、停止・回収を統合する |
 | 7 | 結果確定とP1完了試験 | 現在token・running・lease内・取消要求なしをDB更新条件にし、exit 0/1・timeout・log_limitを保存。正常/失敗/長時間/大量ログの4fixtureで履歴・終了理由が再起動後も残り、一時資源とログ容量が回収される |
 
-受付・取得APIと故障試験は完了。「初回queuedの原子的な取得とattempt発行」は完了（[仕様・検証](worker-claim.md)）。実行前DB preflightも完了（[仕様と限界](execution-preflight.md)）。[固定fixtureの制限付きコンテナ作成・設定照合](container-preparation.md)も完了。次は起動直前のDB再照合・実値確認を伴う上限付き実行にする。
+受付・取得APIと故障試験は完了。「初回queuedの原子的な取得とattempt発行」は完了（[仕様・検証](worker-claim.md)）。実行前DB preflightも完了（[仕様と限界](execution-preflight.md)）。[固定fixtureの制限付きコンテナ作成・設定照合](container-preparation.md)も完了。[上限付き固定fixture実行](fixture-execution.md)も完了。次は条件付き結果確定にする。
 再取得防止、失敗時rollback、取得後のロック解放は専用DBで確認済み。履歴ありのqueuedは再試行の理由・予算を実装するまで取得しない。
 DDL変更が必要なら001を上書きせず後続migrationを追加し、適用ツールも後続版対応する。
 入力の許可設定と実行境界をテスト用ハーネスへ依存させず、アプリ側で明示的に強制する。
@@ -34,8 +34,8 @@ WebhookはP3、UI/成果物管理はP4。任意repo・外部PR・秘密注入・
 ## 次の単一Workerの小さな単位
 
 1. **初回取得は完了**。固定Worker IDを持つ別プロセスでqueuedを1件取得し、DB時刻のlease・新token・attempt番号を同じtransactionで永続化する。取得後停止の状態を記録し、APIにはDocker権限を与えない。
-2. **DB実行権preflightは完了**。起動前の現在token・状態・DB期限・取消要求を再照合するsnapshotを返す。未起動コンテナの設定検証/回収も完了。残りは起動直前のDB再照合・実行時制限の実値確認を接続する。固定イメージ/commit以外を実行せず、preflight不一致・DB断では開始を拒否する。テスト用ハーネスを本番からimportしない。
-3. stdout/stderrの保持上限、時間上限、停止と一時領域回収を統合し、正常・チェック失敗・timeout・大量ログの4fixtureを試す。
+2. **DB実行権preflightは完了**。起動前の現在token・状態・DB期限・取消要求を再照合するsnapshotを返す。未起動コンテナの設定検証/回収も完了。起動前とガード後のDB再照合・実値確認も内部実行ライブラリに接続済み。固定イメージ/commit以外を実行せず、preflight不一致・DB断では開始を拒否する。テスト用ハーネスを本番からimportしない。
+3. **内部の固定fixture実行は完了**。合計ログ保持1MiB・10秒/DB残leaseで停止し回収、4fixtureと拒否系を専用DB/実Dockerで確認。API/claim-once・常駐処理へは未接続。
 4. token・状態・DB期限・取消条件に合う場合だけ結果を確定し、再起動後に履歴から追えることを確認する。lease失効後の自動回復はP2の残件と明記する。
 
-受理SHAのコード取得/実行対象への対応付けは未実装。現在の準備境界は常にローカル固定success fixtureを作成するだけで、受理commitの検査完了ではない。
+受理SHAのコード取得/実行対象への対応付けは未実装。現在はローカル固定4fixtureだけを実行し、受理commitの検査完了ではない。

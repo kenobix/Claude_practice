@@ -25,6 +25,7 @@ class ExecutionPermit:
     ref: str
     commit_sha: str
     workflow_version: str
+    remaining_lease_seconds: float = 0.0
 
 
 def authorize_execution(claim: Claim, connection_factory=None) -> ExecutionPermit:
@@ -39,7 +40,8 @@ def authorize_execution(claim: Claim, connection_factory=None) -> ExecutionPermi
         row = conn.execute(
             'SELECT r.id AS run_id, a.id AS attempt_id, a.attempt_no, a.worker_id, '
             'a.lease_token, a.lease_expires_at, r.repository_id, r.ref, '
-            'r.commit_sha, r.workflow_version '
+            'r.commit_sha, r.workflow_version, '
+            'EXTRACT(EPOCH FROM (a.lease_expires_at-clock_timestamp())) AS remaining_lease_seconds '
             'FROM runs r JOIN attempts a ON a.run_id=r.id '
             "WHERE r.id=%s AND a.id=%s AND a.lease_token=%s AND a.worker_id=%s "
             'AND a.attempt_no=%s AND a.attempt_no=1 '
@@ -53,6 +55,7 @@ def authorize_execution(claim: Claim, connection_factory=None) -> ExecutionPermi
         ).fetchone()
         if row is None or not re.fullmatch(r'[0-9a-f]{40}', row['commit_sha']):
             raise ExecutionDenied('execution claim is not currently valid')
+        row['remaining_lease_seconds'] = float(row['remaining_lease_seconds'])
         permit = ExecutionPermit(**row)
     # DB errors during context exit must also prevent a successful return.
     return permit

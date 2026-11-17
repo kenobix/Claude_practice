@@ -35,7 +35,7 @@ SELECT後のconnection context終了時にDBエラーが起きた場合も成功
 今回だけで「取消後の実行が常に起きない」「DB断でもホストで必ず停止する」とは説明しない。
 
 P0で実測したCPU/RAM/PID等の隔離制限とは別の確認である。
-本番側のコンテナ設定・cgroup確認・実行中監視はまだ接続していない。
+[内部の固定fixture実行](fixture-execution.md)へコンテナ準備・起動前/ガード後DB再照合・cgroup確認・時間/ログ/残lease監視を接続済み。実行中DB再照合は未実装。
 claim-once CLIの挙動は変更せず、取得後はrunningのまま残る。HTTP APIからの起動もない。
 
 ## 専用PostgreSQLの検証
@@ -60,7 +60,7 @@ scripts/verify_db.pyで使い捨て専用DBを作成し、既存テストとtest
 ## 次の1単位
 
 [固定fixture用の制限付きコンテナ作成・設定照合](container-preparation.md)は後続単位で実装済み。DB照合からの自動接続はまだない。
-その後に、このDB preflightとcgroup等の実値確認を起動直前へ接続し、上限付き実行・停止/回収・結果保存を進める。
+上限付き実行と停止/回収も後続単位で実装済み。次はDB条件付き結果確定へ進める。
 P1全体は未完了。再試行、heartbeat、期限回収はP2へ残す。
 
 参考: [PostgreSQL clock_timestamp](https://www.postgresql.org/docs/17/functions-datetime.html)、
@@ -70,3 +70,5 @@ P1全体は未完了。再試行、heartbeat、期限回収はP2へ残す。
 新規認可19ケースと既存48ケース。別実行のP0隔離回帰は10 passed、41.46秒。
 途中で認可用Claimの取得準備が1件失敗したため、投入直後の時刻条件と認可試験を分離し、DB上で明示的に取得可能にしたfixtureへ修正した。
 取得不可の根本原因は未確定で、取得失敗時の診断を追加してwork_log.mdに記録している。本番取得SQLの条件緩和や試験内リトライは行っていない。
+
+実行ライブラリ向けにDBのlease残秒も返す。ホストはDB呼出前の単調時計へ加算し、DB往復待ちで期限を延長しない。lease更新や実行権の予約ではない。

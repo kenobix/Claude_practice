@@ -5,7 +5,8 @@
 ヘルスチェック・受付/履歴API・PostgreSQL永続化・冪等性を実装済み（P1前半）。
 Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB preflightを実装済み。
 固定fixtureのコンテナ作成・設定照合・回収まで実装済み。
-常駐Worker・コンテナ起動/実行・結果保存・Webhook・UIは未実装で、P1全体は未完了。
+内部ライブラリでDB再照合・実値ガード・時間/ログ/lease上限付きのローカル固定fixture実行も実装済み。
+常駐Worker・受理commitの取得/実行・結果保存・Webhook・UIは未実装で、P1全体は未完了。
 GitHub Pagesへの公開対象ではない。常駐バックエンドの配置先は将来別途判断する。
 
 ## Python環境とテスト
@@ -92,11 +93,12 @@ verify_db.pyを使い、既存の開発DBへテストを手動で向けない。
 - [受付APIの契約・競合設計・故障検証](ci_runner/docs/intake-api.md)
 - [Worker初回取得の仕様・検証と限界](ci_runner/docs/worker-claim.md)
 - [実行前DB preflightとsnapshotの限界](ci_runner/docs/execution-preflight.md)
+- [上限付き固定fixture実行とDB認可ゲート](ci_runner/docs/fixture-execution.md)
 - [固定fixtureのコンテナ作成・設定照合](ci_runner/docs/container-preparation.md)
 - [P1進捗と次の単一Worker実装順序](ci_runner/docs/p1-plan.md)
 - [調査・検証結果](work_log.md)
 
-受付・永続化・冪等性は実装済み。初回取得は実装済み。次はDB再照合と実値確認を伴う上限付きfixture実行、その後に結果保存へ進む。認証なしAPIはloopback限定を維持する。
+受付・永続化・冪等性は実装済み。初回取得は実装済み。次は現在token/DB期限/取消条件を守る結果のDB確定へ進む。認証なしAPIはloopback限定を維持する。
 
 ## 一時DBでの再検証
 
@@ -167,8 +169,8 @@ DATABASE_URL設定済みの使い捨て開発DBに限って利用する。
 
 Worker内部向けのauthorize_execution(claim)で、DBにある現在token・Worker・状態・取消要求・lease期限・許可設定を再照合する。
 有効な初回attemptだけに、DBから読み直した固定commit等のExecutionPermitを返す。DB異常や条件不一致なら返さない。
-この照合はsnapshotであり、照合後の取消/失効を防ぐ予約ではない。実際の起動直前の再確認と実行中監視は今後必要。
-Dockerの作成・起動や結果保存にはまだ接続していない。通常の検証はscripts/verify_db.pyを使用する。
+この照合はsnapshotであり、照合後の取消/失効を防ぐ予約ではない。内部経路では起動前/ガード後の再確認とローカル上限監視を行う。実行中DB再照合は今後必要。
+内部の固定fixture実行ライブラリに接続済み。結果保存・API/claim-onceへの接続は未実装。通常の検証はscripts/verify_db.pyを使用する。
 
 ## 固定fixtureのコンテナ準備（起動なし）
 
@@ -177,8 +179,22 @@ Dockerの作成・起動や結果保存にはまだ接続していない。通�
 .venv/bin/python scripts/verify_preparation.py
 ```
 
-Worker内部のprepare_fixture(permit)はローカル固定success fixtureをbuildし、
+Worker内部のprepare_fixture(permit, mode)はローカル固定fixtureをbuildし、
 制限付きcreateとinspect照合後に未起動コンテナを返すcontext manager。通常終了・例外時に自分のcontainer/tagを回収する。
 P0のテストハーネスには依存せず、任意イメージ・コマンド・mount・環境変数を受け付けない。
-API/claim-onceへは未接続。受理SHAのコード取得・起動・実行時cgroup確認・監視・結果保存は未実装。
+API/claim-onceへは未接続。実行ライブラリの起動・実値確認・上限監視は実装済み。受理SHAのコード取得・結果保存は未実装。
 設定確認を実行時強制の証拠としない。詳細と残存時のラベルは[準備境界仕様](ci_runner/docs/container-preparation.md)を参照。
+
+## 上限付き固定fixture実行の検証
+
+```bash
+# ci_runner/から。使い捨て専用DBと実Dockerを使用
+.venv/bin/python scripts/verify_execution.py
+```
+
+execute_fixture(claim, mode)はsuccess/failure/timeout/logsだけを扱う内部ライブラリ。
+DB再照合とコンテナ内ガードの確認後、DBを再照合してから定型GOを送る。
+CPU/RAM/swap/PIDの実値を確認し、壁時計10秒・合計保持ログ1MiB・DB残leaseの上限を適用する。
+実行結果はメモリ上に返すだけでDBはrunningのまま。共有DBへ向けず上記スクリプトで検証する。
+実行中の取消/DB断の即時検知、heartbeat/自動復旧、結果の永続化は未実装。
+[実行仕様・証拠・限界](ci_runner/docs/fixture-execution.md)を参照。

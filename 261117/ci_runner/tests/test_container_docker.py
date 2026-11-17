@@ -32,9 +32,9 @@ def test_owned_lifecycle_and_failure_cleanup(monkeypatch, failure):
     monkeypatch.setattr(container, 'docker', observe)
     if failure == 'mismatch':
         validate = container.validate_configuration
-        def reject(info, image, labels):
+        def reject(info, image, labels, mode):
             info['HostConfig']['NetworkMode'] = 'bridge'
-            validate(info, image, labels)
+            validate(info, image, labels, mode)
         monkeypatch.setattr(container, 'validate_configuration', reject)
     job_permit = permit()
     def exercise():

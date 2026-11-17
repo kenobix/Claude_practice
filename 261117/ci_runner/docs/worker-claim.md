@@ -67,9 +67,9 @@ commit応答が失われれば結果不明になり得るため、DBエラーを
 
 ## 次の依存関係
 
-DB期限/状態/token/取消要求の再確認はpreflightとして実装済み。次は固定fixture用の制限付きコンテナ作成・設定照合を用意し、後続の起動時にpreflightとP0の実値確認を接続する。
+DB期限/状態/token/取消要求の再確認はpreflightとして実装済み。内部の固定fixture実行ライブラリへ準備・起動前/ガード後DB照合・実値確認と上限監視を接続済み。claim-once CLIからは呼ばない。
 取得を済ませてから任意のホストコマンドを呼ぶ実装は行わない。
-その後、単一Workerの上限付き実行・停止/回収・条件付き結果保存を進める。P1全体は未完了。
+次は条件付き結果保存、その後に単一Workerの常駐接続へ進める。P1全体は未完了。
 heartbeat、自動lease回収、基盤障害の再試行、古い報告拒否・取消競合の故障実験はP2で完成させる。
 
 参考: [PostgreSQL SELECT](https://www.postgresql.org/docs/17/sql-select.html)、

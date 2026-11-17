@@ -34,6 +34,7 @@ def test_current_claim_returns_db_snapshot_without_locks_or_writes(dedicated_dat
     run, claim = issue_claim()
     permit = authorize_execution(claim)
     assert permit.run_id == run.id and permit.attempt_id == claim.attempt_id
+    assert 0 < permit.remaining_lease_seconds <= 30
     assert permit.attempt_no == 1 and permit.worker_id == claim.worker_id
     assert permit.lease_token == claim.lease_token
     assert permit.lease_expires_at == claim.lease_expires_at

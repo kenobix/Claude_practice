@@ -2,18 +2,18 @@
 
 `src/ci_runner/container.py` の `prepare_fixture(permit)` はWorker内部用context manager。
 固定されたローカル `fixtures/job/` だけをnetwork noneでbuildし、取得したイメージIDでコンテナをcreateする。
-イメージ名・コマンド・URL・YAML・マウント・環境変数を呼出側から指定する引数はない。
+イメージ名・任意コマンド・URL・YAML・マウント・環境変数を呼出側から指定する引数はない。内部mode引数は固定4種類だけを許可する。
 P0のテスト用ハーネスをアプリからimportしない。現在はREADMEのsource checkout・editable installを前提とし、fixtureを含まないwheel単独配布は対象外。
 
 ## 今回の範囲と依存関係
 
 受付・初回claim・[DB preflight](execution-preflight.md)が先行実装済み。
 今回は制限付きcreate、inspect照合とcontext終了時の回収だけを実装した。
-APIとclaim-once CLIには接続していない。startを呼ぶ経路はなく、fixture.pyをホストで実行しない。
+APIとclaim-once CLIには接続していない。後続の[実行ライブラリ](fixture-execution.md)がガードとfixtureを起動する。fixture.pyをホストで実行しない。
 
 ExecutionPermitのrepository/ref/workflow・SHA形式・初回番号と識別子を検証する。
 これは内部snapshotの形式確認で、現在のDB認可の代わりではない。build中にleaseが切れることもある。
-受理SHAは実行するコードへ解決していない。作成するのは常にローカルの定型success fixtureであり、
+受理SHAは実行するコードへ解決していない。作成するのは常にローカルの固定4fixtureであり、
 「受理commitを取得・検証した」「そのcommitの検査に成功した」とは扱わない。
 固定commitの取得/対応付けもP1残件である。
 
@@ -26,8 +26,8 @@ ExecutionPermitのrepository/ref/workflow・SHA形式・初回番号と識別子
 | namespace / network | private cgroup/ipc、host PIDなし、network none、ポート公開なし |
 | 書込領域 | root read-only、/tmpだけ16MiB tmpfs、rw/noexec/nosuid/nodev、mode1777 |
 | 追加アクセス | binds/追加mount/volume/device/volumes-from/追加groupなし |
-| ログ・再起動 | log-driver none、restart=no、stdin/TTYなし |
-| 固定実行指示 | イメージID一致、定型Python entrypoint、追加Cmdなし、/tmp作業dir |
+| ログ・再起動 | log-driver none、restart=no、固定GOゲートのためstdin open、TTYなし |
+| 固定実行指示 | イメージID一致、定型Python entrypoint、Cmdはsuccess/failure/timeout/logsだけ、/tmp作業dir |
 | 環境 | 固定イメージのEnvと一致。ホスト環境をジョブへ追加しない |
 | 状態・追跡 | created、PID0、非running。ランダムsession・run/attemptラベル一致 |
 
@@ -67,8 +67,8 @@ cd ~/work/Claude_practice-261117/261117/ci_runner
 
 ## 次の1単位
 
-起動前のDB再照合とcgroup等の実値確認を接続した、上限付き固定fixture実行を実装する。
-実値不一致でworkloadを進めず、時間/合計ログ上限・停止・回収を統合する必要がある。
+起動前/ガード後DB再照合とcgroup実値確認を伴う上限付き実行は後続単位で実装済み。
+実値不一致の拒否、時間/合計ログ/DB残lease上限、停止/回収を検証済み。
 続いて現在token/DB期限/取消条件に従う結果確定を実装する。P1全体は未完了。
 
 参照: [Docker create（起動を伴わない作成）](https://docs.docker.com/reference/cli/docker/container/create/)。

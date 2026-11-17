@@ -14,6 +14,7 @@ from .worker import validate_worker_id
 LABEL = 'dev.ci-runner.preparation-session'
 ROOT = Path(__file__).resolve().parents[2]
 TMPFS = {'/tmp': 'rw,noexec,nosuid,nodev,size=16m,mode=1777'}
+MODES = frozenset(('success', 'failure', 'timeout', 'logs'))
 ENTRYPOINT = ['python', '-I', '-B', '/opt/fixture.py']
 
 
@@ -41,7 +42,7 @@ def docker(*args, timeout=30, check=True):
     return result
 
 
-def validate_configuration(info, image, labels):
+def validate_configuration(info, image, labels, mode='success'):
     """Inspect settings only. Effective runtime cgroups still require verification."""
     try:
         cfg, host, state = info['Config'], info['HostConfig'], info['State']
@@ -63,10 +64,11 @@ def validate_configuration(info, image, labels):
         valid = valid and state['Status'] == 'created' and state['Pid'] == 0 and not state['Running']
         valid = valid and info['Image'] == image['Id']
         valid = valid and cfg['User'] == '65534:65534' and cfg['WorkingDir'] == '/tmp'
-        valid = valid and cfg['Entrypoint'] == ENTRYPOINT and not cfg['Cmd']
+        valid = valid and cfg['Entrypoint'] == ENTRYPOINT and cfg['Cmd'] == [mode]
         valid = valid and cfg['Env'] == image['Config']['Env']
         valid = valid and not any(cfg.get(key) for key in (
-            'Volumes', 'ExposedPorts', 'Healthcheck', 'OpenStdin', 'Tty'))
+            'Volumes', 'ExposedPorts', 'Healthcheck', 'Tty'))
+        valid = valid and cfg['OpenStdin'] is True
         valid = valid and all(cfg['Labels'].get(key) == value for key, value in labels.items())
     except (KeyError, TypeError):
         valid = False
@@ -87,7 +89,7 @@ def remove_owned(name, session):
 
 
 @contextmanager
-def prepare_fixture(permit: ExecutionPermit):
+def prepare_fixture(permit: ExecutionPermit, mode='success'):
     """Prepare local reviewed fixture, not the submitted commit's repository code.
 
     A permit is only a DB snapshot. This function never authorizes actual start;
@@ -95,6 +97,8 @@ def prepare_fixture(permit: ExecutionPermit):
     Own resources are removed on normal return and exception. SIGKILL may orphan
     labeled resources; no global prune or cleanup by run ID is performed.
     """
+    if mode not in MODES:
+        raise ContainerRejected('unknown fixed fixture mode')
     validate_worker_id(permit.worker_id)
     if ((permit.repository_id, permit.ref, permit.workflow_version) !=
             (POLICY.repository_id, POLICY.ref, POLICY.workflow_version)
@@ -116,14 +120,14 @@ def prepare_fixture(permit: ExecutionPermit):
         options = [item for key, value in labels.items() for item in ('--label', f'{key}={value}')]
         attempted_create = True  # Also inspect for cleanup if create response is lost.
         cid = docker('create', '--name', name, *options, '--pull=never',
-                     '--user', '65534:65534', '--cpus', '0.5', '--memory', '128m',
+                     '--interactive', '--user', '65534:65534', '--cpus', '0.5', '--memory', '128m',
                      '--memory-swap', '128m', '--pids-limit', '64', '--network', 'none',
                      '--read-only', '--tmpfs', f'/tmp:{TMPFS["/tmp"]}',
                      '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges=true',
                      '--cgroupns', 'private', '--ipc', 'private', '--restart', 'no',
-                     '--log-driver', 'none', image['Id']).stdout.strip()
+                     '--log-driver', 'none', image['Id'], mode).stdout.strip()
         info = json.loads(docker('inspect', name).stdout)[0]
-        validate_configuration(info, image, labels)
+        validate_configuration(info, image, labels, mode)
         if cid != info['Id'] or not re.fullmatch('[0-9a-f]{64}', cid):
             raise ContainerRejected('container identity mismatch')
         yield PreparedContainer(cid, image['Id'], permit.run_id, permit.attempt_id)
