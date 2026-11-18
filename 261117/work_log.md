@@ -818,3 +818,20 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
   ホストディスク総量や64MiB実データの満杯試験は未実測。MVP全体は計画工数を重みとする概算35%。
   次の作業はP2のDB時刻に基づくlease更新と、失効/古いtoken/DB断での拒否を検証する。
 専用DBのreadiness 200、PostgreSQL 17.12、再起動後のmigration 1〜4保持、専用DBコンテナ・network・volumeの回収を確認。
+
+## P2：DB時刻によるlease更新
+
+- 開始HEAD `9b329f3826d58fa0e20c69c43fc3b9c6b101156d` のpush/PR CIは両方成功。Draft PR #1に未解決のレビュー指摘なし。
+  P2の5秒heartbeatで必要になる、現在のattemptに限定したDB更新を今回の一単位に選んだ。
+- `renew_lease(claim)` はrun→attemptの行ロック後にPostgreSQL時刻を取得し、期限内の初回attemptをDB時刻+30秒へ更新する。
+  現在token、run/attempt ID、attempt番号、Worker、許可設定、running状態、取消なし、正式結果なしを条件とする。
+  識別子・token・source/imageの由来・結果・ログは保持し、commit成功後に期限を返す。
+- 新規専用テスト12件で、DB時刻と連続更新、別のID/番号/Worker/token、古いattempt、許可外run、確定後の拒否を検証した。
+  `pg_stat_activity` で実際のロック待ちを確認し、先に確定した取消と待機中の自然失効のどちらも更新を拒否した。
+  commit直前と直後に通信異常を注入し、直前はrollback、直後はDBに更新が残っても呼び出し元へ期限を返さないことを確認した。
+- 既存の専用DB実停止試験にrenewalを追加し、例外を返し、DB再起動後も以前の期限が保持されることを確認した。
+  通常回帰は163 passed、147 deselected、既知警告1件。pip check・compileall成功。
+  `scripts/verify_db.py` は270 passed、40 skipped、既知警告1件（82.29秒）。固定ジョブの実Docker・実GitHub取得は今回未実施。
+  PostgreSQL 17.12のreadiness 200、再起動後のmigration 1〜4保持、専用コンテナ・network・volumeの回収を確認した。
+- P2は概算25%、MVPは計画工数を重みとする概算37%（残63%）。次は常駐Workerの5秒heartbeatとローカルwatchdogへの接続。
+  期限監視、失効後の再試行と残存コンテナ回収、2Workerによる一連の故障復旧は未実装。

@@ -1,4 +1,4 @@
-"""Initial-attempt claiming only. Does not execute jobs or recover expired leases."""
+"""Claim and renewal operations; the CLI only claims initial attempts."""
 import argparse
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -36,6 +36,10 @@ class Claim:
     lease_token: UUID = field(repr=False)
     started_at: datetime
     lease_expires_at: datetime
+
+
+class LeaseRenewalDenied(Exception):
+    """The claim is no longer eligible for renewal."""
 
 
 def validate_worker_id(value: str) -> str:
@@ -84,6 +88,43 @@ def claim_next(worker_id: str, connection_factory=None, *, target: tuple[UUID, s
         result = Claim(**row)
     # Success means both changes committed; no execution-time lock is retained.
     return result
+
+
+def renew_lease(claim: Claim, connection_factory=None) -> datetime:
+    """Return the new DB deadline after commit, or raise on rejection or DB failure."""
+    validate_worker_id(claim.worker_id)
+    factory = connection_factory or database.connect
+    denied = 'lease is not currently renewable'
+    with factory() as conn:
+        # Use the same lock order as finalization and cancellation.
+        run = conn.execute(
+            "SELECT id FROM runs WHERE id=%s AND state='running' "
+            'AND cancel_requested_at IS NULL AND completed_attempt_id IS NULL '
+            'AND repository_id=%s AND ref=%s AND workflow_version=%s FOR UPDATE',
+            (claim.run_id, POLICY.repository_id, POLICY.ref, POLICY.workflow_version),
+        ).fetchone()
+        if run is None:
+            raise LeaseRenewalDenied(denied)
+        attempt = conn.execute(
+            'SELECT id FROM attempts WHERE run_id=%s AND id=%s AND worker_id=%s '
+            'AND lease_token=%s AND attempt_no=%s AND attempt_no=1 '
+            "AND retry_kind='initial' AND state='running' AND finished_at IS NULL FOR UPDATE",
+            (claim.run_id, claim.attempt_id, claim.worker_id, claim.lease_token, claim.attempt_no),
+        ).fetchone()
+        if attempt is None:
+            raise LeaseRenewalDenied(denied)
+        # Sample once after both locks. A snapshot taken before waiting can revive an expired lease.
+        row = conn.execute(
+            'WITH renewal_time AS MATERIALIZED (SELECT clock_timestamp() AS measured_at) '
+            "UPDATE attempts AS a SET lease_expires_at=t.measured_at + %s * interval '1 second' "
+            'FROM renewal_time AS t WHERE a.id=%s AND a.lease_expires_at > t.measured_at '
+            'RETURNING a.lease_expires_at',
+            (LEASE_SECONDS, attempt['id']),
+        ).fetchone()
+        if row is None:
+            raise LeaseRenewalDenied(denied)
+    # A failed or unknown commit must never publish a new deadline to the caller.
+    return row['lease_expires_at']
 
 
 def main():

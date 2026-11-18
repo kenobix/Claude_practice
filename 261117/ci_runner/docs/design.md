@@ -40,6 +40,22 @@
 - DB断では新規ジョブを開始せず、lease更新の応答が不明なら成功とみなさない。Workerの単調時計watchdogで残存実行を止める。
 - 外部の停止とDB更新は単一transactionにできない。取消は完了確定をまず防止し、実際の停止確認・残存回収を追跡する。
 
+### Lease更新の実装範囲
+
+Worker内部の `renew_lease(claim)` はrun→attemptの順に行ロックを取得する。現在の許可設定に合う
+running runで、取消要求・正式結果がなく、run ID・attempt ID・番号・Worker ID・tokenが一致する
+初回running attemptだけを対象にする。現在許可される取得は初回だけ。再試行attemptへの対応は再試行の実装時に追加する。
+
+両方の行を確保してから `clock_timestamp()` を一度取得する。保存済みの期限がその時刻より後の場合だけ
+期限をDB時刻+30秒に設定する。期限とDB時刻が等しい場合も拒否する。呼び出し元の保持する期限から延長幅を計算しない。
+run/attemptの識別子、token、状態、由来・結果・ログは保持する。
+
+commitが完了した場合だけ新しい期限を返す。条件不一致は `LeaseRenewalDenied`、DBエラーやcommit応答不明は例外で返す。
+応答不明の場合の期限はDB側で延びている可能性がある。呼び出し元が実行継続に使える更新応答は発行されない。
+専用DBで、取消による行ロック待ちと、attemptロック待ちの間の自然失効を確認した。
+次は5秒間隔のheartbeatとローカルwatchdogへの接続。実行時間上限と実行前DB照合を維持する。
+期限監視・失効後の再試行・コンテナ回収・2Workerでの復旧試験も残る。
+
 ## 冪等性と成果物
 
 pushの業務キーはrepository/ref/commit/workflow版。Webhookのhook/delivery IDも一意。

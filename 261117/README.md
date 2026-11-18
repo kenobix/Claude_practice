@@ -4,6 +4,7 @@
 基準: [開発計画](../261014/plan_ci_runner.md)。**P0完了（現在環境・管理下の固定fixtureによる開発検証範囲）**。**P1完了（管理下fixtureの受付から結果保存・単一Worker停止まで）**。
 ヘルスチェック・受付/履歴API・PostgreSQL永続化・冪等性を実装済み（P1前半）。
 Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB preflightを実装済み。
+P2ではDB時刻による[lease更新](ci_runner/docs/design.md#lease更新の実装範囲)を実装済み。常駐Workerからのheartbeat呼び出しは今後の作業。
 固定fixtureのコンテナ作成・設定照合・回収まで実装済み。
 内部ライブラリでDB再照合・実値ガード・時間/ログ/lease上限付きのローカル固定fixture実行も実装済み。
 ローカルfixture結果の条件付きDB確定（状態/exit/理由/終了時刻・正式attempt参照）も実装済み。

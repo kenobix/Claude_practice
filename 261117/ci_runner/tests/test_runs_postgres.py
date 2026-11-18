@@ -19,7 +19,7 @@ import pytest
 from ci_runner.finalization import finalize_fixture
 from test_finalization_input import report
 from ci_runner.preflight import authorize_execution
-from ci_runner.worker import claim_next
+from ci_runner.worker import claim_next, renew_lease
 
 @dataclass
 class DisposableDatabase:
@@ -218,6 +218,8 @@ def test_actual_database_stop_returns_503_and_recovers(dedicated_database):
             with pytest.raises(psycopg.OperationalError):
                 authorize_execution(claim)
             with pytest.raises(psycopg.OperationalError):
+                renew_lease(claim)
+            with pytest.raises(psycopg.OperationalError):
                 finalize_fixture(claim, report(claim))
             worker = subprocess.run(
                 [sys.executable, '-m', 'ci_runner.worker', '--claim-once', '--worker-id', 'db-stop-check'],
@@ -229,6 +231,9 @@ def test_actual_database_stop_returns_503_and_recovers(dedicated_database):
         assert client.get('/health/ready').status_code == 200
         assert client.get('/runs/' + saved['id']).json() == saved
         assert row_count(dedicated_database) == 1
+        with psycopg.connect(dedicated_database.dsn) as conn:
+            assert conn.execute('SELECT lease_expires_at FROM attempts WHERE id=%s',
+                                (claim.attempt_id,)).fetchone() == (claim.lease_expires_at,)
 
 
 def test_unique_conflict_wait_then_reads_committed_winner(dedicated_database):
