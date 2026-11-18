@@ -1,4 +1,4 @@
-"""Close expired attempts for the configured repository and workflow."""
+"""Close expired attempts and schedule safe retries for the configured workflow."""
 import argparse
 from dataclasses import dataclass
 import json
@@ -9,6 +9,7 @@ from uuid import UUID
 import psycopg
 
 from . import database
+from .retry import MAX_ATTEMPTS, schedule_next
 from .settings import POLICY
 
 POLL_SECONDS = 5
@@ -40,13 +41,17 @@ def expire_next(connection_factory=None) -> ExpiredAttempt | None:
             return None
         run_id, attempt_id = candidate['run_id'], candidate['attempt_id']
         locked = conn.execute(
-            "SELECT id FROM attempts WHERE run_id=%s AND id=%s AND state='running' FOR UPDATE",
+            "SELECT attempt_no, retry_kind FROM attempts WHERE run_id=%s AND id=%s AND state='running' FOR UPDATE",
             (run_id, attempt_id),
         ).fetchone()
         if locked is None:
             return None
-        state, reason = ('canceled', 'canceled_lease_expired') if candidate['cancel_requested_at'] is not None else (
-            'failed', 'infra_lease_expired')
+        if candidate['cancel_requested_at'] is not None:
+            state, reason = 'canceled', 'canceled_lease_expired'
+        elif (locked['attempt_no'], locked['retry_kind']) == (MAX_ATTEMPTS, 'infrastructure'):
+            state, reason = 'failed', 'infra_exhausted'
+        else:
+            state, reason = 'failed', 'infra_lease_expired'
         expired = conn.execute(
             'WITH expiry_time AS MATERIALIZED (SELECT clock_timestamp() AS measured_at) '
             'UPDATE attempts AS a SET state=%s, reason=%s, exit_code=NULL, finished_at=t.measured_at '
@@ -66,7 +71,7 @@ def expire_next(connection_factory=None) -> ExpiredAttempt | None:
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
-    mode.add_argument('--once', action='store_true', help='scan one bounded batch and exit')
+    mode.add_argument('--once', action='store_true', help='process bounded expiry and retry batches and exit')
     mode.add_argument('--watch', action='store_true', help='repeat the scan after a five-second delay')
     args = parser.parse_args(argv)
     try:
@@ -77,6 +82,14 @@ def main(argv=None):
                     break
                 print(json.dumps({'run_id': str(result.run_id), 'attempt_id': str(result.attempt_id),
                                   'state': result.state, 'reason': result.reason}), flush=True)
+            for _ in range(MAX_PER_POLL):
+                retry = schedule_next()
+                if retry is None:
+                    break
+                print(json.dumps({'run_id': str(retry.run_id), 'attempt_id': str(retry.attempt_id),
+                                  'state': 'queued', 'reason': 'infra_retry_scheduled',
+                                  'next_attempt_no': retry.next_attempt_no,
+                                  'available_at': retry.available_at.isoformat()}), flush=True)
             if args.once:
                 return 0
             time.sleep(POLL_SECONDS)

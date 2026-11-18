@@ -9,16 +9,17 @@ from uuid import UUID
 import psycopg
 
 from . import container, database
+from .retry import ATTEMPT_KIND_SQL
 from .settings import POLICY
 
 
 POLICY_PARAMS = (POLICY.repository_id, POLICY.ref, POLICY.workflow_version)
 CLOSED_ATTEMPT = (
     'r.id=a.run_id AND r.repository_id=%s AND r.ref=%s AND r.workflow_version=%s '
-    "AND a.attempt_no=1 AND a.retry_kind='initial' "
+    f'AND {ATTEMPT_KIND_SQL} '
     'AND a.container_recovered_at IS NULL AND r.completed_attempt_id IS NULL AND a.exit_code IS NULL '
     'AND a.lease_expires_at <= statement_timestamp() AND a.finished_at >= a.lease_expires_at '
-    "AND ((r.state='failed' AND a.state='failed' AND a.reason='infra_lease_expired' "
+    "AND ((r.state='failed' AND a.state='failed' AND a.reason IN ('infra_lease_expired','infra_exhausted') "
     'AND r.cancel_requested_at IS NULL) '
     "OR (r.state='canceled' AND a.state='canceled' AND a.reason='canceled_lease_expired' "
     'AND r.cancel_requested_at IS NOT NULL))'

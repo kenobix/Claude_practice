@@ -5,6 +5,7 @@ import re
 from uuid import UUID
 
 from . import database
+from .retry import ATTEMPT_KIND_SQL
 from .settings import POLICY
 from .worker import Claim, validate_worker_id
 
@@ -44,8 +45,8 @@ def authorize_execution(claim: Claim, connection_factory=None) -> ExecutionPermi
             'EXTRACT(EPOCH FROM (a.lease_expires_at-clock_timestamp())) AS remaining_lease_seconds '
             'FROM runs r JOIN attempts a ON a.run_id=r.id '
             "WHERE r.id=%s AND a.id=%s AND a.lease_token=%s AND a.worker_id=%s "
-            'AND a.attempt_no=%s AND a.attempt_no=1 '
-            "AND a.retry_kind='initial' AND r.state='running' AND a.state='running' "
+            f'AND a.attempt_no=%s AND {ATTEMPT_KIND_SQL} '
+            "AND r.state='running' AND a.state='running' "
             'AND a.finished_at IS NULL AND r.cancel_requested_at IS NULL '
             'AND r.completed_attempt_id IS NULL '
             'AND a.lease_expires_at > clock_timestamp() '
@@ -75,8 +76,8 @@ def reserve_container_create(permit: ExecutionPermit, daemon_id: UUID, session: 
         if run is None:
             raise ExecutionDenied(denied)
         attempt = conn.execute(
-            "SELECT id FROM attempts WHERE run_id=%s AND id=%s AND state='running' "
-            "AND attempt_no=1 AND attempt_no=%s AND retry_kind='initial' "
+            "SELECT id FROM attempts a WHERE run_id=%s AND id=%s AND state='running' "
+            f'AND attempt_no=%s AND {ATTEMPT_KIND_SQL} '
             'AND worker_id=%s AND lease_token=%s FOR UPDATE',
             (permit.run_id, permit.attempt_id, permit.attempt_no, permit.worker_id, permit.lease_token),
         ).fetchone()

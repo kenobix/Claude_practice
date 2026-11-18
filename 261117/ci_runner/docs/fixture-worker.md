@@ -1,7 +1,7 @@
 # 固定fixtureを実行するWorker
 
 `src/ci_runner/fixture_worker.py`はAPIから独立した信頼済みプロセス。
-P1の取得・隔離実行・結果確定を接続し、一件実行と常駐の入口を持つ。P2では別プロセスで期限監視とコンテナ回収を行える。再試行は未実装。
+P1の取得・隔離実行・結果確定を接続し、一件実行と常駐の入口を持つ。P2では別プロセスで期限監視・再キューとコンテナ回収を行う。検証付きWorkerが再試行attemptを取得する。
 従来の[claim-once](worker-claim.md)の意味は変更しない。
 
 ## ローカル開発経路
@@ -87,7 +87,7 @@ curl 8.4以上とGitHub HTTPS接続、migration 006適用済みの専用DBとUUI
    由来はrun ID・受理SHA・main snapshot・blob SHA・source digest・実行image ID。
    受理commitの理由は `commit_*`、ローカルの理由は `fixture_*`。同じ結果の再送にはログと由来の一致が必要。
 
-権限消失やDB断は成功扱いせず、claim済みの場合はrunningが残り得る。自動回復はP2。
+権限消失やDB断は成功扱いせず、claim済みの場合はrunningが残り得る。その後の失効と再キューは期限監視が処理する。
 Workerはsource本文をDB・ログ・応答に保存せず、一時build contextは削除する。
 Docker base imageやbuild cacheは既存の運用どおり再利用され得る。
 
@@ -107,7 +107,7 @@ Docker base imageやbuild cacheは既存の運用どおり再利用され得る�
   終了・回収後に次のrunを開始せず終了0。停止要求とclaim開始が並行した場合は進行中の一件として扱う。
 - 停止待ちには進行中の取得・build・実行・回収の操作期限が適用される。外部監視から停止するときは
   Worker PIDを対象にし、同時にDocker/Curl子プロセスへシグナルを送らない。
-  SIGKILLやdaemon障害時の手順は、期限監視と同じDockerホストでの残存コンテナ回収。自動再試行はP2の残件。
+  SIGKILLやdaemon障害時は、期限監視と同じDockerホストでの残存コンテナ回収を行う。監視が再キューできる条件は[基盤障害の自動再試行](design.md#基盤障害の自動再試行)を参照。
 - 取得拒否、claim競合、DB障害、Docker障害、確定失敗では安全な失敗情報を出して終了1。
   先頭が取得できないときは後続に読み替えない。GitHub匿名APIの制限がかかったときも同じ扱い。
   runの状態と正式attemptを照合してから運用者が再開する。

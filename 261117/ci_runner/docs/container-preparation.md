@@ -1,7 +1,7 @@
 # 固定fixtureのコンテナ準備境界
 
 `src/ci_runner/container.py` の `prepare_fixture(permit)` はWorker内部用context manager。
-固定されたローカル `fixtures/job/` だけをnetwork noneでbuildし、取得したイメージIDでコンテナをcreateする。
+ローカル `fixtures/job/` または承認済みの取得sourceをnetwork noneでbuildし、取得したイメージIDでコンテナをcreateする。
 イメージ名・任意コマンド・URL・YAML・マウント・環境変数を呼出側から指定する引数はない。内部mode引数は固定4種類だけを許可する。
 P0のテスト用ハーネスをアプリからimportしない。現在はREADMEのsource checkout・editable installを前提とし、fixtureを含まないwheel単独配布は対象外。
 
@@ -11,15 +11,14 @@ P0のテスト用ハーネスをアプリからimportしない。現在はREADME
 今回は制限付きcreate、inspect照合とcontext終了時の回収だけを実装した。
 APIとclaim-once CLIには接続していない。後続の[実行ライブラリ](fixture-execution.md)がガードとfixtureを起動する。fixture.pyをホストで実行しない。
 
-ExecutionPermitのrepository/ref/workflow・SHA形式・初回番号と識別子を検証する。
+ExecutionPermitのrepository/ref/workflow・SHA形式・attempt番号と識別子を検証する。基盤障害の再試行では検証済みsourceを持つimageが必須。
 これは内部snapshotの形式確認で、現在のDB認可の代わりではない。build中にleaseが切れることもある。
-受理SHAは実行するコードへ解決していない。作成するのは常にローカルの固定4fixtureであり、
-「受理commitを取得・検証した」「そのcommitの検査に成功した」とは扱わない。
-固定commitの取得/対応付けもP1残件である。
+ローカル経路では固定fixtureを使用し、受理SHAによるsource取得は行わない。
+受理SHAからの取得とimageの対応付けは[検証付きWorker](fixture-worker.md#受理commitの固定fixture経路)を参照。
 
 ## 取得前image準備と内部での受渡し
 
-prepare_image()は固定ローカルsourceだけをbuildし、unique tag・session・image IDを持つPreparedImageを返す内部context。
+prepare_image()は既定で固定ローカルsourceをbuildし、unique tag・session・image IDを持つPreparedImageを返す内部context。
 一件Workerは候補を読取確認後、このcontextを開いてからrunを取得する。準備失敗時はattemptを作らない。
 prepare_fixture(permit, mode, prepared_image=image)は借用したimageを再buildせず、タグのIDと所有sessionを再照合し、
 --pull=neverと検証済みIDでcreateする。形の不正なhandle・別所有者・IDの差替え・寿命後のタグ欠落は拒否する。

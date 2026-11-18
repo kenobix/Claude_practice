@@ -52,7 +52,7 @@ def test_missing_db_process_never_reports_success(dedicated_database):
     result = invoke(env=env)
     assert result.returncode == 1 and result.stdout == ''
     assert json.loads(result.stderr) == {'status': 'incomplete', 'stage': 'queue',
-                                       'detail': 'inspect DB state; no automatic retry'}
+                                       'detail': 'inspect DB state; worker stopped'}
 
 
 def test_image_failure_keeps_all_runs_queued(dedicated_database, monkeypatch):

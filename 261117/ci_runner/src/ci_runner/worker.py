@@ -10,22 +10,30 @@ from uuid import UUID
 import psycopg
 
 from . import database
+from .retry import ATTEMPT_KIND_SQL, LATEST_ATTEMPT_JOIN, RETRYABLE_ATTEMPT_SQL, attempt_kind
 from .settings import POLICY, SCHEMA_VERSION
 
 LEASE_SECONDS = 30
 
-ELIGIBLE_SQL = (
-    "SELECT r.id, r.commit_sha FROM runs r WHERE r.state='queued' "
+QUEUE_FILTER = (
+    "WHERE r.state='queued' AND r.completed_attempt_id IS NULL "
     'AND r.cancel_requested_at IS NULL AND r.available_at <= clock_timestamp() '
     'AND r.repository_id=%s AND r.ref=%s AND r.workflow_version=%s '
-    # Retry cause/budget is not implemented: never mislabel a retry as initial.
+)
+INITIAL_SQL = (
+    f'SELECT r.id, r.commit_sha, 0 AS previous_attempt_no FROM runs r {QUEUE_FILTER}'
     'AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.run_id=r.id) '
+)
+VERIFIED_SQL = (
+    'SELECT r.id, r.commit_sha, COALESCE(a.attempt_no,0) AS previous_attempt_no '
+    f'FROM runs r {LATEST_ATTEMPT_JOIN}{QUEUE_FILTER}'
+    f'AND (a.id IS NULL OR ({RETRYABLE_ATTEMPT_SQL})) '
 )
 QUEUE_ORDER = (
     'ORDER BY r.available_at, r.created_at, r.id '
     'LIMIT 1'
 )
-CANDIDATE_SQL = ELIGIBLE_SQL + QUEUE_ORDER
+CANDIDATE_SQL = VERIFIED_SQL + QUEUE_ORDER
 
 
 @dataclass(frozen=True)
@@ -52,22 +60,22 @@ def validate_worker_id(value: str) -> str:
 def has_queued_candidate(connection_factory=None):
     """Read-only hint, not a reservation or authorization; closes before build."""
     with (connection_factory or database.connect)() as conn:
-        present = conn.execute(CANDIDATE_SQL, (POLICY.repository_id, POLICY.ref,
-                                              POLICY.workflow_version)).fetchone() is not None
+        present = conn.execute(INITIAL_SQL + QUEUE_ORDER, (POLICY.repository_id, POLICY.ref,
+                                                         POLICY.workflow_version)).fetchone() is not None
     return present
 
 
 def claim_next(worker_id: str, connection_factory=None, *, target: tuple[UUID, str] | None = None) -> Claim | None:
-    """Claim the next candidate, or only the exact verified run and SHA."""
+    """Claim an initial attempt, or claim the exact verified run including its retries."""
     validate_worker_id(worker_id)
     factory = connection_factory or database.connect
     params = (POLICY.repository_id, POLICY.ref, POLICY.workflow_version)
-    eligible = ELIGIBLE_SQL + 'AND EXISTS (SELECT 1 FROM schema_migrations WHERE version=%s) '
+    schema = 'AND EXISTS (SELECT 1 FROM schema_migrations WHERE version=%s) '
     params += (SCHEMA_VERSION,)
-    sql = eligible + QUEUE_ORDER
+    sql = INITIAL_SQL + schema + QUEUE_ORDER
     if target is not None:
         # This path must be able to persist the provenance before we grant a lease.
-        sql = (eligible + 'AND r.id=%s AND r.commit_sha=%s '
+        sql = (VERIFIED_SQL + schema + 'AND r.id=%s AND r.commit_sha=%s '
                'AND EXISTS (SELECT 1 FROM schema_migrations WHERE version=4)')
         params += target
     with factory() as conn:
@@ -75,14 +83,20 @@ def claim_next(worker_id: str, connection_factory=None, *, target: tuple[UUID, s
             sql + ' FOR UPDATE OF r SKIP LOCKED', params).fetchone()
         if run is None:
             return None
+        if target is not None:
+            # A waiter can observe a newer run state than its statement's attempt snapshot.
+            run = conn.execute(sql, params).fetchone()
+            if run is None:
+                return None
+        number = run['previous_attempt_no'] + 1
         row = conn.execute(
             'INSERT INTO attempts(run_id, attempt_no, worker_id, lease_token, '
             'started_at, lease_expires_at, retry_kind, create_tracked) '
-            "VALUES (%s, 1, %s, gen_random_uuid(), statement_timestamp(), "
-            "statement_timestamp() + %s * interval '1 second', 'initial', true) "
+            "VALUES (%s, %s, %s, gen_random_uuid(), statement_timestamp(), "
+            "statement_timestamp() + %s * interval '1 second', %s, true) "
             'RETURNING id AS attempt_id, run_id, attempt_no, worker_id, '
             'lease_token, started_at, lease_expires_at',
-            (run['id'], worker_id, LEASE_SECONDS)).fetchone()
+            (run['id'], number, worker_id, LEASE_SECONDS, attempt_kind(number))).fetchone()
         changed = conn.execute(
             "UPDATE runs SET state='running' WHERE id=%s AND state='queued' "
             'AND cancel_requested_at IS NULL RETURNING id', (run['id'],)).fetchone()
@@ -109,9 +123,9 @@ def renew_lease(claim: Claim, connection_factory=None) -> datetime:
         if run is None:
             raise LeaseRenewalDenied(denied)
         attempt = conn.execute(
-            'SELECT id FROM attempts WHERE run_id=%s AND id=%s AND worker_id=%s '
-            'AND lease_token=%s AND attempt_no=%s AND attempt_no=1 '
-            "AND retry_kind='initial' AND state='running' AND finished_at IS NULL FOR UPDATE",
+            'SELECT id FROM attempts a WHERE run_id=%s AND id=%s AND worker_id=%s '
+            f'AND lease_token=%s AND attempt_no=%s AND {ATTEMPT_KIND_SQL} '
+            "AND state='running' AND finished_at IS NULL FOR UPDATE",
             (claim.run_id, claim.attempt_id, claim.worker_id, claim.lease_token, claim.attempt_no),
         ).fetchone()
         if attempt is None:
@@ -134,7 +148,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--worker-id', required=True, type=validate_worker_id)
     parser.add_argument('--claim-once', required=True, action='store_true',
-                        help='claim one initial attempt and exit; it stays running without recovery')
+                        help='claim one initial attempt and exit without running a job')
     args = parser.parse_args()
     try:
         claim = claim_next(args.worker_id)

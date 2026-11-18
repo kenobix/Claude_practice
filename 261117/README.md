@@ -5,7 +5,7 @@
 ヘルスチェック・受付/履歴API・PostgreSQL永続化・冪等性を実装済み（P1前半）。
 Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB preflightを実装済み。
 P2では[実行中の5秒heartbeatとlease更新](ci_runner/docs/design.md#lease更新の実装範囲)を実装済み。更新を確認できなければ実行を打ち切り、次のrunへ進まない。
-独立した[期限監視](ci_runner/docs/design.md#期限監視の実装範囲)を起動すると、失効したrunとattemptをDBで閉じる。
+独立した[期限監視](ci_runner/docs/design.md#期限監視の実装範囲)は失効したattemptを閉じ、条件を満たすrunを[再試行](ci_runner/docs/design.md#基盤障害の自動再試行)のため再キューする。
 失効確定後の残存コンテナは、Dockerデーモンごとの[回収コマンド](ci_runner/docs/design.md#失効attemptのコンテナ回収)で回収し、同じ完全IDの不在をDBに記録できる。
 P2の[コンテナ作成台帳](ci_runner/docs/design.md#コンテナ作成台帳)は、WorkerがDockerへ要求を送る前に作成可能性を記録する。
 固定fixtureのコンテナ作成・設定照合・回収まで実装済み。
@@ -63,7 +63,7 @@ CI_RUN_LIVE_COMMIT_SOURCE=1 .venv/bin/python scripts/verify_execution.py
 取得拒否・GitHubレート制限・DB/Docker異常・確定不明は終了1となる。実行中のheartbeat失敗は `stage: heartbeat` に出る。再起動する前にDB状態を照合する。
 [常駐と停止の仕様](ci_runner/docs/fixture-worker.md#常駐実行と停止)。
 
-## 実行権の期限を監視する
+## 実行権の期限監視と基盤障害の再試行
 
 同じ専用DBへ接続する環境で、Workerとは別プロセスとして起動する。
 
@@ -71,8 +71,10 @@ CI_RUN_LIVE_COMMIT_SOURCE=1 .venv/bin/python scripts/verify_execution.py
 .venv/bin/python -m ci_runner.expiry_monitor --watch
 ```
 
-1回最大16件を処理し、5秒待って再走査する。単発は `--once`。DBエラー時は終了1とし、再開前にDB状態を照合する。
-現段階は失効を `failed`、先行する取消要求ありを `canceled` として保存する。
+1走査で期限切れと再キューをそれぞれ最大16件処理し、5秒待つ。単発は `--once`。DBエラー時は終了1とし、再開前にDB状態を照合する。
+基盤障害による失効後、Dockerへのcreate未送信または回収確認があるrunを同じID・受理SHAで再キューする。
+`available_at` はDB時刻から5秒後（2回目）または10秒後（3回目）。検証付きWorkerだけが新しいattempt・tokenを取得する。
+3回目も失効した場合は `failed / infra_exhausted` を記録する。取消・チェック失敗・タイムアウト・ログ超過は自動再試行の対象外。
 
 ## 失効後に残ったコンテナを回収する
 
@@ -86,7 +88,8 @@ Workerと同じDockerデーモンおよび migration 006 適用済みの専用DB
 不在確認を `container_recovered_at` に保存する。DB確定後に完全IDとrun/attempt IDをJSONで出力する。
 削除後に中断した場合は、一覧から消えた完全IDも再走査できる。DBやDockerの異常時は終了1。作成台帳の対象外だった旧attemptは、
 従来どおりDockerが削除を確認した場合にJSONを出力する。
-作成予約があり、完全IDを観測できていない場合は、一覧が空でも作成結果は不明のまま。再試行への接続は次の作業単位。
+作成予約があり、完全IDを観測できていない場合は、一覧が空でも作成結果は不明のままで再試行を保留する。
+回収後は期限監視の次の走査で再キューできる。
 [回収条件と再検証](ci_runner/docs/design.md#失効attemptのコンテナ回収)。
 
 ## Python環境とテスト
@@ -252,7 +255,7 @@ DATABASE_URL設定済みの使い捨て開発DBに限って利用する。
 ## 実行前DB preflight
 
 Worker内部向けのauthorize_execution(claim)で、DBにある現在token・Worker・状態・取消要求・lease期限・許可設定を再照合する。
-有効な初回attemptだけに、DBから読み直した固定commit等のExecutionPermitを返す。DB異常や条件不一致なら返さない。
+現在の初回または基盤障害の再試行attemptに、DBから読み直した固定commit等のExecutionPermitを返す。DB異常や条件不一致なら返さない。
 この照合はsnapshotであり、照合後の取消/失効を防ぐ予約ではない。内部経路では起動前/ガード後に再確認し、実行中はheartbeatとローカル上限で監視する。
 内部の固定fixture実行ライブラリに接続済み。結果確定ライブラリも実装済み。API/claim-onceへの接続は未実装。通常の検証はscripts/verify_db.pyを使用する。
 
@@ -280,7 +283,7 @@ execute_fixture(claim, mode)はsuccess/failure/timeout/logsだけを扱う内部
 DB再照合とコンテナ内ガードの確認後、DBを再照合してから定型GOを送る。
 CPU/RAM/swap/PIDの実値を確認し、壁時計10秒・合計保持ログ1MiB・DB残leaseの上限を適用する。
 execute_fixtureだけではDBはrunningのまま。別途finalize_fixture(claim, result)で状態/exit/理由/終了時刻を原子的に確定できる。共有DBへ向けず上記スクリプトで検証する。
-実行中の取消やDB断はheartbeatで検知する。期限を過ぎたattemptの自動復旧は未実装。
+実行中の取消やDB断はheartbeatで検知する。失効後の再試行は独立した期限監視と[回収確認](ci_runner/docs/design.md#基盤障害の自動再試行)が扱う。
 [実行仕様・証拠・限界](ci_runner/docs/fixture-execution.md)を参照。
 
 ## 固定fixtureの結果確定
@@ -306,7 +309,7 @@ API/claim-onceは結果確定へ自動接続しない。使い捨てDBのverify_
 空キューを読取確認し、候補があれば固定imageを準備してから取得する。buildは30秒leaseを消費しない。
 取得後は検証したimage IDでcreateし、起動前/GO前のDB再照合を維持する。create・実行・回収が期限を超えれば拒否する。
 取得後の失敗はrunningに残る場合がある。DBで状態を照合し、自動再投入・手動SQLリセットで履歴を壊さない。
-常駐処理・自動再試行は追加しない。従来の`ci_runner.worker --claim-once`は取得だけを維持する。
+このローカル経路と`ci_runner.worker --claim-once`は初回取得用。再試行の実行には受理commitを検証するWorkerを使用する。
 詳細と故障時の確認手順は[一件Worker仕様](ci_runner/docs/fixture-worker.md)を参照。
 
 ## 上限付きログ保存

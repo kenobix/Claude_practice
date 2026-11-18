@@ -159,7 +159,13 @@ def test_monitor_cli_acknowledges_only_committed_expiry_without_token(dedicated_
     cmd = [sys.executable, '-m', 'ci_runner.expiry_monitor', '--once']
     result = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=10)
     assert result.returncode == 0 and not result.stderr
-    assert json.loads(result.stdout) == {'run_id': str(claim.run_id), 'attempt_id': str(claim.attempt_id),
-                                         'state': 'failed', 'reason': 'infra_lease_expired'}
+    expiry, retry = [json.loads(line) for line in result.stdout.splitlines()]
+    identity = {'run_id': str(claim.run_id), 'attempt_id': str(claim.attempt_id)}
+    assert expiry == {**identity, 'state': 'failed', 'reason': 'infra_lease_expired'}
+    with database.connect() as conn:
+        run = conn.execute('SELECT state, available_at FROM runs WHERE id=%s', (claim.run_id,)).fetchone()
+    assert run['state'] == 'queued'
+    assert retry == {**identity, 'state': 'queued', 'reason': 'infra_retry_scheduled',
+                     'next_attempt_no': 2, 'available_at': run['available_at'].isoformat()}
     empty = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=10)
     assert empty.returncode == 0 and not empty.stdout and not empty.stderr

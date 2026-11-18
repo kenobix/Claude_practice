@@ -2,7 +2,8 @@
 
 状態: P0検証とP1前半（受付/取得API・DB永続化・冪等性）は実装済み。Workerの初回取得と実行前DB preflightは実装済み。[固定fixtureの未起動コンテナ準備](container-preparation.md)と[内部の上限付きfixture実行](fixture-execution.md)も実装済み。[条件付きfixture結果確定](result-finalization.md)も実装済み。上限付きログDB保存を結果確定へ接続済み。正式ログ取得/最小HTML表示も実装済み。受理commitの常駐実行は実装済み。Webhook・履歴UI等は未実装。
 実装したHTTP契約と競合・commit前後の障害証拠は[受付API仕様](intake-api.md)を参照。
-[Worker初回取得](worker-claim.md)は履歴なしの許可queuedだけを取得し、attempt番号1・initial・DB期限30秒を同時commitする。期限監視を実装済み。再試行は未実装。
+[Worker初回取得](worker-claim.md)は履歴なしの許可queuedを取得し、attempt番号1・initial・DB期限30秒を同時commitする。
+検証付きWorkerは、[基盤障害の自動再試行](#基盤障害の自動再試行)で再キューされたrunも取得する。
 [実行前DB preflight](execution-preflight.md)は現在の実行権を再確認するsnapshotを返す。固定fixtureの起動前/ガード後にDBを再照合し、実行中はheartbeatと時間・ログ・残leaseを監視する。DB照合と外部起動は別操作。
 計画書のP1/P2/P3/P4にまたがる条件を先に定義する。数値は実験初期値であり保証ではない。
 
@@ -17,16 +18,14 @@
 | running | 同条件、実行時間上限到達 | timed_out | timed_out、コンテナ停止・回収 |
 | running | 取消要求確定 | running（要求あり） | Workerが停止処理、成功確定は拒否 |
 | running（取消要求あり） | Worker停止確認または期限監視 | canceled | canceledで終了。未回収なら別途追跡 |
-| running | 基盤障害/lease期限切れ、取消なし、予算内 | queued | failed/infra理由で終了、新attemptは次回取得時 |
-| running | 同上、予算超過 | failed | failed/infra_exhausted |
+| running | lease期限切れ、取消なし、1または2回目 | failed | failed/infra_lease_expired |
+| failed | 直近attemptが基盤障害、予算内、作成未送信または回収確認済み | queued | 既存attemptを保持し、次回取得時に新attemptを発行 |
+| running | lease期限切れ、取消なし、3回目 | failed | failed/infra_exhausted |
 | failed/timed_out | 明示的な手動retry、取消要求なし | queued | 過去attemptを保持、次回は新番号・token |
 | succeeded/canceled | retry要求 | 変更なし | MVPは拒否 |
 | 全終端 | 遅延完了・遅延取消 | 変更なし | 古い報告を拒否/終了済みを返す |
 
-自動再試行は初回を含む最大3attempt。手動retryで新しい予算区間を開始する。
-区間はattempt.retry_kind=initial/manualを境界に数え、試行番号はrun全体で単調増加。
-バックオフは基盤障害後に5秒、10秒（上限30秒）をavailable_atに設定する設計案。
-通常チェック失敗・ジョブ時間切れは自動再試行しない。
+自動再試行は初回を含む最大3attempt。現在のバックオフは5秒と10秒。手動retryと新しい予算区間はP4で扱う。
 
 ## 責務と排他
 
@@ -44,7 +43,7 @@
 
 Worker内部の `renew_lease(claim)` はrun→attemptの順に行ロックを取得する。現在の許可設定に合う
 running runで、取消要求・正式結果がなく、run ID・attempt ID・番号・Worker ID・tokenが一致する
-初回running attemptだけを対象にする。現在許可される取得は初回だけ。再試行attemptへの対応は再試行の実装時に追加する。
+running attemptを対象にする。初回は `1/initial`、基盤障害の再試行は `2〜3/infrastructure`。
 
 両方の行を確保してから `clock_timestamp()` を一度取得する。保存済みの期限がその時刻より後の場合だけ
 期限をDB時刻+30秒に設定する。期限とDB時刻が等しい場合も拒否する。呼び出し元の保持する期限から延長幅を計算しない。
@@ -60,14 +59,14 @@ DB操作は最大1件を別スレッドで実行し、確認した更新だけ�
 
 ### 期限監視の実装範囲
 
-独立プロセスの `ci_runner.expiry_monitor --watch` は許可repository/ref/workflowの失効を1走査最大16件処理し、5秒待つ。
-`--once` は1走査で終了する。1件ずつcommitし、確認できたrun ID・attempt ID・状態・理由だけをJSONで出す。
-DBエラーやcommit応答喪失は終了1。再走査はrunningの組だけが対象なので、既に閉じたattemptを二重に処理しない。
+独立プロセスの `ci_runner.expiry_monitor --watch` は許可repository/ref/workflowの失効と再キューを1走査で各最大16件処理し、5秒待つ。
+`--once` は1走査で終了する。1件ずつcommitし、確認できたrun ID・attempt ID・状態・理由をJSONで出す。
+DBエラーやcommit応答喪失は終了1。失効処理はrunningの組だけが対象なので、既に閉じたattemptを二重に処理しない。
 
 PostgreSQLの文開始時刻で候補を選び、期限順にrun行を `FOR UPDATE OF r SKIP LOCKED` で確保する。
 次にattemptをロックし、更新時の `clock_timestamp()` で期限以下かを再確認する。
 期限切れを確定すると、runとattemptの両方を同一transactionで閉じる。
-現段階は取消要求ありなら `canceled / canceled_lease_expired`、それ以外は `failed / infra_lease_expired`。
+取消要求ありなら `canceled / canceled_lease_expired`。それ以外は `failed / infra_lease_expired`、上限の3回目は `failed / infra_exhausted`。
 終了コード・正式attempt参照・ログ・由来を作らず、識別子・token・元の期限は保持する。
 
 MVPの予算内再キューには、旧attemptの資源回収の確認と新attemptの発行が必要。
@@ -77,9 +76,10 @@ MVPの予算内再キューには、旧attemptの資源回収の確認と新atte
 `orphan_cleanup --once` はWorkerと同じDocker daemon・専用DBで実行する。Dockerの一覧を
 `dev.ci-runner.preparation-session` で絞り、停止済み・未起動を含めて完全IDで各候補を照合する。
 32桁のsessionと `ci-runner-prepare-<session>` の名前、標準UUID表記のrun/attemptラベルを要求する。
-同じrun/attemptの組について、DBで許可repo/ref/workflow、初回attempt、正式結果と終了コードの欠如、
+同じrun/attemptの組について、DBで許可repo/ref/workflow、初回または再試行attempt、正式結果と終了コードの欠如、
 期限以後の終了時刻を確認する。対象は `failed / infra_lease_expired` と、取消要求を伴う
-`canceled / canceled_lease_expired` の確定済み記録。期限時刻を過ぎたrunning attemptは期限監視が先に処理する。
+`canceled / canceled_lease_expired`、上限到達時の `failed / infra_exhausted` の確定済み記録。
+期限時刻を過ぎたrunning attemptは期限監視が先に処理する。
 
 作成台帳の対象では、Dockerのdaemon IDと所有sessionを予約と照合する。遅延createなどで完全IDが未記録なら、
 観測したIDを保存する。DB transactionの成功応答を確認した後、完全IDを指定して `docker container rm --force` する。
@@ -95,7 +95,7 @@ migration 006の `attempts.container_recovered_at` にDB時刻を保存する。
 
 一覧は取得時点の観測で、応答喪失後に完了するcreateは次の走査で拾う。
 [作成台帳](#コンテナ作成台帳)に予約があり完全IDが未記録なら、一覧が空でも回収は未確認。
-自動再試行は次の作業単位で、この不明状態を保留する。
+自動再試行では、この不明状態を保留する。
 
 実Dockerと専用DBの回帰は `scripts/verify_execution.py` から `orphan_cleanup` を選択する。
 作成後・GO後にWorkerをSIGKILLし、期限監視後の回収、DB停止中の保留、回収競合を検証する。
@@ -126,6 +126,22 @@ Dockerが返した完全IDとinspectが一致し、既存の設定検証を通�
 予約commit自体の応答喪失で作成が行われなかった場合も、回収プロセスには作成結果を確定する証拠がない。
 台帳はコンテナ用で、claim前に準備したimageタグの所有権・回収は別に扱う。
 
+### 基盤障害の自動再試行
+
+期限監視の各走査は、失効確定後に再キューを確認する。許可されたfailed runで、取消要求と正式結果がなく、
+直近の1回目または2回目のattemptが `infra_lease_expired` で閉じている場合を対象にする。
+作成台帳でcreate未送信を確認できる場合、または同じ完全IDの不在確認が確定済みの場合だけ再キューできる。
+チェック失敗、タイムアウト、ログ超過、取消、作成の有無が不明な旧記録は自動再試行の対象外。
+
+再キューはrunを `FOR UPDATE OF r SKIP LOCKED` で確保し、直近attemptを読み直して `state` と `available_at` を更新する。
+DB時刻からの待機は2回目が5秒、3回目が10秒。再キューのcommit後に `infra_retry_scheduled`、直近attempt ID、次の番号と時刻を出力する。
+commit応答が消失して再走査しても、すでにqueuedのrunの待機時刻は変更しない。
+
+待機時刻に達したrunは、検証付きWorkerが受理SHAから固定sourceを再検証して取得する。
+同一run IDとSHAを指定し、runロック後に直近attemptを読み直して、新しいattempt番号・UUID token・30秒leaseを発行する。
+再試行は検証済みsourceを持つimageと結果だけを受け付ける。古いattemptの状態やログは保持する。
+診断用 `--claim-once` と検証付き指定のないローカルfixture実行は初回のみ。3回目の失効は `infra_exhausted` で終了し、コンテナは回収対象に残る。
+
 ## 冪等性と成果物
 
 pushの業務キーはrepository/ref/commit/workflow版。Webhookのhook/delivery IDも一意。
@@ -153,7 +169,7 @@ run.completed_attempt_idを現在の有効attemptの確定transactionでのみ�
 
 基礎DDLは `../migrations/001_initial.sql`（未変更）。版2で履歴用(created_at DESC, id DESC) indexを追加。版3でログと容量台帳を追加（[仕様](log-storage.md)）。UUIDはDB生成。日時はtimestamptz。
 状態CHECKだけでは遷移順・期限・取消優先・正式結果の整合性を保証しない。
-それらはP1/P2の条件付き更新と競合統合テストで検証する。実DB適用・二重適用・業務キー一意制約・状態CHECK・再起動後のschema保持は検証済み。結果確定と条件付き取消SQL、期限監視との競合を検証済み。取消API・再試行は未実装。
+それらはP1/P2の条件付き更新と競合統合テストで検証する。実DB適用・二重適用・業務キー一意制約・状態CHECK・再起動後のschema保持は検証済み。結果確定と条件付き取消SQL、期限監視との競合を検証済み。取消APIと手動再試行は未実装。
 現在のDDLはSHA-1の40桁commitを許容し、他形式は将来再検討する。
 
 ## 故障・中断時の期待動作
@@ -174,14 +190,14 @@ run.completed_attempt_idを現在の有効attemptの確定transactionでのみ�
 
 P1前半ではcommit前/後のAPI SIGKILL、実DB停止、10 HTTP同時投入と一意キー競合待ち、API再起動後の保持を実測済み。
 P0ではDB再起動後のschema保持、CPU/RAM/PID制限、時間/ログ上限と回収を固定fixtureで実測済み。
-初回取得時のrun/attempt同時更新、rollback、ロック解放と取得競合は検証済み。ローカルfixtureの結果反映・再送・commit境界SIGKILL・取消/期限競合も検証済み。Worker全体の障害回復は未実装・未検証。[隔離実測](isolation.md)と[P1計画](p1-plan.md)を参照。
-復旧45秒は未測定の仮目標。実装も測定も未実施。
+初回取得時のrun/attempt同時更新、rollback、ロック解放と取得競合は検証済み。ローカルfixtureの結果反映・再送・commit境界SIGKILL・取消/期限競合も検証済み。2 Worker常駐での障害回復の通し検証が残る。[隔離実測](isolation.md)と[P1計画](p1-plan.md)を参照。
+復旧45秒は未測定の仮目標。
 
 ## 参照
 
 現在のP1実装では、[一件Worker](fixture-worker.md)が既存の取得・上限付きローカルfixture実行・条件付き結果確定を接続する。
 候補の読取transactionを終了後に固定imageを準備し、その後に初回取得する。image IDを固定してcreateし、containerとunique imageタグの回収後に結果確定する。
-claim-onceは取得だけを維持。受理commit経路では検証・buildを前置し、同じrun ID/SHAだけをclaimして既存の実行権照合を通す。migration 004で正式結果と同時に由来を保存する。常駐経路は一件ずつ処理し、停止時は進行中の一件を片付ける。自動復旧は未実装。正式ログの参照境界は[ログ取得仕様](log-access.md)を参照。
+claim-onceは初回取得だけを維持。受理commit経路では検証・buildを前置し、同じrun ID/SHAだけをclaimして実行権照合を通す。migration 004で正式結果と同時に由来を保存する。常駐経路は一件ずつ処理し、停止時は進行中の一件を片付ける。正式ログの参照境界は[ログ取得仕様](log-access.md)を参照。
 
 - [PostgreSQL 17 SELECT](https://www.postgresql.org/docs/17/sql-select.html): SKIP LOCKEDはキュー競合回避用途。一般の一貫した読取の代替にしない。
 - [FastAPI virtual environments](https://fastapi.tiangolo.com/virtual-environments/): プロジェクト専用Python環境を使用。

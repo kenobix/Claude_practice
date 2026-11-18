@@ -18,14 +18,13 @@ GO送信済み、確認済みcgroup値、image ID形式、終了理由とexit co
 | log_limit | failed | fixture_log_limit | 137 |
 
 lease_expired、ガード拒否、GO未送信、不正な組合せは確定しない。復旧処理の対象としてrunningに残す。
-後続単位で[上限付きログDB保存](log-storage.md)を同じtransactionへ接続した。経過時間・image ID・一般のファイル成果物は未保存。
-受理commitを取得・検査する経路はまだない。理由にfixture_を付け、ローカル固定fixtureの結果を記録していることを区別する。
-workflowはfixture-v1固定。受理SHAのコード検査成功という意味ではない。
+[上限付きログDB保存](log-storage.md)を同じtransactionへ接続済み。表の `fixture_*` はローカル固定fixtureの結果を示す。
+受理SHAを実行する[検証付きWorker](fixture-worker.md#受理commitの固定fixture経路)は `commit_*` の理由を使い、image IDなどの由来も同時に保存する。
 
 ## 排他と確定条件
 
 1. runをFOR UPDATE、次にそのrunに属するattemptをFOR UPDATEする。
-2. 固定repository/ref/workflow、run/attempt ID、現在token、Worker ID、初回番号1・initialを確認する。
+2. 固定repository/ref/workflow、run/attempt ID、現在token、Worker ID、番号と種別の組（`1/initial` または `2〜3/infrastructure`）を確認する。再試行は検証済みsourceを必須とする。
 3. 新規確定はrun/attemptがrunning、取消要求なし、completed_attempt_id未設定、finished_at未設定であることを確認する。
 4. attemptを終端状態・exit/reason・DB時刻finished_atへ更新する。WHEREで現在tokenと**DB現在時刻でlease期限内**を再確認する。
 5. runの状態とcompleted_attempt_idを更新し、WHEREで取消なし・running・結果参照なし・現在token/DB期限内を再確認する。

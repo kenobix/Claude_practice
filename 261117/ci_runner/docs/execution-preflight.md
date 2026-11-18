@@ -1,7 +1,7 @@
 # 実行前DB preflight：状態と実行権の再確認
 
 今回実装した1単位は、固定fixtureの実行境界に先立つDB上の権限確認。
-`src/ci_runner/preflight.py` のauthorize_execution(claim)が、初回取得時のClaimを現在のDB状態と照合する。
+`src/ci_runner/preflight.py` のauthorize_execution(claim)が、取得時のClaimを現在のDB状態と照合する。
 コンテナ作成・起動、コード取得、ジョブ実行、結果確定、lease更新・回収は行わない。
 
 ## 受け付ける実行権
@@ -13,7 +13,7 @@
 - 取消要求がなく、正式結果attemptの参照も未設定。
 - DB上のlease_expires_atがDBのclock_timestamp()より未来。
 - 現在のサーバー許可設定のrepository/ref/workflowと一致。
-- 今回の対象である初回attempt番号1、retry_kind=initial。
+- 初回attemptの番号1と `initial`、または再試行attemptの番号2〜3と `infrastructure` の組。
 
 取得したcommit SHAも小文字16進40桁として確認する。
 手元のClaimのstarted_at/lease_expires_atで認可しない。DBの現在値を正本にする。
@@ -35,7 +35,7 @@ SELECT後のconnection context終了時にDBエラーが起きた場合も成功
 今回だけで「取消後の実行が常に起きない」「DB断でもホストで必ず停止する」とは説明しない。
 
 P0で実測したCPU/RAM/PID等の隔離制限とは別の確認である。
-[内部の固定fixture実行](fixture-execution.md)へコンテナ準備・起動前/ガード後DB再照合・cgroup確認・時間/ログ/残lease監視を接続済み。実行中DB再照合は未実装。
+[内部の固定fixture実行](fixture-execution.md)へコンテナ準備・起動前/ガード後DB再照合・cgroup確認・時間/ログ/残lease監視とheartbeatを接続済み。
 claim-once CLIの挙動は変更せず、取得後はrunningのまま残る。HTTP APIからの起動もない。
 
 ## 専用PostgreSQLの検証

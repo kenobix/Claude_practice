@@ -34,8 +34,8 @@ def run_once(worker_id, mode='success', connection_factory=None, *,
              verified_commit=False, stopping=None):
     """Claim once, execute/clean up, then finalize. Never retry any phase.
 
-    A raised error can include an unknown COMMIT outcome. After acquisition,
-    failure leaves reconciliation to the operator/future recovery process.
+    A raised error can include an unknown COMMIT outcome. The expiry monitor
+    and container recovery reconcile interrupted attempts independently.
     """
     worker.validate_worker_id(worker_id)
     if mode not in container.MODES:
@@ -138,7 +138,7 @@ def main(argv=None):
     except OneShotFailed as exc:
         # Claim/finalization COMMIT may have succeeded despite a lost response.
         error = {'status': 'incomplete', 'stage': exc.stage,
-                 'detail': 'inspect DB state; no automatic retry'}
+                 'detail': 'inspect DB state; worker stopped'}
         if exc.run_id:
             error.update(run_id=exc.run_id, attempt_id=exc.attempt_id)
         if exc.source_error:

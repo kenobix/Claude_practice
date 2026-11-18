@@ -1,6 +1,6 @@
 # Worker初回取得：実装した1単位
 
-状態: queuedの原子的な取得と初回attempt発行を実装。コンテナ実行・結果確定・heartbeat・期限回収・再試行は未実装。
+初回queuedの原子的な取得とattempt発行を実装済み。検証付きWorkerによる再取得は[基盤障害の自動再試行](design.md#基盤障害の自動再試行)を参照。
 受付APIとP0実行境界検証に続くP1の最小単位。migrationやAPI応答形式は変更しない。
 
 ## 条件とtransaction
@@ -25,9 +25,8 @@ run行を先にロックし、初回attempt番号1・retry_kind=initial・worker
 取得可能な対象がなければNone（全行が他transactionでロック中の場合も含む）。途中の失敗では両変更がrollbackされる。成功後は行ロックを保持しない。
 
 Claimは内部の実行権情報を保持するが、tokenはreprとCLI出力へ含めない。
-この実装は権限を**発行**するだけで、コンテナ起動前のDB照合は後続の[preflight](execution-preflight.md)に実装済み。起動処理への接続と完了報告のtoken検証は未実装。
-再試行の理由や予算が未実装のため、履歴ありのqueuedを初回扱いで再取得しない。
-後続のretry実装で番号を単調増加させ、manual/infrastructureを正しく保存する必要がある。
+`--claim-once` は実行権の発行までを行う。起動前の再照合は[preflight](execution-preflight.md)、実行と結果反映の入口は[fixture Worker](fixture-worker.md)を参照。
+この診断経路は履歴ありのqueuedを取得対象から除く。検証付きWorkerは基盤障害の再取得で番号を増やし、`infrastructure` と新しいtokenを保存する。
 
 ## 別プロセスでの動作確認
 

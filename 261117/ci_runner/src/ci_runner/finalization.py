@@ -6,6 +6,7 @@ from uuid import UUID
 
 from . import commit_source, database
 from .execution import ExecutionResult, EXPECTED_LIMITS, LOG_LIMIT
+from .retry import attempt_kind
 from .settings import POLICY
 from .worker import Claim, validate_worker_id
 
@@ -60,6 +61,9 @@ def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=N
     """
     state, reason = outcome(claim, result)
     source = result.verified_source
+    kind = attempt_kind(claim.attempt_no)
+    if kind is None or (kind == 'infrastructure' and source is None):
+        raise FinalizationDenied('fixture report is not current')
     provenance = None
     if source is not None:
         try:
@@ -82,8 +86,7 @@ def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=N
                 (POLICY.repository_id, POLICY.ref, POLICY.workflow_version)
                 or attempt['lease_token'] != claim.lease_token
                 or attempt['worker_id'] != claim.worker_id
-                or attempt['attempt_no'] != claim.attempt_no or claim.attempt_no != 1
-                or attempt['retry_kind'] != 'initial'):
+                or attempt['attempt_no'] != claim.attempt_no or attempt['retry_kind'] != kind):
             raise FinalizationDenied('fixture report is not current')
         if source is not None and run['commit_sha'] != source.commit_sha:
             raise FinalizationDenied('source SHA does not match the claimed run')

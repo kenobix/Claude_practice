@@ -948,3 +948,25 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
   ライブGitHub取得は選択回帰で4件skip。Docker daemonの実停止は今回未実施。
 - P2は概算80%、計画工数で重み付けしたMVP全体は概算50%（残約50%）。次は作成要求が未送信、または回収確認済みの
   基盤障害だけを最大3attempt・上限付きバックオフで再試行する。その後に2 Workerで故障復旧を通し検証する。
+
+## P2の基盤障害に限定した自動再試行
+
+- 開始HEAD `20780b26436e773648fbc547b9be7c61af71f4d0` のpush/PR CIは成功。Draft PR #1に未解決のレビュー指摘なし。
+  期限監視へ再キューを接続し、既存schemaの `available_at` と `retry_kind`、Docker作成台帳を使用した。
+- 直近attemptが `infra_lease_expired`、取消・正式結果なし、create未送信または完全IDの不在確認済みの場合を対象とする。
+  runをロックして直近attemptを読み直し、同じrun ID・受理SHAのままDB時刻から5秒または10秒後に再キューする。
+  監視は1走査で失効と再キューを各最大16件処理する。3回目が失効した場合は `infra_exhausted` を記録する。
+- 検証付きWorkerは再取得時に固定sourceを再検証し、同じrun ID/SHAに新しいattempt ID・番号・token・30秒leaseを発行する。
+  2/3回目のpreflight・更新・回収・結果確定にも番号と種別の照合を適用。ローカルimageとsourceのない再試行結果を拒否する。
+  チェック失敗、時間切れ、ログ超過、取消、作成の有無が不明なattemptは自動再試行から除外する。
+- 初回の対象検証は43 passed、336 deselected、既知のTestClient警告1件（29.63秒）。固定のGitHub試験応答と実Dockerで、
+  2回目のWorkerを作成直後にSIGKILLし、不在確認前の再キュー拒否と回収後の3回目の確定を確認した。
+- 最終の通常回帰は192 passed、187 deselected、既知警告1件。pip checkとcompileallも成功。
+- 専用PostgreSQL 17.12とDocker 29.9.2の選択回帰は182 passed、5 skipped、192 deselected、既知警告1件（257.97秒）。
+  DB時刻の5秒・10秒の設定と待機中の取得拒否、再キュー・再取得の競合、3回目の上限、旧token/許可外SHAの拒否、
+  rollbackとcommit応答喪失を確認した。Dockerの通し試験ではDBの待機時刻を過去に更新してから次のattemptを取得した。
+  正式attemptの受理SHA・source digest・image ID・ログの記録と、旧報告の拒否を確認した。
+  DB readinessは200、再起動後にmigration 1〜6を保持。試験用DBのcontainer/volume/networkとfixtureのコンテナ・imageは残存0件。
+  skip内訳はライブGitHub取得4件とP0専用Dockerプローブ1件。Docker daemon自体の停止と2 Worker常駐の故障復旧は未実施。
+- P2は概算90%、MVP全体は計画工数で重み付けした概算53%（残約47%）。次は常駐Workerが正常な取得競合から待機に戻れるようにし、
+  同一ホストの2 Workerで停止位置別の復旧と古い結果の拒否を通し検証する。復旧45秒は仮目標のまま。

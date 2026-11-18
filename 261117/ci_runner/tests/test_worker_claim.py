@@ -85,7 +85,7 @@ def test_ineligible_runs_are_skipped(dedicated_database):
             "now()+interval '30 seconds',now(),'failed','initial')", (retried.id, 'previous', uuid4()))
     claim = claim_next('worker-1')
     assert claim.run_id == allowed.id
-    assert claim_next('worker-1') is None  # requeued attempts await explicit retry implementation
+    assert claim_next('worker-1') is None  # diagnostic claim path accepts only initial attempts
 
 
 def test_locked_head_is_skipped_without_waiting(dedicated_database):
