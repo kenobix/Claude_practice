@@ -3,8 +3,8 @@
 今回の1単位は `src/ci_runner/execution.py` の `execute_fixture(claim, mode)`。
 先行する[DB preflight](execution-preflight.md)と[制限付きコンテナ準備](container-preparation.md)をつなぐ内部ライブラリ。
 固定ローカルのsuccess/failure/timeout/logsだけを実行する。任意コード・コマンド・イメージ・YAMLは受け付けない。
-HTTP API・claim-once CLIからは呼ばず、受理commitは専用の常駐Workerから実行する。heartbeatはP2。後続の[条件付きDB結果確定](result-finalization.md)を内部関数として実装済み。
-受理commitの取得/実行コードへの対応付けは未実装。DB確定時も理由はfixture_接頭辞であり、受理commitの検査成功とは扱わない。
+HTTP API・claim-once CLIからは呼ばない。受理commitの固定fixtureとローカル開発経路の実行ループを共用し、実行中はheartbeatを監視する。後続の[条件付きDB結果確定](result-finalization.md)は専用Workerが呼ぶ。
+DB確定時の理由は受理commit経路を `commit_*`、ローカル開発経路を `fixture_*` で識別する。
 
 ## 起動と処理開始の区別
 
@@ -38,8 +38,13 @@ nosuid/nodevの個別強制検証や任意コードの完全隔離は今回も�
 ガード起動から壁時計10秒、またはDBが返したlease残時間に基づく単調時計期限の早い方でkillする。
 DB SELECTは `lease_expires_at-clock_timestamp()` を返し、ホストは**DB照合呼出前**の単調時計へ残秒を加算する。
 query/commit/応答待ち時間で権限を延長しない。再照合で得た期限が遅くても元のローカル期限を延長しない。
-lease更新はしない。DB時計の実行中ジャンプや、GO送信後の取消/DB断を即座に検知する処理は未実装。
-今回のwatchdogは取得した期限と10秒上限に従う。DBの実行権を維持/予約するものではない。
+
+GO送信後は5秒間隔で同じClaimのDB更新を開始する。DB操作は別スレッドで行い、要求の重複は許さない。
+commitの成功応答が確認できた場合にだけ、要求を出した時点の単調時計+30秒へローカルlease期限を更新する。
+応答確認の締切は要求から5秒か直前のlease期限の早い方。遅れた応答や更新拒否、通信エラーでは例外を返し、`rm --force` で所有コンテナの回収に進む。
+10秒上限と出力量監視は応答待ちの間も継続する。コンテナ終了時に送信済みの更新があれば、その成否も締切内に確認する。
+DB側で更新がcommit済みでも応答を失えば正式な結果は保存しない。終了後にスレッドが戻る場合があるので、再開前にDB状態を照合する。
+取消/DB断はheartbeatで検知する。DB時計の急変やWorkerの強制終了後の回復は別途検証する。
 
 selectorsでstdout/stderrを並行して読み、合計保持を1MiBに制限する。超過分は捨て、log_limitでkillする。
 ガードackは4KiB上限の内部通信であり、利用者ログへ含めない。
@@ -92,7 +97,7 @@ execute_fixture単体ではrun/attemptはrunningのまま。後続のfinalize_fi
 ## 次の1単位
 
 条件付き結果確定と[一件だけのWorker入口](fixture-worker.md)による取得→実行/回収→確定の接続は後続単位で実装済み。
-受理commit取得と常駐Workerへの接続は実装済み。実行中DB監視・heartbeat・期限回収・再試行はP2の残件。
+受理commit取得・常駐Workerと実行中のheartbeatは接続済み。期限回収・再試行はP2の残件。
 
 参照: [Docker startのattach/interactive](https://docs.docker.com/reference/cli/docker/container/start/)、
 [Python selectors](https://docs.python.org/3.12/library/selectors.html)、

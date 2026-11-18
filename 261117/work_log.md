@@ -835,3 +835,24 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
   PostgreSQL 17.12のreadiness 200、再起動後のmigration 1〜4保持、専用コンテナ・network・volumeの回収を確認した。
 - P2は概算25%、MVPは計画工数を重みとする概算37%（残63%）。次は常駐Workerの5秒heartbeatとローカルwatchdogへの接続。
   期限監視、失効後の再試行と残存コンテナ回収、2Workerによる一連の故障復旧は未実装。
+
+## P2：実行中heartbeatとローカルwatchdog
+
+- 開始HEAD `5b8d4a458ac45e414b922ce7b81f3507b2f92bd7` のpush/PR CIは両方成功。Draft PR #1に未解決のレビュー指摘なし。
+  DB更新の実装に続く一単位として、常駐Workerと一件Workerが共用する実行ループへheartbeatを接続した。
+- 実値ガードと起動前/GO前の再照合を通った後、5秒間隔で同じClaimを使い、DB更新を別スレッドで最大1件ずつ行う。
+  確認済みの更新は要求開始時の単調時計+30秒へ反映する。従来の期限または要求から5秒の早い方を応答締切とし、時刻・ログ上限の監視は続ける。
+  拒否・通信エラー・応答不明時は所有資源を回収し、`stage: heartbeat` で終了1。正式結果を保存せず次のrunへ進まない。
+- 通常回帰は166 passed、151 deselected、既知警告1件。pip check・compileall成功。
+  更新の二重発行防止、dispatch起点の残時間、従来の期限や応答締切以降に届いた応答の拒否を確認した。
+- 最初の実DB・実Docker選択回帰は51 passed、1 failed、265 deselected。匿名GitHub APIは開始時58回残り、通常の匿名HTTPSで
+  受理commitの4モードと常駐WorkerのSIGTERM drain、実行中のDB期限延長を確認した。認証済みghの試験経路は使用していない。
+  実停止ケース1件でheartbeat呼び出しまでの到達を確認できず、初回の原因は特定できていない。
+  専用DBの停止を短い猶予で行い、停止成否とWorker終了段階を確認するよう試験を修正した。
+- 修正後の選択再検証は7 passed、310 deselected、既知警告1件（50.88秒）。固定GitHub応答を使って受理commitを実Docker実行し、
+  実行中の取消、専用PostgreSQL実停止、commit後の応答喪失、無応答を検証した。確定なし、次のrunはqueued、所有コンテナとimageタグの回収を確認した。
+  commit応答喪失ではDB側の期限延長だけが残った。無応答注入ではDB処理が止まったままでもWorkerは終了した。
+- 一件Workerの4モード、短縮lease、結果確定、claim競合と実行中障害を含む追加選択回帰は44 passed、273 deselected、既知警告1件（119.26秒）。
+  PostgreSQL 17.12のreadiness 200、再起動後のmigration 1〜4保持、専用コンテナ・network・volumeの回収を確認した。P0隔離を含む全件回帰は今回未実施。
+- P2は概算40%、MVPは計画工数を重みとする概算41%（残59%）。次はDB時刻による期限監視と失効attempt処理の競合検証。
+  失効後の再試行・残存コンテナ回収、Worker強制終了やDocker daemon障害を含む2Workerの一連の復旧試験は未実装。

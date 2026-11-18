@@ -76,7 +76,7 @@ DBのみの確定試験はverify_dbでも実行する。入力拒否試験はDB�
 この文書の実Docker試験は内部関数を順に呼ぶ検証。後続単位の[一件Worker](fixture-worker.md)では別プロセスで取得→実行/回収→確定まで接続した。
 P1全体は未完了。一件Workerでも失敗時のrunning残存・確定不明を自動回復しない。
 既存claim-once診断は変えない。一件Workerのimage準備は取得前へ分離し、container/imageの回収後に確定する。
-受理commitの由来保存と常駐ループは実装済み。本格UI、heartbeat・期限回収・再試行は残件。
+受理commitの由来保存・常駐ループ・実行中heartbeatは実装済み。本格UI、期限回収・再試行は残件。
 
 参照: [PostgreSQLの行ロック](https://www.postgresql.org/docs/17/explicit-locking.html)、
 [READ COMMITTEDでの待機後の条件再評価](https://www.postgresql.org/docs/17/transaction-iso.html)。

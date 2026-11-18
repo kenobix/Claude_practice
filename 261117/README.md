@@ -4,7 +4,7 @@
 基準: [開発計画](../261014/plan_ci_runner.md)。**P0完了（現在環境・管理下の固定fixtureによる開発検証範囲）**。**P1完了（管理下fixtureの受付から結果保存・単一Worker停止まで）**。
 ヘルスチェック・受付/履歴API・PostgreSQL永続化・冪等性を実装済み（P1前半）。
 Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB preflightを実装済み。
-P2ではDB時刻による[lease更新](ci_runner/docs/design.md#lease更新の実装範囲)を実装済み。常駐Workerからのheartbeat呼び出しは今後の作業。
+P2では[実行中の5秒heartbeatとlease更新](ci_runner/docs/design.md#lease更新の実装範囲)を実装済み。更新を確認できなければ実行を打ち切り、次のrunへ進まない。
 固定fixtureのコンテナ作成・設定照合・回収まで実装済み。
 内部ライブラリでDB再照合・実値ガード・時間/ログ/lease上限付きのローカル固定fixture実行も実装済み。
 ローカルfixture結果の条件付きDB確定（状態/exit/理由/終了時刻・正式attempt参照）も実装済み。
@@ -57,7 +57,7 @@ CI_RUN_LIVE_COMMIT_SOURCE=1 .venv/bin/python scripts/verify_execution.py
 空キューは1秒ごとに確認し、受理commitだけを一件ずつ処理する。結果確定後にstdoutへ1行ずつ出力する。
 停止はWorker PIDにSIGTERMを送る。取得やbuildの途中なら完了・回収を待ち、claimを開始済みの一件は
 既存の時間・lease上限で確定または失敗、回収してから終了する。
-取得拒否・GitHubレート制限・DB/Docker異常・確定不明は終了1となる。再起動する前にDB状態を照合する。
+取得拒否・GitHubレート制限・DB/Docker異常・確定不明は終了1となる。実行中のheartbeat失敗は `stage: heartbeat` に出る。再起動する前にDB状態を照合する。
 [常駐と停止の仕様](ci_runner/docs/fixture-worker.md#常駐実行と停止)。
 
 ## Python環境とテスト
@@ -224,7 +224,7 @@ DATABASE_URL設定済みの使い捨て開発DBに限って利用する。
 
 Worker内部向けのauthorize_execution(claim)で、DBにある現在token・Worker・状態・取消要求・lease期限・許可設定を再照合する。
 有効な初回attemptだけに、DBから読み直した固定commit等のExecutionPermitを返す。DB異常や条件不一致なら返さない。
-この照合はsnapshotであり、照合後の取消/失効を防ぐ予約ではない。内部経路では起動前/ガード後の再確認とローカル上限監視を行う。実行中DB再照合は今後必要。
+この照合はsnapshotであり、照合後の取消/失効を防ぐ予約ではない。内部経路では起動前/ガード後に再確認し、実行中はheartbeatとローカル上限で監視する。
 内部の固定fixture実行ライブラリに接続済み。結果確定ライブラリも実装済み。API/claim-onceへの接続は未実装。通常の検証はscripts/verify_db.pyを使用する。
 
 ## 固定fixtureのコンテナ準備（起動なし）
@@ -251,7 +251,7 @@ execute_fixture(claim, mode)はsuccess/failure/timeout/logsだけを扱う内部
 DB再照合とコンテナ内ガードの確認後、DBを再照合してから定型GOを送る。
 CPU/RAM/swap/PIDの実値を確認し、壁時計10秒・合計保持ログ1MiB・DB残leaseの上限を適用する。
 execute_fixtureだけではDBはrunningのまま。別途finalize_fixture(claim, result)で状態/exit/理由/終了時刻を原子的に確定できる。共有DBへ向けず上記スクリプトで検証する。
-実行中の取消/DB断の即時検知、heartbeat/自動復旧は未実装。
+実行中の取消やDB断はheartbeatで検知する。期限を過ぎたattemptの自動復旧は未実装。
 [実行仕様・証拠・限界](ci_runner/docs/fixture-execution.md)を参照。
 
 ## 固定fixtureの結果確定

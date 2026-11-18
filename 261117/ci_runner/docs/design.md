@@ -3,7 +3,7 @@
 状態: P0検証とP1前半（受付/取得API・DB永続化・冪等性）は実装済み。Workerの初回取得と実行前DB preflightは実装済み。[固定fixtureの未起動コンテナ準備](container-preparation.md)と[内部の上限付きfixture実行](fixture-execution.md)も実装済み。[条件付きfixture結果確定](result-finalization.md)も実装済み。上限付きログDB保存を結果確定へ接続済み。正式ログ取得/最小HTML表示も実装済み。受理commitの常駐実行は実装済み。Webhook・履歴UI等は未実装。
 実装したHTTP契約と競合・commit前後の障害証拠は[受付API仕様](intake-api.md)を参照。
 [Worker初回取得](worker-claim.md)は履歴なしの許可queuedだけを取得し、attempt番号1・initial・DB期限30秒を同時commitする。再試行と期限回収は未実装。
-[実行前DB preflight](execution-preflight.md)は現在の実行権を再確認するsnapshotを返すが、外部起動との原子性はない。ローカル固定fixtureでは起動前/ガード後にDB再照合し、時間/ログ/残leaseを監視する。実行中DB監視は未実装。
+[実行前DB preflight](execution-preflight.md)は現在の実行権を再確認するsnapshotを返す。固定fixtureの起動前/ガード後にDBを再照合し、実行中はheartbeatと時間・ログ・残leaseを監視する。DB照合と外部起動は別操作。
 計画書のP1/P2/P3/P4にまたがる条件を先に定義する。数値は実験初期値であり保証ではない。
 
 ## 状態遷移
@@ -53,8 +53,11 @@ run/attemptの識別子、token、状態、由来・結果・ログは保持す�
 commitが完了した場合だけ新しい期限を返す。条件不一致は `LeaseRenewalDenied`、DBエラーやcommit応答不明は例外で返す。
 応答不明の場合の期限はDB側で延びている可能性がある。呼び出し元が実行継続に使える更新応答は発行されない。
 専用DBで、取消による行ロック待ちと、attemptロック待ちの間の自然失効を確認した。
-次は5秒間隔のheartbeatとローカルwatchdogへの接続。実行時間上限と実行前DB照合を維持する。
-期限監視・失効後の再試行・コンテナ回収・2Workerでの復旧試験も残る。
+[実行ループ](fixture-execution.md#監視出力終了結果)は、GO送信から5秒ごとに同じClaimで更新する。
+DB操作は最大1件を別スレッドで実行し、確認した更新だけをローカル期限へ反映する。基準は応答時刻でなく更新開始前の単調時計。
+更新要求から5秒または従来のローカルlease期限の早い方までに応答を確認できなければ、実行を中断し所有資源を回収する。
+実行時間とログ量の上限は継続し、更新を待つ間も監視する。失敗したWorkerは確定を呼ばず、後続runを開始しない。
+次は期限監視と失効attemptの処理。再試行・残存コンテナ回収・2Workerでの復旧試験も残る。
 
 ## 冪等性と成果物
 

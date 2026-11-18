@@ -69,6 +69,8 @@ def run_once(worker_id, mode='success', connection_factory=None, *,
     except commit_source.SourceRejected as exc:
         # SourceRejected messages are fixed descriptions, never raw remote data.
         raise OneShotFailed(stage, claim, source_error=str(exc)) from None
+    except execution.HeartbeatFailed:
+        raise OneShotFailed('heartbeat', claim) from None
     except EXPECTED_FAILURES:
         raise OneShotFailed(stage, claim) from None
     if claim is None:

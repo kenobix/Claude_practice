@@ -2,20 +2,71 @@
 from dataclasses import dataclass
 import json
 import os
+from queue import Empty, SimpleQueue
 import selectors
 import subprocess
+from threading import Thread
 import time
 from uuid import UUID
 
 from . import container
 from .commit_source import VerifiedSource
 from .preflight import ExecutionDenied, authorize_execution
-from .worker import Claim
+from .worker import Claim, LEASE_SECONDS, renew_lease
 
 LOG_LIMIT = 1024 * 1024
 TIMEOUT = 10
+HEARTBEAT_INTERVAL = 5
 EXPECTED_LIMITS = {'cpu.max': '50000 100000', 'memory.max': '134217728',
                    'memory.swap.max': '0', 'pids.max': '64'}
+
+
+class HeartbeatFailed(ExecutionDenied):
+    """The execution loop could not confirm continued DB authority."""
+
+
+def _renew_in_background(claim, connection_factory, response):
+    try:
+        renew_lease(claim, connection_factory)
+    except Exception:
+        # DB and transport diagnostics can contain secrets. Fail closed on any error.
+        response.put(False)
+    else:
+        response.put(True)
+
+
+class _Heartbeat:
+    def __init__(self, claim, connection_factory):
+        self._claim = claim
+        self._factory = connection_factory
+        self._next_at = time.monotonic() + HEARTBEAT_INTERVAL
+        self._response = None
+
+    @property
+    def pending(self):
+        return self._response is not None
+
+    def poll(self, lease_deadline, *, running):
+        now = time.monotonic()
+        if self._response is not None:
+            if now >= min(lease_deadline, self._next_at):
+                raise HeartbeatFailed('lease renewal was not confirmed in time')
+            try:
+                confirmed = self._response.get_nowait()
+            except Empty:
+                return lease_deadline
+            if not confirmed:
+                raise HeartbeatFailed('lease renewal was rejected or unconfirmed')
+            self._response = None
+            # Anchor to request dispatch so DB and delivery latency consume the budget.
+            return self._next_at - HEARTBEAT_INTERVAL + LEASE_SECONDS
+        if running and now >= self._next_at and now < lease_deadline:
+            self._response = SimpleQueue()
+            self._next_at = now + HEARTBEAT_INTERVAL
+            # A black-holed DB connection cannot block the watchdog or worker exit.
+            Thread(target=_renew_in_background, args=(self._claim, self._factory, self._response),
+                   daemon=True).start()
+        return lease_deadline
 
 
 @dataclass(frozen=True)
@@ -49,7 +100,7 @@ def execute_fixture(claim: Claim, mode='success', connection_factory=None, *, pr
     """Run only a fixed fixture. Returns after owned container cleanup.
 
     Starts a trusted guard, then rechecks DB before releasing fixed workload.
-    No polling, heartbeat, repository fetch, DB finalization, or public API.
+    Heartbeat starts after release. No repository fetch, DB finalization, or public API.
     """
     if mode not in container.MODES:
         raise container.ContainerRejected('unknown fixed fixture mode')
@@ -71,6 +122,7 @@ def execute_fixture(claim: Claim, mode='success', connection_factory=None, *, pr
 
 def _run(prepared, claim, connection_factory, lease_deadline, source):
     process = stop = None
+    heartbeat = None
     selector = selectors.DefaultSelector()
     out, err, handshake = bytearray(), bytearray(), bytearray()
     observed = 0
@@ -84,8 +136,14 @@ def _run(prepared, claim, connection_factory, lease_deadline, source):
         for stream, name in ((process.stdout, 'stdout'), (process.stderr, 'stderr')):
             os.set_blocking(stream.fileno(), False)
             selector.register(stream, selectors.EVENT_READ, name)
-        while selector.get_map() or process.poll() is None:
+        while True:
             now = time.monotonic()
+            running = process.poll() is None
+            if heartbeat is not None:
+                lease_deadline = heartbeat.poll(lease_deadline, running=(
+                    running and reason == 'completed' and now < wall_deadline))
+            if not selector.get_map() and not running and (heartbeat is None or not heartbeat.pending):
+                break
             if reason == 'completed' and now >= min(wall_deadline, lease_deadline):
                 reason = 'lease_expired' if lease_deadline <= wall_deadline else 'timeout'
             if reason != 'completed' and stop is None:
@@ -123,6 +181,7 @@ def _run(prepared, claim, connection_factory, lease_deadline, source):
                         raise ExecutionDenied('execution budget expired before release')
                     _release_workload(process)
                     released = True
+                    heartbeat = _Heartbeat(claim, connection_factory)
                     handshake.clear()
                     continue
                 observed += len(chunk)

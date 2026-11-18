@@ -34,6 +34,7 @@ APIへDocker権限を追加せず、既存の入力許可とlease30秒を維持�
 | image | 固定imageのbuild/検証失敗。runを取得せず、attemptを作らない |
 | claim | COMMIT前ならqueued、COMMIT後の応答喪失ならrunning。Claimを受け取れずrun ID不明の場合もある。後続実行へ進まない |
 | execution | 取消/期限/preflight拒否、Docker障害や回収失敗は通常running・正式結果なし。期限後の新規確定は禁止 |
+| heartbeat | 実行中の更新が拒否・不明。所有コンテナとimageタグを回収し、確定や次runの取得へ進まず終了1。応答不明ならDB側の期限が延びている可能性がある |
 | image_cleanup | imageタグ回収失敗。取得済みならrunningのまま確定しない。別所有者へ差し替わったタグを削除しない |
 | finalization | COMMIT前ならrunning、応答喪失後なら終端保存済みの可能性がある。未保存と断定しない |
 | プロセス終了シグナル/daemon断 | SIGTERM/SIGKILL等ではfinallyの完了を保証できず、ラベル付き資源が残り得る。自動回収/再試行は未実装 |
@@ -48,9 +49,9 @@ claim応答不明時はGET一覧とDBのworker_id・開始時刻も照合する�
 一件Workerではbuild（操作上限180秒）を取得前へ移した。候補確認のDB行ロック/transactionやleaseはbuild中へ持ち越さない。
 image準備失敗時は未取得。build中に他Workerが取得/取消した場合は、取得条件を再確認し、対象なしなら自分のimageタグを回収して終了する。
 準備済みimageは内部contextで寿命を管理し、container回収→imageタグ回収→DB確定の順序を守る。handleは公開APIの入力や認証ではない。
-create・実行・両回収は取得後の30秒leaseを消費する。期限切れなら引き続き実行/確定を拒否し、leaseを延長しない。
+create・実行・両回収は取得後のleaseを消費する。GO後の実行ループでは5秒間隔でDBに更新を要求し、期限切れや応答不明時に確定を拒否する。
 内部execute_fixtureを準備済みimageなしで直接呼ぶ互換経路ではbuildも取得後のまま。新しい一件Worker経路と混同しない。
-実行中の取消/DB変化の即時検知、heartbeat、期限回収、基盤障害の再試行はP2の残件。
+期限回収、基盤障害の再試行はP2の残件。
 
 ## 検証
 
