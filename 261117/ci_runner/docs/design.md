@@ -2,11 +2,11 @@
 
 状態: P0検証とP1前半（受付/取得API・DB永続化・冪等性）は実装済み。Workerの初回取得と実行前DB preflightは実装済み。[固定fixtureの未起動コンテナ準備](container-preparation.md)と[内部の上限付きfixture実行](fixture-execution.md)も実装済み。[条件付きfixture結果確定](result-finalization.md)も実装済み。上限付きログDB保存を結果確定へ接続済み。正式ログ取得/最小HTML表示も実装済み。受理commitの常駐実行は実装済み。Webhook・履歴UI等は未実装。
 実装したHTTP契約と競合・commit前後の障害証拠は[受付API仕様](intake-api.md)を参照。
-[Worker初回取得](worker-claim.md)は履歴なしの許可queuedだけを取得し、attempt番号1・initial・DB期限30秒を同時commitする。再試行と期限回収は未実装。
+[Worker初回取得](worker-claim.md)は履歴なしの許可queuedだけを取得し、attempt番号1・initial・DB期限30秒を同時commitする。期限監視を実装済み。再試行は未実装。
 [実行前DB preflight](execution-preflight.md)は現在の実行権を再確認するsnapshotを返す。固定fixtureの起動前/ガード後にDBを再照合し、実行中はheartbeatと時間・ログ・残leaseを監視する。DB照合と外部起動は別操作。
 計画書のP1/P2/P3/P4にまたがる条件を先に定義する。数値は実験初期値であり保証ではない。
 
-## 状態遷移
+## MVPの状態遷移
 
 | 現在 | 事象・条件 | 次のrun状態 | attempt処理 |
 |---|---|---|---|
@@ -36,7 +36,7 @@
 - heartbeat=5秒、lease=30秒、期限監視=5秒。期限の正本はPostgreSQL時刻。
 - heartbeatと完了報告はrun行を先にロックし、running・現在のrunning attempt/token・期限内を再確認する。期限の更新は失効済みtokenを復活させない。
 - 取消・完了・期限回収も同じrun→attemptのロック順。取消要求を先にcommitしたら成功更新を拒否する。先に完了commitしたら取消は終了済みと返す。
-- 期限監視は失効attemptを閉じてから再キューする。一意なrunning attempt制約と組み合わせる。
+- 期限監視は失効attemptを閉じる。失効後の再キューは、残存コンテナ回収と再試行予算を接続する段階で追加する。
 - DB断では新規ジョブを開始せず、lease更新の応答が不明なら成功とみなさない。Workerの単調時計watchdogで残存実行を止める。
 - 外部の停止とDB更新は単一transactionにできない。取消は完了確定をまず防止し、実際の停止確認・残存回収を追跡する。
 
@@ -57,7 +57,21 @@ commitが完了した場合だけ新しい期限を返す。条件不一致は `
 DB操作は最大1件を別スレッドで実行し、確認した更新だけをローカル期限へ反映する。基準は応答時刻でなく更新開始前の単調時計。
 更新要求から5秒または従来のローカルlease期限の早い方までに応答を確認できなければ、実行を中断し所有資源を回収する。
 実行時間とログ量の上限は継続し、更新を待つ間も監視する。失敗したWorkerは確定を呼ばず、後続runを開始しない。
-次は期限監視と失効attemptの処理。再試行・残存コンテナ回収・2Workerでの復旧試験も残る。
+
+### 期限監視の実装範囲
+
+独立プロセスの `ci_runner.expiry_monitor --watch` は許可repository/ref/workflowの失効を1走査最大16件処理し、5秒待つ。
+`--once` は1走査で終了する。1件ずつcommitし、確認できたrun ID・attempt ID・状態・理由だけをJSONで出す。
+DBエラーやcommit応答喪失は終了1。再走査はrunningの組だけが対象なので、既に閉じたattemptを二重に処理しない。
+
+PostgreSQLの文開始時刻で候補を選び、期限順にrun行を `FOR UPDATE OF r SKIP LOCKED` で確保する。
+次にattemptをロックし、更新時の `clock_timestamp()` で期限以下かを再確認する。
+期限切れを確定すると、runとattemptの両方を同一transactionで閉じる。
+現段階は取消要求ありなら `canceled / canceled_lease_expired`、それ以外は `failed / infra_lease_expired`。
+終了コード・正式attempt参照・ログ・由来を作らず、識別子・token・元の期限は保持する。
+
+今回の終端runを後続の監視が無条件に再開することはない。MVPの予算内再キューには、旧attemptの資源回収の確認と新attemptの発行が必要。
+DBの失効記録からDocker停止は確認できないため、次はattemptラベルに基づく、回収対象を限定した残存コンテナ回収を実装する。
 
 ## 冪等性と成果物
 
@@ -86,7 +100,7 @@ run.completed_attempt_idを現在の有効attemptの確定transactionでのみ�
 
 基礎DDLは `../migrations/001_initial.sql`（未変更）。版2で履歴用(created_at DESC, id DESC) indexを追加。版3でログと容量台帳を追加（[仕様](log-storage.md)）。UUIDはDB生成。日時はtimestamptz。
 状態CHECKだけでは遷移順・期限・取消優先・正式結果の整合性を保証しない。
-それらはP1/P2の条件付き更新と競合統合テストで検証する。実DB適用・二重適用・業務キー一意制約・状態CHECK・再起動後のschema保持は検証済み。ローカルfixtureの結果確定と条件付き取消SQLの競合を検証済み。取消API/期限回収等は未実装。
+それらはP1/P2の条件付き更新と競合統合テストで検証する。実DB適用・二重適用・業務キー一意制約・状態CHECK・再起動後のschema保持は検証済み。結果確定と条件付き取消SQL、期限監視との競合を検証済み。取消API・再試行は未実装。
 現在のDDLはSHA-1の40桁commitを許容し、他形式は将来再検討する。
 
 ## 故障・中断時の期待動作

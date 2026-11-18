@@ -5,6 +5,7 @@
 ヘルスチェック・受付/履歴API・PostgreSQL永続化・冪等性を実装済み（P1前半）。
 Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB preflightを実装済み。
 P2では[実行中の5秒heartbeatとlease更新](ci_runner/docs/design.md#lease更新の実装範囲)を実装済み。更新を確認できなければ実行を打ち切り、次のrunへ進まない。
+独立した[期限監視](ci_runner/docs/design.md#期限監視の実装範囲)を起動すると、失効したrunとattemptをDBで閉じる。
 固定fixtureのコンテナ作成・設定照合・回収まで実装済み。
 内部ライブラリでDB再照合・実値ガード・時間/ログ/lease上限付きのローカル固定fixture実行も実装済み。
 ローカルfixture結果の条件付きDB確定（状態/exit/理由/終了時刻・正式attempt参照）も実装済み。
@@ -59,6 +60,17 @@ CI_RUN_LIVE_COMMIT_SOURCE=1 .venv/bin/python scripts/verify_execution.py
 既存の時間・lease上限で確定または失敗、回収してから終了する。
 取得拒否・GitHubレート制限・DB/Docker異常・確定不明は終了1となる。実行中のheartbeat失敗は `stage: heartbeat` に出る。再起動する前にDB状態を照合する。
 [常駐と停止の仕様](ci_runner/docs/fixture-worker.md#常駐実行と停止)。
+
+## 実行権の期限を監視する
+
+同じ専用DBへ接続する環境で、Workerとは別プロセスとして起動する。
+
+```bash
+.venv/bin/python -m ci_runner.expiry_monitor --watch
+```
+
+1回最大16件を処理し、5秒待って再走査する。単発は `--once`。DBエラー時は終了1とし、再開前にDB状態を照合する。
+現段階は失効を `failed`、先行する取消要求ありを `canceled` として保存する。失効後の自動再試行と残存コンテナ回収は後続の作業。
 
 ## Python環境とテスト
 
@@ -217,7 +229,7 @@ commit結果が不明な接続断では、未保存と断定せず同じ業務�
 DATABASE_URL設定済みの使い捨て開発DBに限って利用する。
 許可設定に合う初回queuedを1件だけrunningにし、attempt番号1・DB生成token・30秒leaseを同時commitする。
 対象なしはclaimed=false。tokenは出力しない。DB停止時はexit 1で成功応答を出さない。
-取得後の実行・結果保存・期限回収はまだなく、コマンド終了後もrunningが残る。
+この取得専用コマンドの終了後はrunningが残る。失効後のDB処理は別プロセスの期限監視が行う。
 検証と回収をまとめて行う場合はscripts/verify_db.pyを使用する。詳細はWorker初回取得仕様を参照。
 
 ## 実行前DB preflight

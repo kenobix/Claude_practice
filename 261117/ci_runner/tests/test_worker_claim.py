@@ -23,7 +23,11 @@ pytestmark = pytest.mark.integration
 
 
 def seed(sha='a' * 40):
-    return runs.create_run(database.connect, sha)[0]
+    run = runs.create_run(database.connect, sha)[0]
+    # Give claim tests a clearly eligible run. Future availability is tested separately.
+    with database.connect() as conn:
+        conn.execute("UPDATE runs SET available_at=clock_timestamp()-interval '1 day' WHERE id=%s", (run.id,))
+    return run
 
 
 def worker_process(worker_id):
@@ -37,7 +41,13 @@ def test_separate_worker_commits_initial_attempt_and_api_observes_it(dedicated_d
     result = worker_process('worker-1')
     assert result.returncode == 0 and result.stderr == ''
     output = json.loads(result.stdout)
-    assert output['claimed'] and output['run_id'] == str(run.id) and output['attempt_no'] == 1
+    if not output['claimed']:
+        with database.connect() as conn:
+            diagnostic = conn.execute(
+                'SELECT state, available_at, clock_timestamp() AS db_now FROM runs WHERE id=%s', (run.id,),
+            ).fetchone()
+        pytest.fail(f'worker did not claim the eligible run: {diagnostic}')
+    assert output['run_id'] == str(run.id) and output['attempt_no'] == 1
     assert 'lease_token' not in output
     with psycopg.connect(dedicated_database.dsn) as conn:
         row = conn.execute('SELECT state FROM runs WHERE id=%s FOR UPDATE NOWAIT', (run.id,)).fetchone()
@@ -80,6 +90,8 @@ def test_ineligible_runs_are_skipped(dedicated_database):
 
 def test_locked_head_is_skipped_without_waiting(dedicated_database):
     head, next_run = seed('a' * 40), seed('b' * 40)
+    with database.connect() as conn:
+        conn.execute("UPDATE runs SET available_at=clock_timestamp()-interval '2 days' WHERE id=%s", (head.id,))
     with psycopg.connect(dedicated_database.dsn) as owner:
         owner.execute('SELECT id FROM runs WHERE id=%s FOR UPDATE', (head.id,))
         # Another process can claim the next row while the queue head is locked.

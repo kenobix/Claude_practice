@@ -856,3 +856,23 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
   PostgreSQL 17.12のreadiness 200、再起動後のmigration 1〜4保持、専用コンテナ・network・volumeの回収を確認した。P0隔離を含む全件回帰は今回未実施。
 - P2は概算40%、MVPは計画工数を重みとする概算41%（残59%）。次はDB時刻による期限監視と失効attempt処理の競合検証。
   失効後の再試行・残存コンテナ回収、Worker強制終了やDocker daemon障害を含む2Workerの一連の復旧試験は未実装。
+
+## P2：DB時刻による期限監視と失効記録
+
+- 開始HEAD `3767018310a67154f3989216c5ac0e0c59cd51a7` のpush/PR CIは両方成功。Draft PR #1に未解決のレビュー指摘なし。
+  heartbeatに続く一単位として独立プロセス `ci_runner.expiry_monitor` を追加。1回最大16件、`--watch` は走査後に5秒待つ。
+- DB時刻で候補を選び、run→attemptの順にロックし、更新時のDB時刻で失効を再確認する。
+  期限切れのrunとattemptを同一transactionで閉じ、取消要求が確定済みなら `canceled / canceled_lease_expired`、
+  それ以外は `failed / infra_lease_expired` を記録。token・期限・run/attempt IDを維持し、正式結果やログ・由来の昇格は行わない。
+  commit確認済みの行だけを出力する。DBエラーや確定不明は終了1、再走査しても確定済み行を二重処理しない。
+- 専用PostgreSQLで、期限到達・未到達、取消要求、監視同士の競合、先行するheartbeat/結果確定のスキップ、
+  失効確定後の遅延報告拒否、commit前rollbackとcommit後の応答喪失を確認した。既存の実DB停止試験にも監視を追加。
+- 通常回帰は168 passed、160 deselected、既知警告1件。pip checkとcompileall成功。
+  初回の専用DB全回帰は283 passed、1 failed、44 skipped。監視試験は全件成功し、既存の初回claim試験で1件取得できなかった。
+  失敗時のDB時刻は記録されておらず、原因は未特定。取得試験の開始可能時刻をDB時刻より前に明示し、診断を追加。
+  未来に設定したrunの除外とキュー先頭のロックスキップは従来どおり個別に検証する。
+- 修正後の `scripts/verify_db.py` は284 passed、44 skipped、既知警告1件（81.94秒）。
+  PostgreSQL 17.12でreadiness 200、DB再起動後のmigration 1〜4保持、専用コンテナ・network・volumeの回収を確認。
+  今回の監視はDBだけを操作する。固定ジョブの実Docker実行・GitHubからのsource取得は今回未実施。
+- 失効時のDB終端処理までを実装。再試行を接続するまで、監視で閉じたrunは自動再開しない。
+  P2は概算55%、MVP全体は概算44%（計画工数で重み付け）。次はattemptラベルとDB状態で対象を特定し、残存コンテナの回収を検証する。

@@ -16,6 +16,7 @@ import httpx
 import psycopg
 import pytest
 
+from ci_runner.expiry_monitor import expire_next
 from ci_runner.finalization import finalize_fixture
 from test_finalization_input import report
 from ci_runner.preflight import authorize_execution
@@ -219,6 +220,8 @@ def test_actual_database_stop_returns_503_and_recovers(dedicated_database):
                 authorize_execution(claim)
             with pytest.raises(psycopg.OperationalError):
                 renew_lease(claim)
+            with pytest.raises(psycopg.OperationalError):
+                expire_next()
             with pytest.raises(psycopg.OperationalError):
                 finalize_fixture(claim, report(claim))
             worker = subprocess.run(
