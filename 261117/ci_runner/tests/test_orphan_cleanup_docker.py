@@ -92,6 +92,12 @@ def inspect(container_id):
     return json.loads(container.docker('container', 'inspect', container_id).stdout)[0]
 
 
+def recovery_time(claim):
+    with database.connect() as conn:
+        return conn.execute('SELECT container_recovered_at FROM attempts WHERE id=%s',
+                            (claim.attempt_id,)).fetchone()['container_recovered_at']
+
+
 def test_worker_killed_after_go_is_recovered_only_after_natural_expiry(dedicated_database):
     before = resources()
     with container.prepare_image() as image:
@@ -111,8 +117,11 @@ def test_worker_killed_after_go_is_recovered_only_after_natural_expiry(dedicated
             assert json.loads(recovered.stdout) == {
                 'container_id': orphan, 'run_id': str(run.id), 'attempt_id': str(claim.attempt_id)}
             assert orphan_cleanup._inspect(orphan) is None
+            confirmed_at = recovery_time(claim)
+            assert confirmed_at >= claim.lease_expires_at
             again = scan_cli()
             assert again.returncode == 0 and not again.stdout and not again.stderr
+            assert recovery_time(claim) == confirmed_at
             with pytest.raises(FinalizationDenied):
                 finalize_fixture(claim, report(claim))
             with database.connect() as conn:
@@ -173,6 +182,7 @@ def test_created_orphan_survives_db_stop_then_two_recovery_scans(
                 receipts = [receipt for scan in scans for receipt in scan.result(timeout=16)]
             assert receipts == [orphan_cleanup.RemovedContainer(orphan, run.id, claim.attempt_id)]
             assert orphan_cleanup._inspect(orphan) is None
+            assert recovery_time(claim) is not None
             assert inspect(unrelated.container_id)['State']['Status'] == 'created'
             with database.connect() as conn:
                 assert conn.execute('SELECT state FROM runs WHERE id=%s', (run.id,)).fetchone()['state'] == 'canceled'
@@ -208,20 +218,82 @@ def test_delayed_create_is_recorded_before_docker_can_list_it(dedicated_database
             set_expiry(claim)
             assert expire_next().attempt_id == claim.attempt_id
             assert list(orphan_cleanup.recover()) == [] and create_history(claim) == history
+            assert recovery_time(claim) is None
             allow_create.set()
             assert visible.wait(8)
             (container_id,) = ids
             info = inspect(container_id)
             assert info['State']['Status'] == 'created'
             assert info['Config']['Labels'][container.LABEL] == history['create_session'].hex
+            owner = orphan_cleanup._owner(info)
+            assert orphan_cleanup._authorize_removal(database.connect, replace(owner, session=uuid4()),
+                                                      history['create_daemon_id'], container_id) is None
+            with monkeypatch.context() as patch:
+                other_daemon = uuid4()
+                patch.setattr(container, 'daemon_id', lambda: other_daemon)
+                assert list(orphan_cleanup.recover()) == []
+            assert create_history(claim) == history
+
+            authorize = orphan_cleanup._authorize_removal
+
+            @contextmanager
+            def lost_ack():
+                with database.connect() as conn:
+                    yield conn
+                raise psycopg.OperationalError('injected lost binding commit response')
+
+            with monkeypatch.context() as patch:
+                patch.setattr(orphan_cleanup, '_authorize_removal',
+                              lambda _, *args: authorize(lost_ack, *args))
+                with pytest.raises(psycopg.OperationalError, match='lost binding'):
+                    list(orphan_cleanup.recover())
+            assert create_history(claim) == {**history, 'created_container_id': container_id}
+            assert inspect(container_id)['State']['Status'] == 'created'
+            assert recovery_time(claim) is None
             assert list(orphan_cleanup.recover()) == [
                 orphan_cleanup.RemovedContainer(container_id, run.id, claim.attempt_id)]
-            assert create_history(claim) == history
+            assert orphan_cleanup._inspect(container_id) is None
+            assert recovery_time(claim) is not None
         finally:
             allow_create.set()
             reply.set()
         with pytest.raises(container.ContainerRejected, match='response loss'):
             task.result(timeout=8)
+    assert resources() == before
+
+
+@pytest.mark.parametrize('committed', [False, True], ids=['rollback', 'lost-commit-response'])
+def test_recovery_restarts_after_removal_before_db_confirmation(dedicated_database, monkeypatch, committed):
+    before = resources()
+    confirm = orphan_cleanup._confirm_recovery
+
+    @contextmanager
+    def interrupted():
+        with database.connect() as conn:
+            yield conn
+            if not committed:
+                raise psycopg.OperationalError('injected recovery rollback')
+        raise psycopg.OperationalError('injected recovery commit response loss')
+
+    with container.prepare_image() as image:
+        run, claim = issue_claim()
+        with killed_worker(claim, image, 'created') as orphan:
+            set_expiry(claim)
+            assert expire_next().attempt_id == claim.attempt_id
+            with monkeypatch.context() as patch:
+                patch.setattr(orphan_cleanup, '_confirm_recovery', lambda _, *args: confirm(interrupted, *args))
+                with pytest.raises(psycopg.OperationalError, match='injected recovery'):
+                    list(orphan_cleanup.recover())
+            assert orphan_cleanup._inspect(orphan) is None
+            confirmed_at = recovery_time(claim)
+            assert (confirmed_at is not None) == committed
+            # The next scan must use the stored ID because Docker no longer lists it.
+            expected = [] if committed else [orphan_cleanup.RemovedContainer(orphan, run.id, claim.attempt_id)]
+            assert list(orphan_cleanup.recover()) == expected
+            final_time = recovery_time(claim)
+            assert final_time is not None
+            if committed:
+                assert final_time == confirmed_at
     assert resources() == before
 
 
@@ -251,4 +323,8 @@ def test_lost_reservation_commit_ack_never_dispatches_create(dedicated_database,
             execution.execute_fixture(claim, prepared_image=image)
         assert create_history(claim)['create_session'] is not None
         assert create_history(claim)['created_container_id'] is None
+        set_expiry(claim)
+        assert expire_next().attempt_id == claim.attempt_id
+        assert list(orphan_cleanup.recover()) == []
+        assert recovery_time(claim) is None
     assert resources() == before

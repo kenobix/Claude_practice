@@ -40,7 +40,7 @@ APIは認証なしのローカル開発用途で、127.0.0.1に限定して起�
 | GET /runs/{id} | 200、Run | UUID不正422、存在しないID404、DB503 |
 | GET /health/live | 200、phase=P1-intake | DB不要 |
 | GET /runs/{id}/logs | 正式ログの上限付きtext/HTMLページ（[仕様](log-access.md)） | 未確定409・ログなし404・範囲416・入力422・DB停止503 |
-| GET /health/ready | schema版3が確認できれば200 | 未設定/DB停止/未適用503 |
+| GET /health/ready | 現行schema版6が確認できれば200 | 未設定/DB停止/未適用503 |
 
 Runはid、repository_id、ref、commit_sha、workflow_version、state、created_at、available_at、cancel_requested_at、completed_attempt_idを返す。
 lease tokenやDB接続情報は返さない。新規はqueued、日時はDB時刻、取消・正式結果参照はnull。

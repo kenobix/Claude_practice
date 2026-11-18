@@ -6,7 +6,7 @@
 Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB preflightを実装済み。
 P2では[実行中の5秒heartbeatとlease更新](ci_runner/docs/design.md#lease更新の実装範囲)を実装済み。更新を確認できなければ実行を打ち切り、次のrunへ進まない。
 独立した[期限監視](ci_runner/docs/design.md#期限監視の実装範囲)を起動すると、失効したrunとattemptをDBで閉じる。
-失効確定後の残存コンテナは、Dockerホストごとの[回収コマンド](ci_runner/docs/design.md#失効attemptのコンテナ回収)で回収できる。
+失効確定後の残存コンテナは、Dockerデーモンごとの[回収コマンド](ci_runner/docs/design.md#失効attemptのコンテナ回収)で回収し、同じ完全IDの不在をDBに記録できる。
 P2の[コンテナ作成台帳](ci_runner/docs/design.md#コンテナ作成台帳)は、WorkerがDockerへ要求を送る前に作成可能性を記録する。
 固定fixtureのコンテナ作成・設定照合・回収まで実装済み。
 内部ライブラリでDB再照合・実値ガード・時間/ログ/lease上限付きのローカル固定fixture実行も実装済み。
@@ -32,7 +32,7 @@ blob・2151 bytes・承認済みSHA-256を照合する。I/O前後のrun ID/SHA�
 
 ## 受理commitの固定fixtureを一件実行する
 
-専用DBで migration 005 まで適用し、許可main上のfixtureを含むSHAでrunを投入する。
+専用DBで migration 006 まで適用し、許可main上のfixtureを含むSHAでrunを投入する。
 WorkerにDocker権限とGitHub HTTPS接続を用意し、`ci_runner/` から実行する。
 
 ```bash
@@ -56,7 +56,7 @@ CI_RUN_LIVE_COMMIT_SOURCE=1 .venv/bin/python scripts/verify_execution.py
 .venv/bin/python -m ci_runner.fixture_worker --worker-id commit-worker-1 --serve
 ```
 
-専用DB・migration 005・Docker・GitHub HTTPSの条件は一件実行と同じ。
+専用DB・migration 006・Docker・GitHub HTTPSの条件は一件実行と同じ。
 空キューは1秒ごとに確認し、受理commitだけを一件ずつ処理する。結果確定後にstdoutへ1行ずつ出力する。
 停止はWorker PIDにSIGTERMを送る。取得やbuildの途中なら完了・回収を待ち、claimを開始済みの一件は
 既存の時間・lease上限で確定または失敗、回収してから終了する。
@@ -76,16 +76,18 @@ CI_RUN_LIVE_COMMIT_SOURCE=1 .venv/bin/python scripts/verify_execution.py
 
 ## 失効後に残ったコンテナを回収する
 
-Workerと同じDockerデーモンおよび専用DBに接続する環境で実行する。
+Workerと同じDockerデーモンおよび migration 006 適用済みの専用DBに接続する環境で実行する。
 
 ```bash
 .venv/bin/python -m ci_runner.orphan_cleanup --once
 ```
 
-準備時の所有ラベルとDBの失効記録が一致したコンテナだけを対象とする。削除確認を受け取った各コンテナについて、
-完全IDとrun/attempt IDをJSONで出力する。照合に必要なDB操作やDocker操作が失敗すると終了1。復旧後に再走査できる。
-遅れて完了するDocker createの回収には再走査が必要。台帳に作成予約が残り完全IDが未記録なら、一覧が空でも回収は確認できない。
-次は回収確認をDBに保存し、再キューの前提にする。[回収条件と再検証](ci_runner/docs/design.md#失効attemptのコンテナ回収)。
+準備時の所有ラベルとDBの失効記録を照合する。作成を追跡しているattemptでは、完全IDを保存してから削除し、同じデーモンでの
+不在確認を `container_recovered_at` に保存する。DB確定後に完全IDとrun/attempt IDをJSONで出力する。
+削除後に中断した場合は、一覧から消えた完全IDも再走査できる。DBやDockerの異常時は終了1。作成台帳の対象外だった旧attemptは、
+従来どおりDockerが削除を確認した場合にJSONを出力する。
+作成予約があり、完全IDを観測できていない場合は、一覧が空でも作成結果は不明のまま。再試行への接続は次の作業単位。
+[回収条件と再検証](ci_runner/docs/design.md#失効attemptのコンテナ回収)。
 
 ## Python環境とテスト
 

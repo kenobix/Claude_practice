@@ -132,17 +132,20 @@ def test_two_simultaneous_monitors_report_one_expiry(dedicated_database):
 @pytest.mark.parametrize('committed', [False, True])
 def test_commit_fault_does_not_acknowledge_or_partially_close(dedicated_database, committed):
     _, claim = issue_claim()
-    set_expiry(claim)
+    set_expiry(claim, -1)
 
     @contextmanager
     def faulty_connection():
         with database.connect() as conn:
             yield conn
+            assert conn.execute('SELECT state FROM attempts WHERE id=%s',
+                                (claim.attempt_id,)).fetchone()['state'] == 'failed'
             if not committed:
                 raise psycopg.OperationalError('injected precommit disconnect')
         raise psycopg.OperationalError('injected missing commit acknowledgement')
 
-    with pytest.raises(psycopg.OperationalError):
+    fault = 'missing commit acknowledgement' if committed else 'precommit disconnect'
+    with pytest.raises(psycopg.OperationalError, match=f'injected {fault}'):
         expire_next(faulty_connection)
     row = saved(claim)
     assert row['state'] == row['run_state'] == ('failed' if committed else 'running')

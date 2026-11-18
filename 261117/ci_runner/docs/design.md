@@ -81,18 +81,25 @@ MVPの予算内再キューには、旧attemptの資源回収の確認と新atte
 期限以後の終了時刻を確認する。対象は `failed / infra_lease_expired` と、取消要求を伴う
 `canceled / canceled_lease_expired` の確定済み記録。期限時刻を過ぎたrunning attemptは期限監視が先に処理する。
 
-DB照合のtransactionが正常に戻った後、照合した完全IDを指定して `docker container rm --force` する。
-同じIDの削除確認を得たときにだけreceiptを出す。競合時に同じIDの不在を確認できれば処理済みとして続ける。
-DB接続異常やDockerの結果不明は終了1。周期的な実行は運用側から行い、障害復旧後は再走査する。
+作成台帳の対象では、Dockerのdaemon IDと所有sessionを予約と照合する。遅延createなどで完全IDが未記録なら、
+観測したIDを保存する。DB transactionの成功応答を確認した後、完全IDを指定して `docker container rm --force` する。
+削除応答にかかわらず、同じdaemonで同じ完全IDのコンテナ専用inspectが不在を返してから、
+migration 006の `attempts.container_recovered_at` にDB時刻を保存する。不在確認は、正式結果・token・lease・由来を変更しない。
+
+既知の完全IDもDBから走査するので、削除後に回収プロセスやDB接続が中断されても、再走査で不在を確認できる。
+確認時刻を設定したtransactionが成功した場合だけJSONを出力する。並行確認ですでに確定済みなら時刻を書き換えない。
+作成台帳の対象外では従来の所有ラベル照合による削除を続け、Dockerが同じIDの削除を返した場合にJSONを出力する。
+この場合にDBの不在確認は残さない。DB接続異常やDockerの結果不明は終了1。周期的な実行は運用側から行い、障害復旧後は再走査する。
 権限境界は既存Workerと同じで、コンテナのラベル・名前を設定できるDocker管理主体と、専用DBの書込主体を信頼する。
 回収対象はコンテナ本体。imageタグ、volume、network、build cacheの回収は別途所有権を確認する必要がある。
 
-回収のDB検索はread-only。一覧は取得時点の観測で、応答喪失後に完了するcreateは次の走査で拾う。
-[作成台帳](#コンテナ作成台帳)が予約を記録していて完全IDが未記録なら、一覧が空でも回収は未確認。
-回収側による完全IDの記録と不在確認の永続化を、再キューの前提として後続単位で扱う。
+一覧は取得時点の観測で、応答喪失後に完了するcreateは次の走査で拾う。
+[作成台帳](#コンテナ作成台帳)に予約があり完全IDが未記録なら、一覧が空でも回収は未確認。
+自動再試行は次の作業単位で、この不明状態を保留する。
 
 実Dockerと専用DBの回帰は `scripts/verify_execution.py` から `orphan_cleanup` を選択する。
 作成後・GO後にWorkerをSIGKILLし、期限監視後の回収、DB停止中の保留、回収競合を検証する。
+遅延createと完全ID保存commitの応答喪失、削除後のDB rollbackとcommit応答喪失からの再走査も検証する。
 
 ### コンテナ作成台帳
 
@@ -112,10 +119,11 @@ Dockerが返した完全IDとinspectが一致し、既存の設定検証を通�
 | 記録対象外（既存行） | 作成履歴不明 |
 | 記録対象で予約なし | WorkerはDocker createを送っていない |
 | 予約あり、完全IDなし | 作成結果不明。遅れて現れる可能性があり、応答喪失で実際には送信していない場合も含む |
-| 予約あり、完全IDあり | 同じdaemon上のコンテナを照合するための識別情報がある。回収確認は別途必要 |
+| 予約あり、完全IDあり、確認時刻なし | 同じdaemon上で完全IDの不在を確認する必要がある |
+| 予約あり、完全IDあり、確認時刻あり | 回収プロセスが同じdaemonで完全IDの不在を確認した |
 
-現段階の回収コマンドで削除しても、台帳に回収確認は保存されない。createの応答喪失後に回収され、完全IDを
-永続化できなかった予約は作成結果不明のまま残る。再試行はこの不明状態を自動で解除しない設計にする。
+作成要求の応答喪失後、完全IDの記録前にWorkerの通常後処理などでコンテナが消えた場合は、作成結果不明のまま残る。
+予約commit自体の応答喪失で作成が行われなかった場合も、回収プロセスには作成結果を確定する証拠がない。
 台帳はコンテナ用で、claim前に準備したimageタグの所有権・回収は別に扱う。
 
 ## 冪等性と成果物
@@ -136,7 +144,7 @@ run.completed_attempt_idを現在の有効attemptの確定transactionでのみ�
 | 表 | 役割・制約 |
 |---|---|
 | runs | 業務キー一意、状態CHECK、再取得可能時刻、取消要求、正式結果attempt参照 |
-| attempts | run内番号一意、token一意、runningはrunごとに最大1件、期限・理由・retry種別 |
+| attempts | run内番号一意、token一意、runningはrunごとに最大1件、期限・理由・retry種別、Docker作成予約・回収確認 |
 | deliveries | hook/delivery一意、body SHA-256、結果、runへのFK |
 | artifacts | attempt FK、サーバー生成名、サイズCHECK、SHA-256、保存キー一意 |
 | attempt_logs / log_storage_budget | attempt別の不変byteaログ、合計1MiB/attempt・最大64MiBのraw保持payload台帳 |

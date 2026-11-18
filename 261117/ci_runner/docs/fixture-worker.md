@@ -71,7 +71,7 @@ build1回・createのimage ID一致・正常確定・資源回収も確認する
 ## 受理commitの固定fixture経路
 
 `--run-once --verified-commit` は許可mainのsnapshotから検証した固定fixtureを実行する。
-curl 8.4以上とGitHub HTTPS接続、migration 005適用済みの専用DBとUUID形式のIDを返すDocker daemonが必要。
+curl 8.4以上とGitHub HTTPS接続、migration 006適用済みの専用DBとUUID形式のIDを返すDocker daemonが必要。
 `--fixture-mode` は運用者が選ぶ既存4モードで、受付APIは実行指示を受け取らない。
 
 1. DB transactionを閉じてから[固定取得](commit-source-readiness.md)を実施する。

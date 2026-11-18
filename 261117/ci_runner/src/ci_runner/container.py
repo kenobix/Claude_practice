@@ -49,6 +49,13 @@ def docker(*args, timeout=30, check=True):
     return result
 
 
+def daemon_id():
+    try:
+        return UUID(docker('info', '--format', '{{.ID}}').stdout.strip())
+    except ValueError:
+        raise ContainerRejected('Docker daemon identity unavailable') from None
+
+
 def validate_configuration(info, image, labels, mode='success'):
     """Inspect settings only. Effective runtime cgroups still require verification."""
     try:
@@ -206,11 +213,8 @@ def prepare_fixture(permit: ExecutionPermit, mode='success', *, prepared_image=N
     name = f'{NAME_PREFIX}{session}'
     labels = {LABEL: session, RUN_LABEL: str(permit.run_id), ATTEMPT_LABEL: str(permit.attempt_id)}
     if connection_factory is not None:
-        try:
-            daemon_id = UUID(docker('info', '--format', '{{.ID}}').stdout.strip())
-        except ValueError:
-            raise ContainerRejected('Docker daemon identity unavailable') from None
-        reserve_container_create(permit, daemon_id, reservation, connection_factory)
+        daemon = daemon_id()
+        reserve_container_create(permit, daemon, reservation, connection_factory)
     attempted_create = False
     try:
         options = [item for key, value in labels.items() for item in ('--label', f'{key}={value}')]
@@ -227,7 +231,7 @@ def prepare_fixture(permit: ExecutionPermit, mode='success', *, prepared_image=N
         if cid != info['Id'] or not re.fullmatch('[0-9a-f]{64}', cid):
             raise ContainerRejected('container identity mismatch')
         if connection_factory is not None:
-            record_created_container(permit, daemon_id, reservation, cid, connection_factory)
+            record_created_container(permit, daemon, reservation, cid, connection_factory)
         yield PreparedContainer(cid, image['Id'], permit.run_id, permit.attempt_id)
     finally:
         if attempted_create:

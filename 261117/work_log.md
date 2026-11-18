@@ -924,3 +924,27 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
   ライブGitHub取得（4件skip）とDocker daemonの実停止は今回未実施。
 - P2は概算75%、計画工数で重み付けしたMVP全体は概算49%（残51%）。次は回収側で作成済みの完全IDを削除前に
   永続化し、同じdaemonでの不在確認を保存する。その確認を基盤障害に限定した再キューへ接続する。
+
+## P2の失効コンテナ回収確認の永続化
+
+- 開始HEAD `45c5e135b0c9ad8deb6aaef2df9deff536e7032a` のpush/PR CIは成功。Draft PR #1に未解決のレビュー指摘なし。
+  基盤障害の再試行に先行し、回収プロセスによるDocker完全IDの照合と不在確認の保存を実装した。
+- `orphan_cleanup --once` は、確定済みの失効・取消、所有ラベル、daemonとsessionを予約と照合する。
+  遅延createで初めて観測した完全IDをDBへ保存し、そのcommit応答を得てから完全IDで削除する。
+  同じdaemonのコンテナ専用inspectで不在を確認したDB時刻を、migration 006の `container_recovered_at` に保存する。
+  削除直後に中断した場合は、Docker一覧から消えたIDも台帳から再確認できる。並行走査で確認時刻は更新し直さない。
+- 予約ありで完全IDが未記録のまま一覧が空の場合は作成結果不明を維持する。旧attemptの従来回収には確認時刻を保存しない。
+  run/attemptの状態、受理SHA、token、lease、正式結果・ログ・由来への遷移はこの作業単位の対象外。
+- 初回の専用DB・実Docker選択回帰は66 passed、1 failed、4 skipped、295 deselected。新しい回収試験は成功し、
+  既存の期限監視試験でcommit応答喪失後の状態が `running` のままだった。初回の原因は特定できていない。
+  同試験では期限をDB時刻の1秒前に設定し、失効更新をtransaction内で確認してから注入した障害を照合するよう修正した。
+- 2回目の選択回帰は67 passed、1 failed、4 skipped、295 deselected。期限監視と実Docker回収は成功した。
+  新しいmigration制約テストの入力に既存の必須列 `retry_kind` が欠けていたため、試験データに初回種別を指定した。
+- 通常回帰は192 passed、175 deselected、既知のTestClient警告1件。pip checkとcompileallも成功。
+- 最終の対象再検証は8 passed、359 deselected、既知警告1件（49.63秒）。専用PostgreSQL 17.12とDocker 29.9.2で、
+  DB停止と並行回収、遅延create、完全ID保存commitの応答喪失による削除保留、削除後のDB rollback・応答喪失からの再走査、
+  予約だけでは回収済みとしないことを確認した。DB readinessは200、再起動後にmigration 1〜6を保持した。
+  専用DBのcontainer・network・volumeとfixtureのコンテナ・imageは、試験終了後に残存0件を確認。
+  ライブGitHub取得は選択回帰で4件skip。Docker daemonの実停止は今回未実施。
+- P2は概算80%、計画工数で重み付けしたMVP全体は概算50%（残約50%）。次は作成要求が未送信、または回収確認済みの
+  基盤障害だけを最大3attempt・上限付きバックオフで再試行する。その後に2 Workerで故障復旧を通し検証する。
