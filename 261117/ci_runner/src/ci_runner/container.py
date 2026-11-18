@@ -15,6 +15,9 @@ from .settings import POLICY
 from .worker import validate_worker_id
 
 LABEL = 'dev.ci-runner.preparation-session'
+RUN_LABEL = 'dev.ci-runner.run'
+ATTEMPT_LABEL = 'dev.ci-runner.attempt'
+NAME_PREFIX = 'ci-runner-prepare-'
 ROOT = Path(__file__).resolve().parents[2]
 TMPFS = {'/tmp': 'rw,noexec,nosuid,nodev,size=16m,mode=1777'}
 MODES = frozenset(('success', 'failure', 'timeout', 'logs'))
@@ -199,9 +202,8 @@ def prepare_fixture(permit: ExecutionPermit, mode='success', *, prepared_image=N
     if source is not None and (permit.run_id, permit.commit_sha) != (source.run_id, source.commit_sha):
         raise ContainerRejected('prepared source does not match the execution permit')
     session = uuid4().hex
-    name = f'ci-runner-prepare-{session}'
-    labels = {LABEL: session, 'dev.ci-runner.run': str(permit.run_id),
-              'dev.ci-runner.attempt': str(permit.attempt_id)}
+    name = f'{NAME_PREFIX}{session}'
+    labels = {LABEL: session, RUN_LABEL: str(permit.run_id), ATTEMPT_LABEL: str(permit.attempt_id)}
     attempted_create = False
     try:
         options = [item for key, value in labels.items() for item in ('--label', f'{key}={value}')]

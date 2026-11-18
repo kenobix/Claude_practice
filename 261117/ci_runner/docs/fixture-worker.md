@@ -1,7 +1,7 @@
 # 固定fixtureを実行するWorker
 
 `src/ci_runner/fixture_worker.py`はAPIから独立した信頼済みプロセス。
-P1の取得・隔離実行・結果確定を接続し、一件実行と常駐の入口を持つ。P2の復旧処理は未実装。
+P1の取得・隔離実行・結果確定を接続し、一件実行と常駐の入口を持つ。P2では別プロセスで期限監視とコンテナ回収を行える。再試行は未実装。
 従来の[claim-once](worker-claim.md)の意味は変更しない。
 
 ## ローカル開発経路
@@ -37,7 +37,7 @@ APIへDocker権限を追加せず、既存の入力許可とlease30秒を維持�
 | heartbeat | 実行中の更新が拒否・不明。所有コンテナとimageタグを回収し、確定や次runの取得へ進まず終了1。応答不明ならDB側の期限が延びている可能性がある |
 | image_cleanup | imageタグ回収失敗。取得済みならrunningのまま確定しない。別所有者へ差し替わったタグを削除しない |
 | finalization | COMMIT前ならrunning、応答喪失後なら終端保存済みの可能性がある。未保存と断定しない |
-| プロセス終了シグナル/daemon断 | SIGTERM/SIGKILL等ではfinallyの完了を保証できず、ラベル付き資源が残り得る。自動回収/再試行は未実装 |
+| プロセス終了シグナル/daemon断 | SIGKILLやdaemon断でラベル付き資源が残り得る。期限確定後に同じホストでコンテナ回収を実行できる |
 
 stderrで取得済みのrun/attempt IDを照会し、GET /runs/{id}の状態・completed_attempt_id、専用DBのattempt理由/終了時刻を確認する。
 claim応答不明時はGET一覧とDBのworker_id・開始時刻も照合する。tokenをログへ出さない。
@@ -51,7 +51,8 @@ image準備失敗時は未取得。build中に他Workerが取得/取消した場
 準備済みimageは内部contextで寿命を管理し、container回収→imageタグ回収→DB確定の順序を守る。handleは公開APIの入力や認証ではない。
 create・実行・両回収は取得後のleaseを消費する。GO後の実行ループでは5秒間隔でDBに更新を要求し、期限切れや応答不明時に確定を拒否する。
 内部execute_fixtureを準備済みimageなしで直接呼ぶ互換経路ではbuildも取得後のまま。新しい一件Worker経路と混同しない。
-失効のDB処理は[独立の期限監視](design.md#期限監視の実装範囲)が行う。残存コンテナの回収と基盤障害の再試行はP2の残件。
+失効のDB処理は[独立の期限監視](design.md#期限監視の実装範囲)が行う。DBの失効確定後は
+[残存コンテナの回収](design.md#失効attemptのコンテナ回収)を実行できる。基盤障害の再試行はP2の残件。
 
 ## 検証
 
@@ -106,7 +107,7 @@ Docker base imageやbuild cacheは既存の運用どおり再利用され得る�
   終了・回収後に次のrunを開始せず終了0。停止要求とclaim開始が並行した場合は進行中の一件として扱う。
 - 停止待ちには進行中の取得・build・実行・回収の操作期限が適用される。外部監視から停止するときは
   Worker PIDを対象にし、同時にDocker/Curl子プロセスへシグナルを送らない。
-  SIGKILLやdaemon障害で残り得る資源とrunning attemptの自動回復はP2。
+  SIGKILLやdaemon障害時の手順は、期限監視と同じDockerホストでの残存コンテナ回収。自動再試行はP2の残件。
 - 取得拒否、claim競合、DB障害、Docker障害、確定失敗では安全な失敗情報を出して終了1。
   先頭が取得できないときは後続に読み替えない。GitHub匿名APIの制限がかかったときも同じ扱い。
   runの状態と正式attemptを照合してから運用者が再開する。

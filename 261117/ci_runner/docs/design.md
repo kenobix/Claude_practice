@@ -32,11 +32,11 @@
 
 - API: 固定repository/ref/workflowの許可設定、入力上限とcommit SHA検証、受付とrunの同時commit後に受理。
 - Worker: 短いtransactionの `FOR UPDATE SKIP LOCKED` でqueuedを取得し、run更新とattempt発行を同時commit。実行中は行ロックを保持しない。
-- WorkerだけがDocker daemonを操作する。取得・作業領域準備とネットワーク無効の実行を分離する。
+- 信頼済みのWorkerと残存コンテナ回収プロセスがDocker daemonを操作する。取得・作業領域準備とネットワーク無効の実行を分離する。
 - heartbeat=5秒、lease=30秒、期限監視=5秒。期限の正本はPostgreSQL時刻。
 - heartbeatと完了報告はrun行を先にロックし、running・現在のrunning attempt/token・期限内を再確認する。期限の更新は失効済みtokenを復活させない。
 - 取消・完了・期限回収も同じrun→attemptのロック順。取消要求を先にcommitしたら成功更新を拒否する。先に完了commitしたら取消は終了済みと返す。
-- 期限監視は失効attemptを閉じる。失効後の再キューは、残存コンテナ回収と再試行予算を接続する段階で追加する。
+- 期限監視が失効attemptを閉じた後、ホストごとの回収プロセスが該当コンテナを処理する。再キューには回収確認と再試行予算が必要。
 - DB断では新規ジョブを開始せず、lease更新の応答が不明なら成功とみなさない。Workerの単調時計watchdogで残存実行を止める。
 - 外部の停止とDB更新は単一transactionにできない。取消は完了確定をまず防止し、実際の停止確認・残存回収を追跡する。
 
@@ -70,8 +70,29 @@ PostgreSQLの文開始時刻で候補を選び、期限順にrun行を `FOR UPDA
 現段階は取消要求ありなら `canceled / canceled_lease_expired`、それ以外は `failed / infra_lease_expired`。
 終了コード・正式attempt参照・ログ・由来を作らず、識別子・token・元の期限は保持する。
 
-今回の終端runを後続の監視が無条件に再開することはない。MVPの予算内再キューには、旧attemptの資源回収の確認と新attemptの発行が必要。
-DBの失効記録からDocker停止は確認できないため、次はattemptラベルに基づく、回収対象を限定した残存コンテナ回収を実装する。
+MVPの予算内再キューには、旧attemptの資源回収の確認と新attemptの発行が必要。
+
+### 失効attemptのコンテナ回収
+
+`orphan_cleanup --once` はWorkerと同じDocker daemon・専用DBで実行する。Dockerの一覧を
+`dev.ci-runner.preparation-session` で絞り、停止済み・未起動を含めて完全IDで各候補を照合する。
+32桁のsessionと `ci-runner-prepare-<session>` の名前、標準UUID表記のrun/attemptラベルを要求する。
+同じrun/attemptの組について、DBで許可repo/ref/workflow、初回attempt、正式結果と終了コードの欠如、
+期限以後の終了時刻を確認する。対象は `failed / infra_lease_expired` と、取消要求を伴う
+`canceled / canceled_lease_expired` の確定済み記録。期限時刻を過ぎたrunning attemptは期限監視が先に処理する。
+
+DB照合のtransactionが正常に戻った後、照合した完全IDを指定して `docker container rm --force` する。
+同じIDの削除確認を得たときにだけreceiptを出す。競合時に同じIDの不在を確認できれば処理済みとして続ける。
+DB接続異常やDockerの結果不明は終了1。周期的な実行は運用側から行い、障害復旧後は再走査する。
+権限境界は既存Workerと同じで、コンテナのラベル・名前を設定できるDocker管理主体と、専用DBの書込主体を信頼する。
+回収対象はコンテナ本体。imageタグ、volume、network、build cacheの回収は別途所有権を確認する必要がある。
+
+DB検索はread-only。run、attempt、lease、token、受理SHA、ログ・由来には回収結果を書き込まない。
+一覧は取得時点の観測で、応答喪失後に完了するcreateは次の走査で拾う。旧attemptのcreateが完了したことの確認と、
+回収の永続的な証拠を、再キューの前提として後続単位で扱う。
+
+実Dockerと専用DBの回帰は `scripts/verify_execution.py` から `orphan_cleanup` を選択する。
+作成後・GO後にWorkerをSIGKILLし、期限監視後の回収、DB停止中の保留、回収競合を検証する。
 
 ## 冪等性と成果物
 

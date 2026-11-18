@@ -6,6 +6,7 @@
 Workerの初回queued取得・attempt/token/DB期限発行と、実行前DB preflightを実装済み。
 P2では[実行中の5秒heartbeatとlease更新](ci_runner/docs/design.md#lease更新の実装範囲)を実装済み。更新を確認できなければ実行を打ち切り、次のrunへ進まない。
 独立した[期限監視](ci_runner/docs/design.md#期限監視の実装範囲)を起動すると、失効したrunとattemptをDBで閉じる。
+失効確定後の残存コンテナは、Dockerホストごとの[回収コマンド](ci_runner/docs/design.md#失効attemptのコンテナ回収)で回収できる。
 固定fixtureのコンテナ作成・設定照合・回収まで実装済み。
 内部ライブラリでDB再照合・実値ガード・時間/ログ/lease上限付きのローカル固定fixture実行も実装済み。
 ローカルfixture結果の条件付きDB確定（状態/exit/理由/終了時刻・正式attempt参照）も実装済み。
@@ -70,7 +71,20 @@ CI_RUN_LIVE_COMMIT_SOURCE=1 .venv/bin/python scripts/verify_execution.py
 ```
 
 1回最大16件を処理し、5秒待って再走査する。単発は `--once`。DBエラー時は終了1とし、再開前にDB状態を照合する。
-現段階は失効を `failed`、先行する取消要求ありを `canceled` として保存する。失効後の自動再試行と残存コンテナ回収は後続の作業。
+現段階は失効を `failed`、先行する取消要求ありを `canceled` として保存する。
+
+## 失効後に残ったコンテナを回収する
+
+Workerと同じDockerデーモンおよび専用DBに接続する環境で実行する。
+
+```bash
+.venv/bin/python -m ci_runner.orphan_cleanup --once
+```
+
+準備時の所有ラベルとDBの失効記録が一致したコンテナだけを対象とする。削除確認を受け取った各コンテナについて、
+完全IDとrun/attempt IDをJSONで出力する。照合に必要なDB操作やDocker操作が失敗すると終了1。復旧後に再走査できる。
+遅れて完了するDocker createの回収には再走査が必要。自動再試行を接続する前に、旧attemptのcreate完了と
+回収を確認する条件を定める。[回収条件と再検証](ci_runner/docs/design.md#失効attemptのコンテナ回収)。
 
 ## Python環境とテスト
 

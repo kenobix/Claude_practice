@@ -876,3 +876,27 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
   今回の監視はDBだけを操作する。固定ジョブの実Docker実行・GitHubからのsource取得は今回未実施。
 - 失効時のDB終端処理までを実装。再試行を接続するまで、監視で閉じたrunは自動再開しない。
   P2は概算55%、MVP全体は概算44%（計画工数で重み付け）。次はattemptラベルとDB状態で対象を特定し、残存コンテナの回収を検証する。
+
+## P2の失効attemptの残存コンテナ回収
+
+- 開始HEAD `afb946bf77e88ed4f1a883f3f5be8da67db57194` のpush/PR CIは成功。Draft PR #1に未解決のレビュー指摘なし。
+  期限監視がDBで失効を確定した後も残るコンテナの回収を、再試行に先行する作業単位として選んだ。
+- `orphan_cleanup --once` は、同じDocker daemonの準備sessionラベルで候補を選び、完全ID、定型名、run/attemptの
+  UUIDを照合する。同じ組に許可repo/ref/workflowと監視の確定済み理由がある場合だけ、完全IDでforce rmする。
+  DBで未確定・組が違う場合は保留。Docker失敗やDB断は終了1で通知し、復旧後の再走査を可能にした。
+  receiptは完全IDをDockerが返した削除だけに出す。DB更新は行わない。
+- 専用DBと実Dockerで、固定fixtureのコンテナ作成直後と実行開始後にWorkerをSIGKILLした。
+  固定fixtureのSHA-256は `9c567875e01f89cc15eb23d1b3d2d40c2c23239cc414ff12a1b1c3902dd3f7ff`。
+  初回の選択回帰は108 passed、1 failed、10 skipped。競合試験で、Docker 29.9.2は同じIDの削除後に
+  `rm --force` を再度呼ぶと終了0・stdout空を返した。完全IDの一致をreceiptの条件とし、
+  応答が空の場合はinspectで同じIDの不在を確認するよう修正した。
+- 最初の通常回帰は制限環境で既存APIテストの進行が止まったため終了し、再実行した。停止原因は未特定。
+- 最終の通常回帰は187 passed、162 deselected、既知のTestClient警告1件。pip checkとcompileallも成功。
+- `verify_execution.py` で `orphan_cleanup or expiry_monitor or execution_docker or lease_renewal or runs_postgres or container`
+  を選択した最終回帰は111 passed、10 skipped、228 deselected、既知警告1件（194.53秒）。専用PostgreSQL 17.12と実Docker
+  29.9.2で、GO後の自然失効、取消要求ありの未起動コンテナ、DB停止中の回収保留、DB復旧後の並行回収を実測した。
+  期限監視前の削除抑止、別attemptのコンテナ保持、失効後の結果確定拒否、コンテナ本体の不在と試験用タグの回収も確認。
+  専用DBのreadiness 200、再起動後のschema 1〜4保持、専用DB資源の回収を確認した。
+  ライブGitHub取得、Docker daemonの実停止、遅延create完了後の再走査は今回未実測。
+- P2は概算70%、計画工数で重み付けしたMVP全体は概算48%（残52%）。次は遅延createを考慮した回収確認を
+  再キューの前提にし、基盤障害に限定した最大3attemptとバックオフを実装する。その後に2 Workerで障害復旧を通し検証する。

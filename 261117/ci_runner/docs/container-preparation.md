@@ -58,7 +58,7 @@ sessionラベルが一致するコンテナIDだけをforce rm --volumesする�
 cleanup失敗は例外として伝播し、成功と扱わない。base image/build cacheは残る。
 WorkerのSIGKILLやdaemon断でfinallyが完了しなければ残存し得る。
 CLI timeout後にdaemon処理が遅れて完了する場合も、その時点のinspectだけでは残存を否定できない。ラベル
-`dev.ci-runner.preparation-session` とrun/attemptを手掛かりに照合する。自動回収器は未実装。
+`dev.ci-runner.preparation-session` とrun/attemptを手掛かりに、[失効attemptのコンテナ回収](design.md#失効attemptのコンテナ回収)で再走査できる。
 Docker daemonを操作できる他の信頼済み主体による競合改変までは保護しない。
 
 ## 再検証
