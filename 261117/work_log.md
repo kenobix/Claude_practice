@@ -987,3 +987,29 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
   skipはライブGitHub 5件。今回はGitHubライブ取得とDocker daemon自体の停止を実施していない。
 - P2は概算95%、MVP全体は計画工数で重み付けした概算54%（残約46%）。次は同一専用DB・Docker上の2 Workerで
   停止位置を変え、時刻の書き換えを使わずに失効・回収・バックオフ・再取得を観測し、古いattemptの完了報告を拒否することを確認する。
+
+## P2の停止位置別復旧と受入判定
+
+- 開始HEAD `d8adf6026e111c30f606aae1c83fe82536363b4a` のpush/PR CIは成功。Draft PR #1に未解決のレビュー指摘なし。
+  既存の常駐Worker用ハーネスを再利用し、使い捨てPostgreSQL 17.12・Docker 29.9.2で2つのWorkerと期限監視を起動した。
+  復旧試験の取得は固定GitHub応答を使い、固定fixtureはDocker内で実行した。
+- 3ケースでDB時刻を書き換えずに30秒leaseの失効と5秒の再試行待機を経て、別Workerが同じrunと受理SHAを引き継いだ。
+  実行中に停止したケースでは失効前の回収拒否と、DB上で不在確認を保存してからの再キューを確認した。確定直前のケースでは
+  回収済みコンテナの記録済み完全IDを再照合した。再取得中と正式確定後に旧tokenの報告が拒否され、旧attemptと新しい正式結果・
+  ログ・source digest・image IDの整合性を確認した。
+
+| SIGKILLの位置 | 停止直前から正式結果までのDB時刻差 |
+|---|---:|
+| claimのcommit直後 | 43.41秒 |
+| 固定コンテナにGOを送った直後 | 47.07秒 |
+| 正常実行と回収の後、結果確定直前 | 45.74秒 |
+
+- 45秒は仮目標。3回中2回で超過した。Docker daemon自体の停止は今回未実施。SIGKILLで残った専用imageタグは試験側が所有権を照合して削除した。
+- 通常回帰は195 passed、195 deselected、既知のTestClient警告1件。pip checkとcompileallも成功。
+- P2の全体回帰は378 passed、1 failed、1 skipped、10 deselected（738.31秒）。P0専用隔離の試験ファイルは既存の実測を再利用した。
+  匿名GitHubでの常駐停止試験1件はskip。認証済み `gh` のライブ試験4件のうち、時間切れfixtureのケースがsource取得段階で失敗した。
+  初回の診断から真因を特定できなかったため、試験用 `gh` のタイムアウトと異常終了を識別する診断を追加した。
+  同じ1ケースの再検証は1 passed（31.65秒）。取得上限・本番の通信条件は維持した。
+  専用DBのreadinessは200、再起動後にmigration 1〜6を保持。専用DBのcontainer/volume/networkとfixtureのコンテナ・imageは残存0件。
+- 管理下の固定fixtureでP2の[全受入条件](ci_runner/docs/design.md#2-workerの故障復旧試験)を満たした。
+  MVP全体は計画工数で重み付けした概算55%（残約45%）。次はP3のWebhook署名確認と配送の永続化から着手する。

@@ -21,7 +21,7 @@ from test_verified_execution_docker import PUBLISHED
 pytestmark = [pytest.mark.integration, pytest.mark.docker]
 
 
-def resident_at_queue_checkpoint(worker_id, output, pause=None):
+def resident_at_queue_checkpoint(worker_id, output, pause=None, *, configure=None, mode='success'):
     # Replace only the GitHub transport with fixed responses; DB and Docker are real.
     verify = commit_source._verify
     claim_next = worker.claim_next
@@ -55,14 +55,16 @@ def resident_at_queue_checkpoint(worker_id, output, pause=None):
             return matches
 
         worker.matches_verified_target = confirm
+    if configure is not None:
+        configure()
     with (output.with_suffix('.out').open('w') as stdout, output.with_suffix('.err').open('w') as stderr,
           redirect_stdout(stdout), redirect_stderr(stderr)):
-        raise SystemExit(fixture_worker.main(['--serve', '--worker-id', worker_id]))
+        raise SystemExit(fixture_worker.main(['--serve', '--worker-id', worker_id, '--fixture-mode', mode]))
 
 
 @contextmanager
-def resident_process(ctx, worker_id, output, pause=None):
-    proc = ctx.Process(target=resident_at_queue_checkpoint, args=(worker_id, output, pause))
+def resident_process(ctx, worker_id, output, pause=None, **options):
+    proc = ctx.Process(target=resident_at_queue_checkpoint, args=(worker_id, output, pause), kwargs=options)
     proc.start()
     try:
         yield proc

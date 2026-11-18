@@ -190,8 +190,29 @@ run.completed_attempt_idを現在の有効attemptの確定transactionでのみ�
 
 P1前半ではcommit前/後のAPI SIGKILL、実DB停止、10 HTTP同時投入と一意キー競合待ち、API再起動後の保持を実測済み。
 P0ではDB再起動後のschema保持、CPU/RAM/PID制限、時間/ログ上限と回収を固定fixtureで実測済み。
-初回取得時のrun/attempt同時更新、rollback、ロック解放と取得競合は検証済み。ローカルfixtureの結果反映・再送・commit境界SIGKILL・取消/期限競合も検証済み。2 Worker常駐での障害回復の通し検証が残る。[隔離実測](isolation.md)と[P1計画](p1-plan.md)を参照。
-復旧45秒は未測定の仮目標。
+初回取得時のrun/attempt同時更新、rollback、ロック解放と取得競合は検証済み。ローカルfixtureの結果反映・再送・commit境界SIGKILL・取消/期限競合も検証済み。[隔離実測](isolation.md)と[P1計画](p1-plan.md)を参照。
+
+### 2 Workerの故障復旧試験
+
+```bash
+PYTEST_ADDOPTS='-k test_two_residents_recover_after_sigkill -rP' .venv/bin/python scripts/verify_execution.py
+```
+
+同じ使い捨てPostgreSQLとDocker daemonを使う2 Workerと、独立した `expiry_monitor --watch` を起動する。
+停止するWorkerは、claimのcommit直後、固定コンテナへGOを送った直後、正常実行と資源回収を終えて結果を確定する直前の3地点で止める。
+GitHub取得には固定試験応答を使う。DB時刻や期限を書き換えずに、必要な場合は `orphan_cleanup --once` で記録済みIDの不在を確認する。
+待機時刻以後に別Workerが同じrunを取得し、新しいtokenで正式結果・ログ・由来を保存する。
+旧attemptの報告は新attemptの実行権がある間と正式確定後に再送し、拒否と履歴の不変を確認する。
+
+SIGKILLの直前から正式結果までを同じDB時刻で測る。45秒は実験上の仮目標で、測定値は[作業記録](../../work_log.md)に残す。
+強制終了時のimageタグはコンテナとは別に残ることがある。試験は控えた完全image ID・専用タグ・所有ラベルを照合してからそのタグだけを削除する。
+
+| P2の受入条件 | 検証 |
+|---|---|
+| 2 Workerの原子的な取得 | `test_resident_worker_docker.py` の先頭変更・claim競合で、同じrunへのattempt発行は1件で、負けたWorkerが次のrunを処理することを確認 |
+| DB時刻による期限、古い報告の拒否 | `test_resident_recovery_docker.py` の3地点で、30秒leaseの自然失効、失効後の回収・再取得、旧tokenの報告による上書きなしを確認 |
+| 基盤障害だけを最大3attemptで再試行 | `test_retry_postgres.py` でDB時刻からの5秒・10秒、上限到達と対象外の失敗を検証。`test_retry_docker.py` で2回目の残存コンテナ回収後に3回目の結果確定まで検証 |
+| DB断で実行を停止し新規処理を開始しない | `test_resident_worker_docker.py` のheartbeat試験で専用DB停止・応答欠落・commit応答喪失時に実行を停止し、次のrunがキューに残ることを確認 |
 
 ## 参照
 

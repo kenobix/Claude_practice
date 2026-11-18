@@ -43,9 +43,14 @@ def test_live_verified_commit_runs_through_normal_cli(
         # Authenticated GitHub traffic for tests when the public API quota is exhausted.
         # Only the HTTP transport changes: validate the real responses and run the same CLI.
         def authenticated_get(self, endpoint):
-            response = subprocess.check_output(
-                ['gh', 'api', '--hostname', 'github.com', f'repos/kenobix/Claude_practice{endpoint}'],
-                timeout=commit_source.REQUEST_TIMEOUT)
+            try:
+                response = subprocess.check_output(
+                    ['gh', 'api', '--hostname', 'github.com', f'repos/kenobix/Claude_practice{endpoint}'],
+                    stderr=subprocess.DEVNULL, timeout=commit_source.REQUEST_TIMEOUT)
+            except subprocess.TimeoutExpired:
+                pytest.fail('authenticated gh request exceeded the source timeout', pytrace=False)
+            except subprocess.CalledProcessError as exc:
+                pytest.fail(f'authenticated gh request exited with status {exc.returncode}', pytrace=False)
             assert len(response) <= commit_source.MAX_RESPONSE
             return json.loads(response)
 

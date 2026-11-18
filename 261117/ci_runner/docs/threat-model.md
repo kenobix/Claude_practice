@@ -38,7 +38,7 @@ Docker inspectの値だけで有効と判断せず、実際の失敗・抑制と
 6. 制限が無効なら失敗として記録し、設定を修正するまでWorkerを有効化しない。
 
 PostgreSQL 17.12-bookwormのdigestはComposeに固定済み。P0 fixtureのPythonイメージもdigest固定で実測済み。
-表の制御はP0テストで実証したものと、P1以降の要件を含む。受付APIのrepository/SHA/4KiB/未知入力拒否は実装・検証済み。WorkerのDB実行権preflightと未起動コンテナ作成・設定照合・回収を別ライブラリに実装した。[固定fixture実行ライブラリ](fixture-execution.md)にDB再照合・実値ガード・上限監視・回収を接続済み。HTTP/claim-onceからは未接続。ローカルfixture結果の条件付きDB確定も実装済み。一件Workerへの接続と[上限付きログDB保存](log-storage.md)も実装済み。正式ログの[bounded read/制御文字可視化/HTMLエスケープ](log-access.md)も実装済み。受理commitの固定取得と常駐実行は接続済み。本格UIと自動再試行は未実装。実ブラウザでのCSP強制は未検証。
-P0監視ハーネスとアプリ側の固定fixture実行監視を分離している。常駐Workerは作業単位の停止に対応する。実行中のDB heartbeatを確認できなければ所有資源を回収して終了する。強制終了後は[失効attemptのコンテナ回収](design.md#失効attemptのコンテナ回収)でDBの終端記録とDockerの所有ラベル・完全IDを照合する。daemonとDB書込主体は信頼境界の内側。遅延createの確定と安全な再試行はP2の残件。nosuid/nodevや全setuid/全syscallの試験は未実施。
+表の制御はP0テストで実証したものと、P1以降の要件を含む。受付APIのrepository/SHA/4KiB/未知入力拒否は実装・検証済み。WorkerのDB実行権preflightと未起動コンテナ作成・設定照合・回収を別ライブラリに実装した。[固定fixture実行ライブラリ](fixture-execution.md)にDB再照合・実値ガード・上限監視・回収を接続済み。HTTP/claim-onceからは未接続。ローカルfixture結果の条件付きDB確定も実装済み。一件Workerへの接続と[上限付きログDB保存](log-storage.md)も実装済み。正式ログの[bounded read/制御文字可視化/HTMLエスケープ](log-access.md)も実装済み。受理commitの固定取得と常駐実行は接続済み。本格UIは未実装。実ブラウザでのCSP強制は未検証。
+P0監視ハーネスとアプリ側の固定fixture実行監視を分離している。常駐Workerは作業単位の停止に対応する。実行中のDB heartbeatを確認できなければ所有資源を回収して終了する。強制終了後は[失効attemptのコンテナ回収](design.md#失効attemptのコンテナ回収)でDBの終端記録とDockerの所有ラベル・完全IDを照合する。daemonとDB書込主体は信頼境界の内側。基盤障害の再試行はcreate未送信または同じdaemonでの完全IDの不在確認を条件とする。結果不明のcreateには再試行を保留する。nosuid/nodevや全setuid/全syscallの試験は未実施。
 
 参照: [Docker security](https://docs.docker.com/engine/security/)、[Rootless mode](https://docs.docker.com/engine/security/rootless/)。

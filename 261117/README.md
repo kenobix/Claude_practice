@@ -61,7 +61,7 @@ CI_RUN_LIVE_COMMIT_SOURCE=1 .venv/bin/python scripts/verify_execution.py
 同じ専用DB・Docker daemonに接続する2つ目のWorkerには別の `--worker-id` を指定する。
 取得競合で負けたWorkerは元のrun ID・受理SHA・許可設定を再照合し、一致すれば次のポーリングへ戻る。
 作成済みの専用imageはその前に回収する。runやschemaの不一致では停止する。
-2 Workerの取得競合は検証済み。停止位置を変えた2 Workerの故障復旧試験は次の作業。
+2 Workerの取得競合と停止位置別の復旧については[故障復旧試験](ci_runner/docs/design.md#2-workerの故障復旧試験)を参照。
 停止はWorker PIDにSIGTERMを送る。取得やbuildの途中なら完了・回収を待ち、claimを開始済みの一件は
 既存の時間・lease上限で確定または失敗、回収してから終了する。
 取得拒否・GitHubレート制限・DB/Docker異常・確定不明は終了1となる。実行中のheartbeat失敗は `stage: heartbeat` に出る。再起動する前にDB状態を照合する。
