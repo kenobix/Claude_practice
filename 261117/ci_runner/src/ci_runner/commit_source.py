@@ -28,6 +28,12 @@ class SourceRejected(Exception):
     """Verification failed. Messages contain only fixed descriptions."""
 
 
+class QueueCandidateChanged(SourceRejected):
+    def __init__(self, target):
+        super().__init__('queued run or SHA changed during acquisition')
+        self.target = target
+
+
 @dataclass(frozen=True)
 class VerifiedSource:
     run_id: UUID
@@ -170,8 +176,10 @@ def verify_queued_source(connection_factory=None):
     if candidate is None:
         return None
     verified = _verify(*candidate, _GitHub())
-    if (verified.run_id, verified.commit_sha) != candidate or _candidate(factory) != candidate:
-        raise SourceRejected('queued run or SHA changed during acquisition')
+    if (verified.run_id, verified.commit_sha) != candidate:
+        raise SourceRejected('verified source does not match queued run or SHA')
+    if _candidate(factory) != candidate:
+        raise QueueCandidateChanged(candidate)
     return verified
 
 

@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import pytest
 
 from ci_runner import commit_source, database, runs, worker
@@ -21,8 +23,9 @@ def test_source_verification_checks_real_queue_without_claiming(
 
     monkeypatch.setattr(commit_source, '_GitHub', github)
     if concurrent_claim:
-        with pytest.raises(commit_source.SourceRejected, match='run or SHA changed'):
+        with pytest.raises(commit_source.QueueCandidateChanged, match='run or SHA changed') as error:
             commit_source.verify_queued_source()
+        assert error.value.target == (run.id, HEAD)
     else:
         result = commit_source.verify_queued_source()
         assert (result.run_id, result.commit_sha) == (run.id, HEAD)
@@ -31,3 +34,13 @@ def test_source_verification_checks_real_queue_without_claiming(
         assert conn.execute('SELECT state FROM runs WHERE id=%s', (run.id,)).fetchone()['state'] == (
             'running' if concurrent_claim else 'queued'
         )
+
+
+def test_wrong_verified_identity_is_not_a_queue_change(dedicated_database, monkeypatch):
+    runs.create_run(database.connect, HEAD)
+    verify = commit_source._verify
+    monkeypatch.setattr(commit_source, '_verify',
+                        lambda run_id, sha, _: replace(verify(run_id, sha, GitHubFixture(sha)), commit_sha='f'*40))
+    with pytest.raises(commit_source.SourceRejected, match='verified source does not match') as error:
+        commit_source.verify_queued_source()
+    assert not isinstance(error.value, commit_source.QueueCandidateChanged)

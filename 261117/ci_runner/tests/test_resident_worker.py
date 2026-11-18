@@ -5,6 +5,7 @@ import os
 import signal
 from uuid import uuid4
 
+import psycopg
 import pytest
 
 from ci_runner import commit_source, container, finalization, fixture_worker, worker
@@ -86,6 +87,47 @@ def test_serve_stops_instead_of_retrying_incomplete_work(monkeypatch, capsys, st
     assert not output.out
     assert json.loads(output.err)['stage'] == stage
     assert attempts == [stage]
+
+
+@pytest.mark.parametrize('outcome', ['identity_changed', 'db_error'])
+def test_serve_stops_if_a_missed_target_cannot_be_confirmed(monkeypatch, capsys, outcome):
+    target = (uuid4(), HEAD)
+
+    def miss(*args, **kwargs):
+        raise fixture_worker.QueuePollMiss('claim', target, 'verified run is no longer claimable')
+
+    def check(actual):
+        assert actual == target
+        if outcome == 'db_error':
+            raise psycopg.OperationalError('sensitive database diagnostic')
+        return False
+
+    monkeypatch.setattr(fixture_worker, 'run_once', miss)
+    monkeypatch.setattr(worker, 'matches_verified_target', check)
+    monkeypatch.setattr(fixture_worker.time, 'sleep', lambda _: pytest.fail('unexpected poll'))
+    assert fixture_worker.main(ARGS) == 1
+    output = capsys.readouterr()
+    assert not output.out
+    assert json.loads(output.err)['stage'] == 'claim'
+    assert 'sensitive database diagnostic' not in output.err
+
+
+def test_cleanup_failure_on_a_missed_claim_stops_serve(monkeypatch, capsys):
+    source = commit_source._verify(uuid4(), HEAD, GitHubFixture(HEAD))
+
+    @contextmanager
+    def failed_cleanup(**kwargs):
+        yield object()
+        raise container.ContainerRejected('injected image tag cleanup failure')
+
+    monkeypatch.setattr(commit_source, 'verify_queued_source', lambda _: source)
+    monkeypatch.setattr(container, 'prepare_image', failed_cleanup)
+    monkeypatch.setattr(worker, 'claim_next', lambda *a, **kw: None)
+    monkeypatch.setattr(worker, 'matches_verified_target', lambda _: pytest.fail('cleanup was incomplete'))
+    assert fixture_worker.main(ARGS) == 1
+    output = capsys.readouterr()
+    assert not output.out
+    assert json.loads(output.err)['stage'] == 'image_cleanup'
 
 
 @pytest.mark.parametrize('phase', ['source', 'image'])

@@ -25,26 +25,37 @@ def test_competing_verified_claims_cannot_take_a_different_run(dedicated_databas
     with ThreadPoolExecutor(max_workers=2) as executor:
         claims = [claim for claim in executor.map(contend, range(2)) if claim]
     assert [claim.run_id for claim in claims] == [run.id]
+    assert worker.matches_verified_target((run.id, run.commit_sha))
     assert runs.get_run(database.connect, other.id).state == 'queued'
 
 
 def test_verified_claim_refuses_sha_mismatch_without_mutation(dedicated_database):
     run = runs.create_run(database.connect, HEAD)[0]
     assert worker.claim_next('worker-1', target=(run.id, 'b'*40)) is None
+    assert not worker.matches_verified_target((run.id, 'b'*40))
     assert runs.get_run(database.connect, run.id).state == 'queued'
     with database.connect() as conn:
         assert conn.execute('SELECT count(*) AS n FROM attempts').fetchone()['n'] == 0
 
 
-def test_verified_claim_requires_provenance_migration(dedicated_database):
+@pytest.mark.parametrize('version', [4, 6])
+def test_verified_claim_requires_provenance_and_recovery_migrations(dedicated_database, version):
     run = runs.create_run(database.connect, HEAD)[0]
     with database.connect() as conn:
         # Temporarily simulate an earlier schema in this transaction only.
-        conn.execute('DELETE FROM schema_migrations WHERE version=4')
+        conn.execute('DELETE FROM schema_migrations WHERE version=%s', (version,))
         assert worker.claim_next('worker-1', lambda: nullcontext(conn),
                                  target=(run.id, run.commit_sha)) is None
+        assert not worker.matches_verified_target((run.id, run.commit_sha), lambda: nullcontext(conn))
         assert conn.execute('SELECT count(*) AS n FROM attempts').fetchone()['n'] == 0
         conn.rollback()
+
+
+def test_verified_miss_checks_original_policy(dedicated_database):
+    run = runs.create_run(database.connect, HEAD)[0]
+    with database.connect() as conn:
+        conn.execute("UPDATE runs SET ref='refs/heads/other' WHERE id=%s", (run.id,))
+    assert not worker.matches_verified_target((run.id, run.commit_sha))
 
 
 def test_provenance_finalization_fences_sha_and_replay(dedicated_database):

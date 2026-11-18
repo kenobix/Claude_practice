@@ -25,6 +25,14 @@ class OneShotFailed(Exception):
         self.source_error = source_error
 
 
+class QueuePollMiss(OneShotFailed):
+    """A verified target moved or could not be locked before issuing a lease."""
+
+    def __init__(self, stage, target, source_error):
+        super().__init__(stage, source_error=source_error)
+        self.target = target
+
+
 EXPECTED_FAILURES = (psycopg.Error, database.DatabaseUnavailable, ExecutionDenied,
                      container.ContainerRejected, finalization.FinalizationDenied,
                      OSError, subprocess.SubprocessError, json.JSONDecodeError)
@@ -59,13 +67,13 @@ def run_once(worker_id, mode='success', connection_factory=None, *,
             stage = 'claim'
             claim_options = {} if source is None else {'target': (source.run_id, source.commit_sha)}
             claim = worker.claim_next(worker_id, connection_factory, **claim_options)
-            if source is not None and claim is None:
-                raise commit_source.SourceRejected('verified run is no longer claimable')
             if claim is not None:
                 stage = 'execution'
                 result = execution.execute_fixture(claim, mode, connection_factory, prepared_image=image)
             stage = 'image_cleanup'
         # Both container and unique image tag must be released before persistence.
+    except commit_source.QueueCandidateChanged as exc:
+        raise QueuePollMiss(stage, exc.target, str(exc)) from None
     except commit_source.SourceRejected as exc:
         # SourceRejected messages are fixed descriptions, never raw remote data.
         raise OneShotFailed(stage, claim, source_error=str(exc)) from None
@@ -74,6 +82,9 @@ def run_once(worker_id, mode='success', connection_factory=None, *,
     except EXPECTED_FAILURES:
         raise OneShotFailed(stage, claim) from None
     if claim is None:
+        if source is not None:
+            raise QueuePollMiss('claim', (source.run_id, source.commit_sha),
+                                'verified run is no longer claimable')
         return None
     try:
         # execute_fixture returns only after its resource context has exited.
@@ -107,7 +118,16 @@ def serve(worker_id, mode):
         for signum in (signal.SIGINT, signal.SIGTERM):
             handlers[signum] = signal.signal(signum, request_stop)
         while not stopped:
-            receipt = run_once(worker_id, mode, verified_commit=True, stopping=stopping)
+            try:
+                receipt = run_once(worker_id, mode, verified_commit=True, stopping=stopping)
+            except QueuePollMiss as exc:
+                try:
+                    matches = worker.matches_verified_target(exc.target)
+                except (psycopg.Error, database.DatabaseUnavailable):
+                    raise OneShotFailed(exc.stage) from None
+                if not matches:
+                    raise
+                receipt = None
             if receipt is not None:
                 print_receipt(receipt)
             elif not stopped:

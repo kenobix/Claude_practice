@@ -15,10 +15,16 @@ from .settings import POLICY, SCHEMA_VERSION
 
 LEASE_SECONDS = 30
 
+POLICY_FILTER = 'r.repository_id=%s AND r.ref=%s AND r.workflow_version=%s '
+SCHEMA_CHECK = 'EXISTS (SELECT 1 FROM schema_migrations WHERE version=%s) '
+VERIFIED_TARGET_FILTER = (
+    f'AND {SCHEMA_CHECK}AND r.id=%s AND r.commit_sha=%s '
+    'AND EXISTS (SELECT 1 FROM schema_migrations WHERE version=4)'
+)
 QUEUE_FILTER = (
     "WHERE r.state='queued' AND r.completed_attempt_id IS NULL "
     'AND r.cancel_requested_at IS NULL AND r.available_at <= clock_timestamp() '
-    'AND r.repository_id=%s AND r.ref=%s AND r.workflow_version=%s '
+    f'AND {POLICY_FILTER}'
 )
 INITIAL_SQL = (
     f'SELECT r.id, r.commit_sha, 0 AS previous_attempt_no FROM runs r {QUEUE_FILTER}'
@@ -65,18 +71,26 @@ def has_queued_candidate(connection_factory=None):
     return present
 
 
+def matches_verified_target(target: tuple[UUID, str], connection_factory=None) -> bool:
+    """Check the identity of a missed target without granting execution rights."""
+    with (connection_factory or database.connect)() as conn:
+        row = conn.execute(
+            f'SELECT 1 FROM runs r WHERE {POLICY_FILTER}{VERIFIED_TARGET_FILTER}',
+            (POLICY.repository_id, POLICY.ref, POLICY.workflow_version, SCHEMA_VERSION, *target),
+        ).fetchone()
+    return row is not None
+
+
 def claim_next(worker_id: str, connection_factory=None, *, target: tuple[UUID, str] | None = None) -> Claim | None:
     """Claim an initial attempt, or claim the exact verified run including its retries."""
     validate_worker_id(worker_id)
     factory = connection_factory or database.connect
     params = (POLICY.repository_id, POLICY.ref, POLICY.workflow_version)
-    schema = 'AND EXISTS (SELECT 1 FROM schema_migrations WHERE version=%s) '
     params += (SCHEMA_VERSION,)
-    sql = INITIAL_SQL + schema + QUEUE_ORDER
+    sql = INITIAL_SQL + f'AND {SCHEMA_CHECK}' + QUEUE_ORDER
     if target is not None:
         # This path must be able to persist the provenance before we grant a lease.
-        sql = (VERIFIED_SQL + schema + 'AND r.id=%s AND r.commit_sha=%s '
-               'AND EXISTS (SELECT 1 FROM schema_migrations WHERE version=4)')
+        sql = VERIFIED_SQL + VERIFIED_TARGET_FILTER
         params += target
     with factory() as conn:
         run = conn.execute(

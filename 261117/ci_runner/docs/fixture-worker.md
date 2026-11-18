@@ -108,6 +108,12 @@ Docker base imageやbuild cacheは既存の運用どおり再利用され得る�
 - 停止待ちには進行中の取得・build・実行・回収の操作期限が適用される。外部監視から停止するときは
   Worker PIDを対象にし、同時にDocker/Curl子プロセスへシグナルを送らない。
   SIGKILLやdaemon障害時は、期限監視と同じDockerホストでの残存コンテナ回収を行う。監視が再キューできる条件は[基盤障害の自動再試行](design.md#基盤障害の自動再試行)を参照。
-- 取得拒否、claim競合、DB障害、Docker障害、確定失敗では安全な失敗情報を出して終了1。
-  先頭が取得できないときは後続に読み替えない。GitHub匿名APIの制限がかかったときも同じ扱い。
+- 取得後の先頭変更、または完全一致する対象をロック・claimできなかった場合は、該当するpollを破棄する。
+  build済みの場合は専用imageタグを回収してから、元のrun ID・受理SHA・許可repo/ref/workflow・schema 004/006をDBで再照合する。
+  一致を確認できた場合、常駐Workerは空キューと同じ1秒待機へ戻る。次のpollはsourceの取得からやり直す。
+  `--run-once --verified-commit` はこの場合も終了1。
+- 取得拒否、確認対象の不一致、DB障害やcommit応答喪失、Docker障害や回収失敗、確定失敗では安全な失敗情報を出して終了1。
+  GitHub匿名APIの制限がかかったときも同じ扱い。
   runの状態と正式attemptを照合してから運用者が再開する。
+- `scripts/verify_execution.py` で `test_two_residents_continue_after_contending_for_same_run` を選択すると、
+  固定GitHub試験応答・専用PostgreSQL・実Dockerで2 Workerの競合を再現できる。

@@ -23,7 +23,8 @@ curl 8.4以上で各応答1 MiB、各リクエスト5秒、取得全体30秒を�
 [curlの応答サイズ上限](https://curl.se/docs/manpage.html#--max-filesize)。
 
 取得対象は初回または基盤障害で再キューされて待機期限に達した、許可対象のキュー先頭。DB transactionは通信前に閉じ、
-取得後に別transactionで先頭のrun IDとcommit SHAを再照合する。消失、競合取得、別runへの変更は拒否。
+取得後に別transactionで先頭のrun IDとcommit SHAを再照合する。候補変更時はこの取得結果を破棄する。
+常駐Workerだけは、元のrun ID・SHA・許可設定・必要なschemaを照合できた場合に次のポーリングへ戻る。
 検証結果は不変のsource bytesとrun ID、受理SHA、main snapshot、blob IDを含む。この再照合は予約ではない。
 一件Workerは検証済みのbytesで固定imageをbuildした後、同じrun ID/SHAを条件付きでclaimする。
 既存の制限・lease・fencingを維持し、正式結果と同じtransactionでsourceとimageの由来を保存する。

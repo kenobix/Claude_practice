@@ -970,3 +970,20 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
   skip内訳はライブGitHub取得4件とP0専用Dockerプローブ1件。Docker daemon自体の停止と2 Worker常駐の故障復旧は未実施。
 - P2は概算90%、MVP全体は計画工数で重み付けした概算53%（残約47%）。次は常駐Workerが正常な取得競合から待機に戻れるようにし、
   同一ホストの2 Workerで停止位置別の復旧と古い結果の拒否を通し検証する。復旧45秒は仮目標のまま。
+
+## P2の常駐Workerの取得競合時の継続
+
+- 開始HEAD `ba5f4e74063516241163a599c67067ef384a681a` のpush/PR CIは成功。Draft PR #1に未解決のレビュー指摘なし。
+  同じrunを先に取得された常駐Workerが終了する問題を修正した。
+- 取得後の先頭変更と、image準備後に同一run/SHAをclaimできなかった場合に、元のrun ID・受理SHA・許可repo/ref/workflow・
+  schema 004/006を再照合する。一致時だけ1秒待機に戻る。準備済みimageタグは再照合前に回収する。
+  照合不一致、DBとcommit応答の異常、取得拒否、回収失敗では終了1。一件実行は競合時に終了1を維持した。
+- 通常回帰は195 passed、192 deselected、既知のTestClient警告1件。pip check、compileall、差分検査も成功。
+- 専用PostgreSQL 17.12・Docker 29.9.2で選択回帰は85 passed、5 skipped、297 deselected、既知警告1件（130.51秒）。
+  固定GitHub試験応答を使い、取得後とclaim直前の2地点で常駐Workerを待機させ、別の常駐Workerに先に同じrunを処理させた。
+  負けたWorkerは終了せずに次のrunを検証・処理した。各runのattemptは1件で、正式結果・ログ・受理SHA・source digest・
+  image IDの対応を確かめた。受理SHA変更、許可ref変更、必要schemaの欠落、DB停止、heartbeat異常の回帰を実行した。
+  DB readinessは200、再起動後にmigration 1〜6を保持した。試験用DBのcontainer/volume/networkとfixtureのコンテナ・imageは残存0件。
+  skipはライブGitHub 5件。今回はGitHubライブ取得とDocker daemon自体の停止を実施していない。
+- P2は概算95%、MVP全体は計画工数で重み付けした概算54%（残約46%）。次は同一専用DB・Docker上の2 Workerで
+  停止位置を変え、時刻の書き換えを使わずに失効・回収・バックオフ・再取得を観測し、古いattemptの完了報告を拒否することを確認する。
