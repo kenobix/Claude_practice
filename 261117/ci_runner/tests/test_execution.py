@@ -32,7 +32,7 @@ def test_denied_claim_never_prepares_container(monkeypatch):
 def test_db_round_trip_consumes_local_lease_budget(monkeypatch):
     from contextlib import contextmanager
     @contextmanager
-    def prepared(*args):
+    def prepared(*args, **kwargs):
         yield object()
     times = iter([100.0, 103.0])
     monkeypatch.setattr(execution.time, 'monotonic', lambda: next(times))

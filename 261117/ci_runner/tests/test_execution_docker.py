@@ -1,5 +1,4 @@
 """Dedicated PostgreSQL plus real restricted Docker fixtures, explicit opt-in."""
-from contextlib import contextmanager
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -107,7 +106,11 @@ def test_four_bounded_fixtures(dedicated_database, owned_resources, evidence, mo
         assert len(result.stdout) + len(result.stderr) == execution.LOG_LIMIT
     # Execution does not pretend that the DB result was finalized.
     with database.connect() as conn:
-        assert conn.execute('SELECT state FROM attempts WHERE id=%s', (claim.attempt_id,)).fetchone()['state'] == 'running'
+        row = conn.execute('SELECT state, create_session, create_daemon_id, created_container_id '
+                           'FROM attempts WHERE id=%s', (claim.attempt_id,)).fetchone()
+        assert row['state'] == 'running'
+        assert all(row[field] for field in ('create_session', 'create_daemon_id', 'created_container_id'))
+        assert container.docker('container', 'inspect', row['created_container_id'], check=False).returncode != 0
     receipt = finalize_fixture(claim, result)
     with database.connect() as conn:
         logs = conn.execute('SELECT stdout,stderr,observed_bytes FROM attempt_logs WHERE attempt_id=%s',
@@ -129,8 +132,9 @@ def test_after_guard_db_recheck_refuses_release(dedicated_database, owned_resour
         project, filename = os.environ.get('CI_TEST_COMPOSE_PROJECT'), os.environ.get('CI_TEST_COMPOSE_FILE')
         assert project == 'ci-runner-261117-p0-check' and filename == str(ROOT / 'compose.yaml')
         compose = ['docker', 'compose', '--project-name', project, '-f', filename]
-    @contextmanager
-    def factory():
+    authorize = execution.authorize_execution
+
+    def before_release(*args):
         nonlocal calls
         calls += 1
         if calls == 3:
@@ -145,12 +149,13 @@ def test_after_guard_db_recheck_refuses_release(dedicated_database, owned_resour
                     else:
                         conn.execute("UPDATE attempts SET started_at=clock_timestamp()-interval '1 minute', "
                                  "lease_expires_at=clock_timestamp()-interval '1 second' WHERE id=%s", (claim.attempt_id,))
-        with database.connect() as conn:
-            yield conn
+        return authorize(*args)
+
+    monkeypatch.setattr(execution, 'authorize_execution', before_release)
     monkeypatch.setattr(execution, '_release_workload', lambda p: pytest.fail('invalid authority released workload'))
     try:
         with pytest.raises(psycopg.OperationalError if fault in ('db_error', 'db_stop') else ExecutionDenied):
-            execution.execute_fixture(claim, connection_factory=factory)
+            execution.execute_fixture(claim)
         assert calls == 3
         evidence['cases'].append({'case': fault, 'released': False, 'db_checks': calls})
     finally:
@@ -183,19 +188,21 @@ def test_actual_cgroup_mismatch_never_releases_workload(dedicated_database, owne
     assert result.stdout == b'' and result.stderr == b'runtime preflight refused\n'
 
 
-def test_db_remaining_lease_caps_local_execution(dedicated_database, owned_resources, evidence):
+def test_db_remaining_lease_caps_local_execution(dedicated_database, owned_resources, evidence, monkeypatch):
     _, claim = issue_claim()
     calls = 0
-    @contextmanager
-    def short_lease():
+    authorize = execution.authorize_execution
+
+    def short_lease(*args):
         nonlocal calls
         calls += 1
         if calls == 2:
             with database.connect() as conn:
                 conn.execute("UPDATE attempts SET lease_expires_at=clock_timestamp()+interval '3 seconds' WHERE id=%s", (claim.attempt_id,))
-        with database.connect() as conn:
-            yield conn
-    result = execution.execute_fixture(claim, 'timeout', short_lease)
+        return authorize(*args)
+
+    monkeypatch.setattr(execution, 'authorize_execution', short_lease)
+    result = execution.execute_fixture(claim, 'timeout')
     record_result(evidence, 'short_db_lease', result)
     assert result.released and result.reason == 'lease_expired' and result.exit_code == 137
     assert 2 <= result.elapsed_seconds < 8

@@ -103,6 +103,20 @@ def test_cleanup_refuses_unowned_container(monkeypatch):
     assert len(calls) == 1
 
 
+@pytest.mark.parametrize('missing', ['owned-name', 'different-name'])
+def test_owned_cleanup_accepts_only_its_exact_absence(monkeypatch, missing):
+    def inspect(*args, **kwargs):
+        assert args == ('container', 'inspect', 'owned-name') and kwargs == {'check': False}
+        return SimpleNamespace(returncode=1, stderr=f'Error response from daemon: No such container: {missing}')
+
+    monkeypatch.setattr(container, 'docker', inspect)
+    if missing == 'owned-name':
+        container.remove_owned('owned-name', 'session')
+    else:
+        with pytest.raises(container.ContainerRejected, match='cleanup inspection failed'):
+            container.remove_owned('owned-name', 'session')
+
+
 @pytest.mark.parametrize('error', [FileNotFoundError('public injected missing CLI'),
     container.subprocess.TimeoutExpired(['docker'], 30, output='public-test-canary')])
 def test_unavailable_or_timed_out_docker_is_rejected(monkeypatch, error):

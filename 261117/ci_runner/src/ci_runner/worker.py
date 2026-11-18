@@ -21,10 +21,11 @@ ELIGIBLE_SQL = (
     # Retry cause/budget is not implemented: never mislabel a retry as initial.
     'AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.run_id=r.id) '
 )
-CANDIDATE_SQL = ELIGIBLE_SQL + (
+QUEUE_ORDER = (
     'ORDER BY r.available_at, r.created_at, r.id '
     'LIMIT 1'
 )
+CANDIDATE_SQL = ELIGIBLE_SQL + QUEUE_ORDER
 
 
 @dataclass(frozen=True)
@@ -61,12 +62,14 @@ def claim_next(worker_id: str, connection_factory=None, *, target: tuple[UUID, s
     validate_worker_id(worker_id)
     factory = connection_factory or database.connect
     params = (POLICY.repository_id, POLICY.ref, POLICY.workflow_version)
-    sql = CANDIDATE_SQL
+    eligible = ELIGIBLE_SQL + 'AND EXISTS (SELECT 1 FROM schema_migrations WHERE version=%s) '
+    params += (SCHEMA_VERSION,)
+    sql = eligible + QUEUE_ORDER
     if target is not None:
         # This path must be able to persist the provenance before we grant a lease.
-        sql = (ELIGIBLE_SQL + 'AND r.id=%s AND r.commit_sha=%s '
-               'AND EXISTS (SELECT 1 FROM schema_migrations WHERE version=%s)')
-        params += (*target, SCHEMA_VERSION)
+        sql = (eligible + 'AND r.id=%s AND r.commit_sha=%s '
+               'AND EXISTS (SELECT 1 FROM schema_migrations WHERE version=4)')
+        params += target
     with factory() as conn:
         run = conn.execute(
             sql + ' FOR UPDATE OF r SKIP LOCKED', params).fetchone()
@@ -74,9 +77,9 @@ def claim_next(worker_id: str, connection_factory=None, *, target: tuple[UUID, s
             return None
         row = conn.execute(
             'INSERT INTO attempts(run_id, attempt_no, worker_id, lease_token, '
-            'started_at, lease_expires_at, retry_kind) '
+            'started_at, lease_expires_at, retry_kind, create_tracked) '
             "VALUES (%s, 1, %s, gen_random_uuid(), statement_timestamp(), "
-            "statement_timestamp() + %s * interval '1 second', 'initial') "
+            "statement_timestamp() + %s * interval '1 second', 'initial', true) "
             'RETURNING id AS attempt_id, run_id, attempt_no, worker_id, '
             'lease_token, started_at, lease_expires_at',
             (run['id'], worker_id, LEASE_SECONDS)).fetchone()

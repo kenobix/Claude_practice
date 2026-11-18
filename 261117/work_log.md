@@ -900,3 +900,27 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
   ライブGitHub取得、Docker daemonの実停止、遅延create完了後の再走査は今回未実測。
 - P2は概算70%、計画工数で重み付けしたMVP全体は概算48%（残52%）。次は遅延createを考慮した回収確認を
   再キューの前提にし、基盤障害に限定した最大3attemptとバックオフを実装する。その後に2 Workerで障害復旧を通し検証する。
+
+## P2のDocker作成予約と完全ID記録
+
+- 開始HEAD `93ab9e63e524d9d211ab36af082dca5697260b9c` のpush/PR CIは成功。Draft PR #1に未解決のレビュー指摘なし。
+  旧attemptの回収を確定する前提として、Docker createの未送信と応答不明をDBで区別する単位を選んだ。
+- migration 005で作成台帳を追加。claimと同時に新attemptを記録対象とし、既存のattemptは作成履歴不明とする。
+  run→attemptロック後、現在のrun/attempt・受理SHA・token・取消・DB時刻を照合し、daemon IDとsessionを一度だけ予約する。
+  予約commitの応答後だけcreateを呼ぶ。Dockerの完全IDとinspectが一致したら同じ台帳に保存する。
+- 予約あり・完全IDなしは作成結果不明。Docker一覧が空でもこの状態は変えない。未確定のまま手動の回収コマンドで
+  削除した場合も作成結果不明として残る。回収確認の永続化と再試行は後続。作成予約で使うdaemon IDはUUID形式に限定し、
+  実行中は同じ信頼済みDocker contextを使う。
+- 初回の専用DB・実Docker選択回帰は153 passed、1 failed、6 skipped、200 deselected。遅延createの回収自体は
+  成功したが、Workerの後処理で汎用 `docker inspect` の小文字の不在応答をエラーと判定した。コンテナ専用inspectで
+  対象名の不在を厳密に照合し、並行回収後に元のcreate例外を維持するよう修正した。
+- 修正後の通常回帰は189 passed、173 deselected、既知のTestClient警告1件。pip checkとcompileallも成功。
+- `CI_RUN_PREPARATION_TESTS=1` で `verify_execution.py` から作成台帳・残存回収・Docker準備/実行・検証付きclaim・
+  migrationを選択した修正後の再検証は55 passed、4 skipped、303 deselected、既知警告1件（204.42秒）。
+  PostgreSQL 17.12とDocker 29.9.2で、予約競合、ロック待ち中の失効、旧token・取消・SHA不一致の拒否、予約commitの
+  前後の障害を確認した。Docker呼び出しの遅延を注入し、初回走査ではコンテナが見えず、失効後に実Dockerで作成された
+  同じsessionのコンテナを未起動のまま回収できた。予約commit応答喪失時はcreateを呼ばなかった。
+  専用DBのreadinessは200、再起動後にmigration 1〜5を保持し、試験資源を回収した。
+  ライブGitHub取得（4件skip）とDocker daemonの実停止は今回未実施。
+- P2は概算75%、計画工数で重み付けしたMVP全体は概算49%（残51%）。次は回収側で作成済みの完全IDを削除前に
+  永続化し、同じdaemonでの不在確認を保存する。その確認を基盤障害に限定した再キューへ接続する。

@@ -10,12 +10,14 @@ import sys
 from threading import Barrier, Event
 from uuid import uuid4
 
+import psycopg
 import pytest
 
 from ci_runner import container, database, execution, orphan_cleanup
 from ci_runner.expiry_monitor import expire_next
 from ci_runner.finalization import FinalizationDenied, finalize_fixture
 from ci_runner.preflight import authorize_execution
+from test_create_reservation import create_history
 from test_expiry_monitor import set_expiry
 from test_finalization_input import report
 from test_fixture_worker_docker import resources
@@ -174,4 +176,79 @@ def test_created_orphan_survives_db_stop_then_two_recovery_scans(
             assert inspect(unrelated.container_id)['State']['Status'] == 'created'
             with database.connect() as conn:
                 assert conn.execute('SELECT state FROM runs WHERE id=%s', (run.id,)).fetchone()['state'] == 'canceled'
+    assert resources() == before
+
+
+def test_delayed_create_is_recorded_before_docker_can_list_it(dedicated_database, monkeypatch):
+    before = resources()
+    docker = container.docker
+    dispatched, allow_create, visible, reply = Event(), Event(), Event(), Event()
+    ids = []
+
+    def delay_create(*args, **kwargs):
+        if args[0] != 'create':
+            return docker(*args, **kwargs)
+        dispatched.set()
+        assert allow_create.wait(15)
+        result = docker(*args, **kwargs)
+        ids.append(result.stdout.strip())
+        visible.set()
+        assert reply.wait(15)
+        raise container.ContainerRejected('injected create response loss')
+
+    with container.prepare_image() as image, ThreadPoolExecutor(max_workers=1) as pool:
+        run, claim = issue_claim()
+        monkeypatch.setattr(container, 'docker', delay_create)
+        task = pool.submit(execution.execute_fixture, claim, prepared_image=image)
+        try:
+            assert dispatched.wait(8)
+            history = create_history(claim)
+            assert history['create_tracked'] and history['create_session'] and history['create_daemon_id']
+            assert history['created_container_id'] is None
+            set_expiry(claim)
+            assert expire_next().attempt_id == claim.attempt_id
+            assert list(orphan_cleanup.recover()) == [] and create_history(claim) == history
+            allow_create.set()
+            assert visible.wait(8)
+            (container_id,) = ids
+            info = inspect(container_id)
+            assert info['State']['Status'] == 'created'
+            assert info['Config']['Labels'][container.LABEL] == history['create_session'].hex
+            assert list(orphan_cleanup.recover()) == [
+                orphan_cleanup.RemovedContainer(container_id, run.id, claim.attempt_id)]
+            assert create_history(claim) == history
+        finally:
+            allow_create.set()
+            reply.set()
+        with pytest.raises(container.ContainerRejected, match='response loss'):
+            task.result(timeout=8)
+    assert resources() == before
+
+
+def test_lost_reservation_commit_ack_never_dispatches_create(dedicated_database, monkeypatch):
+    before = resources()
+    reserve = container.reserve_container_create
+    docker = container.docker
+
+    @contextmanager
+    def lost_ack():
+        with database.connect() as conn:
+            yield conn
+        raise psycopg.OperationalError('injected lost reservation commit response')
+
+    def unconfirmed(permit, daemon, session, _factory):
+        reserve(permit, daemon, session, lost_ack)
+
+    def forbid_create(*args, **kwargs):
+        assert args[0] != 'create', 'reservation was not acknowledged'
+        return docker(*args, **kwargs)
+
+    with container.prepare_image() as image:
+        _, claim = issue_claim()
+        monkeypatch.setattr(container, 'reserve_container_create', unconfirmed)
+        monkeypatch.setattr(container, 'docker', forbid_create)
+        with pytest.raises(psycopg.OperationalError, match='lost reservation'):
+            execution.execute_fixture(claim, prepared_image=image)
+        assert create_history(claim)['create_session'] is not None
+        assert create_history(claim)['created_container_id'] is None
     assert resources() == before

@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 from uuid import UUID, uuid4
 
 from . import commit_source
-from .preflight import ExecutionPermit
+from .preflight import ExecutionPermit, record_created_container, reserve_container_create
 from .settings import POLICY
 from .worker import validate_worker_id
 
@@ -84,9 +84,9 @@ def validate_configuration(info, image, labels, mode='success'):
 
 
 def remove_owned(name, session):
-    result = docker('inspect', name, check=False)
+    result = docker('container', 'inspect', name, check=False)
     if result.returncode:
-        if 'No such object:' in result.stderr:
+        if result.stderr.strip() == f'Error response from daemon: No such container: {name}':
             return
         raise ContainerRejected('container cleanup inspection failed')
     info = json.loads(result.stdout)[0]
@@ -177,7 +177,7 @@ def prepare_image(*, verified_source: commit_source.VerifiedSource | None = None
 
 
 @contextmanager
-def prepare_fixture(permit: ExecutionPermit, mode='success', *, prepared_image=None):
+def prepare_fixture(permit: ExecutionPermit, mode='success', *, prepared_image=None, connection_factory=None):
     """Create/inspect an unstarted fixture, borrowing an optional live image scope.
 
     Direct callers retain the original build/create/cleanup lifecycle. The
@@ -194,16 +194,23 @@ def prepare_fixture(permit: ExecutionPermit, mode='success', *, prepared_image=N
         raise ContainerRejected('unsupported fixture preparation request')
     if prepared_image is None:
         with prepare_image() as image:
-            with prepare_fixture(permit, mode, prepared_image=image) as prepared:
+            with prepare_fixture(permit, mode, prepared_image=image, connection_factory=connection_factory) as prepared:
                 yield prepared
         return
     image = inspect_prepared_image(prepared_image)
     source = prepared_image.verified_source
     if source is not None and (permit.run_id, permit.commit_sha) != (source.run_id, source.commit_sha):
         raise ContainerRejected('prepared source does not match the execution permit')
-    session = uuid4().hex
+    reservation = uuid4()
+    session = reservation.hex
     name = f'{NAME_PREFIX}{session}'
     labels = {LABEL: session, RUN_LABEL: str(permit.run_id), ATTEMPT_LABEL: str(permit.attempt_id)}
+    if connection_factory is not None:
+        try:
+            daemon_id = UUID(docker('info', '--format', '{{.ID}}').stdout.strip())
+        except ValueError:
+            raise ContainerRejected('Docker daemon identity unavailable') from None
+        reserve_container_create(permit, daemon_id, reservation, connection_factory)
     attempted_create = False
     try:
         options = [item for key, value in labels.items() for item in ('--label', f'{key}={value}')]
@@ -219,6 +226,8 @@ def prepare_fixture(permit: ExecutionPermit, mode='success', *, prepared_image=N
         validate_configuration(info, image, labels, mode)
         if cid != info['Id'] or not re.fullmatch('[0-9a-f]{64}', cid):
             raise ContainerRejected('container identity mismatch')
+        if connection_factory is not None:
+            record_created_container(permit, daemon_id, reservation, cid, connection_factory)
         yield PreparedContainer(cid, image['Id'], permit.run_id, permit.attempt_id)
     finally:
         if attempted_create:

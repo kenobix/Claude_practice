@@ -9,7 +9,7 @@ from threading import Thread
 import time
 from uuid import UUID
 
-from . import container
+from . import container, database
 from .commit_source import VerifiedSource
 from .preflight import ExecutionDenied, authorize_execution
 from .worker import Claim, LEASE_SECONDS, renew_lease
@@ -108,8 +108,8 @@ def execute_fixture(claim: Claim, mode='success', connection_factory=None, *, pr
         raise container.ContainerRejected('invalid prepared image handle')
     source = prepared_image.verified_source if prepared_image is not None else None
     permit = _authorize(claim, connection_factory, source)
-    options = {} if prepared_image is None else {'prepared_image': prepared_image}
-    with container.prepare_fixture(permit, mode, **options) as prepared:
+    with container.prepare_fixture(permit, mode, prepared_image=prepared_image,
+                                   connection_factory=connection_factory or database.connect) as prepared:
         # Budget starts before the DB round trip: query/commit/network delay may
         # shorten local authority but must never extend the DB-issued lease.
         measured = time.monotonic()

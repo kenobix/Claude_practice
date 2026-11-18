@@ -59,6 +59,7 @@ cleanup失敗は例外として伝播し、成功と扱わない。base image/bu
 WorkerのSIGKILLやdaemon断でfinallyが完了しなければ残存し得る。
 CLI timeout後にdaemon処理が遅れて完了する場合も、その時点のinspectだけでは残存を否定できない。ラベル
 `dev.ci-runner.preparation-session` とrun/attemptを手掛かりに、[失効attemptのコンテナ回収](design.md#失効attemptのコンテナ回収)で再走査できる。
+実行Workerは[コンテナ作成台帳](design.md#コンテナ作成台帳)に作成を予約し、照合済みの完全IDを起動前に記録する。
 Docker daemonを操作できる他の信頼済み主体による競合改変までは保護しない。
 
 ## 再検証
