@@ -1,0 +1,110 @@
+[
+  {
+    "Package": "libbcg729-0",
+    "Version": "1.1.1-2build1",
+    "Filename": "pool/universe/b/bcg729/libbcg729-0_1.1.1-2build1_amd64.deb",
+    "SHA256": "78bf38671fc93a869823d9d5845757e3e214be3f73e3f60336734dd0cdd95bcb"
+  },
+  {
+    "Package": "libibverbs1",
+    "Version": "50.0-2ubuntu0.2",
+    "Filename": "pool/main/r/rdma-core/libibverbs1_50.0-2ubuntu0.2_amd64.deb",
+    "SHA256": "8489558105ee1d1c65ae6e0f1bac0e9b15f314a68f106ee9a63c89821242bd8e"
+  },
+  {
+    "Package": "liblua5.2-0",
+    "Version": "5.2.4-3build2",
+    "Filename": "pool/universe/l/lua5.2/liblua5.2-0_5.2.4-3build2_amd64.deb",
+    "SHA256": "b030bc0bea32fe27dfb70a31e14491b6ab767379811877e6497af28338eab5d8"
+  },
+  {
+    "Package": "libnghttp3-3",
+    "Version": "0.8.0-2",
+    "Filename": "pool/universe/n/nghttp3/libnghttp3-3_0.8.0-2_amd64.deb",
+    "SHA256": "d1aa1d91c16d30fcc19209453aa1dbe4976afd16be3aa75e637e9d6ccee83910"
+  },
+  {
+    "Package": "libnl-3-200",
+    "Version": "3.7.0-0.3build1.1",
+    "Filename": "pool/main/libn/libnl3/libnl-3-200_3.7.0-0.3build1.1_amd64.deb",
+    "SHA256": "15b3f61db753dc3db6f62f4259f8b822299343e500886776486612a13a2ed247"
+  },
+  {
+    "Package": "libnl-genl-3-200",
+    "Version": "3.7.0-0.3build1.1",
+    "Filename": "pool/main/libn/libnl3/libnl-genl-3-200_3.7.0-0.3build1.1_amd64.deb",
+    "SHA256": "9ca0cb63f295d00e6346b9924278c07cfc61311cbd288b805b06e25aa08c9fd8"
+  },
+  {
+    "Package": "libnl-route-3-200",
+    "Version": "3.7.0-0.3build1.1",
+    "Filename": "pool/main/libn/libnl3/libnl-route-3-200_3.7.0-0.3build1.1_amd64.deb",
+    "SHA256": "c9dbd29cb7fdcf1a0587726cbc5432a7d3e81242108dfcfa2dd6716c44c74d4d"
+  },
+  {
+    "Package": "libopencore-amrnb0",
+    "Version": "0.1.6-1build1",
+    "Filename": "pool/universe/o/opencore-amr/libopencore-amrnb0_0.1.6-1build1_amd64.deb",
+    "SHA256": "b35434b1103f14574985b9533bf1dc202c00d915cfa59431e45138dd96e423ee"
+  },
+  {
+    "Package": "libpcap0.8t64",
+    "Version": "1.10.4-4.1ubuntu3.1",
+    "Filename": "pool/main/libp/libpcap/libpcap0.8t64_1.10.4-4.1ubuntu3.1_amd64.deb",
+    "SHA256": "58e93055e14afdd27ff5faf62cf738ce5e79c06c30b3f83561beba874e5d8b67"
+  },
+  {
+    "Package": "libsbc1",
+    "Version": "2.0-1build1",
+    "Filename": "pool/main/s/sbc/libsbc1_2.0-1build1_amd64.deb",
+    "SHA256": "d4d453e7673218fc2f917dbabb2492a5a81155c2305f6fe63a37cadcaa806128"
+  },
+  {
+    "Package": "libsmi2t64",
+    "Version": "0.4.8+dfsg2-16.1build1",
+    "Filename": "pool/universe/libs/libsmi/libsmi2t64_0.4.8+dfsg2-16.1build1_amd64.deb",
+    "SHA256": "adeff0bf973b50aad5d64f44e35f28039b570b1f99d94ee229ccaf42243782ed"
+  },
+  {
+    "Package": "libspandsp2t64",
+    "Version": "0.0.6+dfsg-2.1build1",
+    "Filename": "pool/universe/s/spandsp/libspandsp2t64_0.0.6+dfsg-2.1build1_amd64.deb",
+    "SHA256": "107557f1f8aea7bbf23476d966bbdba7666f0e83497f3ebda8dfe21a0e29e5f5"
+  },
+  {
+    "Package": "libspeexdsp1",
+    "Version": "1.2.1-1ubuntu3",
+    "Filename": "pool/main/s/speexdsp/libspeexdsp1_1.2.1-1ubuntu3_amd64.deb",
+    "SHA256": "c16ccd12c2964ca5f30bd25670651550cce2d611cce2952c4807de44244da5a1"
+  },
+  {
+    "Package": "libwireshark-data",
+    "Version": "4.2.2-1.1build3",
+    "Filename": "pool/universe/w/wireshark/libwireshark-data_4.2.2-1.1build3_all.deb",
+    "SHA256": "296954a04d7eea7e339b7dedd0e7a792b782c6b7cbaa10003fc3608f8a06bb66"
+  },
+  {
+    "Package": "libwireshark17t64",
+    "Version": "4.2.2-1.1build3",
+    "Filename": "pool/universe/w/wireshark/libwireshark17t64_4.2.2-1.1build3_amd64.deb",
+    "SHA256": "2d6c3432b14739e4162c015e9b1f140435302f041750e46f5b589dd0b44b343e"
+  },
+  {
+    "Package": "libwiretap14t64",
+    "Version": "4.2.2-1.1build3",
+    "Filename": "pool/universe/w/wireshark/libwiretap14t64_4.2.2-1.1build3_amd64.deb",
+    "SHA256": "ad90fc160853e33bb1906a2d1b005e315a162b8be55a353aa2feceb4c84d057b"
+  },
+  {
+    "Package": "libwsutil15t64",
+    "Version": "4.2.2-1.1build3",
+    "Filename": "pool/universe/w/wireshark/libwsutil15t64_4.2.2-1.1build3_amd64.deb",
+    "SHA256": "208d127d0b6e42358e355c0d7c35c1c9c374075d84e15e1c6dbfcbb0320f1673"
+  },
+  {
+    "Package": "tshark",
+    "Version": "4.2.2-1.1build3",
+    "Filename": "pool/universe/w/wireshark/tshark_4.2.2-1.1build3_amd64.deb",
+    "SHA256": "e06fb38458c5a06a395fd78c7c24ead0f06c792422be265fa542352c5062d91b"
+  }
+]

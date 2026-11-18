@@ -1,0 +1,1024 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "phase",
+    "input",
+    "tool",
+    "config",
+    "complete",
+    "summary",
+    "classification_indices",
+    "flows",
+    "dns",
+    "diagnostics",
+    "unattributed_indices"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.4.0"
+    },
+    "phase": {
+      "const": "2b"
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256",
+        "size_bytes",
+        "timestamp_precision",
+        "linktype"
+      ],
+      "properties": {
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "timestamp_precision": {
+          "enum": [
+            "us",
+            "ns"
+          ]
+        },
+        "linktype": {
+          "const": 1
+        }
+      }
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "const": "pcap-analyzer"
+        },
+        "version": {
+          "const": "0.3.0"
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "max_input_bytes",
+        "max_records",
+        "max_packet_bytes",
+        "max_diagnostics",
+        "max_flows",
+        "max_dns_keys"
+      ],
+      "properties": {
+        "version": {
+          "const": "0.4"
+        },
+        "max_input_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 104857600
+        },
+        "max_records": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        },
+        "max_packet_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "max_diagnostics": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "max_flows": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "max_dns_keys": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        }
+      }
+    },
+    "complete": {
+      "type": "boolean"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packet_count",
+        "captured_bytes",
+        "original_bytes",
+        "classification_counts",
+        "protocol_counts",
+        "parsed_ratio",
+        "start_ns",
+        "end_ns",
+        "duration_ns",
+        "ipv4_fragment_count",
+        "timestamp_invalid_count",
+        "flow_count",
+        "unattributed_packet_count",
+        "unattributed_captured_bytes",
+        "unattributed_original_bytes"
+      ],
+      "properties": {
+        "packet_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "captured_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "original_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "classification_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "parsed",
+            "unsupported",
+            "truncated",
+            "malformed"
+          ],
+          "properties": {
+            "parsed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unsupported": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "truncated": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "malformed": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "protocol_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tcp",
+            "udp",
+            "ipv4_fragment",
+            "ipv4_other",
+            "non_ipv4",
+            "unknown"
+          ],
+          "properties": {
+            "tcp": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "udp": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "ipv4_fragment": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "ipv4_other": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "non_ipv4": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unknown": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "parsed_ratio": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "start_ns": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "end_ns": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "duration_ns": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "ipv4_fragment_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "timestamp_invalid_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "flow_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unattributed_packet_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unattributed_captured_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unattributed_original_bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "classification_indices": {
+      "description": "Exclusive packet classifications, including structure validation of otherwise parsed UDP port-53 candidates. DNS errors do not invalidate verified flow headers.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "parsed",
+        "unsupported",
+        "truncated",
+        "malformed"
+      ],
+      "properties": {
+        "parsed": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true
+        },
+        "unsupported": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true
+        },
+        "truncated": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true
+        },
+        "malformed": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "flows": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "protocol",
+          "a",
+          "b",
+          "a_to_b",
+          "b_to_a",
+          "tcp_flag_counts"
+        ],
+        "properties": {
+          "protocol": {
+            "enum": [
+              6,
+              17
+            ]
+          },
+          "a": {
+            "$ref": "#/$defs/endpoint"
+          },
+          "b": {
+            "$ref": "#/$defs/endpoint"
+          },
+          "a_to_b": {
+            "$ref": "#/$defs/direction"
+          },
+          "b_to_a": {
+            "$ref": "#/$defs/direction"
+          },
+          "tcp_flag_counts": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/tcp_flags"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "protocol": {
+                  "const": 6
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "tcp_flag_counts": {
+                  "$ref": "#/$defs/tcp_flags"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "tcp_flag_counts": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "dns": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "time_analysis",
+        "query_count",
+        "response_count",
+        "unassigned_indices",
+        "event_counts",
+        "events"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "complete",
+            "partial"
+          ]
+        },
+        "time_analysis": {
+          "enum": [
+            "enabled",
+            "disabled_timestamp_regression"
+          ]
+        },
+        "query_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "response_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unassigned_indices": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true,
+          "maxItems": 1
+        },
+        "event_counts": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "matched",
+                "ambiguous",
+                "additional_response",
+                "unmatched_response",
+                "no_response_observed",
+                "window_incomplete"
+              ],
+              "properties": {
+                "matched": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "ambiguous": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "additional_response": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "unmatched_response": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "no_response_observed": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "window_incomplete": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "events": {
+          "type": "array",
+          "maxItems": 1000000,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "status",
+              "key",
+              "query_group",
+              "query_indices",
+              "response_indices",
+              "response_time_ns",
+              "response_time_ms",
+              "rcode",
+              "tc"
+            ],
+            "properties": {
+              "status": {
+                "enum": [
+                  "matched",
+                  "ambiguous",
+                  "additional_response",
+                  "unmatched_response",
+                  "no_response_observed",
+                  "window_incomplete"
+                ]
+              },
+              "key": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "client",
+                  "server",
+                  "id",
+                  "labels_hex",
+                  "name",
+                  "qtype",
+                  "qclass"
+                ],
+                "properties": {
+                  "client": {
+                    "$ref": "#/$defs/endpoint"
+                  },
+                  "server": {
+                    "$ref": "#/$defs/endpoint"
+                  },
+                  "id": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  },
+                  "labels_hex": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 128,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^(?:[0-9a-f]{2}){0,63}$"
+                    },
+                    "contains": {
+                      "const": ""
+                    },
+                    "minContains": 1,
+                    "maxContains": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1021
+                  },
+                  "qtype": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  },
+                  "qclass": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  }
+                }
+              },
+              "query_group": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1
+              },
+              "query_indices": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "uniqueItems": true,
+                "maxItems": 1000000
+              },
+              "response_indices": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "uniqueItems": true,
+                "maxItems": 1
+              },
+              "response_time_ns": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 5000000000
+              },
+              "response_time_ms": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 5000
+              },
+              "rcode": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 15
+              },
+              "tc": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "matched"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "query_indices": {
+                      "minItems": 1,
+                      "maxItems": 1
+                    },
+                    "response_indices": {
+                      "minItems": 1
+                    },
+                    "response_time_ns": {
+                      "type": "integer"
+                    },
+                    "response_time_ms": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "response_time_ns": {
+                      "type": "null"
+                    },
+                    "response_time_ms": {
+                      "type": "null"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "ambiguous"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "query_indices": {
+                      "minItems": 2
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "additional_response",
+                        "unmatched_response"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "query_indices": {
+                      "maxItems": 0
+                    },
+                    "response_indices": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "unmatched_response"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "query_group": {
+                      "type": "null"
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "query_group": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "no_response_observed",
+                        "window_incomplete"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "query_indices": {
+                      "minItems": 1,
+                      "maxItems": 1
+                    },
+                    "response_indices": {
+                      "maxItems": 0
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "response_indices": {
+                      "minItems": 1
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "rcode": {
+                      "type": "integer"
+                    },
+                    "tc": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "rcode": {
+                      "type": "null"
+                    },
+                    "tc": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "description": "Eligible observations in the processed prefix; counts survive timing invalidation. Additional responses link to a primary event via query_group without repeating query indices.",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "time_analysis": {
+                "const": "disabled_timestamp_regression"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "event_counts": {
+                "type": "null"
+              },
+              "events": {
+                "maxItems": 0
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "event_counts": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "matched",
+                  "ambiguous",
+                  "additional_response",
+                  "unmatched_response",
+                  "no_response_observed",
+                  "window_incomplete"
+                ],
+                "properties": {
+                  "matched": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "ambiguous": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "additional_response": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "unmatched_response": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "no_response_observed": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "window_incomplete": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "reason",
+          "packet_index"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[EPW]_[A-Z_]+$"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "packet_index": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "unattributed_indices": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "uniqueItems": true
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PCAP analyzer Phase 2b report v0.4.0",
+  "$defs": {
+    "endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ip",
+        "port"
+      ],
+      "properties": {
+        "ip": {
+          "type": "string",
+          "format": "ipv4"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535
+        }
+      }
+    },
+    "direction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packets",
+        "captured_bytes",
+        "original_bytes",
+        "packet_indices"
+      ],
+      "properties": {
+        "packets": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "captured_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "original_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "packet_indices": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "tcp_flags": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "F",
+        "S",
+        "R",
+        "P",
+        "A",
+        "U",
+        "E",
+        "C",
+        "N"
+      ],
+      "properties": {
+        "F": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "S": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "R": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "P": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "A": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "U": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "E": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "C": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "N": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "complete": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "dns": {
+            "properties": {
+              "status": {
+                "const": "complete"
+              },
+              "unassigned_indices": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "dns": {
+            "properties": {
+              "status": {
+                "const": "partial"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,201 @@
+{
+  "schema_version": "0.3.0",
+  "phase": "2a",
+  "input": {
+    "sha256": "15d498f6b295f4325b1add47e408ce26564aa14a506c5f10cde30143f65912b6",
+    "size_bytes": 864,
+    "timestamp_precision": "us",
+    "linktype": 1
+  },
+  "tool": {
+    "name": "pcap-analyzer",
+    "version": "0.2.0"
+  },
+  "config": {
+    "version": "0.3",
+    "max_input_bytes": 104857600,
+    "max_records": 1000000,
+    "max_packet_bytes": 1048576,
+    "max_diagnostics": 10000,
+    "max_flows": 100000
+  },
+  "complete": true,
+  "summary": {
+    "packet_count": 10,
+    "captured_bytes": 680,
+    "original_bytes": 680,
+    "classification_counts": {
+      "parsed": 10,
+      "unsupported": 0,
+      "truncated": 0,
+      "malformed": 0
+    },
+    "protocol_counts": {
+      "tcp": 4,
+      "udp": 6,
+      "ipv4_fragment": 0,
+      "ipv4_other": 0,
+      "non_ipv4": 0,
+      "unknown": 0
+    },
+    "parsed_ratio": 1.0,
+    "start_ns": 1700000000000000000,
+    "end_ns": 1700000008000000000,
+    "duration_ns": 8000000000,
+    "ipv4_fragment_count": 0,
+    "timestamp_invalid_count": 0,
+    "flow_count": 4,
+    "unattributed_packet_count": 0,
+    "unattributed_captured_bytes": 0,
+    "unattributed_original_bytes": 0
+  },
+  "classification_indices": {
+    "parsed": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "unsupported": [],
+    "truncated": [],
+    "malformed": []
+  },
+  "flows": [
+    {
+      "protocol": 6,
+      "a": {
+        "ip": "192.0.2.1",
+        "port": 40000
+      },
+      "b": {
+        "ip": "198.51.100.53",
+        "port": 443
+      },
+      "a_to_b": {
+        "packets": 2,
+        "captured_bytes": 108,
+        "original_bytes": 108,
+        "packet_indices": [
+          1,
+          3
+        ]
+      },
+      "b_to_a": {
+        "packets": 2,
+        "captured_bytes": 108,
+        "original_bytes": 108,
+        "packet_indices": [
+          2,
+          10
+        ]
+      },
+      "tcp_flag_counts": {
+        "F": 0,
+        "S": 2,
+        "R": 0,
+        "P": 0,
+        "A": 3,
+        "U": 0,
+        "E": 0,
+        "C": 0,
+        "N": 0
+      }
+    },
+    {
+      "protocol": 17,
+      "a": {
+        "ip": "192.0.2.1",
+        "port": 53000
+      },
+      "b": {
+        "ip": "198.51.100.53",
+        "port": 53
+      },
+      "a_to_b": {
+        "packets": 1,
+        "captured_bytes": 72,
+        "original_bytes": 72,
+        "packet_indices": [
+          4
+        ]
+      },
+      "b_to_a": {
+        "packets": 1,
+        "captured_bytes": 88,
+        "original_bytes": 88,
+        "packet_indices": [
+          5
+        ]
+      },
+      "tcp_flag_counts": null
+    },
+    {
+      "protocol": 17,
+      "a": {
+        "ip": "192.0.2.1",
+        "port": 53001
+      },
+      "b": {
+        "ip": "198.51.100.53",
+        "port": 53
+      },
+      "a_to_b": {
+        "packets": 1,
+        "captured_bytes": 72,
+        "original_bytes": 72,
+        "packet_indices": [
+          6
+        ]
+      },
+      "b_to_a": {
+        "packets": 0,
+        "captured_bytes": 0,
+        "original_bytes": 0,
+        "packet_indices": []
+      },
+      "tcp_flag_counts": null
+    },
+    {
+      "protocol": 17,
+      "a": {
+        "ip": "192.0.2.1",
+        "port": 53002
+      },
+      "b": {
+        "ip": "198.51.100.53",
+        "port": 53
+      },
+      "a_to_b": {
+        "packets": 2,
+        "captured_bytes": 144,
+        "original_bytes": 144,
+        "packet_indices": [
+          7,
+          8
+        ]
+      },
+      "b_to_a": {
+        "packets": 1,
+        "captured_bytes": 88,
+        "original_bytes": 88,
+        "packet_indices": [
+          9
+        ]
+      },
+      "tcp_flag_counts": null
+    }
+  ],
+  "dns": {
+    "status": "not_implemented",
+    "time_analysis": "not_implemented",
+    "events": null
+  },
+  "diagnostics": [],
+  "unattributed_indices": []
+}

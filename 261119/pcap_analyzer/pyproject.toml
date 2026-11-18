@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools==80.9.0", "wheel==0.45.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pcap-analyzer"
+version = "0.3.0"
+description = "Offline classic pcap header analysis and bidirectional flow reporting"
+requires-python = ">=3.12,<3.13"
+dependencies = ["scapy==2.6.1"]
+
+[project.optional-dependencies]
+dev = ["pytest==8.4.2", "jsonschema==4.25.1"]
+
+[project.scripts]
+pcap-analyzer = "pcap_analyzer.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

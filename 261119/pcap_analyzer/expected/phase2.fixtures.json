@@ -1,0 +1,16 @@
+{
+  "baseline.pcap": {"exit": 0, "flows": 4, "unattributed": [0, 0, 0], "queries": 4, "responses": 2},
+  "header_only.pcap": {"exit": 0, "flows": 0, "unattributed": [0, 0, 0], "queries": 0, "responses": 0},
+  "empty.pcap": {"exit": 2, "error": "E_FORMAT"},
+  "capture_truncated.pcap": {"exit": 0, "flows": 0, "unattributed": [1, 40, 54], "queries": 0, "responses": 0},
+  "record_cutoff.pcap": {"exit": 2, "error": "E_RECORD_DATA", "flows": 0, "unattributed": [0, 0, 0], "queries": 0, "responses": 0},
+  "header_cutoff.pcap": {"exit": 2, "error": "E_RECORD_HEADER", "flows": 0, "unattributed": [0, 0, 0], "queries": 0, "responses": 0},
+  "malformed_length.pcap": {"exit": 2, "error": "E_RECORD_LENGTH", "flows": 0, "unattributed": [0, 0, 0], "queries": 0, "responses": 0},
+  "unsupported_arp.pcap": {"exit": 0, "flows": 0, "unattributed": [1, 42, 42], "queries": 0, "responses": 0},
+  "fragment.pcap": {"exit": 0, "flows": 0, "unattributed": [1, 50, 50], "queries": 0, "responses": 0},
+  "nano.pcap": {"exit": 0, "flows": 1, "unattributed": [0, 0, 0], "queries": 0, "responses": 0},
+  "big_endian.pcap": {"exit": 0, "flows": 1, "unattributed": [0, 0, 0], "queries": 0, "responses": 0},
+  "backward.pcap": {"exit": 0, "flows": 1, "unattributed": [0, 0, 0], "queries": 1, "responses": 1, "disabled": true},
+  "unsupported_linktype.pcap": {"exit": 2, "error": "E_LINKTYPE"},
+  "unsupported_pcapng.pcapng": {"exit": 2, "error": "E_FORMAT_UNSUPPORTED"}
+}

@@ -1,0 +1,41 @@
+{
+  "baseline.pcap": {
+    "analyzer": {
+      "packet_count": 10, "captured_bytes": 680, "original_bytes": 680,
+      "classification_counts": {"parsed": 10, "unsupported": 0, "truncated": 0, "malformed": 0},
+      "query_count": 4, "response_count": 2, "time_analysis": "enabled",
+      "events": [["matched", [4], [5], 25000000, 0, false], ["no_response_observed", [6], [], null, null, null], ["ambiguous", [7, 8], [9], null, 0, false]]
+    },
+    "tshark_response_links": [[5, 4, 25000000], [9, 7, 20000000]],
+    "explained_differences": ["TShark links response 9 to query 7 and reports 20ms. The analyzer retains queries 7 and 8 as ambiguous and publishes no latency.", "Query 6 has no response; only the analyzer's 5-second observation window gives no_response_observed."]
+  },
+  "backward.pcap": {
+    "analyzer": {
+      "packet_count": 2, "captured_bytes": 160, "original_bytes": 160,
+      "classification_counts": {"parsed": 2, "unsupported": 0, "truncated": 0, "malformed": 0},
+      "query_count": 1, "response_count": 1, "time_analysis": "disabled_timestamp_regression", "events": []
+    },
+    "tshark_response_links": [[2, 1, -100000000]],
+    "explained_differences": ["TShark links 1 to 2 with -100ms. The analyzer discards all timing events on timestamp regression and retains only query/response counts."]
+  },
+  "dns_metadata.pcap": {
+    "analyzer": {
+      "packet_count": 12, "captured_bytes": 813, "original_bytes": 814,
+      "classification_counts": {"parsed": 9, "unsupported": 1, "truncated": 1, "malformed": 1},
+      "query_count": 4, "response_count": 5, "time_analysis": "enabled",
+      "events": [["matched", [1], [2], 25000000, 3, false], ["additional_response", [], [3], null, 3, false], ["matched", [4], [5], 123, 0, true], ["matched", [6], [7], 5000000000, 0, false], ["unmatched_response", [], [8], null, 0, false], ["window_incomplete", [9], [], null, null, null]]
+    },
+    "tshark_response_links": [[2, 1, 25000000], [3, null, null], [5, 4, 123], [7, 6, 5000000000], [8, null, null]],
+    "explained_differences": ["The analyzer records response 3 as additional_response in query 1's window; TShark publishes no response_to or time for this extra response.", "Only the analyzer labels response 8 unmatched and query 9 window_incomplete. Fragment 10, captured-short DNS 11 and incomplete DNS header 12 remain excluded even if TShark extracts partial DNS fields."]
+  },
+  "dns_late_reuse.pcap": {
+    "analyzer": {
+      "packet_count": 8, "captured_bytes": 532, "original_bytes": 532,
+      "classification_counts": {"parsed": 8, "unsupported": 0, "truncated": 0, "malformed": 0},
+      "query_count": 4, "response_count": 3, "time_analysis": "enabled",
+      "events": [["no_response_observed", [1], [], null, null, null], ["unmatched_response", [], [2], null, 0, false], ["matched", [3], [4], 1, 0, false], ["ambiguous", [5, 7], [6], null, 0, false]]
+    },
+    "tshark_response_links": [[2, 1, 5000000001], [4, 3, 1], [6, 5, 1000000000]],
+    "explained_differences": ["TShark links response 2 at 5s+1ns to query 1. The analyzer's closed 5s window has expired: no_response_observed plus unmatched_response; query 3 starts a new window and matches response 4 in 1ns.", "TShark links 5 to 6 with 1s; later query 7 reuses the key within the analyzer's window, so the analyzer retracts latency and marks the whole group ambiguous."]
+  }
+}

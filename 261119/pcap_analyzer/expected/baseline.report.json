@@ -1,0 +1,258 @@
+{
+  "schema_version": "0.1.0",
+  "input": {
+    "sha256": "15d498f6b295f4325b1add47e408ce26564aa14a506c5f10cde30143f65912b6",
+    "size_bytes": 864,
+    "timestamp_precision": "us",
+    "linktype": 1
+  },
+  "tool": {
+    "name": "pcap-analyzer",
+    "version": "0.0.0"
+  },
+  "config": {
+    "version": "0.1",
+    "dns_window_ns": 5000000000,
+    "max_input_bytes": 104857600,
+    "max_records": 1000000,
+    "max_flows": 100000,
+    "max_dns_keys": 100000
+  },
+  "complete": true,
+  "summary": {
+    "packet_count": 10,
+    "captured_bytes": 680,
+    "original_bytes": 680,
+    "unattributed_captured_bytes": 0,
+    "classification_counts": {
+      "parsed": 10,
+      "unsupported": 0,
+      "truncated": 0,
+      "malformed": 0
+    },
+    "parsed_ratio": 1,
+    "start_ns": 1700000000000000000,
+    "end_ns": 1700000008000000000,
+    "duration_ns": 8000000000,
+    "ipv4_fragment_count": 0
+  },
+  "flows": [
+    {
+      "protocol": 6,
+      "a": {
+        "ip": "192.0.2.1",
+        "port": 40000
+      },
+      "b": {
+        "ip": "198.51.100.53",
+        "port": 443
+      },
+      "a_to_b": {
+        "packets": 2,
+        "captured_bytes": 108,
+        "original_bytes": 108,
+        "packet_indices": [
+          1,
+          3
+        ]
+      },
+      "b_to_a": {
+        "packets": 2,
+        "captured_bytes": 108,
+        "original_bytes": 108,
+        "packet_indices": [
+          2,
+          10
+        ]
+      },
+      "tcp_flag_counts": {
+        "F": 0,
+        "S": 2,
+        "R": 0,
+        "P": 0,
+        "A": 3,
+        "U": 0,
+        "E": 0,
+        "C": 0
+      }
+    },
+    {
+      "protocol": 17,
+      "a": {
+        "ip": "192.0.2.1",
+        "port": 53000
+      },
+      "b": {
+        "ip": "198.51.100.53",
+        "port": 53
+      },
+      "a_to_b": {
+        "packets": 1,
+        "captured_bytes": 72,
+        "original_bytes": 72,
+        "packet_indices": [
+          4
+        ]
+      },
+      "b_to_a": {
+        "packets": 1,
+        "captured_bytes": 88,
+        "original_bytes": 88,
+        "packet_indices": [
+          5
+        ]
+      },
+      "tcp_flag_counts": null
+    },
+    {
+      "protocol": 17,
+      "a": {
+        "ip": "192.0.2.1",
+        "port": 53001
+      },
+      "b": {
+        "ip": "198.51.100.53",
+        "port": 53
+      },
+      "a_to_b": {
+        "packets": 1,
+        "captured_bytes": 72,
+        "original_bytes": 72,
+        "packet_indices": [
+          6
+        ]
+      },
+      "b_to_a": {
+        "packets": 0,
+        "captured_bytes": 0,
+        "original_bytes": 0,
+        "packet_indices": []
+      },
+      "tcp_flag_counts": null
+    },
+    {
+      "protocol": 17,
+      "a": {
+        "ip": "192.0.2.1",
+        "port": 53002
+      },
+      "b": {
+        "ip": "198.51.100.53",
+        "port": 53
+      },
+      "a_to_b": {
+        "packets": 2,
+        "captured_bytes": 144,
+        "original_bytes": 144,
+        "packet_indices": [
+          7,
+          8
+        ]
+      },
+      "b_to_a": {
+        "packets": 1,
+        "captured_bytes": 88,
+        "original_bytes": 88,
+        "packet_indices": [
+          9
+        ]
+      },
+      "tcp_flag_counts": null
+    }
+  ],
+  "dns": {
+    "time_analysis": "enabled",
+    "events": [
+      {
+        "status": "matched",
+        "query_indices": [
+          4
+        ],
+        "response_indices": [
+          5
+        ],
+        "response_time_ms": 25,
+        "rcode": 0,
+        "tc": false,
+        "key": {
+          "client": {
+            "ip": "192.0.2.1",
+            "port": 53000
+          },
+          "server": {
+            "ip": "198.51.100.53",
+            "port": 53
+          },
+          "id": 1,
+          "labels_hex": [
+            "6578616d706c65",
+            "74657374",
+            ""
+          ],
+          "qtype": 1,
+          "qclass": 1
+        }
+      },
+      {
+        "status": "no_response_observed",
+        "query_indices": [
+          6
+        ],
+        "response_indices": [],
+        "response_time_ms": null,
+        "rcode": null,
+        "tc": null,
+        "key": {
+          "client": {
+            "ip": "192.0.2.1",
+            "port": 53001
+          },
+          "server": {
+            "ip": "198.51.100.53",
+            "port": 53
+          },
+          "id": 2,
+          "labels_hex": [
+            "6578616d706c65",
+            "74657374",
+            ""
+          ],
+          "qtype": 1,
+          "qclass": 1
+        }
+      },
+      {
+        "status": "ambiguous",
+        "query_indices": [
+          7,
+          8
+        ],
+        "response_indices": [
+          9
+        ],
+        "response_time_ms": null,
+        "rcode": 0,
+        "tc": false,
+        "key": {
+          "client": {
+            "ip": "192.0.2.1",
+            "port": 53002
+          },
+          "server": {
+            "ip": "198.51.100.53",
+            "port": 53
+          },
+          "id": 3,
+          "labels_hex": [
+            "6578616d706c65",
+            "74657374",
+            ""
+          ],
+          "qtype": 1,
+          "qclass": 1
+        }
+      }
+    ]
+  },
+  "diagnostics": []
+}

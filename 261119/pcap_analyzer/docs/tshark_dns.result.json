@@ -1,0 +1,984 @@
+{
+  "capture_filter": null,
+  "display_filter": null,
+  "fields": [
+    "frame.number",
+    "frame.time_epoch",
+    "ip.src",
+    "ip.dst",
+    "udp.srcport",
+    "udp.dstport",
+    "dns.id",
+    "dns.flags.response",
+    "dns.qry.name",
+    "dns.qry.type",
+    "dns.qry.class",
+    "dns.flags.rcode",
+    "dns.flags.truncated",
+    "dns.response_to",
+    "dns.response_in",
+    "dns.time"
+  ],
+  "matched": true,
+  "name_resolution": false,
+  "passes": 2,
+  "preferences": [
+    "ip.defragment:FALSE",
+    "tcp.desegment_tcp_streams:FALSE",
+    "tcp.analyze_sequence_numbers:FALSE"
+  ],
+  "results": [
+    {
+      "analyzer": {
+        "captured_bytes": 680,
+        "classification_counts": {
+          "malformed": 0,
+          "parsed": 10,
+          "truncated": 0,
+          "unsupported": 0
+        },
+        "events": [
+          [
+            "matched",
+            [
+              4
+            ],
+            [
+              5
+            ],
+            25000000,
+            0,
+            false
+          ],
+          [
+            "no_response_observed",
+            [
+              6
+            ],
+            [],
+            null,
+            null,
+            null
+          ],
+          [
+            "ambiguous",
+            [
+              7,
+              8
+            ],
+            [
+              9
+            ],
+            null,
+            0,
+            false
+          ]
+        ],
+        "original_bytes": 680,
+        "packet_count": 10,
+        "query_count": 4,
+        "response_count": 2,
+        "time_analysis": "enabled"
+      },
+      "differences": [],
+      "exclusions": [],
+      "explained_differences": [
+        "TShark links response 9 to query 7 and reports 20ms. The analyzer retains queries 7 and 8 as ambiguous and publishes no latency.",
+        "Query 6 has no response; only the analyzer's 5-second observation window gives no_response_observed."
+      ],
+      "fixture": "baseline.pcap",
+      "matched_latencies": [
+        {
+          "analyzer_ns": 25000000,
+          "query": 4,
+          "response": 5,
+          "tshark_ns": 25000000
+        }
+      ],
+      "rows": [
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": null,
+          "dns.flags.truncated": null,
+          "dns.id": null,
+          "dns.qry.class": null,
+          "dns.qry.name": "",
+          "dns.qry.type": null,
+          "dns.response_in": null,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 1,
+          "frame.time_epoch": 1700000000000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": null,
+          "udp.srcport": null
+        },
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": null,
+          "dns.flags.truncated": null,
+          "dns.id": null,
+          "dns.qry.class": null,
+          "dns.qry.name": "",
+          "dns.qry.type": null,
+          "dns.response_in": null,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 2,
+          "frame.time_epoch": 1700000000010000000,
+          "ip.dst": "192.0.2.1",
+          "ip.src": "198.51.100.53",
+          "udp.dstport": null,
+          "udp.srcport": null
+        },
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": null,
+          "dns.flags.truncated": null,
+          "dns.id": null,
+          "dns.qry.class": null,
+          "dns.qry.name": "",
+          "dns.qry.type": null,
+          "dns.response_in": null,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 3,
+          "frame.time_epoch": 1700000000020000000,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": null,
+          "udp.srcport": null
+        },
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": false,
+          "dns.flags.truncated": false,
+          "dns.id": 1,
+          "dns.qry.class": 1,
+          "dns.qry.name": "example.test",
+          "dns.qry.type": 1,
+          "dns.response_in": 5,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 4,
+          "frame.time_epoch": 1700000001000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": 53,
+          "udp.srcport": 53000
+        },
+        {
+          "dns.flags.rcode": 0,
+          "dns.flags.response": true,
+          "dns.flags.truncated": false,
+          "dns.id": 1,
+          "dns.qry.class": 1,
+          "dns.qry.name": "example.test",
+          "dns.qry.type": 1,
+          "dns.response_in": null,
+          "dns.response_to": 4,
+          "dns.time": 25000000,
+          "frame.number": 5,
+          "frame.time_epoch": 1700000001025000000,
+          "ip.dst": "192.0.2.1",
+          "ip.src": "198.51.100.53",
+          "udp.dstport": 53000,
+          "udp.srcport": 53
+        },
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": false,
+          "dns.flags.truncated": false,
+          "dns.id": 2,
+          "dns.qry.class": 1,
+          "dns.qry.name": "example.test",
+          "dns.qry.type": 1,
+          "dns.response_in": null,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 6,
+          "frame.time_epoch": 1700000002000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": 53,
+          "udp.srcport": 53001
+        },
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": false,
+          "dns.flags.truncated": false,
+          "dns.id": 3,
+          "dns.qry.class": 1,
+          "dns.qry.name": "example.test",
+          "dns.qry.type": 1,
+          "dns.response_in": 9,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 7,
+          "frame.time_epoch": 1700000003000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": 53,
+          "udp.srcport": 53002
+        },
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": false,
+          "dns.flags.truncated": false,
+          "dns.id": 3,
+          "dns.qry.class": 1,
+          "dns.qry.name": "example.test",
+          "dns.qry.type": 1,
+          "dns.response_in": null,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 8,
+          "frame.time_epoch": 1700000003010000000,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": 53,
+          "udp.srcport": 53002
+        },
+        {
+          "dns.flags.rcode": 0,
+          "dns.flags.response": true,
+          "dns.flags.truncated": false,
+          "dns.id": 3,
+          "dns.qry.class": 1,
+          "dns.qry.name": "example.test",
+          "dns.qry.type": 1,
+          "dns.response_in": null,
+          "dns.response_to": 7,
+          "dns.time": 20000000,
+          "frame.number": 9,
+          "frame.time_epoch": 1700000003020000000,
+          "ip.dst": "192.0.2.1",
+          "ip.src": "198.51.100.53",
+          "udp.dstport": 53002,
+          "udp.srcport": 53
+        },
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": null,
+          "dns.flags.truncated": null,
+          "dns.id": null,
+          "dns.qry.class": null,
+          "dns.qry.name": "",
+          "dns.qry.type": null,
+          "dns.response_in": null,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 10,
+          "frame.time_epoch": 1700000008000000000,
+          "ip.dst": "192.0.2.1",
+          "ip.src": "198.51.100.53",
+          "udp.dstport": null,
+          "udp.srcport": null
+        }
+      ],
+      "sha256": "15d498f6b295f4325b1add47e408ce26564aa14a506c5f10cde30143f65912b6",
+      "tshark_response_links": [
+        [
+          5,
+          4,
+          25000000
+        ],
+        [
+          9,
+          7,
+          20000000
+        ]
+      ]
+    },
+    {
+      "analyzer": {
+        "captured_bytes": 160,
+        "classification_counts": {
+          "malformed": 0,
+          "parsed": 2,
+          "truncated": 0,
+          "unsupported": 0
+        },
+        "events": [],
+        "original_bytes": 160,
+        "packet_count": 2,
+        "query_count": 1,
+        "response_count": 1,
+        "time_analysis": "disabled_timestamp_regression"
+      },
+      "differences": [],
+      "exclusions": [],
+      "explained_differences": [
+        "TShark links 1 to 2 with -100ms. The analyzer discards all timing events on timestamp regression and retains only query/response counts."
+      ],
+      "fixture": "backward.pcap",
+      "matched_latencies": [],
+      "rows": [
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": false,
+          "dns.flags.truncated": false,
+          "dns.id": 1,
+          "dns.qry.class": 1,
+          "dns.qry.name": "example.test",
+          "dns.qry.type": 1,
+          "dns.response_in": 2,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 1,
+          "frame.time_epoch": 1700000001000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": 53,
+          "udp.srcport": 53000
+        },
+        {
+          "dns.flags.rcode": 0,
+          "dns.flags.response": true,
+          "dns.flags.truncated": false,
+          "dns.id": 1,
+          "dns.qry.class": 1,
+          "dns.qry.name": "example.test",
+          "dns.qry.type": 1,
+          "dns.response_in": null,
+          "dns.response_to": 1,
+          "dns.time": -100000000,
+          "frame.number": 2,
+          "frame.time_epoch": 1700000000900000000,
+          "ip.dst": "192.0.2.1",
+          "ip.src": "198.51.100.53",
+          "udp.dstport": 53000,
+          "udp.srcport": 53
+        }
+      ],
+      "sha256": "0a1fa91aa194cb15b6262cf0ef17073c52a6684e5263d994e334909b01e6dd28",
+      "tshark_response_links": [
+        [
+          2,
+          1,
+          -100000000
+        ]
+      ]
+    },
+    {
+      "analyzer": {
+        "captured_bytes": 813,
+        "classification_counts": {
+          "malformed": 1,
+          "parsed": 9,
+          "truncated": 1,
+          "unsupported": 1
+        },
+        "events": [
+          [
+            "matched",
+            [
+              1
+            ],
+            [
+              2
+            ],
+            25000000,
+            3,
+            false
+          ],
+          [
+            "additional_response",
+            [],
+            [
+              3
+            ],
+            null,
+            3,
+            false
+          ],
+          [
+            "matched",
+            [
+              4
+            ],
+            [
+              5
+            ],
+            123,
+            0,
+            true
+          ],
+          [
+            "matched",
+            [
+              6
+            ],
+            [
+              7
+            ],
+            5000000000,
+            0,
+            false
+          ],
+          [
+            "unmatched_response",
+            [],
+            [
+              8
+            ],
+            null,
+            0,
+            false
+          ],
+          [
+            "window_incomplete",
+            [
+              9
+            ],
+            [],
+            null,
+            null,
+            null
+          ]
+        ],
+        "original_bytes": 814,
+        "packet_count": 12,
+        "query_count": 4,
+        "response_count": 5,
+        "time_analysis": "enabled"
+      },
+      "differences": [],
+      "exclusions": [
+        {
+          "classification": "unsupported",
+          "packet_index": 10,
+          "reason": "ipv4_fragment",
+          "tshark_dns_id": 15
+        },
+        {
+          "classification": "truncated",
+          "packet_index": 11,
+          "reason": "capture_shorter_than_original",
+          "tshark_dns_id": 16
+        },
+        {
+          "classification": "malformed",
+          "packet_index": 12,
+          "reason": "dns_header_incomplete",
+          "tshark_dns_id": null
+        }
+      ],
+      "explained_differences": [
+        "The analyzer records response 3 as additional_response in query 1's window; TShark publishes no response_to or time for this extra response.",
+        "Only the analyzer labels response 8 unmatched and query 9 window_incomplete. Fragment 10, captured-short DNS 11 and incomplete DNS header 12 remain excluded even if TShark extracts partial DNS fields."
+      ],
+      "fixture": "dns_metadata.pcap",
+      "matched_latencies": [
+        {
+          "analyzer_ns": 25000000,
+          "query": 1,
+          "response": 2,
+          "tshark_ns": 25000000
+        },
+        {
+          "analyzer_ns": 123,
+          "query": 4,
+          "response": 5,
+          "tshark_ns": 123
+        },
+        {
+          "analyzer_ns": 5000000000,
+          "query": 6,
+          "response": 7,
+          "tshark_ns": 5000000000
+        }
+      ],
+      "rows": [
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": false,
+          "dns.flags.truncated": false,
+          "dns.id": 10,
+          "dns.qry.class": 1,
+          "dns.qry.name": "Alpha.test",
+          "dns.qry.type": 1,
+          "dns.response_in": 2,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 1,
+          "frame.time_epoch": 1700000000000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": 53,
+          "udp.srcport": 53010
+        },
+        {
+          "dns.flags.rcode": 3,
+          "dns.flags.response": true,
+          "dns.flags.truncated": false,
+          "dns.id": 10,
+          "dns.qry.class": 1,
+          "dns.qry.name": "ALPHA.test",
+          "dns.qry.type": 1,
+          "dns.response_in": null,
+          "dns.response_to": 1,
+          "dns.time": 25000000,
+          "frame.number": 2,
+          "frame.time_epoch": 1700000000025000000,
+          "ip.dst": "192.0.2.1",
+          "ip.src": "198.51.100.53",
+          "udp.dstport": 53010,
+          "udp.srcport": 53
+        },
+        {
+          "dns.flags.rcode": 3,
+          "dns.flags.response": true,
+          "dns.flags.truncated": false,
+          "dns.id": 10,
+          "dns.qry.class": 1,
+          "dns.qry.name": "alpha.test",
+          "dns.qry.type": 1,
+          "dns.response_in": null,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 3,
+          "frame.time_epoch": 1700000000026000000,
+          "ip.dst": "192.0.2.1",
+          "ip.src": "198.51.100.53",
+          "udp.dstport": 53010,
+          "udp.srcport": 53
+        },
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": false,
+          "dns.flags.truncated": false,
+          "dns.id": 11,
+          "dns.qry.class": 1,
+          "dns.qry.name": "alpha.test",
+          "dns.qry.type": 28,
+          "dns.response_in": 5,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 4,
+          "frame.time_epoch": 1700000001000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": 53,
+          "udp.srcport": 53011
+        },
+        {
+          "dns.flags.rcode": 0,
+          "dns.flags.response": true,
+          "dns.flags.truncated": true,
+          "dns.id": 11,
+          "dns.qry.class": 1,
+          "dns.qry.name": "alpha.test",
+          "dns.qry.type": 28,
+          "dns.response_in": null,
+          "dns.response_to": 4,
+          "dns.time": 123,
+          "frame.number": 5,
+          "frame.time_epoch": 1700000001000000123,
+          "ip.dst": "192.0.2.1",
+          "ip.src": "198.51.100.53",
+          "udp.dstport": 53011,
+          "udp.srcport": 53
+        },
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": false,
+          "dns.flags.truncated": false,
+          "dns.id": 12,
+          "dns.qry.class": 3,
+          "dns.qry.name": "alpha.test",
+          "dns.qry.type": 1,
+          "dns.response_in": 7,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 6,
+          "frame.time_epoch": 1700000002000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": 53,
+          "udp.srcport": 53012
+        },
+        {
+          "dns.flags.rcode": 0,
+          "dns.flags.response": true,
+          "dns.flags.truncated": false,
+          "dns.id": 12,
+          "dns.qry.class": 3,
+          "dns.qry.name": "alpha.test",
+          "dns.qry.type": 1,
+          "dns.response_in": null,
+          "dns.response_to": 6,
+          "dns.time": 5000000000,
+          "frame.number": 7,
+          "frame.time_epoch": 1700000007000000000,
+          "ip.dst": "192.0.2.1",
+          "ip.src": "198.51.100.53",
+          "udp.dstport": 53012,
+          "udp.srcport": 53
+        },
+        {
+          "dns.flags.rcode": 0,
+          "dns.flags.response": true,
+          "dns.flags.truncated": false,
+          "dns.id": 13,
+          "dns.qry.class": 1,
+          "dns.qry.name": "alpha.test",
+          "dns.qry.type": 1,
+          "dns.response_in": null,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 8,
+          "frame.time_epoch": 1700000007000000001,
+          "ip.dst": "192.0.2.1",
+          "ip.src": "198.51.100.53",
+          "udp.dstport": 53013,
+          "udp.srcport": 53
+        },
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": false,
+          "dns.flags.truncated": false,
+          "dns.id": 14,
+          "dns.qry.class": 1,
+          "dns.qry.name": "alpha.test",
+          "dns.qry.type": 1,
+          "dns.response_in": null,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 9,
+          "frame.time_epoch": 1700000008000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": 53,
+          "udp.srcport": 53014
+        },
+        {
+          "dns.flags.rcode": 0,
+          "dns.flags.response": true,
+          "dns.flags.truncated": false,
+          "dns.id": 15,
+          "dns.qry.class": 1,
+          "dns.qry.name": "alpha.test",
+          "dns.qry.type": 1,
+          "dns.response_in": null,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 10,
+          "frame.time_epoch": 1700000009000000000,
+          "ip.dst": "192.0.2.1",
+          "ip.src": "198.51.100.53",
+          "udp.dstport": 53015,
+          "udp.srcport": 53
+        },
+        {
+          "dns.flags.rcode": 0,
+          "dns.flags.response": true,
+          "dns.flags.truncated": false,
+          "dns.id": 16,
+          "dns.qry.class": null,
+          "dns.qry.name": "",
+          "dns.qry.type": null,
+          "dns.response_in": null,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 11,
+          "frame.time_epoch": 1700000009000000001,
+          "ip.dst": "192.0.2.1",
+          "ip.src": "198.51.100.53",
+          "udp.dstport": 53016,
+          "udp.srcport": 53
+        },
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": null,
+          "dns.flags.truncated": null,
+          "dns.id": null,
+          "dns.qry.class": null,
+          "dns.qry.name": "",
+          "dns.qry.type": null,
+          "dns.response_in": null,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 12,
+          "frame.time_epoch": 1700000009000000002,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": 53,
+          "udp.srcport": 53017
+        }
+      ],
+      "sha256": "2ab48732ec9d2a7dc04ef7925176e2b28b3770ebe6b983d0987542f072205e65",
+      "tshark_response_links": [
+        [
+          2,
+          1,
+          25000000
+        ],
+        [
+          3,
+          null,
+          null
+        ],
+        [
+          5,
+          4,
+          123
+        ],
+        [
+          7,
+          6,
+          5000000000
+        ],
+        [
+          8,
+          null,
+          null
+        ]
+      ]
+    },
+    {
+      "analyzer": {
+        "captured_bytes": 532,
+        "classification_counts": {
+          "malformed": 0,
+          "parsed": 8,
+          "truncated": 0,
+          "unsupported": 0
+        },
+        "events": [
+          [
+            "no_response_observed",
+            [
+              1
+            ],
+            [],
+            null,
+            null,
+            null
+          ],
+          [
+            "unmatched_response",
+            [],
+            [
+              2
+            ],
+            null,
+            0,
+            false
+          ],
+          [
+            "matched",
+            [
+              3
+            ],
+            [
+              4
+            ],
+            1,
+            0,
+            false
+          ],
+          [
+            "ambiguous",
+            [
+              5,
+              7
+            ],
+            [
+              6
+            ],
+            null,
+            0,
+            false
+          ]
+        ],
+        "original_bytes": 532,
+        "packet_count": 8,
+        "query_count": 4,
+        "response_count": 3,
+        "time_analysis": "enabled"
+      },
+      "differences": [],
+      "exclusions": [],
+      "explained_differences": [
+        "TShark links response 2 at 5s+1ns to query 1. The analyzer's closed 5s window has expired: no_response_observed plus unmatched_response; query 3 starts a new window and matches response 4 in 1ns.",
+        "TShark links 5 to 6 with 1s; later query 7 reuses the key within the analyzer's window, so the analyzer retracts latency and marks the whole group ambiguous."
+      ],
+      "fixture": "dns_late_reuse.pcap",
+      "matched_latencies": [
+        {
+          "analyzer_ns": 1,
+          "query": 3,
+          "response": 4,
+          "tshark_ns": 1
+        }
+      ],
+      "rows": [
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": false,
+          "dns.flags.truncated": false,
+          "dns.id": 20,
+          "dns.qry.class": 1,
+          "dns.qry.name": "alpha.test",
+          "dns.qry.type": 1,
+          "dns.response_in": 2,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 1,
+          "frame.time_epoch": 1700000000000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": 53,
+          "udp.srcport": 53020
+        },
+        {
+          "dns.flags.rcode": 0,
+          "dns.flags.response": true,
+          "dns.flags.truncated": false,
+          "dns.id": 20,
+          "dns.qry.class": 1,
+          "dns.qry.name": "alpha.test",
+          "dns.qry.type": 1,
+          "dns.response_in": null,
+          "dns.response_to": 1,
+          "dns.time": 5000000001,
+          "frame.number": 2,
+          "frame.time_epoch": 1700000005000000001,
+          "ip.dst": "192.0.2.1",
+          "ip.src": "198.51.100.53",
+          "udp.dstport": 53020,
+          "udp.srcport": 53
+        },
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": false,
+          "dns.flags.truncated": false,
+          "dns.id": 20,
+          "dns.qry.class": 1,
+          "dns.qry.name": "alpha.test",
+          "dns.qry.type": 1,
+          "dns.response_in": 4,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 3,
+          "frame.time_epoch": 1700000006000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": 53,
+          "udp.srcport": 53020
+        },
+        {
+          "dns.flags.rcode": 0,
+          "dns.flags.response": true,
+          "dns.flags.truncated": false,
+          "dns.id": 20,
+          "dns.qry.class": 1,
+          "dns.qry.name": "alpha.test",
+          "dns.qry.type": 1,
+          "dns.response_in": null,
+          "dns.response_to": 3,
+          "dns.time": 1,
+          "frame.number": 4,
+          "frame.time_epoch": 1700000006000000001,
+          "ip.dst": "192.0.2.1",
+          "ip.src": "198.51.100.53",
+          "udp.dstport": 53020,
+          "udp.srcport": 53
+        },
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": false,
+          "dns.flags.truncated": false,
+          "dns.id": 21,
+          "dns.qry.class": 1,
+          "dns.qry.name": "alpha.test",
+          "dns.qry.type": 1,
+          "dns.response_in": 6,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 5,
+          "frame.time_epoch": 1700000007000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": 53,
+          "udp.srcport": 53021
+        },
+        {
+          "dns.flags.rcode": 0,
+          "dns.flags.response": true,
+          "dns.flags.truncated": false,
+          "dns.id": 21,
+          "dns.qry.class": 1,
+          "dns.qry.name": "alpha.test",
+          "dns.qry.type": 1,
+          "dns.response_in": null,
+          "dns.response_to": 5,
+          "dns.time": 1000000000,
+          "frame.number": 6,
+          "frame.time_epoch": 1700000008000000000,
+          "ip.dst": "192.0.2.1",
+          "ip.src": "198.51.100.53",
+          "udp.dstport": 53021,
+          "udp.srcport": 53
+        },
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": false,
+          "dns.flags.truncated": false,
+          "dns.id": 21,
+          "dns.qry.class": 1,
+          "dns.qry.name": "alpha.test",
+          "dns.qry.type": 1,
+          "dns.response_in": null,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 7,
+          "frame.time_epoch": 1700000008500000000,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": 53,
+          "udp.srcport": 53021
+        },
+        {
+          "dns.flags.rcode": null,
+          "dns.flags.response": null,
+          "dns.flags.truncated": null,
+          "dns.id": null,
+          "dns.qry.class": null,
+          "dns.qry.name": "",
+          "dns.qry.type": null,
+          "dns.response_in": null,
+          "dns.response_to": null,
+          "dns.time": null,
+          "frame.number": 8,
+          "frame.time_epoch": 1700000013000000000,
+          "ip.dst": "198.51.100.53",
+          "ip.src": "192.0.2.1",
+          "udp.dstport": 9,
+          "udp.srcport": 53010
+        }
+      ],
+      "sha256": "1cf6abd6c051397b0a9a3026a809f52234792679577ceb17c6a776ebf3dc1fca",
+      "tshark_response_links": [
+        [
+          2,
+          1,
+          5000000001
+        ],
+        [
+          4,
+          3,
+          1
+        ],
+        [
+          6,
+          5,
+          1000000000
+        ]
+      ]
+    }
+  ],
+  "tshark_version": "TShark (Wireshark) 4.2.2 (Git v4.2.2 packaged as 4.2.2-1.1build3).\n\nCopyright 1998-2024 Gerald Combs <gerald@wireshark.org> and contributors.\nLicensed under the terms of the GNU General Public License (version 2 or later).\nThis is free software; see the file named COPYING in the distribution. There is\nNO WARRANTY; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\nCompiled (64-bit) using GCC 13.2.0, with GLib 2.80.0, with libpcap, with POSIX\ncapabilities (Linux), with libnl 3, with zlib 1.3, with PCRE2, with Lua 5.2.4,\nwith GnuTLS 3.8.3 and PKCS #11 support, with Gcrypt 1.10.3, with Kerberos (MIT),\nwith MaxMind, with nghttp2 1.59.0, with nghttp3 0.8.0, with brotli, with LZ4,\nwith Zstandard, with Snappy, with libxml2 2.9.14, with libsmi 0.4.8, with binary\nplugins.\n\nRunning on Linux 6.6.87.2-microsoft-standard-WSL2, with AMD Ryzen 7 7735HS with\nRadeon Graphics (with SSE4.2), with 28066 MB of physical memory, with GLib\n2.80.0, with libpcap 1.10.4 (with TPACKET_V3), with zlib 1.3, with PCRE2 10.42\n2022-12-11, with c-ares 1.27.0, with GnuTLS 3.8.3, with Gcrypt 1.10.3, with\nnghttp2 1.59.0, with nghttp3 0.8.0, with brotli 1.1.0, with LZ4 1.9.4, with\nZstandard 1.5.5, with libsmi 0.4.8, with LC_TYPE=C, binary plugins supported.\n"
+}

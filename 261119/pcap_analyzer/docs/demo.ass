@@ -1,0 +1,54 @@
+[Script Info]
+Title: PCAP Analyzer MVP - Offline demo
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+WrapStyle: 2
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Brand,Noto Sans CJK JP,23,&H00F9DB8C,&H00000000,&H00000000,&H00000000,-1,0,0,0,100,100,1,0,1,0,0,7,64,64,40,1
+Style: Title,Noto Sans CJK JP,48,&H00F7F9F9,&H00000000,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,0,0,7,64,64,96,1
+Style: Body,Noto Sans CJK JP,30,&H00DFD2C4,&H00000000,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,64,64,184,1
+Style: Code,DejaVu Sans Mono,24,&H00E8F2E9,&H00000000,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,84,84,288,1
+Style: Foot,Noto Sans CJK JP,22,&H00F9DB8C,&H00000000,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,64,64,622,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:03:00.00,Brand,,0,0,0,,PCAP ANALYZER  /  v0.3.0  /  保存済みの人工PCAPだけを使用
+Dialogue: 0,0:00:00.00,0:00:20.00,Title,,0,0,0,,01  通信量を集計する
+Dialogue: 0,0:00:00.00,0:00:20.00,Body,,0,0,0,,人工記録をローカルで読み、件数・捕捉長・元長を確認する。
+Dialogue: 0,0:00:00.00,0:00:20.00,Code,,0,0,0,,$ .venv/bin/pcap-analyzer fixtures/baseline.pcap\N\NInput processing             complete\NPackets                      10\NCaptured bytes               680\NOriginal bytes (recorded)    680\NFlows                        4
+Dialogue: 0,0:00:00.00,0:00:20.00,Foot,,0,0,0,,00:00–00:20  |  捕捉長と記録上の元長は、回線上の実転送量ではない。
+Dialogue: 0,0:00:20.00,0:00:40.00,Title,,0,0,0,,02  根拠のパケットへたどる
+Dialogue: 0,0:00:20.00,0:00:40.00,Body,,0,0,0,,UDPの往路に #4、復路に #5。DNSの照合も同じ番号を示す。
+Dialogue: 0,0:00:20.00,0:00:40.00,Code,,0,0,0,,UDP 192.0.2.1:53000 <-> 198.51.100.53:53\N  a_to_b: packets=1 captured=72 original=72 packet_indices=[4]\N  b_to_a: packets=1 captured=88 original=88 packet_indices=[5]\N\NDNS matched: example.test. id=1\N  queries=[4] responses=[5] response_time_ms=25.0
+Dialogue: 0,0:00:20.00,0:00:40.00,Foot,,0,0,0,,00:20–00:40  |  根拠番号は同一ファイル内の1始まり。25 msはこの記録での観測時間。
+Dialogue: 0,0:00:40.00,0:01:05.00,Title,,0,0,0,,03  曖昧さを結果に残す
+Dialogue: 0,0:00:40.00,0:01:05.00,Body,,0,0,0,,query #6 は窓内で応答が見えない。#7・#8 は同じ窓で重複。\N応答 #9 を片方へ割り当てず、時間も表示しない。
+Dialogue: 0,0:00:40.00,0:01:05.00,Code,,0,0,0,,DNS no_response_observed: example.test. id=2\N  queries=[6] responses=[] response_time_ms=None\N\NDNS ambiguous: example.test. id=3\N  queries=[7, 8] responses=[9] response_time_ms=None
+Dialogue: 0,0:00:40.00,0:01:05.00,Foot,,0,0,0,,00:40–01:05  |  5秒窓内の観測。DNS障害・損失・攻撃を断定しない。
+Dialogue: 0,0:01:05.00,0:01:25.00,Title,,0,0,0,,04  捕捉不足を見分ける
+Dialogue: 0,0:01:05.00,0:01:25.00,Body,,0,0,0,,レコードは完全でも、フレーム本文は途中までしか捕捉されていない。
+Dialogue: 0,0:01:05.00,0:01:25.00,Code,,0,0,0,,$ .venv/bin/pcap-analyzer fixtures/capture_truncated.pcap\N\NInput processing             complete\NCaptured bytes               40\NOriginal bytes (recorded)    54\Ntruncated                    1\NP_TRUNCATED packet #1: capture_shorter_than_original
+Dialogue: 0,0:01:05.00,0:01:25.00,Foot,,0,0,0,,01:05–01:25  |  終了0はファイル処理の完了。捕捉されなかった14 bytesは補完しない。
+Dialogue: 0,0:01:25.00,0:01:40.00,Title,,0,0,0,,05  破損と未対応を区別する
+Dialogue: 0,0:01:25.00,0:01:40.00,Body,,0,0,0,,途中レコードは集計外。pcapngは入力の時点で拒否する。
+Dialogue: 0,0:01:25.00,0:01:40.00,Code,,0,0,0,,record_cutoff.pcap          exit 2 / INCOMPLETE / 0 packets\NE_RECORD_DATA: record declares caplen=54; only 40 bytes available\N\Nunsupported_pcapng.pcapng   exit 2 / レポートなし\NE_FORMAT_UNSUPPORTED
+Dialogue: 0,0:01:25.00,0:01:40.00,Foot,,0,0,0,,01:25–01:40  |  途中結果と入力拒否は、どちらも正常完了と区別する。
+Dialogue: 0,0:01:40.00,0:02:05.00,Title,,0,0,0,,06  TSharkで共通項目を照合する
+Dialogue: 0,0:01:40.00,0:02:05.00,Body,,0,0,0,,保存済みのPhase 3実測記録。TShark 4.2.2、名前解決なし。\N同じbaselineをフレーム番号・長さ・IP/ポートで比較した。
+Dialogue: 0,0:01:40.00,0:02:05.00,Code,,0,0,0,,baseline.pcap\N  10 frames / 680 captured bytes / 680 original bytes\N\Nresponse frame 5    response_to 4    dns.time 0.025 s\NAnalyzer: #4 -> #5                  25,000,000 ns
+Dialogue: 0,0:01:40.00,0:02:05.00,Foot,,0,0,0,,01:40–02:05  |  TSharkの実行条件・抽出行・入力ハッシュは比較記録に保存。
+Dialogue: 0,0:02:05.00,0:02:30.00,Title,,0,0,0,,07  一致しない理由を説明する
+Dialogue: 0,0:02:05.00,0:02:30.00,Body,,0,0,0,,TSharkは #7→#9 に20 msを表示。解析器は #8 も候補に残す。\N同じ窓で重複が見えた場合、一意の応答時間は算出しない。
+Dialogue: 0,0:02:05.00,0:02:30.00,Code,,0,0,0,,TShark      response_to=7   response=9   time=20 ms\NAnalyzer    queries=[7,8]   response=9   time=None\N\NReference: docs/tshark_dns_comparison.md\N           docs/tshark_dns.result.json
+Dialogue: 0,0:02:05.00,0:02:30.00,Foot,,0,0,0,,02:05–02:30  |  共通部は照合し、独自の状態規則は別に根拠を示す。
+Dialogue: 0,0:02:30.00,0:02:45.00,Title,,0,0,0,,08  対応範囲を明示する
+Dialogue: 0,0:02:30.00,0:02:45.00,Body,,0,0,0,,非圧縮classic pcap、Ethernet、IPv4、TCP/UDP。\NDNS照合は非フラグメントの平文UDP、単一質問が対象。
+Dialogue: 0,0:02:30.00,0:02:45.00,Code,,0,0,0,,MVP outputs: JSON / terminal table\NOut of scope: pcapng, IPv6, live capture, TCP reassembly, TLS
+Dialogue: 0,0:02:30.00,0:02:45.00,Foot,,0,0,0,,02:30–02:45  |  READMEから人工fixtureの生成と期待値照合を再現できる。
+Dialogue: 0,0:02:45.00,0:03:00.00,Title,,0,0,0,,09  次の判断は独立レビューから
+Dialogue: 0,0:02:45.00,0:03:00.00,Body,,0,0,0,,MVPはここで止め、まず再現手順・根拠・限界をレビューする。\N拡張を選ぶなら候補はpcapng。複数インターフェースの\Nlink type・時刻精度・パケット番号の扱いを先に設計する。
+Dialogue: 0,0:02:45.00,0:03:00.00,Code,,0,0,395,,Reproduce: 261119/README.md\NReview:    docs/mvp_acceptance.md
+Dialogue: 0,0:02:45.00,0:03:00.00,Foot,,0,0,0,,02:45–03:00  |  拡張は別計画。今回のMVPには追加しない。
