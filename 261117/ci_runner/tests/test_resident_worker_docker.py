@@ -1,4 +1,4 @@
-from contextlib import contextmanager, redirect_stderr, redirect_stdout
+from contextlib import contextmanager, nullcontext, redirect_stderr, redirect_stdout
 from datetime import timedelta
 import json
 from multiprocessing import get_context
@@ -12,8 +12,10 @@ import time
 import psycopg
 import pytest
 
-from ci_runner import commit_source, database, execution, fixture_worker, runs, worker
+from ci_runner import commit_source, database, execution, finalization, fixture_worker, runs, worker
+from ci_runner.expiry_monitor import expire_next
 from test_commit_source import GitHubFixture, HEAD, OLDER
+from test_finalization_input import report
 from test_fixture_worker_docker import resources
 from test_runs_postgres import ROOT, api, dedicated_database, payload
 from test_verified_execution_docker import PUBLISHED
@@ -216,6 +218,7 @@ def test_heartbeat_fault_stops_resident_and_reclaims_running_fixture(dedicated_d
     before = resources()
     renew = execution.renew_lease
     active = []
+    cancellation = []
     unblock = Event()
     finished = Event()
     db_stopped = Event()
@@ -239,8 +242,14 @@ def test_heartbeat_fault_stops_resident_and_reclaims_running_fixture(dedicated_d
                                check=True, capture_output=True, timeout=15)
                 db_stopped.set()
             elif fault == 'cancel':
-                with database.connect() as conn:
-                    conn.execute('UPDATE runs SET cancel_requested_at=clock_timestamp() WHERE id=%s', (claim.run_id,))
+                path = f'/runs/{claim.run_id}/cancel'
+                response = client.put(path)
+                assert response.status_code == 202
+                requested = response.json()
+                assert requested['state'] == 'running' and requested['cancel_requested_at']
+                repeat = client.put(path)
+                assert repeat.status_code == 202 and repeat.json() == requested
+                cancellation.append((claim, requested))
             elif fault == 'unknown_commit':
                 factory = commit_without_ack
             return renew(claim, factory)
@@ -248,15 +257,16 @@ def test_heartbeat_fault_stops_resident_and_reclaims_running_fixture(dedicated_d
             finished.set()
 
     monkeypatch.setattr(execution, 'renew_lease', renew_with_fault)
-    try:
-        code = fixture_worker.main(['--serve', '--worker-id', 'heartbeat-integration', '--fixture-mode', 'timeout'])
-        if fault == 'no_response':
-            assert not finished.is_set()  # Worker exited while DB work was still pending.
-    finally:
-        unblock.set()
-        finished.wait(timeout=20)
-        if fault == 'db_stop':
-            subprocess.run(compose + ['up', '-d', '--wait', 'db'], check=True, capture_output=True, timeout=60)
+    with (api() if fault == 'cancel' else nullcontext((None, None))) as (client, _):
+        try:
+            code = fixture_worker.main(['--serve', '--worker-id', 'heartbeat-integration', '--fixture-mode', 'timeout'])
+            if fault == 'no_response':
+                assert not finished.is_set()  # Worker exited while DB work was still pending.
+        finally:
+            unblock.set()
+            finished.wait(timeout=20)
+            if fault == 'db_stop':
+                subprocess.run(compose + ['up', '-d', '--wait', 'db'], check=True, capture_output=True, timeout=60)
     output = capsys.readouterr()
     assert code == 1 and output.out == '', (output.out, output.err)
     diagnostic = json.loads(output.err)
@@ -278,3 +288,23 @@ def test_heartbeat_fault_stops_resident_and_reclaims_running_fixture(dedicated_d
         assert conn.execute('SELECT count(*) AS n FROM attempt_sources').fetchone()['n'] == 0
         assert conn.execute('SELECT count(*) AS n FROM attempts').fetchone()['n'] == 1
     assert runs.get_run(database.connect, pending.id).state == 'queued'
+    if fault == 'cancel':
+        (claim, requested), = cancellation
+        with pytest.raises(finalization.FinalizationDenied):
+            finalization.finalize_fixture(claim, report(claim))
+        with database.connect() as conn:
+            conn.execute('SET LOCAL statement_timeout = 35000')
+            conn.execute('SELECT pg_sleep_until(%s)', (claim.lease_expires_at,))
+        closed = expire_next()
+        assert (closed.attempt_id, closed.state, closed.reason) == (
+            claim.attempt_id, 'canceled', 'canceled_lease_expired',
+        )
+        with api() as (client, _):
+            canceled = client.put(f'/runs/{first.id}/cancel')
+            assert canceled.status_code == 200
+            assert canceled.json()['state'] == 'canceled'
+            assert canceled.json()['cancel_requested_at'] == requested['cancel_requested_at']
+            attempt, = client.get(f'/runs/{first.id}/attempts').json()['items']
+            assert (attempt['state'], attempt['reason'], attempt['official']) == (
+                'canceled', 'canceled_lease_expired', False,
+            )

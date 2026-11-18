@@ -219,6 +219,8 @@ def test_actual_database_stop_returns_503_and_recovers(dedicated_database):
                 ('POST', '/runs', {'json': payload('b' * 40)}),
                 ('GET', '/runs', {}), ('GET', '/runs/' + saved['id'], {}),
                 ('GET', '/runs/' + saved['id'] + '/logs', {}),
+                ('GET', '/runs/' + saved['id'] + '/attempts', {}),
+                ('PUT', '/runs/' + saved['id'] + '/cancel', {}),
             ]:
                 response = client.request(method, path, **kwargs)
                 assert response.status_code == 503

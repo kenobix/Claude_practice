@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 
 from .database import DatabaseUnavailable
-from .models import Cursor, Run, RunPage
+from .models import Attempt, AttemptPage, Cursor, Run, RunPage
 from .settings import POLICY
 
 COLUMNS = ('id, repository_id, ref, commit_sha, workflow_version, state, created_at, '
@@ -56,6 +56,45 @@ def get_run(connection_factory, run_id: UUID) -> Run:
     if row is None:
         raise HTTPException(404, 'run not found')
     return Run.model_validate(row)
+
+
+def cancel_run(connection_factory, run_id: UUID) -> Run:
+    """Serialize the cancellation with claim, renewal, expiry and completion."""
+    with connection_factory() as conn:
+        row = conn.execute(
+            f'SELECT {COLUMNS} FROM runs WHERE id=%s AND repository_id=%s AND ref=%s '
+            'AND workflow_version=%s FOR UPDATE', (run_id, POLICY.repository_id, POLICY.ref, POLICY.workflow_version),
+        ).fetchone()
+        if row is None:
+            raise HTTPException(404, 'run not found')
+        if row['state'] not in ('queued', 'running', 'canceled'):
+            raise HTTPException(409, 'run already finished')
+        if row['state'] == 'queued' or (row['state'] == 'running' and row['cancel_requested_at'] is None):
+            row = conn.execute(
+                "UPDATE runs SET state=CASE WHEN state='queued' THEN 'canceled' ELSE state END, "
+                'cancel_requested_at=COALESCE(cancel_requested_at, clock_timestamp()) '
+                f'WHERE id=%s RETURNING {COLUMNS}', (run_id,),
+            ).fetchone()
+        result = Run.model_validate(row)
+    return result
+
+
+def list_attempts(connection_factory, run_id: UUID, limit: int, before: int | None) -> AttemptPage:
+    with connection_factory() as conn:
+        # One snapshot distinguishes a missing run from an empty history and pins official status.
+        rows = conn.execute(
+            'SELECT page.*, COALESCE(page.id=r.completed_attempt_id, false) AS official '
+            'FROM runs r LEFT JOIN LATERAL ( '
+            '  SELECT a.id, a.attempt_no, a.retry_kind, a.state, a.started_at, a.finished_at, a.exit_code, a.reason '
+            '  FROM attempts a WHERE a.run_id=r.id AND (%s::integer IS NULL OR a.attempt_no < %s) '
+            '  ORDER BY a.attempt_no DESC LIMIT %s '
+            ') AS page ON true WHERE r.id=%s ORDER BY page.attempt_no DESC',
+            (before, before, limit + 1, run_id),
+        ).fetchall()
+    if not rows:
+        raise HTTPException(404, 'run not found')
+    items = [Attempt.model_validate(row) for row in rows[:limit] if row['id'] is not None]
+    return AttemptPage(items=items, next_before=items[-1].attempt_no if len(rows) > limit else None)
 
 
 def list_runs(connection_factory, limit: int, cursor: Cursor | None) -> RunPage:

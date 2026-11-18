@@ -33,3 +33,20 @@ class Cursor(BaseModel):
 class RunPage(BaseModel):
     items: list[Run]
     next_cursor: str | None
+
+
+class Attempt(BaseModel):
+    id: UUID
+    attempt_no: int
+    retry_kind: Literal['initial', 'infrastructure', 'manual']
+    state: Literal['running', 'succeeded', 'failed', 'timed_out', 'canceled']
+    started_at: datetime
+    finished_at: datetime | None
+    exit_code: int | None
+    reason: str | None
+    official: bool
+
+
+class AttemptPage(BaseModel):
+    items: list[Attempt]
+    next_before: int | None

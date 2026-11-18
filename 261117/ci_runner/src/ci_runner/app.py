@@ -1,15 +1,18 @@
+import re
 from typing import Annotated, Literal
 from uuid import UUID
 
 import psycopg
-from fastapi import FastAPI, HTTPException, Query, Response
+from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from . import database, logs, runs
 from .body_limit import JsonBodyLimit
-from .models import Run, RunInput, RunPage
+from .models import AttemptPage, Run, RunInput, RunPage
 from .settings import BODY_LIMIT, POLICY, SCHEMA_VERSION
+
+LOOPBACK_HOST = re.compile(r'(?:localhost|127\.0\.0\.1|\[::1\])(?::[0-9]{1,5})?', re.IGNORECASE)
 
 
 def create_app(connection_factory=None):
@@ -64,6 +67,20 @@ def create_app(connection_factory=None):
     @app.get('/runs/{run_id}', response_model=Run)
     def detail(run_id: UUID):
         return runs.get_run(factory, run_id)
+
+    @app.put('/runs/{run_id}/cancel', response_model=Run, responses={202: {'model': Run}})
+    def cancel(run_id: UUID, request: Request, response: Response):
+        hosts = request.headers.getlist('host')
+        if len(hosts) != 1 or not LOOPBACK_HOST.fullmatch(hosts[0]):
+            raise HTTPException(403, 'loopback host required')
+        result = runs.cancel_run(factory, run_id)
+        response.status_code = 202 if result.state == 'running' else 200
+        return result
+
+    @app.get('/runs/{run_id}/attempts', response_model=AttemptPage)
+    def attempts(run_id: UUID, limit: Annotated[int, Query(ge=1, le=100)] = 20,
+                 before: Annotated[int | None, Query(ge=1, le=2147483647)] = None):
+        return runs.list_attempts(factory, run_id, limit, before)
 
     @app.get('/runs/{run_id}/logs', response_class=Response)
     def log_page(run_id: UUID,

@@ -1,6 +1,6 @@
 # P0設計案：ジョブの正本と実行権
 
-状態: P0〜P2は固定fixtureで受入確認済み。[Webhook受付と配送の永続化](webhook.md)を実装済み。GitHubからの実配送と履歴UIは後続作業。
+状態: P0〜P2は固定fixtureで受入確認済み。[Webhook受付と配送の永続化](webhook.md)、[run取消とattempt履歴API](run-operations.md)を実装済み。GitHubからの実配送と履歴UIは後続作業。
 実装したHTTP契約と競合・commit前後の障害証拠は[受付API仕様](intake-api.md)を参照。
 [Worker初回取得](worker-claim.md)は履歴なしの許可queuedを取得し、attempt番号1・initial・DB期限30秒を同時commitする。
 検証付きWorkerは、[基盤障害の自動再試行](#基盤障害の自動再試行)で再キューされたrunも取得する。
@@ -169,7 +169,7 @@ run.completed_attempt_idを現在の有効attemptの確定transactionでのみ�
 
 基礎DDLは `../migrations/001_initial.sql`（未変更）。版2で履歴用(created_at DESC, id DESC) indexを追加。版3でログと容量台帳を追加（[仕様](log-storage.md)）。UUIDはDB生成。日時はtimestamptz。
 状態CHECKだけでは遷移順・期限・取消優先・正式結果の整合性を保証しない。
-それらはP1/P2の条件付き更新と競合統合テストで検証する。実DB適用・二重適用・業務キー一意制約・状態CHECK・再起動後のschema保持は検証済み。結果確定と条件付き取消SQL、期限監視との競合を検証済み。取消APIと手動再試行は未実装。
+それらは条件付き更新と競合統合テストで検証する。実DB適用・二重適用・業務キー一意制約・状態CHECK・再起動後のschema保持は検証済み。[取消API](run-operations.md)は結果確定、取得、期限監視が使うrunロックを共有する。手動再試行は未実装。
 現在のDDLはSHA-1の40桁commitを許容し、他形式は将来再検討する。
 
 ## 故障・中断時の期待動作

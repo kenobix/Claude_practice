@@ -250,6 +250,18 @@ commit結果が不明な接続断では、未保存と断定せず同じ業務�
 運用時は承認済みの公開HTTPS受信口から `POST /webhooks/github` だけを転送する。
 [受付仕様・起動・手動再送手順](ci_runner/docs/webhook.md)。
 
+## runを取り消す・attempt履歴を見る
+
+管理APIのloopbackアドレスから操作する。待機中の取消は200。実行中の取消要求は202で受理し、実行権を閉じるまでは `GET /runs/{id}` に要求時刻と `running` を表示する。
+
+```bash
+curl -X PUT "http://127.0.0.1:18117/runs/${RUN_ID}/cancel"
+curl "http://127.0.0.1:18117/runs/${RUN_ID}/attempts?limit=20"
+```
+
+attempt履歴では終了理由と正式結果の有無を確認できる。次のページには `next_before` を `before` に渡す。
+[運用API仕様](ci_runner/docs/run-operations.md)。
+
 ## Worker取得だけの診断
 
 ```bash

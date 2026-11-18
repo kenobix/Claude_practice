@@ -1026,3 +1026,19 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
   DB readinessは200、再起動後もmigration 1〜6を保持。試験用DBのcontainer・volume・networkは残存0件。
 - 公開HTTPS受信先と既存のGitHub hookは未設定。GitHubからの実push配送、応答時間、受付停止後のGitHub画面からの手動再送は未検証。
   P3は概算75%、MVP全体は概算65%（残35%）。公開先の準備後に[実配送と復旧の受入](ci_runner/docs/webhook.md#起動と障害復旧)を行う。
+
+## P4のrun取消とattempt履歴
+
+- 開始HEAD `3b22b918ec4340664537536805125c16b8c626f0` のpush/PR CIは成功。Draft PR #1に未解決のレビュー指摘なし。
+  P3に必要な公開HTTPS受信先が未確保のため、Webhookに依存しない管理APIの2操作を先行した。
+- `PUT /runs/{id}/cancel` を追加。待機中は即時取消、実行中はDB時刻で要求を保存して202、他の終端状態は409。再送では元の要求時刻を保持する。
+  取消と完了の順序は既存のrun行ロックで決め、heartbeat・期限監視・リソース回収を再利用した。
+- `GET /runs/{id}/attempts` を追加。試行番号の降順ページングと、状態・終了コード・理由・正式参照を提供する。実行権tokenとログ本体は含めない。
+- 通常回帰は222 passed、201 deselected、既知のTestClient警告1件。pip checkとcompileallも成功。
+- 使い捨てPostgreSQL 17.12・Docker 29.9.2の選択回帰は47 passed、376 deselected、既知警告1件（158.49秒）。
+  待機取消の並行再送、取消と完了それぞれが先行する行ロック競合、DB停止時の503、旧attemptと正式なチェック失敗の履歴表示を確認した。
+  実Dockerでは固定試験応答で取得したfixtureを実行中にHTTPで取り消し、heartbeat拒否とコンテナ・image回収、旧報告拒否、
+  DB時刻を書き換えずに期限監視で取消済みとなることを確認した。専用DBのreadinessは200、再起動後にmigration 1〜6を保持。
+  専用DB・fixtureの試験資源は残存0件。
+- P3は概算75%で実配送待ち。P4は概算25%、MVP全体は概算69%（残31%）。
+  次は失敗・時間切れの手動再試行と履歴UI。P3では公開HTTPS確保後に実pushとGitHubの手動再送を検証する。

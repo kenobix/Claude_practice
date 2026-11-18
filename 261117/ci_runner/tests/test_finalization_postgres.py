@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from dataclasses import replace
 import os
 from pathlib import Path
@@ -12,6 +12,7 @@ from uuid import uuid4
 
 import psycopg
 import pytest
+from fastapi import HTTPException
 
 from ci_runner import database, runs
 from ci_runner.finalization import FinalizationDenied, finalize_fixture
@@ -156,7 +157,7 @@ def test_state_and_time_rechecked_after_lock_wait(dedicated_database, winner):
             future = pool.submit(finalize_fixture, claim, report(claim), contender)
             wait_for_lock(pids.get(timeout=3))
             if winner == 'cancel':
-                blocker.execute('UPDATE runs SET cancel_requested_at=clock_timestamp() WHERE id=%s', (claim.run_id,))
+                assert runs.cancel_run(lambda: nullcontext(blocker), claim.run_id).cancel_requested_at
             else:
                 blocker.execute("UPDATE attempts SET started_at=clock_timestamp()-interval '60 seconds',"
                                 "lease_expires_at=clock_timestamp()-interval '1 second' WHERE id=%s", (claim.attempt_id,))
@@ -180,23 +181,25 @@ def test_completion_wins_conditional_cancel_and_concurrent_replay(dedicated_data
             yield conn
             ready.set()
             assert release.wait(timeout=5)
-    def cancel():
+    @contextmanager
+    def cancel_connection():
         with database.connect() as conn:
             cancel_pid.put(conn.info.backend_pid)
-            return conn.execute('UPDATE runs SET cancel_requested_at=clock_timestamp() '
-                                "WHERE id=%s AND state='running' RETURNING id", (claim.run_id,)).fetchone()
+            yield conn
     with ThreadPoolExecutor(max_workers=3) as pool:
         first = pool.submit(finalize_fixture, claim, report(claim), held_commit)
         try:
             assert ready.wait(timeout=3)
-            cancellation = pool.submit(cancel)
+            cancellation = pool.submit(runs.cancel_run, cancel_connection, claim.run_id)
             wait_for_lock(cancel_pid.get(timeout=3))
             replay = pool.submit(finalize_fixture, claim, report(claim), replay_connection)
             wait_for_lock(replay_pid.get(timeout=3))
         finally:
             release.set()
         assert first.result(timeout=5).replayed is False
-        assert cancellation.result(timeout=5) is None
+        with pytest.raises(HTTPException) as rejected:
+            cancellation.result(timeout=5)
+        assert rejected.value.status_code == 409
         assert replay.result(timeout=5).replayed is True
     assert saved(claim)['state'] == 'succeeded'
 
