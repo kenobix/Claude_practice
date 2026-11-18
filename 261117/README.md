@@ -12,7 +12,7 @@ P2の[コンテナ作成台帳](ci_runner/docs/design.md#コンテナ作成台�
 内部ライブラリでDB再照合・実値ガード・時間/ログ/lease上限付きのローカル固定fixture実行も実装済み。
 ローカルfixture結果の条件付きDB確定（状態/exit/理由/終了時刻・正式attempt参照）も実装済み。
 別プロセスの一件実行入口で、取得→ローカル固定fixture実行/回収→条件付き確定まで接続済み。
-上限付きログを結果と同一transactionでDB保存する。正式ログの取得・最小HTML表示も実装済み。受理commitの固定fixtureを一件実行し、sourceとimageの由来を結果に保存できる。常駐Workerは検証済みcommitを順に実行する。Webhook・履歴UIは後続フェーズで扱う。
+上限付きログを結果と同一transactionでDB保存する。正式ログの取得・最小HTML表示も実装済み。受理commitの固定fixtureを一件実行し、sourceとimageの由来を結果に保存できる。常駐Workerは検証済みcommitを順に実行する。Webhookの受付は実装済みで、GitHubからの実配送は未検証。履歴UIは後続フェーズで扱う。
 GitHub Pagesへの公開対象ではない。常駐バックエンドの配置先は将来別途判断する。
 
 ## 受理commitのsourceを検証する
@@ -243,6 +243,12 @@ SHAは構文例。新規201、同じ業務キーの再送200で同じrunを返�
 bodyはJSONで4KiBまで。DB未設定・停止・query失敗は503で受理を返さない。
 commit結果が不明な接続断では、未保存と断定せず同じ業務キーで再送する。
 詳細なHTTP契約・ページングの限界・障害実験は受付API仕様を参照。
+
+## GitHub Webhookを受け付ける
+
+`ci_runner.webhook:app` を分離して起動し、専用DBとhook ID・共有秘密を環境変数で設定する。
+運用時は承認済みの公開HTTPS受信口から `POST /webhooks/github` だけを転送する。
+[受付仕様・起動・手動再送手順](ci_runner/docs/webhook.md)。
 
 ## Worker取得だけの診断
 

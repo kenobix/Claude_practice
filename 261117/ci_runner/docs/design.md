@@ -1,6 +1,6 @@
 # P0設計案：ジョブの正本と実行権
 
-状態: P0検証とP1前半（受付/取得API・DB永続化・冪等性）は実装済み。Workerの初回取得と実行前DB preflightは実装済み。[固定fixtureの未起動コンテナ準備](container-preparation.md)と[内部の上限付きfixture実行](fixture-execution.md)も実装済み。[条件付きfixture結果確定](result-finalization.md)も実装済み。上限付きログDB保存を結果確定へ接続済み。正式ログ取得/最小HTML表示も実装済み。受理commitの常駐実行は実装済み。Webhook・履歴UI等は未実装。
+状態: P0〜P2は固定fixtureで受入確認済み。[Webhook受付と配送の永続化](webhook.md)を実装済み。GitHubからの実配送と履歴UIは後続作業。
 実装したHTTP契約と競合・commit前後の障害証拠は[受付API仕様](intake-api.md)を参照。
 [Worker初回取得](worker-claim.md)は履歴なしの許可queuedを取得し、attempt番号1・initial・DB期限30秒を同時commitする。
 検証付きWorkerは、[基盤障害の自動再試行](#基盤障害の自動再試行)で再キューされたrunも取得する。
@@ -145,8 +145,8 @@ commit応答が消失して再走査しても、すでにqueuedのrunの待機�
 ## 冪等性と成果物
 
 pushの業務キーはrepository/ref/commit/workflow版。Webhookのhook/delivery IDも一意。
-同じdelivery IDでbodyハッシュが異なる場合は拒否する。署名検証後に許可設定を照合する（P3）。
-delivery保持は30日を暫定案とし、runの業務キーはMVP中保持する。期間外再送もrun重複を防ぐ。
+同じdelivery IDでbodyハッシュが異なる場合は拒否する。配送結果とrunを同じtransactionで確定する。
+保持方針と起動手順は[Webhook受付](webhook.md)を参照。
 手動投入も同じ業務キーで同一runを返す。明示retryを別操作に分ける。
 
 成果物はサーバー生成名とattempt別領域を使い、1ファイル10MiB・attempt合計20MiBを初期案とする。

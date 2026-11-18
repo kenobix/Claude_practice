@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import HTTPException
 from pydantic import ValidationError
 
+from .database import DatabaseUnavailable
 from .models import Cursor, Run, RunPage
 from .settings import POLICY
 
@@ -24,26 +25,29 @@ def decode_cursor(value: str | None) -> Cursor | None:
 
 
 def create_run(connection_factory, commit_sha: str) -> tuple[Run, bool]:
-    key = (POLICY.repository_id, POLICY.ref, commit_sha, POLICY.workflow_version)
     with connection_factory() as conn:
-        row = conn.execute(
-            f'INSERT INTO runs(repository_id, ref, commit_sha, workflow_version) '
-            f'VALUES (%s, %s, %s, %s) ON CONFLICT '
-            f'(repository_id, ref, commit_sha, workflow_version) DO NOTHING RETURNING {COLUMNS}',
-            key).fetchone()
-        created = row is not None
-        if row is None:
-            # Separate READ COMMITTED statement sees the winner after INSERT's wait.
-            row = conn.execute(
-                f'SELECT {COLUMNS} FROM runs WHERE repository_id=%s AND ref=%s '
-                'AND commit_sha=%s AND workflow_version=%s', key).fetchone()
-            if row is None:
-                # Only an external delete can cause this; never fabricate an accepted run.
-                from .database import DatabaseUnavailable
-                raise DatabaseUnavailable()
-        result = Run.model_validate(row)
+        result = upsert_run(conn, commit_sha)
     # Context manager must finish COMMIT before the HTTP handler can return success.
-    return result, created
+    return result
+
+
+def upsert_run(conn, commit_sha: str) -> tuple[Run, bool]:
+    """Use the caller's transaction for the same business key as manual intake."""
+    key = (POLICY.repository_id, POLICY.ref, commit_sha, POLICY.workflow_version)
+    row = conn.execute(
+        f'INSERT INTO runs(repository_id, ref, commit_sha, workflow_version) '
+        f'VALUES (%s, %s, %s, %s) ON CONFLICT '
+        f'(repository_id, ref, commit_sha, workflow_version) DO NOTHING RETURNING {COLUMNS}',
+        key).fetchone()
+    if row is not None:
+        return Run.model_validate(row), True
+    # Separate READ COMMITTED statement sees the winner after INSERT's wait.
+    row = conn.execute(
+        f'SELECT {COLUMNS} FROM runs WHERE repository_id=%s AND ref=%s '
+        'AND commit_sha=%s AND workflow_version=%s', key).fetchone()
+    if row is None:
+        raise DatabaseUnavailable()
+    return Run.model_validate(row), False
 
 
 def get_run(connection_factory, run_id: UUID) -> Run:

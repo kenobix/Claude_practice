@@ -1013,3 +1013,16 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
   専用DBのreadinessは200、再起動後にmigration 1〜6を保持。専用DBのcontainer/volume/networkとfixtureのコンテナ・imageは残存0件。
 - 管理下の固定fixtureでP2の[全受入条件](ci_runner/docs/design.md#2-workerの故障復旧試験)を満たした。
   MVP全体は計画工数で重み付けした概算55%（残約45%）。次はP3のWebhook署名確認と配送の永続化から着手する。
+
+## P3のWebhook受付とローカル受入
+
+- 開始HEAD `b1920b4f4201166a544c7d5e5fcc3d3421edb95c` のpush/PR CIは成功。Draft PR #1に未解決のレビュー指摘なし。
+- 管理APIから分離したWebhook入口で、256 KiB・2秒のbody受信制限、元bytesのHMAC-SHA256照合、設定済みhookと署名済みrepository/ref/削除情報の検証を追加した。
+  hook・配送ID、body hash、判定とrunを同じPostgreSQL transactionで保存し、commit後に応答する。既存のrun業務キーとmigration 001〜006を再利用した。
+- 通常回帰は221 passed、199 deselected、既知のTestClient警告1件。pip check、compileallも成功。
+- 使い捨てPostgreSQL 17.12で選択回帰28件成功（62.00秒）。初回配送が競合するケースを追加後、Webhook対象4件を再検証して成功（24.79秒）。
+  証明書を検証するローカルHTTPSでは、同じ配送IDの10回同時再送と別配送IDの同一コミットを受理してrunは1件。最大応答0.206秒。
+  不正署名では配送・runとも0件。同じIDでbodyを変えると409。commit前/後の受信プロセスSIGKILLとDB停止の後、同じ配送を再送してrunは1件。
+  DB readinessは200、再起動後もmigration 1〜6を保持。試験用DBのcontainer・volume・networkは残存0件。
+- 公開HTTPS受信先と既存のGitHub hookは未設定。GitHubからの実push配送、応答時間、受付停止後のGitHub画面からの手動再送は未検証。
+  P3は概算75%、MVP全体は概算65%（残35%）。公開先の準備後に[実配送と復旧の受入](ci_runner/docs/webhook.md#起動と障害復旧)を行う。

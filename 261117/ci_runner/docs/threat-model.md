@@ -21,7 +21,7 @@ Docker操作権限は信頼済みWorkerだけ。APIやジョブへsocketを渡�
 | ログによるディスク枯渇 | log-driver none、DB保持payload合計1MiB/attempt・最大64MiBの条件付き予約 | DB競合/容量不足で確定拒否。WAL/履歴等を含む物理容量の上限は未検証 |
 | 古い実行結果 | token/DB時刻/状態/取消条件による確定、attempt別成果物 | 期限切れ完了・競合試験 |
 | パストラバーサル/XSS | ファイル名はサーバー生成、範囲外パスとsymlinkを拒否、表示時HTML escape | 悪意ある名前・内容の試験 |
-| Webhook偽装/再送 | raw body HMAC-SHA256定数時間比較、body上限、許可repo/ref、IDと業務キー | P3の署名fixture・再送試験 |
+| Webhook偽装/再送 | raw body HMAC-SHA256定数時間比較、body上限、許可repo/ref、IDと業務キー。Webhook専用アプリへ分離 | [ローカルHTTPS・再送試験](webhook.md)。GitHubからの実配送は未検証 |
 | ローカルAPIの悪用 | loopback限定、CORSを開放しない、公開時の認証は別設計 | 非loopback公開を避ける起動確認 |
 
 上限値は初期案。OS/cgroup/rootless構成により適用できない場合は実行開始を拒否する設計にする。

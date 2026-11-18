@@ -1,15 +1,18 @@
-"""Bound POST /runs before FastAPI buffers or parses JSON, including chunked input."""
+"""Bound JSON ingress before FastAPI buffers or parses it, including chunked input."""
+from asyncio import timeout
+
 from starlette.responses import JSONResponse
 
-from .settings import BODY_LIMIT
 
-
-class RunBodyLimit:
-    def __init__(self, app):
+class JsonBodyLimit:
+    def __init__(self, app, *, path, limit, read_timeout=None):
         self.app = app
+        self.path = path
+        self.limit = limit
+        self.read_timeout = read_timeout
 
     async def __call__(self, scope, receive, send):
-        if scope['type'] != 'http' or scope['method'] != 'POST' or scope['path'] != '/runs':
+        if scope['type'] != 'http' or scope['method'] != 'POST' or scope['path'] != self.path:
             await self.app(scope, receive, send)
             return
         headers = scope['headers']
@@ -21,7 +24,7 @@ class RunBodyLimit:
         except ValueError:
             await JSONResponse({'detail': 'invalid content length'}, 400)(scope, receive, send)
             return
-        if length is not None and length > BODY_LIMIT:
+        if length is not None and length > self.limit:
             await JSONResponse({'detail': 'body too large'}, 413)(scope, receive, send)
             return
         types = [v.split(b';', 1)[0].strip().lower() for k, v in headers if k.lower() == b'content-type']
@@ -29,22 +32,29 @@ class RunBodyLimit:
             await JSONResponse({'detail': 'application/json required'}, 415)(scope, receive, send)
             return
         body = bytearray()
-        while True:
-            message = await receive()
-            if message['type'] == 'http.disconnect':
-                return
-            chunk = message.get('body', b'')
-            if len(body) + len(chunk) > BODY_LIMIT:
-                await JSONResponse({'detail': 'body too large'}, 413)(scope, receive, send)
-                return
-            body.extend(chunk)
-            if not message.get('more_body', False):
-                break
+        try:
+            async with timeout(self.read_timeout):
+                while True:
+                    message = await receive()
+                    if message['type'] == 'http.disconnect':
+                        return
+                    chunk = message.get('body', b'')
+                    if len(body) + len(chunk) > self.limit:
+                        await JSONResponse({'detail': 'body too large'}, 413)(scope, receive, send)
+                        return
+                    body.extend(chunk)
+                    if not message.get('more_body', False):
+                        break
+        except TimeoutError:
+            await JSONResponse({'detail': 'body read timed out'}, 408)(scope, receive, send)
+            return
         if length is not None and len(body) != length:
             await JSONResponse({'detail': 'content length mismatch'}, 400)(scope, receive, send)
             return
 
+        raw = bytes(body)
+
         async def buffered_receive():
-            return {'type': 'http.request', 'body': bytes(body), 'more_body': False}
+            return {'type': 'http.request', 'body': raw, 'more_body': False}
 
         await self.app(scope, buffered_receive, send)

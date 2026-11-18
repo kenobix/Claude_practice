@@ -21,6 +21,6 @@ def test_db_failure_is_unavailable_and_does_not_leak(monkeypatch):
     assert response.json() == {"status": "unavailable"}
 
 
-def test_execution_and_webhook_are_not_implemented():
-    assert client.post("/webhook", json={}).status_code == 404
+def test_execution_and_webhook_are_not_exposed_on_internal_api():
+    assert client.post("/webhooks/github", json={}).status_code == 404
     assert client.post("/worker", json={}).status_code == 404

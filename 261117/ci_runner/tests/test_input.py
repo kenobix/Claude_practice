@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 import pytest
 
 from ci_runner.app import create_app
-from ci_runner.body_limit import RunBodyLimit
+from ci_runner.body_limit import JsonBodyLimit
 
 
 def no_database():
@@ -66,7 +66,7 @@ def test_streamed_body_limits_without_trusting_content_length(chunks, headers, e
             assert len((await receive())['body']) <= 4096
             await send({'type': 'http.response.start', 'status': 204, 'headers': []})
             await send({'type': 'http.response.body', 'body': b''})
-        await RunBodyLimit(downstream)(
+        await JsonBodyLimit(downstream, path='/runs', limit=4096)(
             {'type': 'http', 'method': 'POST', 'path': '/runs',
              'headers': [(b'content-type', b'application/json'), *headers]}, receive, send)
         assert sent[0]['status'] == expected

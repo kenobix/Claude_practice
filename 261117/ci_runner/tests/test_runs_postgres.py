@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 import os
 from pathlib import Path
 import socket
+import ssl
 import subprocess
 import sys
 import tempfile
@@ -53,14 +54,21 @@ def dedicated_database(monkeypatch):
 
 
 @contextmanager
-def api(fault_position=None, marker=None):
+def api(fault_position=None, marker=None, *, webhook=False, tls=None):
     env = os.environ.copy()
     args = [sys.executable, '-m', 'uvicorn']
     if fault_position:
         env.update(CI_FAULT_POSITION=fault_position, CI_FAULT_MARKER=str(marker))
-        args += ['p1_fault_server:make_app', '--factory', '--app-dir', str(ROOT / 'tests')]
+        target = 'make_webhook' if webhook else 'make_app'
+        args += [f'p1_fault_server:{target}', '--factory', '--app-dir', str(ROOT / 'tests')]
     else:
-        args += ['ci_runner.app:app']
+        args += ['ci_runner.webhook:app' if webhook else 'ci_runner.app:app']
+    probe_path, probe_status = ('/', 404) if webhook else ('/health/live', 200)
+    scheme, trust = 'http', True
+    if tls:
+        cert, key = tls
+        args += ['--ssl-certfile', str(cert), '--ssl-keyfile', str(key)]
+        scheme, trust = 'https', ssl.create_default_context(cafile=str(cert))
     with socket.socket() as listener:
         listener.bind(('127.0.0.1', 0))
         port = listener.getsockname()[1]
@@ -68,12 +76,13 @@ def api(fault_position=None, marker=None):
         process = subprocess.Popen(args, env=env, cwd=ROOT, pass_fds=(listener.fileno(),),
                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
-            with httpx.Client(base_url=f'http://127.0.0.1:{port}', timeout=10, trust_env=False) as client:
+            with httpx.Client(base_url=f'{scheme}://127.0.0.1:{port}', timeout=10,
+                              trust_env=False, verify=trust) as client:
                 for _ in range(100):
                     if process.poll() is not None:
                         raise AssertionError('API process exited before startup')
                     try:
-                        if client.get('/health/live').status_code == 200:
+                        if client.get(probe_path).status_code == probe_status:
                             break
                     except httpx.TransportError:
                         pass

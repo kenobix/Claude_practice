@@ -11,4 +11,5 @@ class RepositoryPolicy:
 
 POLICY = RepositoryPolicy()
 BODY_LIMIT = 4096
+GITHUB_REPOSITORY_ID = 1197425837
 SCHEMA_VERSION = 6

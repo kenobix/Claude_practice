@@ -7,14 +7,14 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from . import database, logs, runs
-from .body_limit import RunBodyLimit
+from .body_limit import JsonBodyLimit
 from .models import Run, RunInput, RunPage
-from .settings import POLICY, SCHEMA_VERSION
+from .settings import BODY_LIMIT, POLICY, SCHEMA_VERSION
 
 
 def create_app(connection_factory=None):
     app = FastAPI(title='CI runner', version='0.1.0')
-    app.add_middleware(RunBodyLimit)
+    app.add_middleware(JsonBodyLimit, path='/runs', limit=BODY_LIMIT)
     # Test processes can inject a connection context at the transaction boundary.
     # No HTTP/environment fault switch exists in production.
     factory = connection_factory or database.connect
