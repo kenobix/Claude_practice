@@ -85,7 +85,7 @@ MVPの予算内再キューには、旧attemptの資源回収の確認と新atte
 作成台帳の対象では、Dockerのdaemon IDと所有sessionを予約と照合する。遅延createなどで完全IDが未記録なら、
 観測したIDを保存する。DB transactionの成功応答を確認した後、完全IDを指定して `docker container rm --force` する。
 削除応答にかかわらず、同じdaemonで同じ完全IDのコンテナ専用inspectが不在を返してから、
-migration 006の `attempts.container_recovered_at` にDB時刻を保存する。不在確認は、正式結果・token・lease・由来を変更しない。
+migration 006の `attempts.container_recovered_at` にDBの現在時刻とattempt終了時刻の遅い方を保存する。DBの壁時計が逆行した場合も、終了・回収の順序を維持する。
 
 既知の完全IDもDBから走査するので、削除後に回収プロセスやDB接続が中断されても、再走査で不在を確認できる。
 確認時刻を設定したtransactionが成功した場合だけJSONを出力する。並行確認ですでに確定済みなら時刻を書き換えない。
@@ -109,6 +109,7 @@ migration 005はattemptに作成台帳を追加する。新しいWorkerが発行
 
 実行Workerは固定imageと受理SHAの照合後、同じDocker daemonのIDと一意のsessionをDBに予約する。
 操作中は同じ信頼済みDocker contextを使用し、Dockerが返すdaemon IDはUUID形式を要求する。
+ID照合のたびに現在のcontextから接続先を解決する。通常のローカルUnix socketには `GET /info` で問い合わせ、TLS等を設定したcontextや直接取得に失敗した場合は同じ設定でDocker CLIを使う。作成予約と回収確認は、毎回観測したdaemon IDを照合する。 [Docker Engine API](https://docs.docker.com/reference/api/engine/version/v1.56/#tag/System/operation/SystemInfo)
 予約はrun→attemptの順にロックし、許可設定・受理SHA・実行権のtoken・状態・取消・DB時刻の期限を照合する。
 監視や取消が先に確定した場合、または同じattemptに予約がある場合は拒否する。
 予約のcommit応答を確認してからDocker createを一度だけ呼ぶ。応答が不明ならWorkerは処理を中断する。
@@ -135,7 +136,7 @@ Dockerが返した完全IDとinspectが一致し、既存の設定検証を通�
 チェック失敗、タイムアウト、ログ超過、取消、作成の有無が不明な旧記録は自動再試行の対象外。
 
 再キューはrunを `FOR UPDATE OF r SKIP LOCKED` で確保し、直近attemptを読み直して `state` と `available_at` を更新する。
-DB時刻からの待機は2回目が5秒、3回目が10秒。再キューのcommit後に `infra_retry_scheduled`、直近attempt ID、次の番号と時刻を出力する。
+DBの現在時刻、記録済みのattempt終了と回収の時刻のうち最も遅い時刻から、2回目は5秒、3回目は10秒待つ。再キューのcommit後に `infra_retry_scheduled`、直近attempt ID、次の番号と時刻を出力する。
 commit応答が消失して再走査しても、すでにqueuedのrunの待機時刻は変更しない。
 
 待機時刻に達したrunは、検証付きWorkerが受理SHAから固定sourceを再検証して取得する。
@@ -207,13 +208,14 @@ GitHub取得には固定試験応答を使う。DB時刻や期限を書き換え
 旧attemptの報告は新attemptの実行権がある間と正式確定後に再送し、拒否と履歴の不変を確認する。
 
 SIGKILLの直前から正式結果までを同じDB時刻で測る。45秒は実験上の仮目標で、測定値は[作業記録](../../work_log.md)に残す。
+代替Workerのclaim後は、DB照合、image照合、daemon ID取得、作成予約などの開始時刻と所要時間をテストで記録する。時間の基準はclaim応答直後の単調時計。
 強制終了時のimageタグはコンテナとは別に残ることがある。試験は控えた完全image ID・専用タグ・所有ラベルを照合してからそのタグだけを削除する。
 
 | P2の受入条件 | 検証 |
 |---|---|
 | 2 Workerの原子的な取得 | `test_resident_worker_docker.py` の先頭変更・claim競合で、同じrunへのattempt発行は1件で、負けたWorkerが次のrunを処理することを確認 |
 | DB時刻による期限、古い報告の拒否 | `test_resident_recovery_docker.py` の3地点で、30秒leaseの自然失効、失効後の回収・再取得、旧tokenの報告による上書きなしを確認 |
-| 基盤障害だけを最大3attemptで再試行 | `test_retry_postgres.py` でDB時刻からの5秒・10秒、上限到達と対象外の失敗を検証。`test_retry_docker.py` で2回目の残存コンテナ回収後に3回目の結果確定まで検証 |
+| 基盤障害だけを最大3attemptで再試行 | `test_retry_postgres.py` でDB時刻からの5秒・10秒、上限到達と対象外の失敗を検証。`test_retry_docker.py` では2回目の作成予約前に失効した場合と残存コンテナを回収した場合に、3回目だけが正式結果を確定することを検証 |
 | DB断で実行を停止し新規処理を開始しない | `test_resident_worker_docker.py` のheartbeat試験で専用DB停止・応答欠落・commit応答喪失時に実行を停止し、次のrunがキューに残ることを確認 |
 
 ## 参照

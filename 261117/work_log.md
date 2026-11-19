@@ -1119,3 +1119,17 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
 - 管理HostとWebhookの分離を専用PostgreSQL 17.12で再確認し、2 passed、441 deselected（9.18秒）。ローカルHTTPSの最大応答は0.198秒、DB readinessは200、再起動後にmigration 001〜008を保持した。専用DBおよびfixtureの試験資源の残存は0件。
 - P5の既存CSV 600件から、各100件のキュー待ち・実行p95を独立再計算し、既存表の12値と一致することを確認した。計画で求めた比較グラフを追加した。[比較結果](ci_runner/docs/p5-validation.md#2026-11-19の実測)
 - P2の再検証結果を踏まえ、MVPの推定を概算93%（残7%）へ見直した。P2の作成前の遅延の切り分けと最終結果の確認、P3の承認済み公開HTTPSでの実配送・手動再送、P5の第三者再現・最終受入が残る。全体の重い回帰は再実行していない。
+
+## P2のdaemon ID取得と作成前失効の再検証
+
+- 開始HEAD `1ff56f25adf6e2e7818bee4bdb1e05e5488be2d5` のpush/PR CIは成功。PR #1の最新headとDraft状態を確認した。
+- 変更前の3地点はすべて同じrunを復旧した（3 passed、440 deselected、228.38秒）。claim直後・実行中・結果確定直前の順に復旧69.59秒、48.97秒、47.13秒。claim後のdaemon ID取得はそれぞれ13.846秒、3.279秒、0.862秒で、作成予約は0.041秒、1.342秒、0.042秒だった。前回の代替試行の失効はこの計測では再現しなかった。
+- ローカルの読み取り比較2回では、CLIのID取得0.639〜0.693秒、Engine APIのID取得0.054〜0.085秒で、IDは一致した。Docker CLI 29.9.2では `docker info` の表示をIDに限定してもCLI pluginを調べる。現在のcontextが通常のUnix socketの場合は `/info` からIDを取得する。作成予約と回収に使うIDを毎回照合し、DB時刻の30秒lease、5秒heartbeat、隔離制限、再試行上限を適用する。 [Docker CLI 29.9.2の実装](https://github.com/docker/cli/blob/v29.9.2/cli/command/system/info.go#L78-L105)
+- 通常回帰は233 passed、216 deselected、既知のTestClient警告1件（3.32秒）。pip check、compileallも成功。Unix socketの選択、失敗時のCLI経路、SSH/TLS構成、UUID不正の拒否を検証した。
+- 最初の全体回帰は、使い捨てDBがhealthyになった直後、migrationより前にホストからのTCP接続が切れて中断した。初期化用サーバーはUnix socketで応答するため、Composeのreadinessをコンテナ内TCPの `127.0.0.1` で確認するようにした。 [PostgreSQLイメージの初期化処理](https://github.com/docker-library/postgres/blob/master/docker-entrypoint.sh#L264-L285)
+- TCP readinessを使った実PostgreSQL 17.12・実Docker 29.9.2の全体回帰は431 passed、3 failed、15 skipped（961.28秒）。skipはP0専用プローブ10件とライブGitHub source取得5件。停止試験のclaim直後と確定直前は58.23秒と39.95秒で復旧し、代替Workerのdaemon ID取得は0.629秒と0.178秒だった。
+- 実行中停止の試験では回収CLIの外側の12秒待ちが切れた。Dockerイベントのkillからdestroyには約10秒かかったため、この試験で失効後に回収する呼び出しの待ちを45秒とした。製品の制限と復旧時間の実測を維持する。DB停止注入の別試験では2件を明示的な `available_at` 順にそろえ、どちらも取得可能な状態にした。
+- 手動再試行の回収ではDBの観測時刻が終了時刻より約0.165秒前となり、回収記録のCHECK制約が更新を拒否した。回収時刻は終了時刻とDBの現在時刻の遅い方を保存し、自動再試行は終了・回収・DBの現在時刻のうち最も遅い時刻から5秒または10秒を数える。同一daemon・完全IDでの不在確認、DB更新条件とCHECK制約を適用する。
+- 影響範囲の回帰は26 passed、1 failed、423 deselected（396.32秒）。3停止位置の正式結果、旧報告の拒否、作成前失効から3回目だけが確定するケース、壁時計の逆行を模した回収・待機順序、DB停止注入を確認した。復旧はclaim直後43.16秒、実行中49.59秒、確定直前55.28秒。代替Workerのdaemon ID取得は0.148〜0.215秒、45秒の仮目標は2件で超過した。残った手動再試行のテストでは、APIが受付済みを返した直後の問い合わせで取得可能なrunが見つからず、DBの `available_at` に達するまで最大5秒ポーリングするようにした。
+- 手動再試行の再検証は1 passed、449 deselected（32.24秒）。readiness 200、再起動後のmigration 001〜008保持を確認した。最終の通常回帰は233 passed、217 deselected、既知のTestClient警告1件。全体回帰の回収CLI打ち切りで残った専用imageはrunラベル・所有タグ・完全IDの照合後に回収した。専用DBとfixtureの試験資源の残存は0件。
+- 取得競合、DB時刻による失効、停止3地点、古い報告の拒否、基盤障害だけの最大3回、DB断と安全な回収を照合し、P2を完了と判定した。MVPは計画工数で重み付けして概算94%（残6%）。P3のGitHub実配送と手動再送、P5の第三者再現と最終受入が残る。

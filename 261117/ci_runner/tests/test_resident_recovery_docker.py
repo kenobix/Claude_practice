@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from dataclasses import replace
 from datetime import datetime, timedelta
-from functools import partial
+from functools import partial, wraps
 import json
 from multiprocessing import get_context
 from multiprocessing.connection import wait
@@ -24,7 +24,33 @@ from test_runs_postgres import ROOT, dedicated_database
 pytestmark = [pytest.mark.integration, pytest.mark.docker]
 
 
-def pause_resident(phase, notify, release=None):
+def trace_execution(path):
+    # Write completed calls even when the replacement exits before it can report.
+    origin = time.monotonic()
+
+    def measure(function, operation):
+        @wraps(function)
+        def call(*args, **kwargs):
+            start = time.monotonic()
+            outcome = 'ok'
+            try:
+                return function(*args, **kwargs)
+            except Exception as exc:
+                outcome = type(exc).__name__
+                raise
+            finally:
+                finish = time.monotonic()
+                with path.open('a') as output:
+                    output.write(f'{operation} +{start - origin:.3f}s {finish - start:.3f}s {outcome}\n')
+        return call
+
+    for module, name in ((execution, '_authorize'), (container, 'inspect_prepared_image'),
+                         (container, 'daemon_id'), (container, 'reserve_container_create'),
+                         (container, 'record_created_container'), (execution, '_run')):
+        setattr(module, name, measure(getattr(module, name), name))
+
+
+def pause_resident(phase, notify, release=None, *, trace=None):
     execute = execution.execute_fixture
     send_go = execution._release_workload
     finalize = finalization.finalize_fixture
@@ -42,6 +68,8 @@ def pause_resident(phase, notify, release=None):
         current, image = claim, prepared_image
         if phase == 'claim':
             stop_here()
+        if trace is not None:
+            trace_execution(trace)
         return execute(claim, *args, prepared_image=prepared_image, **kwargs)
 
     def track_release(process):
@@ -108,10 +136,11 @@ def test_two_residents_recover_after_sigkill(dedicated_database, tmp_path, phase
     ctx = get_context('fork')
     resume = ctx.Event()
     replacement_output = tmp_path / 'replacement'
+    replacement_trace = tmp_path / 'replacement.trace'
     old_read, old_write = ctx.Pipe(duplex=False)
     new_read, new_write = ctx.Pipe(duplex=False)
     failed_setup = partial(pause_resident, phase, old_write)
-    replacement_setup = partial(pause_resident, 'report', new_write, resume)
+    replacement_setup = partial(pause_resident, 'report', new_write, resume, trace=replacement_trace)
     killed = False
     prior = None
     try:
@@ -157,7 +186,8 @@ def test_two_residents_recover_after_sigkill(dedicated_database, tmp_path, phase
                     assert closed['container_recovered_at'] is None and closed['exit_code'] is None
                     if orphan is not None:
                         assert runs.get_run(database.connect, run.id).state == 'failed'
-                        recovered = scan_cli()
+                        # The scan includes Docker removal, exact absence and the DB commit.
+                        recovered = scan_cli(timeout=45)
                         assert recovered.returncode == 0 and not recovered.stderr
                         assert json.loads(recovered.stdout) == {
                             'container_id': orphan, 'run_id': str(run.id), 'attempt_id': str(claim.attempt_id)}
@@ -193,6 +223,8 @@ def test_two_residents_recover_after_sigkill(dedicated_database, tmp_path, phase
                 healthy.join(timeout=10)
                 assert healthy.exitcode == 0
     finally:
+        if replacement_trace.exists():
+            print(replacement_trace.read_text(), end='')
         if killed and phase != 'report':
             if prior['created_container_id'] is not None:
                 container.remove_owned(prior['created_container_id'], prior['create_session'].hex)

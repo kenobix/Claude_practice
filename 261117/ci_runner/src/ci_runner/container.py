@@ -3,10 +3,12 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
 from tempfile import TemporaryDirectory
+import time
 from uuid import UUID, uuid4
 
 from . import commit_source
@@ -51,10 +53,39 @@ def docker(*args, timeout=30, check=True):
 
 
 def daemon_id():
+    """Get a fresh Engine ID without CLI plugin probing on a plain local socket."""
+    deadline = time.monotonic() + 30
     try:
-        return UUID(docker('info', '--format', '{{.ID}}').stdout.strip())
-    except ValueError:
+        if not any(os.environ.get(key) for key in (
+                'DOCKER_TLS', 'DOCKER_TLS_VERIFY', 'DOCKER_CUSTOM_HEADERS', 'DOCKER_API_VERSION')):
+            context = json.loads(docker('context', 'inspect', '--format', '{{json .}}', timeout=5).stdout)
+            endpoint = context['Endpoints']['docker']
+            host = endpoint['Host']
+            if host.startswith('unix:///') and not endpoint.get('SkipTLSVerify') and not context.get('TLSMaterial'):
+                identity = _unix_daemon_id(host.removeprefix('unix://'))
+                if identity is not None:
+                    return identity
+        remaining = deadline - time.monotonic()
+        if remaining > 0:
+            return UUID(docker('info', '--format', '{{.ID}}', timeout=remaining).stdout.strip())
+    except (AttributeError, KeyError, TypeError, ValueError):
         raise ContainerRejected('Docker daemon identity unavailable') from None
+    raise ContainerRejected('Docker daemon identity unavailable')
+
+
+def _unix_daemon_id(path):
+    # Fixed local read only. Keep the configured CLI as the fallback for missing
+    # curl or a daemon that rejects an unversioned request.
+    try:
+        result = subprocess.run(
+            ['curl', '-q', '--silent', '--fail', '--noproxy', '*', '--proto', '=http',
+             '--unix-socket', path, '--max-time', '5', '--max-filesize', '1048576', 'http://localhost/info'],
+            stdin=subprocess.DEVNULL, capture_output=True, timeout=5)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode == 0:
+        return UUID(json.loads(result.stdout)['ID'])
+    return None
 
 
 def validate_configuration(info, image, labels, mode='success'):

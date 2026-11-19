@@ -65,15 +65,21 @@ def schedule_next(connection_factory=None) -> ScheduledRetry | None:
             return None
         # Read the latest attempt again under the run lock using a fresh snapshot.
         previous = conn.execute(
-            f'SELECT a.id, a.attempt_no, {ATTEMPT_POSITION_SQL} AS position {FAILED_RUN_FROM}AND r.id=%s',
+            'SELECT a.id, a.attempt_no, a.finished_at, a.container_recovered_at, '
+            f'{ATTEMPT_POSITION_SQL} AS position {FAILED_RUN_FROM}AND r.id=%s',
             (*params, candidate['id']),
         ).fetchone()
         if previous is None:
             return None
         number = previous['attempt_no']
+        # A backward DB clock step must not shorten the backoff after expiry or recovery.
         queued = conn.execute(
-            "UPDATE runs SET state='queued', available_at=clock_timestamp() + %s * interval '1 second' "
-            'WHERE id=%s RETURNING available_at', (BACKOFF_SECONDS[previous['position'] - 1], candidate['id']),
+            "UPDATE runs SET state='queued', "
+            'available_at=GREATEST(clock_timestamp(), %s::timestamptz, %s::timestamptz) '
+            "+ %s * interval '1 second' "
+            'WHERE id=%s RETURNING available_at',
+            (previous['finished_at'], previous['container_recovered_at'],
+             BACKOFF_SECONDS[previous['position'] - 1], candidate['id']),
         ).fetchone()
         if queued is None:
             raise database.DatabaseUnavailable()

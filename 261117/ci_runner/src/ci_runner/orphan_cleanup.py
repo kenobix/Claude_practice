@@ -120,8 +120,10 @@ def _confirm_recovery(factory, owner, daemon, container_id):
     if container.daemon_id() != daemon:
         raise container.ContainerRejected('Docker daemon changed during orphan cleanup')
     with factory() as conn:
+        # A wall-clock adjustment must preserve the order of expiry and observed absence.
         row = conn.execute(
-            'UPDATE attempts AS a SET container_recovered_at=clock_timestamp() FROM runs AS r '
+            'UPDATE attempts AS a SET container_recovered_at=GREATEST(clock_timestamp(), a.finished_at) '
+            'FROM runs AS r '
             f'WHERE {CLOSED_ATTEMPT} AND r.id=%s AND a.id=%s AND a.create_daemon_id=%s '
             'AND a.create_session=%s AND a.created_container_id=%s RETURNING a.id',
             (*POLICY_PARAMS, owner.run_id, owner.attempt_id, daemon, owner.session, container_id),

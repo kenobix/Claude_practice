@@ -32,6 +32,8 @@ def mock_scan(monkeypatch, owned):
         answers = iter(((INFO, 0, str(DAEMON)), *steps))
 
         def docker(*args, **kwargs):
+            if args[:2] == ('context', 'inspect'):
+                return CompletedProcess(args, 0, '{"Endpoints":{"docker":{"Host":"ssh://test"}}}', '')
             calls.append(args)
             expected, code, output = next(answers)
             assert args == expected

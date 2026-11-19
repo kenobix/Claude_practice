@@ -1,12 +1,13 @@
 from dataclasses import replace
 import os
+import time
 
 import pytest
 
 from ci_runner import commit_source, container, database, fixture_worker, orphan_cleanup, runs, worker
 from ci_runner.expiry_monitor import expire_next
 from ci_runner.finalization import FinalizationDenied, finalize_fixture
-from ci_runner.preflight import authorize_execution
+from ci_runner.preflight import ExecutionDenied, authorize_execution
 from ci_runner.retry import schedule_next
 from test_commit_source import GitHubFixture, HEAD
 from test_expiry_monitor import set_expiry
@@ -20,7 +21,8 @@ from test_runs_postgres import api, dedicated_database
 pytestmark = [pytest.mark.integration, pytest.mark.docker]
 
 
-def test_verified_retry_recovers_second_attempt_before_running_third(dedicated_database, monkeypatch):
+@pytest.mark.parametrize('fail_at', ['before_create', 'after_create'])
+def test_verified_retry_recovers_second_attempt_before_running_third(dedicated_database, monkeypatch, fail_at):
     if os.environ.get('CI_RUN_EXECUTION_TESTS') != '1':
         pytest.skip('run scripts/verify_execution.py for DB/Docker retry checks')
 
@@ -43,16 +45,43 @@ def test_verified_retry_recovers_second_attempt_before_running_third(dedicated_d
             pytest.fail('local image prepared a retry')
         with pytest.raises(FinalizationDenied):
             finalize_fixture(second, report(second))
-        with killed_worker(second, image, 'created') as orphan:
-            set_expiry(second, -1)
+        if fail_at == 'before_create':
+            daemon_id, docker = container.daemon_id, container.docker
+
+            def expire_before_reservation():
+                identity = daemon_id()
+                set_expiry(second, -1)
+                return identity
+
+            def reject_create(command, *args, **kwargs):
+                assert command != 'create', 'expired attempt sent a Docker create request'
+                return docker(command, *args, **kwargs)
+
+            with monkeypatch.context() as fault:
+                fault.setattr(container, 'daemon_id', expire_before_reservation)
+                fault.setattr(container, 'docker', reject_create)
+                with (
+                    pytest.raises(ExecutionDenied, match='container create cannot be reserved'),
+                    container.prepare_fixture(authorize_execution(second), prepared_image=image,
+                                              connection_factory=database.connect),
+                ):
+                    pytest.fail('expired attempt prepared a container')
+            with database.connect() as conn:
+                recorded = conn.execute('SELECT create_session, created_container_id FROM attempts WHERE id=%s',
+                                        (second.attempt_id,)).fetchone()
+                assert recorded == {'create_session': None, 'created_container_id': None}
             assert expire_next().attempt_id == second.attempt_id
-            assert schedule_next() is None
-            assert list(orphan_cleanup.recover()) == [
-                orphan_cleanup.RemovedContainer(orphan, run.id, second.attempt_id)]
-            assert recovery_time(second) is not None
-            assert orphan_cleanup._inspect(orphan) is None
-            queued = schedule_next()
-            assert queued.next_attempt_no == 3 and queued.attempt_id == second.attempt_id
+        else:
+            with killed_worker(second, image, 'created') as orphan:
+                set_expiry(second, -1)
+                assert expire_next().attempt_id == second.attempt_id
+                assert schedule_next() is None
+                assert list(orphan_cleanup.recover()) == [
+                    orphan_cleanup.RemovedContainer(orphan, run.id, second.attempt_id)]
+                assert recovery_time(second) is not None
+                assert orphan_cleanup._inspect(orphan) is None
+        queued = schedule_next()
+        assert queued.next_attempt_no == 3 and queued.attempt_id == second.attempt_id
 
     make_available(run.id)
     result = fixture_worker.run_once('retry-3', verified_commit=True)
@@ -86,7 +115,13 @@ def test_manual_retry_recovers_orphan_and_promotes_only_new_result(dedicated_dat
     with api() as (client, _):
         retry = client.put(f'/runs/{run.id}/retry/{first.attempt_id}')
         assert retry.status_code == 202
+        deadline = time.monotonic() + 5
         source = commit_source.verify_queued_source()
+        # The DB clock can briefly lag the committed available_at after a backward step.
+        while source is None and time.monotonic() < deadline:
+            time.sleep(0.05)
+            source = commit_source.verify_queued_source()
+        assert source is not None, 'accepted manual retry did not become claimable'
         assert (source.run_id, source.commit_sha) == (run.id, run.commit_sha)
         with container.prepare_image(verified_source=source) as image:
             manual = worker.claim_next('manual', target=(source.run_id, source.commit_sha))

@@ -96,6 +96,10 @@ def test_verified_image_recovers_after_claim_or_preflight_denial(dedicated_datab
     # Keep control-plane fault injection independent of the live GitHub test.
     monkeypatch.setattr(commit_source, '_GitHub', lambda: GitHubFixture(HEAD))
     first, other = [runs.create_run(database.connect, char*40)[0] for char in 'ab']
+    with database.connect() as conn:
+        conn.execute("UPDATE runs SET available_at=statement_timestamp() - interval '1 day' "
+                     "- CASE WHEN id=%s THEN interval '1 second' ELSE interval '0 seconds' END WHERE id IN (%s, %s)",
+                     (first.id, first.id, other.id))
     before = resources()
     docker = container.docker
     context_path = None

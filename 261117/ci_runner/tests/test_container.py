@@ -1,5 +1,6 @@
 from dataclasses import replace
 from datetime import datetime, timezone
+import json
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -90,8 +91,44 @@ def test_docker_errors_do_not_expose_diagnostics(monkeypatch):
     assert 'public-test-canary' not in str(error.value)
 
 
+@pytest.mark.parametrize('reply', ['valid', 'malformed', 'curl_error', 'ssh', 'tls'])
+def test_daemon_id_uses_current_context_and_preserves_cli_fallback(monkeypatch, reply):
+    for var in ('DOCKER_TLS', 'DOCKER_TLS_VERIFY', 'DOCKER_CUSTOM_HEADERS', 'DOCKER_API_VERSION'):
+        monkeypatch.delenv(var, raising=False)
+    identity = uuid4()
+    path = '/run/user/1234/docker.sock'
+    host = 'ssh://test' if reply == 'ssh' else f'unix://{path}'
+    fallback = []
+
+    def docker(*args, **kwargs):
+        if args == ('context', 'inspect', '--format', '{{json .}}'):
+            context = {'Endpoints': {'docker': {'Host': host}},
+                       'TLSMaterial': {'docker': ['ca.pem']} if reply == 'tls' else None}
+            return SimpleNamespace(stdout=json.dumps(context))
+        assert args == ('info', '--format', '{{.ID}}') and 0 < kwargs['timeout'] <= 30
+        fallback.append(True)
+        return SimpleNamespace(stdout=str(identity))
+
+    def curl(args, **kwargs):
+        assert reply not in ('ssh', 'tls')
+        assert args[:2] == ['curl', '-q']
+        assert args[args.index('--unix-socket') + 1] == path
+        assert args[args.index('--noproxy') + 1] == '*' and args[-1] == 'http://localhost/info'
+        assert 0 < kwargs['timeout'] < 30
+        return SimpleNamespace(returncode=int(reply == 'curl_error'),
+                               stdout=json.dumps({'ID': 'nonpublic daemon reply' if reply == 'malformed' else str(identity)}))
+
+    monkeypatch.setattr(container, 'docker', docker)
+    monkeypatch.setattr(container.subprocess, 'run', curl)
+    if reply == 'malformed':
+        with pytest.raises(container.ContainerRejected, match=r'^Docker daemon identity unavailable$'):
+            container.daemon_id()
+    else:
+        assert container.daemon_id() == identity
+    assert bool(fallback) == (reply in ('curl_error', 'ssh', 'tls'))
+
+
 def test_cleanup_refuses_unowned_container(monkeypatch):
-    import json
     calls = []
     info, _, _ = configuration()
     def fake(*args, **kwargs):
@@ -139,7 +176,6 @@ def test_invalid_image_handle_never_contacts_docker(monkeypatch, change):
 
 @pytest.mark.parametrize('changed', ['identity', 'owner'])
 def test_rebound_or_unowned_image_never_creates_container(monkeypatch, changed):
-    import json
     prepared = container.PreparedImage('sha256:'+'a'*64, 'b'*32, 'ci-runner-fixed-fixture:'+'b'*32)
     image = {'Id': prepared.image_id, 'Config': {'Labels': {container.LABEL: prepared.session}}}
     if changed == 'identity':
@@ -156,7 +192,6 @@ def test_rebound_or_unowned_image_never_creates_container(monkeypatch, changed):
 
 
 def test_cleanup_never_removes_a_rebound_image_tag(monkeypatch):
-    import json
     rebound = False
     def fake(*args, **kwargs):
         if args[0] == 'build':

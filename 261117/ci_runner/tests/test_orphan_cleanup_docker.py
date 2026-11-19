@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import replace
+from datetime import timedelta
 import json
 from multiprocessing import get_context
 import os
@@ -13,10 +14,11 @@ from uuid import uuid4
 import psycopg
 import pytest
 
-from ci_runner import container, database, execution, orphan_cleanup
+from ci_runner import container, database, execution, orphan_cleanup, worker
 from ci_runner.expiry_monitor import expire_next
 from ci_runner.finalization import FinalizationDenied, finalize_fixture
 from ci_runner.preflight import authorize_execution
+from ci_runner.retry import schedule_next
 from test_create_reservation import create_history
 from test_expiry_monitor import set_expiry
 from test_finalization_input import report
@@ -83,9 +85,9 @@ def killed_worker(claim, image, checkpoint):
                 container.docker('container', 'rm', '--force', container_id, check=False)
 
 
-def scan_cli():
+def scan_cli(*, timeout=12):
     return subprocess.run([sys.executable, '-m', 'ci_runner.orphan_cleanup', '--once'],
-                          cwd=ROOT, capture_output=True, text=True, timeout=12)
+                          cwd=ROOT, capture_output=True, text=True, timeout=timeout)
 
 
 def inspect(container_id):
@@ -294,6 +296,32 @@ def test_recovery_restarts_after_removal_before_db_confirmation(dedicated_databa
             assert final_time is not None
             if committed:
                 assert final_time == confirmed_at
+    assert resources() == before
+
+
+def test_recovery_and_backoff_keep_db_order_when_clock_moves_back(dedicated_database):
+    before = resources()
+    with container.prepare_image() as image:
+        run, claim = issue_claim()
+        with killed_worker(claim, image, 'created') as orphan:
+            set_expiry(claim, -1)
+            assert expire_next().attempt_id == claim.attempt_id
+            with database.connect() as conn:
+                finished = conn.execute('SELECT finished_at FROM attempts WHERE id=%s',
+                                        (claim.attempt_id,)).fetchone()['finished_at']
+                future = finished + timedelta(minutes=2)
+                conn.execute('UPDATE attempts SET finished_at=%s WHERE id=%s', (future, claim.attempt_id))
+
+            assert list(orphan_cleanup.recover()) == [orphan_cleanup.RemovedContainer(orphan, run.id, claim.attempt_id)]
+            assert recovery_time(claim) == future
+            assert schedule_next() is None
+
+            # Simulate a recorded recovery still ahead of the current clock after a backward step.
+            with database.connect() as conn:
+                conn.execute('UPDATE attempts SET finished_at=%s WHERE id=%s', (finished, claim.attempt_id))
+            queued = schedule_next()
+            assert (queued.attempt_id, queued.available_at) == (claim.attempt_id, future + timedelta(seconds=5))
+            assert worker.claim_next('early', target=(run.id, run.commit_sha)) is None
     assert resources() == before
 
 

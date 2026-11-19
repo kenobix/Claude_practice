@@ -77,7 +77,7 @@ CI_RUN_LIVE_COMMIT_SOURCE=1 .venv/bin/python scripts/verify_execution.py
 
 1走査で期限切れと再キューをそれぞれ最大16件処理し、5秒待つ。単発は `--once`。DBエラー時は終了1とし、再開前にDB状態を照合する。
 基盤障害による失効後、Dockerへのcreate未送信または回収確認があるrunを同じID・受理SHAで再キューする。
-`available_at` はDB時刻から5秒後（2回目）または10秒後（3回目）。検証付きWorkerだけが新しいattempt・tokenを取得する。
+`available_at` はDBの現在時刻と記録済みの終了・回収時刻のうち最も遅い時刻から、5秒後（2回目）または10秒後（3回目）。検証付きWorkerだけが新しいattempt・tokenを取得する。
 初回投入と各手動再試行はそれぞれ最大3attempt。区間の3回目も失効した場合は `failed / infra_exhausted` を記録する。
 取消・チェック失敗・タイムアウト・ログ超過は自動再試行の対象外。
 
