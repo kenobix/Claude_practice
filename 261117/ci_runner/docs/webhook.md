@@ -26,9 +26,11 @@ Webhook専用のASGIアプリ `ci_runner.webhook:app` は `POST /webhooks/github
 .venv/bin/python -m uvicorn ci_runner.webhook:app --host 127.0.0.1 --port 18118 --no-access-log
 ```
 
-実配送では承認済みの公開HTTPS受信口で証明書検証を有効にし、`POST /webhooks/github` だけをこのプロセスへ転送する。プロキシはbodyを変換せず、サイズ・接続・受信時間を制限する。GitHubのhookはJSON、pushイベントだけ、SSL検証有効で設定する。先に非アクティブなhookを作成する場合はIDを受信設定へ反映してから有効にする。 [GitHubのWebhook運用指針](https://docs.github.com/en/webhooks/using-webhooks/best-practices-for-using-webhooks)
+実配送の前に、公開先の運用責任者がTLS終端、転送経路、試験時間帯を承認する。公開側からは `POST /webhooks/github` だけを `127.0.0.1:18118` の専用アプリへ転送し、管理API・DB・Docker socketへの経路を設けない。プロキシは元bodyを保ち、サイズ・接続・受信時間を制限し、bodyや署名ヘッダーをログに残さない。 [GitHubのWebhook運用指針](https://docs.github.com/en/webhooks/using-webhooks/best-practices-for-using-webhooks)
 
-GitHubは失敗配送を自動再送しない。復旧後、管理者がリポジトリの **Settings → Webhooks → Recent deliveries** で対象GUIDの **Redeliver** を選ぶ。対象は過去3日間。停止中に失敗したpushを同じIDで再送してrunが1件であること、GitHubの画面で応答が受信から10秒以内であることを確認する。 [GitHubの手動再送手順](https://docs.github.com/en/webhooks/testing-and-troubleshooting-webhooks/redelivering-webhooks)
+リポジトリの所有者または管理者が、承認を得て対象リポジトリの **Settings → Webhooks** から設定する。Payload URLは承認済みのHTTPS URL、Content typeは `application/json`、イベントはpushのみ、SSL検証は有効とする。共有秘密はGitHub設定と受信プロセスの環境にだけ登録する。非アクティブで作成した場合は、hook IDを受信設定に反映してから有効にする。 [GitHubの設定手順](https://docs.github.com/en/webhooks/using-webhooks/creating-webhooks)
+
+管理者と、許可refへ通常の運用で届くpushの試験時刻を調整する。通常受信で配送GUID・受理SHA・run IDが対応し、永続化後の202が10秒以内に返ることを確認する。専用受信プロセスの停止中に別の対象pushが失敗したことを確認し、復旧後、管理者が **Recent deliveries** の同じGUIDで **Redeliver** を選ぶ。GitHubは自動再送せず、手動再送は過去3日間の配送が対象。同じ配送を10回再送しても同じrunが返り、そのSHAのrunは1件であることを確認する。GitHub側の応答時間と受信側の永続化結果を記録する。 [GitHubの手動再送手順](https://docs.github.com/en/webhooks/testing-and-troubleshooting-webhooks/redelivering-webhooks)
 
 ## 検証範囲
 

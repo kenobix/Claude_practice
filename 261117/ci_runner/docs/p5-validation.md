@@ -62,8 +62,10 @@ DBの合計9,093回の観測で待ちイベントは `IO/WalSync` 15サンプル
 
 ## 初回のローカル検証
 
-手元の専用開発環境にリポジトリを取得し、検証対象のcommitを選んで、READMEのvenv作成と固定依存の導入を行う。
-既存DBの設定やGitHubの認証情報を用意せず、以下のコマンドでローカル固定fixtureの成功を確認する。ポート `55417` は試験専用に空ける。
+独立レビュー担当者は、Docker EngineとCompose v2を利用できるクリーンな専用Linux VMに `https://github.com/kenobix/Claude_practice.git` を新規cloneする。
+Draft PR #1でレビュー対象とする `feat/ci-runner` のSHAをcheckoutし、`git rev-parse HEAD` で一致を確認する。既存のvenvやDB設定を持ち込まず、READMEどおりにPython 3.12のvenvを作り、固定依存とパッケージを導入して `pip check` を通す。 [環境の準備](../../README.md#python環境とテスト)
+
+GitHubの認証情報や `.env` は不要。ポート `55417` を試験専用に空け、下記を実行する。
 
 ```bash
 # 261117/ci_runner から実行
@@ -72,8 +74,17 @@ PYTEST_ADDOPTS='-k "test_api_to_separate_worker_to_persisted_result and fixture_
 ```
 
 受付APIで保存したrunを別Workerプロセスで取得して固定fixtureをDockerで実行する。APIを起動し直して正式結果とログを照会し、同じ要求から新しいrunが増えないことを検査する。
-成功は該当テストのPASS、readiness 200、DB再起動後のmigration保持、専用資源の回収で判断する。
-2026-11-19に同一ホストの一時アーカイブと新しいvenvで、PyPIから固定依存を導入して再現した。別ホストの第三者による確認は残る。
+
+| 合格条件 | レビュー担当者が確認する証拠 |
+|---|---|
+| 新規環境から同じ版を起動できる | 受入対象SHAとローカルHEADが一致し、固定依存の導入と `pip check` が成功 |
+| 実PostgreSQL・実Dockerで固定fixtureが1件成功し、正式結果を再照会できる | pytestが `1 passed`。新規生成された `artifacts/fixture-worker-latest.json` の `git_head_at_execution` が対象SHA、`pytest_failures` が0、唯一の `cases` が `fixture: success`、`receipt.state: succeeded`、`api_restarted: true` |
+| 正しいDBを使い、再起動後も初期化状態を保持する | `real DB readiness: 200`、`migration persists after restart`、PostgreSQLの版と固定イメージdigestの出力 |
+| 試験資源を回収できる | スクリプトの終了コード0、証拠の `owned_resources_before` と `owned_resources_after` が一致。Composeラベル `com.docker.compose.project=ci-runner-261117-p0-check` のコンテナ・volume・networkが終了後に0件 |
+
+レビュー結果として、SHA、実施日、OS・Python・Docker・Compose・PostgreSQLの版、上の各条件の合否、つまずいた手順をPR #1へ返す。証拠は必要な項目とログの該当行に絞り、認証情報や環境変数の値を添付しない。skipや証拠不足は未完了とする。
+
+2026-11-19に同一ホストの一時アーカイブと新しいvenvで、PyPIから固定依存を導入して再現した。第三者による確認は未実施。
 
 担当ブランチでは、使い捨てのUbuntu 24.04 VMで同じ初回検証を実行する。毎回新しいvenvへ固定依存を導入し、実PostgreSQLと実Dockerでローカル固定fixtureを1件確認する。
 試験がskipされて証拠が生成されない場合や、証拠のSHAとcheckoutのSHAが異なる場合は失敗とする。
