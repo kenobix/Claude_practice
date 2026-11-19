@@ -4,6 +4,7 @@ Run from the project venv. Docker daemon access and image pull are required.
 Credentials are generated in memory and never saved or printed.
 """
 import os
+from contextlib import contextmanager
 from pathlib import Path
 import secrets
 import subprocess
@@ -15,33 +16,41 @@ ROOT = Path(__file__).resolve().parents[1]
 PROJECT = 'ci-runner-261117-p0-check'
 
 
-def verify():
+@contextmanager
+def disposable_database(project, port):
     env = os.environ.copy()
     env.update(
-        COMPOSE_PROJECT_NAME=PROJECT,
+        COMPOSE_PROJECT_NAME=project,
         POSTGRES_USER='ci_runner_261117',
         POSTGRES_DB='ci_runner_261117',
         POSTGRES_PASSWORD=secrets.token_hex(24),
-        CI_DB_PORT='55417',
+        CI_DB_PORT=str(port),
     )
     env['DATABASE_URL'] = (
         f"postgresql://{env['POSTGRES_USER']}:{env['POSTGRES_PASSWORD']}"
-        '@127.0.0.1:55417/ci_runner_261117'
+        f'@127.0.0.1:{port}/ci_runner_261117'
     )
     env['CI_TEST_DATABASE_URL'] = env['DATABASE_URL']
     env['CI_TEST_DISPOSABLE'] = '1'
-    env['CI_TEST_COMPOSE_PROJECT'] = PROJECT
+    env['CI_TEST_COMPOSE_PROJECT'] = project
     env['CI_TEST_COMPOSE_FILE'] = str(ROOT / 'compose.yaml')
-    compose = ['docker', 'compose', '--project-name', PROJECT, '-f', str(ROOT / 'compose.yaml')]
+    compose = ['docker', 'compose', '--project-name', project, '-f', str(ROOT / 'compose.yaml')]
     # Refuse to mutate or remove any existing project, including abandoned volumes.
     for resource in ('ps', 'volume ls', 'network ls'):
         command = ['docker', *resource.split()]
         command += ['-aq'] if resource == 'ps' else ['-q']
-        command += ['--filter', f'label=com.docker.compose.project={PROJECT}']
-        if subprocess.check_output(command, env=env, text=True).strip():
+        command += ['--filter', f'label=com.docker.compose.project={project}']
+        if subprocess.check_output(command, env=env, text=True, timeout=15).strip():
             raise SystemExit('Existing verification project found; refusing to modify it')
     try:
-        subprocess.run(compose + ['up', '-d', '--wait', 'db'], env=env, check=True)
+        subprocess.run(compose + ['up', '-d', '--wait', 'db'], env=env, check=True, timeout=180)
+        yield env, compose
+    finally:
+        subprocess.run(compose + ['down', '--volumes'], env=env, check=True, timeout=60)
+
+
+def verify():
+    with disposable_database(PROJECT, 55417) as (env, compose):
         for _ in range(2):
             subprocess.run([sys.executable, str(ROOT / 'scripts/migrate.py')], env=env, check=True)
         subprocess.run([sys.executable, '-m', 'pytest', '-q', str(ROOT / 'tests')], env=env, check=True)
@@ -67,8 +76,6 @@ def verify():
             print('migration persists after restart')
         subprocess.run(['docker', 'image', 'inspect', 'postgres:17.12-bookworm',
                         '--format', '{{json .RepoDigests}}'], check=True, env=env)
-    finally:
-        subprocess.run(compose + ['down', '--volumes'], env=env, check=True)
 
 
 if __name__ == '__main__':

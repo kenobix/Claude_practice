@@ -1,4 +1,4 @@
-# CIジョブ実行基盤：環境整備とP0設計準備
+# CIジョブ実行基盤
 
 作業日: 2026-11-17。worktree: `~/work/Claude_practice-261117`、branch: `feat/ci-runner`。
 基準: [開発計画](../261014/plan_ci_runner.md)。**P0完了（現在環境・管理下の固定fixtureによる開発検証範囲）**。**P1完了（管理下fixtureの受付から結果保存・単一Worker停止まで）**。
@@ -99,8 +99,10 @@ Workerと同じDockerデーモンと専用DBに接続する環境で実行する
 
 ## Python環境とテスト
 
+リポジトリのルートから開始する。Python 3.12、venv、Docker EngineとCompose v2を用意し、Dockerへ接続できる専用開発環境を使用する。
+
 ```bash
-cd ~/work/Claude_practice-261117/261117/ci_runner
+cd 261117/ci_runner
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.lock
 .venv/bin/python -m pip install --no-build-isolation --no-deps -e .
@@ -121,8 +123,7 @@ curl --fail http://127.0.0.1:18117/health/live
 curl -i http://127.0.0.1:18117/health/ready
 ```
 
-liveは200。readyはDB未設定・DB停止・migration未適用なら503。
-本当のDB準備完了はスキーマ版3の確認後に200となる。一時検証DBでready=200を確認済み。
+liveは200。readyは必要なmigration 001〜008をすべて確認して200、DB未設定・停止・版の欠落時は503。
 
 ## PostgreSQLの起動・初期化
 
@@ -230,9 +231,9 @@ Base image/build cacheは再利用用に残す。強制中断でfinallyも動か
 
 ## 受付APIの利用
 
-DATABASE_URL設定とmigration版4適用後、前述のUvicorn起動コマンドで利用できる。
+DATABASE_URL設定とmigration 008までの適用後、前述のUvicorn起動コマンドで利用できる。
 repositoryはkenobix/Claude_practice、refはrefs/heads/main、workflow版はfixture-v1に固定する。
-入力にref・workflow・URL・command・YAMLを追加できない。SHAは構文だけを検証し、実在確認や実行はまだ行わない。
+入力にref・workflow・URL・command・YAMLを追加できない。受付ではSHAの構文を確認し、実在・許可mainへの所属・承認済みfixtureの検証はWorkerがclaim前に行う。
 
 ```bash
 curl -i -X POST http://127.0.0.1:18117/runs \
@@ -281,6 +282,12 @@ curl -X PUT "http://127.0.0.1:18117/runs/${RUN_ID}/retry/${ATTEMPT_ID}"
 検証付きWorkerが同じ受理SHAを取得した後、次の番号と新しいtokenで実行する。以前のattempt・ログ・取得元の記録は保持する。
 回収を確認できない基盤障害は409で再試行を拒否する。
 [運用API仕様](ci_runner/docs/run-operations.md)。
+
+## 比較実験と障害デモ
+
+使い捨てPostgreSQLと実Dockerで1/2 Workerを比較できる。通常は100ジョブを各3回実行し、`--pilot` は2件の動作確認に使う。
+固定fixtureの検証と実行制限を保ち、GitHub HTTP応答を試験データに置き換える。
+[計測、クリーン環境の確認、3分の故障デモ](ci_runner/docs/p5-validation.md)
 
 ## Worker取得だけの診断
 
@@ -371,5 +378,4 @@ X-Log-Next-Offsetで続き、X-Log-Attempt-Idで参照先、X-Log-Truncatedで�
 未確定409・ログなし404・範囲超過416・不正入力422・DB停止503を区別する。
 詳細は[ログ取得仕様](ci_runner/docs/log-access.md)。APIは引き続きloopback限定で運用する。
 
-P0〜P5全体の推定進捗は約30%（残約70%）、P1全体は未完了。
-[推定の根拠と完了判定](ci_runner/docs/progress.md)を参照。テスト件数や時間消化率による値ではない。
+P0〜P5の[受入状況と進捗の概算](ci_runner/docs/progress.md)を参照。
