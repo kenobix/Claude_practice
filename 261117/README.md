@@ -32,7 +32,7 @@ blob・2151 bytes・承認済みSHA-256を照合する。I/O前後のrun ID/SHA�
 
 ## 受理commitの固定fixtureを一件実行する
 
-専用DBで migration 007 まで適用し、許可main上のfixtureを含むSHAでrunを投入する。
+専用DBで migration 008 まで適用し、許可main上のfixtureを含むSHAでrunを投入する。
 WorkerにDocker権限とGitHub HTTPS接続を用意し、`ci_runner/` から実行する。
 
 ```bash
@@ -158,6 +158,7 @@ verify_db.pyを使い、既存の開発DBへテストを手動で向けない。
 版1に加えて002_run_history.sqlの履歴indexを適用する。001は変更していない。
 003_attempt_logs.sqlでattempt別ログと容量台帳を追加する。既存履歴を保持し、過去ログはbackfillしない。
 007_manual_retry.sqlは手動再試行の受付記録と、各attemptが属する区間の開始番号を追加する。
+008_result_artifacts_and_timings.sqlは結果JSON、成果物の容量台帳、試行別の計測情報を追加する。
 更新時は既存のAPI・Worker・期限監視・回収プロセスを停止してからmigrationを適用し、新しい版で再起動する。
 適用ツールは番号順の前進適用と未知版の検出に対応し、downgradeは未実装。
 
@@ -257,6 +258,7 @@ commit結果が不明な接続断では、未保存と断定せず同じ業務�
 
 API起動後、ブラウザーで `http://127.0.0.1:18117/ui` を開く。一覧または実行IDの検索から詳細に入り、
 コミットSHA、試行履歴、チェック失敗と基盤障害の区別、正式ログを確認する。対象の状態に応じて取消・再試行を行える。
+正式結果の「結果JSONを保存」から試行別の成果物を取得できる。「運用指標」では直近24時間の待ち時間・実行時間・基盤障害率・期限切れ件数を確認できる。
 「過去のデモ」は障害試験を再現した表示専用の例で、DBなしでも開ける。 [管理画面と運用API](ci_runner/docs/run-operations.md)
 
 ### CLIから取り消す・再試行する・attempt履歴を見る

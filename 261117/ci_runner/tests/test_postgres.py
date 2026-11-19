@@ -19,7 +19,7 @@ def test_migration_and_constraints(monkeypatch):
         subprocess.run([sys.executable, str(script)], check=True)
     with psycopg.connect(dsn) as conn:
         assert conn.execute("SELECT version FROM schema_migrations ORDER BY version").fetchall() == [
-            (1,), (2,), (3,), (4,), (5,), (6,), (7,)]
+            (1,), (2,), (3,), (4,), (5,), (6,), (7,), (8,)]
         run_id = conn.execute(
             "INSERT INTO runs(repository_id, ref, commit_sha, workflow_version) "
             "VALUES ('fixture', 'refs/heads/main', %s, 'v1') RETURNING id", ('a' * 40,)
@@ -45,7 +45,7 @@ def test_migration_and_constraints(monkeypatch):
 
 
 @pytest.mark.integration
-def test_manual_retry_migration_preserves_original_attempt_numbers_and_tokens():
+def test_latest_migrations_preserve_original_attempts_and_artifact_metadata():
     dsn = os.environ.get('CI_TEST_DATABASE_URL')
     if not dsn or os.environ.get('CI_TEST_DISPOSABLE') != '1':
         pytest.skip('use verify_db.py: disposable dedicated PostgreSQL required')
@@ -74,4 +74,15 @@ def test_manual_retry_migration_preserves_original_attempt_numbers_and_tokens():
         assert conn.execute(query).fetchall() == old
         assert conn.execute('SELECT DISTINCT retry_start_no FROM attempts').fetchall() == [(1,)]
         assert conn.execute('SELECT count(*) FROM manual_retries').fetchone() == (0,)
+        conn.execute(
+            'INSERT INTO artifacts(attempt_id,relative_name,size_bytes,sha256,storage_key) VALUES (%s,%s,%s,%s,%s)',
+            (old[0][0], 'legacy.txt', 16, 'a'*64, 'legacy-metadata'),
+        )
+        conn.execute(next(path for path in migrations if path.name.startswith('008_')).read_text())
+        assert conn.execute(query).fetchall() == old
+        assert conn.execute('SELECT claimable_at, execution_ms FROM attempts').fetchall() == [(None, None)] * 2
+        assert conn.execute('SELECT relative_name, size_bytes, payload FROM artifacts').fetchone() == (
+            'legacy.txt', 16, None,
+        )
+        assert conn.execute('SELECT used_bytes FROM artifact_storage_budget').fetchone() == (0,)
         conn.rollback()

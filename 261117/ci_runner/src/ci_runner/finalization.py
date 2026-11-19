@@ -4,7 +4,7 @@ from datetime import datetime
 import re
 from uuid import UUID
 
-from . import commit_source, database
+from . import artifacts, commit_source, database
 from .execution import ExecutionResult, EXPECTED_LIMITS, LOG_LIMIT
 from .retry import attempt_kind
 from .settings import POLICY
@@ -52,7 +52,7 @@ def outcome(claim: Claim, result: ExecutionResult):
 
 
 def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=None):
-    """Persist a report and bounded opaque logs after execution/cleanup.
+    """Persist a report, bounded logs and a result artifact after execution/cleanup.
 
     Lock run then attempt. Fresh DB-clock guards fence both updates. Identical
     committed reports can be acknowledged after expiry without writing again.
@@ -60,6 +60,9 @@ def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=N
     This is a trusted internal API, not a cryptographic proof of execution.
     """
     state, reason = outcome(claim, result)
+    if type(result.elapsed_seconds) not in (int, float) or not 0 <= result.elapsed_seconds <= 2147483.647:
+        raise FinalizationDenied('invalid execution duration')
+    elapsed_ms = round(result.elapsed_seconds * 1000)
     source = result.verified_source
     if type(claim.attempt_no) is not int or claim.attempt_no < 1 or (claim.attempt_no > 1 and source is None):
         raise FinalizationDenied('fixture report is not current')
@@ -91,6 +94,8 @@ def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=N
             raise FinalizationDenied('fixture report is not current')
         if source is not None and run['commit_sha'] != source.commit_sha:
             raise FinalizationDenied('source SHA does not match the claimed run')
+        document = artifacts.result_document(claim, run['commit_sha'], state, reason, result.exit_code,
+                                             elapsed_ms, provenance)
         replayed = (run['completed_attempt_id'] == claim.attempt_id
                     and run['state'] == attempt['state'] == state
                     and attempt['exit_code'] == result.exit_code and attempt['reason'] == reason
@@ -108,6 +113,10 @@ def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=N
                     (claim.attempt_id, claim.run_id)).fetchone()
                 if saved_source != provenance:
                     raise FinalizationDenied('persisted source does not match the report')
+            # Older completed attempts have no duration or result document.
+            if attempt['execution_ms'] is not None and (
+                    attempt['execution_ms'] != elapsed_ms or not artifacts.matches(conn, claim.attempt_id, document)):
+                raise FinalizationDenied('persisted artifact does not match the report')
             finished_at = attempt['finished_at']
         else:
             if (run['state'] != 'running' or run['cancel_requested_at'] is not None
@@ -115,10 +124,10 @@ def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=N
                     or attempt['finished_at'] is not None):
                 raise FinalizationDenied('fixture report is not current')
             saved = conn.execute(
-                'UPDATE attempts SET state=%s,exit_code=%s,reason=%s,finished_at=clock_timestamp() '
+                'UPDATE attempts SET state=%s,exit_code=%s,reason=%s,execution_ms=%s,finished_at=clock_timestamp() '
                 "WHERE id=%s AND lease_token=%s AND state='running' AND finished_at IS NULL "
                 'AND lease_expires_at>clock_timestamp() RETURNING finished_at',
-                (state, result.exit_code, reason, claim.attempt_id, claim.lease_token)).fetchone()
+                (state, result.exit_code, reason, elapsed_ms, claim.attempt_id, claim.lease_token)).fetchone()
             if saved is None:
                 raise FinalizationDenied('execution lease is expired')
             conn.execute('INSERT INTO attempt_logs(attempt_id,stdout,stderr,observed_bytes) VALUES (%s,%s,%s,%s)',
@@ -128,6 +137,7 @@ def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=N
                     'INSERT INTO attempt_sources(attempt_id,run_id,commit_sha,main_sha,blob_sha,source_sha256,image_id) '
                     'VALUES (%(attempt_id)s,%(run_id)s,%(commit_sha)s,%(main_sha)s,%(blob_sha)s,%(source_sha256)s,%(image_id)s)',
                     {**provenance, 'attempt_id': claim.attempt_id, 'run_id': claim.run_id})
+            artifacts.store(conn, claim.attempt_id, document)
             changed = conn.execute(
                 'UPDATE runs SET state=%s,completed_attempt_id=%s '
                 "WHERE id=%s AND state='running' AND cancel_requested_at IS NULL "

@@ -18,9 +18,9 @@ Docker操作権限は信頼済みWorkerだけ。APIやジョブへsocketを渡�
 | 書込・資源枯渇 | read-only root、限定tmpfs 16MiB、CPU 0.5、RAM 128MiB、PID 64 | 書込拒否、OOM、CPU/PID実測 |
 | ネットワーク流出 | fetch段階を分離、実行コンテナはnetwork none | 外向き通信失敗を実測 |
 | 無限実行/大量ログ | 壁時計上限10秒、stdout+stderr合計1MiBで打切り、停止・強制kill・回収 | 長時間/大量ログfixture試験 |
-| ログによるディスク枯渇 | log-driver none、DB保持payload合計1MiB/attempt・最大64MiBの条件付き予約 | DB競合/容量不足で確定拒否。WAL/履歴等を含む物理容量の上限は未検証 |
+| ログ・成果物による容量枯渇 | log-driver none、ログ1MiB/attempt・最大64MiB、結果JSON 4KiB/attempt・最大16MiBをDBで条件付き予約 | DB競合/容量不足で確定拒否。WAL/履歴等を含む物理容量の上限は未検証 |
 | 古い実行結果 | token/DB時刻/状態/取消条件による確定、attempt別成果物 | 期限切れ完了・競合試験 |
-| パストラバーサル/XSS | ファイル名はサーバー生成、範囲外パスとsymlinkを拒否、表示時HTML escape | 悪意ある名前・内容の試験 |
+| パストラバーサル/XSS | 成果物は固定名とDB保存キーで生成、ダウンロード入力はUUID。ログは表示時HTML escape | 不正ID、旧試行の参照、ログ内のタグ・制御文字を検証 |
 | Webhook偽装/再送 | raw body HMAC-SHA256定数時間比較、body上限、許可repo/ref、IDと業務キー。Webhook専用アプリへ分離 | [ローカルHTTPS・再送試験](webhook.md)。GitHubからの実配送は未検証 |
 | ローカルAPIの悪用 | loopback限定、CORSを開放しない、管理画面のHostもloopbackに限定し埋め込みを拒否 | [管理画面の検証](run-operations.md#管理画面)。公開時の認証は別設計 |
 

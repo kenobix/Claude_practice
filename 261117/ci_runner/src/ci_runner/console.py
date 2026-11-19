@@ -9,7 +9,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 
-from . import logs, runs
+from . import logs, metrics, runs
 from .models import Attempt, AttemptPage, Run, RunPage
 from .settings import POLICY
 
@@ -95,7 +95,7 @@ def _listing(page: RunPage, cursor: str | None) -> HTMLResponse:
     first = '<a href="/ui">最新のページ</a>' if cursor else ''
     more = f'<a href="{_link("/ui", cursor=page.next_cursor)}">以前の実行</a>' if page.next_cursor else ''
     return _page('実行一覧', f"""
-<h1>実行一覧</h1>
+<div class="section-heading"><h1>実行一覧</h1><a href="/ui/metrics">運用指標</a></div>
 <form class="lookup" action="/ui/lookup" method="get">
 <label for="run_id">実行IDで詳細・ログを探す</label>
 <input type="search" name="run_id" id="run_id" required maxlength="36" pattern="{UUID_PATTERN}"
@@ -118,13 +118,18 @@ def _attempt_card(attempt: Attempt) -> str:
 </li>"""
 
 
-def _detail(run: Run, history: AttemptPage, retry_id: UUID | None = None, *, demo=False, before=None) -> HTMLResponse:
+def _detail(run: Run, history: AttemptPage, retry_id: UUID | None = None, *, demo=False,
+            before=None, has_artifact=False) -> HTMLResponse:
     url = f'/ui/runs/{run.id}'
     log_link = ''
+    artifact_link = ''
     button = ''
     if not demo:
         if run.completed_attempt_id:
             log_link = f'<a class="button secondary" href="{_link(f"{url}/logs", attempt_id=run.completed_attempt_id)}">正式ログを開く</a>'
+        if has_artifact:
+            artifact_url = _link(f'/runs/{run.id}/artifacts/result', attempt_id=run.completed_attempt_id)
+            artifact_link = f'<a class="button secondary" href="{artifact_url}">結果JSONを保存</a>'
         if retry_id:
             button = f'<button type="button" data-put="/runs/{run.id}/retry/{retry_id}">再試行する</button>'
         elif run.state in ('queued', 'running') and not run.cancel_requested_at and (
@@ -153,7 +158,7 @@ def _detail(run: Run, history: AttemptPage, retry_id: UUID | None = None, *, dem
 <div><dt>正式結果の試行ID</dt><dd>{final}</dd></div>
 </dl>
 {pending}
-<div class="actions">{log_link}{button}</div><p id="action-status" role="status"></p>
+<div class="actions">{log_link}{artifact_link}{button}</div><p id="action-status" role="status"></p>
 <div class="section-heading"><h2>試行履歴</h2><span>新しい順 / UTC</span></div>
 {items}<div class="pager">{first}{more}</div>""", demo=demo, actions=bool(button))
 
@@ -179,6 +184,30 @@ def _demo() -> HTMLResponse:
     return _detail(run, attempts, demo=True)
 
 
+def _metrics(report) -> HTMLResponse:
+    def timing(prefix):
+        count = report[f'{prefix}_samples']
+        if not count:
+            return '計測値なし'
+        mean, p95 = report[f'{prefix}_mean_ms'], report[f'{prefix}_p95_ms']
+        return f'平均 <code>{mean:,.1f} ms</code> / p95 <code>{p95:,.1f} ms</code>（{count}件）'
+
+    total = report['finished_attempts']
+    failures = report['infrastructure_failures']
+    rate = f'{report["infrastructure_error_rate"]:.1%}（{failures}/{total}件）' if total else '完了試行なし'
+    return _page('運用指標', f"""
+<a class="back" href="/ui">実行一覧</a>
+<h1>運用指標</h1>
+<p>直近{report['window_hours']}時間の完了試行、最新{report['sample_limit']:,}件まで。対象 {total}件。</p>
+<p class="muted">集計時刻（UTC） {_time(report['measured_at'])}</p>
+<dl class="identity">
+<div><dt>キュー待ち時間</dt><dd>{timing('queue')}</dd></div>
+<div><dt>Worker実行時間</dt><dd>{timing('execution')}</dd></div>
+<div><dt>基盤障害率</dt><dd>{rate}</dd></div>
+<div><dt>実行権の期限切れ</dt><dd>{report['lease_expirations']}件</dd></div>
+</dl>""")
+
+
 def router(factory, require_loopback_host) -> APIRouter:
     api = APIRouter(prefix='/ui', dependencies=[Depends(require_loopback_host)], include_in_schema=False)
 
@@ -202,6 +231,10 @@ def router(factory, require_loopback_host) -> APIRouter:
     def demo():
         return _demo()
 
+    @api.get('/metrics')
+    def operations():
+        return _metrics(metrics.recent(factory))
+
     @api.get('/assets/{asset}')
     def asset(asset: Literal['console.css', 'actions.js']):
         media = 'text/css' if asset == 'console.css' else 'text/javascript'
@@ -210,10 +243,10 @@ def router(factory, require_loopback_host) -> APIRouter:
     @api.get('/runs/{run_id}')
     def detail(run_id: UUID, before: Annotated[int | None, Query(ge=1, le=2147483647)] = None):
         try:
-            run, history, retry_id = runs.get_run_history(factory, run_id, PAGE_SIZE, before)
+            run, history, retry_id, has_artifact = runs.get_run_history(factory, run_id, PAGE_SIZE, before)
         except HTTPException as exc:
             return error_page('実行が見つかりません', '実行IDを確認するか、一覧から開き直してください。', exc.status_code)
-        return _detail(run, history, retry_id, before=before)
+        return _detail(run, history, retry_id, before=before, has_artifact=has_artifact)
 
     @api.get('/runs/{run_id}/logs')
     def read_log(run_id: UUID, attempt_id: UUID, stream: Literal['stdout', 'stderr'] = 'stdout',

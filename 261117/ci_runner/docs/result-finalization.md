@@ -24,9 +24,9 @@ lease_expired、ガード拒否、GO未送信、不正な組合せは確定し�
 ## 排他と確定条件
 
 1. runをFOR UPDATE、次にそのrunに属するattemptをFOR UPDATEする。
-2. 固定repository/ref/workflow、run/attempt ID、現在token、Worker ID、番号と種別の組（`1/initial` または `2〜3/infrastructure`）を確認する。再試行は検証済みsourceを必須とする。
+2. 固定repository/ref/workflow、run/attempt ID、現在token、Worker ID、番号・区間・種別の整合性を確認する。再試行は検証済みsourceを必須とする。
 3. 新規確定はrun/attemptがrunning、取消要求なし、completed_attempt_id未設定、finished_at未設定であることを確認する。
-4. attemptを終端状態・exit/reason・DB時刻finished_atへ更新する。WHEREで現在tokenと**DB現在時刻でlease期限内**を再確認する。
+4. attemptを終端状態・exit/reason・DB時刻finished_at・実行時間へ更新し、ログ・由来・容量制限付き結果JSONを保存する。WHEREで現在tokenと**DB現在時刻でlease期限内**を再確認する。
 5. runの状態とcompleted_attempt_idを更新し、WHEREで取消なし・running・結果参照なし・現在token/DB期限内を再確認する。
 6. COMMIT完了後にだけFinalizationReceiptを返す。途中の条件不一致・DB例外はtransactionをrollbackする。
 
@@ -36,12 +36,12 @@ lease条件は更新時に判定する。COMMIT応答受信時まで期限内で
 
 取消要求がrunロックを先に取得しcommitした場合、後続の確定は拒否する。
 確定が先なら、終端状態に対する条件付き取消SQLは変更0件となる。
-今回の試験の取消はテスト用SQLであり、取消APIや実行中の停止処理が完成したことを意味しない。
+運用時の取消は[管理API](run-operations.md#runの取消)から要求し、heartbeatと期限監視で収束する。
 
 ## 再送と障害
 
 同じrun/attempt・token・Workerに対し、既存の正式結果が同じ状態/exit/reasonならreplayed=trueで返す。
-stdout/stderr/observed_bytesも保存済みログと一致する必要がある。finished_atを更新せず、DB書込もしない。これは確定済みreceiptの再取得なので、後からleaseが切れていても応答する。
+stdout/stderr/observed_bytesと由来を照合する。版8以降の結果は実行時間と結果JSONも照合する。finished_atを更新せず、DB書込もしない。これは確定済みreceiptの再取得なので、後からleaseが切れていても応答する。
 新しい実行権を与える処理ではなく、失効後の新規結果を受理する例外ではない。
 ログ欠落/内容不一致・観測量不一致、状態/exit/reasonが異なる再送、古いtoken等の上書きは拒否する。過去のログなし結果を再送でbackfillしない。
 

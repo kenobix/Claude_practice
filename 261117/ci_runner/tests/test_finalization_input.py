@@ -24,6 +24,7 @@ def logged_report(claim):
     {'exit_code': True}, {'exit_code': 1}, {'reason': 'lease_expired'},
     {'reason': 'runtime_preflight_rejected'}, {'reason': 'unknown'},
     {'reason': 'timeout', 'exit_code': 0}, {'reason': 'log_limit', 'exit_code': 0},
+    {'elapsed_seconds': float('nan')}, {'elapsed_seconds': float('inf')}, {'elapsed_seconds': -1},
 ])
 def test_invalid_result_never_connects(changes):
     claim = permit()

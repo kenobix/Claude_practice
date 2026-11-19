@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import HTTPException
 from pydantic import ValidationError
 
+from . import artifacts
 from .database import DatabaseUnavailable
 from .models import Attempt, AttemptPage, Cursor, ManualRetryReceipt, Run, RunPage
 from .retry import ATTEMPT_KIND_SQL, LATEST_ATTEMPT_JOIN, MAX_ATTEMPTS, RECOVERED_INFRA_ATTEMPT_SQL
@@ -155,13 +156,14 @@ def _list_attempts(conn, run_id: UUID, limit: int, before: int | None) -> Attemp
 
 
 def get_run_history(connection_factory, run_id: UUID, limit: int, before: int | None):
-    """Use one read snapshot for the run, its attempts and the available retry action."""
+    """Use one read snapshot for the run, attempt history and possible actions."""
     with connection_factory() as conn:
         conn.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY')
         run = _get_run(conn, run_id)
         history = _list_attempts(conn, run_id, limit, before)
         retry_id = _retryable_attempt(conn, run_id) if run.state in ('failed', 'timed_out') else None
-    return run, history, retry_id
+        has_artifact = run.completed_attempt_id is not None and artifacts.has_result(conn, run.completed_attempt_id)
+    return run, history, retry_id, has_artifact
 
 
 def list_runs(connection_factory, limit: int, cursor: Cursor | None) -> RunPage:

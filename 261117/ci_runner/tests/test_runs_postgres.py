@@ -47,10 +47,12 @@ def dedicated_database(monkeypatch):
         # Allowed only under the explicitly disposable test DB contract above.
         conn.execute('TRUNCATE runs CASCADE')
         conn.execute('UPDATE log_storage_budget SET capacity_bytes=67108864 WHERE singleton')
+        conn.execute('UPDATE artifact_storage_budget SET capacity_bytes=16777216 WHERE singleton')
     yield DisposableDatabase(dsn)
     with psycopg.connect(dsn) as conn:
         conn.execute('TRUNCATE runs CASCADE')
         conn.execute('UPDATE log_storage_budget SET capacity_bytes=67108864 WHERE singleton')
+        conn.execute('UPDATE artifact_storage_budget SET capacity_bytes=16777216 WHERE singleton')
 
 
 @contextmanager
@@ -219,6 +221,8 @@ def test_actual_database_stop_returns_503_and_recovers(dedicated_database):
                 ('POST', '/runs', {'json': payload('b' * 40)}),
                 ('GET', '/runs', {}), ('GET', '/runs/' + saved['id'], {}),
                 ('GET', '/runs/' + saved['id'] + '/logs', {}),
+                ('GET', f"/runs/{saved['id']}/artifacts/result?attempt_id={claim.attempt_id}", {}),
+                ('GET', '/metrics/operations', {}),
                 ('GET', '/runs/' + saved['id'] + '/attempts', {}),
                 ('PUT', '/runs/' + saved['id'] + '/cancel', {}),
                 ('PUT', f"/runs/{saved['id']}/retry/{claim.attempt_id}", {}),

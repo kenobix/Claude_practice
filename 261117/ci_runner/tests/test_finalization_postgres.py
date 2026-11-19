@@ -226,6 +226,10 @@ def test_process_kill_at_commit_boundary(dedicated_database, tmp_path, position)
         logs = conn.execute('SELECT stdout FROM attempt_logs WHERE attempt_id=%s', (claim.attempt_id,)).fetchone()
         assert logs == (None if position == 'before_commit' else {'stdout': b'fixed commit log'})
         assert conn.execute('SELECT used_bytes FROM log_storage_budget').fetchone()['used_bytes'] == (0 if position == 'before_commit' else 16)
+        artifact = conn.execute('SELECT size_bytes FROM artifacts WHERE attempt_id=%s', (claim.attempt_id,)).fetchone()
+        assert (artifact is None) == (position == 'before_commit')
+        reserved = conn.execute('SELECT used_bytes FROM artifact_storage_budget').fetchone()['used_bytes']
+        assert reserved == (artifact['size_bytes'] if artifact else 0)
     assert finalize_fixture(claim, logged_report(claim)).replayed == (position == 'after_commit')
 
 
@@ -235,10 +239,13 @@ def test_persistence_after_api_and_db_restart(dedicated_database):
         pytest.skip('restart requires the owned disposable Compose project')
     _, claim = issue_claim()
     receipt = finalize_fixture(claim, logged_report(claim))
+    artifact_path = f'/runs/{claim.run_id}/artifacts/result?attempt_id={claim.attempt_id}'
     with api() as (client, _):
         original = client.get(f'/runs/{claim.run_id}').json()
         assert client.get(f'/runs/{claim.run_id}/logs').text == 'fixed commit log'
         assert original['state'] == 'succeeded' and original['completed_attempt_id'] == str(claim.attempt_id)
+        artifact = client.get(artifact_path)
+        assert artifact.status_code == 200
     compose = ['docker','compose','--project-name',project,'-f',filename]
     subprocess.run(compose+['restart','db'],check=True,capture_output=True,timeout=30)
     subprocess.run(compose+['up','-d','--wait','db'],check=True,capture_output=True,timeout=60)
@@ -247,6 +254,9 @@ def test_persistence_after_api_and_db_restart(dedicated_database):
         assert client.get('/runs').json()['items'][0] == original
         log_page = client.get(f'/runs/{claim.run_id}/logs')
         assert log_page.text == 'fixed commit log' and log_page.headers['x-log-attempt-id'] == str(claim.attempt_id)
+        persisted = client.get(artifact_path)
+        assert persisted.status_code == 200 and persisted.content == artifact.content
+        assert persisted.headers['x-artifact-sha256'] == artifact.headers['x-artifact-sha256']
     assert saved(claim)['finished_at'] == receipt.finished_at
     with database.connect() as conn:
         assert conn.execute('SELECT stdout,observed_bytes FROM attempt_logs WHERE attempt_id=%s',

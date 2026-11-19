@@ -38,7 +38,7 @@ def test_verified_claim_refuses_sha_mismatch_without_mutation(dedicated_database
         assert conn.execute('SELECT count(*) AS n FROM attempts').fetchone()['n'] == 0
 
 
-@pytest.mark.parametrize('version', [4, 6])
+@pytest.mark.parametrize('version', [4, 6, 7, 8])
 def test_verified_claim_requires_provenance_and_recovery_migrations(dedicated_database, version):
     run = runs.create_run(database.connect, HEAD)[0]
     with database.connect() as conn:

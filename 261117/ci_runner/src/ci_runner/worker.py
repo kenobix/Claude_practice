@@ -16,22 +16,18 @@ from .settings import POLICY, SCHEMA_VERSION
 LEASE_SECONDS = 30
 
 POLICY_FILTER = 'r.repository_id=%s AND r.ref=%s AND r.workflow_version=%s '
-SCHEMA_CHECK = 'EXISTS (SELECT 1 FROM schema_migrations WHERE version=%s) '
-VERIFIED_TARGET_FILTER = (
-    f'AND {SCHEMA_CHECK}AND r.id=%s AND r.commit_sha=%s '
-    'AND EXISTS (SELECT 1 FROM schema_migrations WHERE version=4)'
-)
+VERIFIED_TARGET_FILTER = f'AND {database.SCHEMA_CHECK}AND r.id=%s AND r.commit_sha=%s '
 QUEUE_FILTER = (
     "WHERE r.state='queued' AND r.completed_attempt_id IS NULL "
     'AND r.cancel_requested_at IS NULL AND r.available_at <= clock_timestamp() '
     f'AND {POLICY_FILTER}'
 )
 INITIAL_SQL = (
-    f'SELECT r.id, r.commit_sha, 0 AS previous_attempt_no, 1 AS retry_start_no FROM runs r {QUEUE_FILTER}'
+    f'SELECT r.id, r.commit_sha, r.available_at, 0 AS previous_attempt_no, 1 AS retry_start_no FROM runs r {QUEUE_FILTER}'
     'AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.run_id=r.id) '
 )
 VERIFIED_SQL = (
-    'SELECT r.id, r.commit_sha, COALESCE(a.attempt_no,0) AS previous_attempt_no, '
+    'SELECT r.id, r.commit_sha, r.available_at, COALESCE(a.attempt_no,0) AS previous_attempt_no, '
     'CASE WHEN m.previous_attempt_id IS NOT NULL THEN a.attempt_no+1 '
     'ELSE COALESCE(a.retry_start_no,1) END AS retry_start_no '
     f'FROM runs r {LATEST_ATTEMPT_JOIN}'
@@ -90,7 +86,7 @@ def claim_next(worker_id: str, connection_factory=None, *, target: tuple[UUID, s
     factory = connection_factory or database.connect
     params = (POLICY.repository_id, POLICY.ref, POLICY.workflow_version)
     params += (SCHEMA_VERSION,)
-    sql = INITIAL_SQL + f'AND {SCHEMA_CHECK}' + QUEUE_ORDER
+    sql = INITIAL_SQL + f'AND {database.SCHEMA_CHECK}' + QUEUE_ORDER
     if target is not None:
         # This path must be able to persist the provenance before we grant a lease.
         sql = VERIFIED_SQL + VERIFIED_TARGET_FILTER
@@ -109,13 +105,13 @@ def claim_next(worker_id: str, connection_factory=None, *, target: tuple[UUID, s
         retry_start_no = run['retry_start_no']
         row = conn.execute(
             'INSERT INTO attempts(run_id, attempt_no, worker_id, lease_token, '
-            'started_at, lease_expires_at, retry_kind, retry_start_no, create_tracked) '
+            'started_at, lease_expires_at, retry_kind, retry_start_no, claimable_at, create_tracked) '
             "VALUES (%s, %s, %s, gen_random_uuid(), statement_timestamp(), "
-            "statement_timestamp() + %s * interval '1 second', %s, %s, true) "
+            "statement_timestamp() + %s * interval '1 second', %s, %s, %s, true) "
             'RETURNING id AS attempt_id, run_id, attempt_no, worker_id, '
             'lease_token, started_at, lease_expires_at',
             (run['id'], number, worker_id, LEASE_SECONDS, attempt_kind(number, retry_start_no),
-             retry_start_no)).fetchone()
+             retry_start_no, run['available_at'])).fetchone()
         changed = conn.execute(
             "UPDATE runs SET state='running' WHERE id=%s AND state='queued' "
             'AND cancel_requested_at IS NULL RETURNING id', (run['id'],)).fetchone()

@@ -3,6 +3,11 @@ import os
 import psycopg
 from psycopg.rows import dict_row
 
+SCHEMA_CHECK = (
+    'NOT EXISTS (SELECT 1 FROM generate_series(1,%s) AS required(version) '
+    'WHERE NOT EXISTS (SELECT 1 FROM schema_migrations m WHERE m.version=required.version)) '
+)
+
 
 class DatabaseUnavailable(Exception):
     pass

@@ -111,6 +111,13 @@ def test_manual_retry_recovers_orphan_and_promotes_only_new_result(dedicated_dat
             finalize_fixture(manual, replace(report(manual), verified_source=source))
         assert client.put(f'/runs/{run.id}/retry/{first.attempt_id}').json() == retry.json()
         assert client.get(f'/runs/{run.id}/logs').headers['x-log-attempt-id'] == str(last.attempt_id)
+        artifact = client.get(f'/runs/{run.id}/artifacts/result', params={'attempt_id': str(last.attempt_id)})
+        assert artifact.status_code == 200
+        assert artifact.json()['attempt_no'] == 3 and artifact.json()['state'] == 'succeeded'
+        assert artifact.json()['source']['source_sha256'] == commit_source.DIGEST
+        assert client.get(f'/runs/{run.id}/artifacts/result', params={'attempt_id': str(first.attempt_id)}).status_code == 409
+        metrics = client.get('/metrics/operations').json()
+        assert (metrics['finished_attempts'], metrics['lease_expirations'], metrics['execution_samples']) == (3, 1, 2)
         attempts = client.get(f'/runs/{run.id}/attempts').json()['items']
         assert [(row['retry_kind'], row['reason'], row['official']) for row in attempts] == [
             ('infrastructure', 'commit_success', True), ('manual', 'infra_lease_expired', False),
@@ -118,6 +125,8 @@ def test_manual_retry_recovers_orphan_and_promotes_only_new_result(dedicated_dat
         ]
 
     with database.connect() as conn:
+        artifact_owners = conn.execute('SELECT attempt_id FROM artifacts').fetchall()
+        assert {row['attempt_id'] for row in artifact_owners} == {first.attempt_id, last.attempt_id}
         rows = conn.execute(
             'SELECT s.attempt_id, s.commit_sha, s.source_sha256, s.image_id, l.observed_bytes '
             'FROM attempt_sources s JOIN attempt_logs l ON l.attempt_id=s.attempt_id WHERE s.run_id=%s', (run.id,),

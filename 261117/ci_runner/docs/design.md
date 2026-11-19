@@ -1,6 +1,6 @@
 # P0設計案：ジョブの正本と実行権
 
-P0〜P2は固定fixtureで受入確認済み。[Webhook受付と配送の永続化](webhook.md)、[run取消・手動再試行・試行履歴の管理画面](run-operations.md)を実装済み。GitHubからの実配送、上限付き成果物、運用メトリクスは後続作業。
+P0〜P2は固定fixtureで受入確認済み。[Webhook受付と配送の永続化](webhook.md)、[run取消・手動再試行・試行履歴・成果物・運用指標](run-operations.md)を実装済み。GitHubからの実配送は後続作業。
 実装したHTTP契約と競合・commit前後の障害証拠は[受付API仕様](intake-api.md)を参照。
 [Worker初回取得](worker-claim.md)は履歴なしの許可queuedを取得し、attempt番号1・initial・DB期限30秒を同時commitする。
 検証付きWorkerは、[基盤障害の自動再試行](#基盤障害の自動再試行)で再キューされたrunも取得する。
@@ -161,10 +161,10 @@ run.completed_attempt_idを現在の有効attemptの確定transactionでのみ�
 | 表 | 役割・制約 |
 |---|---|
 | runs | 業務キー一意、状態CHECK、再取得可能時刻、取消要求、正式結果attempt参照 |
-| attempts | run内番号一意、token一意、runningはrunごとに最大1件、期限・理由・retry種別・区間開始番号、Docker作成予約・回収確認 |
+| attempts | run内番号一意、token一意、runningはrunごとに最大1件、期限・理由・retry種別・区間開始番号、Docker作成予約・回収確認、取得可能時刻・実行時間 |
 | manual_retries | runと再試行対象attemptの組に一意制約、DB受付時刻。次のclaimが最新attemptに対応する受付を照合 |
 | deliveries | hook/delivery一意、body SHA-256、結果、runへのFK |
-| artifacts | attempt FK、サーバー生成名、サイズCHECK、SHA-256、保存キー一意 |
+| artifacts / artifact_storage_budget | attempt FK、固定名の不変JSON、SHA-256、保存キー一意、4KiB/attempt・最大16MiBのpayload台帳 |
 | attempt_logs / log_storage_budget | attempt別の不変byteaログ、合計1MiB/attempt・最大64MiBのraw保持payload台帳 |
 | attempt_sources | 受理commitの正式attempt別source・imageの由来。runとattemptの組はFKで対応 |
 | schema_migrations | 適用版とDB時刻、transactionでDDLと同時記録 |

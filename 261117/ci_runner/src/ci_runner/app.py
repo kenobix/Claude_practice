@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from . import console, database, logs, runs
+from . import artifacts, console, database, logs, metrics, runs
 from .body_limit import JsonBodyLimit
 from .models import AttemptPage, ManualRetryReceipt, Run, RunInput, RunPage
 from .settings import BODY_LIMIT, POLICY, SCHEMA_VERSION
@@ -52,7 +52,7 @@ def create_app(connection_factory=None):
     def ready():
         try:
             with factory() as conn:
-                row = conn.execute('SELECT version FROM schema_migrations WHERE version=%s',
+                row = conn.execute(f'SELECT 1 WHERE {database.SCHEMA_CHECK}',
                                    (SCHEMA_VERSION,)).fetchone()
             if row is not None:
                 return {'status': 'ready'}
@@ -95,6 +95,17 @@ def create_app(connection_factory=None):
     def attempts(run_id: UUID, limit: Annotated[int, Query(ge=1, le=100)] = 20,
                  before: Annotated[int | None, Query(ge=1, le=2147483647)] = None):
         return runs.list_attempts(factory, run_id, limit, before)
+
+    @app.get('/runs/{run_id}/artifacts/result', response_class=Response)
+    def result_artifact(run_id: UUID, attempt_id: UUID, request: Request):
+        require_loopback_host(request)
+        return artifacts.download(factory, run_id, attempt_id)
+
+    @app.get('/metrics/operations')
+    def operations_metrics(request: Request, response: Response):
+        require_loopback_host(request)
+        response.headers['Cache-Control'] = 'no-store'
+        return metrics.recent(factory)
 
     @app.get('/runs/{run_id}/logs', response_class=Response)
     def log_page(run_id: UUID,
