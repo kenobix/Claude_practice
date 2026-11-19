@@ -1,6 +1,6 @@
 # P0設計案：ジョブの正本と実行権
 
-P0〜P2は固定fixtureで受入確認済み。[Webhook受付と配送の永続化](webhook.md)、[run取消・手動再試行・attempt履歴API](run-operations.md)を実装済み。GitHubからの実配送と履歴UIは後続作業。
+P0〜P2は固定fixtureで受入確認済み。[Webhook受付と配送の永続化](webhook.md)、[run取消・手動再試行・試行履歴の管理画面](run-operations.md)を実装済み。GitHubからの実配送、上限付き成果物、運用メトリクスは後続作業。
 実装したHTTP契約と競合・commit前後の障害証拠は[受付API仕様](intake-api.md)を参照。
 [Worker初回取得](worker-claim.md)は履歴なしの許可queuedを取得し、attempt番号1・initial・DB期限30秒を同時commitする。
 検証付きWorkerは、[基盤障害の自動再試行](#基盤障害の自動再試行)で再キューされたrunも取得する。

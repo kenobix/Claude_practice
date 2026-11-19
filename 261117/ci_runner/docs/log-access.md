@@ -1,4 +1,4 @@
-# 正式ログ取得と安全な最小表示
+# 正式ログ取得と安全な表示
 
 P1のログ参照/HTMLエスケープを実装する1単位。`GET /runs/{run_id}/logs`を追加し、
 既存のloopback限定運用と固定fixtureの境界を維持する。認証なしAPIを外部公開しない。
@@ -39,7 +39,8 @@ textはtext/plain; charset=utf-8。元bytesをUTF-8のerrors=replaceで変換し
 LF/TAB以外のUnicode Cc/Cf制御文字（NUL/ESC/CR・双方向制御等）は可視の\\uコード表記にする。
 元bytesはDBに保持したまま。厳密なバイナリdownloadや、任意境界ページの文字列連結での復元を保証するAPIではない。
 htmlは同じ表示文字列をhtml.escape(quote=True)して固定pre要素へ入れた最小表示。ログ由来の属性・script・style・画像等は生成しない。
-本格的な履歴UI・ナビゲーション・検索はP4の残件。
+[管理画面](run-operations.md#管理画面)はrun ID検索と詳細から正式ログをたどれる。管理画面のログは4KiBずつ表示し、リンクとページ送りに表示対象の正式試行IDを含める。
+そのIDを読み取り時の正式参照と照合し、変更・解除後のリンクには409を返す。表示文字列の制御文字変換・エスケープはAPIと同じ。
 
 成功応答と取得判定の4xxはCache-Control: no-store、X-Content-Type-Options: nosniff、
 CSP default-src 'none'; sandbox; base-uri 'none'; form-action 'none'を付ける。入力422/DB503は既存の共通JSONエラー。
@@ -53,7 +54,7 @@ CSP default-src 'none'; sandbox; base-uri 'none'; form-action 'none'を付ける
 過去attemptや未確定のログはSQLで用意する制御面fixtureで、Worker retryの完成証拠とは扱わない。
 実Dockerは今回変更した4fixture→別Worker→保存→API再起動→ログ参照の経路だけを選択して検証する。
 P0隔離、無関係なDocker故障試験、cold build計測を理由なく再実行しない。
-Chromium/Playwright/browser toolが利用できず、実ブラウザ上のCSP/スクリプト実行試験は未実施。新規依存/OS導入はしない。
+最小HTML表示の初回実装時点ではブラウザ未検証。P4の管理画面と正式ログのブラウザ・実DBの検証は[作業記録](../../work_log.md#p4の管理画面と正式ログ)を参照。
 
 [PostgreSQL bytea substring](https://www.postgresql.org/docs/17/functions-binarystring.html)、
 [Python html.escape](https://docs.python.org/3.12/library/html.html)を参照。

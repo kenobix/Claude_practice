@@ -24,7 +24,7 @@ class LogPage:
     observed_bytes: int
 
 
-def read_page(connection_factory, run_id, stream, offset, limit):
+def read_page(connection_factory, run_id, stream, offset, limit, *, expected_attempt_id=None):
     # Column names are server-owned. Everything else is a bound SQL parameter.
     columns = {'stdout': 'stdout', 'stderr': 'stderr'}
     if (stream not in columns or type(offset) is not int or not 0 <= offset <= MAX_LOG_BYTES
@@ -47,6 +47,8 @@ def read_page(connection_factory, run_id, stream, offset, limit):
             or row['state'] not in ('succeeded', 'failed', 'timed_out', 'canceled')
             or row['attempt_state'] != row['state']):
         raise HTTPException(409, 'logs not finalized')
+    if expected_attempt_id is not None and row['completed_attempt_id'] != expected_attempt_id:
+        raise HTTPException(409, 'official attempt changed')
     if row['log_attempt_id'] is None:
         raise HTTPException(404, 'logs not found')
     if offset > row['total_bytes']:

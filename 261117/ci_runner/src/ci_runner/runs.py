@@ -53,7 +53,11 @@ def upsert_run(conn, commit_sha: str) -> tuple[Run, bool]:
 
 def get_run(connection_factory, run_id: UUID) -> Run:
     with connection_factory() as conn:
-        row = conn.execute(f'SELECT {COLUMNS} FROM runs WHERE id=%s', (run_id,)).fetchone()
+        return _get_run(conn, run_id)
+
+
+def _get_run(conn, run_id: UUID) -> Run:
+    row = conn.execute(f'SELECT {COLUMNS} FROM runs WHERE id=%s', (run_id,)).fetchone()
     if row is None:
         raise HTTPException(404, 'run not found')
     return Run.model_validate(row)
@@ -80,6 +84,25 @@ def cancel_run(connection_factory, run_id: UUID) -> Run:
     return result
 
 
+def _retryable_attempt(conn, run_id: UUID) -> UUID | None:
+    # Official completion records cleanup before publishing. Expiry has no
+    # official result and requires separate proof of recovery.
+    row = conn.execute(
+        f'SELECT a.id FROM runs r {LATEST_ATTEMPT_JOIN}'
+        "WHERE r.id=%s AND r.state IN ('failed','timed_out') "
+        'AND r.repository_id=%s AND r.ref=%s AND r.workflow_version=%s '
+        'AND r.cancel_requested_at IS NULL AND a.state=r.state '
+        'AND a.attempt_no <= %s AND a.finished_at <= statement_timestamp() '
+        f'AND ((r.completed_attempt_id=a.id AND {ATTEMPT_KIND_SQL} '
+        "AND a.reason IN ('fixture_check_failure','fixture_timeout','fixture_log_limit',"
+        "'commit_check_failure','commit_timeout','commit_log_limit')) "
+        f'OR (r.completed_attempt_id IS NULL AND {RECOVERED_INFRA_ATTEMPT_SQL} '
+        "AND a.reason IN ('infra_lease_expired','infra_exhausted')))",
+        (run_id, POLICY.repository_id, POLICY.ref, POLICY.workflow_version, 2147483647 - MAX_ATTEMPTS),
+    ).fetchone()
+    return row['id'] if row is not None else None
+
+
 def request_manual_retry(connection_factory, run_id: UUID, attempt_id: UUID) -> ManualRetryReceipt:
     """Requeue the named failure once, retaining its attempt, logs and provenance."""
     with connection_factory() as conn:
@@ -95,21 +118,7 @@ def request_manual_retry(connection_factory, run_id: UUID, attempt_id: UUID) -> 
             'WHERE run_id=%s AND previous_attempt_id=%s', key,
         ).fetchone()
         if receipt is None:
-            # A committed official result already recorded cleanup before publishing.
-            # Expiry has no official result and needs separate proof of Docker recovery.
-            previous = conn.execute(
-                f'SELECT a.id FROM runs r {LATEST_ATTEMPT_JOIN}'
-                "WHERE r.id=%s AND a.id=%s AND r.state IN ('failed','timed_out') "
-                'AND r.cancel_requested_at IS NULL AND a.state=r.state '
-                'AND a.attempt_no <= %s AND a.finished_at <= statement_timestamp() '
-                f'AND ((r.completed_attempt_id=a.id AND {ATTEMPT_KIND_SQL} '
-                "AND a.reason IN ('fixture_check_failure','fixture_timeout','fixture_log_limit',"
-                "'commit_check_failure','commit_timeout','commit_log_limit')) "
-                f'OR (r.completed_attempt_id IS NULL AND {RECOVERED_INFRA_ATTEMPT_SQL} '
-                "AND a.reason IN ('infra_lease_expired','infra_exhausted')))",
-                (*key, 2147483647 - MAX_ATTEMPTS),
-            ).fetchone()
-            if previous is None:
+            if _retryable_attempt(conn, run_id) != attempt_id:
                 raise HTTPException(409, 'attempt is not the current retryable failure')
             receipt = conn.execute(
                 'INSERT INTO manual_retries(run_id, previous_attempt_id, requested_at) '
@@ -125,20 +134,34 @@ def request_manual_retry(connection_factory, run_id: UUID, attempt_id: UUID) -> 
 
 def list_attempts(connection_factory, run_id: UUID, limit: int, before: int | None) -> AttemptPage:
     with connection_factory() as conn:
-        # One snapshot distinguishes a missing run from an empty history and pins official status.
-        rows = conn.execute(
-            'SELECT page.*, COALESCE(page.id=r.completed_attempt_id, false) AS official '
-            'FROM runs r LEFT JOIN LATERAL ( '
-            '  SELECT a.id, a.attempt_no, a.retry_kind, a.state, a.started_at, a.finished_at, a.exit_code, a.reason '
-            '  FROM attempts a WHERE a.run_id=r.id AND (%s::integer IS NULL OR a.attempt_no < %s) '
-            '  ORDER BY a.attempt_no DESC LIMIT %s '
-            ') AS page ON true WHERE r.id=%s ORDER BY page.attempt_no DESC',
-            (before, before, limit + 1, run_id),
-        ).fetchall()
+        return _list_attempts(conn, run_id, limit, before)
+
+
+def _list_attempts(conn, run_id: UUID, limit: int, before: int | None) -> AttemptPage:
+    # One snapshot distinguishes a missing run from an empty history and pins official status.
+    rows = conn.execute(
+        'SELECT page.*, COALESCE(page.id=r.completed_attempt_id, false) AS official '
+        'FROM runs r LEFT JOIN LATERAL ( '
+        '  SELECT a.id, a.attempt_no, a.retry_kind, a.state, a.started_at, a.finished_at, a.exit_code, a.reason '
+        '  FROM attempts a WHERE a.run_id=r.id AND (%s::integer IS NULL OR a.attempt_no < %s) '
+        '  ORDER BY a.attempt_no DESC LIMIT %s '
+        ') AS page ON true WHERE r.id=%s ORDER BY page.attempt_no DESC',
+        (before, before, limit + 1, run_id),
+    ).fetchall()
     if not rows:
         raise HTTPException(404, 'run not found')
     items = [Attempt.model_validate(row) for row in rows[:limit] if row['id'] is not None]
     return AttemptPage(items=items, next_before=items[-1].attempt_no if len(rows) > limit else None)
+
+
+def get_run_history(connection_factory, run_id: UUID, limit: int, before: int | None):
+    """Use one read snapshot for the run, its attempts and the available retry action."""
+    with connection_factory() as conn:
+        conn.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY')
+        run = _get_run(conn, run_id)
+        history = _list_attempts(conn, run_id, limit, before)
+        retry_id = _retryable_attempt(conn, run_id) if run.state in ('failed', 'timed_out') else None
+    return run, history, retry_id
 
 
 def list_runs(connection_factory, limit: int, cursor: Cursor | None) -> RunPage:

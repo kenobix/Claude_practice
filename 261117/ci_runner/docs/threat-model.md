@@ -22,7 +22,7 @@ Docker操作権限は信頼済みWorkerだけ。APIやジョブへsocketを渡�
 | 古い実行結果 | token/DB時刻/状態/取消条件による確定、attempt別成果物 | 期限切れ完了・競合試験 |
 | パストラバーサル/XSS | ファイル名はサーバー生成、範囲外パスとsymlinkを拒否、表示時HTML escape | 悪意ある名前・内容の試験 |
 | Webhook偽装/再送 | raw body HMAC-SHA256定数時間比較、body上限、許可repo/ref、IDと業務キー。Webhook専用アプリへ分離 | [ローカルHTTPS・再送試験](webhook.md)。GitHubからの実配送は未検証 |
-| ローカルAPIの悪用 | loopback限定、CORSを開放しない、公開時の認証は別設計 | 非loopback公開を避ける起動確認 |
+| ローカルAPIの悪用 | loopback限定、CORSを開放しない、管理画面のHostもloopbackに限定し埋め込みを拒否 | [管理画面の検証](run-operations.md#管理画面)。公開時の認証は別設計 |
 
 上限値は初期案。OS/cgroup/rootless構成により適用できない場合は実行開始を拒否する設計にする。
 Docker inspectの値だけで有効と判断せず、実際の失敗・抑制とホスト影響を観測する。
@@ -38,7 +38,7 @@ Docker inspectの値だけで有効と判断せず、実際の失敗・抑制と
 6. 制限が無効なら失敗として記録し、設定を修正するまでWorkerを有効化しない。
 
 PostgreSQL 17.12-bookwormのdigestはComposeに固定済み。P0 fixtureのPythonイメージもdigest固定で実測済み。
-表の制御はP0テストで実証したものと、P1以降の要件を含む。受付APIのrepository/SHA/4KiB/未知入力拒否は実装・検証済み。WorkerのDB実行権preflightと未起動コンテナ作成・設定照合・回収を別ライブラリに実装した。[固定fixture実行ライブラリ](fixture-execution.md)にDB再照合・実値ガード・上限監視・回収を接続済み。HTTP/claim-onceからは未接続。ローカルfixture結果の条件付きDB確定も実装済み。一件Workerへの接続と[上限付きログDB保存](log-storage.md)も実装済み。正式ログの[bounded read/制御文字可視化/HTMLエスケープ](log-access.md)も実装済み。受理commitの固定取得と常駐実行は接続済み。本格UIは未実装。実ブラウザでのCSP強制は未検証。
+表の制御はP0テストで実証したものと、P1以降の要件を含む。受付APIのrepository/SHA/4KiB/未知入力拒否は実装・検証済み。WorkerのDB実行権preflightと未起動コンテナ作成・設定照合・回収を別ライブラリに実装した。[固定fixture実行ライブラリ](fixture-execution.md)にDB再照合・実値ガード・上限監視・回収を接続済み。HTTP/claim-onceからは未接続。ローカルfixture結果の条件付きDB確定も実装済み。一件Workerへの接続と[上限付きログDB保存](log-storage.md)も実装済み。正式ログの[bounded read/制御文字可視化/HTMLエスケープ](log-access.md)も実装済み。受理commitの固定取得と常駐実行は接続済み。管理画面の失敗理由とログはテキストをエスケープして表示する。操作スクリプトは既存PUT APIに限定する。
 P0監視ハーネスとアプリ側の固定fixture実行監視を分離している。常駐Workerは作業単位の停止に対応する。実行中のDB heartbeatを確認できなければ所有資源を回収して終了する。強制終了後は[失効attemptのコンテナ回収](design.md#失効attemptのコンテナ回収)でDBの終端記録とDockerの所有ラベル・完全IDを照合する。daemonとDB書込主体は信頼境界の内側。基盤障害の再試行はcreate未送信または同じdaemonでの完全IDの不在確認を条件とする。結果不明のcreateには再試行を保留する。nosuid/nodevや全setuid/全syscallの試験は未実施。
 
 参照: [Docker security](https://docs.docker.com/engine/security/)、[Rootless mode](https://docs.docker.com/engine/security/rootless/)。

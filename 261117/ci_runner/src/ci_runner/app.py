@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from . import database, logs, runs
+from . import console, database, logs, runs
 from .body_limit import JsonBodyLimit
 from .models import AttemptPage, ManualRetryReceipt, Run, RunInput, RunPage
 from .settings import BODY_LIMIT, POLICY, SCHEMA_VERSION
@@ -27,10 +27,15 @@ def create_app(connection_factory=None):
     # Test processes can inject a connection context at the transaction boundary.
     # No HTTP/environment fault switch exists in production.
     factory = connection_factory or database.connect
+    app.include_router(console.router(factory, require_loopback_host))
 
     @app.exception_handler(database.DatabaseUnavailable)
     @app.exception_handler(psycopg.Error)
     async def unavailable(request, exc):
+        if request.url.path == '/ui' or request.url.path.startswith('/ui/'):
+            response = console.error_page('実行履歴に接続できません', 'DBの稼働を確認してから開き直してください。', 503)
+            response.headers['Retry-After'] = '1'
+            return response
         return JSONResponse({'detail': 'database unavailable'}, 503, headers={'Retry-After': '1'})
 
     @app.exception_handler(RequestValidationError)

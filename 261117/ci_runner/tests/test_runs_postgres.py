@@ -227,6 +227,9 @@ def test_actual_database_stop_returns_503_and_recovers(dedicated_database):
                 assert response.status_code == 503
                 assert response.json() == {'detail': 'database unavailable'}
                 assert response.headers['retry-after'] == '1'
+            console = client.get('/ui')
+            assert console.status_code == 503 and 'DBの稼働を確認' in console.text
+            assert client.get('/ui/demo').status_code == 200
             assert client.get('/health/ready').status_code == 503
             with pytest.raises(psycopg.OperationalError):
                 authorize_execution(claim)

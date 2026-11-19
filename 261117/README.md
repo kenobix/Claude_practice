@@ -12,7 +12,7 @@ P2の[コンテナ作成台帳](ci_runner/docs/design.md#コンテナ作成台�
 内部ライブラリでDB再照合・実値ガード・時間/ログ/lease上限付きのローカル固定fixture実行も実装済み。
 ローカルfixture結果の条件付きDB確定（状態/exit/理由/終了時刻・正式attempt参照）も実装済み。
 別プロセスの一件実行入口で、取得→ローカル固定fixture実行/回収→条件付き確定まで接続済み。
-上限付きログを結果と同一transactionでDB保存する。正式ログの取得・最小HTML表示も実装済み。受理commitの固定fixtureを一件実行し、sourceとimageの由来を結果に保存できる。常駐Workerは検証済みcommitを順に実行する。Webhookの受付は実装済みで、GitHubからの実配送は未検証。履歴UIは後続フェーズで扱う。
+上限付きログを結果と同一transactionでDB保存する。受理commitの固定fixtureを実行し、sourceとimageの由来を結果に保存できる。常駐Workerは検証済みcommitを順に実行する。管理UIで実行と試行の履歴を確認し、取消・手動再試行を行える。Webhookの受付は実装済みで、GitHubからの実配送は未検証。
 GitHub Pagesへの公開対象ではない。常駐バックエンドの配置先は将来別途判断する。
 
 ## 受理commitのsourceを検証する
@@ -253,7 +253,13 @@ commit結果が不明な接続断では、未保存と断定せず同じ業務�
 運用時は承認済みの公開HTTPS受信口から `POST /webhooks/github` だけを転送する。
 [受付仕様・起動・手動再送手順](ci_runner/docs/webhook.md)。
 
-## runを取り消す・再試行する・attempt履歴を見る
+## 管理画面で実行を確認・操作する
+
+API起動後、ブラウザーで `http://127.0.0.1:18117/ui` を開く。一覧または実行IDの検索から詳細に入り、
+コミットSHA、試行履歴、チェック失敗と基盤障害の区別、正式ログを確認する。対象の状態に応じて取消・再試行を行える。
+「過去のデモ」は障害試験を再現した表示専用の例で、DBなしでも開ける。 [管理画面と運用API](ci_runner/docs/run-operations.md)
+
+### CLIから取り消す・再試行する・attempt履歴を見る
 
 管理APIのloopbackアドレスから操作する。待機中の取消は200。実行中の取消要求は202で受理し、実行権を閉じるまでは `GET /runs/{id}` に要求時刻と `running` を表示する。
 
