@@ -1,0 +1,59 @@
+name: CI runner clean fixture
+
+on:
+  push:
+    branches: [feat/ci-runner]
+    paths:
+      - "261117/ci_runner/**"
+      - ".github/workflows/ci-runner-clean-fixture.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-runner-clean-fixture-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  clean-fixture:
+    if: github.repository == 'kenobix/Claude_practice'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+        working-directory: 261117/ci_runner
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install locked dependencies into a new venv
+        run: |
+          python -V
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements.lock
+          .venv/bin/python -m pip install --no-build-isolation --no-deps -e .
+          .venv/bin/python -m pip check
+      - name: Verify the fixed success fixture on PostgreSQL and Docker
+        env:
+          PYTEST_ADDOPTS: '-k "test_api_to_separate_worker_to_persisted_result and fixture_success" --strict-markers --tb=short'
+        run: |
+          docker version --format '{{.Server.Version}}'
+          docker compose version
+          test ! -e artifacts/fixture-worker-latest.json
+          .venv/bin/python scripts/verify_execution.py
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          evidence = json.loads(Path('artifacts/fixture-worker-latest.json').read_bytes())
+          assert evidence['git_head_at_execution'] == os.environ['GITHUB_SHA']
+          assert evidence['pytest_failures'] == 0
+          case, = evidence['cases']
+          assert case['fixture'] == 'success' and case['receipt']['state'] == 'succeeded'
+          print('Verified one persisted fixture success at the checked-out commit')
+          PY

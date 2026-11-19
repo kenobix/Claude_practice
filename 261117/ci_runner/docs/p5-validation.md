@@ -75,6 +75,10 @@ PYTEST_ADDOPTS='-k "test_api_to_separate_worker_to_persisted_result and fixture_
 成功は該当テストのPASS、readiness 200、DB再起動後のmigration保持、専用資源の回収で判断する。
 2026-11-19に同一ホストの一時アーカイブと新しいvenvで、PyPIから固定依存を導入して再現した。別ホストの第三者による確認は残る。
 
+担当ブランチでは、使い捨てのUbuntu 24.04 VMで同じ初回検証を実行する。毎回新しいvenvへ固定依存を導入し、実PostgreSQLと実Dockerでローカル固定fixtureを1件確認する。
+試験がskipされて証拠が生成されない場合や、証拠のSHAとcheckoutのSHAが異なる場合は失敗とする。
+通常CI、GitHubの実配送、第三者による手順の確認はそれぞれ別に記録する。[クリーン環境検証の実行一覧](https://github.com/kenobix/Claude_practice/actions/workflows/ci-runner-clean-fixture.yml)
+
 ## 3分の障害デモ
 
 Dockerの固定イメージが既にある状態で始める。端末AでDBのない管理画面、端末Bで実DB・Dockerを使う故障試験を開く。

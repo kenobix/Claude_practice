@@ -30,7 +30,13 @@ integration/dockerの88件はdeselectedであり、実行済みや成功件数�
 専用DB・Dockerの統合/故障/隔離試験は、引き続きREADMEのverify_db.py、verify_execution.py、
 verify_preparation.py、verify_isolation.pyで明示的に実行する。新規の外部接続テストには適切なmarkerとopt-inが必要。
 このCIはDocker隔離の検証や、Worker・受理commit実行・ログ永続化の実装を代替しない。
-必須チェックへの設定変更、既存workflowの変更は今回の対象外。
+必須チェックの設定はリポジトリ側で管理する。
+
+## P5のクリーン環境検証
+
+[別のworkflow](../../../.github/workflows/ci-runner-clean-fixture.yml)は `feat/ci-runner` へのpushで、`261117/ci_runner/` または同workflowが変わったときに動く。GitHub-hosted Ubuntu 24.04、`contents: read`、10分上限で実行する。
+新規venvで固定依存を導入し、専用PostgreSQL・実Dockerで[READMEから辿れる初回検証](p5-validation.md#初回のローカル検証)を1件実行する。checkoutのSHAと証拠を照合し、skipでは成功しない。証拠はrunner内で照合する。
+対象は固定fixtureの受付、別Workerでの実行と回収、正式結果の保持。P0の全隔離試験、P2の障害試験、P3の実配送、性能測定は個別に検証する。
 
 ## 検証記録と参照
 

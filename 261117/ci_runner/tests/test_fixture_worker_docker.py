@@ -56,7 +56,9 @@ def test_api_to_separate_worker_to_persisted_result(dedicated_database, mode, st
         first = client.post('/runs', json=payload()).json()
         second = client.post('/runs', json=payload('b'*40)).json()
     with database.connect() as conn:
-        conn.execute("UPDATE runs SET available_at=clock_timestamp()-interval '1 day'")
+        conn.execute("UPDATE runs SET available_at=statement_timestamp() - interval '1 day' "
+                     "- CASE WHEN id=%s THEN interval '1 second' ELSE interval '0 seconds' END WHERE id IN (%s, %s)",
+                     (first['id'], first['id'], second['id']))
     result = invoke(mode)
     assert result.returncode == 0 and result.stderr == ''
     output = json.loads(result.stdout)
