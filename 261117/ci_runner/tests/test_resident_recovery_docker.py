@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from functools import partial
 import json
 from multiprocessing import get_context
+from multiprocessing.connection import wait
 import os
 import signal
 import subprocess
@@ -169,7 +170,10 @@ def test_two_residents_recover_after_sigkill(dedicated_database, tmp_path, phase
                         str(run.id), str(claim.attempt_id), 2)
                     available_at = datetime.fromisoformat(scheduled['available_at'])
                     assert available_at >= (closed['container_recovered_at'] or closed['finished_at']) + timedelta(seconds=5)
-                    assert new_read.poll(25), 'replacement did not execute the scheduled run'
+                    # This harness wait includes backoff, the Docker build and result preparation.
+                    # Recovery time is measured separately from SIGKILL to the official result.
+                    ready = wait([new_read, healthy.sentinel], timeout=60)
+                    assert new_read in ready, f'replacement missed report checkpoint (exit={healthy.exitcode})'
                     new_claim, new_image, new_result = new_read.recv()
                     assert new_claim.run_id == run.id and new_claim.attempt_no == 2
                     assert new_claim.started_at >= available_at

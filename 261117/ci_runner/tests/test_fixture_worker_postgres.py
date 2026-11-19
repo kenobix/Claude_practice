@@ -141,7 +141,7 @@ def test_finalization_commit_fault_never_acquires_another_job(dedicated_database
     with pytest.raises(fixture_worker.OneShotFailed) as error:
         fixture_worker.run_once('worker-1', connection_factory=factory)
     assert calls == 3 and error.value.stage == 'finalization'
-    client = TestClient(app)
+    client = TestClient(app, base_url='http://127.0.0.1')
     detail = client.get('/runs/' + str(first.id)).json()
     assert detail['state'] == state
     assert (detail['completed_attempt_id'] is not None) == (position == 'after')

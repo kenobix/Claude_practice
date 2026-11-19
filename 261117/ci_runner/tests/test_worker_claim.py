@@ -58,7 +58,7 @@ def test_separate_worker_commits_initial_attempt_and_api_observes_it(dedicated_d
         assert attempt[:4] == ('worker-1', 1, 'initial', timedelta(seconds=30))
         assert attempt[4] is not None and attempt[5]
         assert str(attempt[4]) not in result.stdout + result.stderr
-    client = TestClient(app)
+    client = TestClient(app, base_url='http://127.0.0.1')
     assert client.get('/runs/' + str(run.id)).json()['state'] == 'running'
     replay = client.post('/runs', json={'repository_id': run.repository_id, 'commit_sha': run.commit_sha})
     assert replay.status_code == 200 and replay.json()['state'] == 'running'

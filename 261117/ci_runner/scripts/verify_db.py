@@ -60,7 +60,7 @@ def verify():
         old_dsn = os.environ.get('DATABASE_URL')
         os.environ['DATABASE_URL'] = env['DATABASE_URL']
         try:
-            assert TestClient(app).get('/health/ready').status_code == 200
+            assert TestClient(app, base_url='http://127.0.0.1').get('/health/ready').status_code == 200
             print('real DB readiness: 200')
         finally:
             if old_dsn is None:

@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 import psycopg
 from ci_runner.app import app
 
-client = TestClient(app)
+client = TestClient(app, base_url='http://127.0.0.1')
 
 
 def test_liveness_without_db(monkeypatch):

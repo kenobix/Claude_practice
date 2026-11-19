@@ -22,7 +22,7 @@ Docker操作権限は信頼済みWorkerだけ。APIやジョブへsocketを渡�
 | 古い実行結果 | token/DB時刻/状態/取消条件による確定、attempt別成果物 | 期限切れ完了・競合試験 |
 | パストラバーサル/XSS | 成果物は固定名とDB保存キーで生成、ダウンロード入力はUUID。ログは表示時HTML escape | 不正ID、旧試行の参照、ログ内のタグ・制御文字を検証 |
 | Webhook偽装/再送 | raw body HMAC-SHA256定数時間比較、body上限、許可repo/ref、IDと業務キー。Webhook専用アプリへ分離 | [ローカルHTTPS・再送試験](webhook.md)。GitHubからの実配送は未検証 |
-| ローカルAPIの悪用 | loopback限定、CORSを開放しない、管理画面のHostもloopbackに限定し埋め込みを拒否 | [管理画面の検証](run-operations.md#管理画面)。公開時の認証は別設計 |
+| ローカルAPIの悪用 | loopback bind、CORSを開放しない、管理アプリ全経路の単一loopback Host検証、管理画面の埋め込み拒否 | [管理APIの契約](run-operations.md)。Host検証はloopback bindの補助。公開時の認証は別設計 |
 
 上限値は初期案。OS/cgroup/rootless構成により適用できない場合は実行開始を拒否する設計にする。
 Docker inspectの値だけで有効と判断せず、実際の失敗・抑制とホスト影響を観測する。

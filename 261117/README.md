@@ -124,6 +124,8 @@ curl -i http://127.0.0.1:18117/health/ready
 ```
 
 liveは200。readyは必要なmigration 001〜008をすべて確認して200、DB未設定・停止・版の欠落時は503。
+管理アプリの全HTTP経路は、単一のloopback `Host`（`127.0.0.1`、`localhost`、`[::1]`、ポート指定可）を要求する。
+管理アプリは引き続きloopbackにbindする。公開HTTPSの転送先には[Webhook専用アプリ](#github-webhookを受け付ける)を指定する。
 
 ## PostgreSQLの起動・初期化
 
@@ -287,7 +289,7 @@ curl -X PUT "http://127.0.0.1:18117/runs/${RUN_ID}/retry/${ATTEMPT_ID}"
 
 使い捨てPostgreSQLと実Dockerで1/2 Workerを比較できる。通常は100ジョブを各3回実行し、`--pilot` は2件の動作確認に使う。
 固定fixtureの検証と実行制限を保ち、GitHub HTTP応答を試験データに置き換える。
-[計測、クリーン環境の確認、3分の故障デモ](ci_runner/docs/p5-validation.md)
+[比較グラフ、クリーン環境の確認、3分の故障デモ](ci_runner/docs/p5-validation.md)
 
 ## Worker取得だけの診断
 

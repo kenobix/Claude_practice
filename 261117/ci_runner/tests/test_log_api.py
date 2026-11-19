@@ -22,7 +22,7 @@ def no_database():
     '/runs/{id}/logs?limit=16385', '/runs/{id}/logs?offset=1.5',
 ])
 def test_invalid_log_request_never_accesses_db(suffix):
-    response = TestClient(create_app(no_database)).get(suffix.format(id=uuid4()))
+    response = TestClient(create_app(no_database), base_url='http://127.0.0.1').get(suffix.format(id=uuid4()))
     assert response.status_code == 422 and 'private-canary' not in response.text
 
 
@@ -39,7 +39,7 @@ def client_with_page(chunk, total=None):
                    'retained_bytes': len(chunk), 'observed_bytes': len(chunk)+10}
             return SimpleNamespace(fetchone=lambda: row)
         yield SimpleNamespace(execute=execute)
-    return TestClient(create_app(factory)), attempt_id
+    return TestClient(create_app(factory), base_url='http://127.0.0.1'), attempt_id
 
 
 @pytest.mark.parametrize('format', ['text', 'html'])
@@ -88,6 +88,6 @@ def test_db_commit_failure_does_not_return_log_content():
     def unavailable():
         yield SimpleNamespace(execute=lambda *a: SimpleNamespace(fetchone=lambda: None))
         raise psycopg.OperationalError('private-log-db-canary')
-    response = TestClient(create_app(unavailable)).get(f'/runs/{uuid4()}/logs')
+    response = TestClient(create_app(unavailable), base_url='http://127.0.0.1').get(f'/runs/{uuid4()}/logs')
     assert response.status_code == 503 and response.headers['retry-after'] == '1'
     assert response.json() == {'detail': 'database unavailable'}

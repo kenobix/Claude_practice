@@ -3,31 +3,40 @@ from typing import Annotated, Literal
 from uuid import UUID
 
 import psycopg
-from fastapi import FastAPI, HTTPException, Query, Request, Response
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from . import artifacts, console, database, logs, metrics, runs
 from .body_limit import JsonBodyLimit
 from .models import AttemptPage, ManualRetryReceipt, Run, RunInput, RunPage
 from .settings import BODY_LIMIT, POLICY, SCHEMA_VERSION
 
-LOOPBACK_HOST = re.compile(r'(?:localhost|127\.0\.0\.1|\[::1\])(?::[0-9]{1,5})?', re.IGNORECASE)
+LOOPBACK_HOST = re.compile(rb'(?:localhost|127\.0\.0\.1|\[::1\])(?::[0-9]{1,5})?', re.IGNORECASE)
 
 
-def require_loopback_host(request: Request):
-    hosts = request.headers.getlist('host')
-    if len(hosts) != 1 or not LOOPBACK_HOST.fullmatch(hosts[0]):
-        raise HTTPException(403, 'loopback host required')
+class LoopbackHost:
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if scope['type'] == 'http':
+            hosts = [value for name, value in scope['headers'] if name.lower() == b'host']
+            if len(hosts) != 1 or not LOOPBACK_HOST.fullmatch(hosts[0]):
+                await JSONResponse({'detail': 'loopback host required'}, 403)(scope, receive, send)
+                return
+        await self.app(scope, receive, send)
 
 
 def create_app(connection_factory=None):
     app = FastAPI(title='CI runner', version='0.1.0')
     app.add_middleware(JsonBodyLimit, path='/runs', limit=BODY_LIMIT)
+    app.add_middleware(LoopbackHost)
     # Test processes can inject a connection context at the transaction boundary.
     # No HTTP/environment fault switch exists in production.
     factory = connection_factory or database.connect
-    app.include_router(console.router(factory, require_loopback_host))
+    app.include_router(console.router(factory))
 
     @app.exception_handler(database.DatabaseUnavailable)
     @app.exception_handler(psycopg.Error)
@@ -80,15 +89,13 @@ def create_app(connection_factory=None):
         return runs.get_run(factory, run_id)
 
     @app.put('/runs/{run_id}/cancel', response_model=Run, responses={202: {'model': Run}})
-    def cancel(run_id: UUID, request: Request, response: Response):
-        require_loopback_host(request)
+    def cancel(run_id: UUID, response: Response):
         result = runs.cancel_run(factory, run_id)
         response.status_code = 202 if result.state == 'running' else 200
         return result
 
     @app.put('/runs/{run_id}/retry/{attempt_id}', response_model=ManualRetryReceipt, status_code=202)
-    def retry(run_id: UUID, attempt_id: UUID, request: Request):
-        require_loopback_host(request)
+    def retry(run_id: UUID, attempt_id: UUID):
         return runs.request_manual_retry(factory, run_id, attempt_id)
 
     @app.get('/runs/{run_id}/attempts', response_model=AttemptPage)
@@ -97,13 +104,11 @@ def create_app(connection_factory=None):
         return runs.list_attempts(factory, run_id, limit, before)
 
     @app.get('/runs/{run_id}/artifacts/result', response_class=Response)
-    def result_artifact(run_id: UUID, attempt_id: UUID, request: Request):
-        require_loopback_host(request)
+    def result_artifact(run_id: UUID, attempt_id: UUID):
         return artifacts.download(factory, run_id, attempt_id)
 
     @app.get('/metrics/operations')
-    def operations_metrics(request: Request, response: Response):
-        require_loopback_host(request)
+    def operations_metrics(response: Response):
         response.headers['Cache-Control'] = 'no-store'
         return metrics.recent(factory)
 

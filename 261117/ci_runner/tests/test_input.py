@@ -14,7 +14,7 @@ def no_database():
     raise AssertionError('invalid input must never open a database connection')
 
 
-client = TestClient(create_app(no_database))
+client = TestClient(create_app(no_database), base_url='http://127.0.0.1')
 VALID = {'repository_id': 'kenobix/Claude_practice', 'commit_sha': 'a' * 40}
 
 
@@ -48,6 +48,21 @@ def test_run_controls_validate_input_and_require_loopback_for_mutations():
         for path in ('invalid/attempts', f'{run_id}/attempts?limit=101', f'{run_id}/attempts?before=0',
                      f'{run_id}/attempts?before=2147483648'):
             assert local.get(f'/runs/{path}').status_code == 422
+
+
+def test_management_host_is_checked_before_body_and_database():
+    run_id = uuid4()
+    headers = {'Host': 'external.example', 'X-Forwarded-Host': 'localhost'}
+    with TestClient(create_app(no_database), base_url='http://127.0.0.1') as local:
+        for path in ('/health/live', '/health/ready', '/runs', f'/runs/{run_id}',
+                     f'/runs/{run_id}/attempts', f'/runs/{run_id}/logs', '/openapi.json'):
+            response = local.get(path, headers=headers)
+            assert response.status_code == 403, path
+            assert response.json() == {'detail': 'loopback host required'}
+        assert local.post('/runs', json=VALID, headers=headers).status_code == 403
+        assert local.post('/runs', content=b'x' * 4097, headers=headers).status_code == 403
+        for host in ('localhost', 'LOCALHOST:18117', '127.0.0.1:18117', '[::1]:18117'):
+            assert local.get('/health/live', headers={'Host': host}).status_code == 200
 
 
 def test_content_types_sizes_and_malformed_json():

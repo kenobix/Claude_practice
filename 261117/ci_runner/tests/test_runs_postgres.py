@@ -109,6 +109,8 @@ def row_count(db):
 
 def test_manual_creation_serial_replay_and_status(dedicated_database):
     with api() as (client, _):
+        external = {'Host': 'external.example', 'X-Forwarded-Host': 'localhost'}
+        assert client.post('/runs', json=payload(), headers=external).status_code == 403
         assert client.get('/runs').json() == {'items': [], 'next_cursor': None}
         first = client.post('/runs', json=payload())
         assert first.status_code == 201
@@ -121,6 +123,7 @@ def test_manual_creation_serial_replay_and_status(dedicated_database):
             assert replay.status_code == 200 and replay.json() == run
         assert row_count(dedicated_database) == 1
         assert client.get('/runs/' + run['id']).json() == run
+        assert client.get('/runs/' + run['id'], headers=external).status_code == 403
         assert client.get('/runs/' + str(uuid4())).status_code == 404
         assert client.post('/runs', json=payload('b' * 40)).status_code == 201
         with psycopg.connect(dedicated_database.dsn) as conn:

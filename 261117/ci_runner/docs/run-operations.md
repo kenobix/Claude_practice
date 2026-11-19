@@ -1,6 +1,6 @@
 # run取消・手動再試行・attempt履歴API
 
-管理API `ci_runner.app:app` のloopbackで使う。公開Webhookアプリの受信口とは別。DB接続やtransactionに失敗した場合は共通の503応答を返す。
+管理API `ci_runner.app:app` をloopbackにbindして使う。全HTTP経路で単一のloopback `Host` を要求し、bodyやDBを処理する前に違反を403で拒否する。`X-Forwarded-Host` は許可判定に使わない。公開Webhookアプリの受信口とは別。DB接続やtransactionに失敗した場合は共通の503応答を返す。
 
 ## 管理画面
 

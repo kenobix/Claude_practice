@@ -6,7 +6,7 @@ from typing import Annotated, Literal
 from urllib.parse import urlencode
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 
 from . import logs, metrics, runs
@@ -208,8 +208,8 @@ def _metrics(report) -> HTMLResponse:
 </dl>""")
 
 
-def router(factory, require_loopback_host) -> APIRouter:
-    api = APIRouter(prefix='/ui', dependencies=[Depends(require_loopback_host)], include_in_schema=False)
+def router(factory) -> APIRouter:
+    api = APIRouter(prefix='/ui', include_in_schema=False)
 
     @api.get('')
     def index(cursor: Annotated[str | None, Query(min_length=1, max_length=256)] = None):
