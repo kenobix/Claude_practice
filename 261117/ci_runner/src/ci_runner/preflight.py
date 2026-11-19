@@ -27,6 +27,7 @@ class ExecutionPermit:
     commit_sha: str
     workflow_version: str
     remaining_lease_seconds: float = 0.0
+    retry_start_no: int = 1
 
 
 def authorize_execution(claim: Claim, connection_factory=None) -> ExecutionPermit:
@@ -41,7 +42,7 @@ def authorize_execution(claim: Claim, connection_factory=None) -> ExecutionPermi
         row = conn.execute(
             'SELECT r.id AS run_id, a.id AS attempt_id, a.attempt_no, a.worker_id, '
             'a.lease_token, a.lease_expires_at, r.repository_id, r.ref, '
-            'r.commit_sha, r.workflow_version, '
+            'r.commit_sha, r.workflow_version, a.retry_start_no, '
             'EXTRACT(EPOCH FROM (a.lease_expires_at-clock_timestamp())) AS remaining_lease_seconds '
             'FROM runs r JOIN attempts a ON a.run_id=r.id '
             "WHERE r.id=%s AND a.id=%s AND a.lease_token=%s AND a.worker_id=%s "
@@ -77,9 +78,10 @@ def reserve_container_create(permit: ExecutionPermit, daemon_id: UUID, session: 
             raise ExecutionDenied(denied)
         attempt = conn.execute(
             "SELECT id FROM attempts a WHERE run_id=%s AND id=%s AND state='running' "
-            f'AND attempt_no=%s AND {ATTEMPT_KIND_SQL} '
+            f'AND attempt_no=%s AND retry_start_no=%s AND {ATTEMPT_KIND_SQL} '
             'AND worker_id=%s AND lease_token=%s FOR UPDATE',
-            (permit.run_id, permit.attempt_id, permit.attempt_no, permit.worker_id, permit.lease_token),
+            (permit.run_id, permit.attempt_id, permit.attempt_no, permit.retry_start_no,
+             permit.worker_id, permit.lease_token),
         ).fetchone()
         if attempt is None:
             raise ExecutionDenied(denied)

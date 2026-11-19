@@ -61,8 +61,7 @@ def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=N
     """
     state, reason = outcome(claim, result)
     source = result.verified_source
-    kind = attempt_kind(claim.attempt_no)
-    if kind is None or (kind == 'infrastructure' and source is None):
+    if type(claim.attempt_no) is not int or claim.attempt_no < 1 or (claim.attempt_no > 1 and source is None):
         raise FinalizationDenied('fixture report is not current')
     provenance = None
     if source is not None:
@@ -85,8 +84,10 @@ def finalize_fixture(claim: Claim, result: ExecutionResult, connection_factory=N
                 or (run['repository_id'], run['ref'], run['workflow_version']) !=
                 (POLICY.repository_id, POLICY.ref, POLICY.workflow_version)
                 or attempt['lease_token'] != claim.lease_token
-                or attempt['worker_id'] != claim.worker_id
-                or attempt['attempt_no'] != claim.attempt_no or attempt['retry_kind'] != kind):
+                or attempt['worker_id'] != claim.worker_id or attempt['attempt_no'] != claim.attempt_no):
+            raise FinalizationDenied('fixture report is not current')
+        kind = attempt_kind(attempt['attempt_no'], attempt['retry_start_no'])
+        if kind is None or attempt['retry_kind'] != kind:
             raise FinalizationDenied('fixture report is not current')
         if source is not None and run['commit_sha'] != source.commit_sha:
             raise FinalizationDenied('source SHA does not match the claimed run')

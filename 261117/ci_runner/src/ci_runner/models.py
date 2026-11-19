@@ -35,6 +35,12 @@ class RunPage(BaseModel):
     next_cursor: str | None
 
 
+class ManualRetryReceipt(BaseModel):
+    run_id: UUID
+    previous_attempt_id: UUID
+    requested_at: datetime
+
+
 class Attempt(BaseModel):
     id: UUID
     attempt_no: int

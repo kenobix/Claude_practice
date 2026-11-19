@@ -27,13 +27,16 @@ QUEUE_FILTER = (
     f'AND {POLICY_FILTER}'
 )
 INITIAL_SQL = (
-    f'SELECT r.id, r.commit_sha, 0 AS previous_attempt_no FROM runs r {QUEUE_FILTER}'
+    f'SELECT r.id, r.commit_sha, 0 AS previous_attempt_no, 1 AS retry_start_no FROM runs r {QUEUE_FILTER}'
     'AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.run_id=r.id) '
 )
 VERIFIED_SQL = (
-    'SELECT r.id, r.commit_sha, COALESCE(a.attempt_no,0) AS previous_attempt_no '
-    f'FROM runs r {LATEST_ATTEMPT_JOIN}{QUEUE_FILTER}'
-    f'AND (a.id IS NULL OR ({RETRYABLE_ATTEMPT_SQL})) '
+    'SELECT r.id, r.commit_sha, COALESCE(a.attempt_no,0) AS previous_attempt_no, '
+    'CASE WHEN m.previous_attempt_id IS NOT NULL THEN a.attempt_no+1 '
+    'ELSE COALESCE(a.retry_start_no,1) END AS retry_start_no '
+    f'FROM runs r {LATEST_ATTEMPT_JOIN}'
+    'LEFT JOIN manual_retries m ON m.run_id=r.id AND m.previous_attempt_id=a.id '
+    f'{QUEUE_FILTER}AND (a.id IS NULL OR m.previous_attempt_id IS NOT NULL OR ({RETRYABLE_ATTEMPT_SQL})) '
 )
 QUEUE_ORDER = (
     'ORDER BY r.available_at, r.created_at, r.id '
@@ -103,14 +106,16 @@ def claim_next(worker_id: str, connection_factory=None, *, target: tuple[UUID, s
             if run is None:
                 return None
         number = run['previous_attempt_no'] + 1
+        retry_start_no = run['retry_start_no']
         row = conn.execute(
             'INSERT INTO attempts(run_id, attempt_no, worker_id, lease_token, '
-            'started_at, lease_expires_at, retry_kind, create_tracked) '
+            'started_at, lease_expires_at, retry_kind, retry_start_no, create_tracked) '
             "VALUES (%s, %s, %s, gen_random_uuid(), statement_timestamp(), "
-            "statement_timestamp() + %s * interval '1 second', %s, true) "
+            "statement_timestamp() + %s * interval '1 second', %s, %s, true) "
             'RETURNING id AS attempt_id, run_id, attempt_no, worker_id, '
             'lease_token, started_at, lease_expires_at',
-            (run['id'], number, worker_id, LEASE_SECONDS, attempt_kind(number))).fetchone()
+            (run['id'], number, worker_id, LEASE_SECONDS, attempt_kind(number, retry_start_no),
+             retry_start_no)).fetchone()
         changed = conn.execute(
             "UPDATE runs SET state='running' WHERE id=%s AND state='queued' "
             'AND cancel_requested_at IS NULL RETURNING id', (run['id'],)).fetchone()

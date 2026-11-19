@@ -32,7 +32,7 @@ blob・2151 bytes・承認済みSHA-256を照合する。I/O前後のrun ID/SHA�
 
 ## 受理commitの固定fixtureを一件実行する
 
-専用DBで migration 006 まで適用し、許可main上のfixtureを含むSHAでrunを投入する。
+専用DBで migration 007 まで適用し、許可main上のfixtureを含むSHAでrunを投入する。
 WorkerにDocker権限とGitHub HTTPS接続を用意し、`ci_runner/` から実行する。
 
 ```bash
@@ -56,7 +56,7 @@ CI_RUN_LIVE_COMMIT_SOURCE=1 .venv/bin/python scripts/verify_execution.py
 .venv/bin/python -m ci_runner.fixture_worker --worker-id commit-worker-1 --serve
 ```
 
-専用DB・migration 006・Docker・GitHub HTTPSの条件は一件実行と同じ。
+専用DB・Docker・GitHub HTTPSの条件は一件実行と同じ。
 空キューは1秒ごとに確認し、受理commitだけを一件ずつ処理する。結果確定後にstdoutへ1行ずつ出力する。
 同じ専用DB・Docker daemonに接続する2つ目のWorkerには別の `--worker-id` を指定する。
 取得競合で負けたWorkerは元のrun ID・受理SHA・許可設定を再照合し、一致すれば次のポーリングへ戻る。
@@ -78,11 +78,12 @@ CI_RUN_LIVE_COMMIT_SOURCE=1 .venv/bin/python scripts/verify_execution.py
 1走査で期限切れと再キューをそれぞれ最大16件処理し、5秒待つ。単発は `--once`。DBエラー時は終了1とし、再開前にDB状態を照合する。
 基盤障害による失効後、Dockerへのcreate未送信または回収確認があるrunを同じID・受理SHAで再キューする。
 `available_at` はDB時刻から5秒後（2回目）または10秒後（3回目）。検証付きWorkerだけが新しいattempt・tokenを取得する。
-3回目も失効した場合は `failed / infra_exhausted` を記録する。取消・チェック失敗・タイムアウト・ログ超過は自動再試行の対象外。
+初回投入と各手動再試行はそれぞれ最大3attempt。区間の3回目も失効した場合は `failed / infra_exhausted` を記録する。
+取消・チェック失敗・タイムアウト・ログ超過は自動再試行の対象外。
 
 ## 失効後に残ったコンテナを回収する
 
-Workerと同じDockerデーモンおよび migration 006 適用済みの専用DBに接続する環境で実行する。
+Workerと同じDockerデーモンと専用DBに接続する環境で実行する。
 
 ```bash
 .venv/bin/python -m ci_runner.orphan_cleanup --once
@@ -156,6 +157,8 @@ verify_db.pyを使い、既存の開発DBへテストを手動で向けない。
 初期DDLは `migrations/001_initial.sql`。適用済み版は編集せず、後続版migrationを追加する。
 版1に加えて002_run_history.sqlの履歴indexを適用する。001は変更していない。
 003_attempt_logs.sqlでattempt別ログと容量台帳を追加する。既存履歴を保持し、過去ログはbackfillしない。
+007_manual_retry.sqlは手動再試行の受付記録と、各attemptが属する区間の開始番号を追加する。
+更新時は既存のAPI・Worker・期限監視・回収プロセスを停止してからmigrationを適用し、新しい版で再起動する。
 適用ツールは番号順の前進適用と未知版の検出に対応し、downgradeは未実装。
 
 ## 他プロジェクトとの分離
@@ -250,7 +253,7 @@ commit結果が不明な接続断では、未保存と断定せず同じ業務�
 運用時は承認済みの公開HTTPS受信口から `POST /webhooks/github` だけを転送する。
 [受付仕様・起動・手動再送手順](ci_runner/docs/webhook.md)。
 
-## runを取り消す・attempt履歴を見る
+## runを取り消す・再試行する・attempt履歴を見る
 
 管理APIのloopbackアドレスから操作する。待機中の取消は200。実行中の取消要求は202で受理し、実行権を閉じるまでは `GET /runs/{id}` に要求時刻と `running` を表示する。
 
@@ -260,6 +263,15 @@ curl "http://127.0.0.1:18117/runs/${RUN_ID}/attempts?limit=20"
 ```
 
 attempt履歴では終了理由と正式結果の有無を確認できる。次のページには `next_before` を `before` に渡す。
+失敗または時間切れを手動で再試行するには、履歴から最新の失敗attemptのIDを指定する。
+
+```bash
+curl -X PUT "http://127.0.0.1:18117/runs/${RUN_ID}/retry/${ATTEMPT_ID}"
+```
+
+202は受付の永続化を示す。同じPUTを再送しても後から失敗した別attemptは再キューされない。
+検証付きWorkerが同じ受理SHAを取得した後、次の番号と新しいtokenで実行する。以前のattempt・ログ・取得元の記録は保持する。
+回収を確認できない基盤障害は409で再試行を拒否する。
 [運用API仕様](ci_runner/docs/run-operations.md)。
 
 ## Worker取得だけの診断

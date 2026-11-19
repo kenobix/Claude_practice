@@ -9,7 +9,7 @@ from uuid import UUID
 import psycopg
 
 from . import database
-from .retry import MAX_ATTEMPTS, schedule_next
+from .retry import ATTEMPT_POSITION_SQL, MAX_ATTEMPTS, schedule_next
 from .settings import POLICY
 
 POLL_SECONDS = 5
@@ -41,14 +41,15 @@ def expire_next(connection_factory=None) -> ExpiredAttempt | None:
             return None
         run_id, attempt_id = candidate['run_id'], candidate['attempt_id']
         locked = conn.execute(
-            "SELECT attempt_no, retry_kind FROM attempts WHERE run_id=%s AND id=%s AND state='running' FOR UPDATE",
+            f'SELECT {ATTEMPT_POSITION_SQL} AS position, retry_kind '
+            "FROM attempts a WHERE run_id=%s AND id=%s AND state='running' FOR UPDATE",
             (run_id, attempt_id),
         ).fetchone()
         if locked is None:
             return None
         if candidate['cancel_requested_at'] is not None:
             state, reason = 'canceled', 'canceled_lease_expired'
-        elif (locked['attempt_no'], locked['retry_kind']) == (MAX_ATTEMPTS, 'infrastructure'):
+        elif (locked['position'], locked['retry_kind']) == (MAX_ATTEMPTS, 'infrastructure'):
             state, reason = 'failed', 'infra_exhausted'
         else:
             state, reason = 'failed', 'infra_lease_expired'

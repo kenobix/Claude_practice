@@ -19,7 +19,7 @@ def test_migration_and_constraints(monkeypatch):
         subprocess.run([sys.executable, str(script)], check=True)
     with psycopg.connect(dsn) as conn:
         assert conn.execute("SELECT version FROM schema_migrations ORDER BY version").fetchall() == [
-            (1,), (2,), (3,), (4,), (5,), (6,)]
+            (1,), (2,), (3,), (4,), (5,), (6,), (7,)]
         run_id = conn.execute(
             "INSERT INTO runs(repository_id, ref, commit_sha, workflow_version) "
             "VALUES ('fixture', 'refs/heads/main', %s, 'v1') RETURNING id", ('a' * 40,)
@@ -42,3 +42,36 @@ def test_migration_and_constraints(monkeypatch):
                     "now(), 'failed', now(), 'infra_lease_expired', 'initial', now())", (run_id,))
         assert invalid_recovery.value.diag.constraint_name == 'attempts_container_recovery_identity'
         conn.rollback()  # test data never persists; schema remains for local development
+
+
+@pytest.mark.integration
+def test_manual_retry_migration_preserves_original_attempt_numbers_and_tokens():
+    dsn = os.environ.get('CI_TEST_DATABASE_URL')
+    if not dsn or os.environ.get('CI_TEST_DISPOSABLE') != '1':
+        pytest.skip('use verify_db.py: disposable dedicated PostgreSQL required')
+    migrations = sorted((Path(__file__).resolve().parents[1] / 'migrations').glob('[0-9][0-9][0-9]_*.sql'))
+    with psycopg.connect(dsn) as conn:
+        conn.execute('CREATE SCHEMA manual_retry_upgrade')
+        conn.execute('SET LOCAL search_path TO manual_retry_upgrade, pg_catalog')
+        for path in migrations:
+            if int(path.name[:3]) < 7:
+                conn.execute(path.read_text())
+        run_id, = conn.execute(
+            "INSERT INTO runs(repository_id,ref,commit_sha,workflow_version,state) "
+            "VALUES ('fixture','refs/heads/main',%s,'v1','running') RETURNING id", ('a'*40,),
+        ).fetchone()
+        conn.execute(
+            'INSERT INTO attempts(run_id, attempt_no, worker_id, lease_token, started_at, lease_expires_at, '
+            'finished_at, state, retry_kind) '
+            "VALUES (%s,1,'old',gen_random_uuid(),now()-interval '1 minute',now()-interval '30 seconds',"
+            "now()-interval '30 seconds','failed','initial'), "
+            "(%s,2,'current',gen_random_uuid(),now(),now()+interval '30 seconds',NULL,'running','infrastructure')",
+            (run_id, run_id),
+        )
+        query = 'SELECT id, attempt_no, retry_kind, lease_token, state FROM attempts ORDER BY attempt_no'
+        old = conn.execute(query).fetchall()
+        conn.execute(next(path for path in migrations if path.name.startswith('007_')).read_text())
+        assert conn.execute(query).fetchall() == old
+        assert conn.execute('SELECT DISTINCT retry_start_no FROM attempts').fetchall() == [(1,)]
+        assert conn.execute('SELECT count(*) FROM manual_retries').fetchone() == (0,)
+        conn.rollback()

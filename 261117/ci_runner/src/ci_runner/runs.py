@@ -7,7 +7,8 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 
 from .database import DatabaseUnavailable
-from .models import Attempt, AttemptPage, Cursor, Run, RunPage
+from .models import Attempt, AttemptPage, Cursor, ManualRetryReceipt, Run, RunPage
+from .retry import ATTEMPT_KIND_SQL, LATEST_ATTEMPT_JOIN, MAX_ATTEMPTS, RECOVERED_INFRA_ATTEMPT_SQL
 from .settings import POLICY
 
 COLUMNS = ('id, repository_id, ref, commit_sha, workflow_version, state, created_at, '
@@ -76,6 +77,49 @@ def cancel_run(connection_factory, run_id: UUID) -> Run:
                 f'WHERE id=%s RETURNING {COLUMNS}', (run_id,),
             ).fetchone()
         result = Run.model_validate(row)
+    return result
+
+
+def request_manual_retry(connection_factory, run_id: UUID, attempt_id: UUID) -> ManualRetryReceipt:
+    """Requeue the named failure once, retaining its attempt, logs and provenance."""
+    with connection_factory() as conn:
+        run = conn.execute(
+            'SELECT id FROM runs WHERE id=%s AND repository_id=%s AND ref=%s '
+            'AND workflow_version=%s FOR UPDATE', (run_id, POLICY.repository_id, POLICY.ref, POLICY.workflow_version),
+        ).fetchone()
+        if run is None:
+            raise HTTPException(404, 'run not found')
+        key = (run_id, attempt_id)
+        receipt = conn.execute(
+            'SELECT run_id, previous_attempt_id, requested_at FROM manual_retries '
+            'WHERE run_id=%s AND previous_attempt_id=%s', key,
+        ).fetchone()
+        if receipt is None:
+            # A committed official result already recorded cleanup before publishing.
+            # Expiry has no official result and needs separate proof of Docker recovery.
+            previous = conn.execute(
+                f'SELECT a.id FROM runs r {LATEST_ATTEMPT_JOIN}'
+                "WHERE r.id=%s AND a.id=%s AND r.state IN ('failed','timed_out') "
+                'AND r.cancel_requested_at IS NULL AND a.state=r.state '
+                'AND a.attempt_no <= %s AND a.finished_at <= statement_timestamp() '
+                f'AND ((r.completed_attempt_id=a.id AND {ATTEMPT_KIND_SQL} '
+                "AND a.reason IN ('fixture_check_failure','fixture_timeout','fixture_log_limit',"
+                "'commit_check_failure','commit_timeout','commit_log_limit')) "
+                f'OR (r.completed_attempt_id IS NULL AND {RECOVERED_INFRA_ATTEMPT_SQL} '
+                "AND a.reason IN ('infra_lease_expired','infra_exhausted')))",
+                (*key, 2147483647 - MAX_ATTEMPTS),
+            ).fetchone()
+            if previous is None:
+                raise HTTPException(409, 'attempt is not the current retryable failure')
+            receipt = conn.execute(
+                'INSERT INTO manual_retries(run_id, previous_attempt_id, requested_at) '
+                'VALUES (%s,%s,clock_timestamp()) RETURNING run_id, previous_attempt_id, requested_at', key,
+            ).fetchone()
+            conn.execute(
+                "UPDATE runs SET state='queued', completed_attempt_id=NULL, available_at=%s WHERE id=%s",
+                (receipt['requested_at'], run_id),
+            )
+        result = ManualRetryReceipt.model_validate(receipt)
     return result
 
 

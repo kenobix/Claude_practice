@@ -72,7 +72,7 @@ build1回・createのimage ID一致・正常確定・資源回収も確認する
 ## 受理commitの固定fixture経路
 
 `--run-once --verified-commit` は許可mainのsnapshotから検証した固定fixtureを実行する。
-curl 8.4以上とGitHub HTTPS接続、migration 006適用済みの専用DBとUUID形式のIDを返すDocker daemonが必要。
+curl 8.4以上とGitHub HTTPS接続、migration 007適用済みの専用DBとUUID形式のIDを返すDocker daemonが必要。
 `--fixture-mode` は運用者が選ぶ既存4モードで、受付APIは実行指示を受け取らない。
 
 1. DB transactionを閉じてから[固定取得](commit-source-readiness.md)を実施する。
@@ -110,7 +110,7 @@ Docker base imageやbuild cacheは既存の運用どおり再利用され得る�
   Worker PIDを対象にし、同時にDocker/Curl子プロセスへシグナルを送らない。
   SIGKILLやdaemon障害時は、期限監視と同じDockerホストでの残存コンテナ回収を行う。監視が再キューできる条件は[基盤障害の自動再試行](design.md#基盤障害の自動再試行)を参照。
 - 取得後の先頭変更、または完全一致する対象をロック・claimできなかった場合は、該当するpollを破棄する。
-  build済みの場合は専用imageタグを回収してから、元のrun ID・受理SHA・許可repo/ref/workflow・schema 004/006をDBで再照合する。
+  build済みの場合は専用imageタグを回収してから、元のrun ID・受理SHA・許可repo/ref/workflowと、由来保存・現在のschema版をDBで再照合する。
   一致を確認できた場合、常駐Workerは空キューと同じ1秒待機へ戻る。次のpollはsourceの取得からやり直す。
   `--run-once --verified-commit` はこの場合も終了1。
 - 取得拒否、確認対象の不一致、DB障害やcommit応答喪失、Docker障害や回収失敗、確定失敗では安全な失敗情報を出して終了1。

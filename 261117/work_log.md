@@ -1042,3 +1042,22 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
   専用DB・fixtureの試験資源は残存0件。
 - P3は概算75%で実配送待ち。P4は概算25%、MVP全体は概算69%（残31%）。
   次は失敗・時間切れの手動再試行と履歴UI。P3では公開HTTPS確保後に実pushとGitHubの手動再送を検証する。
+
+## P4の手動再試行と実行権の引き継ぎ
+
+- 開始HEAD `81d8f4b18ecea576db99fbf663afbb16af93d7c7` のpush/PR CIは成功。Draft PR #1に未解決のレビュー指摘なし。
+  公開HTTPS受信先がないため、P3の実配送試験に依存しない手動再試行を先行した。
+- `PUT /runs/{run_id}/retry/{attempt_id}` を追加。最新の確定済み失敗・時間切れ、または作成未送信・回収確認済みの基盤障害だけを受付。
+  migration 007で受付記録と区間の開始番号を追加した。runの再キューと正式結果の参照解除を同じcommitにまとめ、同じ要求には元の受付を返す。
+- 検証付きWorkerが同じrun IDと受理SHAを再確認し、次の通算番号と新しいtokenを取得する。初回投入と各手動再試行を起点に最大3attempt。
+  5秒・10秒の自動再試行間隔、固定sourceの検証、旧実行権の拒否、過去のログ・由来・試行履歴を維持した。
+- 通常回帰は222 passed、207 deselected、既知のTestClient警告1件。pip check、compileallも成功。
+- 使い捨てPostgreSQL 17.12・Docker 29.9.2の選択回帰は151 passed、1 skipped、276 deselected、既知警告1件（315.17秒）。
+  skipはP0専用の隔離プローブ。並行PUT・並行claim、DB停止時の503、commit前後のAPIプロセスSIGKILL、期限切れ・回収前の拒否、旧報告拒否を確認した。
+  GitHubは固定試験応答を使用。実Dockerでチェック失敗を記録し、手動再試行でコンテナ作成直後にWorkerを強制停止した。
+  不在確認を保存してから、別Workerが同じSHAを取得して成功し、最新attemptが正式結果・ログの参照先になった。
+- 最終差分の選択回帰は36 passed、393 deselected、既知警告1件（80.29秒）。旧スキーマのattempt番号・token・状態の保持、
+  手動再試行のDocker通し試験、完了処理、ローカルHTTPSのWebhook回帰を確認した。DB readinessは200、再起動後にmigration 1〜7を保持。
+  専用DBのcontainer・volume・network、fixtureのcontainer・imageの残存は0件。
+- P4は概算40%、MVP全体は計画工数で重み付けして概算72%（残28%）。次は管理UIからコミット・試行・理由・正式結果を追い、
+  ライブと過去デモを識別して取消・再試行できるようにする。容量制限付き成果物と運用メトリクス、P5の比較計測と最終受入、P3の実配送が残る。

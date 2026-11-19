@@ -1,6 +1,6 @@
-# run取消とattempt履歴API
+# run取消・手動再試行・attempt履歴API
 
-両操作は管理API `ci_runner.app:app` のloopbackで使う。公開Webhookアプリの受信口とは別。DB接続やtransactionに失敗した場合は共通の503応答を返す。
+管理API `ci_runner.app:app` のloopbackで使う。公開Webhookアプリの受信口とは別。DB接続やtransactionに失敗した場合は共通の503応答を返す。
 
 ## runの取消
 
@@ -17,6 +17,24 @@
 取消要求と結果確定は同じrun行ロックで順序が決まる。取消要求のcommit後はpreflight・heartbeat・成功報告が拒否され、期限監視が `canceled_lease_expired` を記録する。残存コンテナは通常の回収手順に従う。現在の常駐Workerはheartbeat拒否を受けると所有資源を回収し、安全停止する。後続処理には監視側からの再起動が必要。
 
 取消の応答はDB commit後に返す。応答喪失時は同じPUTを再送できる。HTTP 202は取消要求の保存を示す。実行停止の確認には状態とattempt履歴を参照する。
+
+## 手動再試行
+
+`PUT /runs/{run_id}/retry/{attempt_id}` はbodyなし。同じloopback Host条件を適用する。`GET /runs/{run_id}/attempts` で確認した最新の失敗attemptを指定する。
+
+| 条件 | 応答 |
+|---|---|
+| `failed` / `timed_out` の正式結果、または作成未送信・不在確認済みの基盤障害 | 202。`run_id`、`previous_attempt_id`、`requested_at` を返す |
+| 受付済みのrunとattemptの組を再送 | 同じ202と元の受付記録。現在のrun状態は `GET /runs/{run_id}` で確認する |
+| 遅延した未受付の要求、待機中、実行中、成功、取消、回収未確認の基盤障害 | 409。`--claim-once` から再試行を取得することもできない |
+| runなし、許可対象外、UUID不正 | 404または422 |
+
+run行を先にロックして最新attemptを照合する。新しい受付記録、`queued` への遷移、正式結果参照の解除を同じtransactionでcommitする。
+期限監視が先に同じrunを再キューした場合は409。手動受付が先に確定した場合は、その要求を起点として直ちに待機キューに入る。
+旧attemptとログ・取得元は保持する。正式ログAPIは、新しい正式結果が確定するまで409を返す。
+
+検証付きWorkerが同じrun IDと受理SHAを再検証し、新しい通算番号・token・30秒leaseを発行する。
+明示的な再取得は `manual`、同じ区間で失効後に再取得する場合は `infrastructure`。新しい区間ごとに最大3attempt、5秒・10秒のバックオフを適用する。
 
 ## attempt履歴
 

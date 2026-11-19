@@ -1,6 +1,6 @@
 # P0設計案：ジョブの正本と実行権
 
-状態: P0〜P2は固定fixtureで受入確認済み。[Webhook受付と配送の永続化](webhook.md)、[run取消とattempt履歴API](run-operations.md)を実装済み。GitHubからの実配送と履歴UIは後続作業。
+P0〜P2は固定fixtureで受入確認済み。[Webhook受付と配送の永続化](webhook.md)、[run取消・手動再試行・attempt履歴API](run-operations.md)を実装済み。GitHubからの実配送と履歴UIは後続作業。
 実装したHTTP契約と競合・commit前後の障害証拠は[受付API仕様](intake-api.md)を参照。
 [Worker初回取得](worker-claim.md)は履歴なしの許可queuedを取得し、attempt番号1・initial・DB期限30秒を同時commitする。
 検証付きWorkerは、[基盤障害の自動再試行](#基盤障害の自動再試行)で再キューされたrunも取得する。
@@ -21,11 +21,12 @@
 | running | lease期限切れ、取消なし、1または2回目 | failed | failed/infra_lease_expired |
 | failed | 直近attemptが基盤障害、予算内、作成未送信または回収確認済み | queued | 既存attemptを保持し、次回取得時に新attemptを発行 |
 | running | lease期限切れ、取消なし、3回目 | failed | failed/infra_exhausted |
-| failed/timed_out | 明示的な手動retry、取消要求なし | queued | 過去attemptを保持、次回は新番号・token |
+| failed/timed_out | 最新の確定済み失敗または回収済み基盤障害を指定、取消要求なし | queued | 受付を永続化して正式結果の参照を解除。過去attemptを保持し、次回は新番号・token |
 | succeeded/canceled | retry要求 | 変更なし | MVPは拒否 |
 | 全終端 | 遅延完了・遅延取消 | 変更なし | 古い報告を拒否/終了済みを返す |
 
-自動再試行は初回を含む最大3attempt。現在のバックオフは5秒と10秒。手動retryと新しい予算区間はP4で扱う。
+自動再試行は、初回投入と各手動再試行を起点とする区間ごとに最大3attempt。現在のバックオフは5秒と10秒。
+`retry_start_no` を区間の開始番号とし、`attempt_no` は同じrunの通算番号を維持する。
 
 ## 責務と排他
 
@@ -129,7 +130,7 @@ Dockerが返した完全IDとinspectが一致し、既存の設定検証を通�
 ### 基盤障害の自動再試行
 
 期限監視の各走査は、失効確定後に再キューを確認する。許可されたfailed runで、取消要求と正式結果がなく、
-直近の1回目または2回目のattemptが `infra_lease_expired` で閉じている場合を対象にする。
+直近のattemptが現在の区間の1回目または2回目で、`infra_lease_expired` で閉じている場合を対象にする。
 作成台帳でcreate未送信を確認できる場合、または同じ完全IDの不在確認が確定済みの場合だけ再キューできる。
 チェック失敗、タイムアウト、ログ超過、取消、作成の有無が不明な旧記録は自動再試行の対象外。
 
@@ -160,7 +161,8 @@ run.completed_attempt_idを現在の有効attemptの確定transactionでのみ�
 | 表 | 役割・制約 |
 |---|---|
 | runs | 業務キー一意、状態CHECK、再取得可能時刻、取消要求、正式結果attempt参照 |
-| attempts | run内番号一意、token一意、runningはrunごとに最大1件、期限・理由・retry種別、Docker作成予約・回収確認 |
+| attempts | run内番号一意、token一意、runningはrunごとに最大1件、期限・理由・retry種別・区間開始番号、Docker作成予約・回収確認 |
+| manual_retries | runと再試行対象attemptの組に一意制約、DB受付時刻。次のclaimが最新attemptに対応する受付を照合 |
 | deliveries | hook/delivery一意、body SHA-256、結果、runへのFK |
 | artifacts | attempt FK、サーバー生成名、サイズCHECK、SHA-256、保存キー一意 |
 | attempt_logs / log_storage_budget | attempt別の不変byteaログ、合計1MiB/attempt・最大64MiBのraw保持payload台帳 |
@@ -169,7 +171,7 @@ run.completed_attempt_idを現在の有効attemptの確定transactionでのみ�
 
 基礎DDLは `../migrations/001_initial.sql`（未変更）。版2で履歴用(created_at DESC, id DESC) indexを追加。版3でログと容量台帳を追加（[仕様](log-storage.md)）。UUIDはDB生成。日時はtimestamptz。
 状態CHECKだけでは遷移順・期限・取消優先・正式結果の整合性を保証しない。
-それらは条件付き更新と競合統合テストで検証する。実DB適用・二重適用・業務キー一意制約・状態CHECK・再起動後のschema保持は検証済み。[取消API](run-operations.md)は結果確定、取得、期限監視が使うrunロックを共有する。手動再試行は未実装。
+それらは条件付き更新と競合統合テストで検証する。実DB適用・二重適用・業務キー一意制約・状態CHECK・再起動後のschema保持は検証済み。[取消・手動再試行API](run-operations.md)は結果確定、取得、期限監視が使うrunロックを共有する。
 現在のDDLはSHA-1の40桁commitを許容し、他形式は将来再検討する。
 
 ## 故障・中断時の期待動作

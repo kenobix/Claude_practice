@@ -20,7 +20,7 @@ Webhook専用のASGIアプリ `ci_runner.webhook:app` は `POST /webhooks/github
 
 ## 起動と障害復旧
 
-専用DBに既存のmigration 001〜006を適用する。Webhook受信プロセスに `DATABASE_URL`、GitHubで付与された `CI_GITHUB_WEBHOOK_HOOK_ID`、GitHub側と同じ `CI_GITHUB_WEBHOOK_SECRET` を環境変数で設定する。秘密は32バイト以上のランダム値を使用し、リポジトリや起動コマンドの引数に置かない。
+専用DBに同じ版のmigrationを適用する。Webhook受信プロセスに `DATABASE_URL`、GitHubで付与された `CI_GITHUB_WEBHOOK_HOOK_ID`、GitHub側と同じ `CI_GITHUB_WEBHOOK_SECRET` を環境変数で設定する。秘密は32バイト以上のランダム値を使用し、リポジトリや起動コマンドの引数に置かない。
 
 ```bash
 .venv/bin/python -m uvicorn ci_runner.webhook:app --host 127.0.0.1 --port 18118 --no-access-log

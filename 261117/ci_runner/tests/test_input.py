@@ -35,12 +35,16 @@ def test_invalid_identifiers_and_paging_are_rejected_before_db(path):
     assert client.get(path).status_code == 422
 
 
-def test_run_controls_validate_input_and_require_loopback_for_cancellation():
+def test_run_controls_validate_input_and_require_loopback_for_mutations():
     run_id = uuid4()
     with TestClient(create_app(no_database), base_url='http://127.0.0.1') as local:
         assert local.put('/runs/invalid/cancel').status_code == 422
-        assert local.post(f'/runs/{run_id}/cancel').status_code == 405
-        assert local.put(f'/runs/{run_id}/cancel', headers={'Host': 'untrusted.example'}).status_code == 403
+        assert local.put(f'/runs/{run_id}/retry/invalid').status_code == 422
+        for action in ('cancel', f'retry/{uuid4()}'):
+            path = f'/runs/{run_id}/{action}'
+            assert local.post(path).status_code == 405
+            assert local.put(path, headers={'Host': 'untrusted.example'}).status_code == 403
+            assert local.put(path, headers=[('Host', 'localhost'), ('Host', 'localhost')]).status_code == 403
         for path in ('invalid/attempts', f'{run_id}/attempts?limit=101', f'{run_id}/attempts?before=0',
                      f'{run_id}/attempts?before=2147483648'):
             assert local.get(f'/runs/{path}').status_code == 422

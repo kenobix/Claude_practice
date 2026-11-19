@@ -9,10 +9,16 @@ from fastapi.responses import JSONResponse
 
 from . import database, logs, runs
 from .body_limit import JsonBodyLimit
-from .models import AttemptPage, Run, RunInput, RunPage
+from .models import AttemptPage, ManualRetryReceipt, Run, RunInput, RunPage
 from .settings import BODY_LIMIT, POLICY, SCHEMA_VERSION
 
 LOOPBACK_HOST = re.compile(r'(?:localhost|127\.0\.0\.1|\[::1\])(?::[0-9]{1,5})?', re.IGNORECASE)
+
+
+def require_loopback_host(request: Request):
+    hosts = request.headers.getlist('host')
+    if len(hosts) != 1 or not LOOPBACK_HOST.fullmatch(hosts[0]):
+        raise HTTPException(403, 'loopback host required')
 
 
 def create_app(connection_factory=None):
@@ -70,12 +76,15 @@ def create_app(connection_factory=None):
 
     @app.put('/runs/{run_id}/cancel', response_model=Run, responses={202: {'model': Run}})
     def cancel(run_id: UUID, request: Request, response: Response):
-        hosts = request.headers.getlist('host')
-        if len(hosts) != 1 or not LOOPBACK_HOST.fullmatch(hosts[0]):
-            raise HTTPException(403, 'loopback host required')
+        require_loopback_host(request)
         result = runs.cancel_run(factory, run_id)
         response.status_code = 202 if result.state == 'running' else 200
         return result
+
+    @app.put('/runs/{run_id}/retry/{attempt_id}', response_model=ManualRetryReceipt, status_code=202)
+    def retry(run_id: UUID, attempt_id: UUID, request: Request):
+        require_loopback_host(request)
+        return runs.request_manual_retry(factory, run_id, attempt_id)
 
     @app.get('/runs/{run_id}/attempts', response_model=AttemptPage)
     def attempts(run_id: UUID, limit: Annotated[int, Query(ge=1, le=100)] = 20,

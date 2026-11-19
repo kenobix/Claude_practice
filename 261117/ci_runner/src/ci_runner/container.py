@@ -195,13 +195,13 @@ def prepare_fixture(permit: ExecutionPermit, mode='success', *, prepared_image=N
     if mode not in MODES:
         raise ContainerRejected('unknown fixed fixture mode')
     validate_worker_id(permit.worker_id)
-    kind = attempt_kind(permit.attempt_no)
+    kind = attempt_kind(permit.attempt_no, permit.retry_start_no)
     if ((permit.repository_id, permit.ref, permit.workflow_version) !=
             (POLICY.repository_id, POLICY.ref, POLICY.workflow_version)
             or kind is None or not re.fullmatch('[0-9a-f]{40}', permit.commit_sha)
             or not isinstance(permit.run_id, UUID) or not isinstance(permit.attempt_id, UUID)):
         raise ContainerRejected('unsupported fixture preparation request')
-    if kind == 'infrastructure' and (prepared_image is None or prepared_image.verified_source is None):
+    if kind != 'initial' and (prepared_image is None or prepared_image.verified_source is None):
         raise ContainerRejected('retry requires a verified source image')
     if prepared_image is None:
         with prepare_image() as image:
