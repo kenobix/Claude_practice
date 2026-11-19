@@ -837,3 +837,22 @@ commit時点で今回のリモートCIは未実行。実結果/SHAと段階5の�
 電源断/ホスト停止/WSL・装置flush/診断先の永続化、全故障/seed/スケジュールは依然未検証。
 差分・リンク・秘密情報・生成物を確認し、対象文書だけcommit・feat/database-engineへ通常pushする。
 commit時点で本単位のリモートCIは未実行。push後に最新SHAの結果を確認しDraft PR #2へ記録する。
+
+## 2026-11-19: MVP独立レビューの指摘3件を修正
+
+基準は `4d854e46d30572914da313399bc2595e894e57da`。Draft PR #2のheadと一致し、作業開始時に未コミット変更なし。
+修正前の回帰試験で、`--db .` がDBディレクトリを二重に同期して親のEIO注入を通らずOpenに成功すること、
+不在GETとClose EIOが重なるとexit 3になること、観測サイズ16 Bの読み取り元の早期EOFが `corrupt` になることを再現した。
+
+- High: OpenとInspectでパスを実際のDBディレクトリに解決してからロックを取得する。ヘッダーwrite→ファイルSync→DBディレクトリSync→実親Syncを絶対・相対・`.`・末尾スラッシュ・symlinkと `..` を含むパスで照合した。親SyncのEIO注入ではDBを返さず、初回ヘッダーと既存ログを保持した。再試行でロック取得・書込み・再Openを確認した。
+- Medium: 操作エラーとClose失敗が重なる場合は共通分類の前にCLIで処理する。不在のみはexit 3、Close EIOのみと両方発生時はexit 6。両方の原因をstderrに残し、stdoutは空でログの内容は保持した。
+- Low: 観測サイズ16 B以上でのヘッダー早期EOFを `io_error`、実サイズ15 Bを `corrupt` に分類した。検証不能位置・最終正常境界はともに0。InspectとOpenでログ内容が変わらず、復旧事前イベントも出ないことを確認した。
+
+Go 1.27.4で対象回帰・`make check`（fmt/vet/全6パッケージテスト/両CLI build）・
+`go test -race -count=1 -timeout=3m ./...`（全6パッケージ）に成功。
+`make demo` の3シナリオと2回の実SIGKILLが成功した。別の一時DBで、実親を検索権限のみとした製品CLIの
+`--db .` 初回PUTはexit 6・stdoutなし・16 Bのヘッダー保持。権限を戻した後の再試行はsequence 1、Inspectも正常。
+
+形式v1とfixtureの互換性を維持。実機電源断、ホスト停止、WSL・装置flush、実媒体の容量枯渇は未検証。
+修正後の独立再レビューをDraft PR #2で依頼し、本人による設計説明の確認とともにMVP最終承認の保留条件とする。
+修正コミットのリモートCI結果はPRのChecksで確認する。

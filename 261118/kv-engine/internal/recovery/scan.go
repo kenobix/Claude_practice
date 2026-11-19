@@ -87,6 +87,9 @@ func Scan(file io.ReaderAt, size int64) (Result, error) {
 	}
 	reader := io.NewSectionReader(file, 0, size)
 	if err := record.ReadFileHeader(reader); err != nil {
+		if size >= record.FileHeaderSize && (errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF)) {
+			err = fmt.Errorf("read file header before snapshot end: %w", io.ErrUnexpectedEOF)
+		}
 		return fail(0, err)
 	}
 	result.Report.FormatVersion = record.Version

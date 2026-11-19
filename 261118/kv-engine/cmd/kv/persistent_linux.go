@@ -122,7 +122,9 @@ func runPersistentWithOpen(args []string, in io.Reader, out, errOut io.Writer, o
 	case "get":
 		value, err = db.Get(key)
 	}
-	err = errors.Join(err, db.Close())
+	if closeErr := db.Close(); closeErr != nil {
+		return writeFailure(errOut, errors.Join(err, closeErr), 6, "io")
+	}
 	if err != nil {
 		return fail(errOut, err)
 	}

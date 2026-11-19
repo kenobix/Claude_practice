@@ -68,6 +68,21 @@ func OpenWithOptions(dir string, options Options) (*DB, error) {
 	return openDisk(dir, options, defaultOps())
 }
 
+func resolveDBDirectory(dir string) (string, error) {
+	if dir == "" {
+		return "", &os.PathError{Op: "stat", Path: dir, Err: syscall.ENOENT}
+	}
+	if !filepath.IsAbs(dir) {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+		// Resolve symlink components before collapsing "..".
+		dir = cwd + string(filepath.Separator) + dir
+	}
+	return filepath.EvalSymlinks(dir)
+}
+
 func lockDirectory(dir string) (*os.File, error) {
 	info, err := os.Stat(dir)
 	if err != nil {
@@ -98,6 +113,10 @@ func lockDirectory(dir string) (*os.File, error) {
 }
 
 func openDisk(dir string, options Options, ops diskOps) (db *DB, err error) {
+	dir, err = resolveDBDirectory(dir)
+	if err != nil {
+		return nil, err
+	}
 	lock, err := lockDirectory(dir)
 	if err != nil {
 		return nil, err
@@ -150,7 +169,7 @@ func openDisk(dir string, options Options, ops diskOps) (db *DB, err error) {
 	if err = ops.syncDir(dir); err != nil {
 		return nil, err
 	}
-	if err = ops.syncDir(filepath.Dir(filepath.Clean(dir))); err != nil {
+	if err = ops.syncDir(filepath.Dir(dir)); err != nil {
 		return nil, err
 	}
 	info, err = file.Stat()
@@ -318,16 +337,25 @@ func (db *DB) Close() error {
 }
 
 // Inspect validates an existing log without repairing it. It still excludes all writers.
-func Inspect(dir string) (report recovery.Report, err error) {
+func Inspect(dir string) (recovery.Report, error) {
+	return inspectDisk(dir, defaultOps().wrap)
+}
+
+func inspectDisk(dir string, wrap func(*os.File) logFile) (report recovery.Report, err error) {
+	dir, err = resolveDBDirectory(dir)
+	if err != nil {
+		return report, err
+	}
 	lock, err := lockDirectory(dir)
 	if err != nil {
 		return report, err
 	}
 	defer func() { err = errors.Join(err, lock.Close()) }()
-	file, err := os.OpenFile(filepath.Join(dir, "data.log"), os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
+	raw, err := os.OpenFile(filepath.Join(dir, "data.log"), os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
 	if err != nil {
 		return report, err
 	}
+	file := wrap(raw)
 	defer func() { err = errors.Join(err, file.Close()) }()
 	info, err := file.Stat()
 	if err != nil {

@@ -87,4 +87,16 @@ inspectと固定seed参照モデルは既存実装を使い、追加実装を繰
 本単位では計測ハーネス・性能結果・デモを作成しない。
 
 後続の[段階4の計測](measurement.md)は実施・判定済み。本書の「次の1単位」は段階3判定時点の順序を示す。
-現在の次の優先作業は段階5の第三者向けデモと成果物の整理。
+後続の[段階5のデモ](demo.md)も実施済み。現在の保留事項は[MVP受入記録](mvp-acceptance.md)を参照。
+
+## MVP独立レビューの指摘と回帰
+
+基準 `4d854e4` で再現した3件を修正した。修正後の独立再レビューは保留。
+
+| 対応する条件 | 修正後に確認したこと |
+|---|---|
+| S3-3 早期EOFと破損の区別 | `TestScanHeaderEarlyEOF` / `TestHeaderReadFailurePreservesLog`。観測サイズ16 B以上でヘッダー読み取りが途中EOFの場合は `io_error`、実サイズ15 Bは `corrupt`。両方とも検証不能位置0で、Inspect/Open後にログ全体が不変 |
+| S3-8 初回作成と安全な再Open | `TestOpenDirectorySyncPaths`。ヘッダーwrite、ファイルSync、DBディレクトリSync、実親Syncの順序。親SyncへのEIO注入でDBを返さず、初回ヘッダーと既存ログを保持。失敗後のOpenでロック取得と初回更新が可能 |
+| S3-9 / S3-10 Close失敗の診断 | `TestPersistentGetCloseErrorPrecedence`。GET不在のみはexit 3。Close EIOのみと両方が重なる場合はexit 6。後者は両方の原因をstderrに残す |
+
+この追加検証は実機電源断、ホスト停止、装置flushの検証を含まない。

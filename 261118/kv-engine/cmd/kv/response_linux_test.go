@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"strings"
 	"syscall"
 	"testing"
 
@@ -213,6 +214,51 @@ func TestPersistentEmptyResponse(t *testing.T) {
 	var out, stderr bytes.Buffer
 	if code := runPersistent([]string{"get", "--db", dir, "--key", "empty"}, nil, &out, &stderr); code != 0 || out.Len() != 0 || stderr.Len() != 0 {
 		t.Fatalf("exit=%d stdout=%q stderr=%s", code, out.String(), stderr.String())
+	}
+}
+
+func TestPersistentGetCloseErrorPrecedence(t *testing.T) {
+	for _, tc := range []struct {
+		name, key, diagnostic string
+		closeErr              error
+		code                  int
+	}{
+		{"missing", "missing", "not_found", nil, 3},
+		{"close-eio", "target", "io", syscall.EIO, 6},
+		{"missing-and-close-eio", "missing", "io", syscall.EIO, 6},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := responseFixture(t)
+			closes := 0
+			open := func(dir string, options engine.Options) (persistentDB, error) {
+				db, err := engine.OpenWithOptions(dir, options)
+				if err != nil {
+					return nil, err
+				}
+				t.Cleanup(func() { _ = db.Close() })
+				return &responseCloseDB{db, func() error {
+					closes++
+					return errors.Join(db.Close(), tc.closeErr)
+				}}, nil
+			}
+			var out, stderr bytes.Buffer
+			code := runPersistentWithOpen([]string{"get", "--db", dir, "--key", tc.key}, nil, &out, &stderr, open)
+			var diagnostic struct {
+				Error   string `json:"error"`
+				Message string `json:"message"`
+			}
+			if err := json.Unmarshal(stderr.Bytes(), &diagnostic); err != nil {
+				t.Fatalf("invalid diagnostic %q: %v", stderr.String(), err)
+			}
+			if code != tc.code || diagnostic.Error != tc.diagnostic || closes != 1 || out.Len() != 0 {
+				t.Fatalf("exit=%d, closes=%d, stdout=%q, stderr=%s", code, closes, out.String(), stderr.String())
+			}
+			if strings.Contains(diagnostic.Message, engine.ErrNotFound.Error()) != (tc.key == "missing") ||
+				strings.Contains(diagnostic.Message, syscall.EIO.Error()) != (tc.closeErr != nil) {
+				t.Fatalf("unexpected causes: %s", diagnostic.Message)
+			}
+			checkResponseDB(t, dir, "get")
+		})
 	}
 }
 

@@ -102,6 +102,7 @@ stderrはエラー時に `{"error":"code","message":"..."}` を1行。
 正常な復旧切り戻しの診断はstderrへ `event:"tail_truncate_planned"`、旧サイズと境界を出す。
 exit: 0=成功、2=引数/入力、3=不在、4=ロック競合、5=破損/未対応形式、
 6=I/O/復旧必要/閉鎖状態、7=容量/sequence上限。help/versionはexit 0。
+GETでキー不存在とログのClose失敗が重なった場合は `io`・exit 6とし、stderrのmessageに両方の原因を含める。
 成功JSONの出力失敗はexit 6となり、同期済み更新は残り得る。
 短いwrite（0バイト/nilを含む）も出力失敗とし、不完全なJSONを成功扱いしない。
 呼出し元は完全な応答とexit 0を確認する。応答途中や異常終了時は未成功更新の不在を仮定しない。
@@ -113,7 +114,9 @@ inspectは有効なヘッダーとレコードを同じ規則で検証する。
 件数は検証済みprefixだけ、delete_countはtombstoneの累計、log_bytesは実サイズ。
 正常時のstatusは `ok`、offset/reasonはnull。
 不完全な末尾は `incomplete_tail`、破損は `corrupt`、未知形式は `unsupported_version`。
-異常時も診断JSONをstdoutに出し、stderrとexit 5を併用する。未知形式は件数等をnullにする。
+異常時も診断JSONをstdoutに出す。破損・不完全末尾・未知形式はexit 5、I/O異常はexit 6となり、どちらもstderrに原因を出す。
+観測サイズが16バイト以上あるのにヘッダーの読み取り中にEOFに達した場合は `io_error`、検証不能位置は0。
+未知形式は件数等をnullにする。
 通常Openは復旧後にAPIを公開し、Inspectメソッドは現在の正常状態のReportを返す。
 CLI inspectは別の読み取り専用scanを使用し、Openによる自動修復を通さない。
 すべてのCLI（inspect含む）は同じ排他ロックを取り、writerとの同時実行を拒否する。

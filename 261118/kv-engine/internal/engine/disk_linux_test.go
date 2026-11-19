@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/kenobix/Claude_practice/261118/kv-engine/internal/record"
+	"github.com/kenobix/Claude_practice/261118/kv-engine/internal/recovery"
 )
 
 func mustOpen(t *testing.T, dir string) *DB {
@@ -223,6 +224,9 @@ func (f *faultFile) ReadAt(p []byte, offset int64) (int, error) {
 	if f.mode == "read" {
 		return 0, syscall.EIO
 	}
+	if f.mode == "header-eof" {
+		return io.NewSectionReader(f.File, 0, 8).ReadAt(p, offset)
+	}
 	return f.File.ReadAt(p, offset)
 }
 func (f *faultFile) Truncate(size int64) error {
@@ -360,6 +364,96 @@ func TestInitializationFailures(t *testing.T) {
 	}
 }
 
+func TestOpenDirectorySyncPaths(t *testing.T) {
+	for _, name := range []string{"absolute", "relative", "dot", "trailing-slash", "symlink-parent", "dot-parent-eio"} {
+		t.Run(name, func(t *testing.T) {
+			parent := t.TempDir()
+			dir := filepath.Join(parent, "db")
+			if err := os.Mkdir(dir, 0700); err != nil {
+				t.Fatal(err)
+			}
+			t.Chdir(parent)
+			path := dir
+			switch name {
+			case "relative":
+				path = "db"
+			case "dot", "dot-parent-eio":
+				t.Chdir(dir)
+				path = "."
+			case "trailing-slash":
+				path = "./db/"
+			case "symlink-parent":
+				aliasDir := t.TempDir()
+				child := filepath.Join(parent, "child")
+				if err := os.Mkdir(child, 0700); err != nil {
+					t.Fatal(err)
+				}
+				alias := filepath.Join(aliasDir, "alias")
+				if err := os.Symlink(child, alias); err != nil {
+					t.Fatal(err)
+				}
+				path = alias + "/../db"
+			}
+
+			var events []string
+			ops := defaultOps()
+			ops.wrap = func(raw *os.File) logFile {
+				return &faultFile{File: raw, events: &events}
+			}
+			ops.syncDir = func(path string) error {
+				absolute, err := filepath.EvalSymlinks(path)
+				if err != nil {
+					return err
+				}
+				absolute, err = filepath.Abs(absolute)
+				if err != nil {
+					return err
+				}
+				events = append(events, "dir:"+absolute)
+				if name == "dot-parent-eio" && absolute == parent {
+					return syscall.EIO
+				}
+				return syncDirectory(path)
+			}
+			db, err := openDisk(path, Options{Create: true}, ops)
+			if db != nil {
+				defer db.Close()
+			}
+			want := []string{"write", "file-sync", "dir:" + dir, "dir:" + parent}
+			if strings.Join(events, "|") != strings.Join(want, "|") {
+				t.Fatalf("sync order=%v, want %v (Open: %v)", events, want, err)
+			}
+			if name == "dot-parent-eio" {
+				if db != nil || !errors.Is(err, syscall.EIO) || !bytes.Equal(logBytes(t, dir), record.FileHeader()) {
+					t.Fatalf("Open=%v, err=%v; expected EIO with the log header retained", db, err)
+				}
+				db = mustOpen(t, dir)
+			} else if err != nil || db == nil {
+				t.Fatal(db, err)
+			}
+			if _, err := Inspect(dir); !errors.Is(err, ErrLocked) {
+				t.Fatalf("Open and Inspect do not share the lock: %v", err)
+			}
+			put(t, db, "k", []byte("v"), 1)
+			if err := db.Close(); err != nil {
+				t.Fatal(err)
+			}
+			if name == "dot-parent-eio" {
+				before := logBytes(t, dir)
+				reopened, err := openDisk(path, Options{}, ops)
+				if reopened != nil || !errors.Is(err, syscall.EIO) || !bytes.Equal(before, logBytes(t, dir)) {
+					t.Fatalf("reopen=%v, err=%v; expected EIO and unchanged log", reopened, err)
+				}
+			}
+			report, err := Inspect(path)
+			if err != nil || report.LatestSequence != 1 {
+				t.Fatalf("Inspect via %q: report=%+v, err=%v", path, report, err)
+			}
+			value(t, mustOpen(t, dir), "k", []byte("v"))
+		})
+	}
+}
+
 func TestCapacityAndSequence(t *testing.T) {
 	db := mustOpen(t, t.TempDir())
 	// Exercise the arithmetic boundary without writing a 256 MiB log in unit tests.
@@ -470,6 +564,47 @@ func TestCorruptionNeverTruncates(t *testing.T) {
 			report, err := Inspect(dir)
 			if err == nil || report.Status == "ok" {
 				t.Fatal(report, err)
+			}
+		})
+	}
+}
+
+func TestHeaderReadFailurePreservesLog(t *testing.T) {
+	for _, tc := range []struct {
+		name, status string
+		size         int
+		cause        error
+	}{
+		{"short-file", "corrupt", 15, record.ErrCorrupt},
+		{"header-eof", "io_error", 16, io.ErrUnexpectedEOF},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			original := record.FileHeader()[:tc.size]
+			if err := os.WriteFile(filepath.Join(dir, "data.log"), original, 0600); err != nil {
+				t.Fatal(err)
+			}
+			ops := defaultOps()
+			ops.wrap = func(raw *os.File) logFile { return &faultFile{File: raw, mode: tc.name} }
+			report, err := inspectDisk(dir, ops.wrap)
+			var problem *recovery.Problem
+			if !errors.Is(err, tc.cause) || !errors.As(err, &problem) ||
+				problem.Offset != 0 || problem.LastValidOffset != 0 ||
+				report.Status != tc.status || report.InvalidOffset == nil || *report.InvalidOffset != 0 ||
+				report.ValidBytes != 0 || report.LogBytes != int64(tc.size) ||
+				report.Reason == nil || !strings.Contains(*report.Reason, "file header") {
+				t.Fatalf("Inspect: report=%+v, err=%v", report, err)
+			}
+			if !bytes.Equal(original, logBytes(t, dir)) {
+				t.Fatal("Inspect changed the log")
+			}
+			var diagnostic bytes.Buffer
+			db, err := openDisk(dir, Options{Create: true, Diagnostics: &diagnostic}, ops)
+			if db != nil || !errors.Is(err, tc.cause) || diagnostic.Len() != 0 {
+				t.Fatalf("Open: db=%v, err=%v, repair diagnostic=%q", db, err, diagnostic.String())
+			}
+			if !bytes.Equal(original, logBytes(t, dir)) {
+				t.Fatal("Open changed the log")
 			}
 		})
 	}

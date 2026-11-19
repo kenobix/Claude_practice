@@ -71,7 +71,7 @@ func ReadFileHeader(r io.Reader) error {
 	var h [FileHeaderSize]byte
 	if _, err := io.ReadFull(r, h[:]); err != nil {
 		if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
-			return fmt.Errorf("%w: short file header", ErrCorrupt)
+			return fmt.Errorf("%w: short file header: %w", ErrCorrupt, err)
 		}
 		return fmt.Errorf("read file header: %w", err)
 	}

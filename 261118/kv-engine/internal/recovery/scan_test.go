@@ -56,3 +56,18 @@ func TestScanReadErrors(t *testing.T) {
 		t.Fatal(result, err)
 	}
 }
+
+func TestScanHeaderEarlyEOF(t *testing.T) {
+	header := record.FileHeader()
+	for _, cut := range []int{0, 8, len(header) - 1} {
+		result, err := Scan(bytes.NewReader(header[:cut]), int64(len(header)))
+		report := result.Report
+		var problem *Problem
+		if !errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, record.ErrCorrupt) ||
+			!errors.As(err, &problem) || problem.Offset != 0 || problem.LastValidOffset != 0 ||
+			report.Status != "io_error" || report.InvalidOffset == nil || *report.InvalidOffset != 0 ||
+			report.ValidBytes != 0 || report.LogBytes != int64(len(header)) {
+			t.Fatalf("cut=%d report=%+v err=%v", cut, report, err)
+		}
+	}
+}

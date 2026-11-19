@@ -6,18 +6,17 @@
 
 ## 判定と残る条件
 
-段階0〜4と段階5のデモ・説明書は既存の実装と検証根拠が揃っている。
-下表は技術的な確認と、人による確認を分ける。**本人による説明確認は未完了**であり、
-MVP全体の最終完成を宣言しない。独立レビューも未実施。これは完成後に提案する作業で、
-元計画に新たな必須機能を足すものではない。新機能を加えず、残る受入確認へ進む。
+段階0〜4と段階5のデモ・説明書の根拠を下表に示す。
+基準 `4d854e4` の独立レビューで指摘された3件は実装側で修正し、回帰試験を実施した。
+**修正後の独立再レビューと本人による説明確認は未完了**。段階5とMVP全体の最終承認は保留する。
 
 | 計画の条件 | 実装・検証根拠 | 判定・境界 |
 |---|---|---|
-| 段階0: 入出力、形式、失敗時の方針 | [API](api.md)、[形式](file-format.md)、[耐久性](durability.md)、[公開hex](../tests/fixtures.md) | 仕様・バイト例を整備。仕様だけで第三者が判断できるかは独立レビューで確認 |
+| 段階0: 入出力、形式、失敗時の方針 | [API](api.md)、[形式](file-format.md)、[耐久性](durability.md)、[公開hex](../tests/fixtures.md) | 仕様・バイト例を整備し、独立レビューで確認 |
 | 段階1: 不在/空値/上書き/削除、入力上限、不正長の拒否 | recordの `TestRoundTrip` / `TestInvalidHeadersBeforeBodyAllocation` / `TestAllTruncations`、engineの `TestReferenceModel` / `TestKeyBoundaries` / `TestValueBoundaries`、fixture往復一致 | 実テストで確認。UTF-8キー1〜256 B、NUL不可、値0〜1 MiB。有限の入力検証であり全入力の証明ではない |
-| 段階2: 更新→同期→索引公開、再起動、単一writer | engineの `TestSyncOrdering` / `TestDiskReferenceModelAcrossReopens` / `TestLockProcess`、CLIの `TestPersistentCLIProcesses` | 実ファイルと別プロセスで確認。ライブラリAPIはinternal内で利用可能。外部公開パッケージ化は対象外 |
+| 段階2: 更新→同期→索引公開、再起動、単一writer | engineの `TestSyncOrdering` / `TestOpenDirectorySyncPaths` / `TestDiskReferenceModelAcrossReopens` / `TestLockProcess`、CLIの `TestPersistentCLIProcesses` | 実ファイルと別プロセスで確認。相対パスと実親の同期失敗を追加検証。ライブラリAPIはinternal内で利用可能 |
 | 容量上限と失敗後の状態 | `TestCapacityAndSequence` / `TestOversizedLogRejected` / `TestDiskWriteAndSyncFailures` / `TestCompoundIORecovery` | ログ256 MiB、sequence枯渇の明示拒否。容量境界は疎ファイル、ENOSPC/EIOは注入であり実媒体枯渇ではない |
-| 段階3: 成功履歴、未応答操作、末尾復旧、破損時停止 | [受入表S3-1〜10](stage3-acceptance.md)、[復旧診断](recovery-diagnostics.md)、[応答境界](cli-response-experiments.md) | 定義したプロセス障害/I/O注入モデル内で完了。全故障・全スケジュールや電源断の証明ではない |
+| 段階3: 成功履歴、未応答操作、末尾復旧、破損時停止 | [受入表S3-1〜10とレビュー後の回帰](stage3-acceptance.md)、[復旧診断](recovery-diagnostics.md)、[応答境界](cli-response-experiments.md) | 定義したプロセス障害とI/O注入モデルで検証。全故障・全スケジュールや電源断は未検証 |
 | 段階4: inspect、固定seed照合 | recoveryの `TestScanBoundaries`、engineの `TestSeededCrashRecovery`、CLIの実プロセス試験 | 検証済みprefixの件数/sequence/削除数/サイズ/位置、3 seedの辞書一致を確認 |
 | 段階4: 起動/更新/メモリの計測と条件 | [計測手順・生JSONの定義・実測表・ログ図](measurement.md) | 1千/1万/10万キーで実測済み。warm Open・毎PUT Sync・Goヒープ。cold start/RSS/他環境比較は未測定。今回は大規模計測を繰り返さない |
 | 段階5: 正常/停止復旧/途中破損の3デモ | [デモ](demo.md)、`TestDemoProductProcesses` / `TestDemoRejectsMissingBinary` | 製品CLI、実SIGKILLハーネス、別DBのfixtureコピーを区別。3〜5分は説明順の目安 |
@@ -120,7 +119,7 @@ GitアーカイブSHA-256は `d4c5b0baa2231994cde64e40b4403cb2ef2f5d2b1c7c9fd263
 2. 同期後・応答前に停止した更新が残り得る理由。成功列Aと最大1件の未応答Pをどう照合するか。
 3. 自動復旧できる末尾と、変更せず停止する破損の違い。短いファイルheaderはなぜ復旧しないか。
 
-この確認を含む全受入条件を満たした後、独立レビューとMVP完成判定を提案する。
-レビューでは入力/容量境界、同期/失敗状態/LOCK順序、破損時不変、未応答の許容結果、保証の表現を確認する。
-Draft PRを維持し、mainへ統合したりSQL・MVCC・コンパクション等へ自動で進んだりしない。
+修正後の [Draft PR #2](https://github.com/kenobix/Claude_practice/pull/2) で独立再レビューを依頼する。
+修正前に再現した3条件を同じ回帰試験で照合し、ロック、成功応答、異常時のログ不変も確認する。
+再レビューと本人の説明確認が完了するまで、DraftとMVP最終承認の保留を維持する。
 電源断/ホスト停止/WSL・装置flush/診断先永続化は、完了判定後も未検証事項として残す。

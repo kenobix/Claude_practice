@@ -183,6 +183,10 @@ func fail(out io.Writer, err error) int {
 	case errors.Is(err, engine.ErrSequenceExhausted):
 		code, name = 7, "sequence_exhausted"
 	}
+	return writeFailure(out, err, code, name)
+}
+
+func writeFailure(out io.Writer, err error, code int, name string) int {
 	var offset, last *int64
 	var problem *recovery.Problem
 	if errors.As(err, &problem) {
