@@ -74,8 +74,13 @@ def verify():
                 (1,), (2,), (3,), (4,), (5,), (6,), (7,), (8,)]
             print('PostgreSQL:', conn.execute('SHOW server_version').fetchone()[0])
             print('migration persists after restart')
-        subprocess.run(['docker', 'image', 'inspect', 'postgres:17.12-bookworm',
-                        '--format', '{{json .RepoDigests}}'], check=True, env=env)
+        # A fresh pull by digest need not give the image a local tag.
+        db_container = subprocess.check_output(compose + ['ps', '--quiet', 'db'],
+                                               env=env, text=True, timeout=15).strip()
+        image_id = subprocess.check_output(['docker', 'container', 'inspect', '--format', '{{.Image}}', db_container],
+                                           env=env, text=True, timeout=15).strip()
+        subprocess.run(['docker', 'image', 'inspect', '--format', '{{json .RepoDigests}}', image_id],
+                       check=True, env=env, timeout=15)
 
 
 if __name__ == '__main__':

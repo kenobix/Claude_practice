@@ -1140,3 +1140,5 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
 - P5の初回検証を、担当ブランチへのpush時に使い捨てUbuntu 24.04 VMで再現するworkflowを追加した。固定依存を新しいvenvへ入れ、専用PostgreSQL・実Dockerで固定fixtureを1件実行する。証拠のSHA、成功件数、正式結果を照合し、テストがskipのときは失敗する。[クリーン環境検証の実行一覧](https://github.com/kenobix/Claude_practice/actions/workflows/ci-runner-clean-fixture.yml)
 - 既存の統合試験で処理対象と次のrunをDB時刻から明示的に順序付けた。ローカルの専用PostgreSQL 17.12・実Dockerで成功、失敗、タイムアウト、ログ上限の4件が成功（77.76秒）。readiness 200、再起動後のmigration 001〜008保持、試験資源の回収を確認した。
 - 通常回帰233件、pip check、compileall、workflowのYAML構文とシェル構文が成功。100件の比較実験やP2の故障試験は測り直していない。P5の第三者による手順再現と全体受入は残る。
+- GitHub-hostedでの初回はfixtureが1件成功し、readiness 200とDB再起動後のmigration保持を確認した。digest指定で取得したDBイメージにはタグが付かず、最後の証拠採取がタグ指定で失敗してjob全体は失敗した。Composeが作成したDBコンテナのイメージIDからdigestを確認するように修正した。[初回のGitHub Actionsログ](https://github.com/kenobix/Claude_practice/actions/runs/44536749997)
+- 修正後のローカル初回検証は1件成功（16.05秒）。readiness 200、再起動後のmigration保持、使用イメージのdigest出力、専用DB資源の回収まで確認した。
