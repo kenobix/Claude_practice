@@ -13,7 +13,7 @@ P2の[コンテナ作成台帳](ci_runner/docs/design.md#コンテナ作成台�
 ローカルfixture結果の条件付きDB確定（状態/exit/理由/終了時刻・正式attempt参照）も実装済み。
 別プロセスの一件実行入口で、取得→ローカル固定fixture実行/回収→条件付き確定まで接続済み。
 上限付きログを結果と同一transactionでDB保存する。受理commitの固定fixtureを実行し、sourceとimageの由来を結果に保存できる。常駐Workerは検証済みcommitを順に実行する。管理UIで実行と試行の履歴を確認し、取消・手動再試行を行える。Webhookの受付は実装済みで、GitHubからの実配送は未検証。
-GitHub Pagesへの公開対象ではない。常駐バックエンドの配置先は将来別途判断する。
+常駐バックエンドの配置先は将来別途判断する。GitHub Pages向けの[静的デモ](demo/index.html)には再現データと比較実測を収録する。
 
 ## 受理commitのsourceを検証する
 
@@ -291,6 +291,18 @@ curl -X PUT "http://127.0.0.1:18117/runs/${RUN_ID}/retry/${ATTEMPT_ID}"
 使い捨てPostgreSQLと実Dockerで1/2 Workerを比較できる。通常は100ジョブを各3回実行し、`--pilot` は2件の動作確認に使う。
 固定fixtureの検証と実行制限を保ち、GitHub HTTP応答を試験データに置き換える。
 [比較グラフ、クリーン環境の確認、3分の故障デモ](ci_runner/docs/p5-validation.md)
+
+[公開用の静的デモ](demo/index.html)は試行1の失効、別Workerの取得、旧報告の拒否、試行2の正式結果を順に確認できる。
+リポジトリのルートで、検証対象のcommitから公開用ファイルだけを一時ディレクトリに展開する。
+
+```bash
+preview_dir=$(mktemp -d)
+git archive HEAD 261117/demo 261117/ci_runner/docs/p5-worker-{comparison.png,samples.csv} | tar -x -C "$preview_dir"
+python3 -m http.server 8000 --bind 127.0.0.1 --directory "$preview_dir"
+```
+
+`http://127.0.0.1:8000/261117/demo/` でプレビューする。終了後は一時ディレクトリを削除する。
+GitHub Pagesへの公開は保留中。
 
 ## Worker取得だけの診断
 

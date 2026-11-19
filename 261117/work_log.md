@@ -1142,3 +1142,11 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
 - 通常回帰233件、pip check、compileall、workflowのYAML構文とシェル構文が成功。100件の比較実験やP2の故障試験は測り直していない。P5の第三者による手順再現と全体受入は残る。
 - GitHub-hostedでの初回はfixtureが1件成功し、readiness 200とDB再起動後のmigration保持を確認した。digest指定で取得したDBイメージにはタグが付かず、最後の証拠採取がタグ指定で失敗してjob全体は失敗した。Composeが作成したDBコンテナのイメージIDからdigestを確認するように修正した。[初回のGitHub Actionsログ](https://github.com/kenobix/Claude_practice/actions/runs/44536749997)
 - 修正後のローカル初回検証は1件成功（16.05秒）。readiness 200、再起動後のmigration保持、使用イメージのdigest出力、専用DB資源の回収まで確認した。
+
+## P5の公開用静的デモ
+
+- 開始HEAD `ceea5328f509180aba141dd34dab5675ca0ba612` の通常CIと、GitHub-hostedのPostgreSQL 17.12・Docker Engine 28.0.4を使う初回検証は成功。PR #1はDraft。P3の承認済み公開HTTPS受信先は未確保。
+- 計画§7に沿い、匿名化した復旧シナリオを静的HTMLにした。表示用の実行ID・コミットで、失効、別Workerの試行、旧報告の拒否、正式結果までたどれる。既存の比較グラフとサンプルを参照する。[静的デモ](demo/index.html)
+- 公開ファイル4点だけをGitHub Pages相当のサブパスで配信し、Chromiumの1440・390・320pxで、横スクロールが発生しないこと、Spaceキーで手順を開きEnterキーで閉じられること、グラフ表示とCSV取得を確認した。ページ読み込み時はローカルHTML・CSS・PNGだけを取得した。
+- 600サンプルからキュー待ち・実行のp95中央値4値を再計算し、表示と一致した。バッチ所要の中央値2値も元の記録と一致した。既存の管理画面テストは2件成功。実DB/Dockerの重い回帰や比較実験は手元で再実行していない。
+- GitHub Pagesへの公開は保留。P3の実配送と停止後の手動再送、P5の第三者による初回手順の再現と最終受入が残る。MVPの概算94%（残6%）を維持する。

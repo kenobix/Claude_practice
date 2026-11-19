@@ -78,6 +78,7 @@ PYTEST_ADDOPTS='-k "test_api_to_separate_worker_to_persisted_result and fixture_
 担当ブランチでは、使い捨てのUbuntu 24.04 VMで同じ初回検証を実行する。毎回新しいvenvへ固定依存を導入し、実PostgreSQLと実Dockerでローカル固定fixtureを1件確認する。
 試験がskipされて証拠が生成されない場合や、証拠のSHAとcheckoutのSHAが異なる場合は失敗とする。
 通常CI、GitHubの実配送、第三者による手順の確認はそれぞれ別に記録する。[クリーン環境検証の実行一覧](https://github.com/kenobix/Claude_practice/actions/workflows/ci-runner-clean-fixture.yml)
+初回の固定fixtureは、Python 3.12.16・PostgreSQL 17.12・Docker Engine 28.0.4のGitHub-hosted runnerでも成功した。[実行ログ](https://github.com/kenobix/Claude_practice/actions/runs/44537278859)
 
 ## 3分の障害デモ
 
