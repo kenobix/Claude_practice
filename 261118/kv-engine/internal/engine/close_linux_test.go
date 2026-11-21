@@ -138,7 +138,7 @@ func checkCloseResources(t *testing.T, dir string, file *closeGateFile) {
 	if _, err := file.File.Stat(); !errors.Is(err, os.ErrClosed) {
 		t.Fatalf("log FD not closed: %v", err)
 	}
-	lock, err := lockDirectory(dir)
+	lock, err := probeLock(dir)
 	if err != nil {
 		t.Fatalf("lock not released: %v", err)
 	}

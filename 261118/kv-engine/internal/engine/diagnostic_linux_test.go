@@ -106,7 +106,7 @@ func TestRecoveryDiagnosticCompletion(t *testing.T) {
 			if _, err := file.Stat(); !errors.Is(err, os.ErrClosed) {
 				t.Fatalf("log FD not closed: %v", err)
 			}
-			lock, err := lockDirectory(dir)
+			lock, err := probeLock(dir)
 			if err != nil {
 				t.Fatalf("LOCK not released: %v", err)
 			}

@@ -99,15 +99,15 @@ func openCrashOps(dir, point string, events *json.Encoder) (diskOps, Options, er
 		log = &openCrashLog{crashLog: &crashLog{File: raw, events: events}, openPoint: point}
 		return log
 	}
-	ops.syncDir = func(path string) error {
+	ops.syncDir = func(f *os.File) error {
 		stage := "parent"
-		if filepath.Clean(path) == filepath.Clean(dir) {
+		if filepath.Clean(f.Name()) == filepath.Clean(dir) {
 			stage = "dir"
 		}
 		if log.openPoint == "init_before_"+stage+"_sync" {
 			log.pause(log.openPoint)
 		}
-		if err := syncDirectory(path); err != nil {
+		if err := f.Sync(); err != nil {
 			return err
 		}
 		if log.openPoint == "init_after_"+stage+"_sync" {
@@ -155,7 +155,7 @@ func TestCrashInitializationCheckpoints(t *testing.T) {
 					}
 				}
 				// Failed initialization must still release the advisory lock.
-				lock, err := lockDirectory(dir)
+				lock, err := probeLock(dir)
 				if err != nil {
 					t.Fatal(err)
 				}

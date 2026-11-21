@@ -57,6 +57,15 @@ func logBytes(t *testing.T, dir string) []byte {
 	return b
 }
 
+func probeLock(path string) (*os.File, error) {
+	dir, err := openDirectory(path)
+	if err != nil {
+		return nil, err
+	}
+	defer dir.Close()
+	return lockDirectory(dir)
+}
+
 func TestDiskRestart(t *testing.T) {
 	dir := t.TempDir()
 	db := mustOpen(t, dir)
@@ -309,7 +318,10 @@ func TestSyncOrdering(t *testing.T) {
 	var events []string
 	ops := defaultOps()
 	ops.wrap = func(raw *os.File) logFile { file = &faultFile{File: raw, events: &events}; return file }
-	ops.syncDir = func(path string) error { events = append(events, "dir:"+path); return syncDirectory(path) }
+	ops.syncDir = func(f *os.File) error {
+		events = append(events, "dir:"+filepath.Clean(f.Name()))
+		return f.Sync()
+	}
 	db, err := openDisk(dir, Options{Create: true}, ops)
 	if err != nil {
 		t.Fatal(err)
@@ -342,17 +354,18 @@ func TestInitializationFailures(t *testing.T) {
 				}
 				return &faultFile{File: raw, mode: mode}
 			}
-			ops.syncDir = func(path string) error {
+			ops.syncDir = func(f *os.File) error {
+				path := filepath.Clean(f.Name())
 				if mode == "dir" && path == dir || mode == "parent" && path == filepath.Dir(dir) {
 					return syscall.EIO
 				}
-				return syncDirectory(path)
+				return f.Sync()
 			}
 			if db, err := openDisk(dir, Options{Create: true}, ops); db != nil || err == nil {
 				t.Fatal(db, err)
 			}
 			// Failure must release the OS lock and leave the file for diagnosis.
-			lock, err := lockDirectory(dir)
+			lock, err := probeLock(dir)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -396,24 +409,35 @@ func TestOpenDirectorySyncPaths(t *testing.T) {
 			}
 
 			var events []string
+			dirInfo, err := os.Stat(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			parentInfo, err := os.Stat(parent)
+			if err != nil {
+				t.Fatal(err)
+			}
 			ops := defaultOps()
 			ops.wrap = func(raw *os.File) logFile {
 				return &faultFile{File: raw, events: &events}
 			}
-			ops.syncDir = func(path string) error {
-				absolute, err := filepath.EvalSymlinks(path)
+			ops.syncDir = func(f *os.File) error {
+				info, err := f.Stat()
 				if err != nil {
 					return err
 				}
-				absolute, err = filepath.Abs(absolute)
-				if err != nil {
-					return err
+				switch {
+				case os.SameFile(info, dirInfo):
+					events = append(events, "dir:"+dir)
+				case os.SameFile(info, parentInfo):
+					events = append(events, "dir:"+parent)
+					if name == "dot-parent-eio" {
+						return syscall.EIO
+					}
+				default:
+					return fmt.Errorf("unexpected sync target: %s", f.Name())
 				}
-				events = append(events, "dir:"+absolute)
-				if name == "dot-parent-eio" && absolute == parent {
-					return syscall.EIO
-				}
-				return syncDirectory(path)
+				return f.Sync()
 			}
 			db, err := openDisk(path, Options{Create: true}, ops)
 			if db != nil {
@@ -451,6 +475,64 @@ func TestOpenDirectorySyncPaths(t *testing.T) {
 			}
 			value(t, mustOpen(t, dir), "k", []byte("v"))
 		})
+	}
+}
+
+func TestDeniedDirectoryTraversal(t *testing.T) {
+	parent := t.TempDir()
+	dir := filepath.Join(parent, "db")
+	empty := filepath.Join(parent, "empty")
+	blocked := filepath.Join(parent, "no-search")
+	for _, path := range []string{dir, empty, blocked} {
+		if err := os.Mkdir(path, 0700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Chdir(parent)
+	db := mustOpen(t, dir)
+	put(t, db, "saved", []byte("value"), 1)
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	before := logBytes(t, dir)
+	if err := os.Symlink("no-search/../db", "alias"); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(blocked, 0600); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chmod(blocked, 0700); err != nil {
+			t.Error(err)
+		}
+	})
+	if _, err := os.Stat("no-search/../db"); err == nil {
+		t.Skip("test user can bypass directory search permissions")
+	} else if !errors.Is(err, syscall.EACCES) {
+		t.Fatalf("unexpected kernel path error: %v", err)
+	}
+	for _, path := range []string{"no-search/../db", parent + "/no-search/../db", "alias", "no-search/../empty"} {
+		t.Run(path, func(t *testing.T) {
+			db, err := Open(path)
+			if db != nil {
+				if closeErr := db.Close(); closeErr != nil {
+					t.Error(closeErr)
+				}
+			}
+			if db != nil || !errors.Is(err, syscall.EACCES) {
+				t.Errorf("Open(%q) = %v, %v; want EACCES", path, db != nil, err)
+			}
+			report, err := Inspect(path)
+			if report.Status != "" || !errors.Is(err, syscall.EACCES) {
+				t.Errorf("Inspect(%q) = %+v, %v; want EACCES before scanning", path, report, err)
+			}
+		})
+	}
+	if !bytes.Equal(before, logBytes(t, dir)) {
+		t.Error("rejected paths changed the existing log")
+	}
+	if entries, err := os.ReadDir(empty); err != nil || len(entries) != 0 {
+		t.Fatalf("rejected path changed empty directory: %v, %v", entries, err)
 	}
 }
 
@@ -633,7 +715,7 @@ func TestRecoveryFailures(t *testing.T) {
 			if mode != "sync" && !bytes.Equal(data, logBytes(t, dir)) {
 				t.Fatal("modified before diagnostic/truncate success")
 			}
-			lock, err := lockDirectory(dir)
+			lock, err := probeLock(dir)
 			if err != nil {
 				t.Fatal(err)
 			}

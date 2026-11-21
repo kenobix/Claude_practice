@@ -9,7 +9,6 @@ import (
 	"io"
 	"math"
 	"os"
-	"path/filepath"
 	"sync"
 	"syscall"
 
@@ -41,16 +40,40 @@ type logFile interface {
 
 type diskOps struct {
 	wrap    func(*os.File) logFile
-	syncDir func(string) error
+	syncDir func(*os.File) error
 }
 
-func defaultOps() diskOps { return diskOps{func(f *os.File) logFile { return f }, syncDirectory} }
-func syncDirectory(path string) error {
-	f, err := os.Open(path)
+func defaultOps() diskOps { return diskOps{func(f *os.File) logFile { return f }, (*os.File).Sync} }
+
+// Linux O_PATH is missing from syscall on some architectures.
+const oPath = 0x200000
+
+func openDirectory(path string) (*os.File, error) {
+	// Keep the kernel's traversal rules and anchor subsequent opens to the same directory.
+	return os.OpenFile(path, oPath|syscall.O_DIRECTORY, 0)
+}
+
+func openAt(dir *os.File, name string, flags int) (*os.File, error) {
+	dirFD := int(dir.Fd())
+	path := dir.Name() + "/" + name
+	for {
+		fd, err := syscall.Openat(dirFD, name, flags|syscall.O_CLOEXEC, 0600)
+		if err == syscall.EINTR {
+			continue
+		}
+		if err != nil {
+			return nil, &os.PathError{Op: "openat", Path: path, Err: err}
+		}
+		return os.NewFile(uintptr(fd), path), nil
+	}
+}
+
+func syncDirectoryAt(dir *os.File, name string, syncDir func(*os.File) error) error {
+	f, err := openAt(dir, name, syscall.O_RDONLY|syscall.O_DIRECTORY)
 	if err != nil {
 		return err
 	}
-	return errors.Join(f.Sync(), f.Close())
+	return errors.Join(syncDir(f), f.Close())
 }
 
 // DB owns a Linux advisory lock and a single synchronous append log. Use Open.
@@ -68,30 +91,8 @@ func OpenWithOptions(dir string, options Options) (*DB, error) {
 	return openDisk(dir, options, defaultOps())
 }
 
-func resolveDBDirectory(dir string) (string, error) {
-	if dir == "" {
-		return "", &os.PathError{Op: "stat", Path: dir, Err: syscall.ENOENT}
-	}
-	if !filepath.IsAbs(dir) {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return "", err
-		}
-		// Resolve symlink components before collapsing "..".
-		dir = cwd + string(filepath.Separator) + dir
-	}
-	return filepath.EvalSymlinks(dir)
-}
-
-func lockDirectory(dir string) (*os.File, error) {
-	info, err := os.Stat(dir)
-	if err != nil {
-		return nil, err
-	}
-	if !info.IsDir() {
-		return nil, fmt.Errorf("not a directory: %s", dir)
-	}
-	lock, err := os.OpenFile(filepath.Join(dir, "LOCK"), os.O_CREATE|os.O_RDWR|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0600)
+func lockDirectory(dir *os.File) (*os.File, error) {
+	lock, err := openAt(dir, "LOCK", syscall.O_CREAT|syscall.O_RDWR|syscall.O_NOFOLLOW|syscall.O_NONBLOCK)
 	if err != nil {
 		return nil, err
 	}
@@ -112,11 +113,12 @@ func lockDirectory(dir string) (*os.File, error) {
 	return lock, nil
 }
 
-func openDisk(dir string, options Options, ops diskOps) (db *DB, err error) {
-	dir, err = resolveDBDirectory(dir)
+func openDisk(path string, options Options, ops diskOps) (db *DB, err error) {
+	dir, err := openDirectory(path)
 	if err != nil {
 		return nil, err
 	}
+	defer dir.Close()
 	lock, err := lockDirectory(dir)
 	if err != nil {
 		return nil, err
@@ -130,20 +132,25 @@ func openDisk(dir string, options Options, ops diskOps) (db *DB, err error) {
 			err = errors.Join(err, lock.Close())
 		}
 	}()
-	path := filepath.Join(dir, "data.log")
-	raw, err := os.OpenFile(path, os.O_RDWR|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
+	const logFlags = syscall.O_RDWR | syscall.O_NOFOLLOW | syscall.O_NONBLOCK
+	raw, err := openAt(dir, "data.log", logFlags)
 	created := false
 	if errors.Is(err, os.ErrNotExist) && options.Create {
-		entries, readErr := os.ReadDir(dir)
+		listing, openErr := openAt(dir, ".", syscall.O_RDONLY|syscall.O_DIRECTORY)
+		if openErr != nil {
+			return nil, openErr
+		}
+		entries, readErr := listing.Readdirnames(-1)
+		readErr = errors.Join(readErr, listing.Close())
 		if readErr != nil {
 			return nil, readErr
 		}
 		for _, entry := range entries {
-			if entry.Name() != "LOCK" {
+			if entry != "LOCK" {
 				return nil, fmt.Errorf("new DB requires an empty directory (apart from LOCK)")
 			}
 		}
-		raw, err = os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_RDWR|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0600)
+		raw, err = openAt(dir, "data.log", logFlags|syscall.O_CREAT|syscall.O_EXCL)
 		created = err == nil
 	}
 	if err != nil {
@@ -166,10 +173,10 @@ func openDisk(dir string, options Options, ops diskOps) (db *DB, err error) {
 		}
 	}
 	// Even a previous incomplete initialization may have left unsynced names.
-	if err = ops.syncDir(dir); err != nil {
+	if err = syncDirectoryAt(dir, ".", ops.syncDir); err != nil {
 		return nil, err
 	}
-	if err = ops.syncDir(filepath.Dir(dir)); err != nil {
+	if err = syncDirectoryAt(dir, "..", ops.syncDir); err != nil {
 		return nil, err
 	}
 	info, err = file.Stat()
@@ -341,17 +348,18 @@ func Inspect(dir string) (recovery.Report, error) {
 	return inspectDisk(dir, defaultOps().wrap)
 }
 
-func inspectDisk(dir string, wrap func(*os.File) logFile) (report recovery.Report, err error) {
-	dir, err = resolveDBDirectory(dir)
+func inspectDisk(path string, wrap func(*os.File) logFile) (report recovery.Report, err error) {
+	dir, err := openDirectory(path)
 	if err != nil {
 		return report, err
 	}
+	defer dir.Close()
 	lock, err := lockDirectory(dir)
 	if err != nil {
 		return report, err
 	}
 	defer func() { err = errors.Join(err, lock.Close()) }()
-	raw, err := os.OpenFile(filepath.Join(dir, "data.log"), os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
+	raw, err := openAt(dir, "data.log", syscall.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK)
 	if err != nil {
 		return report, err
 	}

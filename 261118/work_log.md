@@ -856,3 +856,22 @@ Go 1.27.4で対象回帰・`make check`（fmt/vet/全6パッケージテスト/�
 形式v1とfixtureの互換性を維持。実機電源断、ホスト停止、WSL・装置flush、実媒体の容量枯渇は未検証。
 修正後の独立再レビューをDraft PR #2で依頼し、本人による設計説明の確認とともにMVP最終承認の保留条件とする。
 修正コミットのリモートCI結果はPRのChecksで確認する。
+
+## 2026-11-21: パス探索権限の回帰を修正
+
+基準 `02f67bde` の独立再レビューで、`no-search/../db` から探索権限のない要素が正規化で消える問題を確認した。
+修正前の `TestDeniedDirectoryTraversal` では相対・絶対・symlink経由の4ケースでOpenが成功し、
+未初期化のディレクトリにLOCKとdata.logが作成された。
+
+- 入力パスをLinuxでそのまま開く。取得したディレクトリFDを起点に `openat` でLOCKとdata.logを開き、
+  同じFDを基準にディレクトリの内容確認とDB・実親の同期を行う。
+- 対象回帰で4ケースのOpen・InspectがEACCESとなり、既存ログ不変と新規ファイル未作成を確認した。
+  正常な相対・絶対・`.`・末尾スラッシュ・symlinkと `..` の組合せは同期するFDのファイルIDで確認した。
+- 実親SyncのEIO、GET不在とClose EIOの終了コード、ヘッダー早期EOFの分類とログ不変を再検証した。
+  製品CLIでも、実親を開けないと初回PUTは終了6で16 Bのヘッダーを保持し、権限を戻すと再試行・再読取りに成功した。
+  探索拒否経路でのPUT・inspectも終了6で、ログは不変だった。
+
+Go 1.27.4で `make check`（fmt/vet/全6パッケージテスト/両CLI build）と
+`go test -race -count=1 -timeout=3m ./...`（全6パッケージ）が成功。
+`make demo` は3シナリオと実SIGKILL 2回に成功した。実機電源断・装置flushは未検証。
+修正後HEADの独立再レビューと本人の設計説明の確認が残る。Draft PR #2を維持し、最新CIはPRのChecksで確認する。

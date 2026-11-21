@@ -82,7 +82,7 @@ func assertCompoundClosed(t *testing.T, f *compoundFile) {
 }
 func assertCompoundLockReleased(t *testing.T, dir string, original os.FileInfo) {
 	t.Helper()
-	lock, err := lockDirectory(dir)
+	lock, err := probeLock(dir)
 	if err != nil {
 		t.Fatalf("lock leaked: %v", err)
 	}
@@ -219,16 +219,16 @@ func TestCompoundIORecovery(t *testing.T) {
 						reopenedFile = &compoundFile{File: f, mode: reopenFault}
 						return reopenedFile
 					}
-					reopenOps.syncDir = func(path string) error {
+					reopenOps.syncDir = func(f *os.File) error {
 						point := "parent"
-						if filepath.Clean(path) == filepath.Clean(dir) {
+						if filepath.Clean(f.Name()) == filepath.Clean(dir) {
 							point = "dir"
 						}
 						dirEvents = append(dirEvents, point)
 						if reopenFault == point {
 							return syscall.EIO
 						}
-						return syncDirectory(path)
+						return f.Sync()
 					}
 					options := Options{Diagnostics: &diagnostic}
 					if reopenFault == "diagnostic" {
