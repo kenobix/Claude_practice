@@ -26,11 +26,49 @@ Webhook専用のASGIアプリ `ci_runner.webhook:app` は `POST /webhooks/github
 .venv/bin/python -m uvicorn ci_runner.webhook:app --host 127.0.0.1 --port 18118 --no-access-log
 ```
 
-実配送の前に、公開先の運用責任者がTLS終端、転送経路、試験時間帯を承認する。公開側からは `POST /webhooks/github` だけを `127.0.0.1:18118` の専用アプリへ転送し、管理API・DB・Docker socketへの経路を設けない。プロキシは元bodyを保ち、サイズ・接続・受信時間を制限し、bodyや署名ヘッダーをログに残さない。 [GitHubのWebhook運用指針](https://docs.github.com/en/webhooks/using-webhooks/best-practices-for-using-webhooks)
+### 公開試験用の起動と停止
 
-リポジトリの所有者または管理者が、承認を得て対象リポジトリの **Settings → Webhooks** から設定する。Payload URLは承認済みのHTTPS URL、Content typeは `application/json`、イベントはpushのみ、SSL検証は有効とする。共有秘密はGitHub設定と受信プロセスの環境にだけ登録する。非アクティブで作成した場合は、hook IDを受信設定に反映してから有効にする。 [GitHubの設定手順](https://docs.github.com/en/webhooks/using-webhooks/creating-webhooks)
+公開先の運用責任者が、CloudflareでのTLS終端と配送データの通過、試験時間帯を承認してから実施する。WSL2でCaddyは `127.0.0.1:18119` に待ち受け、`POST /webhooks/github` だけを元bodyと署名ヘッダーを保ったまま `127.0.0.1:18118` の専用アプリへ転送する。Caddyは管理口とリクエストのログを無効にし、256 KiBと受信・接続時間の上限を適用する。管理API・DB・Docker socketへの転送経路を設けない。 [Caddy設定](../Caddyfile.webhook)
 
-管理者と、許可refへ通常の運用で届くpushの試験時刻を調整する。通常受信で配送GUID・受理SHA・run IDが対応し、永続化後の202が10秒以内に返ることを確認する。専用受信プロセスの停止中に別の対象pushが失敗したことを確認し、復旧後、管理者が **Recent deliveries** の同じGUIDで **Redeliver** を選ぶ。GitHubは自動再送せず、手動再送は過去3日間の配送が対象。同じ配送を10回再送しても同じrunが返り、そのSHAのrunは1件であることを確認する。GitHub側の応答時間と受信側の永続化結果を記録する。 [GitHubの手動再送手順](https://docs.github.com/en/webhooks/testing-and-troubleshooting-webhooks/redelivering-webhooks)
+`261117/ci_runner` から開始する。専用プロジェクト `ci-runner-261117-p3-live` のラベルを持つコンテナ・volume・networkが既にある場合や、ポート18118・18119・55419が使用中の場合は起動を止める。DBとアプリは同じ専用シェルで操作する。
+
+```bash
+set +x
+p3_compose() { docker compose --env-file /dev/null -p ci-runner-261117-p3-live "$@"; }
+export POSTGRES_USER=ci_runner_261117 POSTGRES_DB=ci_runner_261117 CI_DB_PORT=55419
+export POSTGRES_PASSWORD="$(openssl rand -hex 24)"
+export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:${CI_DB_PORT}/${POSTGRES_DB}"
+p3_compose up -d --wait db &&
+  .venv/bin/python scripts/migrate.py
+```
+
+別端末でCaddyを起動し、loopbackで許可外のパスとメソッドが404になることを確認する。承認済みの試験枠で、さらに別端末からQuick Tunnelを前景で起動する。設定とバイナリは管理APIの環境や認証情報を継承しない端末で実行する。
+
+```bash
+(
+  p3_caddy_state=$(mktemp -d) || exit 1
+  trap 'rm -rf -- "$p3_caddy_state"' EXIT
+  export XDG_CONFIG_HOME="$p3_caddy_state/config" XDG_DATA_HOME="$p3_caddy_state/data"
+  env -u CI_WEBHOOK_PROXY_ADDRESS -u CI_WEBHOOK_PROXY_TLS \
+    artifacts/webhook-tools/caddy run --config Caddyfile.webhook --adapter caddyfile
+)
+# 別端末。公開操作なので承認後だけ実行する。
+artifacts/webhook-tools/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:18119
+```
+
+発行されたURLの `/webhooks/github` をPayload URLとする。リポジトリの所有者または管理者が **Settings → Webhooks** で、`application/json`、pushのみ、SSL検証有効、無効状態で登録する。DBのシェルで実際のhook IDと共有秘密を対話入力して受信アプリを起動し、その後hookを有効にする。 [GitHubの設定手順](https://docs.github.com/en/webhooks/using-webhooks/creating-webhooks)
+
+```bash
+read -r -p 'GitHub hook ID: ' CI_GITHUB_WEBHOOK_HOOK_ID
+read -r -s -p 'GitHub webhook secret: ' CI_GITHUB_WEBHOOK_SECRET
+printf '\n'
+export CI_GITHUB_WEBHOOK_HOOK_ID CI_GITHUB_WEBHOOK_SECRET
+.venv/bin/python -m uvicorn ci_runner.webhook:app --host 127.0.0.1 --port 18118 --no-access-log
+```
+
+公開URLでTLS検証と範囲外の404、無効署名の403を確認する。管理者と、許可refへ通常の運用で届くpushの試験時刻を調整する。通常受信で配送GUID・受理SHA・run IDが対応し、永続化後の202が10秒以内に返ることを確認する。受信アプリだけを `Ctrl+C` で停止し、別の対象pushが失敗したことを確認する。同じ設定でアプリを再起動後、管理者が **Recent deliveries** の同じGUIDで **Redeliver** を選ぶ。GitHubは自動再送せず、手動再送は過去3日間の配送が対象。同じ配送を10回再送しても同じrunが返り、そのSHAのrunは1件であることを確認する。GitHub側の応答時間と永続化結果を記録する。 [GitHubの手動再送手順](https://docs.github.com/en/webhooks/testing-and-troubleshooting-webhooks/redelivering-webhooks)
+
+証拠を採取したら管理者が試験用hookを削除する。トンネルを `Ctrl+C` で止め、公開URLの転送が終了したことを確認する。Caddyと受信アプリを `Ctrl+C` で止め、専用シェルで `p3_compose down --volumes` を実行する。専用プロジェクトの資源が消えたことを確認し、`unset POSTGRES_PASSWORD DATABASE_URL CI_GITHUB_WEBHOOK_HOOK_ID CI_GITHUB_WEBHOOK_SECRET` を実行して専用シェルを閉じる。
 
 ## 検証範囲
 
@@ -40,4 +78,6 @@ Webhook専用のASGIアプリ `ci_runner.webhook:app` は `POST /webhooks/github
 PYTEST_ADDOPTS='-k webhook_postgres -rP' .venv/bin/python scripts/verify_db.py
 ```
 
-公開HTTPS受信先の準備と、管理下リポジトリからの実push、GitHubの画面からの手動再送は未検証。ローカルHTTPSは試験用証明書をクライアントに明示して検証する。
+CaddyのローカルHTTPS試験では、`CI_WEBHOOK_PROXY_ADDRESS=https://127.0.0.1:18119` と `CI_WEBHOOK_PROXY_TLS="tls <試験証明書のパス> <試験秘密鍵のパス>"` を設定し、試験証明書をクライアントだけで信頼する。実配送用のloopback HTTP設定でも、公開側のHostに相当する値で転送を確認した。 [検証記録](../../work_log.md#p3公開試験前のcaddyローカル検証)
+
+Quick Tunnelの公開起動、管理下リポジトリからの実push、GitHubの画面からの手動再送は未実施。

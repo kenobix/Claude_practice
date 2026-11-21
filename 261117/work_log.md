@@ -1150,3 +1150,10 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
 - 公開ファイル4点だけをGitHub Pages相当のサブパスで配信し、Chromiumの1440・390・320pxで、横スクロールが発生しないこと、Spaceキーで手順を開きEnterキーで閉じられること、グラフ表示とCSV取得を確認した。ページ読み込み時はローカルHTML・CSS・PNGだけを取得した。
 - 600サンプルからキュー待ち・実行のp95中央値4値を再計算し、表示と一致した。バッチ所要の中央値2値も元の記録と一致した。既存の管理画面テストは2件成功。実DB/Dockerの重い回帰や比較実験は手元で再実行していない。
 - GitHub Pagesへの公開は保留。P3の実配送と停止後の手動再送、P5の第三者による初回手順の再現と最終受入が残る。MVPの概算94%（残6%）を維持する。
+
+## P3公開試験前のCaddyローカル検証
+
+- WSL2 x86_64で公式リリースのcloudflared 2026.11.1とCaddy v2.11.9を `artifacts/webhook-tools/` に配置した。配布物のSHA-256をGitHub Releasesと照合し、Caddyのアーカイブは配布元のSHA-512一覧でも確認した。 [cloudflared](https://github.com/cloudflare/cloudflared/releases/tag/2026.11.1) · [Caddy](https://github.com/caddyserver/caddy/releases/tag/v2.11.9)
+- Caddyのloopback HTTPSから既存Webhookと使い捨てPostgreSQLへ接続した。試験証明書を信頼しない接続、許可外の12パターン、無効署名、256 KiB超過を拒否し、拒否時は配送・runを作成しなかった。正しい署名の初回と並行再送10回はすべて202でrunが1件。最長応答は0.237秒。
+- DB停止中は503で保存せず、DB復旧後の同じ配送は202。受信アプリ停止中はCaddyが502を返し、再起動後は外部Host相当の値を付けたloopback HTTP転送で同じrunが返った。試験用の秘密値・署名・bodyの識別文字列は設定、応答、Caddy・受信アプリ・DBの試験出力に含まれなかった。
+- 通常回帰233件と、使い捨てPostgreSQLを使う既存Webhook回帰4件が成功。両方で既知のTestClient警告が1件あった。readiness 200、DB再起動後のmigration保持、専用コンテナ・volume・networkの回収を確認した。公開トンネルの起動、GitHub設定変更、実配送は未実施。 [公開承認後の起動と停止](ci_runner/docs/webhook.md#公開試験用の起動と停止)

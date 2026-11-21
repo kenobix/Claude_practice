@@ -1,0 +1,41 @@
+{
+	admin off
+	auto_https off
+	persist_config off
+	log {
+		output discard
+	}
+	servers {
+		timeouts {
+			read_header 2s
+			read_body 3s
+			write 10s
+			idle 15s
+		}
+	}
+}
+
+{$CI_WEBHOOK_PROXY_ADDRESS:http://:18119} {
+	bind 127.0.0.1
+	# Optional certificate and key for the local HTTPS test.
+	{$CI_WEBHOOK_PROXY_TLS}
+
+	@github {
+		method POST
+		expression `{http.request.orig_uri} == "/webhooks/github"`
+	}
+	handle @github {
+		request_body {
+			max_size 262144
+		}
+		reverse_proxy 127.0.0.1:18118 {
+			transport http {
+				dial_timeout 1s
+				response_header_timeout 8s
+			}
+		}
+	}
+	handle {
+		respond 404
+	}
+}
