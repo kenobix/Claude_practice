@@ -1164,3 +1164,8 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
 - 元の実push `91afb731a8184717f86b88c04807207c18390e83` と同一GUIDの502・202、GitHub上の受理SHAとrun IDを読み取り確認した。確認時点で対象SHAは `main` の先頭にあり、固定fixtureの形式、2151 bytes、SHA-256を照合した。GitHubの再送期限内なら既存eventを起点にできる。旧公開先は接続不可で、新しい試験枠の個別承認を待っている。Webhook受付から正式結果までの同一runの実測は未実施。 [デモの合格条件](ci_runner/docs/p5-validation.md#実pushを起点にしたデモ)
 - 対象SHAのクリーンVM CIと、同一ホストの一時clone・新規venvでの独立レビュー追試は、実DB・実Dockerで固定fixture各1件が成功した。既存の比較実測600件からp95を再計算して一致した。人による外部レビュー結果は未提出。 [再現手順と合格条件](ci_runner/docs/p5-validation.md#初回のローカル検証)
 - Pagesの公開元は `main` のルートで、デモHTMLのGitHub Contents APIは404。静的デモ・CSS・比較図・CSVの相対参照と、外部レビュー手順のシェル構文を確認した。計画§7の公開は承認済み統合後の提出条件とした。実pushデモと人による再現結果の確認が済むまで、P5の完了とマージは保留する。 [公開時の確認項目](ci_runner/docs/p5-validation.md#pagesの公開)
+
+## 2026-11-21 P5公開試験の終了
+
+- `c37a4ccc3891e2fc85d7aaf6c69b3491d6c104dc` で承認済みの公開枠を開いた。HTTPSの対象POSTは未設定時503、対象GETと管理APIへのPOSTは404。Webhook `714755178` の配送先・受信側Secretの設定が揃わず、対象GUIDの今回の再送は0件。Workerを起動せず、同一runでの復旧と正式結果は未実測。 [P5の試験記録](ci_runner/docs/p5-validation.md#2026-11-21の公開試験)
+- 終了予定の17:39:46 JSTまでに公開を停止し、試験用サービス・DB・volume・networkの残存がないことを確認した。P5は未完了、MVP完成とマージは保留。前回項目に記載した人による再現結果の提出は、元計画のMVP受入条件に含めない。

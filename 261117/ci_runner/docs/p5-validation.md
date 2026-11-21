@@ -101,7 +101,7 @@ PYTEST_ADDOPTS='-k "test_api_to_separate_worker_to_persisted_result and fixture_
 - 実装SHA `9531a2a` のクリーンなUbuntu 24.04 VMで、固定依存、新規venv、実PostgreSQLと実Dockerによる固定fixture1件が成功。証拠とcheckoutのSHA、DB再起動後のmigration保持を確認。 [クリーン環境CI](https://github.com/kenobix/Claude_practice/actions/runs/44861993482)
 - 2026-11-21の独立レビューでは、同じ実装SHAをWSLの一時cloneへcheckoutし、Ubuntu 24.04.4、Python 3.12.3、Docker 29.9.2、Compose 5.6.1、PostgreSQL 17.12で固定fixture1件に成功。DB readiness 200、API・DBの再起動後の保持、証拠のSHA、専用資源の回収を確認した。
 
-新規環境でREADMEを実行できることは確認済み。最終受入で求める人による実施結果は未提出で、Draft PR #1のレビュー履歴は2026-11-21確認時点で0件だった。
+計画§5が求めるREADMEの再現性は確認済み。人による再現結果は未提出で、Draft PR #1のレビュー履歴は2026-11-21確認時点で0件だった。人による再現結果の提出は、元計画のMVP受入条件には含めない。
 
 ## 3分の障害デモ
 
@@ -143,6 +143,12 @@ PYTEST_ADDOPTS='-k "test_two_residents_recover_after_sigkill and running" -rP' \
 | 4. 正式結果 | 成功モードの再試行だけが正式結果となり、commit SHA、source digest、image ID、ログ、結果JSONがそのattemptを指す。管理画面で履歴と正式結果を確認し、復旧時間と試験資源の回収を記録する。 |
 
 記録するのは配送GUID、応答時間、SHA、run・attempt ID、tokenが異なるという照合結果、終了理由、正式ログ、回収結果。tokenの値やWebhookの秘密値・署名・本文は出力しない。既存の故障注入は停止位置と旧結果拒否の確認に使い、実行対象runは配送テーブルから取得する。
+
+### 2026-11-21の公開試験
+
+承認済みの時間枠でQuick Tunnelを起動し、外部HTTPSで `POST /webhooks/github` が未設定時に503、同じパスへのGETと管理APIへのPOSTが404になることを確認した。終了予定は17:39:46 JST。17:36:59の確認では受信側のSecret入力は未確認、DBの配送は0件、Worker試験は未起動だった。17:39:18のGitHub照合でも配送先URLは更新されておらず、対象GUIDの新しい再送は確認されなかった。
+
+17:39:48に公開終了と専用DB・volume・network、loopbackポート、制御ソケットの回収を確認した。今回の公開枠ではGitHubの202、run ID、Workerの停止・復旧、正式結果は未実測。P5の実push起点デモは未完了。
 
 ## Pagesの公開
 
