@@ -66,7 +66,7 @@ export CI_GITHUB_WEBHOOK_HOOK_ID CI_GITHUB_WEBHOOK_SECRET
 .venv/bin/python -m uvicorn ci_runner.webhook:app --host 127.0.0.1 --port 18118 --no-access-log
 ```
 
-公開URLでTLS検証と範囲外の404、無効署名の403を確認する。管理者と、許可refへ通常の運用で届くpushの試験時刻を調整する。通常受信で配送GUID・受理SHA・run IDが対応し、永続化後の202が10秒以内に返ることを確認する。受信アプリだけを `Ctrl+C` で停止し、別の対象pushが失敗したことを確認する。同じ設定でアプリを再起動後、管理者が **Recent deliveries** の同じGUIDで **Redeliver** を選ぶ。GitHubは自動再送せず、手動再送は過去3日間の配送が対象。同じ配送を10回再送しても同じrunが返り、そのSHAのrunは1件であることを確認する。GitHub側の応答時間と永続化結果を記録する。 [GitHubの手動再送手順](https://docs.github.com/en/webhooks/testing-and-troubleshooting-webhooks/redelivering-webhooks)
+公開URLでTLS検証と範囲外の404、無効署名の403を確認する。既存の配送を使う場合は、管理者が **Recent deliveries** の対象GUIDで **Redeliver** を選ぶ。GitHubは自動再送せず、手動再送は過去3日間の配送が対象。GitHub側の応答時間、配送GUID、受理SHA、run ID、DBの記録を照合する。P3の10回再送とDB一意性はローカルHTTPSの検証で確認済み。公開経路での手動再送は目的のイベント1回で照合する。 [GitHubの手動再送手順](https://docs.github.com/en/webhooks/testing-and-troubleshooting-webhooks/redelivering-webhooks)
 
 証拠を採取したら管理者が試験用hookを削除する。トンネルを `Ctrl+C` で止め、公開URLの転送が終了したことを確認する。Caddyと受信アプリを `Ctrl+C` で止め、専用シェルで `p3_compose down --volumes` を実行する。専用プロジェクトの資源が消えたことを確認し、`unset POSTGRES_PASSWORD DATABASE_URL CI_GITHUB_WEBHOOK_HOOK_ID CI_GITHUB_WEBHOOK_SECRET` を実行して専用シェルを閉じる。
 
@@ -80,4 +80,13 @@ PYTEST_ADDOPTS='-k webhook_postgres -rP' .venv/bin/python scripts/verify_db.py
 
 CaddyのローカルHTTPS試験では、`CI_WEBHOOK_PROXY_ADDRESS=https://127.0.0.1:18119` と `CI_WEBHOOK_PROXY_TLS="tls <試験証明書のパス> <試験秘密鍵のパス>"` を設定し、試験証明書をクライアントだけで信頼する。実配送用のloopback HTTP設定でも、公開側のHostに相当する値で転送を確認した。 [検証記録](../../work_log.md#p3公開試験前のcaddyローカル検証)
 
-Quick Tunnelの公開起動、管理下リポジトリからの実push、GitHubの画面からの手動再送は未実施。
+## 実配送の受入記録
+
+2026-11-21に既存hook `714755178` を使用した。計画§5のP3は、ローカルHTTPSの10回再送・無効署名と実GitHubの停止復旧の証拠を合わせて受入済み。
+
+| 実配送 | GitHubの結果 | 永続化の証拠 |
+|---|---|---|
+| `47faf210-e564-11f1-8d14-29e21b4acbd6` の手動再送 | 202、4.14秒。SHA `9097f84b12affb0d58f23e51d22c92a6475f4224`、run `b62bf3cb-99f3-47c3-a6dd-2c38a690bae1` | 専用DBの配送・runを直接照合 |
+| `e269343e-e568-11f1-8f9c-c6f2c8a1d397` の停止中の配送と復旧後の1回の手動再送 | 停止中502（0.87秒）、復旧後202（0.70秒）。SHA `91afb731a8184717f86b88c04807207c18390e83`、run `665e351e-383e-4227-a1ea-10a63162ee3e` | 停止中は配送・run各0件を直接確認。復旧後はGitHubの受理応答を確認し、DB件数の直接採取は試験枠終了までに行えなかった |
+
+試験枠終了後は専用資源を回収した。今後の実push起点の障害デモは、P5の合格条件に沿って別途記録する。 [P5実pushデモ](p5-validation.md#実pushを起点にしたデモ)

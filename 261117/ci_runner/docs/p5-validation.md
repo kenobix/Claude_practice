@@ -62,8 +62,20 @@ DBの合計9,093回の観測で待ちイベントは `IO/WalSync` 15サンプル
 
 ## 初回のローカル検証
 
-独立レビュー担当者は、Docker EngineとCompose v2を利用できるクリーンな専用Linux VMに `https://github.com/kenobix/Claude_practice.git` を新規cloneする。
-Draft PR #1でレビュー対象とする `feat/ci-runner` のSHAをcheckoutし、`git rev-parse HEAD` で一致を確認する。既存のvenvやDB設定を持ち込まず、READMEどおりにPython 3.12のvenvを作り、固定依存とパッケージを導入して `pip check` を通す。 [環境の準備](../../README.md#python環境とテスト)
+独立レビュー担当者は、Docker EngineとCompose v2、cgroup v2を利用できるクリーンな専用Linux VMで実行する。既存のvenvやDB設定を持ち込まず、レビュー対象として合意したSHAへcheckoutする。下記は実装レビュー時のSHAを指定した例。
+
+```bash
+git clone --branch feat/ci-runner https://github.com/kenobix/Claude_practice.git
+cd Claude_practice
+review_sha=9531a2ab48055655a5266fe342d88e9957893e53
+git switch --detach "$review_sha"
+test "$(git rev-parse HEAD)" = "$review_sha"
+cd 261117/ci_runner
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements.lock
+.venv/bin/python -m pip install --no-build-isolation --no-deps -e .
+.venv/bin/python -m pip check
+```
 
 GitHubの認証情報や `.env` は不要。ポート `55417` を試験専用に空け、下記を実行する。
 
@@ -80,16 +92,16 @@ PYTEST_ADDOPTS='-k "test_api_to_separate_worker_to_persisted_result and fixture_
 | 新規環境から同じ版を起動できる | 受入対象SHAとローカルHEADが一致し、固定依存の導入と `pip check` が成功 |
 | 実PostgreSQL・実Dockerで固定fixtureが1件成功し、正式結果を再照会できる | pytestが `1 passed`。新規生成された `artifacts/fixture-worker-latest.json` の `git_head_at_execution` が対象SHA、`pytest_failures` が0、唯一の `cases` が `fixture: success`、`receipt.state: succeeded`、`api_restarted: true` |
 | 正しいDBを使い、再起動後も初期化状態を保持する | `real DB readiness: 200`、`migration persists after restart`、PostgreSQLの版と固定イメージdigestの出力 |
-| 試験資源を回収できる | スクリプトの終了コード0、証拠の `owned_resources_before` と `owned_resources_after` が一致。Composeラベル `com.docker.compose.project=ci-runner-261117-p0-check` のコンテナ・volume・networkが終了後に0件 |
+| 試験資源を回収できる | スクリプトの終了コード0、`cases[0].owned_resources_before` と `cases[0].owned_resources_after` が一致。Composeラベル `com.docker.compose.project=ci-runner-261117-p0-check` のコンテナ・volume・networkが終了後に0件 |
 
 レビュー結果として、SHA、実施日、OS・Python・Docker・Compose・PostgreSQLの版、上の各条件の合否、つまずいた手順をPR #1へ返す。証拠は必要な項目とログの該当行に絞り、認証情報や環境変数の値を添付しない。skipや証拠不足は未完了とする。
 
-2026-11-19に同一ホストの一時アーカイブと新しいvenvで、PyPIから固定依存を導入して再現した。第三者による確認は未実施。
+計画§5のREADMEによる再現性には次の二つの証拠がある。
 
-担当ブランチでは、使い捨てのUbuntu 24.04 VMで同じ初回検証を実行する。毎回新しいvenvへ固定依存を導入し、実PostgreSQLと実Dockerでローカル固定fixtureを1件確認する。
-試験がskipされて証拠が生成されない場合や、証拠のSHAとcheckoutのSHAが異なる場合は失敗とする。
-通常CI、GitHubの実配送、第三者による手順の確認はそれぞれ別に記録する。[クリーン環境検証の実行一覧](https://github.com/kenobix/Claude_practice/actions/workflows/ci-runner-clean-fixture.yml)
-初回の固定fixtureは、Python 3.12.16・PostgreSQL 17.12・Docker Engine 28.0.4のGitHub-hosted runnerでも成功した。[実行ログ](https://github.com/kenobix/Claude_practice/actions/runs/44537278859)
+- 実装SHA `9531a2a` のクリーンなUbuntu 24.04 VMで、固定依存、新規venv、実PostgreSQLと実Dockerによる固定fixture1件が成功。証拠とcheckoutのSHA、DB再起動後のmigration保持を確認。 [クリーン環境CI](https://github.com/kenobix/Claude_practice/actions/runs/44861993482)
+- 2026-11-21の独立レビューでは、同じ実装SHAをWSLの一時cloneへcheckoutし、Ubuntu 24.04.4、Python 3.12.3、Docker 29.9.2、Compose 5.6.1、PostgreSQL 17.12で固定fixture1件に成功。DB readiness 200、API・DBの再起動後の保持、証拠のSHA、専用資源の回収を確認した。
+
+新規環境でREADMEを実行できることは確認済み。最終受入で求める人による実施結果は未提出で、Draft PR #1のレビュー履歴は2026-11-21確認時点で0件だった。
 
 ## 3分の障害デモ
 
@@ -115,7 +127,28 @@ PYTEST_ADDOPTS='-k "test_two_residents_recover_after_sigkill and running" -rP' \
 
 45秒は復旧の仮目標。イメージ取得、ディスク待ち、監視周期で実際の時間は変わる。出力が揃うまで待ち、超過や失敗を記録する。
 2026-11-19の復旧は45.91秒。初回検証と過去デモの表示テストを含む選択回帰3件とDBの起動から回収までは113.51秒だった。
-このデモで使う投入は試験用のrunで、GitHub pushの実配送は承認済み公開HTTPS受信先の確保後に別途確認する。[P3実配送と手動再送](webhook.md#起動と障害復旧)
+このデモは固定GitHub応答と試験用のrunを使用する。実push起点の受入は次の手順で確認する。
+
+## 実pushを起点にしたデモ
+
+2026-11-21の実push `91afb731a8184717f86b88c04807207c18390e83`、配送GUID `e269343e-e568-11f1-8f9c-c6f2c8a1d397` を再利用できる。計画§8は成功したpushを起点とするデモを求めており、GitHubが既存イベントを正規の手順で再送すれば、実際のpushに由来する同じ配送とSHAを追跡できる。対象SHAは確認時の `main` 先頭で、固定fixtureは2151 bytes、承認済みSHA-256と一致した。元の配送がRecent deliveriesに残る3日間に試験を調整する。期限後は管理下の許可refへの次の承認済みpushを使う。 [P3の実配送記録](webhook.md#実配送の受入記録)・[GitHubの再送期限](https://docs.github.com/en/webhooks/testing-and-troubleshooting-webhooks/redelivering-webhooks)
+
+2026-11-21の確認時点で旧公開先に接続できない。公開枠の個別承認後、管理者が既存hookの配送先を更新し、受信準備が整った時点で同じGUIDを1回再送する。試験は固定イメージを準備した使い捨て環境で行う。 [専用入口の設定と停止](webhook.md#公開試験用の起動と停止)
+
+| 順序 | 合格条件 |
+|---|---|
+| 1. 受付 | GitHubが10秒以内に202を受信。専用DBで配送GUIDと対象SHAが同じrunを指し、配送とそのSHAのrunが各1件。今回の専用DBが発行したrun IDを以後の照合に使う。 |
+| 2. 停止 | 最初の常駐Workerが実GitHubから受理SHAの固定ソースを取得し、長時間モードの固定fixtureを起動。対象runの開始を観測して、そのWorkerだけをSIGKILLする。 |
+| 3. 復旧 | DB時刻のlease失効とコンテナ回収を記録。次のWorkerが同じrun ID・SHAを別attempt・別tokenで取得する。既存の故障試験と同様に旧tokenでの結果確定が拒否されることを照合する。 |
+| 4. 正式結果 | 成功モードの再試行だけが正式結果となり、commit SHA、source digest、image ID、ログ、結果JSONがそのattemptを指す。管理画面で履歴と正式結果を確認し、復旧時間と試験資源の回収を記録する。 |
+
+記録するのは配送GUID、応答時間、SHA、run・attempt ID、tokenが異なるという照合結果、終了理由、正式ログ、回収結果。tokenの値やWebhookの秘密値・署名・本文は出力しない。既存の故障注入は停止位置と旧結果拒否の確認に使い、実行対象runは配送テーブルから取得する。
+
+## Pagesの公開
+
+静的デモとCSS、比較図、CSVはブランチに揃っている。GitHub Pagesの公開元は `main` のルート。2026-11-21に公開元にデモのHTMLが存在しないことをGitHub APIで確認した。計画§7は公開を提出条件としているため、マージ前には公開物と参照先を確認し、承認済みの統合後に公開を確認する。 [静的デモ](../../demo/index.html)・[計画§7](../../../261014/plan_ci_runner.md#7-実行境界公開費用)
+
+公開時はルートREADMEの一覧にデモへの導線を追加し、既存の公開元を維持する。Pagesのデプロイが成功したら、デモ画面、CSS、比較図の表示、CSVのダウンロードを公開URLで確認する。 [公開URL](https://kenobix.github.io/Claude_practice/261117/demo/)
 
 ## 運用と限界
 

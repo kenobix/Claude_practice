@@ -12,7 +12,7 @@ P2の[コンテナ作成台帳](ci_runner/docs/design.md#コンテナ作成台�
 内部ライブラリでDB再照合・実値ガード・時間/ログ/lease上限付きのローカル固定fixture実行も実装済み。
 ローカルfixture結果の条件付きDB確定（状態/exit/理由/終了時刻・正式attempt参照）も実装済み。
 別プロセスの一件実行入口で、取得→ローカル固定fixture実行/回収→条件付き確定まで接続済み。
-上限付きログを結果と同一transactionでDB保存する。受理commitの固定fixtureを実行し、sourceとimageの由来を結果に保存できる。常駐Workerは検証済みcommitを順に実行する。管理UIで実行と試行の履歴を確認し、取消・手動再試行を行える。Webhookの受付は実装済みで、GitHubからの実配送は未検証。
+上限付きログを結果と同一transactionでDB保存する。受理commitの固定fixtureを実行し、sourceとimageの由来を結果に保存できる。常駐Workerは検証済みcommitを順に実行する。管理UIで実行と試行の履歴を確認し、取消・手動再試行を行える。WebhookはGitHub実配送の障害復旧まで受入済み。[受入状況](ci_runner/docs/progress.md)にP5の残件を記録する。
 常駐バックエンドの配置先は将来別途判断する。GitHub Pages向けの[静的デモ](demo/index.html)には再現データと比較実測を収録する。
 
 ## 受理commitのsourceを検証する
@@ -302,7 +302,7 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory "$preview_dir"
 ```
 
 `http://127.0.0.1:8000/261117/demo/` でプレビューする。終了後は一時ディレクトリを削除する。
-GitHub Pagesへの公開は保留中。
+GitHub Pagesでは、承認済みの統合後にデモ、図、CSVを確認する。[公開時の確認項目](ci_runner/docs/p5-validation.md#pagesの公開)
 
 ## Worker取得だけの診断
 

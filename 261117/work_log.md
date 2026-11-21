@@ -1157,3 +1157,10 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
 - Caddyのloopback HTTPSから既存Webhookと使い捨てPostgreSQLへ接続した。試験証明書を信頼しない接続、許可外の12パターン、無効署名、256 KiB超過を拒否し、拒否時は配送・runを作成しなかった。正しい署名の初回と並行再送10回はすべて202でrunが1件。最長応答は0.237秒。
 - DB停止中は503で保存せず、DB復旧後の同じ配送は202。受信アプリ停止中はCaddyが502を返し、再起動後は外部Host相当の値を付けたloopback HTTP転送で同じrunが返った。試験用の秘密値・署名・bodyの識別文字列は設定、応答、Caddy・受信アプリ・DBの試験出力に含まれなかった。
 - 通常回帰233件と、使い捨てPostgreSQLを使う既存Webhook回帰4件が成功。両方で既知のTestClient警告が1件あった。readiness 200、DB再起動後のmigration保持、専用コンテナ・volume・networkの回収を確認した。公開トンネルの起動、GitHub設定変更、実配送は未実施。 [公開承認後の起動と停止](ci_runner/docs/webhook.md#公開試験用の起動と停止)
+
+## 2026-11-21 P5の最終受入に残る証拠
+
+- 実装SHA `9531a2ab48055655a5266fe342d88e9957893e53` の独立レビューでP0〜P4を合格と判定した。P3では元pushの実GitHub配送の失敗と復旧、ローカルHTTPSで10回再送したときの実DB一意性を確認した。復旧後の公開試験DB件数は未観測。 [実配送の受入記録](ci_runner/docs/webhook.md#実配送の受入記録)
+- 元の実push `91afb731a8184717f86b88c04807207c18390e83` と同一GUIDの502・202、GitHub上の受理SHAとrun IDを読み取り確認した。確認時点で対象SHAは `main` の先頭にあり、固定fixtureの形式、2151 bytes、SHA-256を照合した。GitHubの再送期限内なら既存eventを起点にできる。旧公開先は接続不可で、新しい試験枠の個別承認を待っている。Webhook受付から正式結果までの同一runの実測は未実施。 [デモの合格条件](ci_runner/docs/p5-validation.md#実pushを起点にしたデモ)
+- 対象SHAのクリーンVM CIと、同一ホストの一時clone・新規venvでの独立レビュー追試は、実DB・実Dockerで固定fixture各1件が成功した。既存の比較実測600件からp95を再計算して一致した。人による外部レビュー結果は未提出。 [再現手順と合格条件](ci_runner/docs/p5-validation.md#初回のローカル検証)
+- Pagesの公開元は `main` のルートで、デモHTMLのGitHub Contents APIは404。静的デモ・CSS・比較図・CSVの相対参照と、外部レビュー手順のシェル構文を確認した。計画§7の公開は承認済み統合後の提出条件とした。実pushデモと人による再現結果の確認が済むまで、P5の完了とマージは保留する。 [公開時の確認項目](ci_runner/docs/p5-validation.md#pagesの公開)
