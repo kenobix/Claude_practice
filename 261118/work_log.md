@@ -875,3 +875,9 @@ Go 1.27.4で `make check`（fmt/vet/全6パッケージテスト/両CLI build）
 `go test -race -count=1 -timeout=3m ./...`（全6パッケージ）が成功。
 `make demo` は3シナリオと実SIGKILL 2回に成功した。実機電源断・装置flushは未検証。
 修正後HEADの独立再レビューと本人の設計説明の確認が残る。Draft PR #2を維持し、最新CIはPRのChecksで確認する。
+
+## 2026-11-21: 段階5の最終受入
+
+- 実装 `3f9e622d90829882fe065f72873e423bf2a5eb10` の独立再レビューはCritical・High・Medium・Low各0件で、push CIとPR CIは成功。
+- 本人の書面回答を仕様、実装、試験と照合してQ1〜Q3を合格とした。Q2は追加回答で、Sync成功後とSync結果不明時の許容状態をデータとsequenceの組合せで区別できた。
+- 元計画の段階0〜5を満たし、[MVP受入記録](kv-engine/docs/mvp-acceptance.md)に完成判定を記録した。実機電源断、ホスト停止、WSL・装置flush、診断先の永続化は未検証。PR #2のマージ承認を別途求める。
