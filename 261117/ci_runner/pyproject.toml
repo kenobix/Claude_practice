@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ci-runner-261117"
+version = "0.1.0"
+description = "CI runner intake API and bounded local-fixture execution"
+requires-python = ">=3.12,<3.13"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.in"]}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+ci_runner = ["console_assets/*.css", "console_assets/*.js"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = [
+    "integration: requires an explicitly configured dedicated PostgreSQL database",
+    "docker: requires explicit opt-in and real Docker daemon access",
+]

@@ -1,0 +1,183 @@
+"""Claim and renewal operations; the CLI only claims initial attempts."""
+import argparse
+from dataclasses import dataclass, field
+from datetime import datetime
+import json
+import re
+import sys
+from uuid import UUID
+
+import psycopg
+
+from . import database
+from .retry import ATTEMPT_KIND_SQL, LATEST_ATTEMPT_JOIN, RETRYABLE_ATTEMPT_SQL, attempt_kind
+from .settings import POLICY, SCHEMA_VERSION
+
+LEASE_SECONDS = 30
+
+POLICY_FILTER = 'r.repository_id=%s AND r.ref=%s AND r.workflow_version=%s '
+VERIFIED_TARGET_FILTER = f'AND {database.SCHEMA_CHECK}AND r.id=%s AND r.commit_sha=%s '
+QUEUE_FILTER = (
+    "WHERE r.state='queued' AND r.completed_attempt_id IS NULL "
+    'AND r.cancel_requested_at IS NULL AND r.available_at <= clock_timestamp() '
+    f'AND {POLICY_FILTER}'
+)
+INITIAL_SQL = (
+    f'SELECT r.id, r.commit_sha, r.available_at, 0 AS previous_attempt_no, 1 AS retry_start_no FROM runs r {QUEUE_FILTER}'
+    'AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.run_id=r.id) '
+)
+VERIFIED_SQL = (
+    'SELECT r.id, r.commit_sha, r.available_at, COALESCE(a.attempt_no,0) AS previous_attempt_no, '
+    'CASE WHEN m.previous_attempt_id IS NOT NULL THEN a.attempt_no+1 '
+    'ELSE COALESCE(a.retry_start_no,1) END AS retry_start_no '
+    f'FROM runs r {LATEST_ATTEMPT_JOIN}'
+    'LEFT JOIN manual_retries m ON m.run_id=r.id AND m.previous_attempt_id=a.id '
+    f'{QUEUE_FILTER}AND (a.id IS NULL OR m.previous_attempt_id IS NOT NULL OR ({RETRYABLE_ATTEMPT_SQL})) '
+)
+QUEUE_ORDER = (
+    'ORDER BY r.available_at, r.created_at, r.id '
+    'LIMIT 1'
+)
+CANDIDATE_SQL = VERIFIED_SQL + QUEUE_ORDER
+
+
+@dataclass(frozen=True)
+class Claim:
+    attempt_id: UUID
+    run_id: UUID
+    attempt_no: int
+    worker_id: str
+    lease_token: UUID = field(repr=False)
+    started_at: datetime
+    lease_expires_at: datetime
+
+
+class LeaseRenewalDenied(Exception):
+    """The claim is no longer eligible for renewal."""
+
+
+def validate_worker_id(value: str) -> str:
+    if not isinstance(value, str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}', value):
+        raise ValueError('worker ID must be 1-64 ASCII identifier characters')
+    return value
+
+
+def has_queued_candidate(connection_factory=None):
+    """Read-only hint, not a reservation or authorization; closes before build."""
+    with (connection_factory or database.connect)() as conn:
+        present = conn.execute(INITIAL_SQL + QUEUE_ORDER, (POLICY.repository_id, POLICY.ref,
+                                                         POLICY.workflow_version)).fetchone() is not None
+    return present
+
+
+def matches_verified_target(target: tuple[UUID, str], connection_factory=None) -> bool:
+    """Check the identity of a missed target without granting execution rights."""
+    with (connection_factory or database.connect)() as conn:
+        row = conn.execute(
+            f'SELECT 1 FROM runs r WHERE {POLICY_FILTER}{VERIFIED_TARGET_FILTER}',
+            (POLICY.repository_id, POLICY.ref, POLICY.workflow_version, SCHEMA_VERSION, *target),
+        ).fetchone()
+    return row is not None
+
+
+def claim_next(worker_id: str, connection_factory=None, *, target: tuple[UUID, str] | None = None) -> Claim | None:
+    """Claim an initial attempt, or claim the exact verified run including its retries."""
+    validate_worker_id(worker_id)
+    factory = connection_factory or database.connect
+    params = (POLICY.repository_id, POLICY.ref, POLICY.workflow_version)
+    params += (SCHEMA_VERSION,)
+    sql = INITIAL_SQL + f'AND {database.SCHEMA_CHECK}' + QUEUE_ORDER
+    if target is not None:
+        # This path must be able to persist the provenance before we grant a lease.
+        sql = VERIFIED_SQL + VERIFIED_TARGET_FILTER
+        params += target
+    with factory() as conn:
+        run = conn.execute(
+            sql + ' FOR UPDATE OF r SKIP LOCKED', params).fetchone()
+        if run is None:
+            return None
+        if target is not None:
+            # A waiter can observe a newer run state than its statement's attempt snapshot.
+            run = conn.execute(sql, params).fetchone()
+            if run is None:
+                return None
+        number = run['previous_attempt_no'] + 1
+        retry_start_no = run['retry_start_no']
+        row = conn.execute(
+            'INSERT INTO attempts(run_id, attempt_no, worker_id, lease_token, '
+            'started_at, lease_expires_at, retry_kind, retry_start_no, claimable_at, create_tracked) '
+            "VALUES (%s, %s, %s, gen_random_uuid(), statement_timestamp(), "
+            "statement_timestamp() + %s * interval '1 second', %s, %s, %s, true) "
+            'RETURNING id AS attempt_id, run_id, attempt_no, worker_id, '
+            'lease_token, started_at, lease_expires_at',
+            (run['id'], number, worker_id, LEASE_SECONDS, attempt_kind(number, retry_start_no),
+             retry_start_no, run['available_at'])).fetchone()
+        changed = conn.execute(
+            "UPDATE runs SET state='running' WHERE id=%s AND state='queued' "
+            'AND cancel_requested_at IS NULL RETURNING id', (run['id'],)).fetchone()
+        if changed is None:
+            raise database.DatabaseUnavailable()
+        result = Claim(**row)
+    # Success means both changes committed; no execution-time lock is retained.
+    return result
+
+
+def renew_lease(claim: Claim, connection_factory=None) -> datetime:
+    """Return the new DB deadline after commit, or raise on rejection or DB failure."""
+    validate_worker_id(claim.worker_id)
+    factory = connection_factory or database.connect
+    denied = 'lease is not currently renewable'
+    with factory() as conn:
+        # Use the same lock order as finalization and cancellation.
+        run = conn.execute(
+            "SELECT id FROM runs WHERE id=%s AND state='running' "
+            'AND cancel_requested_at IS NULL AND completed_attempt_id IS NULL '
+            'AND repository_id=%s AND ref=%s AND workflow_version=%s FOR UPDATE',
+            (claim.run_id, POLICY.repository_id, POLICY.ref, POLICY.workflow_version),
+        ).fetchone()
+        if run is None:
+            raise LeaseRenewalDenied(denied)
+        attempt = conn.execute(
+            'SELECT id FROM attempts a WHERE run_id=%s AND id=%s AND worker_id=%s '
+            f'AND lease_token=%s AND attempt_no=%s AND {ATTEMPT_KIND_SQL} '
+            "AND state='running' AND finished_at IS NULL FOR UPDATE",
+            (claim.run_id, claim.attempt_id, claim.worker_id, claim.lease_token, claim.attempt_no),
+        ).fetchone()
+        if attempt is None:
+            raise LeaseRenewalDenied(denied)
+        # Sample once after both locks. A snapshot taken before waiting can revive an expired lease.
+        row = conn.execute(
+            'WITH renewal_time AS MATERIALIZED (SELECT clock_timestamp() AS measured_at) '
+            "UPDATE attempts AS a SET lease_expires_at=t.measured_at + %s * interval '1 second' "
+            'FROM renewal_time AS t WHERE a.id=%s AND a.lease_expires_at > t.measured_at '
+            'RETURNING a.lease_expires_at',
+            (LEASE_SECONDS, attempt['id']),
+        ).fetchone()
+        if row is None:
+            raise LeaseRenewalDenied(denied)
+    # A failed or unknown commit must never publish a new deadline to the caller.
+    return row['lease_expires_at']
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--worker-id', required=True, type=validate_worker_id)
+    parser.add_argument('--claim-once', required=True, action='store_true',
+                        help='claim one initial attempt and exit without running a job')
+    args = parser.parse_args()
+    try:
+        claim = claim_next(args.worker_id)
+    except (psycopg.Error, database.DatabaseUnavailable):
+        print('database unavailable; claim outcome may be unknown', file=sys.stderr)
+        return 1
+    output = {'claimed': claim is not None}
+    if claim:
+        # The execution-right token must not be emitted into routine logs.
+        output.update(run_id=str(claim.run_id), attempt_id=str(claim.attempt_id),
+                      attempt_no=claim.attempt_no, lease_expires_at=claim.lease_expires_at.isoformat())
+    print(json.dumps(output))
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

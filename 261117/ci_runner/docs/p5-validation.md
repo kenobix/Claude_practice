@@ -1,0 +1,164 @@
+# P5の比較実験と再現手順
+
+## 1 Workerと2 Workerの比較
+
+専用のLinux開発環境で実行する。Python 3.12と固定依存、Docker Engine、Compose v2、ジョブのcgroup v2制限、CPU統計 `/proc/stat` と `/proc/pressure/cpu` を利用する。同一のDocker daemon上でDBとジョブを動かし、計測時に別の負荷試験を重ねない。[環境の準備](../../README.md#python環境とテスト)
+
+```bash
+# 261117/ci_runner から実行
+mkdir -p artifacts
+.venv/bin/python scripts/compare_workers.py --pilot --output artifacts/p5-pilot.jsonl
+.venv/bin/python scripts/compare_workers.py --output artifacts/p5-comparison.jsonl
+```
+
+出力は既存ファイルを上書きしない。各回の環境・生データをJSON Linesに保存し、全回の終了と専用DBの回収後に `complete` を記録する。
+試験専用のComposeプロジェクトにランダムな名前を付け、DBを `127.0.0.1:55418` に置く。使用中なら起動は失敗し、既存接続先へ切り替えない。
+別の `DATABASE_URL` は使わない。停止時はWorkerをドレインして専用DBを回収する。ハード停止後の確認では、その試験のrun IDまたはComposeプロジェクト名で資源を特定する。
+
+| 項目 | 条件・測り方 |
+|---|---|
+| 負荷 | 固定 `fixture-v1` の成功モード。1/2 Workerを `1, 2, 2, 1, 1, 2` の順で各3回。同じ100個の合成commit SHAを1 transactionで待機キューに入れる |
+| ウォームアップ | 各回の開始前に各自のWorker構成で2件成功させる。測定対象の100件から除外。Docker build cacheは保持する |
+| 実行経路 | GitHub HTTP応答を試験用データに置換。取得物の検証、固定Docker build、claim、Docker制限、DBでの結果・ログ・成果物確定は常駐Workerの通常経路 |
+| キュー待ち p95 | DB上の `started_at - claimable_at`。対象runがキューに今すぐ入れる時刻からclaimまで。取得とbuildの時間も入り得る |
+| 実行 p95 | Workerの単調時計でDockerの起動から終了確認まで。準備、回収とDB commitを含まない |
+| バッチ所要時間 | DB上のキュー投入時刻から、最後の正式resultの終了時刻まで |
+| DB待ち | およそ0.5秒ごとに `pg_stat_activity` を読み、実行中のCI Runner接続のwait eventを数える。接続の発行前や短い待ちを取りこぼし得る |
+| CPU競合 | Workerホストの `/proc/stat` 差分のbusy、iowait、steal、CPU PSIの `some` 増分。ホスト全体の値を使い、CPUを待つタスクが一つでもあった時間を区別する |
+| 合格条件 | 100件に試行各1件、同一SHA・固定digestに結びついた正式成功、ログと結果JSON、計測値を確認。試験対象コンテナ・imageを回収する |
+
+p95は各回の成功サンプルで線形補間する。失敗件数を別に数え、異常終了・計測値の欠落・資源残存があれば比較を停止する。
+短い固定fixtureの結果は、Docker準備・終了処理やDBの競合を含めた当環境の観測値。キャッシュがない初回、ネットワーク経由のGitHub、他のジョブへの適用は別に測る。
+
+### 2026-11-19の実測
+
+AMD Ryzen 7 7735HS、WSL2 Linux 6.6.87.2、8論理CPU・約27.4 GiB RAM、Python 3.12.3、Docker Engine 29.9.2、PostgreSQL 17.12（migration 001〜008）を使用した。
+実行コードは `649dbd4f01abc6a98de071244879841633d4e8e7`。比較スクリプトのSHA-256は `cb4388faa5dcec2b8b298a550d23b8ad6f787bfdc8733bca395f86479921204c`。
+
+- Pythonベースイメージは `python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df`。
+- PostgreSQLイメージは `postgres:17.12-bookworm@sha256:40865bc877a289da75963d97d72b59633f639fc5af7a4e856bfa3714cae5b536`。
+- `fixture-v1` のSHA-256は `9c567875e01f89cc15eb23d1b3d2d40c2c23239cc414ff12a1b1c3902dd3f7ff`。同じ固定Dockerfileを全回で使った。
+
+| 実行順 | Worker | 正式成功 / 失敗 | キュー待ち p95（秒） | 実行 p95（秒） | バッチ所要（秒） | CPU busy / iowait | CPU PSI some（秒） | DB観測回数 / WalSync |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 1 | 100 / 0 | 728.439 | 2.699 | 799.125 | 52.0% / 3.3% | 115.51 | 1,573 / 1 |
+| 2 | 2 | 100 / 0 | 567.699 | 3.005 | 595.757 | 62.3% / 3.9% | 159.23 | 1,178 / 1 |
+| 3 | 2 | 100 / 0 | 641.698 | 3.222 | 686.851 | 67.9% / 3.3% | 192.13 | 1,356 / 3 |
+| 4 | 1 | 100 / 0 | 766.448 | 2.779 | 813.574 | 51.3% / 3.1% | 114.71 | 1,615 / 3 |
+| 5 | 1 | 100 / 0 | 795.113 | 2.744 | 849.695 | 50.6% / 2.4% | 125.23 | 1,685 / 1 |
+| 6 | 2 | 100 / 0 | 806.831 | 3.848 | 852.616 | 66.0% / 3.9% | 231.54 | 1,686 / 6 |
+
+600件のrunは試行各1件で正式成功し、同じSHA・固定digest・image ID・ログ・結果JSONの対応を確認した。
+2 Workerの3回はどちらのWorkerも毎回50件を確定した。測定対象とウォームアップのコンテナ・image、専用DB資源は回収した。
+CSVのサンプル番号は合成SHAでソートした順。各回の100件を個別に再集計でき、image IDにはrun別の由来ラベルが含まれる。[600件の実測サンプル](p5-worker-samples.csv)
+
+![各回100ジョブのp95比較。2 Workerではキュー待ちが3組中2組で短縮し、実行時間は3組すべてで増加した。](p5-worker-comparison.png)
+
+グラフはCSVの `queue_ms` と `execution_ms` を実行順の各100件で集計したp95。線は時系列で隣接する1・2回目、3・4回目、5・6回目を結ぶ。縦軸はそれぞれ秒で、範囲が異なる。
+
+1 Workerと2 Workerの各3回の中央値を比べると、キュー待ちp95は766.448秒から641.698秒（約16%減）、実行p95は2.744秒から3.222秒（約17%増）、バッチ所要は813.574秒から686.851秒（約16%減）だった。最後のペアでは2 Workerが約3秒遅かった。
+2 Workerの全回でCPU busyとCPU待ちの時間が増えた。Docker起動・実行の競合は実行p95の増加と整合するが、ホスト統計では処理段階や他プロセスの影響を分離できない。
+DBの合計9,093回の観測で待ちイベントは `IO/WalSync` 15サンプル、ロック待ちは0サンプルだった。観測間の短い待ちや接続確立はこの回数に含まれない。
+
+## 初回のローカル検証
+
+独立レビュー担当者は、Docker EngineとCompose v2、cgroup v2を利用できるクリーンな専用Linux VMで実行する。既存のvenvやDB設定を持ち込まず、レビュー対象として合意したSHAへcheckoutする。下記は実装レビュー時のSHAを指定した例。
+
+```bash
+git clone --branch feat/ci-runner https://github.com/kenobix/Claude_practice.git
+cd Claude_practice
+review_sha=9531a2ab48055655a5266fe342d88e9957893e53
+git switch --detach "$review_sha"
+test "$(git rev-parse HEAD)" = "$review_sha"
+cd 261117/ci_runner
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements.lock
+.venv/bin/python -m pip install --no-build-isolation --no-deps -e .
+.venv/bin/python -m pip check
+```
+
+GitHubの認証情報や `.env` は不要。ポート `55417` を試験専用に空け、下記を実行する。
+
+```bash
+# 261117/ci_runner から実行
+PYTEST_ADDOPTS='-k "test_api_to_separate_worker_to_persisted_result and fixture_success" -rP' \
+  .venv/bin/python scripts/verify_execution.py
+```
+
+受付APIで保存したrunを別Workerプロセスで取得して固定fixtureをDockerで実行する。APIを起動し直して正式結果とログを照会し、同じ要求から新しいrunが増えないことを検査する。
+
+| 合格条件 | レビュー担当者が確認する証拠 |
+|---|---|
+| 新規環境から同じ版を起動できる | 受入対象SHAとローカルHEADが一致し、固定依存の導入と `pip check` が成功 |
+| 実PostgreSQL・実Dockerで固定fixtureが1件成功し、正式結果を再照会できる | pytestが `1 passed`。新規生成された `artifacts/fixture-worker-latest.json` の `git_head_at_execution` が対象SHA、`pytest_failures` が0、唯一の `cases` が `fixture: success`、`receipt.state: succeeded`、`api_restarted: true` |
+| 正しいDBを使い、再起動後も初期化状態を保持する | `real DB readiness: 200`、`migration persists after restart`、PostgreSQLの版と固定イメージdigestの出力 |
+| 試験資源を回収できる | スクリプトの終了コード0、`cases[0].owned_resources_before` と `cases[0].owned_resources_after` が一致。Composeラベル `com.docker.compose.project=ci-runner-261117-p0-check` のコンテナ・volume・networkが終了後に0件 |
+
+レビュー結果として、SHA、実施日、OS・Python・Docker・Compose・PostgreSQLの版、上の各条件の合否、つまずいた手順をPR #1へ返す。証拠は必要な項目とログの該当行に絞り、認証情報や環境変数の値を添付しない。skipや証拠不足は未完了とする。
+
+計画§5のREADMEによる再現性には次の二つの証拠がある。
+
+- 実装SHA `9531a2a` のクリーンなUbuntu 24.04 VMで、固定依存、新規venv、実PostgreSQLと実Dockerによる固定fixture1件が成功。証拠とcheckoutのSHA、DB再起動後のmigration保持を確認。 [クリーン環境CI](https://github.com/kenobix/Claude_practice/actions/runs/44861993482)
+- 2026-11-21の独立レビューでは、同じ実装SHAをWSLの一時cloneへcheckoutし、Ubuntu 24.04.4、Python 3.12.3、Docker 29.9.2、Compose 5.6.1、PostgreSQL 17.12で固定fixture1件に成功。DB readiness 200、API・DBの再起動後の保持、証拠のSHA、専用資源の回収を確認した。
+
+計画§5が求めるREADMEの再現性は確認済み。人による再現結果は未提出で、Draft PR #1のレビュー履歴は2026-11-21確認時点で0件だった。人による再現結果の提出は、元計画のMVP受入条件には含めない。
+
+## 3分の障害デモ
+
+Dockerの固定イメージが既にある状態で始める。端末AでDBのない管理画面、端末Bで実DB・Dockerを使う故障試験を開く。
+
+```bash
+# 端末A
+env -u DATABASE_URL .venv/bin/python -m uvicorn ci_runner.app:app --host 127.0.0.1 --port 18117
+```
+
+```bash
+# 端末B
+PYTEST_ADDOPTS='-k "test_two_residents_recover_after_sigkill and running" -rP' \
+  .venv/bin/python scripts/verify_execution.py
+```
+
+| 目安 | 操作と確認 |
+|---|---|
+| 0:00–0:30 | 端末Bで試験を開始し、ブラウザーの `http://127.0.0.1:18117/ui/demo` で過去のデモを開く。コミットSHA、失効した試行1、正式結果の試行2を確認する |
+| 0:30–1:30 | 試験は固定GitHub応答を検証し、コンテナのGO直後に1つ目のWorkerを強制停止する。DB時刻の30秒leaseを待ち、DB記録と完全IDの照合を経て残存コンテナを回収する |
+| 1:30–2:30 | 代替Workerがバックオフ後に同じrun・同じSHAを取得する。試験は代替の試行中と正式確定後の両方で旧tokenの結果を拒否し、履歴と正式結果を検査する |
+| 2:30–3:00 | 端末Bで復旧秒数とPASS、readiness、専用DBの回収を確認する。ブラウザーの過去デモと、今回の実測を区別する |
+
+45秒は復旧の仮目標。イメージ取得、ディスク待ち、監視周期で実際の時間は変わる。出力が揃うまで待ち、超過や失敗を記録する。
+2026-11-19の復旧は45.91秒。初回検証と過去デモの表示テストを含む選択回帰3件とDBの起動から回収までは113.51秒だった。
+このデモは固定GitHub応答と試験用のrunを使用する。実push起点の受入は次の手順で確認する。
+
+## 実pushを起点にしたデモ
+
+2026-11-21の実push `91afb731a8184717f86b88c04807207c18390e83`、配送GUID `e269343e-e568-11f1-8f9c-c6f2c8a1d397` を再利用できる。計画§8は成功したpushを起点とするデモを求めており、GitHubが既存イベントを正規の手順で再送すれば、実際のpushに由来する同じ配送とSHAを追跡できる。対象SHAは確認時の `main` 先頭で、固定fixtureは2151 bytes、承認済みSHA-256と一致した。元の配送がRecent deliveriesに残る3日間に試験を調整する。期限後は管理下の許可refへの次の承認済みpushを使う。 [P3の実配送記録](webhook.md#実配送の受入記録)・[GitHubの再送期限](https://docs.github.com/en/webhooks/testing-and-troubleshooting-webhooks/redelivering-webhooks)
+
+2026-11-21の確認時点で旧公開先に接続できない。公開枠の個別承認後、管理者が既存hookの配送先を更新し、受信準備が整った時点で同じGUIDを1回再送する。試験は固定イメージを準備した使い捨て環境で行う。 [専用入口の設定と停止](webhook.md#公開試験用の起動と停止)
+
+| 順序 | 合格条件 |
+|---|---|
+| 1. 受付 | GitHubが10秒以内に202を受信。専用DBで配送GUIDと対象SHAが同じrunを指し、配送とそのSHAのrunが各1件。今回の専用DBが発行したrun IDを以後の照合に使う。 |
+| 2. 停止 | 最初の常駐Workerが実GitHubから受理SHAの固定ソースを取得し、長時間モードの固定fixtureを起動。対象runの開始を観測して、そのWorkerだけをSIGKILLする。 |
+| 3. 復旧 | DB時刻のlease失効とコンテナ回収を記録。次のWorkerが同じrun ID・SHAを別attempt・別tokenで取得する。既存の故障試験と同様に旧tokenでの結果確定が拒否されることを照合する。 |
+| 4. 正式結果 | 成功モードの再試行だけが正式結果となり、commit SHA、source digest、image ID、ログ、結果JSONがそのattemptを指す。管理画面で履歴と正式結果を確認し、復旧時間と試験資源の回収を記録する。 |
+
+記録するのは配送GUID、応答時間、SHA、run・attempt ID、tokenが異なるという照合結果、終了理由、正式ログ、回収結果。tokenの値やWebhookの秘密値・署名・本文は出力しない。既存の故障注入は停止位置と旧結果拒否の確認に使い、実行対象runは配送テーブルから取得する。
+
+### 2026-11-21の公開試験
+
+承認済みの時間枠でQuick Tunnelを起動し、外部HTTPSで `POST /webhooks/github` が未設定時に503、同じパスへのGETと管理APIへのPOSTが404になることを確認した。終了予定は17:39:46 JST。17:36:59の確認では受信側のSecret入力は未確認、DBの配送は0件、Worker試験は未起動だった。17:39:18のGitHub照合でも配送先URLは更新されておらず、対象GUIDの新しい再送は確認されなかった。
+
+17:39:48に公開終了と専用DB・volume・network、loopbackポート、制御ソケットの回収を確認した。今回の公開枠ではGitHubの202、run ID、Workerの停止・復旧、正式結果は未実測。P5の実push起点デモは未完了。
+
+## Pagesの公開
+
+静的デモとCSS、比較図、CSVはブランチに揃っている。GitHub Pagesの公開元は `main` のルート。2026-11-21に公開元にデモのHTMLが存在しないことをGitHub APIで確認した。計画§7は公開を提出条件としているため、マージ前には公開物と参照先を確認し、承認済みの統合後に公開を確認する。 [静的デモ](../../demo/index.html)・[計画§7](../../../261014/plan_ci_runner.md#7-実行境界公開費用)
+
+公開時はルートREADMEの一覧にデモへの導線を追加し、既存の公開元を維持する。Pagesのデプロイが成功したら、デモ画面、CSS、比較図の表示、CSVのダウンロードを公開URLで確認する。 [公開URL](https://kenobix.github.io/Claude_practice/261117/demo/)
+
+## 運用と限界
+
+- 受け付け状況はreadinessとrun履歴を照合する。API応答が途切れた手動投入は同じ業務キーで再送する。外部Webhook配送は管理者がGitHubから再送する。[受付API](intake-api.md)
+- Worker停止・DB断では、新規取得に進めない。停止位置によっては期限監視と回収が必要。Docker create結果が不明なら不在を推測せず、再実行を保留する。[期限と回収](design.md#失効attemptのコンテナ回収)
+- ログと成果物のpayloadに容量上限がある。自動保持期限と複数ホストはMVP対象外。異常時は運用指標から当該runの試行へ戻って調べる。[管理画面と指標](run-operations.md)
+- 管理APIはloopback、Webhookは専用入口、ジョブは固定fixtureだけをDockerの制限下で実行する。管理用のDB、Docker socket、認証情報をジョブと分離する。[脅威モデル](threat-model.md)
