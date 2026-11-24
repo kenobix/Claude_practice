@@ -1,0 +1,592 @@
+{
+  "schema_version": 1,
+  "started_at": "2026-11-16T23:09:23.967635+00:00",
+  "scope": "trusted finite P0 probes only; not an untrusted-code runner",
+  "cases": [
+    {
+      "mode": "boundary",
+      "log_limit_bytes": 1048576,
+      "timeout_seconds": 10,
+      "container_id": "8f1cd57f8e103d4db756d055d460dc4fce760351f4726edfc51b662f387cda51",
+      "reason": "completed",
+      "elapsed_seconds": 1.6072070709997206,
+      "exit_code": 0,
+      "oom_killed": false,
+      "state_pid": 0,
+      "retained_bytes": {
+        "stdout": 520,
+        "stderr": 0
+      },
+      "observed_bytes": {
+        "stdout": 520,
+        "stderr": 0
+      },
+      "retained_sha256": {
+        "stdout": "a551054342c84288cb7b080d1dafb20f53d90c266adab570e8bf2cec1bed2dad",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "settings": {
+        "NanoCpus": 500000000,
+        "Memory": 134217728,
+        "MemorySwap": 134217728,
+        "PidsLimit": 64,
+        "NetworkMode": "none",
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges=true"
+        ],
+        "LogConfig": {
+          "Type": "none",
+          "Config": {}
+        },
+        "Binds": null,
+        "Tmpfs": {
+          "/tmp": "rw,noexec,nosuid,nodev,size=16m,mode=1777"
+        },
+        "Privileged": false,
+        "PidMode": "",
+        "IpcMode": "private",
+        "PortBindings": {},
+        "Devices": [],
+        "DeviceRequests": null
+      },
+      "mounts": [],
+      "user": "65534:65534",
+      "stdout_text": "{\"uid\": 65534, \"gid\": 65534, \"cap_eff\": \"0000000000000000\", \"cap_bnd\": \"0000000000000000\", \"no_new_privs\": \"1\", \"seccomp\": \"2\", \"setuid_errno\": 1, \"raw_socket_errno\": 1, \"readonly_errno\": 30, \"tmp_write\": true, \"tmp_noexec_errno\": 13, \"network_errno\": 101, \"interfaces\": [\"lo\"], \"docker_socket_errno\": 2, \"docker_socket_present\": false, \"host_mount_present\": false, \"host_env_inherited\": false, \"cpu_max\": \"50000 100000\", \"memory_max\": \"134217728\", \"memory_swap_max\": \"0\", \"pids_max\": \"64\", \"python_version\": \"3.12.16\"}\n",
+      "stderr_text": "",
+      "removed": true
+    },
+    {
+      "mode": "cpu",
+      "log_limit_bytes": 1048576,
+      "timeout_seconds": 10,
+      "container_id": "0a225df97435af1e02dcce9a44a0ec237f4d943be9b4741c20d01e781ee3ac68",
+      "reason": "completed",
+      "elapsed_seconds": 4.5420371719956165,
+      "exit_code": 0,
+      "oom_killed": false,
+      "state_pid": 0,
+      "retained_bytes": {
+        "stdout": 144,
+        "stderr": 0
+      },
+      "observed_bytes": {
+        "stdout": 144,
+        "stderr": 0
+      },
+      "retained_sha256": {
+        "stdout": "7af0fd02b1a29d929659ea4b69e9cbc7191165ba3421337522ef7ad995747803",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "settings": {
+        "NanoCpus": 500000000,
+        "Memory": 134217728,
+        "MemorySwap": 134217728,
+        "PidsLimit": 64,
+        "NetworkMode": "none",
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges=true"
+        ],
+        "LogConfig": {
+          "Type": "none",
+          "Config": {}
+        },
+        "Binds": null,
+        "Tmpfs": {
+          "/tmp": "rw,noexec,nosuid,nodev,size=16m,mode=1777"
+        },
+        "Privileged": false,
+        "PidMode": "",
+        "IpcMode": "private",
+        "PortBindings": {},
+        "Devices": [],
+        "DeviceRequests": null
+      },
+      "mounts": [],
+      "user": "65534:65534",
+      "stdout_text": "{\"wall_seconds\": 3.00000352900679, \"cpu_seconds\": 1.490608256, \"cpu_ratio\": 0.49686883418217015, \"nr_throttled\": 30, \"throttled_usec\": 1236026}\n",
+      "stderr_text": "",
+      "removed": true
+    },
+    {
+      "mode": "memory",
+      "log_limit_bytes": 1048576,
+      "timeout_seconds": 10,
+      "container_id": "5334b991094782a788179961368639df34dc7412dfe2a784e7e6cc07e43df3fd",
+      "reason": "completed",
+      "elapsed_seconds": 1.6891949019991443,
+      "exit_code": 137,
+      "oom_killed": true,
+      "state_pid": 0,
+      "retained_bytes": {
+        "stdout": 39,
+        "stderr": 0
+      },
+      "observed_bytes": {
+        "stdout": 39,
+        "stderr": 0
+      },
+      "retained_sha256": {
+        "stdout": "79db95d74ed6cf3277f9458152d15d3feec92527bb144dd9412528f0156fbcbf",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "settings": {
+        "NanoCpus": 500000000,
+        "Memory": 134217728,
+        "MemorySwap": 134217728,
+        "PidsLimit": 64,
+        "NetworkMode": "none",
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges=true"
+        ],
+        "LogConfig": {
+          "Type": "none",
+          "Config": {}
+        },
+        "Binds": null,
+        "Tmpfs": {
+          "/tmp": "rw,noexec,nosuid,nodev,size=16m,mode=1777"
+        },
+        "Privileged": false,
+        "PidMode": "",
+        "IpcMode": "private",
+        "PortBindings": {},
+        "Devices": [],
+        "DeviceRequests": null
+      },
+      "mounts": [],
+      "user": "65534:65534",
+      "stdout_text": "{\"allocation_target_bytes\": 201326592}\n",
+      "stderr_text": "",
+      "removed": true
+    },
+    {
+      "mode": "pids",
+      "log_limit_bytes": 1048576,
+      "timeout_seconds": 10,
+      "container_id": "fa234d49008d1c0512d54580f0abf8d6a70e0fe5814b88b79464aa8eef99fbc9",
+      "reason": "completed",
+      "elapsed_seconds": 1.8539469280003686,
+      "exit_code": 0,
+      "oom_killed": false,
+      "state_pid": 0,
+      "retained_bytes": {
+        "stdout": 74,
+        "stderr": 0
+      },
+      "observed_bytes": {
+        "stdout": 74,
+        "stderr": 0
+      },
+      "retained_sha256": {
+        "stdout": "96c5a87c18341af3edb13860078b6ce75b249d1d9ab2b9abd35b3a712a75be59",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "settings": {
+        "NanoCpus": 500000000,
+        "Memory": 134217728,
+        "MemorySwap": 134217728,
+        "PidsLimit": 64,
+        "NetworkMode": "none",
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges=true"
+        ],
+        "LogConfig": {
+          "Type": "none",
+          "Config": {}
+        },
+        "Binds": null,
+        "Tmpfs": {
+          "/tmp": "rw,noexec,nosuid,nodev,size=16m,mode=1777"
+        },
+        "Privileged": false,
+        "PidMode": "",
+        "IpcMode": "private",
+        "PortBindings": {},
+        "Devices": [],
+        "DeviceRequests": null
+      },
+      "mounts": [],
+      "user": "65534:65534",
+      "stdout_text": "{\"children\": 63, \"fork_errno\": 11, \"pids_current\": 64, \"limit_events\": 1}\n",
+      "stderr_text": "",
+      "removed": true
+    },
+    {
+      "mode": "tmpfs",
+      "log_limit_bytes": 1048576,
+      "timeout_seconds": 10,
+      "container_id": "cdebcb8b6f1ee81a589d4c7cceb69179151ecce58b7436491ee9af216fc7cd62",
+      "reason": "completed",
+      "elapsed_seconds": 1.3503799160025665,
+      "exit_code": 0,
+      "oom_killed": false,
+      "state_pid": 0,
+      "retained_bytes": {
+        "stdout": 47,
+        "stderr": 0
+      },
+      "observed_bytes": {
+        "stdout": 47,
+        "stderr": 0
+      },
+      "retained_sha256": {
+        "stdout": "cd3c9f669734a258b8858b9ec134f279cbf509f1c17d55e48c2fddf2fb43139b",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "settings": {
+        "NanoCpus": 500000000,
+        "Memory": 134217728,
+        "MemorySwap": 134217728,
+        "PidsLimit": 64,
+        "NetworkMode": "none",
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges=true"
+        ],
+        "LogConfig": {
+          "Type": "none",
+          "Config": {}
+        },
+        "Binds": null,
+        "Tmpfs": {
+          "/tmp": "rw,noexec,nosuid,nodev,size=16m,mode=1777"
+        },
+        "Privileged": false,
+        "PidMode": "",
+        "IpcMode": "private",
+        "PortBindings": {},
+        "Devices": [],
+        "DeviceRequests": null
+      },
+      "mounts": [],
+      "user": "65534:65534",
+      "stdout_text": "{\"written_bytes\": 16777216, \"write_errno\": 28}\n",
+      "stderr_text": "",
+      "removed": true
+    },
+    {
+      "mode": "timeout",
+      "log_limit_bytes": 1048576,
+      "timeout_seconds": 10,
+      "container_id": "c62db22d2376ed36024414a7bc4b578e12d50698653fbd45b9426af0d5df4ba8",
+      "reason": "timeout",
+      "elapsed_seconds": 10.379768088001583,
+      "exit_code": 137,
+      "oom_killed": false,
+      "state_pid": 0,
+      "retained_bytes": {
+        "stdout": 0,
+        "stderr": 0
+      },
+      "observed_bytes": {
+        "stdout": 0,
+        "stderr": 0
+      },
+      "retained_sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "settings": {
+        "NanoCpus": 500000000,
+        "Memory": 134217728,
+        "MemorySwap": 134217728,
+        "PidsLimit": 64,
+        "NetworkMode": "none",
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges=true"
+        ],
+        "LogConfig": {
+          "Type": "none",
+          "Config": {}
+        },
+        "Binds": null,
+        "Tmpfs": {
+          "/tmp": "rw,noexec,nosuid,nodev,size=16m,mode=1777"
+        },
+        "Privileged": false,
+        "PidMode": "",
+        "IpcMode": "private",
+        "PortBindings": {},
+        "Devices": [],
+        "DeviceRequests": null
+      },
+      "mounts": [],
+      "user": "65534:65534",
+      "stdout_text": "",
+      "stderr_text": "",
+      "removed": true
+    },
+    {
+      "mode": "logs",
+      "log_limit_bytes": 1048576,
+      "timeout_seconds": 10,
+      "container_id": "36058b81f156fb68ae9b4b6ab9cb7fc2f5562ce85205baacc580273b001b6c88",
+      "reason": "log_limit",
+      "elapsed_seconds": 1.2120312889965135,
+      "exit_code": 137,
+      "oom_killed": false,
+      "state_pid": 0,
+      "retained_bytes": {
+        "stdout": 507904,
+        "stderr": 540672
+      },
+      "observed_bytes": {
+        "stdout": 2097152,
+        "stderr": 2097152
+      },
+      "retained_sha256": {
+        "stdout": "8e584dc347e9f82201cf43318f5c4d3e4141eaafc0044ef36d5b5ae9f7fca317",
+        "stderr": "8945daaa011cd7f7dd905272c4582a24bba606613a13070c0278cb0b6ead36e9"
+      },
+      "settings": {
+        "NanoCpus": 500000000,
+        "Memory": 134217728,
+        "MemorySwap": 134217728,
+        "PidsLimit": 64,
+        "NetworkMode": "none",
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges=true"
+        ],
+        "LogConfig": {
+          "Type": "none",
+          "Config": {}
+        },
+        "Binds": null,
+        "Tmpfs": {
+          "/tmp": "rw,noexec,nosuid,nodev,size=16m,mode=1777"
+        },
+        "Privileged": false,
+        "PidMode": "",
+        "IpcMode": "private",
+        "PortBindings": {},
+        "Devices": [],
+        "DeviceRequests": null
+      },
+      "mounts": [],
+      "user": "65534:65534",
+      "removed": true
+    },
+    {
+      "mode": "success",
+      "log_limit_bytes": 1048576,
+      "timeout_seconds": 10,
+      "container_id": "18f16827ca4e92780b9c617655e7501468480b5a7cd2d4e0e3bbffd8c5c6e7cf",
+      "reason": "completed",
+      "elapsed_seconds": 1.2617319229975692,
+      "exit_code": 0,
+      "oom_killed": false,
+      "state_pid": 0,
+      "retained_bytes": {
+        "stdout": 13,
+        "stderr": 0
+      },
+      "observed_bytes": {
+        "stdout": 13,
+        "stderr": 0
+      },
+      "retained_sha256": {
+        "stdout": "55f66c2c5aeb275ff5b1ae26b321d5c0b8ceda8c034b19c2643e046d024919f3",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "settings": {
+        "NanoCpus": 500000000,
+        "Memory": 134217728,
+        "MemorySwap": 134217728,
+        "PidsLimit": 64,
+        "NetworkMode": "none",
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges=true"
+        ],
+        "LogConfig": {
+          "Type": "none",
+          "Config": {}
+        },
+        "Binds": null,
+        "Tmpfs": {
+          "/tmp": "rw,noexec,nosuid,nodev,size=16m,mode=1777"
+        },
+        "Privileged": false,
+        "PidMode": "",
+        "IpcMode": "private",
+        "PortBindings": {},
+        "Devices": [],
+        "DeviceRequests": null
+      },
+      "mounts": [],
+      "user": "65534:65534",
+      "stdout_text": "{\"ok\": true}\n",
+      "stderr_text": "",
+      "removed": true
+    },
+    {
+      "mode": "failure",
+      "log_limit_bytes": 1048576,
+      "timeout_seconds": 10,
+      "container_id": "1cf76f894c747b7c5183558343e33dda9f3eb88a0f0d47335d3fece994b82980",
+      "reason": "completed",
+      "elapsed_seconds": 1.1234881410055095,
+      "exit_code": 1,
+      "oom_killed": false,
+      "state_pid": 0,
+      "retained_bytes": {
+        "stdout": 0,
+        "stderr": 14
+      },
+      "observed_bytes": {
+        "stdout": 0,
+        "stderr": 14
+      },
+      "retained_sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "0a9178aab97b77d315d50473ab55162519e5817f19b801444f459ec3fb1555e6"
+      },
+      "settings": {
+        "NanoCpus": 500000000,
+        "Memory": 134217728,
+        "MemorySwap": 134217728,
+        "PidsLimit": 64,
+        "NetworkMode": "none",
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges=true"
+        ],
+        "LogConfig": {
+          "Type": "none",
+          "Config": {}
+        },
+        "Binds": null,
+        "Tmpfs": {
+          "/tmp": "rw,noexec,nosuid,nodev,size=16m,mode=1777"
+        },
+        "Privileged": false,
+        "PidMode": "",
+        "IpcMode": "private",
+        "PortBindings": {},
+        "Devices": [],
+        "DeviceRequests": null
+      },
+      "mounts": [],
+      "user": "65534:65534",
+      "stdout_text": "",
+      "stderr_text": "fixed failure\n",
+      "removed": true
+    },
+    {
+      "mode": "preflight_rejection",
+      "log_limit_bytes": 1048576,
+      "timeout_seconds": 10,
+      "container_id": "dd347f5cc9c9d45c675ab94037cfee2d59d1b87ae67da92b2837aedb1f5d34bc",
+      "reason": "completed",
+      "elapsed_seconds": 1.2185342939992552,
+      "exit_code": 1,
+      "oom_killed": false,
+      "state_pid": 0,
+      "retained_bytes": {
+        "stdout": 0,
+        "stderr": 33
+      },
+      "observed_bytes": {
+        "stdout": 0,
+        "stderr": 33
+      },
+      "retained_sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "27ad2235b12ddf57b0236f5856073e4ac689e06ab5d803661dbca7fa16877607"
+      },
+      "settings": {
+        "NanoCpus": 500000000,
+        "Memory": 67108864,
+        "MemorySwap": 67108864,
+        "PidsLimit": 64,
+        "NetworkMode": "none",
+        "ReadonlyRootfs": true,
+        "CapDrop": [
+          "ALL"
+        ],
+        "SecurityOpt": [
+          "no-new-privileges=true"
+        ],
+        "LogConfig": {
+          "Type": "none",
+          "Config": {}
+        },
+        "Binds": null,
+        "Tmpfs": {
+          "/tmp": "rw,noexec,nosuid,nodev,size=16m,mode=1777"
+        },
+        "Privileged": false,
+        "PidMode": "",
+        "IpcMode": "private",
+        "PortBindings": {},
+        "Devices": [],
+        "DeviceRequests": null
+      },
+      "mounts": [],
+      "user": "65534:65534",
+      "stdout_text": "",
+      "stderr_text": "P0 preflight refused: memory.max\n",
+      "removed": true
+    }
+  ],
+  "session": "50bc7a97c18b4917ad31ee791a879dca",
+  "engine": {
+    "ServerVersion": "29.9.2",
+    "CgroupVersion": "2",
+    "CgroupDriver": "cgroupfs",
+    "OperatingSystem": "Docker Desktop",
+    "Architecture": "x86_64",
+    "SecurityOptions": [
+      "name=seccomp,profile=builtin",
+      "name=cgroupns"
+    ],
+    "KernelVersion": "6.6.87.2-microsoft-standard-WSL2"
+  },
+  "source_sha256": {
+    "fixtures/isolation/.dockerignore": "ce9c9ccded886b986e387a409aeedf12ac33a352bfe8354866995dcac7c3350f",
+    "fixtures/isolation/Dockerfile": "c9b11f831ee7617b492933c33efb862017fbc5bc191e5c885b3654b2b5ddcbf8",
+    "fixtures/isolation/probe.py": "b70d6a81b3e9b94b112b37b744bc64f88a20007f07371caae46a07455e79685c",
+    "fixtures/isolation/write-canary": "6b0ba8f015aeb5d3de004d54ec7041dd33298a4a10fe32f92c09e7943b8acc73",
+    "scripts/verify_isolation.py": "7d22d5288417e68db9d3b9ab333f8e612873f016fc136d52f031b94041456421",
+    "tests/isolation_support.py": "918fcf5c3ae9ae563e207fc4904d545db528bbfea6dc56bb2463230768c90461",
+    "tests/test_isolation.py": "018fbd4e261dbf474694729aa2ffe909b97d1ec66ab8b6625647a45fdcaf303e"
+  },
+  "image_id": "sha256:037c44a08b4ee0167d3d37fd65e426585cd162f9adf5757349a9d55276e9d5b1",
+  "git_head_at_execution": "a04d92aecff112f47fcf3792b61cd1379643720a",
+  "remaining_containers_before_final_cleanup": [],
+  "pytest_failures_at_teardown": 0,
+  "finished_at": "2026-11-16T23:09:57.385249+00:00"
+}

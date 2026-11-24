@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'">
+  <title>CI Runnerの障害復旧デモ</title>
+  <link rel="stylesheet" href="demo.css">
+</head>
+<body>
+  <main>
+    <header class="intro">
+      <p class="context">表示専用のデモ</p>
+      <h1>CIジョブは<br>Worker停止からどう復旧するか</h1>
+      <p>実行中にWorkerが停止した例を、受付から正式結果まで追います。各段階を開くと、実行権と結果がどう変わったかを確認できます。</p>
+      <nav aria-label="ページ内の移動">
+        <a href="#recovery">障害復旧の流れ</a>
+        <a href="#comparison">1／2 Workerの実測</a>
+      </nav>
+    </header>
+
+    <section id="recovery" aria-labelledby="recovery-title">
+      <div class="section-heading">
+        <h2 id="recovery-title">障害復旧の流れ</h2>
+        <p>過去の障害試験をもとにした再現データ</p>
+      </div>
+      <div class="incident">
+        <ol class="timeline">
+          <li>
+            <details open>
+              <summary>pushイベントを受け付ける</summary>
+              <p>許可されたpushを受け付け、対象コミットの固定fixtureを指す実行を保存します。Workerが実行権を取得し、試行1を開始します。</p>
+            </details>
+          </li>
+          <li>
+            <details>
+              <summary>Worker停止後に試行1が失効する</summary>
+              <p>実行権の更新が止まり、監視プロセスがDB時刻で期限切れを確定します。同じDockerデーモンで試行1のコンテナを照合し、回収後に不在を記録します。</p>
+            </details>
+          </li>
+          <li>
+            <details>
+              <summary>別のWorkerが試行2を開始する</summary>
+              <p>初回の再試行は5秒の待機後に取得できます。実行IDとコミットは同じまま、新しい試行に新しい実行権を発行します。試行1から遅れて届いた完了報告は、現在の実行権と一致しないため拒否します。</p>
+            </details>
+          </li>
+          <li>
+            <details>
+              <summary>試行2のチェック失敗を正式結果にする</summary>
+              <p>試行2は終了コード1を記録します。Worker停止からの復旧と、チェックの合否はそれぞれ確認できます。正式結果には試行2が残り、試行1の失効も履歴に残ります。</p>
+            </details>
+          </li>
+        </ol>
+
+        <aside class="receipt" aria-labelledby="receipt-title">
+          <h3 id="receipt-title">再現データの最終状態</h3>
+          <dl>
+            <div><dt>実行ID</dt><dd><code>demo-run-01</code></dd></div>
+            <div><dt>コミット</dt><dd><code>demo-commit-01</code></dd></div>
+            <div><dt>試行1</dt><dd>基盤障害（実行権の失効）</dd></div>
+            <div><dt>試行2</dt><dd>チェック失敗（終了コード1）</dd></div>
+            <div class="official"><dt>正式結果</dt><dd>試行2のチェック失敗</dd></div>
+          </dl>
+        </aside>
+      </div>
+    </section>
+
+    <section id="comparison" aria-labelledby="comparison-title">
+      <div class="section-heading">
+        <h2 id="comparison-title">1／2 Workerの比較実測</h2>
+        <p>同じホストと固定fixtureで100ジョブを各3回。600件すべて正式成功。</p>
+      </div>
+      <table>
+        <caption>各3回の中央値（秒）</caption>
+        <thead><tr><th scope="col">指標</th><th scope="col">1 Worker</th><th scope="col">2 Worker</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">キュー待ち p95</th><td>766.448</td><td>641.698</td></tr>
+          <tr><th scope="row">実行 p95</th><td>2.744</td><td>3.222</td></tr>
+          <tr><th scope="row">バッチ所要</th><td>813.574</td><td>686.851</td></tr>
+        </tbody>
+      </table>
+      <figure>
+        <img src="../ci_runner/docs/p5-worker-comparison.png" width="1512" height="810"
+             alt="2 Workerではキュー待ちp95が3組中2組で短くなり、実行p95は3組すべてで長くなった。">
+        <figcaption>線は測定順で隣り合う回を結びます。2 Workerの全回でCPU待ち時間が増えました。DBの0.5秒間隔の観測では、WAL同期待ちを15サンプル確認しました。</figcaption>
+      </figure>
+      <p>観測はこのホストと短い固定fixtureでの結果です。異なるホストやジョブでも同じ改善幅が出るかは未計測です。</p>
+      <ul class="sources">
+        <li><a href="../ci_runner/docs/p5-worker-samples.csv">600件の測定データ（CSV）</a></li>
+        <li><a href="https://github.com/kenobix/Claude_practice/blob/ceea5328f509180aba141dd34dab5675ca0ba612/261117/ci_runner/docs/p5-validation.md">測定条件と故障試験の再現手順</a></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
