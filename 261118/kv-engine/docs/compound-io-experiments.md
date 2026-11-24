@@ -5,7 +5,7 @@
 
 ## 故障モデルとケース
 
-実ファイルのFDを既存diskOpsで包む。まず4操作の成功sequenceを受け取る:
+実ファイルのFDを既存のdiskOpsで包む。まず次の4操作を成功させ、sequenceを受け取る。
 PUT target=acknowledged、PUT keep=00 ff 0a、PUT empty=空値、DELETE missing。
 この正常prefixは197バイト、sequence 4、live_keys 3。
 最後にtargetをPUT（ff 00 01 0a）またはDELETEし、更新失敗と再Open失敗を順番に注入する。
@@ -35,7 +35,7 @@ ENOSPC/EIOは注入値であり、実ディスクの空き容量を枯渇させ�
   診断失敗はbufferへJSONを記録後にEIOを返すwriterで再現し、Truncateを呼ばないことを確認する。
 - 復旧Sync失敗は先に実Truncateが成功しているため、ファイルは197バイトになるが、Openは失敗する。
   診断のold_size/last_valid_offset、Truncate/Sync/Writeの実行有無も検査する。
-  Sync失敗を「元の末尾が必ず残る」と扱わない。
+  Syncが失敗しても、元の末尾が必ず残るとは扱わない。
 - Close後・Open失敗後にログFDが実際に閉じられ、Closeが1回であることを確認する。
   flockを再取得し、LOCKのinodeが変わらないことも確認する。
 - 注入を除いた再試行は同じファイルを使う。部分ログなら正常境界だけを復旧してsequence 4を再生する。
@@ -56,7 +56,7 @@ make check
 
 全DBはt.TempDir内の人工データ。実デバイスのEIO、永続的な故障、任意の多重障害を網羅していない。
 プロセスは通常Closeで終了し、この単位で新しいSIGKILLは行わない。既存の停止試験は全体テストで再実行する。
-Sync失敗後のバイト残存・Truncate後の状態はOSキャッシュが生存する条件の観測で、電源断耐性の証明ではない。
+Sync失敗後に残ったバイトやTruncate後の状態は、OSのキャッシュが残っている条件で観測した。電源断耐性の証明ではない。
 失敗後の再Openが通ることだけを、失敗したSyncの電源断時保証や装置flush成功と扱わない。
 CloseとPut/Get/Delete/Inspectの同時競合は[後続単位](close-concurrency.md)で検証済み。
 次の優先単位は製品CLIのClose/stdout応答周辺の停止・出力失敗試験。

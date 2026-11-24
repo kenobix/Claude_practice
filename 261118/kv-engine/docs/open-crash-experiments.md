@@ -14,7 +14,7 @@
 
 ## 初回作成: 9点の観測
 
-事前作成した空のt.TempDirを使用。停止時に成功応答済み操作は0件。
+事前にt.TempDirで作った空のディレクトリを使う。停止時点で成功応答済みの操作は0件。
 
 | 停止点 | 停止位置 | kill後のdata.log | 再Open結果 |
 |---|---|---:|---|
@@ -28,9 +28,9 @@
 | init_before_parent_sync | 親ディレクトリSync直前 | 16バイト | 正常な空DB |
 | init_after_parent_sync | 親ディレクトリSync成功直後 | 16バイト | 正常な空DB |
 
-短いheaderはinspectと2回のOpenで拒否・不変を確認し、LOCKの再取得も確認する。
-完全headerは形式v1と一致、record_count/latest_sequence/live_keys=0を確認し、
-新しいPUTがsequence=1で成功し、Close/Open後にもバイナリ値00 ffを読み出せることを検証する。
+ヘッダーが短い場合は、inspectと2回のOpenでログが拒否され、内容が変わらないことを確認する。LOCKを再取得できることも確認する。
+ヘッダーが完全な場合は、形式v1に一致し、record_count、latest_sequence、live_keysがいずれも0であることを確認する。
+新しいPUTがsequence=1で成功し、Closeしてから再びOpenした後にもバイナリ値00 ffを読み出せることを検証する。
 短い既存ファイルを自動削除・再初期化する救済処理は追加しない。
 
 ## 復旧中: 4点の観測

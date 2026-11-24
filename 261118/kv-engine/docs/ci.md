@@ -1,8 +1,8 @@
 # KVエンジン専用CI
 
-[workflow](../../../.github/workflows/kv-engine.yml)は、担当ブランチとmainへのpush、main向けpull_requestで、
-`261118/**`またはworkflow自身が変更された場合に実行する。Draft PRも対象。
-他プロジェクトだけの変更では起動しない。pushとPRの両イベントがある場合は各々実行する。
+[workflow](../../../.github/workflows/kv-engine.yml)は、担当ブランチとmainへのpush、およびmain向けのpull_requestで実行する。
+対象は `261118/**` またはワークフロー自体に変更がある場合で、Draft PRも含む。
+他プロジェクトだけの変更では起動しない。pushとPRの両イベントが発生した場合は、それぞれ実行する。
 この設定はmainへのpushやマージを許可するものではない。
 
 ## 構成と安全条件
@@ -20,7 +20,7 @@
 
 ## 実行内容と結果の確認
 
-moduleの作業ディレクトリは`261118/kv-engine`。
+作業ディレクトリはモジュールのある `261118/kv-engine` とする。
 
 ```sh
 sh scripts/setup-go.sh

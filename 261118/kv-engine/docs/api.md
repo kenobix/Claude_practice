@@ -4,9 +4,9 @@
 
 Linuxで `Open(dir)` / `OpenWithOptions(dir, Options)`、DB.Put/Get/Delete/Inspect/Close、
 読み取り専用 `engine.Inspect(dir)` を実装した。Report型は `recovery.Report`。
-Openはdata.logの作成を許可。OptionsのCreate=falseなら存在するログだけを開く。
-Options.Diagnosticsは末尾切り戻し前のJSON診断の出力先（nilならstderr）。診断失敗時は切り戻さない。
-LFを含む全イベントのwrite成功を要求し、短いwrite/nilはio.ErrShortWrite、全長write+errorも失敗とする。
+Openはdata.logを作成できる。OptionsのCreate=falseなら既存のログだけを開く。
+Options.Diagnosticsで、末尾を切り詰める前に出すJSON診断の出力先を指定する（nilならstderr）。診断出力に失敗した場合は切り詰めない。
+LFを含むイベントの全バイトを書き込めたことを確認する。書き込みが短くerrorがnilならio.ErrShortWriteとし、全バイトを書き込めた場合もerrorが返れば失敗とする。
 この場合OpenはDB=nilで失敗し、ログを変更しない。[回帰試験](recovery-diagnostics.md)を参照。
 新規DBはLOCK以外の項目がない既存ディレクトリにのみ作る。data.log/LOCKはregular fileを要求し、symlinkを拒否する。
 すべてのOpenとengine.InspectがLinuxの排他flockを取り、競合を即時拒否する。
@@ -18,7 +18,7 @@ CloseはログFDを閉じてからLOCKのFDを閉じる。Close失敗は返し�
 キー・引数・値上限を検証してからDBを開く。getも通常Openなので不完全末尾の復旧を行い得る。
 inspectだけは切り戻さず、異常でも走査レポートをstdoutへ出す（Open/lock自体の失敗ではレポートなし）。
 statusに `io_error` を追加した。原因I/Oエラーはexit 6。構造・CRC破損、未知version、不完全末尾のinspectはexit 5。
-CLIは操作後Closeが成功した後にstdoutへ返す。Sync後・Close失敗・stdout失敗の操作がログに残る可能性はある。
+CLIは操作を終え、Closeが成功してから標準出力に応答を書く。同期済みの操作は、Closeや標準出力への書き込みが失敗してもログに残ることがある。
 復旧事前イベント名は `tail_truncate_planned`。処置前なので復旧完了と誤認しない名前にした。
 
 ## 段階1の実装と段階0からの差分
@@ -55,7 +55,7 @@ Base64はGo標準のpadded base64、Strictモード。復号後1 MiB上限も確
 Unicode正規化をしない。バイト列が同じ場合のみ同一キー（例: 合成文字と結合文字は区別）。
 値は任意の0〜1,048,576バイト。不在と空値を区別し、外部依存を使わない。
 
-永続API（`internal/engine`、外部向け公開パッケージ化は後段階）:
+永続APIは `internal/engine` に置く。外部向けの公開パッケージ化は後の段階で扱う。
 
 ```go
 Open(dir string) (*DB, error)
@@ -105,7 +105,7 @@ exit: 0=成功、2=引数/入力、3=不在、4=ロック競合、5=破損/未�
 GETでキー不存在とログのClose失敗が重なった場合は `io`・exit 6とし、stderrのmessageに両方の原因を含める。
 成功JSONの出力失敗はexit 6となり、同期済み更新は残り得る。
 短いwrite（0バイト/nilを含む）も出力失敗とし、不完全なJSONを成功扱いしない。
-呼出し元は完全な応答とexit 0を確認する。応答途中や異常終了時は未成功更新の不在を仮定しない。
+呼び出し元は完全な応答とexit 0を確認する。応答が途中で終わった場合や異常終了した場合は、成功を確認できなかった更新が残っていないと仮定しない。
 [Close・stdout境界の実験](cli-response-experiments.md)で停止時の許容結果を示す。
 
 inspectは有効なヘッダーとレコードを同じ規則で検証する。

@@ -16,8 +16,8 @@ make check
 
 [公式配布](https://go.dev/dl/)のGo 1.27.4 linux/amd64をダウンロードし、次のSHA-256と照合する。
 `7226736c2339719cda28fbf3a54d71aa63bcefe376e98cef00034268dab24840`
-一致したアーカイブだけを新規stagingディレクトリへ展開し、`261118/.tools/go1.27.4/go`へ配置。
-その既存ディレクトリを上書きしない。導入済みならバージョンを検証して終了する。
+SHA-256が一致したアーカイブだけを新しい作業用ディレクトリに展開し、`261118/.tools/go1.27.4/go`へ配置する。
+配置先に導入済みのGoがあれば上書きせず、バージョンを検証して終了する。
 Go本体・キャッシュ・GOPATHは `261118/.tools/` 以下、Git対象外。
 前回の `/tmp` 導入は清掃で消えるため、段階1ではこのworktree内のユーザー所有領域へ切り替えた。
 公式サイトへ接続できない環境では取得済みアーカイブを引数に渡せる（同じSHA-256で再照合）。
@@ -45,7 +45,7 @@ make check
 Makeなしなら `./scripts/go-env.sh go vet ./...`、`go test ./...`、`go build -o bin/kv ./cmd/kv` を
 それぞれラッパー経由で実行する。整形確認は `./scripts/go-env.sh gofmt -l cmd internal tests`。
 `make check` はfmt検査、vet、実テスト、CLI buildを実行する。テストの内容は[検証計画](testing.md)を参照。
-生成CLIは `bin/kv` と計測用 `bin/kvbench`、Git対象外。[計測手順](measurement.md)を参照。fuzzのキャッシュも.tools内。将来失敗したfuzzの再現入力は精査してfixtureとして保存する。
+生成するCLIは `bin/kv` と計測用の `bin/kvbench` で、どちらもGitの管理対象外とする。[計測手順](measurement.md)を参照。fuzzのキャッシュも.tools内に置く。今後fuzzで失敗が見つかった場合は、再現入力を精査してfixtureとして保存する。
 テストファイルやDBを作る場合は `t.TempDir()`、手動試験のDBは `mktemp -d` 以下。
 
 ## VS Code / Codex

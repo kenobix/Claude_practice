@@ -27,7 +27,7 @@
 
 ## Goの取得と検証環境
 
-OS全体にはインストールしていない。通常のシェルPATHや起動設定も変更なし。
+OS全体にはインストールしておらず、通常のシェルのPATHや起動設定も変更していない。
 公式 `https://go.dev/dl/?mode=json` のメタデータでGo 1.27.4 linux/amd64を選び、
 公式アーカイブのSHA-256を照合して一時領域へ展開した。
 
@@ -43,7 +43,7 @@ OS全体にはインストールしていない。通常のシェルPATHや起�
 ## 確定した設計
 
 - UTF-8キー1〜256バイト、NUL拒否、正規化なし。値0〜1 MiB。不在と空値を区別。
-- putは上書き、delete不在もtombstone、getは生バイト、inspectは変更しない診断。
+- putは値を上書きできる。存在しないキーのdeleteもtombstoneを記録する。getは値の生バイトを返し、inspectはログを変更せず診断する。
 - ログ256 MiB上限、16バイトfile header、32バイトrecord header、little-endian、CRC-32C。
 - sequenceは1から連続増加、最大値到達後は拒否。長さを信用する前にheader CRCを検証。
 - write-all → file Sync → 索引更新 → 成功応答。初回ファイル/DBディレクトリ/親のSync条件を定義。
@@ -165,14 +165,14 @@ VS Code GUI・Codex拡張の有効化状態はCLIから未確認。
 
 worktreeは~/work/Claude_practice-261118、branchはfeat/database-engine、HEADはb669c7a。
 開始時の未コミット変更なし。ルートAGENTS、計画書、形式・耐久性仕様、既存コードとfixture/testを確認。
-今回も変更範囲は261118/のみ。形式v1とfixtureのhex原本は変更していない。
-Goは既存のworktree内Go 1.27.4 linux/amd64を使用し、OS全体のインストールなし。
+今回も変更範囲は261118/に限った。形式v1とfixtureのhex原本は変更していない。
+worktreeに導入済みのGo 1.27.4 linux/amd64を使用し、OS全体にはインストールしていない。
 
 ### 実装した内容
 
 - Linux flockによるLOCKの非待機排他取得。すべてのOpen/inspectが協調し、競合はErrLocked。
   LOCKはunlinkせず、ログFDを閉じてからロックFDを閉じる。
-- 新規data.logはO_EXCLで作成、ヘッダーwrite-allとFile.Sync、DBディレクトリと親のSync。
+- 新規data.logはO_EXCLで作成し、ヘッダーの全バイトを書き込んでFile.Syncを行う。その後、DBディレクトリとその親をSyncする。
   既存ログは再初期化しない。新規作成はLOCK以外がない事前作成ディレクトリに限定。
   LOCK/data.logのsymlink・非regular fileは拒否する。
 - 同期追記は検証済み末尾へのWriteAt。短いwriteを補完し、0バイトwrite、一部成功+error、Sync失敗を検出。
@@ -190,10 +190,10 @@ Goは既存のworktree内Go 1.27.4 linux/amd64を使用し、OS全体のイン�
 ### 設計との差分
 
 限定的な末尾復旧とI/O注入テストは今回の依頼により段階3から前倒しした。
-処置前の診断名はtail_truncate_plannedとした。処置の成功を事前に示さないための変更。
+処置が成功したと受け取られないよう、処置前の診断名をtail_truncate_plannedとした。
 失敗したTruncate/SyncはOpen失敗とし、DBを公開しない。
-単発CLIは操作とCloseが成功してからstdoutへ返す。Close/stdout失敗でも同期済み更新は残り得る。
-DB.Inspectは現在の検証済み状態の集計、engine.Inspect/CLI inspectはログの独立した再走査。
+単発CLIは操作とCloseが成功してから標準出力に応答を書く。Closeや応答の出力が失敗した場合も、同期済みの更新は残ることがある。
+DB.Inspectは現在の検証済み状態を集計する。engine.InspectとCLI inspectはその集計を使わず、ログを再走査する。
 詳細はdocs/api.mdとdocs/durability.mdへ反映。
 
 ### 検証結果
@@ -676,7 +676,7 @@ commit時点で今回のリモートCIは未実行。実結果・SHAと段階3�
 
 ### 実装と測定条件
 
-- cmd/kvbenchにLinux計測CLIを追加。既存の作業親の中に毎回一意な専用DBを作り、自分のDBだけ清掃する。
+- cmd/kvbenchにLinux向けの計測CLIを追加した。指定された既存の親ディレクトリに毎回別の計測専用DBを作り、自分で作ったDBだけを削除する。
   利用者の既存DBを引数で受け取らず、既存ファイルを変更しない。
 - キー16 B、値128 B、1千/1万/10万キー。投入時も上書き時も製品engine.Putの毎回File.Syncを使う。
   レコード長180 B、100回上書きを含む最大ログは18,018,016 Bで256 MiB内。全計画を事前容量検査する。
