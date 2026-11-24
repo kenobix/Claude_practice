@@ -1,8 +1,11 @@
 # PCAP Analyzer MVP受入記録
 
-2026-11-18（日本時間）。対象: tool 0.3.0 / JSON Schema 0.4.0。
-[元計画](../../../261014/plan_pcap_analyzer.md)の受入証拠と、Draft PR #3の独立レビュー後の修正を記録する。
-初回レビューは承認不可。IEEE 802.3、レコード長矛盾、DNSイベントのメモリ増大への対策を実装・検証し、修正後の独立レビューに引き継ぐ。
+最終整理は2026-11-24（日本時間）。対象はツール0.3.0 / JSON Schema 0.4.0。
+[元計画](../../../261014/plan_pcap_analyzer.md)のPhase 0〜4はすべて合格し、MVPは完成した。
+独立再レビュー対象は `f0c6d4cb344ba73cd2a315be6645e449cdf41ce2`。
+初回の3件（IEEE 802.3での例外、レコード長矛盾の受理、孤立DNS応答イベントのメモリ増大）は解消し、Critical / High / Medium / Lowは各0件。
+[PR #3](https://github.com/kenobix/Claude_practice/pull/3)は `1ad2c778d086ba0ec757c2c217f905fa447f3605` としてmainにマージ済み。
+マージコミットと整理時点のmainの `261119/` および専用CI設定は、独立再レビュー対象と一致した。
 
 | Phase | 計画の受入条件 | 検証と証拠 |
 |---|---|---|
@@ -10,11 +13,10 @@
 | 1 | 正常・空・未対応・破損で規定どおり終了し、読めた件数と集計が一致する | [Phase 1試験](../tests/test_phase1.py)でIEEE 802.3混在入力の継続・件数・根拠番号と、caplenがwirelenを超える地点で終了2・正常prefix保持を確認。空ファイル、pcapng、部分レコード、整数ns、上限も回帰検証 |
 | 2 | 双方向フローとDNS照合を行い、重複ID・逆順・記録終端・フラグメントを成功応答と混同しない | [Phase 2の受入記録](phase2_acceptance.md)と[CLI受入テスト](../tests/test_phase2_acceptance.py)。同一IDの別ポート/名前/type/classを分離、重複は曖昧、孤立・期限外・終端は別状態。時刻逆行で全時間結果を破棄。フラグメント・捕捉不足・不正DNSを照合から除外。方向別/未帰属の分割、TCP flags、根拠、Schema、キー上限と観測数上限も確認 |
 | 3 | TSharkと同じfixtureを比較し、対応範囲の違いを説明して未説明差を残さない | [14保存fixtureの比較](tshark_comparison.md)と[DNS比較4ケース](tshark_dns_comparison.md)をTShark 4.2.2実体で再実行。malformed_lengthは解析器が拒否し、TSharkが1件を抽出する差を期待値に明記。DNSの抽出結果は保存版と同一。未説明差分0 |
-| 4 | 実通信の捕捉なしに、成功例と解析限界を新規環境から再現できる | 修正前に[READMEの新規環境手順](../../README.md#新規環境からの受入再現)でクリーン導入と実CLIを検証。修正後は固定依存環境でpip check、14 fixtureの再生成と照合、全465テスト（22.13秒）に成功 |
-| 4 | 固定規模の処理時間・最大メモリ・解析状態割合を記録し、3分動画を添える | [計測条件と結果](benchmark.md)：500/5,000/15,000件各3回。処理時間と最大RSS、40/20/20/20%の分類を記録。[3分MP4](demo.mp4)・[字幕原稿](demo.ass)を収録。全4,320フレームをデコードし、9場面を目視確認 |
+| 4 | 実通信の捕捉なしに、成功例と解析限界を新規環境から再現できる | 独立再レビューで[READMEの新規環境手順](../../README.md#新規環境からの受入再現)を再現。固定依存での導入、pip check、fixture 14件のバイト一致、成功例と解析限界のCLI出力、全465テストを確認 |
+| 4 | 固定規模の処理時間・最大メモリ・解析状態割合を記録し、3分動画を添える | [計測条件と結果](benchmark.md)：500/5,000/15,000件各3回。処理時間と最大RSS、40/20/20/20%の分類を記録。独立再レビューの9試行で出力ハッシュが保存記録と一致。[3分MP4](demo.mp4)の全4,320フレームをデコードし、9場面をCLI出力と比較記録に照合 |
 
-通常GitHub Actionsが実施するのは固定依存での回帰テストと小規模ハーネス試験。実TShark、性能の全9試行、動画の生成・目視確認はローカル証拠であり、CIによる実施ではない。
-孤立DNS応答の負荷と上限停止は[計測記録](dns_observation_limit.md)に記載。実通信、別OS・Python版、最大長DNS名、多数フロー、入力全体の上限付近の性能は未検証。対応範囲と観測限界は[仕様](spec.md)を参照。
+レビュー対象SHAのGitHub Actionsはpush・PRともに成功した。CIでは固定依存での回帰テストと小規模ハーネス試験を実行し、TShark実体比較、性能9試行、動画の照合はローカルで実施した。 [push CI](https://github.com/kenobix/Claude_practice/actions/runs/44198603807)・[PR CI](https://github.com/kenobix/Claude_practice/actions/runs/44198613928)
 
 ## 3分動画
 
@@ -39,10 +41,10 @@ ffprobe -v error -count_frames -show_entries stream=codec_name,nb_read_frames:fo
 ffmpeg -v error -xerror -i /tmp/pcap-analyzer-demo.mp4 -f null -
 ```
 
-## 独立レビューの引き継ぎ
+## 独立再レビューの追加検証
 
-1. Draft PR #3のheadを別環境で展開し、READMEの再現手順と期待結果を照合する。
-2. 動画の根拠 #4/#5、#7/#8/#9 と捕捉切詰めを、CLIのJSON・fixture・比較記録と突き合わせる。
-3. IEEE 802.3を混在させた場合の継続、レコード長矛盾での正常prefix保持、DNS観測数上限後の部分結果と最新commitのCIを確認して最終判定する。
+- 新規の人工PCAPで、IEEE 802.3が混在しても正常フレームを含めて全件を集計することと、`caplen > wirelen` で先行する正常レコードだけを保持し終了2になることを確認した。分類・フロー・DNSの根拠番号、件数、バイト数、Schemaを照合した。
+- 展開後の最大長255バイトのDNS名を含む孤立応答では、10,000観測まで照合し、10,001件目で `E_LIMIT_DNS_OBSERVATIONS`、終了2、`complete=false` と未割当番号を返した。入力を10,001件から80,000件に増やした両試行で、出力は10,000イベント・約23.64 MiB、CLIの最大RSSは約161 MiBだった。短い名前の孤立応答を使った修正前後の測定条件は[計測記録](dns_observation_limit.md)を参照。
+- 重複問い合わせと追加応答も上限に含まれ、時刻が逆行した入力では件数を保持し、時間依存のDNSイベントを全件破棄した。
 
-修正後のMVP承認は、入力境界の回帰試験、DNS観測数上限の停止結果、最新CIを対象とする再レビューで判定する。
+多数フローを含む入力全体の上限（100 MiB・100万レコード）付近の性能、別OS・Python版、実通信、VS Code GUIは未検証。対応範囲と観測限界は[仕様](spec.md)を参照。
