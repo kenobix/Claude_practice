@@ -1,14 +1,14 @@
 # ローカルfixture結果の条件付きDB確定
 
 今回の1単位は `src/ci_runner/finalization.py` の `finalize_fixture(claim, result)`。
-内部の[上限付き実行](fixture-execution.md)が返した結果を、run/attemptへ同じtransactionで確定する。
-API/claim-once・常駐Workerへ自動接続する機能は今回追加しない。既存migrationは変更しない。
+内部の[上限付き実行](fixture-execution.md)が返した結果を、run（実行記録）とattempt（個々の試行）に同じトランザクションで確定する。
+この実装単位では、API・claim-once・常駐Workerへの自動接続は追加せず、既存migrationも変更しない。
 
 ## 入力と保存するもの
 
 ExecutionResultへrun_id/attempt_idを追加し、提示Claimと一致することをDB接続前に確認する。
 GO送信済み、確認済みcgroup値、image ID形式、終了理由とexit codeの組合せも確認する。
-この型・検証は信頼済み制御面の誤配線を防ぐもので、外部から受け付ける認証方式や実行の暗号学的証明ではない。
+型と入力検証は、信頼済みの制御処理が異なるrunやattemptの結果を渡すなどの誤りを防ぐために使う。外部からの入力を認証したり、実行を暗号学的に証明したりする機能はない。
 
 | 実行結果 | run/attempt状態 | attempts.reason | exit_code |
 |---|---|---|---|

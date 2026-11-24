@@ -11,8 +11,8 @@
   <main>
     <header class="intro">
       <p class="context">表示専用のデモ</p>
-      <h1>CIジョブは<br>Worker停止からどう復旧するか</h1>
-      <p>実行中にWorkerが停止した例を、受付から正式結果まで追います。各段階を開くと、実行権と結果がどう変わったかを確認できます。</p>
+      <h1>CIジョブの実行中に<br>Workerが停止したら</h1>
+      <p>ジョブを実行するWorkerが途中で停止した例です。各段階を開くと、受付から正式結果の保存まで、実行権と結果がどう変わったかを確認できます。</p>
       <nav aria-label="ページ内の移動">
         <a href="#recovery">障害復旧の流れ</a>
         <a href="#comparison">1／2 Workerの実測</a>
@@ -29,25 +29,25 @@
           <li>
             <details open>
               <summary>pushイベントを受け付ける</summary>
-              <p>許可されたpushを受け付け、対象コミットの固定fixtureを指す実行を保存します。Workerが実行権を取得し、試行1を開始します。</p>
+              <p>CI Runnerは許可されたpushを受け付け、対象コミットの固定fixtureを実行するための記録（run）を保存します。Workerが実行権を取得し、試行1（最初のattempt）を開始します。</p>
             </details>
           </li>
           <li>
             <details>
               <summary>Worker停止後に試行1が失効する</summary>
-              <p>実行権の更新が止まり、監視プロセスがDB時刻で期限切れを確定します。同じDockerデーモンで試行1のコンテナを照合し、回収後に不在を記録します。</p>
+              <p>Workerが停止すると、実行権の期限（lease）が更新されなくなります。監視プロセスはDB時刻で期限切れを確定します。回収プロセスは同じDockerデーモンで試行1のコンテナを照合して削除し、コンテナが存在しないことを記録します。</p>
             </details>
           </li>
           <li>
             <details>
               <summary>別のWorkerが試行2を開始する</summary>
-              <p>初回の再試行は5秒の待機後に取得できます。実行IDとコミットは同じまま、新しい試行に新しい実行権を発行します。試行1から遅れて届いた完了報告は、現在の実行権と一致しないため拒否します。</p>
+              <p>初回の再試行は5秒待つと取得できます。実行IDとコミットを引き継ぎ、新しい試行に別の実行権を発行します。試行1から遅れて届いた完了報告は、実行権の識別子（token）が現在のものと一致しないため拒否します。</p>
             </details>
           </li>
           <li>
             <details>
               <summary>試行2のチェック失敗を正式結果にする</summary>
-              <p>試行2は終了コード1を記録します。Worker停止からの復旧と、チェックの合否はそれぞれ確認できます。正式結果には試行2が残り、試行1の失効も履歴に残ります。</p>
+              <p>試行2は終了コード1を記録します。履歴で試行1の失効を、正式結果で試行2のチェック失敗を確認できます。Worker停止からの復旧とチェックの合否は別々に確認できます。</p>
             </details>
           </li>
         </ol>
@@ -68,7 +68,7 @@
     <section id="comparison" aria-labelledby="comparison-title">
       <div class="section-heading">
         <h2 id="comparison-title">1／2 Workerの比較実測</h2>
-        <p>同じホストと固定fixtureで100ジョブを各3回。600件すべて正式成功。</p>
+        <p>同じホストと固定fixtureで、100ジョブを各3回実行しました。600件すべての正式結果は成功でした。</p>
       </div>
       <table>
         <caption>各3回の中央値（秒）</caption>
@@ -84,7 +84,7 @@
              alt="2 Workerではキュー待ちp95が3組中2組で短くなり、実行p95は3組すべてで長くなった。">
         <figcaption>線は測定順で隣り合う回を結びます。2 Workerの全回でCPU待ち時間が増えました。DBの0.5秒間隔の観測では、WAL同期待ちを15サンプル確認しました。</figcaption>
       </figure>
-      <p>観測はこのホストと短い固定fixtureでの結果です。異なるホストやジョブでも同じ改善幅が出るかは未計測です。</p>
+      <p>このホストで短い固定fixtureを使った結果です。別のホストやジョブで同じ改善幅が得られるかは測定していません。</p>
       <ul class="sources">
         <li><a href="../ci_runner/docs/p5-worker-samples.csv">600件の測定データ（CSV）</a></li>
         <li><a href="https://github.com/kenobix/Claude_practice/blob/ceea5328f509180aba141dd34dab5675ca0ba612/261117/ci_runner/docs/p5-validation.md">測定条件と故障試験の再現手順</a></li>

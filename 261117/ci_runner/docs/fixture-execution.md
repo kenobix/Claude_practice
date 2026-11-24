@@ -1,8 +1,8 @@
 # DB認可ゲートと上限付きローカルfixture実行
 
 今回の1単位は `src/ci_runner/execution.py` の `execute_fixture(claim, mode)`。
-先行する[DB preflight](execution-preflight.md)と[制限付きコンテナ準備](container-preparation.md)をつなぐ内部ライブラリ。
-固定ローカルのsuccess/failure/timeout/logsだけを実行する。任意コード・コマンド・イメージ・YAMLは受け付けない。
+この内部ライブラリは[DB preflight](execution-preflight.md)と[制限付きコンテナ準備](container-preparation.md)をつなぐ。
+ローカルの固定fixtureはsuccess/failure/timeout/logsだけを実行する。任意コード・コマンド・イメージ・YAMLは受け付けない。
 HTTP API・claim-once CLIからは呼ばない。受理commitの固定fixtureとローカル開発経路の実行ループを共用し、実行中はheartbeatを監視する。後続の[条件付きDB結果確定](result-finalization.md)は専用Workerが呼ぶ。
 DB確定時の理由は受理commit経路を `commit_*`、ローカル開発経路を `fixture_*` で識別する。
 
@@ -10,8 +10,8 @@ DB確定時の理由は受理commit経路を `commit_*`、ローカル開発経�
 
 1. DBから現在token/状態/取消/期限/固定policyを確認し、固定fixtureのコンテナを準備する。
 2. 準備済みimageがあればID/所有sessionを再照合してcreateする。指定なしの内部互換経路はbuildも行う。create後にDBを再照合し、DB異常・失効なら起動しない。一件Workerはimageを取得前に準備して渡す。
-3. Docker startで**信頼済み固定ガード**を起動する。ガードはcgroup等を読み、確認結果をstdoutに出してstdinを待つ。
-4. Worker側で確認結果を厳密に照合し、DBを再照合する。取消・失効・DB異常なら処理開始のGOを送らず回収する。
+3. Docker startで**信頼済みの固定ガード**を起動する。ガードはcgroupなどを読み、確認結果をstdoutに出して、stdinからの入力を待つ。
+4. Workerはガードの結果を厳密に照合した後、DBで実行権を再確認する。取消・失効・DB異常があれば、処理開始のGOを送らずにコンテナを回収する。
 5. 一致時だけ定型 `GO\n` を送って4種類のfixtureのうち指定した1つを開始し、stdinを閉じる。
 
 ガードにはPID1でも動く明示handler付きSIGALRM 10秒を設定し、GO待ちを無期限にしない。GO受信後は解除し、ホストの監視へ移る。

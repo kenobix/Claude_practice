@@ -11,16 +11,16 @@ mkdir -p artifacts
 .venv/bin/python scripts/compare_workers.py --output artifacts/p5-comparison.jsonl
 ```
 
-出力は既存ファイルを上書きしない。各回の環境・生データをJSON Linesに保存し、全回の終了と専用DBの回収後に `complete` を記録する。
+スクリプトは既存ファイルを上書きしない。各回の実行環境と生データをJSON Linesに保存する。すべての回が終わり、専用DBを回収してから `complete` を記録する。
 試験専用のComposeプロジェクトにランダムな名前を付け、DBを `127.0.0.1:55418` に置く。使用中なら起動は失敗し、既存接続先へ切り替えない。
-別の `DATABASE_URL` は使わない。停止時はWorkerをドレインして専用DBを回収する。ハード停止後の確認では、その試験のrun IDまたはComposeプロジェクト名で資源を特定する。
+別の `DATABASE_URL` は使わない。停止時は、ジョブを実行するWorkerの処理が終わるのを待って専用DBを回収する。強制停止した場合は、その試験のrun ID（実行記録の識別子）またはComposeプロジェクト名で資源を特定する。
 
 | 項目 | 条件・測り方 |
 |---|---|
 | 負荷 | 固定 `fixture-v1` の成功モード。1/2 Workerを `1, 2, 2, 1, 1, 2` の順で各3回。同じ100個の合成commit SHAを1 transactionで待機キューに入れる |
 | ウォームアップ | 各回の開始前に各自のWorker構成で2件成功させる。測定対象の100件から除外。Docker build cacheは保持する |
 | 実行経路 | GitHub HTTP応答を試験用データに置換。取得物の検証、固定Docker build、claim、Docker制限、DBでの結果・ログ・成果物確定は常駐Workerの通常経路 |
-| キュー待ち p95 | DB上の `started_at - claimable_at`。対象runがキューに今すぐ入れる時刻からclaimまで。取得とbuildの時間も入り得る |
+| キュー待ち p95 | DB上の `started_at - claimable_at`。Workerが対象runを取得できるようになった時刻から、実際に取得した時刻まで。取得前のソース取得やビルドの時間も含む場合がある |
 | 実行 p95 | Workerの単調時計でDockerの起動から終了確認まで。準備、回収とDB commitを含まない |
 | バッチ所要時間 | DB上のキュー投入時刻から、最後の正式resultの終了時刻まで |
 | DB待ち | およそ0.5秒ごとに `pg_stat_activity` を読み、実行中のCI Runner接続のwait eventを数える。接続の発行前や短い待ちを取りこぼし得る |
@@ -48,8 +48,8 @@ AMD Ryzen 7 7735HS、WSL2 Linux 6.6.87.2、8論理CPU・約27.4 GiB RAM、Python
 | 5 | 1 | 100 / 0 | 795.113 | 2.744 | 849.695 | 50.6% / 2.4% | 125.23 | 1,685 / 1 |
 | 6 | 2 | 100 / 0 | 806.831 | 3.848 | 852.616 | 66.0% / 3.9% | 231.54 | 1,686 / 6 |
 
-600件のrunは試行各1件で正式成功し、同じSHA・固定digest・image ID・ログ・結果JSONの対応を確認した。
-2 Workerの3回はどちらのWorkerも毎回50件を確定した。測定対象とウォームアップのコンテナ・image、専用DB資源は回収した。
+600件すべてのrunで、attempt（試行）は各1件、正式結果は成功だった。SHA・固定digest・image ID・ログ・結果JSONの対応を照合した。
+2 Worker構成で実行した3回とも、各Workerが毎回50件の結果を確定した。測定とウォームアップで使ったコンテナ・イメージと、専用DBの資源は回収した。
 CSVのサンプル番号は合成SHAでソートした順。各回の100件を個別に再集計でき、image IDにはrun別の由来ラベルが含まれる。[600件の実測サンプル](p5-worker-samples.csv)
 
 ![各回100ジョブのp95比較。2 Workerではキュー待ちが3組中2組で短縮し、実行時間は3組すべてで増加した。](p5-worker-comparison.png)
@@ -125,7 +125,7 @@ PYTEST_ADDOPTS='-k "test_two_residents_recover_after_sigkill and running" -rP' \
 | 1:30–2:30 | 代替Workerがバックオフ後に同じrun・同じSHAを取得する。試験は代替の試行中と正式確定後の両方で旧tokenの結果を拒否し、履歴と正式結果を検査する |
 | 2:30–3:00 | 端末Bで復旧秒数とPASS、readiness、専用DBの回収を確認する。ブラウザーの過去デモと、今回の実測を区別する |
 
-45秒は復旧の仮目標。イメージ取得、ディスク待ち、監視周期で実際の時間は変わる。出力が揃うまで待ち、超過や失敗を記録する。
+復旧時間の仮目標は45秒。実際の時間はイメージ取得、ディスク待ち、監視周期によって変わる。試験の出力が揃うまで待ち、目標を超えた場合や失敗した場合も記録する。
 2026-11-19の復旧は45.91秒。初回検証と過去デモの表示テストを含む選択回帰3件とDBの起動から回収までは113.51秒だった。
 この手順は固定GitHub応答と試験用runで停止から復旧までを再現する。実pushと同じ受理SHAを使った署名付きローカル試験の結果も下に記録する。
 
@@ -134,12 +134,12 @@ PYTEST_ADDOPTS='-k "test_two_residents_recover_after_sigkill and running" -rP' \
 ### 2026-11-24のGitHub実配送
 
 - 実push `0b775ce47360a1eb1c7ca72d8924c5abd1dca4e5` を初回配送で受理。GitHubの応答はHTTP 202、0.52秒。配送GUID `f708add0-e80f-11f1-979f-e269083abce9`、受理SHA、run `9b3df966-0889-4319-9232-4f2bfbbe2b86` が専用DBと一致した。削除前に配送1件、run 1件、attempt 2件を採取した。
-- Worker 1のコンテナはGO前に終了コード2で終了した。この配送に対する実行中の強制停止は未実施。期限切れのattempt `7b1b91a2-2d9a-44a5-a33d-6811766348c7` とコンテナ不在をDBに記録し、同じrunを別tokenのattempt `534aa6c6-7d5d-4be3-8a59-03e478e350ba` が引き継いだ。
-- 旧tokenの報告を正式結果保存の前後に拒否した。DB受付から145.23秒で `succeeded`、固定fixtureのログ `{"ok": true}` と受理SHAをDB・管理画面で照合した。公開経路と専用Docker・DB資源は回収した。
+- Worker 1のコンテナは処理開始を指示するGOの前に終了コード2で終了した。この配送では実行中の強制停止を行っていない。attempt `7b1b91a2-2d9a-44a5-a33d-6811766348c7` の実行権の期限（lease）が切れ、コンテナが存在しないこととあわせてDBに記録した。その後、同じrunを別のtoken（実行権の識別子）を持つattempt `534aa6c6-7d5d-4be3-8a59-03e478e350ba` が引き継いだ。
+- 旧tokenによる報告は、正式結果を保存する前も後も拒否した。DB受付から145.23秒で正式結果が `succeeded` になった。固定fixtureのログ `{"ok": true}` と受理SHAをDB・管理画面で照合し、公開経路と専用Docker・DB資源を回収した。
 
 ### 終了コード2の再現と修正後のローカル試験
 
-公開試験コントローラーは秘密情報を扱うローカルファイルのため `umask 0077` を設定する。Workerがその設定を継承し、製品の一時ビルドコンテキストに `fixture.py` が `0600` で生成された。Dockerの `COPY` がモードを保持し、コンテナのUID 65534が `/opt/fixture.py` を開けず、PythonがGO前に終了コード2を返した。ローカルの実Dockerで同じ固定fixtureを使い、修正前は `0077` で `Permission denied` と終了コード2、`0022` で終了コード0を確認した。 [DockerのCOPY仕様](https://docs.docker.com/reference/dockerfile/#copying-from-the-build-context)
+公開試験コントローラーは秘密情報を扱うローカルファイルのために `umask 0077` を設定する。Workerがこの設定を引き継いだため、一時ビルドコンテキストの `fixture.py` はモード `0600` で作られた。Dockerの `COPY` はモードを保持する。コンテナ内のUID 65534では `/opt/fixture.py` を開けず、PythonはGOの前に終了コード2を返した。修正前にローカルの実Dockerで同じ固定fixtureを使い、`0077` では `Permission denied` と終了コード2、`0022` では終了コード0を確認した。 [DockerのCOPY仕様](https://docs.docker.com/reference/dockerfile/#copying-from-the-build-context)
 
 製品側で検証済みfixtureのモードを `0644` に指定した。ビルドコンテキストのディレクトリは `0700`。同じ `umask 0077` で実PostgreSQLとDockerを起動し、上記実pushのSHAをローカル署名付きPOSTで受け付けた。GitHub上のコミットからのsource取得・digest照合にはWorkerの通常経路を使用した。
 
@@ -153,7 +153,7 @@ PYTEST_ADDOPTS='-k "test_two_residents_recover_after_sigkill and running" -rP' \
 
 ### 受入判定
 
-計画§5と§8のデモは、GitHubの実pushが同じrunの正式結果までつながった証拠と、同じ実push SHAを使ったローカルの実行中停止・引き継ぎ・旧結果拒否の証拠で受け入れる。Webhookは配送とrunを同一transactionで保存し、その後のWorkerはDBのrun ID・SHAを読み、実行権と結果をDBで確定する。公開HTTPSはこのDB境界までを実配送で検証済みで、修正後のローカル試験は同じ受付実装を通ってDB境界から最後までを検証した。2回のrun IDは別であり、公開配送とSIGKILLを同じrunで観測したという判定はしていない。追加の公開試験はマージ前の必須条件にしない。 [元計画](../../../261014/plan_ci_runner.md)・[P2の故障試験](design.md#2-workerの故障復旧試験)・[P3の実配送](webhook.md#実配送の受入記録)
+計画§5と§8のデモの受入には、GitHubの実pushから同じrunの正式結果までを確認した試験と、同じ実push SHAで実行中の停止・引き継ぎ・旧結果の拒否を確認したローカル試験を使う。Webhookは配送とrunを同じトランザクションで保存する。その後、WorkerはDBからrun IDとSHAを読み、実行権と結果をDBで確定する。実配送では公開HTTPSからDBに保存されるまでを確認した。修正後のローカル試験は同じ受付実装を通り、DBに保存されたrunが正式結果に至るまでを検証した。2回のrun IDは別で、SIGKILLはローカル試験でのみ観測した。追加の公開試験はマージ前の必須条件にしない。 [元計画](../../../261014/plan_ci_runner.md)・[P2の故障試験](design.md#2-workerの故障復旧試験)・[P3の実配送](webhook.md#実配送の受入記録)
 
 比較実験、クリーン環境CIと新規cloneの再現、3分デモ、静的デモと運用資料を照合し、P5のマージ前の受入条件は完了と判定した。GitHub Pagesの公開確認は承認済みの統合後に行う。
 
@@ -171,7 +171,7 @@ PYTEST_ADDOPTS='-k "test_two_residents_recover_after_sigkill and running" -rP' \
 
 ## 運用と限界
 
-- 受け付け状況はreadinessとrun履歴を照合する。API応答が途切れた手動投入は同じ業務キーで再送する。外部Webhook配送は管理者がGitHubから再送する。[受付API](intake-api.md)
+- 受付状況を確認するには、readinessとrun履歴を照合する。手動投入時にAPIの応答が途切れた場合は、同じ業務キーで再送する。外部Webhook配送は管理者がGitHubから再送する。[受付API](intake-api.md)
 - Worker停止・DB断では、新規取得に進めない。停止位置によっては期限監視と回収が必要。Docker create結果が不明なら不在を推測せず、再実行を保留する。[期限と回収](design.md#失効attemptのコンテナ回収)
 - ログと成果物のpayloadに容量上限がある。自動保持期限と複数ホストはMVP対象外。異常時は運用指標から当該runの試行へ戻って調べる。[管理画面と指標](run-operations.md)
 - 管理APIはloopback、Webhookは専用入口、ジョブは固定fixtureだけをDockerの制限下で実行する。管理用のDB、Docker socket、認証情報をジョブと分離する。[脅威モデル](threat-model.md)

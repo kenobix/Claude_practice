@@ -1,7 +1,7 @@
 # 実行前DB preflight：状態と実行権の再確認
 
-今回実装した1単位は、固定fixtureの実行境界に先立つDB上の権限確認。
-`src/ci_runner/preflight.py` のauthorize_execution(claim)が、取得時のClaimを現在のDB状態と照合する。
+この実装では、固定fixtureを実行する前にDBで実行権を確認する処理を1単位として追加した。
+`src/ci_runner/preflight.py` のauthorize_execution(claim)は、Workerが取得時に受け取ったClaimを現在のDBの状態と照合する。
 コンテナ作成・起動、コード取得、ジョブ実行、結果確定、lease更新・回収は行わない。
 
 ## 受け付ける実行権

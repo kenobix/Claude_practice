@@ -1,9 +1,8 @@
 # P1前半：受付API・永続化・冪等性
 
-実装済み: POST /runs、GET /runs、GET /runs/{id}、許可設定・入力上限・履歴ページング。
-Worker初回取得は後続で実装済み（[取得仕様](worker-claim.md)）。
-受付APIとは別の単一Workerで固定fixtureを実行できる。Webhook、取消・手動retry・一般成果物管理は未実装。
-P1全体の完了条件（実行から結果保存）はまだ満たしていない。
+受付APIにPOST /runs、GET /runs、GET /runs/{id}と、許可設定・入力上限・履歴のページングを実装した。
+続いて[Workerの初回取得](worker-claim.md)を実装し、受付APIとは別の単一Workerが固定fixtureを実行できるようにした。
+この段階では、Webhook、取消・手動retry・一般成果物管理は未実装だった。P1全体の完了条件である実行から結果保存までは、まだ満たしていなかった。
 
 ## 許可設定と入力
 

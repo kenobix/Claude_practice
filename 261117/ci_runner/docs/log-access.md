@@ -1,7 +1,7 @@
 # 正式ログ取得と安全な表示
 
-P1のログ参照/HTMLエスケープを実装する1単位。`GET /runs/{run_id}/logs`を追加し、
-既存のloopback限定運用と固定fixtureの境界を維持する。認証なしAPIを外部公開しない。
+P1では、ログの参照とHTMLエスケープを1単位として実装し、`GET /runs/{run_id}/logs` を追加した。
+APIはloopbackでのみ待ち受け、ジョブの実行対象は固定fixtureに限る。認証のないAPIは外部に公開しない。
 ジョブ投入・実行・ログ保存・migration・削除/保持期限の仕様は変更しない。
 
 ## リクエストと状態
@@ -14,8 +14,8 @@ P1のログ参照/HTMLエスケープを実装する1単位。`GET /runs/{run_id
 | limit | 元byte列で1〜16384、既定4096 |
 | format | text（既定）またはhtmlだけ |
 
-SQLは列名を固定mapから選び、offset/limit/run IDはパラメータ化する。
-同一SELECTでrun.completed_attempt_id→同じrunのattempt→attempt_logsを参照し、DBでsubstringを適用してページだけを返す。
+SQLの列名は固定の対応表から選ぶ。offset、limit、run IDはパラメータとして渡す。
+同じSELECTでrun.completed_attempt_idから同じrunのattemptをたどり、attempt_logsを参照する。DBでsubstringを適用し、指定ページの範囲だけを返す。
 run/attemptが同じ終端状態で、正式参照先に保存ログがあるときだけ200。過去/未確定の別attemptのログを代わりに返さない。
 DB行ロック・更新は行わず、ログ保存量/終了時刻も変更しない。参照はSELECT時点のsnapshotである。
 
