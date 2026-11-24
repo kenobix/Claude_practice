@@ -31,6 +31,9 @@
 | [261014](261014/) | Codex移行・GitHub認証・Pages公開の記録と、[今後の開発企画](261014/next_project_plan.md)。広い開発力とAI/MLを重視して7案を再評価し、MLOps・CI基盤・自作DBなどを個別の詳細作業計画に整理。 |
 | [261021](261021/) | UCI Bike Sharingを題材に、時系列リーク対策・再現学習・MLflow登録・版固定API・承認付きモデル切り替え・遅延ラベル監視を扱うMLOps基盤。[最新差分監査](261021/docs/evidence.md#20261030-checkpoint-review)と[優先度・難易度・Sol/Luna別の残作業](261014/plan_mlops.md#remaining-work-20261030)を記録。 |
 | [261109](261109/) | デスクトップAI環境と実験記録。[環境構築・Ollama](261109/environment.md)、[開発AIツール](261109/coding_tools.md)、[ComfyUI画像](261109/image_experiments.md)・[動画](261109/video_experiments.md)、[公開手順の履歴](261109/publishing_history.md)へ種類別に整理。 |
+| [261117](261117/) | CI Runner。GitHub Webhookでジョブを受け付け、Dockerでの隔離実行、Worker停止時の復旧、管理画面での結果確認を扱う。 |
+| [261118](261118/) | Database Engine。自作の永続KVエンジンで追記ログ、索引の再構築、プロセス停止からの復旧を検証する。 |
+| [261119](261119/) | PCAP Analyzer。保存済みPCAPからパケット、双方向フロー、DNSの問い合わせと応答を集計し、端末表やJSONで出力する。 |
 
 ---
 
@@ -48,3 +51,4 @@
 | Gemini チャットアプリ | [260521/gemini.html](https://kenobix.github.io/Claude_practice/260521/gemini.html) |
 | 生成AIシステムアーキテクト相談室 | [260630/](https://kenobix.github.io/Claude_practice/260630/) |
 | 忘却曲線フラッシュカードアプリ | [260905/](https://kenobix.github.io/Claude_practice/260905/) |
+| CI Runner デモ | [261117/demo/](https://kenobix.github.io/Claude_practice/261117/demo/) |
