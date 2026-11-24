@@ -1,10 +1,11 @@
-# 保存済みPCAP解析ツール — Phase 4（再現・計測・デモ）
+# 保存済みPCAP解析ツール — MVP完成
 
 作業日: 2026-11-17。`261119`は指定された作業ID。
 計画: [保存済みPCAP解析ツール](../261014/plan_pcap_analyzer.md)。
 
 classic pcapの入力検査、Ethernet/IPv4/TCP・UDPヘッダー検査、件数・長さ・時刻・分類の集計、
-JSONと端末表を実装した。Draft PR #3の独立レビュー指摘を修正し、再レビュー待ち。
+JSONと端末表を実装した。独立再レビューでPhase 0〜4の全受入条件に合格し、MVPは完成した。
+実装は[PR #3](https://github.com/kenobix/Claude_practice/pull/3)でmainに取り込まれた。
 初めて使う場合は[3分デモ動画](pcap_analyzer/docs/demo.mp4)と[新規環境からの受入再現](#新規環境からの受入再現)を参照。
 双方向フロー集計、方向別件数/長さ/根拠、TCP flags、フロー数上限を追加した。
 DNS名の復号・正規化と単一質問抽出を内部APIとして追加した。
@@ -18,8 +19,8 @@ IEEE 802.3のフレームは未対応として集計を継続する。caplenがw
 
 ## 作業環境
 
-- worktree: `~/work/Claude_practice-261119`、branch: `feat/pcap-analyzer`
-- origin: `kenobix/Claude_practice`。mainへのpush・マージとPR作成は行わない。
+- 開発時のworktreeは `~/work/Claude_practice-261119`、実装ブランチは `feat/pcap-analyzer`。
+- originは `kenobix/Claude_practice`。完成したMVPはmainから取得できる。
 - Python 3.12.3、専用環境: `pcap_analyzer/.venv`、ツール版0.3.0
 - Scapy 2.6.1 / pytest 8.4.2 / jsonschema 4.25.1
 - 依存は推移依存・pipを含め[requirements.lock](pcap_analyzer/requirements.lock)に固定。
@@ -46,7 +47,7 @@ python3.12 -m venv .venv
 .venv/bin/python -m pytest -q
 ```
 
-独立レビュー修正後に全465テスト成功。IEEE 802.3混在・予約値境界、レコード長矛盾での正常prefix保持と本文読込前の停止、DNS観測数上限を検証した。
+独立再レビューの新規環境で全465テスト成功。IEEE 802.3混在・予約値境界、レコード長矛盾での正常prefix保持と本文読込前の停止、DNS観測数上限を検証した。
 DNS名/質問抽出40件とフロー・入力処理等の既存テストも再実行した。
 DNS候補の空payloadの分類変更に合わせ、既存1件の期待をparsedからmalformedへ更新した。
 既存100件は分類・入力制限・時刻等の検査を維持し、版変更に伴う期待を更新。
@@ -104,7 +105,7 @@ done
 
 [PCAP analyzer tests](../.github/workflows/pcap-analyzer-tests.yml)で上記の固定依存導入と全テストを実行する。
 `261119/**`またはこのworkflow自身の変更が対象。`feat/pcap-analyzer`と`main`へのpush、
-およびpull requestで起動する。mainへのpush・マージはこの作業では行わない。
+およびpull requestで起動する。
 Ubuntu 24.04 / Python 3.12系列の1ジョブ、10分上限。依存導入はジョブ内の専用`.venv`に限定する。
 ActionsはコミットSHA固定、権限は`contents: read`のみ、checkoutの認証情報は保持しない。
 同じrefの古い実行は中止する。キャッシュ・成果物アップロード・外部サービス・追加secretは使わない。
@@ -304,14 +305,10 @@ Phase 3では専用`.venv`に展開したTSharkと、8 fixtureの共通項目・
 baseline/backwardと追加の人工2レシピ（計32パケット）のDNS共通項目を照合した。
 一意な5ペアの応答時間（25ms、123ns、5秒、1ns等）が一致し、重複/期限外/逆行の相違も説明済み。
 Phase 3は指定した人工入力の対応範囲で完了。Phase 4の[固定規模CLI計測](pcap_analyzer/docs/benchmark.md)を実施した。
-500/5000/15000パケット各3回でSchema・手計算・bytes・決定性が一致。処理時間中央値は
-0.729/1.622/3.944秒、最大RSSの試行最大は54516/57292/65260 KiB（Linux/WSL2、環境依存）。
-正常双方向UDPと未対応/切詰め/長さ不正の混在でparsed40%。DNS/多数フロー/上限付近の性能は未実測。
-新規専用環境での導入・生成・正常例と解析限界の通し再現を確認し、[3分デモ動画](pcap_analyzer/docs/demo.mp4)を作成した。
-Phase 0〜4の全受入条件を[受入記録](pcap_analyzer/docs/mvp_acceptance.md)で照合した。
-
-計画上の成果物は100%完了、残りの受入条件は0。工数の実測値ではない。
-次は受入記録に沿った独立レビューと最終判定。発展機能には着手しない。
+500/5,000/15,000パケット各3回でSchema・手計算・バイト数を照合し、出力ハッシュは独立再レビューでも保存記録と一致した。
+新規環境での導入・fixture生成・正常例と解析限界の再現、[3分デモ動画](pcap_analyzer/docs/demo.mp4)とCLI出力の整合も確認した。
+独立再レビューで最大長255バイトのDNS名を含む孤立応答を検証し、10,001件目で照合を停止した。
+検証の詳細と未検証範囲は[MVP受入記録](pcap_analyzer/docs/mvp_acceptance.md)を参照。
 
 ## 仕様・期待値・制限
 
@@ -336,7 +333,7 @@ DNS名/質問抽出・RR構造検査とpacket分類/CLI診断への統合は実�
 フロー集計と端末フロー表は実装済み。
 人工baselineの25ms・未応答観測・重複queryはCLI出力も手計算一致を確認。
 TShark比較は14保存fixtureの共通項目/入力異常とDNS4ケースまで。DNS名表示は通常ASCIIラベルの共通部分に限定。
-性能測定は上記の固定UDP混在入力のみ。実通信、Python 3.12以外、VS Code GUIは未検証。
+多数フローを含む入力全体の上限付近の性能、実通信、別OS・Python 3.12以外、VS Code GUIは未検証。
 捕捉長と記録上の元長を回線上の実転送量と呼ばず、観測不足を障害や攻撃と断定しない。
 
 ## 固定規模CLI計測（Phase 4の一部）
