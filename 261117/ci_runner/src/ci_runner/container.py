@@ -181,7 +181,10 @@ def _build_context(source):
     with TemporaryDirectory(prefix='ci-runner-source-') as directory:
         context = Path(directory)
         (context / 'Dockerfile').write_bytes(dockerfile)
-        (context / 'fixture.py').write_bytes(source.contents)
+        fixture = context / 'fixture.py'
+        fixture.write_bytes(source.contents)
+        # COPY preserves the file mode, so the image's non-root user needs read access.
+        fixture.chmod(0o644)
         yield context
 
 

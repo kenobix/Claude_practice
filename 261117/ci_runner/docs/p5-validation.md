@@ -127,28 +127,41 @@ PYTEST_ADDOPTS='-k "test_two_residents_recover_after_sigkill and running" -rP' \
 
 45秒は復旧の仮目標。イメージ取得、ディスク待ち、監視周期で実際の時間は変わる。出力が揃うまで待ち、超過や失敗を記録する。
 2026-11-19の復旧は45.91秒。初回検証と過去デモの表示テストを含む選択回帰3件とDBの起動から回収までは113.51秒だった。
-このデモは固定GitHub応答と試験用のrunを使用する。実push起点の受入は次の手順で確認する。
+この手順は固定GitHub応答と試験用runで停止から復旧までを再現する。実pushと同じ受理SHAを使った署名付きローカル試験の結果も下に記録する。
 
 ## 実pushを起点にしたデモ
 
-2026-11-21の実push `91afb731a8184717f86b88c04807207c18390e83`、配送GUID `e269343e-e568-11f1-8f9c-c6f2c8a1d397` を再利用できる。計画§8は成功したpushを起点とするデモを求めており、GitHubが既存イベントを正規の手順で再送すれば、実際のpushに由来する同じ配送とSHAを追跡できる。対象SHAは確認時の `main` 先頭で、固定fixtureは2151 bytes、承認済みSHA-256と一致した。元の配送がRecent deliveriesに残る3日間に試験を調整する。期限後は管理下の許可refへの次の承認済みpushを使う。 [P3の実配送記録](webhook.md#実配送の受入記録)・[GitHubの再送期限](https://docs.github.com/en/webhooks/testing-and-troubleshooting-webhooks/redelivering-webhooks)
+### 2026-11-24のGitHub実配送
 
-2026-11-21の確認時点で旧公開先に接続できない。公開枠の個別承認後、管理者が既存hookの配送先を更新し、受信準備が整った時点で同じGUIDを1回再送する。試験は固定イメージを準備した使い捨て環境で行う。 [専用入口の設定と停止](webhook.md#公開試験用の起動と停止)
+- 実push `0b775ce47360a1eb1c7ca72d8924c5abd1dca4e5` を初回配送で受理。GitHubの応答はHTTP 202、0.52秒。配送GUID `f708add0-e80f-11f1-979f-e269083abce9`、受理SHA、run `9b3df966-0889-4319-9232-4f2bfbbe2b86` が専用DBと一致した。削除前に配送1件、run 1件、attempt 2件を採取した。
+- Worker 1のコンテナはGO前に終了コード2で終了した。この配送に対する実行中の強制停止は未実施。期限切れのattempt `7b1b91a2-2d9a-44a5-a33d-6811766348c7` とコンテナ不在をDBに記録し、同じrunを別tokenのattempt `534aa6c6-7d5d-4be3-8a59-03e478e350ba` が引き継いだ。
+- 旧tokenの報告を正式結果保存の前後に拒否した。DB受付から145.23秒で `succeeded`、固定fixtureのログ `{"ok": true}` と受理SHAをDB・管理画面で照合した。公開経路と専用Docker・DB資源は回収した。
 
-| 順序 | 合格条件 |
+### 終了コード2の再現と修正後のローカル試験
+
+公開試験コントローラーは秘密情報を扱うローカルファイルのため `umask 0077` を設定する。Workerがその設定を継承し、製品の一時ビルドコンテキストに `fixture.py` が `0600` で生成された。Dockerの `COPY` がモードを保持し、コンテナのUID 65534が `/opt/fixture.py` を開けず、PythonがGO前に終了コード2を返した。ローカルの実Dockerで同じ固定fixtureを使い、修正前は `0077` で `Permission denied` と終了コード2、`0022` で終了コード0を確認した。 [DockerのCOPY仕様](https://docs.docker.com/reference/dockerfile/#copying-from-the-build-context)
+
+製品側で検証済みfixtureのモードを `0644` に指定した。ビルドコンテキストのディレクトリは `0700`。同じ `umask 0077` で実PostgreSQLとDockerを起動し、上記実pushのSHAをローカル署名付きPOSTで受け付けた。GitHub上のコミットからのsource取得・digest照合にはWorkerの通常経路を使用した。
+
+| 確認項目 | ローカルで採取した証拠 |
 |---|---|
-| 1. 受付 | GitHubが10秒以内に202を受信。専用DBで配送GUIDと対象SHAが同じrunを指し、配送とそのSHAのrunが各1件。今回の専用DBが発行したrun IDを以後の照合に使う。 |
-| 2. 停止 | 最初の常駐Workerが実GitHubから受理SHAの固定ソースを取得し、長時間モードの固定fixtureを起動。対象runの開始を観測して、そのWorkerだけをSIGKILLする。 |
-| 3. 復旧 | DB時刻のlease失効とコンテナ回収を記録。次のWorkerが同じrun ID・SHAを別attempt・別tokenで取得する。既存の故障試験と同様に旧tokenでの結果確定が拒否されることを照合する。 |
-| 4. 正式結果 | 成功モードの再試行だけが正式結果となり、commit SHA、source digest、image ID、ログ、結果JSONがそのattemptを指す。管理画面で履歴と正式結果を確認し、復旧時間と試験資源の回収を記録する。 |
+| 受付 | HTTP 202、配送 `3ae020b7-2abc-4311-b65a-0d911f76d657`、run `096a8463-aade-48c2-854a-088c7d5f6051`。DBに配送1件とrun 1件 |
+| 実行中の停止と回収 | attempt `9c3c7569-9231-4041-9613-263601ecdc8e` でGOとコンテナの稼働を確認し、Worker 1をSIGKILL。DB時刻のlease失効、残存コンテナの完全IDによる回収を確認 |
+| 引き継ぎと旧報告 | 同じrunとSHAをWorker 2がattempt `c046b48f-6706-4406-bf16-7476681e282d` と別tokenで取得。旧tokenの報告を正式結果保存の前後で拒否 |
+| 正式結果と回収 | `succeeded`、固定source digest、ログ `{"ok": true}`、結果JSON、管理画面とDBの2試行履歴を照合。専用資源を回収 |
+| 所要時間 | DB受付から正式結果55.94秒、SIGKILLから正式結果48.99秒、送信開始から管理画面照合まで62.34秒。計画§6の復旧45秒の仮目標は超過 |
 
-記録するのは配送GUID、応答時間、SHA、run・attempt ID、tokenが異なるという照合結果、終了理由、正式ログ、回収結果。tokenの値やWebhookの秘密値・署名・本文は出力しない。既存の故障注入は停止位置と旧結果拒否の確認に使い、実行対象runは配送テーブルから取得する。
+### 受入判定
+
+計画§5と§8のデモは、GitHubの実pushが同じrunの正式結果までつながった証拠と、同じ実push SHAを使ったローカルの実行中停止・引き継ぎ・旧結果拒否の証拠で受け入れる。Webhookは配送とrunを同一transactionで保存し、その後のWorkerはDBのrun ID・SHAを読み、実行権と結果をDBで確定する。公開HTTPSはこのDB境界までを実配送で検証済みで、修正後のローカル試験は同じ受付実装を通ってDB境界から最後までを検証した。2回のrun IDは別であり、公開配送とSIGKILLを同じrunで観測したという判定はしていない。追加の公開試験はマージ前の必須条件にしない。 [元計画](../../../261014/plan_ci_runner.md)・[P2の故障試験](design.md#2-workerの故障復旧試験)・[P3の実配送](webhook.md#実配送の受入記録)
+
+比較実験、クリーン環境CIと新規cloneの再現、3分デモ、静的デモと運用資料を照合し、P5のマージ前の受入条件は完了と判定した。GitHub Pagesの公開確認は承認済みの統合後に行う。
 
 ### 2026-11-21の公開試験
 
 承認済みの時間枠でQuick Tunnelを起動し、外部HTTPSで `POST /webhooks/github` が未設定時に503、同じパスへのGETと管理APIへのPOSTが404になることを確認した。終了予定は17:39:46 JST。17:36:59の確認では受信側のSecret入力は未確認、DBの配送は0件、Worker試験は未起動だった。17:39:18のGitHub照合でも配送先URLは更新されておらず、対象GUIDの新しい再送は確認されなかった。
 
-17:39:48に公開終了と専用DB・volume・network、loopbackポート、制御ソケットの回収を確認した。今回の公開枠ではGitHubの202、run ID、Workerの停止・復旧、正式結果は未実測。P5の実push起点デモは未完了。
+17:39:48に公開終了と専用DB・volume・network、loopbackポート、制御ソケットの回収を確認した。この公開枠ではGitHubの202、run ID、Workerの停止・復旧、正式結果は未実測だった。
 
 ## Pagesの公開
 

@@ -1,13 +1,16 @@
 from dataclasses import replace
 from datetime import datetime, timezone
 import json
+import os
+from stat import S_IMODE
 from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
 
-from ci_runner import container
+from ci_runner import commit_source, container
 from ci_runner.preflight import ExecutionPermit
+from test_commit_source import GitHubFixture, HEAD
 
 
 def permit():
@@ -206,3 +209,17 @@ def test_cleanup_never_removes_a_rebound_image_tag(monkeypatch):
     with pytest.raises(container.ContainerRejected, match='replaced image tag'):
         with container.prepare_image():
             rebound = True
+
+
+def test_verified_fixture_is_readable_with_restrictive_umask():
+    source = commit_source._verify(uuid4(), HEAD, GitHubFixture(HEAD))
+    previous_umask = os.umask(0o077)
+    try:
+        with container._build_context(source) as context:
+            fixture = context / 'fixture.py'
+            assert S_IMODE(context.stat().st_mode) == 0o700
+            assert S_IMODE(fixture.stat().st_mode) == 0o644
+            assert fixture.read_bytes() == source.contents
+    finally:
+        os.umask(previous_umask)
+    assert not context.exists()

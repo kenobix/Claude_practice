@@ -1169,3 +1169,10 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
 
 - `c37a4ccc3891e2fc85d7aaf6c69b3491d6c104dc` で承認済みの公開枠を開いた。HTTPSの対象POSTは未設定時503、対象GETと管理APIへのPOSTは404。Webhook `714755178` の配送先・受信側Secretの設定が揃わず、対象GUIDの今回の再送は0件。Workerを起動せず、同一runでの復旧と正式結果は未実測。 [P5の試験記録](ci_runner/docs/p5-validation.md#2026-11-21の公開試験)
 - 終了予定の17:39:46 JSTまでに公開を停止し、試験用サービス・DB・volume・networkの残存がないことを確認した。P5は未完了、MVP完成とマージは保留。前回項目に記載した人による再現結果の提出は、元計画のMVP受入条件に含めない。
+
+## 2026-11-24 P5最終受入とfixtureのファイルモード修正
+
+- 承認済みの空コミット `0b775ce47360a1eb1c7ca72d8924c5abd1dca4e5` の実GitHub配送でHTTP 202・0.52秒を確認。専用DBに配送1件、run 1件、attempt 2件。GO前にWorker 1のコンテナが終了コード2で終了したが、同じrunで期限切れ・回収記録、Worker 2への引き継ぎ、旧token拒否、正式結果と管理画面の照合を確認した。DB受付から正式結果まで145.23秒。公開経路は回収済みで既存Webhookは無効。 [実配送の記録](ci_runner/docs/p5-validation.md#2026-11-24のgithub実配送)
+- `umask 0077` を継承したWorkerでは一時fixtureが `0600` となる。ローカルの実Dockerで `/opt/fixture.py` の `Permission denied` と終了コード2を再現し、`0022` では成功した。製品側で検証済みfixtureを `0644` に設定し、一時ディレクトリは `0700`。Dockerfile・元のfixture・固定digest・非root起動と制限は変更していない。
+- 修正後に同じ `0077`、実pushと同じSHAの署名付きローカル受付、通常のGitHubソース取得、使い捨てPostgreSQL・実DockerでGO後のSIGKILLを確認。lease失効・回収、別attemptと旧token拒否、正式結果、ログと管理画面まで同じローカルrunで確認した。SIGKILLから正式結果48.99秒、ローカル送信から管理画面照合62.34秒。試験資源は回収した。
+- ローカルの通常回帰は234 passed、217 deselected、既知のTestClient警告1件。依存関係検査は成功。実GitHub配送とSIGKILLの証拠は別runとして扱い、永続化境界、P0〜P4の独立レビュー、比較実測、再現手順、3分デモを照合してP5およびMVPのマージ前受入を完了と判定した。Pagesの公開確認は承認済み統合後の提出条件。 [P5受入判定](ci_runner/docs/p5-validation.md#受入判定)
