@@ -3,19 +3,24 @@
 作業日: 2026-11-17。`261119`は指定された作業ID。
 計画: [保存済みPCAP解析ツール](../261014/plan_pcap_analyzer.md)。
 
-classic pcapの入力検査、Ethernet/IPv4/TCP・UDPヘッダー検査、件数・長さ・時刻・分類の集計、
-JSONと端末表を実装した。独立再レビューでPhase 0〜4の全受入条件に合格し、MVPは完成した。
+PCAP Analyzerは捕捉済みのパケットを保存したclassic pcapファイルを読み込む。
+ファイル形式を確認してから、Ethernetフレームに格納されたIPv4ヘッダーから送信元と宛先のIPアドレスを読み、TCP・UDPヘッダーからポート番号などを取り出す。
+パケットの件数、長さ、時刻、分類はJSONと端末の表で確認できる。
+独立再レビューでPhase 0〜4の全受入条件に合格し、MVPは完成した。
 実装は[PR #3](https://github.com/kenobix/Claude_practice/pull/3)でmainに取り込まれた。
 初めて使う場合は[3分デモ動画](pcap_analyzer/docs/demo.mp4)と[新規環境からの受入再現](#新規環境からの受入再現)を参照。
-双方向フロー集計、方向別件数/長さ/根拠、TCP flags、フロー数上限を追加した。
-DNS名の復号・正規化と単一質問抽出を内部APIとして追加した。
-DNSメッセージのRR構造検査を完全なUDP port 53候補のパケット分類とCLI診断へ統合済み。
-検証済み質問の引継ぎ、端点/ID/質問の照合キーとQR/portによる方向判定も内部APIで実装済み。
-5秒窓による問い合わせ/応答照合をJSON/端末表へ統合済み。
-時刻逆行時は全DNS結果を破棄し、キー数上限では途中結果と根拠を返す。
+双方向フローでは両端点（IPアドレスとポート）とプロトコルが同じ通信をまとめ、向きごとに件数、長さ、根拠パケット番号を集計する。
+TCP flags（ヘッダー内のSYNやACKなどの制御用ビット）も数え、フロー数には上限を設ける。
+DNSの内部APIは名前の復号と正規化を行い、質問が一つのメッセージからその質問を取り出す。
+UDPのポート53を使う候補では、完全に捕捉したペイロード内のDNSリソースレコード（RR）の構造も調べ、パケット分類とCLI診断に反映する。
+内部APIは検査済みの質問を引き継ぎ、両端点、ID、質問から照合キーを作る。問い合わせか応答かはQRフラグとポートで判定する。
+問い合わせと応答は5秒の観測範囲（窓）で照合し、結果をJSONと端末の表に出す。
+時刻が逆行したら確定済みのDNSイベントも破棄する。キー数の上限を超えたときは、途中結果と根拠を返す。
 DNSの問い合わせ・応答は孤立応答も含めて10000観測まで照合する。超過時はE_LIMIT_DNS_OBSERVATIONSと途中結果を返す。
 孤立応答の最大RSSとJSONサイズは[修正前後の計測記録](pcap_analyzer/docs/dns_observation_limit.md)を参照。
-IEEE 802.3のフレームは未対応として集計を継続する。caplenがwirelenを超えるPCAPレコードはE_RECORD_LENGTHで停止し、先行レコードだけを集計する。
+IEEE 802.3のフレームは未対応として分類し、集計を続ける。
+`caplen` はPCAPに保存したフレームの捕捉長、`wirelen` は記録上の元のフレーム長を表す。
+レコードの `caplen` が `wirelen` を超えると、解析器はE_RECORD_LENGTHで停止し、それまでに読み取れたレコードだけを集計する。
 
 ## 作業環境
 
@@ -47,13 +52,14 @@ python3.12 -m venv .venv
 .venv/bin/python -m pytest -q
 ```
 
-独立再レビューの新規環境で全465テスト成功。IEEE 802.3混在・予約値境界、レコード長矛盾での正常prefix保持と本文読込前の停止、DNS観測数上限を検証した。
+独立再レビューでは新規環境で全465テストに合格した。IEEE 802.3の混在、予約値の境界、DNS観測数の上限を検証した。
+レコードの長さが矛盾する場合は、その本文を読む前に停止し、それまでの正常なレコードを保持することも確認した。
 DNS名/質問抽出40件とフロー・入力処理等の既存テストも再実行した。
 DNS候補の空payloadの分類変更に合わせ、既存1件の期待をparsedからmalformedへ更新した。
 既存100件は分類・入力制限・時刻等の検査を維持し、版変更に伴う期待を更新。
 フローの正常系・方向・キー・flags・truncated帰属・除外・上限・決定性・Schemaの53件を追加した。
-生成した14種類の人工fixture、手計算期待値、4種類のmagic/時刻形式、不正なヘッダー、
-分類優先順位、caplen/wirelen、破損レコード、安全上限、Schema、決定性を検証する。
+生成した14種類の人工fixtureを手計算の期待値と照合するほか、4種類のmagic（形式を識別するヘッダー値）と時刻形式、
+不正なヘッダー、分類の優先順位、caplenとwirelen、破損レコード、安全上限、Schemaへの適合、同じ入力で同じ結果を得られることを検証する。
 依存取得（PyPI/Ubuntu配布）とGitHub保存以外の処理はオフライン。ライブ捕捉・送信・スキャン・逆引き・外部照会なし。
 Scapyの経路/インターフェース自動読込をプロセス内で無効化し、socket生成禁止下でも解析をテストする。
 `.venv`、cache、egg-info等はGit対象外。人工PCAPと期待値は再現用成果物として保持する。
@@ -89,7 +95,7 @@ done
 .venv/bin/python -m pytest -q
 ```
 
-`diff`は出力なしが一致。pytestは保存版14ファイルのJSON CLI出力を既存の手定義期待値とSchemaで照合する。
+`diff` に出力がなければ生成版と保存版は一致している。pytestでは保存版14ファイルをCLIで解析し、JSON出力を手計算で定義した期待値とSchemaに照らす。
 生成版と保存版はバイト単位で比較しており、既存fixtureと期待値は上書きしない。
 
 | 入力 | 表示で確認する結果 |
@@ -117,10 +123,9 @@ fixtureを生成し直して期待値を上書きする手順は追加しない�
 導入時は343件がローカル/ホスト双方で成功し、actionlint 1.7.12で静的検証済み。
 DNS統合後は370件、Phase 2受入追加後は386件、比較ハーネス追加後は406件、入力異常比較追加後は421件、DNS比較追加後はローカル442件成功。
 TShark実体の14保存fixture比較とDNS4ケース比較はローカル明示実行。
-通常CIは保存した参照行の再生とハーネスを検証し、TShark実体を導入・起動しない。
-ホスト結果は各commitの実行一覧で確認する。
-GitHubホスト上の実行結果は[Actions実行一覧](https://github.com/kenobix/Claude_practice/actions/workflows/pcap-analyzer-tests.yml)で確認する。
-CIの成功だけでTShark比較や性能測定の完了とはしない。Phase 2の判定根拠は下記の受入記録を参照。
+通常のCIは保存済みの参照データを使って比較スクリプトを検証する。TShark本体のインストールや起動は含まない。
+各コミットのCI結果は[Actions実行一覧](https://github.com/kenobix/Claude_practice/actions/workflows/pcap-analyzer-tests.yml)で確認できる。
+TShark本体との比較と性能測定は、それぞれの実行結果を確認する。Phase 2の判定根拠は下記の受入記録を参照。
 
 ## CLI
 
@@ -147,16 +152,17 @@ CIの成功だけでTShark比較や性能測定の完了とはしない。Phase 
 基本例の結果は10パケット、捕捉680 bytes、記録上の元長680 bytes、TCP4件、UDP6件、
 全件parsed、観測時刻1700000000000000000〜1700000008000000000 ns（幅8秒、元精度µs）。
 PCAP自体のサイズ864 bytesにはコンテナヘッダーも含む。
-`parsed`は対応ヘッダーと、対象UDP port 53ならDNS構造の検査成功を意味する。
-全RDATAの意味、名前解決の成功や問い合わせ/応答の対応は保証しない。
+`parsed` は対応するヘッダーを検査できたことを表す。対象のUDP port 53ではDNSメッセージの構造検査にも合格したことを表す。
+全RDATAの意味、名前解決の成功、問い合わせと応答の対応までは保証しない。
 
 JSONの`classification_indices`にファイル順・1始まりの根拠番号を保存する。
 `flows`に双方向の集計を出力する。DNS構造エラーは既存の分類/diagnosticsに番号付きで出力する。
 `dns.status`は入力処理に合わせcomplete/partial、`time_analysis`はenabled/disabled_timestamp_regression。
 `events`へmatched/ambiguous/additional_response/unmatched_response/no_response_observed/window_incompleteを出す。
-baselineはquery4→response5の25ms、query6の未応答観測、query7,8/response9の曖昧判定となる。
-時刻逆行では確定済みを含め全DNSイベントを破棄し、状態件数をnullにする。query/response件数は維持する。
-入力途中で停止した場合は処理済み範囲の結果だけであり、未読末尾の時刻整合性を保証しない。
+baselineではquery4→response5の観測時間は25msとなる。query6に対する応答は窓内で観測されず、query7,8はどちらがresponse9に対応するかを決められない。
+照合に使える問い合わせの窓が残っていない応答は、孤立応答として扱う。
+ファイル順に読んだ時刻が前に戻ると、確定済みのものも含めて全DNSイベントを破棄し、状態件数をnullにする。問い合わせと応答の件数は残す。
+途中で停止した結果は読み取れた範囲に限られ、未読部分まで時刻に矛盾がないことは保証しない。
 
 | 終了コード | 意味 / 出力 |
 |---|---|
@@ -164,8 +170,9 @@ baselineはquery4→response5の25ms、query6の未応答観測、query7,8/respo
 | 2 | 入力/形式/読込/上限エラー。不正グローバルヘッダー・サイズ超過はstdout空、stderr診断 |
 | 2 | 読込開始後の不完全レコード・上限はcomplete=falseの途中出力とstderr診断 |
 
-有効ヘッダーのみのpcapは正常0件、空ファイルは形式エラー。
-捕捉された完全レコードのcaplen<wirelenはtruncated、ファイル本文が宣言caplenに届かない場合は入力不完全。
+有効なヘッダーだけのpcapは正常に終了し、件数は0件となる。空ファイルは形式エラーになる。
+レコードの本文を宣言された長さまで読めて `caplen<wirelen` なら、捕捉不足としてtruncatedに分類する。
+ファイル内の本文が宣言されたcaplenより短い場合は、入力ファイル自体が不完全と判断する。
 無効なfractionはmalformedとし時刻範囲から除外、timestamp_invalid_countに数える。
 
 | 安全上限 | 既定値・引上げ不可の最大値 | 小さくするオプション |
@@ -183,8 +190,8 @@ baselineはquery4→response5の25ms、query6の未応答観測、query7,8/respo
 
 ## フローの意味と整合性
 
-キーは(protocol番号、IPv4 bytes/portで昇順に固定した端点a/b)。最初の観測方向に依存しない。
-同じIP同士はportで比較し、両端点が完全に同じ場合はa_to_bへ加算する。
+フローキーはプロトコル番号と端点a、bから作る。端点はIPv4アドレスのバイト列の昇順に並べ、IPアドレスが同じならポート番号で並べる。
+最初の観測方向には依存しない。両端点が完全に同じ場合はa_to_bへ加算する。
 方向ごとにpackets/captured_bytes/original_bytes/packet_indicesを保持する。
 TCP flagsはF/S/R/P/A/U/E/C/Nを独立に計数し、SYN+ACKはSとAへ各1。UDPのflagsはnull。
 同じ両端点の集計であり、単一TCP接続や一意のアプリケーション通信量とは呼ばない。
@@ -193,8 +200,8 @@ TCP flagsはF/S/R/P/A/U/E/C/Nを独立に計数し、SYN+ACKはSとAへ各1。UD
 53001で72/0 bytes、53002で144/88 bytes。方向別合計680 bytes + 未帰属0 bytes = 全捕捉680 bytes。
 TCP flagsはS=2、A=3。件数も10+未帰属0=10、元長も680+0=680で一致する。
 
-非fragmentのIPv4 TCP/UDPでヘッダー全体が完全・整合していれば、payload不足のtruncatedも帰属する。
-不正時刻だけでmalformedとなったものも帰属可能。ヘッダー不足・長さ矛盾・fragment・未対応形式は未帰属。
+フラグメント化されていないIPv4 TCP/UDPでは、ヘッダー全体がそろい、内容に矛盾がなければ、ペイロード不足でtruncatedになったパケットもフローに含める。
+時刻だけが不正でmalformedとなったパケットもフローに含められる。ヘッダー不足、長さ矛盾、フラグメント、未対応形式はフローに割り当てない。
 全分類は従来どおり維持する。summaryの未帰属件数/捕捉長/元長とunattributed_indicesに根拠を残す。
 
 上限を超える新規フローのパケットは全体に計数し、未帰属へ記録してE_LIMIT_FLOWSで停止する。
@@ -332,7 +339,8 @@ DNS名/質問抽出・RR構造検査とpacket分類/CLI診断への統合は実�
 照合キー/向き判定・窓処理・DNSイベントのCLI/Schema統合は実装済み。
 フロー集計と端末フロー表は実装済み。
 人工baselineの25ms・未応答観測・重複queryはCLI出力も手計算一致を確認。
-TShark比較は14保存fixtureの共通項目/入力異常とDNS4ケースまで。DNS名表示は通常ASCIIラベルの共通部分に限定。
+TSharkとの比較対象は保存済みの14 fixtureで共通に読める項目や入力異常の扱いと、DNSの4ケースに限る。
+DNS名の表示を比べるのは、通常のASCIIラベルで両者の表示を照合できる範囲に限る。
 多数フローを含む入力全体の上限付近の性能、実通信、別OS・Python 3.12以外、VS Code GUIは未検証。
 捕捉長と記録上の元長を回線上の実転送量と呼ばず、観測不足を障害や攻撃と断定しない。
 

@@ -3,7 +3,7 @@
 確認日: 2026-11-17（Asia/Tokyo）。対象: schema 0.4.0 / tool 0.3.0。
 元計画: [Phase 2: フローとDNS照合](../../../261014/plan_pcap_analyzer.md)。
 判定: **Phase 2完了**。この文書の人工入力・対応範囲で受入条件を確認した。
-TSharkによる独立比較はPhase 3、性能/メモリ計測・デモはPhase 4であり、MVP全体は未完成。
+この確認の時点ではMVP全体は未完成だった。TSharkによる独立比較はPhase 3、性能とメモリの計測およびデモはPhase 4の範囲とした。
 
 ## 受入条件と証拠
 
@@ -11,7 +11,7 @@ TSharkによる独立比較はPhase 3、性能/メモリ計測・デモはPhase 
 |---|---|---|
 | 双方向通信量・TCP flags | baseline 10件/680 bytes/4 flows、SYN+ACKをS/A両方へ計数。混在例でも方向別・未帰属の件数/捕捉長/元長が一致 | [flow tests](../tests/test_flows.py)、[CLI受入試験](../tests/test_phase2_acceptance.py) |
 | 同じDNS IDの混同を防ぐ | ID=7の6問い合わせを同時保持。port、名前、QTYPE、QCLASS、bytesラベルを分け、応答を逆順で捕捉。ASCII大文字/小文字は対応させる | CLI受入試験のcollision例、[key tests](../tests/test_dns_keys.py) |
-| 応答順序・再利用を成功と混同しない | 問い合わせ前の応答は孤立、5秒窓外の応答で過去を修復しない。期限後の同一キーは別問い合わせとして照合 | CLI受入試験の混在例、[window tests](../tests/test_dns_windows.py) |
+| 応答順序・再利用を成功と混同しない | 問い合わせより先の応答は孤立応答とする。5秒の窓を過ぎて応答が届いても、以前の照合結果は変更しない。期限後に同一キーが現れたら別の問い合わせとして照合する | CLI受入試験の混在例、[window tests](../tests/test_dns_windows.py) |
 | 終端・曖昧さ・追加応答 | baseline query6は未応答観測、query7,8は曖昧。窓端の前/ちょうど/1ns後、完了後query再利用、追加応答リンク、RCODE/TC | [report tests](../tests/test_dns_report.py)、window tests |
 | fragment・truncated・malformedを成功応答にしない | 正しい応答に似た3種類のパケットを混在。fragmentはフローから除外、payload切詰め/不正DNSは確認済みフローへ帰属しDNS照合から除外 | CLI受入試験の混在例、[packet tests](../tests/test_dns_packets.py) |
 | 時刻逆行・整数精度 | backward fixtureは対象件数を維持して時間結果を無効化。窓閉鎖後に逆行しても既出の結果を破棄。ns/usの元精度と整数nsを維持 | 14 fixtureのCLI確認、report tests、[Phase 1 tests](../tests/test_phase1.py) |
@@ -41,9 +41,9 @@ TSharkによる独立比較はPhase 3、性能/メモリ計測・デモはPhase 
 
 ## 追加の混在人工入力
 
-PCAPはテスト内の固定文書用IP・固定時刻から一時ディレクトリへ合成する。
-DNS bytesはstructで組み立て、Scapyや解析器のDNSキー生成から期待値を作らない。
-IP/TCP/UDPの共通wire helperは既存の手組みfixture helperを再利用する。
+テストでは固定の文書用IPアドレスと時刻を使い、一時ディレクトリに人工PCAPを生成する。
+DNSのバイト列はstructで組み立てる。期待値はScapyの出力や解析器が生成するDNSキーから作らない。
+IP/TCP/UDPのバイト列を組み立てる処理には、既存の人工fixture用の補助関数を再利用する。
 ns間隔は整数変換を検証するための人工値であり、実ネットワークの測定値ではない。
 
 同一ID例は6 queryと逆順6 response。query1→response12からquery6→response7までを
@@ -70,7 +70,7 @@ TCP 108 bytes + UDP 407 bytes + 未帰属61 bytes = 全捕捉576 bytes。
 
 ## 実行と完了判定の範囲
 
-worktreeルートから:
+worktreeのルートで次のコマンドを実行する。
 
 ```bash
 261119/pcap_analyzer/.venv/bin/python -m pytest -q 261119/pcap_analyzer/tests/test_phase2_acceptance.py
@@ -79,13 +79,13 @@ worktreeルートから:
 
 受入試験16件成功（既存14 fixture + 混在2例）。全体結果はREADME/work_logに記録する。
 新たな解析機能・仕様緩和・依存追加はない。既存の安全上限、逐次読込、時刻精度、JSON契約は維持する。
-この検証は全実通信の正しさや未知RDATAの意味を保証せず、観測不足を障害/攻撃と断定しない。
+この検証範囲からはあらゆる実通信を正しく解析できるか、未知のRDATAが何を意味するかは判断できない。観測不足を根拠に障害や攻撃と断定しない。
 
 ## 次の単位: Phase 3
 
-TSharkは現在の環境で未導入（command -vで確認）。今回は導入も実行も行っていない。
+受入確認時の環境ではTSharkが未導入だった（command -vで確認）。この段階ではTSharkの導入も実行も行っていない。
 次はOS/他プロジェクトを変更しない実行環境の選択から始め、版・設定・フィルター・実行コマンドを記録する。
 比較対象は同一人工fixtureのframe番号、captured/original長、元精度に応じた整数時刻、IPv4端点、
 protocol、port、TCP flags等の共通に定義できる項目とする。
 fragment/切詰め/不正入力では比較できる範囲と拒否の違いを説明し、独自DNS窓状態まで同じとは仮定しない。
-独立比較・性能測定・デモは、このPhase 2完了判定とは別の未完了事項である。
+このPhase 2の完了判定には独立比較、性能測定、デモを含めておらず、いずれも当時は未完了だった。

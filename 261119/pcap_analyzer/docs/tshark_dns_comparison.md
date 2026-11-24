@@ -2,7 +2,7 @@
 
 2026-11-17、Ubuntu 24.04 amd64 / Python 3.12.3 / TShark 4.2.2（4.2.2-1.1build3）。
 環境は[既存の専用.venv展開手順](tshark_comparison.md)を使用し、追加インストール・OS変更なし。
-今回の単位はPhase 3に残るDNS共通項目・一意な応答時間と、独自窓規則との相違の検証。
+Phase 3の残りとして、両ツールで読み取れるDNS項目と一意に照合できた応答の時間を比較した。解析器固有の照合窓の規則から生じる相違も確認した。
 解析本体・Schema/ツール版・入力制限・対応形式・保存fixture14件は変更しない。
 
 ## コマンド・条件
@@ -32,9 +32,9 @@
   -e dns.response_to -e dns.response_in -e dns.time
 ```
 
-フィールドは[公式DNS reference](https://www.wireshark.org/docs/dfref/d/dns.html)を確認し、
-4.2.2実体の出力で検証した。DNSは将来フレームへの参照`response_in`も確認するため2 pass。
-従来のフレーム/入力異常比較は1 passのまま。filterは未指定、名前解決は`-n`で無効化。
+フィールドは[公式DNS reference](https://www.wireshark.org/docs/dfref/d/dns.html)で確認し、TShark本体（4.2.2）の出力で検証した。
+DNS比較では後続の応答フレームを指す`response_in`も確認するため2 passで処理する。従来のフレームと入力異常の比較は1 passのままとした。
+フィルターは指定せず、名前解決は`-n`で無効にした。
 空のconfig/plugin/extcap、一式展開したdata/library、`LC_ALL=C`と`TZ=UTC`を使う。
 継承した`WIRESHARK_*`設定を除く。スクリプト終了は0=期待どおり、1=未説明差分、2=実行/抽出/Schema異常。
 非0終了、stderrの警告、timeoutを成功扱いしない。
@@ -61,7 +61,7 @@
 
 metadataは70×10+69+44=813 captured、70×11+44=814 original bytes。
 parsed9/unsupported1/truncated1/malformed1、DNS query4/response5。
-TC=1はDNS応答の打切りflagであり、pcapの捕捉不足と別。完全なTC付きDNSはparsedとして照合する。
+TC=1はDNS応答自体が打ち切られたことを示すフラグで、pcapにフレームの一部しか保存されていない捕捉不足とは区別する。完全に捕捉されたTC付きDNSはparsedとして照合する。
 
 | late_reuseの番号 | 時刻offset(ns) | 内容 |
 |---|---:|---|
@@ -75,9 +75,9 @@ late_reuseは70×7+42=532 captured/original bytes、全8件parsed、DNS query4/r
 
 ## 一致と説明した相違
 
-DNS対象24観測（query13/response11）について、IP/port、ID、QR、質問名/type/class、TC、応答RCODEを照合。
-各frame番号と整数ns時刻も照合した。質問名の比較はこの固定レシピの通常ASCIIラベルへ限定し、
-大小文字を正規化。TSharkの表示文字列から製品のbytesラベルキーを再構成しない。
+DNS対象の24観測（query13/response11）で、IPとポート、ID、QR、質問名とtype・class、TC、応答RCODEを照合した。
+各フレーム番号と整数nsの時刻も照合した。質問名の比較ではこの固定レシピにある通常のASCIIラベルだけを対象とし、大文字と小文字を正規化した。
+TSharkの表示文字列から解析器のバイト列ラベルのキーは再構成しない。
 非ASCII・ラベル内dot/backslash・root-only等の表示形式をTSharkと同一視したとはしない。
 
 一意にmatchedな5ペアの`response_to`/`response_in`と時間が一致した。
@@ -97,7 +97,7 @@ decimal秒は符号付き整数nsへ変換し、floatを経由しない。生成
 
 RCODE3のNXDOMAINも25msの応答であり、名前解決成功と混同しない。
 6状態すべての根拠・時間null条件は手定義期待値と一致。独自状態をTShark分類へ無理に対応させない。
-報告JSONは現行Schemaで検証。CIは保存したTShark行の再生とハーネス試験で、実体の検証はローカル明示実行。
+報告JSONは現行Schemaで検証した。CIでは保存したTSharkの出力行を使い、比較スクリプトを検証する。TShark本体での比較はローカルで明示的に実行した。
 全442テスト成功（30.39秒、既存421+DNS比較21）。誤ったDNS field/時間/参照、状態の取り違え、
 欠けた出力、出力形式異常、限定外の表示名、実行失敗/警告/timeout、CLI終了0/1/2も検証。pip check成功。
 他のTShark版・全RDATA意味・全DNS名表示・実通信の正しさを保証する結果ではない。
@@ -111,6 +111,6 @@ RCODE3のNXDOMAINも25msの応答であり、名前解決成功と混同しな�
 | 異常系の差と独自DNS状態の相違を説明 | 入力異常6種と上表、4 DNSケースの結果JSON・手定義期待値 |
 | 未説明差を残さない | 両スクリプトの比較対象で未説明差分0 |
 
-指定した人工fixtureと対応範囲でPhase 3完了と判定する。MVP全体は未完成。
+指定した人工fixtureと対応範囲でPhase 3の完了と判定した。この時点ではMVP全体は未完成だった。
 次はPhase 4の固定規模人工入力による処理時間・最大メモリ・解析状態割合の実測と、再現手順・3分デモ/動画。
 この単位では性能測定やデモを実施しない。MVP全受入後は独立レビューと完成判定を提案する。

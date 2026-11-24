@@ -1,10 +1,10 @@
 # 人工fixtureの設計と手計算
 
-期待値は[expected/fixtures.json](../expected/fixtures.json)。実装の出力から作り直さない。
-生成は[scripts/generate_fixtures.py](../scripts/generate_fixtures.py)。socketを開かずファイルだけを合成する。
-IPは192.0.2.1 / 198.51.100.53、A回答203.0.113.7、ローカルMAC、DNS名example.test。
-基準秒1700000000、IPv4/TCP optionsなし、Ethernet padding/FCSなし。短いフレームもfixture上は保持する。
-PCAPコンテナはstructで組み、L2/L3/L4 bytesはScapy。DNS payloadは固定bytes/struct。
+期待値は[expected/fixtures.json](../expected/fixtures.json)に記録する。実装の出力から作り直さない。
+[scripts/generate_fixtures.py](../scripts/generate_fixtures.py)はsocketを開かず、テスト用の人工入力（fixture）をファイルとして生成する。
+IPアドレスは192.0.2.1と198.51.100.53、DNSのA応答は203.0.113.7とする。ローカルMACを使い、DNS名はexample.testとする。
+時刻の基準は1700000000秒。IPv4とTCPのオプション、EthernetのパディングとFCSは付けず、短いフレームもfixtureにそのまま保存する。
+PCAPコンテナはstructで組み立て、L2/L3/L4のバイト列はScapyで生成する。DNSペイロードには固定のバイト列とstructを使う。
 
 ## 基本例 baseline.pcap
 
@@ -27,8 +27,9 @@ UDP queryは14+20+8+30=72、responseは圧縮A回答16を加え88 bytes。
 
 10件、54×4+72×4+88×2=680 captured/original bytes。
 コンテナ全体は24+16×10+680=864 bytes。時刻範囲8秒、全件parsedがPhase 1目標。
-フロー4本、TCP方向別2件108 bytes。DNS成功1グループ(#4/#5)=25ms、
-未応答1(#6、5秒窓を終端まで観測)、ambiguous1(#7/#8/#9)=時間null。
+フローは4本で、TCPは各方向に2件、108 bytesずつある。
+DNSでは一意に照合できる1グループ（#4/#5）の観測時間が25msとなる。未応答の観測は1グループ（#6、5秒の窓を終端まで観測）。
+ambiguousは1グループ（#7/#8/#9）で、応答時間はnullとする。
 
 ## 境界例
 
@@ -36,8 +37,8 @@ UDP queryは14+20+8+30=72、responseは圧縮A回答16を加え88 bytes。
 |---|---|
 | header_only.pcap | 24 bytes、正常0件 |
 | empty.pcap | 0 bytes、E_FORMAT |
-| capture_truncated.pcap | 完全レコードだがcaplen40/wirelen54、truncated、TCPヘッダー不足 |
-| record_cutoff.pcap | 宣言54に実本文40、完全レコード0件、E_RECORD_DATAで不完全 |
+| capture_truncated.pcap | レコード自体は完全。caplen40/wirelen54でTCPヘッダーの一部が未捕捉のため `truncated` |
+| record_cutoff.pcap | 本文は宣言された54に対して40しかない。完全レコード0件、E_RECORD_DATAで入力不完全 |
 | header_cutoff.pcap | レコードヘッダーが8/16 bytes、E_RECORD_HEADER |
 | malformed_length.pcap | 本文55 bytes、caplen55/wirelen54の矛盾。E_RECORD_LENGTHで終了2、完全レコード0件 |
 | unsupported_arp.pcap | 42 bytes、unsupported |
@@ -50,8 +51,8 @@ UDP queryは14+20+8+30=72、responseは圧縮A回答16を加え88 bytes。
 
 Phase 0では生成の決定性、コンテナbytes・メタデータ、Scapy復号、手計算との一致を確認した。
 Phase 1では上表の入力検査・分類・集計・整数時刻・エラー終了も解析器で確認済み。
-現在はDNS照合も実装済み。独立レビュー後の修正では、保存fixtureのバイト列を維持し、
-malformed_lengthの受入期待値をレコード破損として更新した。IEEE 802.3混在例はテスト内で生成する。
+現在はDNS照合も実装済み。独立レビュー後の修正では保存fixtureのバイト列を維持した。
+malformed_lengthの受入期待値は、レコード破損として扱うよう更新した。IEEE 802.3混在例はテスト内で生成する。
 [Phase 1の全体期待値](../expected/baseline.phase1.json)は手計算から定義し、
 解析コードや生成スクリプトはこのファイルを上書きしない。
 
@@ -63,7 +64,7 @@ DNS窓ちょうど5秒/超過、同ID別名/port/type/class、大小文字/非AS
 NXDOMAIN/TC、完了後query再利用、additional/unmatched_response、window_incomplete。
 現時点でこれらのうちPhase 1の形式・ヘッダー・上限の境界は、追加機能テスト内で
 独立したbytes/structから合成して検証済み。保存fixtureは引き続き14ファイルである。
-DNS照合の解析挙動・性能は検証していない。
+この段階ではDNS照合の挙動と性能は検証していない。
 
 ## Phase 2前半の検証
 
@@ -72,5 +73,5 @@ DNS照合の解析挙動・性能は検証していない。
 TCPフラグS=2/A=3、全方向680 captured/original bytes、未帰属0。
 追加の一時fixtureはtests/test_flows.py内で固定bytes/structから生成し、
 IPバイト順・同一IP/port・各キー成分・UDP・9 flags・truncated・除外・途中停止を確認する。
-フロー数の停止境界は設定を1/2本に縮小して検証し、100000という既定値/設定上限も別に確認した。
-10万本を実際に保持する負荷試験は未実施。DNS照合の期待値は未実装のまま。
+フロー数の上限で停止することは、設定を1本、2本に引き下げて検証した。既定値であり設定上限でもある100000は別に確認した。
+10万本を実際に保持する負荷試験は未実施。この段階ではDNS照合の期待値を検証する実装もなかった。
