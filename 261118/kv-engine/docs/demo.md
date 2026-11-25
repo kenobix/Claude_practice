@@ -12,8 +12,8 @@ make build
 make demo
 ```
 
-デモは既存DBを引数として受け取らない。Pythonの専用TemporaryDirectory、Goテストのt.TempDirに人工データを作る。
-明示した一時親で実行し、記録を残す場合は次のようにする。
+デモは既存DBを引数として受け取らない。PythonのTemporaryDirectoryとGoテストのt.TempDirを使い、それぞれ専用の一時領域に人工データを作る。
+一時領域の親ディレクトリを指定し、実行記録を残す場合は次のように実行する。
 
 ```sh
 demo_parent=$(mktemp -d)
@@ -43,7 +43,7 @@ JSON Linesの各eventを説明しながら、CLIのexit・応答・復旧結果�
 | 3:00〜4:00 | corrupt: CRC破損fixtureのinspect→GETを2回 | offset=16/valid_bytes=16、record_count=0、exit 5、91 B全体不変。後続DELETEを黙って採用しない |
 | 4:00〜5:00 | 最後のdemo_passと保証条件を説明 | scenarios=3/cleanup=true/power_loss_verified=false。成功応答と電源断保証を区別 |
 
-停止ハーネスとfixtureのDBは別物。partial_bodyで停止させたDBを製品CLIへ渡したようには説明しない。
+停止試験とfixtureには別々のDBを使う。partial_bodyで停止させたDBを製品CLIに渡す手順は含まない。
 [既存ハーネス](../internal/engine/crash_linux_test.go)は製品engineの実FDを包むテスト実行ファイルで、
 親が停止通知を受けてSIGKILLする。製品CLIへの障害flag追加や、sleepで停止位置を推測する処理はない。
 公開fixtureは[固定hex](../tests/fixtures.md)のコピーであり、その場でプロセスを止めて生成したログではない。

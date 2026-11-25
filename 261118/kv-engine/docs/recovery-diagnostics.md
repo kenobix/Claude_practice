@@ -1,21 +1,21 @@
 # 復旧前診断の出力完了条件
 
-段階3の受入条件照合中に、診断出力の短いwriteを見逃す問題を検出した。
-`json.Encoder.Encode`はWriteのerrorを調べるが、nil errorと短いバイト数を返すWriterを拒否しない。
-修正前は診断が0バイト/一部だけでもOpenが成功し、64バイトのログを54バイトへ切り戻していた。
-これは「診断失敗なら変更しない」という[既存契約](durability.md)に合わないため、完了判定より先に修正した。
+段階3の受入条件を照合した際に、診断出力が途中で終わっても検出できない問題が見つかった。
+`json.Encoder.Encode`はWriteが返すerrorを調べるが、書き込みが一部だけでも、Writerがnil errorを返せば拒否しない。
+修正前は、診断の出力が0バイトまたは一部だけでも、Openが64バイトのログを54バイトに切り詰めて成功していた。
+「診断失敗なら変更しない」という[既存契約](durability.md)に合わないため、段階3の完了判定より先に修正した。
 
 ## 判定と処理順序
 
-`tail_truncate_planned`イベント全体をJSONへ変換し、LFを付けて診断Writerへ一度だけ渡す。
-errorがなく、返却バイト数がイベント全長と等しい場合にのみ、Truncate→File.Syncへ進む。
-短いwrite/nilは`io.ErrShortWrite`、Writerが返したerrorは元の原因を保持してラップする。
-全バイト受理後でもerrorが返れば失敗とし、追記や再送で診断の重複・継続を試みない。
-失敗時はDB=nilでOpenを終了し、ログFDとLOCKを解放する。
+`tail_truncate_planned`イベント全体をJSONに変換し、LFを付けて診断Writerへ一度だけ書き込む。
+errorがなく、返された書き込みバイト数がLFを含む全長と一致した場合に限り、Truncate、File.Syncの順に進む。
+書き込みが短くerrorがnilなら`io.ErrShortWrite`とする。Writerがerrorを返した場合は、元の原因を保持したままラップする。
+全バイトが受理されても、errorが返れば失敗として扱う。残りの追記やイベントの再送による診断出力の継続は試みない。
+診断に失敗した場合、OpenはDB=nilで終了し、ログFDとLOCKを解放する。
 
 イベント名、field、JSONエスケープ規則、末尾LFは既存と同じ。ログ形式v1とfixtureの変更もない。
 短いwrite/nilはio.Writer契約違反の注入だが、復旧による変更に先立って明示的に拒否する。
-Writerの全長受理は診断先の永続化・fsyncを意味せず、診断の保存保証を追加したものではない。
+Writerが全バイトを受理しても、診断先の永続化やfsyncを確認したことにはならない。診断の保存保証は追加していない。
 
 ## 回帰試験
 

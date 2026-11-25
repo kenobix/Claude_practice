@@ -18,8 +18,8 @@
 ## 試験と観測
 
 全DBはt.TempDir内の人工データ。基本状態はtarget=old、keep=00 ff 01、empty=空値の3操作。
-実FDのSync/ReadAt/Close内部でchannelを使って待機し、5秒の待合せ期限とcleanupで解除する。
-時間待ちで順序を推測しない。入出力回数・Close回数はatomic counterで記録する。
+実FDのSync、ReadAt、Closeの内部でチャネルを使って待機させる。待ち合わせには5秒の期限を設け、cleanupで待機を解除する。
+経過時間から順序を推測しない。入出力とCloseの回数はアトミックなカウンターで記録する。
 
 | 試験 | ケース数 | 判定 |
 |---|---:|---|
@@ -39,7 +39,7 @@ LOCK自体のCloseエラーや、FDが閉じられない仮想的な失敗の模
 
 同時開始では基本状態に16キーのPUTを追加し、19操作を成功済みにする。
 16 PUT、16 DELETE、16 GET、16 Inspect、8 Closeを同時開始し、成功またはErrClosedだけを許容する。
-成功更新を返却sequenceで並べ、19の次から欠番・重複なく続くことを確認する。
+成功した更新を返されたsequenceの順に並べ、19の次から欠番も重複もなく続くことを確認する。
 テスト側の独立した辞書へ成功更新だけを適用し、全候補キー・不存在・live_keys・最新sequenceを再Open結果と照合する。
 Inspectの成功結果は、そのsequenceまでの成功履歴から算出したPUT/DELETE件数とlive_keysに一致する。
 Getは他の操作が変えないkeepの全バイトを返す。すべてのClose終了後は実FD閉鎖とflock再取得を確認する。

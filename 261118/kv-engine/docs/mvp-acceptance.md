@@ -49,15 +49,15 @@ stateDiagram-v2
     Closed --> [*]: log FD→LOCK FDの順に閉鎖
 ```
 
-通常Openで新規ログを作る場合は、完全なファイルheaderのwriteとFile.Syncも必要。
-CLIの応答はAPI成功後のClose成功→stdout全長受理→exit 0。
-同期後のClose/出力失敗や応答前停止でも、更新全体が再Openで見え得る。
-inspectは別の読み取り専用走査であり、上図の修復経路を通らない。
+通常のOpenで新規ログを作るには、ファイルヘッダーの全バイトを書き込み、File.Syncを成功させる必要もある。
+APIが成功を返すと、CLIはCloseを実行する。Closeが成功し、標準出力に成功応答の全バイトを書き込めたらexit 0で終了する。
+同期後にCloseや出力が失敗した場合や、応答前にプロセスが停止した場合も、再Open時に更新全体が見えることがある。
+inspectは別の読み取り専用走査を使うため、上図の修復経路を通らない。
 
 ## 管理対象ソースからの再現手順
 
-これは別worktreeを作らず、`git archive`で専用一時領域にソースだけを展開する手順。
-通常DB、既存toolchain、Goキャッシュ、未追跡ファイル、Gitメタデータを持ち込まない。
+別のworktreeは作らず、`git archive`でソースだけを専用の一時領域に展開する。
+普段使うDB、既存のツールチェーン、Goキャッシュ、未追跡ファイル、Gitのメタデータは持ち込まない。
 Linux x86_64/ext4、Python 3、gcc、GNU Make、sh/curl/tar/sha256sumなどのOS側ツールは必要。
 ネットワークは公式Goアーカイブ取得時だけ必要で、Go moduleの外部依存はない。
 
