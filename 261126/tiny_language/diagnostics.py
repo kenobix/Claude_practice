@@ -23,7 +23,11 @@ class DiagnosticError(Exception):
 
     @property
     def exit_code(self) -> int:
-        return 4 if self.phase == "internal" else 2
+        if self.phase == "runtime":
+            return 3
+        if self.phase == "internal":
+            return 4
+        return 2
 
     def as_dict(self) -> dict[str, object]:
         position = (

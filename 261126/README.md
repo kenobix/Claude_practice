@@ -2,7 +2,7 @@
 
 整数と真偽値を持つ小さな言語を作ります。同じプログラムを構文木（AST）の直接評価とスタック型VMで実行し、標準出力と診断を比較します。 [元計画](../261014/plan_language_vm.md)
 
-Phase 0で文法、実行規則、資源上限、診断、例の期待値を確定しました。Phase 1では位置付きの字句解析と構文解析を実装し、CLIでトークンとASTを確認できるようにしました。
+Phase 0で言語仕様と期待値を定め、Phase 1で位置付きの字句解析と構文解析を実装しました。Phase 2では名前を解決して型を検査し、AST評価器でプログラムを実行できるようにしました。
 
 - [言語仕様と処理系の構成](docs/language_spec.md)
 - [実行例の読み方と受入条件](docs/acceptance.md)
@@ -17,6 +17,7 @@ Phase 0で文法、実行規則、資源上限、診断、例の期待値を確�
 cd 261126
 python3 -m tiny_language --tokens examples/arithmetic.tiny
 python3 -m tiny_language --ast examples/arithmetic.tiny
+python3 -m tiny_language run --engine ast examples/sum_loop.tiny
 python3 -B -m unittest discover -s tests -v
 ```
 
@@ -24,4 +25,6 @@ python3 -B -m unittest discover -s tests -v
 
 どちらのオプションも入力エラーと字句エラーを検出し、`--ast` は構文エラーも検出します。該当するエラーでは標準エラー出力にJSONの診断を1件出し、終了コードは2です。診断位置は1始まりの行・列と、0始まりで終端を含まないUTF-8バイト範囲です。 [Phase 1の受入記録](docs/acceptance.md#phase-1の受入記録)
 
-Phase 2では名前解決、型検査、AST評価と `run --engine ast PATH` を実装します。
+`run --engine ast PATH` はプログラム全体の名前解決と型検査を終えてから実行します。上の合計例は `15` と `6` を1行ずつ出力します。実行前エラーでは標準出力は空で、終了コードは2です。実行時エラーでは成功済みの出力を残し、終了コード3を返します。どちらも診断を標準エラー出力に1件書きます。 [Phase 2の受入記録](docs/acceptance.md#phase-2の受入記録)
+
+Phase 3では命令仕様を定め、コンパイラ、スタック型VM、命令の逆アセンブルと実行トレースを実装します。
