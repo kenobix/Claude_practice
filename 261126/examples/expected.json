@@ -1,0 +1,83 @@
+{
+  "arithmetic.tiny": {
+    "stdout": "7\n9\n12\n5\n-3\n2\n-3\n-2\n2\n-1\n9\n2\n",
+    "exit_code": 0,
+    "diagnostic": null
+  },
+  "branch.tiny": {
+    "stdout": "true\ntrue\nfalse\n",
+    "exit_code": 0,
+    "diagnostic": null
+  },
+  "shadowing.tiny": {
+    "stdout": "1\ntrue\nfalse\n2\n",
+    "exit_code": 0,
+    "diagnostic": null
+  },
+  "sum_loop.tiny": {
+    "stdout": "15\n6\n",
+    "exit_code": 0,
+    "diagnostic": null
+  },
+  "lex_character.tiny": {
+    "stdout": "",
+    "exit_code": 2,
+    "diagnostic": {"code": "E_LEX", "phase": "lex", "line": 2, "column": 8, "span": [20, 23]}
+  },
+  "parse_chain.tiny": {
+    "stdout": "",
+    "exit_code": 2,
+    "diagnostic": {"code": "E_PARSE", "phase": "parse", "line": 1, "column": 13, "span": [12, 13]}
+  },
+  "parse_eof.tiny": {
+    "stdout": "",
+    "exit_code": 2,
+    "diagnostic": {"code": "E_PARSE", "phase": "parse", "line": 2, "column": 1, "span": [13, 13]}
+  },
+  "redeclaration.tiny": {
+    "stdout": "",
+    "exit_code": 2,
+    "diagnostic": {"code": "E_REDECLARATION", "phase": "resolve", "line": 2, "column": 5, "span": [20, 21]}
+  },
+  "self_reference.tiny": {
+    "stdout": "",
+    "exit_code": 2,
+    "diagnostic": {"code": "E_SELF_REFERENCE", "phase": "resolve", "line": 3, "column": 16, "span": [33, 34]}
+  },
+  "undefined.tiny": {
+    "stdout": "",
+    "exit_code": 2,
+    "diagnostic": {"code": "E_UNDEFINED", "phase": "resolve", "line": 2, "column": 7, "span": [15, 16]}
+  },
+  "type_condition.tiny": {
+    "stdout": "",
+    "exit_code": 2,
+    "diagnostic": {"code": "E_TYPE", "phase": "type", "line": 1, "column": 1, "span": [0, 5]}
+  },
+  "type_dead_branch.tiny": {
+    "stdout": "",
+    "exit_code": 2,
+    "diagnostic": {"code": "E_TYPE", "phase": "type", "line": 3, "column": 14, "span": [35, 36]}
+  },
+  "type_initializer.tiny": {
+    "stdout": "",
+    "exit_code": 2,
+    "diagnostic": {"code": "E_TYPE", "phase": "type", "line": 1, "column": 5, "span": [4, 5]}
+  },
+  "zero_division.tiny": {
+    "stdout": "7\n",
+    "exit_code": 3,
+    "diagnostic": {"code": "E_ZERO_DIVISION", "phase": "runtime", "line": 2, "column": 10, "span": [18, 19]}
+  },
+  "zero_remainder.tiny": {
+    "stdout": "7\n",
+    "exit_code": 3,
+    "diagnostic": {"code": "E_ZERO_DIVISION", "phase": "runtime", "line": 2, "column": 9, "span": [17, 18]}
+  },
+  "step_limit.tiny": {
+    "stdout": "",
+    "exit_code": 3,
+    "diagnostic": {"code": "E_LIMIT", "phase": "runtime"},
+    "ast_position": {"line": 1, "column": 14, "span": [13, 14]}
+  }
+}

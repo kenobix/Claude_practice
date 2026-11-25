@@ -1,0 +1,18 @@
+let ready: bool = 1 < 2 == true;
+if (ready) {
+  print !false;
+} else {
+  print 1 / 0;
+}
+if (false) {
+  print 0;
+} else {
+  print 2 != 3;
+}
+if (false) {
+  print 0;
+}
+while (false) {
+  print 1 / 0;
+}
+print false;

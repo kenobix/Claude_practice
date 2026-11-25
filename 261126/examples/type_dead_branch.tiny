@@ -1,0 +1,4 @@
+print 1;
+if (false) {
+  print true + 1;
+}

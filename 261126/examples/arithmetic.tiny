@@ -1,0 +1,13 @@
+// 優先順位、結合順、負の除算と剰余
+print 1 + 2 * 3;
+print (1 + 2) * 3;
+print 20 / 3 * 2;
+print 10 - 3 - 2;
+print -7 / 3;
+print -7 % 3;
+print 7 / -3;
+print 7 % -3;
+print -7 / -3;
+print -7 % -3;
+print 0009;
+print --2;
