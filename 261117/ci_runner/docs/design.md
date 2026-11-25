@@ -1,11 +1,11 @@
 # P0設計案：ジョブの正本と実行権
 
-P0〜P2は固定fixtureで受入確認済み。[Webhook受付と配送の永続化](webhook.md)、[run取消・手動再試行・試行履歴・成果物・運用指標](run-operations.md)を実装済み。GitHubからの実配送は後続作業。
-実装したHTTP契約と競合・commit前後の障害証拠は[受付API仕様](intake-api.md)を参照。
-[Worker初回取得](worker-claim.md)は履歴なしの許可queuedを取得し、attempt番号1・initial・DB期限30秒を同時commitする。
+固定fixtureでP0〜P2の受入条件を確認した。[Webhook受付と配送の永続化](webhook.md)と、[run取消・手動再試行・試行履歴・成果物・運用指標](run-operations.md)を実装した。GitHubからの実配送はWebhook受付の実装後に検証した。
+HTTPの仕様と、競合時やcommit前後に障害が起きた場合の検証結果は[受付API仕様](intake-api.md)を参照。
+[Worker初回取得](worker-claim.md)では、Worker（ジョブを実行するプロセス）が、許可条件に合う履歴のない待機中のrun（実行記録）を取得する。DBはattempt（試行）の番号1、種別initial、30秒のlease（DB時刻で管理する実行権の期限）を同時にcommitする。tokenは現在の実行権を識別する。
 検証付きWorkerは、[基盤障害の自動再試行](#基盤障害の自動再試行)で再キューされたrunも取得する。
-[実行前DB preflight](execution-preflight.md)は現在の実行権を再確認するsnapshotを返す。固定fixtureの起動前/ガード後にDBを再照合し、実行中はheartbeatと時間・ログ・残leaseを監視する。DB照合と外部起動は別操作。
-計画書のP1/P2/P3/P4にまたがる条件を先に定義する。数値は実験初期値であり保証ではない。
+[実行前DB preflight](execution-preflight.md)は照合時点の実行権を返す。Workerは固定fixtureの起動前とガード後にDBを再照合し、実行中はheartbeat（定期的なleaseの更新）と、実行時間・ログ量・残りのleaseを監視する。DBの照合とコンテナの起動は別々に行う。
+ここでは計画書のP1/P2/P3/P4にまたがる条件を定義する。数値は実験の初期値であり、保証値ではない。
 
 ## MVPの状態遷移
 
@@ -36,9 +36,9 @@ P0〜P2は固定fixtureで受入確認済み。[Webhook受付と配送の永続�
 - heartbeat=5秒、lease=30秒、期限監視=5秒。期限の正本はPostgreSQL時刻。
 - heartbeatと完了報告はrun行を先にロックし、running・現在のrunning attempt/token・期限内を再確認する。期限の更新は失効済みtokenを復活させない。
 - 取消・完了・期限回収も同じrun→attemptのロック順。取消要求を先にcommitしたら成功更新を拒否する。先に完了commitしたら取消は終了済みと返す。
-- 期限監視が失効attemptを閉じた後、ホストごとの回収プロセスが該当コンテナを処理する。再キューには回収確認と再試行予算が必要。
+- 期限監視が失効したattemptを終了した後、ホストごとの回収プロセスが該当するコンテナを回収する。キューに戻すには、作成要求が未送信か回収済みと確認でき、再試行の上限に達していないことが必要。
 - DB断では新規ジョブを開始せず、lease更新の応答が不明なら成功とみなさない。Workerの単調時計watchdogで残存実行を止める。
-- 外部の停止とDB更新は単一transactionにできない。取消は完了確定をまず防止し、実際の停止確認・残存回収を追跡する。
+- コンテナの停止とDB更新は、同じトランザクションでは実行できない。取消時は先に完了報告の確定を防ぎ、その後の停止確認と、残存コンテナの回収を追跡する。
 
 ### Lease更新の実装範囲
 
@@ -70,7 +70,7 @@ PostgreSQLの文開始時刻で候補を選び、期限順にrun行を `FOR UPDA
 取消要求ありなら `canceled / canceled_lease_expired`。それ以外は `failed / infra_lease_expired`、上限の3回目は `failed / infra_exhausted`。
 終了コード・正式attempt参照・ログ・由来を作らず、識別子・token・元の期限は保持する。
 
-MVPの予算内再キューには、旧attemptの資源回収の確認と新attemptの発行が必要。
+MVPでは再試行の上限内で、旧attemptの資源回収を確認する。次にrunを取得するときに、新しいattemptを発行する。
 
 ### 失効attemptのコンテナ回収
 
@@ -94,7 +94,7 @@ migration 006の `attempts.container_recovered_at` にDBの現在時刻とattemp
 権限境界は既存Workerと同じで、コンテナのラベル・名前を設定できるDocker管理主体と、専用DBの書込主体を信頼する。
 回収対象はコンテナ本体。imageタグ、volume、network、build cacheの回収は別途所有権を確認する必要がある。
 
-一覧は取得時点の観測で、応答喪失後に完了するcreateは次の走査で拾う。
+Dockerの一覧は取得時点の状態を示す。応答を失った後にcreateが完了した場合は、次の走査で検出する。
 [作成台帳](#コンテナ作成台帳)に予約があり完全IDが未記録なら、一覧が空でも回収は未確認。
 自動再試行では、この不明状態を保留する。
 
@@ -130,17 +130,16 @@ Dockerが返した完全IDとinspectが一致し、既存の設定検証を通�
 
 ### 基盤障害の自動再試行
 
-期限監視の各走査は、失効確定後に再キューを確認する。許可されたfailed runで、取消要求と正式結果がなく、
-直近のattemptが現在の区間の1回目または2回目で、`infra_lease_expired` で閉じている場合を対象にする。
-作成台帳でcreate未送信を確認できる場合、または同じ完全IDの不在確認が確定済みの場合だけ再キューできる。
+期限監視は各走査で、失効を確定してから、runをキューに戻せるかを確認する。対象は許可条件に合うfailedのrunで、取消要求と正式結果がなく、現在の区間の1回目または2回目のattemptが直近で、`infra_lease_expired` で終了しているもの。
+作成台帳でcreateが未送信だと確認できるか、同じ完全IDのコンテナが存在しないことを確定済みの場合に限り、キューに戻す。
 チェック失敗、タイムアウト、ログ超過、取消、作成の有無が不明な旧記録は自動再試行の対象外。
 
-再キューはrunを `FOR UPDATE OF r SKIP LOCKED` で確保し、直近attemptを読み直して `state` と `available_at` を更新する。
-DBの現在時刻、記録済みのattempt終了と回収の時刻のうち最も遅い時刻から、2回目は5秒、3回目は10秒待つ。再キューのcommit後に `infra_retry_scheduled`、直近attempt ID、次の番号と時刻を出力する。
-commit応答が消失して再走査しても、すでにqueuedのrunの待機時刻は変更しない。
+期限監視はrunを `FOR UPDATE OF r SKIP LOCKED` でロックし、直近のattemptを読み直して `state` と `available_at` を更新する。
+DBの現在時刻、記録済みのattempt終了時刻、回収時刻のうち最も遅い時刻を基準に、2回目は5秒、3回目は10秒後に取得できるようにする。キューに戻すcommitが完了したら、`infra_retry_scheduled`、直近のattempt ID、次のattemptの番号と取得可能時刻を出力する。
+commitの応答を受け取れずに再走査しても、すでにqueuedのrunの取得可能時刻は変えない。
 
-待機時刻に達したrunは、検証付きWorkerが受理SHAから固定sourceを再検証して取得する。
-同一run IDとSHAを指定し、runロック後に直近attemptを読み直して、新しいattempt番号・UUID token・30秒leaseを発行する。
+取得可能時刻に達すると、検証付きWorkerが受理SHAから固定ソースを再検証し、runを取得する。
+Workerは同じrun IDとSHAを指定する。runをロックして直近のattemptを読み直した後、新しいattempt番号、UUIDのtoken、30秒のleaseを発行する。
 再試行は検証済みsourceを持つimageと結果だけを受け付ける。古いattemptの状態やログは保持する。
 診断用 `--claim-once` と検証付き指定のないローカルfixture実行は初回のみ。3回目の失効は `infra_exhausted` で終了し、コンテナは回収対象に残る。
 

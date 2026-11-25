@@ -1,14 +1,14 @@
 # 固定fixtureを実行するWorker
 
-`src/ci_runner/fixture_worker.py`はAPIから独立した信頼済みプロセス。
-P1の取得・隔離実行・結果確定を接続し、一件実行と常駐の入口を持つ。P2では別プロセスで期限監視・再キューとコンテナ回収を行う。検証付きWorkerが再試行attemptを取得する。
+`src/ci_runner/fixture_worker.py` は、APIとは別に動く信頼済みのWorker（ジョブを実行するプロセス）。
+P1では、runの取得から隔離実行、結果の確定までを一件実行または常駐で行う。P2では、別プロセスが実行権の期限を監視し、runをキューに戻す処理とコンテナの回収を行う。ソースを検証するWorkerが、再試行のattempt（試行）を取得する。
 従来の[claim-once](worker-claim.md)の意味は変更しない。
 
 ## ローカル開発経路
 
 1. CLIはworker-idと明示的な--run-onceを必須にする。任意URL・コマンド・YAML・image・環境注入・run ID指定は受け付けない。
 2. 運用者のfixture-modeはsuccess/failure/timeout/logsだけ。既定success。モードはHTTP要求や受理repositoryから取得しない。
-3. run_onceは入力を検証後、has_queued_candidateの読取transactionを終了する。候補なしならclaimed=falseでDockerを呼ばない。候補があれば固定imageをbuild/inspectしてからclaim_nextを1回だけ呼ぶ。候補の読取は予約ではなく、build後に対象がなくなる場合もある。
+3. run_onceは入力を検証した後、has_queued_candidateの読み取りトランザクションを終える。候補がなければclaimed=falseを返し、Dockerは呼ばない。候補があれば固定イメージをbuild・inspectしてからclaim_nextを1回だけ呼ぶ。この読み取りで候補は予約されないため、build後に対象がなくなる場合もある。
 4. 取得のCOMMIT成功後、同じClaimと準備済みimageでexecute_fixtureを呼ぶ。再buildせず、image ID/タグ所有sessionを再照合してID指定でcreateする。起動前/GO前のDB再照合、実値ガード、時間/ログ/lease上限を維持する。
 5. 自分のcontainer/image tagを回収してから、同じClaimとExecutionResultでfinalize_fixtureを1回呼ぶ。回収失敗時は確定へ進まない。
 6. 確定のCOMMIT成功後だけrun/attempt ID、state、exit_code、fixture_理由、DB終了時刻、replayedをstdout JSONに出す。

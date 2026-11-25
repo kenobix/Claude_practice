@@ -1,8 +1,8 @@
 # 固定fixtureのコンテナ準備境界
 
-`src/ci_runner/container.py` の `prepare_fixture(permit)` はWorker内部用context manager。
-ローカル `fixtures/job/` または承認済みの取得sourceをnetwork noneでbuildし、取得したイメージIDでコンテナをcreateする。
-イメージ名・任意コマンド・URL・YAML・マウント・環境変数を呼出側から指定する引数はない。内部mode引数は固定4種類だけを許可する。
+`src/ci_runner/container.py` の `prepare_fixture(permit)` は、Worker内部で使うコンテキストマネージャー。
+ローカルの `fixtures/job/` または取得済みの承認ソースをnetwork noneでビルドする。ビルドで得たイメージIDを使ってコンテナを作成する。
+呼び出し元は、イメージ名・任意コマンド・URL・YAML・マウント・環境変数を指定できない。内部のmode引数には固定の4種類だけを許可する。
 P0のテスト用ハーネスをアプリからimportしない。現在はREADMEのsource checkout・editable installを前提とし、fixtureを含まないwheel単独配布は対象外。
 
 ## 今回の範囲と依存関係
@@ -12,7 +12,7 @@ P0のテスト用ハーネスをアプリからimportしない。現在はREADME
 APIとclaim-once CLIには接続していない。後続の[実行ライブラリ](fixture-execution.md)がガードとfixtureを起動する。fixture.pyをホストで実行しない。
 
 ExecutionPermitのrepository/ref/workflow・SHA形式・attempt番号と識別子を検証する。基盤障害の再試行では検証済みsourceを持つimageが必須。
-これは内部snapshotの形式確認で、現在のDB認可の代わりではない。build中にleaseが切れることもある。
+ここでは内部スナップショットの形式だけを確認する。現在の実行権は別途DBで照合する。ビルド中にleaseが切れることもある。
 ローカル経路では固定fixtureを使用し、受理SHAによるsource取得は行わない。
 受理SHAからの取得とimageの対応付けは[検証付きWorker](fixture-worker.md#受理commitの固定fixture経路)を参照。
 

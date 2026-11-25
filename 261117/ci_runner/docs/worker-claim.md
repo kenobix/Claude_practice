@@ -1,12 +1,12 @@
 # Worker初回取得：実装した1単位
 
-初回queuedの原子的な取得とattempt発行を実装済み。検証付きWorkerによる再取得は[基盤障害の自動再試行](design.md#基盤障害の自動再試行)を参照。
+Workerは初回投入で待機中（queued）のrunを取得し、attempt（試行）を発行する。取得と発行は一つのトランザクションで行う。検証付きWorkerによる再取得は[基盤障害の自動再試行](design.md#基盤障害の自動再試行)を参照。
 受付APIとP0実行境界検証に続くP1の最小単位。migrationやAPI応答形式は変更しない。
 
 ## 条件とtransaction
 
-一件Workerのhas_queued_candidateは同じ対象条件を使う読取専用のhint。予約/認可/attempt発行はせず、transactionを終了してからimageを準備する。
-候補の有無は変わり得るため、build後は以下のclaim_nextの取得条件と排他を改めて適用する。claim-onceの動作は変更しない。
+一件実行のWorkerは、has_queued_candidateで、取得時と同じ条件を使って候補の有無を読み取る。この段階では予約・認可・attemptの発行を行わず、トランザクションを終了してからイメージを準備する。
+候補の有無は変わり得るため、ビルド後にclaim_nextで次の取得条件と排他制御を改めて適用する。claim-onceの動作は変更しない。
 
 `src/ci_runner/worker.py` のclaim_next(worker_id)を信頼済みWorker側から呼ぶ。
 worker_idは1〜64文字のASCII識別子に制限し、DB接続より前に検証する。

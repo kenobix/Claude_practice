@@ -6,11 +6,11 @@ P1全体の完了判定とは分け、既存の通常テストを継続的に実
 ## 起動条件と実行境界
 
 - pushはfeat/ci-runner・main、pull_requestはブランチ制限なし。いずれも261117/**または担当workflowの変更時だけ起動する。Draft PRも対象。
-- Ubuntu 24.04のGitHub-hosted runner、Python 3.12系の最新提供patch、1ジョブ、上限10分。Pythonのpatch版は実行ログで確認する。
+- Ubuntu 24.04のGitHub-hosted runnerで、提供されているPython 3.12系の最新パッチバージョンを使う。1ジョブの上限は10分。実際のPythonバージョンは実行ログで確認する。
 - GITHUB_TOKENはcontents: readのみ。checkoutは認証情報を保持せず、公式Actionを40桁commit SHAへ固定する。setup-pythonも同様。
 - pushとPRの系列ごとに古い実行を取り消す。秘密情報・Environment・外部サービス設定・サービスコンテナ・特権設定は不要。
 - pull_request_targetやself-hosted runnerは使用しない。受理したrepositoryのコードやジョブfixtureをホストで実行する経路は追加しない。
-- 固定requirements.lockから導入後、build isolationなし・追加依存なしでeditable install。pip check、通常pytest、compileallを順に実行し、途中の非0終了を失敗にする。
+- requirements.lockで固定した依存関係を導入し、ビルドの隔離や依存関係の追加を行わず、editable installする。続いてpip check、通常のpytest、compileallを順に実行する。途中で終了コードが0以外なら失敗とする。
 
 ## テストの範囲
 

@@ -2,9 +2,9 @@
 
 ## 2026-11-17：依頼と環境
 
-- 目的: `261014/plan_ci_runner.md` を基準に独立開発環境とP0設計を準備する。全機能実装は対象外。
-- 初期pwd: `/home/kenshin/work/Claude_practice-261117`。ユーザーが当初指定したprojectsからworkへ訂正し、現在パスで継続。
-- ブランチ: `feat/ci-runner`、開始HEAD `b4c460a`。作業開始時の変更なし、261117は未作成だった。
+- `261014/plan_ci_runner.md` に沿って、独立した開発環境とP0の設計を準備する。全機能の実装は対象外。
+- 初期pwdは `/home/kenshin/work/Claude_practice-261117`。ユーザーが当初のprojectsをworkに訂正したため、このパスで作業を続けた。
+- ブランチは `feat/ci-runner`、開始時のHEADは `b4c460a`。未コミットの変更はなく、261117は未作成だった。
 - origin: `git@github.com:kenobix/Claude_practice.git`。
 - `git worktree list` でmain、ci-runner、database-engine、pcap-analyzerが別worktreeであることを確認。他worktreeは操作していない。
 - 共通AGENTS.mdと計画書を読んだ。今回の禁止指示を優先しcommit/push/PR、ルートREADME/共通CI/AGENTSの編集は行わない。新日付ディレクトリのルート一覧反映は範囲外として保留。
@@ -25,7 +25,7 @@
 | Compose | v5.6.1 |
 | daemon実行方式 | default context、cgroup v2/cgroupfs、SecurityOptionsにseccomp/cgroupns。rootless表示なし |
 
-直接・推移依存はrequirements.lockに全件固定。Python版・DBイメージdigestも記録。
+直接の依存関係と推移的な依存関係は、すべてrequirements.lockに固定した。PythonのバージョンとDBイメージのdigestも記録した。
 PostgreSQLイメージ: `postgres:17.12-bookworm@sha256:40865bc877a289da75963d97d72b59633f639fc5af7a4e856bfa3714cae5b536`。
 
 ## 実行結果
@@ -50,8 +50,8 @@ PostgreSQLイメージ: `postgres:17.12-bookworm@sha256:40865bc877a289da75963d97
 | 構文 | Python compileall、shell bash -n成功 |
 | ジョブ隔離/資源制限 | 未実施。CPU/RAM/PID/時間/ログ上限、非root、read-only、network制限の有効性を主張しない |
 
-`verify_db.py` は一時資格情報をメモリ内生成し、既存project資源があれば拒否する。
-DB統合ではSQLiteへの代替は行っていない。`.env`や実認証情報を含むファイルは作成していない。一時DBの資格情報は検証終了とともに破棄した。
+`verify_db.py` は一時資格情報をメモリ内で生成し、対象のComposeプロジェクトに既存の資源があれば実行を拒否する。
+DB統合の検証にSQLiteは使わなかった。`.env` や実際の認証情報を含むファイルは作成せず、一時DBの資格情報は検証の終了時に破棄した。
 
 ## 作成物と設計判断
 
@@ -993,10 +993,10 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
 - 開始HEAD `d8adf6026e111c30f606aae1c83fe82536363b4a` のpush/PR CIは成功。Draft PR #1に未解決のレビュー指摘なし。
   既存の常駐Worker用ハーネスを再利用し、使い捨てPostgreSQL 17.12・Docker 29.9.2で2つのWorkerと期限監視を起動した。
   復旧試験の取得は固定GitHub応答を使い、固定fixtureはDocker内で実行した。
-- 3ケースでDB時刻を書き換えずに30秒leaseの失効と5秒の再試行待機を経て、別Workerが同じrunと受理SHAを引き継いだ。
-  実行中に停止したケースでは失効前の回収拒否と、DB上で不在確認を保存してからの再キューを確認した。確定直前のケースでは
-  回収済みコンテナの記録済み完全IDを再照合した。再取得中と正式確定後に旧tokenの報告が拒否され、旧attemptと新しい正式結果・
-  ログ・source digest・image IDの整合性を確認した。
+- 3ケースともDB時刻は書き換えなかった。30秒のleaseが切れ、再試行まで5秒待った後、別のWorkerが同じrunと受理SHAを引き継いだ。
+  実行中に停止したケースでは、失効前は回収が拒否され、コンテナが存在しないことをDBに保存してからrunがキューに戻った。
+  結果確定の直前に停止したケースでは、回収済みコンテナの完全IDを記録と照合し直した。
+  再取得中と正式結果の確定後に旧tokenの報告が拒否されることと、旧attempt、新しい正式結果、ログ、source digest、image IDの整合性を確認した。
 
 | SIGKILLの位置 | 停止直前から正式結果までのDB時刻差 |
 |---|---:|
@@ -1172,7 +1172,7 @@ Draft PR #1に未解決のレビュー指摘なし。P1の残件だった常駐�
 
 ## 2026-11-24 P5最終受入とfixtureのファイルモード修正
 
-- 承認済みの空コミット `0b775ce47360a1eb1c7ca72d8924c5abd1dca4e5` の実GitHub配送でHTTP 202・0.52秒を確認。専用DBに配送1件、run 1件、attempt 2件。GO前にWorker 1のコンテナが終了コード2で終了したが、同じrunで期限切れ・回収記録、Worker 2への引き継ぎ、旧token拒否、正式結果と管理画面の照合を確認した。DB受付から正式結果まで145.23秒。公開経路は回収済みで既存Webhookは無効。 [実配送の記録](ci_runner/docs/p5-validation.md#2026-11-24のgithub実配送)
+- 承認済みの空コミット `0b775ce47360a1eb1c7ca72d8924c5abd1dca4e5` のGitHub実配送では、0.52秒でHTTP 202が返った。専用DBの記録は配送1件、run 1件、attempt 2件だった。Worker 1のコンテナはGOの前に終了コード2で終了した。同じrunで期限切れと回収の記録、Worker 2への引き継ぎ、旧tokenの拒否を確認し、正式結果を管理画面と照合した。DB受付から正式結果までは145.23秒だった。公開経路を回収し、既存Webhookが無効であることを確認した。 [実配送の記録](ci_runner/docs/p5-validation.md#2026-11-24のgithub実配送)
 - `umask 0077` を継承したWorkerでは一時fixtureが `0600` となる。ローカルの実Dockerで `/opt/fixture.py` の `Permission denied` と終了コード2を再現し、`0022` では成功した。製品側で検証済みfixtureを `0644` に設定し、一時ディレクトリは `0700`。Dockerfile・元のfixture・固定digest・非root起動と制限は変更していない。
-- 修正後に同じ `0077`、実pushと同じSHAの署名付きローカル受付、通常のGitHubソース取得、使い捨てPostgreSQL・実DockerでGO後のSIGKILLを確認。lease失効・回収、別attemptと旧token拒否、正式結果、ログと管理画面まで同じローカルrunで確認した。SIGKILLから正式結果48.99秒、ローカル送信から管理画面照合62.34秒。試験資源は回収した。
+- 修正後も同じ `0077` を使い、実pushと同じSHAを指定した署名付きリクエストをローカルで受け付けた。通常の経路でGitHubからソースを取得し、使い捨てPostgreSQLと実Dockerを使ってGO後にWorkerをSIGKILLした。そのローカルrunでleaseの失効と回収、別attemptへの引き継ぎ、旧tokenの拒否を確認し、正式結果とログを管理画面で照合した。SIGKILLから正式結果までは48.99秒、ローカル送信から管理画面の照合までは62.34秒だった。試験資源は回収した。
 - ローカルの通常回帰は234 passed、217 deselected、既知のTestClient警告1件。依存関係検査は成功。実GitHub配送とSIGKILLの証拠は別runとして扱い、永続化境界、P0〜P4の独立レビュー、比較実測、再現手順、3分デモを照合してP5およびMVPのマージ前受入を完了と判定した。Pagesの公開確認は承認済み統合後の提出条件。 [P5受入判定](ci_runner/docs/p5-validation.md#受入判定)
