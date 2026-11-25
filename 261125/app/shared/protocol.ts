@@ -1,4 +1,4 @@
-export const VERSION = 1;
+export const VERSION = 2;
 export const MAX_BODY = 100_000;
 export const MAX_PAYLOAD = 8 * 1024 * 1024;
 const MAX_HEADER = 1024;
@@ -21,6 +21,7 @@ export type Message =
   | { type: 'STATE'; version: number; role: Role; acl_revision: number; grant_revision: number; sequence: number }
   | { type: 'UPDATE'; client_id: string; message_id: string; grant_revision: number }
   | { type: 'APPLIED'; sequence: number }
+  | { type: 'ACK'; client_id: string; message_id: string; sequence: number }
   | { type: 'AWARENESS' }
   | { type: 'ERROR'; code: string; message_id?: string };
 

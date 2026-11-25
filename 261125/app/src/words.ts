@@ -13,8 +13,11 @@ const errors: Record<string, string> = {
   STATE_LIMIT: '文書のデータが上限を超えました。本文を控えてから接続し直してください。',
   INVALID_TITLE: '文書のタイトルを1〜80文字で入力してください。',
   INVALID_UPDATE: '更新を反映できませんでした。本文を控えてから接続し直してください。',
-  MISSING_DEPENDENCY: '一部の更新が届いていません。本文を控えてから接続し直してください。',
+  MISSING_DEPENDENCY: '一部の更新が届いていません。接続し直して必要な更新を送ってください。',
   RATE_LIMIT: '更新が短時間に集中しました。本文を控え、時間をおいて接続し直してください。',
+  STORAGE_RECOVERY: 'サーバーが保存状態を確認しています。時間をおいて接続し直してください。',
+  MESSAGE_ID_CONFLICT: '同じ更新IDに異なる内容が送られました。本文を控えてください。',
+  SYNC_SEQUENCE: '更新の順序を確認できませんでした。接続し直してください。',
 };
 
 export function errorText(code: string) {

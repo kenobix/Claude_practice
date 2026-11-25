@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { isRecord } from '../shared/protocol.ts';
 import { createAccounts, sessionToken } from './accounts.ts';
 import { createRooms } from './rooms.ts';
+import type { StorageOptions } from './storage.ts';
 
 const HOST = '127.0.0.1';
 const DIST = fileURLToPath(new URL('../dist/', import.meta.url));
@@ -63,9 +64,9 @@ async function staticPage(path: string, response: ServerResponse, origin: string
   response.end(bytes);
 }
 
-export async function startApplication(port = 0) {
+export async function startApplication({ port = 0, ...storage }: StorageOptions & { port?: number }) {
   const accounts = createAccounts();
-  const rooms = createRooms((token) => Boolean(accounts.get(token)), accounts.prune);
+  const rooms = createRooms((token) => Boolean(accounts.get(token)), accounts.prune, storage);
   let origin = '';
   let host = '';
 
@@ -103,6 +104,7 @@ export async function startApplication(port = 0) {
     }
 
     if (!session) throw new HttpError(401, 'SESSION_EXPIRED');
+    if (!rooms.available) throw new HttpError(503, 'STORAGE_RECOVERY');
     if (path === '/api/documents') {
       if (method === 'GET') return json(response, 200, { documents: rooms.list(session.user.id) });
       if (method === 'POST') {

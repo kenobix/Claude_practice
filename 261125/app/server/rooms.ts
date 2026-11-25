@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { WebSocket, WebSocketServer } from 'ws';
 import type { IncomingMessage } from 'node:http';
 import type { Duplex } from 'node:stream';
@@ -9,6 +9,8 @@ import {
 } from '../shared/protocol.ts';
 import { encodePresence, readCursor } from './presence.ts';
 import type { PresenceEntry } from './presence.ts';
+import { createStorage } from './storage.ts';
+import type { StorageOptions } from './storage.ts';
 
 const HEARTBEAT_MS = 5_000;
 const BURST = 20;
@@ -39,6 +41,7 @@ type Room = {
   updateBudget: Map<string, { tokens: number; checked: number }>;
   aclRevision: number;
   sequence: number;
+  snapshotSequence: number;
   state: Uint8Array;
   peers: Set<Peer>;
   presenceClock: number;
@@ -94,14 +97,32 @@ function validateUpdate(state: Uint8Array, payload: Uint8Array) {
   }
 }
 
-export function createRooms(validSession: (token: string) => boolean, pruneSessions: () => void) {
+export function createRooms(validSession: (token: string) => boolean, pruneSessions: () => void, options: StorageOptions) {
+  const snapshotEvery = options.snapshotEvery ?? 100;
+  if (!Number.isSafeInteger(snapshotEvery) || snapshotEvery < 1) throw new Error('Invalid snapshot interval');
+  const storage = createStorage(options);
   const rooms = new Map<string, Room>();
+  let available = false;
+
+  function load() {
+    for (const row of storage.load()) {
+      rooms.set(row.id, {
+        id: row.id, title: row.title, owner: row.owner, aclRevision: row.acl_revision, sequence: row.sequence,
+        state: row.state, snapshotSequence: row.snapshotSequence,
+        grants: new Map(row.grants.map((grant) => [grant.user_id, { role: grant.role, revision: grant.revision }])),
+        updateBudget: new Map(), peers: new Set(), presenceClock: 0,
+      });
+    }
+    available = true;
+  }
+
+  try { load(); } catch (error) { storage.close(); throw error; }
   const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_FRAME, perMessageDeflate: false });
 
-  function send(peer: Peer, frame: Uint8Array) {
+  function send(peer: Peer, frame: Uint8Array, written?: () => void) {
     if (!validSession(peer.token) || peer.socket.readyState !== WebSocket.OPEN) return;
     if (peer.socket.bufferedAmount > 2 * MAX_FRAME) peer.socket.terminate();
-    else peer.socket.send(frame);
+    else peer.socket.send(frame, written ? (error) => { if (!error) written(); } : undefined);
   }
 
   function broadcast(room: Room, frame: Uint8Array, except?: Peer) {
@@ -123,6 +144,19 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
     // The close reason survives even when the session already expired.
     if (validSession(peer.token)) send(peer, encodeFrame({ type: 'ERROR', code }));
     peer.socket.close(1008, code);
+  }
+
+  function recoverStorage(error: unknown) {
+    console.error('SQLite operation failed; reloading durable state', error);
+    available = false;
+    for (const room of rooms.values()) for (const peer of room.peers) disconnect(room, peer, 'STORAGE_RECOVERY');
+    rooms.clear();
+    try {
+      storage.reopen();
+      load();
+    } catch (reloadError) {
+      console.error('SQLite recovery failed', reloadError);
+    }
   }
 
   function updatePresence(room: Room, peer: Peer, entry: PresenceEntry, payload: Uint8Array) {
@@ -177,15 +211,40 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
     if (header.grant_revision !== revision) return reject('GRANT_CHANGED');
     if (payload.length > MAX_PAYLOAD) return reject('UPDATE_LIMIT');
     if (!takeUpdateToken(room, peer.user.id)) return reject('RATE_LIMIT');
-    const verdict = validateUpdate(room.state, payload);
-    if ('error' in verdict && verdict.error) return reject(verdict.error);
-    if (!verdict.update || !verdict.next) return;
+    const operation = {
+      document: room.id, user: peer.user.id, client: peer.clientId, message: header.message_id,
+      hash: createHash('sha256').update(payload).digest('hex'),
+    };
+    const ack = (sequence: number) => send(peer, encodeFrame({
+      type: 'ACK', client_id: operation.client, message_id: operation.message, sequence,
+    }), options.checkpoint ? () => options.checkpoint?.('after-ack') : undefined);
+    try {
+      const existing = storage.receipt(operation);
+      if (existing) {
+        if (existing.hash !== operation.hash) return reject('MESSAGE_ID_CONFLICT');
+        return ack(existing.sequence);
+      }
 
-    // Each handler completes synchronously, including validation, publication and broadcast.
-    const frame = encodeFrame({ type: 'APPLIED', sequence: room.sequence + 1 }, verdict.update);
-    room.state = verdict.next;
-    room.sequence += 1;
-    broadcast(room, frame);
+      const verdict = validateUpdate(room.state, payload);
+      if ('error' in verdict && verdict.error) return reject(verdict.error);
+      if (verdict.update && verdict.update.byteLength > MAX_PAYLOAD) return reject('UPDATE_LIMIT');
+      const sequence = verdict.update ? room.sequence + 1 : room.sequence;
+      const frame = verdict.update && encodeFrame({ type: 'APPLIED', sequence }, verdict.update);
+      storage.accept(operation, sequence, verdict.update);
+      if (frame && verdict.next) {
+        room.state = verdict.next;
+        room.sequence = sequence;
+        broadcast(room, frame);
+      }
+      ack(sequence);
+
+      if (room.sequence - room.snapshotSequence >= snapshotEvery) {
+        storage.snapshot(room.id, room.sequence, room.state);
+        room.snapshotSequence = room.sequence;
+      }
+    } catch (error) {
+      recoverStorage(error);
+    }
   }
 
   const heartbeat = setInterval(() => {
@@ -206,6 +265,7 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
   heartbeat.unref();
 
   return {
+    get available() { return available; },
     list(userId: string) {
       return [...rooms.values()].reverse().flatMap((room) => {
         const entry = summary(room, userId);
@@ -215,8 +275,9 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
     create(user: User, title: string) {
       const room: Room = {
         id: randomUUID(), owner: user.id, title, grants: new Map(), updateBudget: new Map(), aclRevision: 0, sequence: 0,
-        state: EMPTY_STATE, peers: new Set(), presenceClock: 0,
+        state: EMPTY_STATE, snapshotSequence: 0, peers: new Set(), presenceClock: 0,
       };
+      try { storage.create(room.id, title, user.id); } catch (error) { recoverStorage(error); throw error; }
       rooms.set(room.id, room);
       return summary(room, user.id);
     },
@@ -225,6 +286,12 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
       if (!room || room.owner !== owner || target === owner) return null;
       if (roleOf(room, target) !== role) {
         const revision = grantRevision(room, target) + 1;
+        try {
+          storage.setGrant(room.id, target, role, revision, room.aclRevision + 1);
+        } catch (error) {
+          recoverStorage(error);
+          throw error;
+        }
         room.grants.set(target, { role, revision });
         room.aclRevision += 1;
         for (const peer of room.peers) if (peer.user.id === target) disconnect(room, peer, 'GRANT_CHANGED');
@@ -237,6 +304,7 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
       }
     },
     upgrade(request: IncomingMessage, socket: Duplex, head: Buffer, documentId: string, token: string, user: User) {
+      if (!available) return 503;
       const room = rooms.get(documentId);
       if (!room || !roleOf(room, user.id)) return 403;
       if (room.peers.size >= MAX_CONNECTIONS) return 409;
@@ -262,6 +330,7 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
       clearInterval(heartbeat);
       for (const socket of wss.clients) socket.terminate();
       wss.close();
+      storage.close();
     },
   };
 }

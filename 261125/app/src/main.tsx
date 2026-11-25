@@ -7,7 +7,11 @@ import { errorText, roleLabel } from './words.ts';
 import './style.css';
 
 type Session = { user: User | null; accounts: User[] };
-const initialStatus: RoomStatus = { connection: 'joining', sequence: null, role: null, users: [], problem: '' };
+const initialStatus: RoomStatus = {
+  connection: 'joining', sequence: null, role: null, users: [], problem: '', localSave: 'idle', serverSave: 'idle',
+};
+const localLabel = { idle: '', writing: '端末に保存中', saved: '端末内保存済み', failed: '端末内保存に失敗' };
+const serverLabel = { idle: '', waiting: 'サーバー保存待ち', saved: 'サーバー保存済み' };
 
 async function api<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
   const response = await fetch(`/api/${path}`, {
@@ -75,15 +79,15 @@ function DocumentList({ documents, selected, choose, refresh, create, busy }: {
 function Room({ document, user, reconnect }: { document: DocumentSummary; user: User; reconnect: () => void }) {
   const [status, setStatus] = useState(initialStatus);
   const editor = useRef<HTMLDivElement>(null);
+  const binding = useRef<ReturnType<typeof import('./room.ts').openRoom> | null>(null);
   useEffect(() => {
     let cancelled = false;
-    let disconnect: (() => void) | undefined;
     void import('./room.ts').then(({ openRoom }) => {
-      if (!cancelled && editor.current) disconnect = openRoom(document.id, user, editor.current, initialStatus, setStatus);
+      if (!cancelled && editor.current) binding.current = openRoom(document.id, user, editor.current, initialStatus, setStatus);
     }).catch(() => {
       if (!cancelled) setStatus({ ...initialStatus, connection: 'offline', problem: '編集画面を読み込めませんでした。接続し直してください。' });
     });
-    return () => { cancelled = true; disconnect?.(); };
+    return () => { cancelled = true; binding.current?.close(); binding.current = null; };
   }, [document.id, user]);
 
   return <>
@@ -96,10 +100,12 @@ function Room({ document, user, reconnect }: { document: DocumentSummary; user: 
           </span>
           <span>{roleLabel[status.role ?? document.role]}</span>
           {status.sequence !== null && <span>受理順番号 <output aria-label="受理順番号">{status.sequence}</output></span>}
+          <span data-local-save={status.localSave} aria-live="polite">{localLabel[status.localSave]}</span>
+          <span data-server-save={status.serverSave} aria-live="polite">{serverLabel[status.serverSave]}</span>
         </div>
       </header>
       {status.problem && <div className="room-error"><p role="alert">{status.problem}</p>
-        <button onClick={reconnect}>接続し直す</button></div>}
+        <button onClick={async () => { await binding.current?.beforeReconnect(); reconnect(); }}>接続し直す</button></div>}
       <div className="editor" ref={editor} />
     </article>
     <section className="presence" aria-label="接続中の利用者">
@@ -188,6 +194,8 @@ function App() {
         setDocuments([]);
         setSelected(null);
         setSession({ ...session, user: null });
+        const { deleteCache } = await import('./cache.ts');
+        await deleteCache(user.id);
       })}>ログアウト</button></div>
     </header>
     {problem && <p role="alert" className="app-error">{problem}</p>}

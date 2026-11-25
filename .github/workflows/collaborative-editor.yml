@@ -1,0 +1,55 @@
+name: Collaborative editor
+
+on:
+  pull_request:
+    paths:
+      - '261125/**'
+      - '.github/workflows/collaborative-editor.yml'
+  push:
+    branches: [main]
+    paths:
+      - '261125/**'
+      - '.github/workflows/collaborative-editor.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: 261125/app
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.22.2'
+          cache: npm
+          cache-dependency-path: |
+            261125/app/package-lock.json
+            261125/experiments/package-lock.json
+      - name: Run Phase 0 regression tests
+        working-directory: 261125/experiments
+        run: |
+          npm ci --ignore-scripts
+          npm test
+      - name: Install locked app dependencies
+        run: npm ci --ignore-scripts
+      - name: Type-check and build
+        run: npm run build
+      - name: Run server and process restart tests
+        run: npm test
+      - name: Install pinned Chromium and system dependencies
+        run: npx playwright install --with-deps chromium --only-shell
+      - name: Run Chromium profile tests
+        run: npm run test:browser

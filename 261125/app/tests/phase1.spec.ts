@@ -5,31 +5,7 @@ import { chromium, expect, test } from '@playwright/test';
 import type { BrowserContext, Page, WebSocketRoute } from '@playwright/test';
 import { startApplication } from '../server/application.ts';
 import { decodeFrame } from '../shared/protocol.ts';
-
-async function signIn(page: Page, origin: string, account: { id: string; password: string }) {
-  await page.goto(origin);
-  await page.getByLabel('アカウント').selectOption(account.id);
-  await page.getByLabel('パスワード').fill(account.password);
-  await page.getByRole('button', { name: 'ログイン', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'ログアウト' })).toBeVisible();
-}
-
-function content(page: Page) {
-  return page.locator('.cm-content');
-}
-
-function body(page: Page) {
-  return content(page).evaluate((element) => [...element.querySelectorAll('.cm-line')].map((line) => {
-    const copy = line.cloneNode(true) as HTMLElement;
-    copy.querySelectorAll('.cm-ySelectionCaret, .cm-widgetBuffer').forEach((node) => node.remove());
-    return copy.textContent;
-  }).join('\n'));
-}
-
-async function openDocument(page: Page, title: string) {
-  await page.getByRole('button', { name: '一覧を更新' }).click();
-  await page.getByRole('navigation', { name: '開ける文書' }).getByRole('button', { name: new RegExp(title) }).click();
-}
+import { body, content, openDocument, signIn } from './browser-helpers.ts';
 
 async function editAtMiddle(page: Page, value: string, ...keys: string[]) {
   await content(page).focus();
@@ -39,8 +15,8 @@ async function editAtMiddle(page: Page, value: string, ...keys: string[]) {
 }
 
 test('P1-1/P1-3: isolated profiles share concurrent insertions and deletions without echo', async () => {
-  const app = await startApplication();
   const profiles = await mkdtemp(join(tmpdir(), 'collab-profiles-'));
+  const app = await startApplication({ databasePath: join(profiles, 'collab.sqlite') });
   const contexts: BrowserContext[] = [];
   try {
     const viewport = { width: 1320, height: 900 };
@@ -82,7 +58,7 @@ test('P1-1/P1-3: isolated profiles share concurrent insertions and deletions wit
     for (const page of pages) {
       await expect(page.locator('[data-connection]')).toHaveText('接続中');
       await expect(page.getByRole('region', { name: '接続中の利用者' }).getByRole('listitem')).toHaveCount(3);
-      await expect(page.getByText(/保存済み|保存完了/)).toHaveCount(0);
+      await expect(page.locator('[data-server-save]')).toHaveAttribute('data-server-save', 'idle');
     }
 
     await content(a).click();
