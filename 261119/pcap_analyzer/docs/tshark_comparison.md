@@ -1,15 +1,15 @@
 # Phase 3: TSharkとの共通フィールド・入力異常比較
 
-Phase 2の人工入力に対する受入完了後、独立した復号器で共通項目を確認する。
-前半の完全コンテナ8 fixtureに加え、今回の単位で残る6 fixtureの入力異常・形式差を比較した。
-その後[DNS独立比較とPhase 3判定](tshark_dns_comparison.md)も完了。ここではフレーム/入力異常の条件と結果を保持する。
+Phase 2の人工入力に対する受入確認の後、解析器とTSharkの両方で読み取れる項目を照合した。
+前半ではPCAPコンテナが完全な8 fixtureを比較し、後半では残る6 fixtureで入力異常や形式の違いに対する挙動を比較した。
+ここではフレームと入力異常の比較条件および結果を記録する。その後のDNS比較は[DNS独立比較とPhase 3判定](tshark_dns_comparison.md)に記録した。
 解析器の対応形式・分類・DNS窓規則・Schemaは変更しない。
 
 ## 実行環境と再現
 
 Ubuntu 24.04 / amd64 / Python 3.12.3。TSharkはUbuntu配布の4.2.2-1.1build3。
-OSには未導入。Docker daemonへの接続権限もなかったため、使わなかった。
-専用`.venv/tshark/`へ配布debのデータだけを展開した。`apt install`、`dpkg -i`、
+TSharkはOSには未導入で、Docker daemonへの接続権限がなかったためDockerも使わなかった。
+専用の`.venv/tshark/`に配布パッケージ（deb）のデータだけを展開した。`apt install`、`dpkg -i`、
 maintainer script、sudo、setcap、dumpcap、OS設定変更は実行しない。
 Wireshark共通の捕捉プログラムを含む`wireshark-common`は取得・展開しない。
 これはUbuntu 24.04 amd64用の開発用比較環境で、汎用配布環境ではない。
@@ -65,8 +65,8 @@ capture/display filterはどちらも未指定、1 passで、再構成を行わ�
 plugin/extcapのディレクトリも空の一時ディレクトリへ指定し、継承した`WIRESHARK_*`設定を除く。
 個人のWireshark profileは使わない。`LC_ALL=C`、`TZ=UTC`。実際のTShark版全文、固定設定、
 各入力SHA-256、抽出値、未比較理由、差分を結果JSONに記録する。
-スクリプトの終了0は共通フィールドと明示した期待挙動の一致、1は未説明の差分、
-2は環境/実行/抽出異常。欠落や実行失敗を成功扱いしない。
+スクリプトの終了0は、共通フィールドと明示した期待挙動が一致したことを表す。1は説明できない差分、2は環境・実行・抽出の異常を表す。
+出力の欠落や実行失敗を成功として扱わない。
 入力異常6件ではTSharkの終了値と診断を期待値へ照合するため、予想した終了2も比較対象とする。
 任意の非0終了を許容しない。版照会と従来8件の予想外の非0終了は、従来どおりスクリプト終了2。
 
@@ -74,7 +74,7 @@ plugin/extcapのディレクトリも空の一時ディレクトリへ指定し�
 
 [実行結果JSON](tshark_comparison.result.json)へ全抽出値と比較結果を保存した。
 8 fixture / 17 records、比較対象の全フィールドに差分なし、全実行stderr空、終了0。
-captured合計1080 bytes、original合計1094 bytes。後者との差14 bytesはcapture_truncatedの不足。
+捕捉長（captured）の合計は1080 bytes、記録上の元長（original）の合計は1094 bytes。差の14 bytesはcapture_truncatedで捕捉できなかった分に当たる。
 
 | fixture | records | captured | original | L4比較除外 |
 |---|---:|---:|---:|---|
@@ -95,8 +95,8 @@ backwardは1700000001000000000→1700000000900000000nsの逆行を保持した�
 比較ハーネスは手定義のTShark行で整数精度、異常出力、件数/flags/IP差分検出、
 部分TCPの除外範囲、未導入/非0終了/timeoutを20テストで検証。
 既存386件を含む全406件成功（28.97秒）、pip check成功。
-通常CIはハーネスをテストする。TSharkの取得と実体でのfixture比較はローカルの明示実行で、
-CIが独立比較まで実施したとはしない。CI workflowとPython依存lockは変更なし。
+通常のCIで検証するのは比較スクリプトの動作までとする。TSharkの取得と、TShark本体を使ったfixtureの独立比較はローカルで明示的に実行した。
+CIのワークフローとPythonの依存関係を固定するファイルに変更はない。
 
 ## 入力異常を含む6 fixture（2026-11-17初回、独立レビュー修正後に再実行）
 
@@ -118,7 +118,7 @@ TSharkの終了0を「classic pcapとして妥当」「全packet正常」と解�
 既存CLIの0/2規則へ対応させた値。CLI実プロセス・Schema・partial/拒否の確認は、併行実行した
 既存のPhase 2 CLI受入16件で別に確認した。
 
-途切れ2件の診断は、対象fixtureの絶対パスだけを`<fixture>`へ置換して保存/完全一致照合する。
+レコードが途中で途切れた2件の診断は、対象fixtureの絶対パスだけを`<fixture>`に置き換えて保存し、診断文が完全に一致するか照合する。
 cut-short診断の別ファイル名、追加警告、permission denied、異なる終了値やsignal終了、
 不意のstdoutフレームを許容しない。共通のIP/長さ/時刻の差分検査も続ける。
 `malformed_length`はTSharkだけが返す行の全パケットフィールドを共通項目の比較から除外する。
@@ -146,7 +146,7 @@ TSharkの追加1件（55/54 bytes）は解析器の合計から除外する。
 - `unsupported_arp`: frame情報を比較。IPv4/portsはなし。ARPをparsedへ変更しない。
 - `backward`: レコード順の時刻をそのまま比較。TSharkのDNS対応付けを独自窓規則へ流用しない。
 
-独自の4分類とTSharkのexpert情報の一対一一致は要求しない。
+解析器の4分類と、TSharkが示すexpert情報との一対一の一致は比較条件に含めない。
 保存fixture14件の共通フィールド/入力異常比較は完了。
 DNS ID/質問/RCODE/TC/一意な応答時間と独自状態の相違は[別の比較記録](tshark_dns_comparison.md)で確認済み。
 性能・負荷・デモ、実通信、他OS、他Pythonは今回の検証対象ではない。

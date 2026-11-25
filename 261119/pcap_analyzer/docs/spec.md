@@ -7,13 +7,13 @@
 次の継続単位でRR構造と圧縮参照先の検査APIも追加済み（下記参照）。
 DNS構造検査をpacket分類/CLI診断へ統合済み。照合キーと窓処理は内部APIで実装済み。
 DNS照合のreport/CLI/Schema統合、逆行時の全結果無効化と上限途中結果を実装済み。
-JSONの形状/版を更新し、Schemaへ照合イベント・根拠参照・上限停止の契約を追加。
+JSONの構造とバージョンを更新し、照合イベント、根拠番号の参照、上限で停止した場合の出力をSchemaで定義した。
 
 ## 入力境界と停止
 
 - ローカルの読み取り可能な通常ファイルを読み取り専用で開く。stdin、FIFO、デバイス、圧縮入力は対象外。
-- 非圧縮classic pcap v2.4。µs/ns両精度、little/big endianの4 magicを受理。
-- link typeは値1のEthernetのみ。pcapng・VLAN・IPv6・cooked capture・Wi-Fiは変換せず対象外を通知。
+- 非圧縮のclassic pcap v2.4を受け付ける。時刻精度のµs・nsとバイト順のlittle endian・big endianを組み合わせた4 magicに対応する。
+- ファイルのlink typeは値1のEthernetのみを受け付ける。pcapng・VLAN・IPv6・cooked capture・Wi-Fiは変換せず、対象外であることを通知する。
 - 最大100 MiB = 104857600 bytes、完全レコード1000000件。ちょうど上限は可、次のレコードがあれば停止。
 - 1レコードのcaplen上限1 MiB、通常診断上限10000件。上限超過時は明示停止する。
   診断上限は当該パケットを計数後に停止し、上限件数に加えて終了診断1件を許可する。
@@ -21,12 +21,14 @@ JSONの形状/版を更新し、Schemaへ照合イベント・根拠参照・上
 - snaplenは1以上。グローバルヘッダー24 bytes、レコードヘッダー16 bytesを検査。
   secは符号なし整数、fractionはµsなら0..999999、nsなら0..999999999。
 - 空ファイル・不足グローバルヘッダー・不正magic/version/snaplenは失敗。ヘッダーのみは正常0件。
-- caplen > wirelenはレコードヘッダーの破損。本文読込前にE_RECORD_LENGTHで停止し、当該レコードと後続を集計しない。診断に予定packet_indexと宣言された両方の長さを残す。
+- レコードヘッダーのcaplenは保存したフレームの捕捉長、wirelenは記録上の元のフレーム長を表す。
+  caplen > wirelenならレコードヘッダーの破損として扱う。解析器は本文を読む前にE_RECORD_LENGTHで停止し、当該レコードと後続を集計しない。
+  診断にはそのレコードの予定packet_indexと、ヘッダーで宣言された両方の長さを残す。
 - caplen > snaplenは本文が完全ならmalformedとして計数する。
   大きな宣言長を無制限にメモリ確保しない。ファイルサイズ・上限を照合して順次処理する。
-- 末尾の部分レコードヘッダー・宣言caplen未満の本文は入力不完全。読めた完全レコードのみ集計し、
-  diagnosticsに失敗位置（1始まりの予定packet_index）、実読込長、宣言長を残す。部分本文は通常集計へ混ぜない。
-  RawPcapReaderのEOFだけでは正常終端と判定しない。前段で厳密なコンテナ検証を行う。
+- 末尾でレコードヘッダーが途中で切れている場合や、本文が宣言されたcaplenに満たない場合は、入力が不完全と判断する。
+  最後まで読めたレコードだけを集計し、diagnosticsに失敗位置（1始まりの予定packet_index）、実際に読めた長さ、宣言された長さを残す。
+  途中までしか読めない本文は通常の集計から除外する。RawPcapReaderのEOFだけでは正常な終端と判定せず、その前にコンテナを検査する。
 - 終了コード: 0=完全な入力を処理、2=形式/読込/上限/不完全エラー。Phase 0で使った3は現CLIでは使用しない。
   unsupported/truncated/malformedパケットがあってもコンテナを最後まで処理できれば0。
   入力ヘッダーが無効ならstderr診断のみ。読込開始後の失敗はcomplete=falseの途中JSONとstderr診断。
@@ -42,15 +44,15 @@ hash後と読込終端にサイズ/mtime/ctimeの変化を検出して失敗扱�
 
 ## 復号範囲と分類
 
-Ethernet II（ヘッダー14 bytes、FCSやpreambleの追加はしない）のIPv4を対象とする。
-ヘッダーの長さ／種別フィールドは0〜1500をIEEE 802.3の長さとして扱い、LLC/SNAPの復号範囲外としてunsupportedにする。
-1501〜1535は予約値なのでmalformed、1536以上はEtherTypeとして判定する。
+Ethernet IIに格納されたIPv4を対象とする。Ethernet IIのヘッダーは14 bytesで、FCSやpreambleは追加しない。
+ヘッダーの長さ／種別フィールドが0〜1500の場合はIEEE 802.3の長さとみなし、LLC/SNAPは復号の対象外なのでunsupportedに分類する。
+1501〜1535は予約値のためmalformedに分類する。1536以上はEtherType（格納するプロトコルの種別）として判定する。
 IPv4 version/IHL/total length、TCP data offset、UDP lengthを検査する。
 IPv4/TCP optionsはヘッダー全体長と捕捉境界を検査しScapyへ渡す。個々のoptionの意味は検証しない。Ethernet paddingは捕捉バイト数に含める。
 IPv4のMF=1またはfragment offset>0はIP段階でfragment件数を計数し、TCP/UDP/DNSを解析しない。
 TCP再構成・再送推定は行わない。チェックサム不一致のみでmalformedとしない（offload等があり検証対象外）。
 
-完全レコードごとに必ず1分類。競合時は次の優先順。
+最後まで読めた各レコードには、必ず1つの分類を付ける。複数の条件に該当する場合は表の上から順に優先する。
 
 | 状態 | 条件例 | 後段 |
 |---|---|---|
@@ -59,14 +61,13 @@ TCP再構成・再送推定は行わない。チェックサム不一致のみ�
 | unsupported | IEEE 802.3、ARP/IPv6/VLAN、IP fragment、非TCP/UDP、DNS質問数≠1等 | 未対応範囲と番号 |
 | parsed | 対応ヘッダーと対象DNSの構造を検査できたもの | フローと対象DNSへ |
 
-DNS候補の構造不正/未対応もpacket分類に反映する（適用条件は下記）。
-parsedはDNSの全RDATAの意味や名前解決成功、他アプリケーション本文の正常性を保証しない。UDP長はIPv4の
-宣言payload長と一致することを要求し、チェックサムは検証しない。
+DNS候補の構造に不備がある場合や、構造が未対応の場合もパケット分類に反映する。適用条件は後述する。
+parsedの判定範囲は対応するヘッダーと対象DNSの構造までとする。DNSの全RDATAの意味、名前解決の成功、他のアプリケーション本文の正常性は保証しない。
+UDP長はIPv4が宣言するペイロード長との一致を要求する。チェックサムは検証しない。
 
-実装済みフローは、非フラグメントのIPv4 TCP/UDPで
-両端点とヘッダー長が完全・整合なら分類にかかわらず捕捉長を加算できる。
-caplen<wirelenでもL4ヘッダーまで完全な例はフローに加算可能、DNS照合は不可。
-フローへ入らなかった捕捉bytesはsummary.unattributed_captured_bytesへ。
+フラグメント化されていないIPv4 TCP/UDPでは、両端点とヘッダー長がそろい、矛盾がなければパケットの分類にかかわらずフローに捕捉長を加算できる。
+caplen<wirelenでもL4（TCPまたはUDP）ヘッダーまでそろっていればフローに加算できる。DNS照合からは除外する。
+どのフローにも割り当てられなかった捕捉バイト数はsummary.unattributed_captured_bytesに記録する。
 IP/TCP/UDPの欠けたポートを推測しない。詳細reasonはpacket_indexとともにdiagnosticsへ。
 
 ## 指標と時刻
@@ -100,7 +101,7 @@ dns.time_analysis=disabled_timestamp_regressionとして警告を出す。
 eventsは通常配列。逆行検出時は確定済みを含め全件破棄して[]、event_countsはnull。
 query_count/response_countは時刻に依存しない対象観測件数として維持する。
 ソートや前半の成功値の温存をしない。件数・バイト・フローは維持する。
-同一時刻は逆行ではなく、ファイル順に処理し0 msの一意応答を許可する。
+同一時刻のレコードは逆行とみなさず、ファイル順に処理し、0 msの一意応答を許可する。
 
 ## 双方向フロー（Phase 2前半実装済み）
 
@@ -125,7 +126,7 @@ TCP flagsはF/S/R/P/A/U/E/C/N（NS）の各bitを独立に計数し、SYN+ACKは
 | caplen>wirelen、ファイル本文が宣言caplenより短い部分レコード | 破損したレコードとして停止し、全体集計にも帰属集計にも入れない |
 
 classificationとは独立したflow_eligibleを使い、欠けたポートやflagsを推測しない。
-DNS本文の構造不正/未対応も、検証済みヘッダーによるフロー帰属を無効にしない。
+DNS本文の構造が不正または未対応でも、必要なヘッダーを検証できていればフローへの割り当ては有効とする。
 
 フロー数上限100000。`--max-flows`で1..100000に引下げ可能。
 上限件数ちょうどと既存フローへの追加は可。次の新規キーを作る前に停止する。
@@ -167,7 +168,7 @@ DNSQuestionを返す。保持値はdns_id/is_response/rcode/tc/name/qtype/qclass
 question_key=(normalized_labels, qtype, qclass)。IP/port/IDを組み合わせる完全照合キーは下記の内部API。
 opcode/質問数/未対応ラベル形式/処理上限はunsupported、境界不足・矛盾はmalformed。
 DNSDecodeErrorにclassification/reason/offsetを保持し、raw bytesをエラー文へ含めない。
-完全なUDP payloadに対するAPIなので、DNSフィールド不足を捕捉truncatedとは判定しない。
+このAPIの入力は最後まで捕捉されたUDPペイロードなので、DNSフィールドが不足していても、捕捉不足を表すtruncatedには分類しない。
 
 この単位はanswer/authority/additional件数、RRのRDLENGTH/RDATAを検査しない。
 TC/RCODEは情報として保持するだけで、応答照合・成功判定・所要時間は計算しない。
@@ -217,8 +218,8 @@ packet分類では両向きとも構造を検査し、QR/port方向の照合資�
 
 DNSDecodeErrorのclassification/reasonを既存のpacket分類・P_MALFORMED/P_UNSUPPORTED診断へ反映。
 完全なUDP payload内でのDNSフィールド不足はmalformed。質問数/opcode/未検証参照先や
-固定処理上限はunsupported。無制限処理を避けるこれらのDNS上限は入力全体の停止条件ではなく、
-そのパケットのunsupported理由となる。通常診断上限に達した場合はE_LIMIT_DIAGNOSTICSで停止する。
+固定処理上限はunsupportedに分類する。これらのDNS上限はパケット単位で適用し、上限超過はそのパケットをunsupportedに分類する理由として記録する。
+この分類だけでは入力全体の処理は止まらない。通常診断上限に達した場合はE_LIMIT_DIAGNOSTICSで停止する。
 空のport53 UDP本文は従来parsedからmalformedへ変更。既存14 fixtureの期待集計は維持。
 
 DNS本文に問題があっても完全なL4ヘッダーのflow_eligibleは維持し、件数/捕捉長/元長と根拠を
@@ -263,23 +264,23 @@ QDCOUNT=1のみ対応。質問0の応答と複数質問はunsupported。TCP DNS�
 JSON用のキー表現はラベルごとの小文字hex配列（rootは空文字列を最後に1つ）。
 表示名はbytesをエスケープし、表示文字列からキーを再構築しない。
 
-照合窓W=5000000000 ns。最初のquery時刻t0を基準とする閉区間[t0,t0+W]。
-窓は重複によって延長しない。窓端と同時刻のresponseは窓内、超えたら期限切れ。
+照合窓W=5000000000 ns。最初のquery時刻t0からの閉区間[t0,t0+W]を、応答と照合できる時間の範囲とする。
+問い合わせが重複しても窓は延長しない。窓の終点と同じ時刻の応答は窓内として扱い、終点より後の応答は期限外とする。
 未完了/完了キー履歴の合計上限100000。履歴を捨てて誤照合せず、上限なら明示停止。
 
 | 状態 | 規則 |
 |---|---|
 | matched | 同じ窓内でquery1件、response1件。response_time_ms=(tr-tq)/1000000 |
-| ambiguous | 同じキーのqueryが窓内に複数。完了後のキー再利用も含む。対応グループ全体を曖昧とし時間値を撤回 |
+| ambiguous | 窓内に同じキーの問い合わせが複数ある状態。照合完了後に同じキーを再利用した場合も含む。グループ全体を曖昧とし、応答時間を取り消す |
 | additional_response | 完了キーへの追加response。最初の一意ペアは維持。ただしquery再利用で曖昧化したら時間値は撤回 |
-| unmatched_response | 未確定queryも保持中の完了キーもないresponse。過去の判定は書き換えない |
-| no_response_observed | query1件、窓内にresponseなし、記録終端>=t0+W |
-| window_incomplete | query1件、responseなし、記録終端<t0+W |
+| unmatched_response | 対応する未確定の問い合わせも、保持中の完了キーもない孤立応答。過去の判定は書き換えない |
+| no_response_observed | 問い合わせが1件あり、窓の終点まで記録があるが、その窓内に応答は観測されていない（記録終端>=t0+W） |
+| window_incomplete | 問い合わせが1件あり、応答が観測されないまま、窓の終点より前に記録が終わる（記録終端<t0+W） |
 
 重複queryグループはresponseの有無にかかわらずambiguousとし、全query番号を残す。
 窓外のキー再利用は別グループ。窓外responseを過去queryへ遡って成功扱いしない。
 responseのRCODEとTCを保存し、NXDOMAINもmatchedになり得る。
-DNS状態件数はqueryグループ/孤立・追加responseイベントの件数でありpacket分類の内訳ではない。
+DNS状態件数は問い合わせグループや孤立応答・追加応答のイベントを数えたもので、パケットの分類別件数とは独立している。
 全eventにquery_indices、response_indicesを添付。対応なしなら片方は[]。
 時間値が算出不可ならnull。障害、損失、攻撃と断定しない。
 
@@ -333,8 +334,8 @@ flowsは上記の双方向集計配列。dns.statusはcomplete/partialで、入�
 時間解析の有効性は別のdns.time_analysis（enabled/disabled_timestamp_regression）で示す。
 DNS構造検査結果はpacket分類/diagnosticsへ反映し、DNS照合状態とは区別する。
 query_count/response_countは構造・QR/port方向・時刻が有効な対象観測数（重複を含む）。
-無効化後も件数を維持し、それ以降の対象観測を数える。event_countsは6状態のイベント数。
-これはpacket分類の内訳でもquery件数でもない。無効化時のnullは「0件」の意味ではない。
+時間解析を無効にした後も件数は保持し、その後の対象観測も加算する。event_countsは6状態のイベント数。
+パケットの分類別件数や問い合わせ件数とは別に集計する。無効化時のnullは状態件数を集計できないことを表し、「0件」を意味しない。
 
 JSONの各イベントはkey/status/query_group/query_indices/response_indices/response_time_ns/
 response_time_ms/rcode/tcを持つ。keyはclient/serverのIPv4文字列とport、id、qtype/qclass、
@@ -357,7 +358,7 @@ unassigned_indicesへ記録する。E_LIMIT_DNS_OBSERVATIONS、complete=false、
 DNS処理後にフローへ必ず分配してから停止し、診断上限時も計数済みの完全レコードを欠落させない。
 有効な時刻は非DNS/unsupported/truncated/malformedでも窓進行に使う。
 入力不完全/読込/各上限停止時は読めた最後の有効時刻で終端処理し、未読時間は推測しない。
-partialの時間値/状態は処理済みprefixの結果であり、未読末尾を含む全ファイルの時刻整合性を保証しない。
+partialの時間値と状態は、ファイルの先頭から停止地点までに読み取れた範囲の結果である。未読部分を含むファイル全体の時刻の整合性は保証しない。
 時間解析有効時はquery_indicesとresponse_indicesとunassigned_indicesが対象観測を重複なく分配する。
 無効化時はevents=[]/event_counts=null、件数と根拠付き警告を保持する。
 通常診断上限やフロー上限が先に停止診断となっても、time_analysisで無効化を明示する。
@@ -396,8 +397,8 @@ DNS共通フィールド/一意な応答時間の独立比較と、独自状態�
 [Phase 3の判定と範囲](tshark_dns_comparison.md)で未説明差分0を確認し、人工入力の対応範囲でPhase 3完了と判定。
 Phase 4の[固定規模CLI計測](benchmark.md)で人工UDP混在入力の時間・最大RSS・状態割合を実測済み。
 計測経路はLinux専用の開発用スクリプトで、製品API/Schema/上限を変更しない。
-新規環境でのREADME通し再現と[3分デモ動画](demo.mp4)は完了。[MVP受入記録](mvp_acceptance.md)を独立レビューへ引き継ぐ。
-DNS/多数フロー/上限付近の性能や実通信への適用は未検証。
+新規環境でREADMEの手順を再現し、[3分デモ動画](demo.mp4)を作成した。[MVP受入記録](mvp_acceptance.md)に独立レビューへの引き継ぎと最終結果を記録した。
+この段階ではDNS、多数フロー、上限付近の性能や実通信への適用は未検証だった。
 
 Scapy APIの採用根拠: [公式RawPcapReader API](https://scapy.readthedocs.io/en/latest/api/scapy.utils.html#scapy.utils.RawPcapReader)。
 インストール版2.6.1のソースも確認し、メタデータがsec/usec/wirelen/caplen、nanoで精度を判別することを検証する。
