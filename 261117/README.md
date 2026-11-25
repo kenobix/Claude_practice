@@ -3,7 +3,9 @@
 作業日: 2026-11-17。worktree: `~/work/Claude_practice-261117`、branch: `feat/ci-runner`。
 [開発計画](../261014/plan_ci_runner.md)に沿って、受付APIによる手動投入とGitHub Webhookでジョブを受け付け、管理下の固定fixtureをDockerで隔離して実行する。P0では現在の開発環境で固定fixtureの隔離を検証し、P1では受付から結果保存、単一Workerの停止までを確認した。どちらも受入済み。ヘルスチェック、受付・履歴API、PostgreSQLへの永続化、冪等性はP1前半で実装した。
 
-runは受け付けたジョブの実行記録、attemptはそのrunに対する個々の試行を指す。Workerは待機中（queued）のrunを取得して実行するプロセス。取得時にDBで初回のattemptを作り、実行権を識別するtokenと、その期限であるleaseを発行する。実行前にはDBで実行権を再照合する。
+runは受け付けたジョブの実行記録、attemptはそのrunに対する個々の試行を指す。Workerは待機中（queued）のrunを取得して実行するプロセス。
+初回の取得ではDBに番号1のattemptを作る。再試行で同じrunを取得するときは、前回のattempt番号に1を足して新しいattemptを作る。
+どちらの場合も、実行権を識別するtokenと、その期限であるleaseを発行する。実行前にはDBで実行権を再照合する。
 
 P2ではWorkerが[実行中に5秒ごとにheartbeatを送り、leaseを更新する](ci_runner/docs/design.md#lease更新の実装範囲)。更新を確認できなければ実行を打ち切り、次のrunへ進まない。
 別プロセスの[期限監視](ci_runner/docs/design.md#期限監視の実装範囲)が失効したattemptを終了し、条件を満たしたrunを[再試行](ci_runner/docs/design.md#基盤障害の自動再試行)のためキューに戻す。
