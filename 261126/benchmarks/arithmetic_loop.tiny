@@ -1,0 +1,6 @@
+let i: int = 0;
+let total: int = 0;
+while (i < 1680) {
+  total = total + (i * 3 - i / 4 + i % 7);
+  i = i + 1;
+}
