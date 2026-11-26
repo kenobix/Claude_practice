@@ -83,6 +83,8 @@ def _validate_instruction(instruction: Instruction, code: Bytecode) -> None:
             raise _invalid("Unknown bytecode instruction.", position)
     if not valid:
         raise _invalid(f"Invalid operand for {op.name}.", position)
+    if op is Op.HALT and position.start != position.end:
+        raise _invalid("HALT requires an empty source span.", position)
 
 
 def validate(code: Bytecode) -> None:

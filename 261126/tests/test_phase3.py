@@ -255,17 +255,17 @@ class BytecodeValidationTests(unittest.TestCase):
     @staticmethod
     def code(*instructions, slots=()):
         return Bytecode(
-            tuple(Instruction(op, operand, Position(1, pc + 1, pc, pc + 1))
+            tuple(Instruction(op, operand, Position(1, pc + 1, pc, pc if op is Op.HALT else pc + 1))
                   for pc, (op, operand) in enumerate(instructions)),
             slots,
         )
 
-    def assert_internal(self, action, pc, message):
+    def assert_internal(self, action, code, pc, message):
         with self.assertRaises(DiagnosticError) as raised:
             action()
         error = raised.exception
         self.assertEqual((error.code, error.phase, error.exit_code), ("E_INTERNAL", "internal", 4))
-        position = None if pc is None else Position(1, pc + 1, pc, pc + 1)
+        position = None if pc is None else code.instructions[pc].position
         self.assertEqual(error.position, position)
         self.assertIn(message, str(error))
 
@@ -288,23 +288,23 @@ class BytecodeValidationTests(unittest.TestCase):
         ]:
             with self.subTest(op=op, operand=operand):
                 code = self.code((op, operand), (Op.HALT, None), slots=(ValueType.INT,))
-                self.assert_internal(lambda: validate(code), 0, message)
+                self.assert_internal(lambda: validate(code), code, 0, message)
         code = self.code((Op.HALT, None), slots=("int",))
-        self.assert_internal(lambda: validate(code), None, "slot type")
+        self.assert_internal(lambda: validate(code), code, None, "slot type")
 
     def test_stack_underflow_on_pops(self):
         for instruction in [(Op.STORE, 0), (Op.UNARY, "-"), (Op.BINARY, "+"),
                             (Op.JUMP_IF_FALSE, 1), (Op.PRINT, None)]:
             with self.subTest(instruction=instruction):
                 code = self.code(instruction, (Op.HALT, None), slots=(ValueType.INT,))
-                self.assert_internal(lambda: validate(code), 0, "underflow")
+                self.assert_internal(lambda: validate(code), code, 0, "underflow")
 
     def test_inconsistent_depth_at_forward_merge_and_back_edge(self):
         for target in [0, 4]:
             with self.subTest(target=target):
                 code = self.code((Op.PUSH, BoolValue(False)), (Op.JUMP_IF_FALSE, 4),
                                  (Op.PUSH, IntValue(1)), (Op.JUMP, target), (Op.HALT, None))
-                self.assert_internal(lambda: validate(code), target, "Inconsistent stack depth")
+                self.assert_internal(lambda: validate(code), code, target, "Inconsistent stack depth")
 
     def test_invalid_termination_and_source_location(self):
         for code, pc, message in [
@@ -318,7 +318,27 @@ class BytecodeValidationTests(unittest.TestCase):
              "source position"),
         ]:
             with self.subTest(code=code):
-                self.assert_internal(lambda: validate(code), pc, message)
+                self.assert_internal(lambda: validate(code), code, pc, message)
+
+    def test_halt_requires_an_empty_source_span(self):
+        code = Bytecode((Instruction(Op.HALT, None, Position(1, 1, 0, 1)),), ())
+        self.assert_internal(lambda: validate(code), code, 0, "empty source span")
+
+    def test_cli_rejects_halt_with_nonempty_source_span(self):
+        code = Bytecode((Instruction(Op.HALT, None, Position(1, 1, 0, 1)),), ())
+        for flags in [("run", "--engine", "vm", "--trace"), ("--disassemble",)]:
+            with (
+                self.subTest(flags=flags),
+                patch("tiny_language.__main__.compile_program", return_value=code),
+                patch("tiny_language.__main__._write_stdout") as output,
+                redirect_stderr(io.StringIO()) as stderr,
+            ):
+                self.assertEqual(main([*flags, str(phase2.EXAMPLES / "arithmetic.tiny")]), 4)
+                output.assert_not_called()
+                error = json.loads(stderr.getvalue())
+                self.assertIn("empty source span", error.pop("message"))
+                self.assertEqual(error, dict(code="E_INTERNAL", phase="internal",
+                                             line=1, column=1, span=[0, 1]))
 
     def test_runtime_internal_checks_keep_instruction_position(self):
         for prefix, pc, message in [
@@ -332,7 +352,7 @@ class BytecodeValidationTests(unittest.TestCase):
             with self.subTest(prefix=prefix):
                 code = self.code(*prefix, (Op.HALT, None), slots=(ValueType.INT,))
                 output = []
-                self.assert_internal(lambda: execute(code, output.append), pc, message)
+                self.assert_internal(lambda: execute(code, output.append), code, pc, message)
                 self.assertEqual(output, [])
 
     def test_cli_rejects_invalid_bytecode_before_printing_or_tracing(self):
