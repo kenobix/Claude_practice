@@ -84,15 +84,17 @@ print r == 0;
         corpus.append(Case(f"divmod-{index:02}", source, Outcome(f"{q}\n{r}\ntrue\n{zero}\n")))
 
     # Each split marks the first operator that fails by left-to-right evaluation.
+    values_by_shape = [rng.sample(range(-9, 10), 4) for _ in range(4)]
     for index in range(16):
-        value = rng.randint(-9, 9)
+        repetition, shape = divmod(index, 4)
+        value = values_by_shape[shape][repetition]
         zero = f"({value} - {value})"
         before, op, after = [
             ("(6 ", "/", f" {zero}) + (3 % {zero})"),
             ("6 / (3 ", "%", f" {zero})"),
             ("(6 / 2) - (3 ", "%", f" {zero})"),
             ("(6 % 2) + (3 ", "/", f" {zero})"),
-        ][index % 4]
+        ][shape]
         prefix = f"// 比較\r\nprint {value};\r\nif (true) {{\r\n  print {before}"
         source = prefix + op + after + ";\r\n} else { print 1 / 0; }\r\nprint 99;\r\n"
         start = len(prefix.encode("utf-8"))

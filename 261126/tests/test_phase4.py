@@ -12,6 +12,7 @@ class GeneratedProgramsTests(unittest.TestCase):
         corpus = compare.cases(261126)
         self.assertEqual(corpus, compare.cases(261126))
         self.assertNotEqual(corpus, compare.cases(261127))
+        self.assertEqual(len({case.source for case in corpus}), len(corpus))
         with tempfile.TemporaryDirectory() as temp:
             report = compare.compare(corpus, 261126, Path(temp))
             self.assertEqual(report["failures"], [], sorted(path.name for path in Path(temp).iterdir()))

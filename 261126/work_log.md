@@ -67,3 +67,13 @@ Phase 2の承認後、`feat/language-vm` の `17bcd75` から作業を始めた�
 日本語文書は `yomiyasu` の検査後に最終稿を照合した。命令の定義、ソース位置、命令数の式、出力先、診断は実装とテストでも確かめた。Phase 3のテストは既存の専用CIでも実行する。 [日本語技術文書の書き方](../docs/engineering/japanese-writing.md)・[ワークフロー](../.github/workflows/language-vm.yml)
 
 Phase 4では有界の生成プログラムを使って一致性の検証範囲を広げ、解析・型検査・コンパイル・実行を分けて測定し、再現手順と最終デモをまとめる。
+
+## 2026-11-26 Phase 4
+
+Phase 3の承認後、`feat/language-vm` の `9b727d4` から開始した。seed `261126` の生成例は60件とした。スコープと有界ループ24件、符号を振った除算・剰余20件、評価順とゼロ除数の診断16件を用意した。すべて両処理系と独立期待値に一致し、最小化を要する不一致はなかった。ステップ上限の判定にはPhase 1〜3の境界テストを使った。 [一致性検証](docs/verification.md)・[期待値の根拠と検証範囲](../docs/engineering/testing-and-reliability.md#期待値の根拠と検証範囲)
+
+出力のない3入力を各4回ウォームアップし、各15回計測した。VMの検査時間はVMが内部で行う検査を計測して求めた。各試行と中央値、入力と処理系のハッシュを保存した。 [性能計測](docs/benchmark.md)
+
+合計例のCLI出力とAST・命令列・トレース、型エラーとシャドーイング、検証と計測の結果を字幕付き動画にまとめた。日本語の文書と台本は `yomiyasu` で検査して最終稿を照合し、出力と数値はCLIおよび保存した結果とも照合した。 [デモ動画](demo/language-vm.mp4)・[台本](demo/storyboard.md)・[日本語技術文書の書き方](../docs/engineering/japanese-writing.md)
+
+再現手順、既知の制約、Phase 0〜4の根拠をそろえてDraft PR #10で引き継ぐ。 [MVP受入記録](docs/acceptance.md#phase-4とmvpの受入記録)・[独立レビューと修正後の再確認](../docs/engineering/development-workflow.md#独立レビューと修正後の再確認)

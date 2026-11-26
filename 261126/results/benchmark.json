@@ -1,0 +1,844 @@
+{
+  "recorded_at_utc": "2026-11-26T03:57:32.853259+00:00",
+  "environment": {
+    "python": "CPython 3.12.3",
+    "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "distribution": "Ubuntu 24.04.4 LTS",
+    "cpu": "AMD Ryzen 7 7735HS with Radeon Graphics",
+    "logical_cpus": 8,
+    "cpu_affinity": [
+      2
+    ]
+  },
+  "clock": {
+    "name": "time.perf_counter_ns",
+    "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+    "resolution_seconds": 1e-09
+  },
+  "warmups": 4,
+  "repeats": 15,
+  "order": "Alternating AST/VM and VM/AST, starting with AST/VM at warmup 1.",
+  "runtime_source_sha256": {
+    "__init__.py": "46d5eb79a2c64a6eff2d37e1ca8ed0488c331684e7c6e279d5c57e0893c14062",
+    "__main__.py": "65b5a59553b57a77b4403dc60c13fb84a014c75fdbf5c9197bd0bac91458c9a6",
+    "ast_nodes.py": "c5918d94114a79d8e74432817bbfc41534bf94487d6a0aaa187cb7a8063c66df",
+    "bytecode.py": "1d742ec0e49601f56c5ddc6e04d64fac90c5036148ab656283d90e915a937286",
+    "compiler.py": "96f3d91c023c2b0d7bb4849187650489485b16cce716951ea05052a6e330c0e1",
+    "diagnostics.py": "1d8095f2912e82c1896a221aa9414dee9a06c5a3e3f183d3942a60a11e05d896",
+    "display.py": "60c03523f2794cb46c59abed1feb44613f07b012e01e032e63f8df35db43d6e1",
+    "integers.py": "964ae6d4ea1507ee854bc2ef0c5e15f495e001e1e16bcbfa964a54acc5f509c7",
+    "interpreter.py": "42820dc79010079a88a840102ae5677286055e9873aaf5612f0a4f1fbb8151da",
+    "operators.py": "80d1904e78c8b25bd6779033c185d358527f1888ca6df66d7b1360542f5025f4",
+    "parser.py": "cc79ac8d43f74860b17d10735808d7e992c20a4d707ae7cd28154af95fbe33d1",
+    "resolver.py": "a7e54e60277dede495c7a161bd5711eda38471f6f2728bfc20d33bbaae95f33c",
+    "runtime.py": "c0d0b84ddd6dc5b00d61897cb7977a98aece8f198b543cbaa8dbf9f1694abddf",
+    "scanner.py": "e9ae78433e8f0d266a213b6e36b39201d8213b969d8b0c43bed0b1c05d5760b7",
+    "source.py": "e617e46787a43fa395e3c8849a73aac9e2557a8a9796b46cdf533383b2d32d9b",
+    "type_checker.py": "31a13146ce5cf76b4e531913cd6776e667ff0fd83965a156bbc096b58adb62ef",
+    "values.py": "3a33a5cad6af7dc0d557771858794edca68fba06e376ff9a32c95ccf541ecc20",
+    "vm.py": "0027adc94164fcb6a4b127526db7775e891761ff60593404d0c86947b8048859"
+  },
+  "workloads": {
+    "arithmetic_loop": {
+      "source_sha256": "02f90ff6e5c6ace74b7dbc5b1a2096dfbdd5f2b1627862031241ce79c4c55726",
+      "samples": {
+        "ast": [
+          {
+            "parse_ns": 1164529,
+            "resolve_type_ns": 184820,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 97495956,
+            "total_ns": 98845305
+          },
+          {
+            "parse_ns": 576501,
+            "resolve_type_ns": 129172,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 78086240,
+            "total_ns": 78791913
+          },
+          {
+            "parse_ns": 495252,
+            "resolve_type_ns": 81375,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 49299435,
+            "total_ns": 49876062
+          },
+          {
+            "parse_ns": 338695,
+            "resolve_type_ns": 75256,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 39799446,
+            "total_ns": 40213397
+          },
+          {
+            "parse_ns": 356235,
+            "resolve_type_ns": 66747,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 39904207,
+            "total_ns": 40327189
+          },
+          {
+            "parse_ns": 455139,
+            "resolve_type_ns": 73022,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 36915174,
+            "total_ns": 37443335
+          },
+          {
+            "parse_ns": 345429,
+            "resolve_type_ns": 63166,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 38670458,
+            "total_ns": 39079053
+          },
+          {
+            "parse_ns": 349365,
+            "resolve_type_ns": 68344,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 38573573,
+            "total_ns": 38991282
+          },
+          {
+            "parse_ns": 346149,
+            "resolve_type_ns": 68491,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 39791192,
+            "total_ns": 40205832
+          },
+          {
+            "parse_ns": 347872,
+            "resolve_type_ns": 67300,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 38213110,
+            "total_ns": 38628282
+          },
+          {
+            "parse_ns": 427670,
+            "resolve_type_ns": 76645,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 41482279,
+            "total_ns": 41986594
+          },
+          {
+            "parse_ns": 357781,
+            "resolve_type_ns": 68041,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 38016992,
+            "total_ns": 38442814
+          },
+          {
+            "parse_ns": 347840,
+            "resolve_type_ns": 67478,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 37583705,
+            "total_ns": 37999023
+          },
+          {
+            "parse_ns": 362457,
+            "resolve_type_ns": 101578,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 35656376,
+            "total_ns": 36120411
+          },
+          {
+            "parse_ns": 343665,
+            "resolve_type_ns": 61756,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 35615429,
+            "total_ns": 36020850
+          }
+        ],
+        "vm": [
+          {
+            "parse_ns": 626042,
+            "resolve_type_ns": 120747,
+            "compile_ns": 208875,
+            "validate_ns": 140656,
+            "execute_ns": 60304533,
+            "total_ns": 61400853
+          },
+          {
+            "parse_ns": 658627,
+            "resolve_type_ns": 136146,
+            "compile_ns": 221655,
+            "validate_ns": 221520,
+            "execute_ns": 51196815,
+            "total_ns": 52434763
+          },
+          {
+            "parse_ns": 349365,
+            "resolve_type_ns": 64084,
+            "compile_ns": 149991,
+            "validate_ns": 82951,
+            "execute_ns": 24924368,
+            "total_ns": 25570759
+          },
+          {
+            "parse_ns": 408000,
+            "resolve_type_ns": 74567,
+            "compile_ns": 126802,
+            "validate_ns": 85206,
+            "execute_ns": 24116430,
+            "total_ns": 24811005
+          },
+          {
+            "parse_ns": 403385,
+            "resolve_type_ns": 64001,
+            "compile_ns": 71863,
+            "validate_ns": 77762,
+            "execute_ns": 22846983,
+            "total_ns": 23463994
+          },
+          {
+            "parse_ns": 331146,
+            "resolve_type_ns": 65609,
+            "compile_ns": 81688,
+            "validate_ns": 72981,
+            "execute_ns": 22863050,
+            "total_ns": 23414474
+          },
+          {
+            "parse_ns": 341556,
+            "resolve_type_ns": 64001,
+            "compile_ns": 68992,
+            "validate_ns": 73544,
+            "execute_ns": 23247340,
+            "total_ns": 23795433
+          },
+          {
+            "parse_ns": 336418,
+            "resolve_type_ns": 65077,
+            "compile_ns": 67467,
+            "validate_ns": 71863,
+            "execute_ns": 24050632,
+            "total_ns": 24591457
+          },
+          {
+            "parse_ns": 340793,
+            "resolve_type_ns": 62811,
+            "compile_ns": 69504,
+            "validate_ns": 74108,
+            "execute_ns": 25507551,
+            "total_ns": 26054767
+          },
+          {
+            "parse_ns": 380572,
+            "resolve_type_ns": 67937,
+            "compile_ns": 67833,
+            "validate_ns": 74077,
+            "execute_ns": 23457442,
+            "total_ns": 24047861
+          },
+          {
+            "parse_ns": 674696,
+            "resolve_type_ns": 100658,
+            "compile_ns": 118314,
+            "validate_ns": 130936,
+            "execute_ns": 25416157,
+            "total_ns": 26440761
+          },
+          {
+            "parse_ns": 342798,
+            "resolve_type_ns": 119023,
+            "compile_ns": 84768,
+            "validate_ns": 85728,
+            "execute_ns": 24180514,
+            "total_ns": 24812831
+          },
+          {
+            "parse_ns": 352340,
+            "resolve_type_ns": 109784,
+            "compile_ns": 95720,
+            "validate_ns": 76332,
+            "execute_ns": 23609108,
+            "total_ns": 24243284
+          },
+          {
+            "parse_ns": 413648,
+            "resolve_type_ns": 75987,
+            "compile_ns": 70234,
+            "validate_ns": 77752,
+            "execute_ns": 23128087,
+            "total_ns": 23765708
+          },
+          {
+            "parse_ns": 351892,
+            "resolve_type_ns": 67133,
+            "compile_ns": 74045,
+            "validate_ns": 76530,
+            "execute_ns": 24012838,
+            "total_ns": 24582438
+          }
+        ]
+      },
+      "median": {
+        "ast": {
+          "parse_ns": 356235,
+          "resolve_type_ns": 68491,
+          "compile_ns": 0,
+          "validate_ns": 0,
+          "execute_ns": 38670458,
+          "total_ns": 39079053
+        },
+        "vm": {
+          "parse_ns": 352340,
+          "resolve_type_ns": 67937,
+          "compile_ns": 81688,
+          "validate_ns": 77752,
+          "execute_ns": 24050632,
+          "total_ns": 24591457
+        }
+      }
+    },
+    "branches": {
+      "source_sha256": "72e1da283cd48b1cc822b5b168378935ca0c1d36f00524416d6a8a0a7b353632",
+      "samples": {
+        "ast": [
+          {
+            "parse_ns": 394009,
+            "resolve_type_ns": 68324,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 25376742,
+            "total_ns": 25839075
+          },
+          {
+            "parse_ns": 420435,
+            "resolve_type_ns": 85195,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 25269088,
+            "total_ns": 25774718
+          },
+          {
+            "parse_ns": 383955,
+            "resolve_type_ns": 67342,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 26414690,
+            "total_ns": 26865987
+          },
+          {
+            "parse_ns": 370121,
+            "resolve_type_ns": 63438,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 26174135,
+            "total_ns": 26607694
+          },
+          {
+            "parse_ns": 388215,
+            "resolve_type_ns": 65838,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 27287860,
+            "total_ns": 27741913
+          },
+          {
+            "parse_ns": 373024,
+            "resolve_type_ns": 66413,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 26784747,
+            "total_ns": 27224184
+          },
+          {
+            "parse_ns": 385239,
+            "resolve_type_ns": 152997,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 27267544,
+            "total_ns": 27805780
+          },
+          {
+            "parse_ns": 347224,
+            "resolve_type_ns": 57946,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 25501821,
+            "total_ns": 25906991
+          },
+          {
+            "parse_ns": 382754,
+            "resolve_type_ns": 66852,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 25005607,
+            "total_ns": 25455213
+          },
+          {
+            "parse_ns": 573213,
+            "resolve_type_ns": 70934,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 26827564,
+            "total_ns": 27471711
+          },
+          {
+            "parse_ns": 511947,
+            "resolve_type_ns": 82940,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 28504584,
+            "total_ns": 29099471
+          },
+          {
+            "parse_ns": 396817,
+            "resolve_type_ns": 73336,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 30103976,
+            "total_ns": 30574129
+          },
+          {
+            "parse_ns": 392130,
+            "resolve_type_ns": 68626,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 26365962,
+            "total_ns": 26826718
+          },
+          {
+            "parse_ns": 394615,
+            "resolve_type_ns": 107748,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 27175218,
+            "total_ns": 27677581
+          },
+          {
+            "parse_ns": 396599,
+            "resolve_type_ns": 70234,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 25958452,
+            "total_ns": 26425285
+          }
+        ],
+        "vm": [
+          {
+            "parse_ns": 420111,
+            "resolve_type_ns": 69879,
+            "compile_ns": 82450,
+            "validate_ns": 78503,
+            "execute_ns": 14964241,
+            "total_ns": 15615184
+          },
+          {
+            "parse_ns": 502435,
+            "resolve_type_ns": 69316,
+            "compile_ns": 76655,
+            "validate_ns": 75037,
+            "execute_ns": 15102975,
+            "total_ns": 15826418
+          },
+          {
+            "parse_ns": 629425,
+            "resolve_type_ns": 101160,
+            "compile_ns": 122176,
+            "validate_ns": 188078,
+            "execute_ns": 14475001,
+            "total_ns": 15515840
+          },
+          {
+            "parse_ns": 381522,
+            "resolve_type_ns": 60180,
+            "compile_ns": 72114,
+            "validate_ns": 71362,
+            "execute_ns": 15524087,
+            "total_ns": 16109265
+          },
+          {
+            "parse_ns": 1107951,
+            "resolve_type_ns": 104323,
+            "compile_ns": 184319,
+            "validate_ns": 83149,
+            "execute_ns": 15152183,
+            "total_ns": 16631925
+          },
+          {
+            "parse_ns": 406455,
+            "resolve_type_ns": 67373,
+            "compile_ns": 73409,
+            "validate_ns": 95323,
+            "execute_ns": 17075892,
+            "total_ns": 17718452
+          },
+          {
+            "parse_ns": 387619,
+            "resolve_type_ns": 68219,
+            "compile_ns": 79412,
+            "validate_ns": 77261,
+            "execute_ns": 14732175,
+            "total_ns": 15344686
+          },
+          {
+            "parse_ns": 1195289,
+            "resolve_type_ns": 105408,
+            "compile_ns": 120799,
+            "validate_ns": 104375,
+            "execute_ns": 14275961,
+            "total_ns": 15801832
+          },
+          {
+            "parse_ns": 410078,
+            "resolve_type_ns": 104490,
+            "compile_ns": 87221,
+            "validate_ns": 80153,
+            "execute_ns": 23767013,
+            "total_ns": 24448955
+          },
+          {
+            "parse_ns": 392297,
+            "resolve_type_ns": 72020,
+            "compile_ns": 111047,
+            "validate_ns": 75455,
+            "execute_ns": 16000803,
+            "total_ns": 16651622
+          },
+          {
+            "parse_ns": 388715,
+            "resolve_type_ns": 67604,
+            "compile_ns": 79902,
+            "validate_ns": 77198,
+            "execute_ns": 15913760,
+            "total_ns": 16527179
+          },
+          {
+            "parse_ns": 426751,
+            "resolve_type_ns": 70913,
+            "compile_ns": 77835,
+            "validate_ns": 78744,
+            "execute_ns": 17911159,
+            "total_ns": 18565402
+          },
+          {
+            "parse_ns": 396328,
+            "resolve_type_ns": 70651,
+            "compile_ns": 81333,
+            "validate_ns": 79370,
+            "execute_ns": 15737579,
+            "total_ns": 16365261
+          },
+          {
+            "parse_ns": 470257,
+            "resolve_type_ns": 71226,
+            "compile_ns": 78566,
+            "validate_ns": 76739,
+            "execute_ns": 15657983,
+            "total_ns": 16354771
+          },
+          {
+            "parse_ns": 392621,
+            "resolve_type_ns": 68198,
+            "compile_ns": 78879,
+            "validate_ns": 75820,
+            "execute_ns": 15783372,
+            "total_ns": 16398890
+          }
+        ]
+      },
+      "median": {
+        "ast": {
+          "parse_ns": 392130,
+          "resolve_type_ns": 68626,
+          "compile_ns": 0,
+          "validate_ns": 0,
+          "execute_ns": 26414690,
+          "total_ns": 26865987
+        },
+        "vm": {
+          "parse_ns": 410078,
+          "resolve_type_ns": 70651,
+          "compile_ns": 79902,
+          "validate_ns": 78503,
+          "execute_ns": 15657983,
+          "total_ns": 16365261
+        }
+      }
+    },
+    "variables": {
+      "source_sha256": "cfbf54ba54369333deffc9f7400925ebba77b2f7c69f7f5574f8ca7eb382ebb1",
+      "samples": {
+        "ast": [
+          {
+            "parse_ns": 419682,
+            "resolve_type_ns": 63177,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 19014272,
+            "total_ns": 19497131
+          },
+          {
+            "parse_ns": 451913,
+            "resolve_type_ns": 66706,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 19735366,
+            "total_ns": 20253985
+          },
+          {
+            "parse_ns": 423348,
+            "resolve_type_ns": 64638,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 18876204,
+            "total_ns": 19364190
+          },
+          {
+            "parse_ns": 445899,
+            "resolve_type_ns": 64022,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 19026843,
+            "total_ns": 19536764
+          },
+          {
+            "parse_ns": 421166,
+            "resolve_type_ns": 58843,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 19509932,
+            "total_ns": 19989941
+          },
+          {
+            "parse_ns": 567168,
+            "resolve_type_ns": 65859,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 18870463,
+            "total_ns": 19503490
+          },
+          {
+            "parse_ns": 407968,
+            "resolve_type_ns": 61182,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 18117838,
+            "total_ns": 18586988
+          },
+          {
+            "parse_ns": 721349,
+            "resolve_type_ns": 72615,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 22305125,
+            "total_ns": 23099089
+          },
+          {
+            "parse_ns": 429476,
+            "resolve_type_ns": 65661,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 23091074,
+            "total_ns": 23586211
+          },
+          {
+            "parse_ns": 426270,
+            "resolve_type_ns": 66424,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 18976358,
+            "total_ns": 19469052
+          },
+          {
+            "parse_ns": 463283,
+            "resolve_type_ns": 63959,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 19697916,
+            "total_ns": 20225158
+          },
+          {
+            "parse_ns": 442788,
+            "resolve_type_ns": 64450,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 23321731,
+            "total_ns": 23828969
+          },
+          {
+            "parse_ns": 431178,
+            "resolve_type_ns": 67290,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 20231495,
+            "total_ns": 20729963
+          },
+          {
+            "parse_ns": 561425,
+            "resolve_type_ns": 90239,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 21223231,
+            "total_ns": 21874895
+          },
+          {
+            "parse_ns": 536649,
+            "resolve_type_ns": 96169,
+            "compile_ns": 0,
+            "validate_ns": 0,
+            "execute_ns": 21975095,
+            "total_ns": 22607913
+          }
+        ],
+        "vm": [
+          {
+            "parse_ns": 415726,
+            "resolve_type_ns": 62884,
+            "compile_ns": 69524,
+            "validate_ns": 72667,
+            "execute_ns": 11476112,
+            "total_ns": 12096913
+          },
+          {
+            "parse_ns": 459441,
+            "resolve_type_ns": 62790,
+            "compile_ns": 64983,
+            "validate_ns": 71174,
+            "execute_ns": 11022904,
+            "total_ns": 11681292
+          },
+          {
+            "parse_ns": 407561,
+            "resolve_type_ns": 60295,
+            "compile_ns": 69065,
+            "validate_ns": 73199,
+            "execute_ns": 10652126,
+            "total_ns": 11262246
+          },
+          {
+            "parse_ns": 696005,
+            "resolve_type_ns": 92232,
+            "compile_ns": 95710,
+            "validate_ns": 125413,
+            "execute_ns": 12666252,
+            "total_ns": 13675612
+          },
+          {
+            "parse_ns": 409618,
+            "resolve_type_ns": 60712,
+            "compile_ns": 67583,
+            "validate_ns": 88464,
+            "execute_ns": 10669321,
+            "total_ns": 11295698
+          },
+          {
+            "parse_ns": 383934,
+            "resolve_type_ns": 54574,
+            "compile_ns": 59344,
+            "validate_ns": 66966,
+            "execute_ns": 12130161,
+            "total_ns": 12694979
+          },
+          {
+            "parse_ns": 397351,
+            "resolve_type_ns": 57110,
+            "compile_ns": 69410,
+            "validate_ns": 73356,
+            "execute_ns": 12228235,
+            "total_ns": 12825462
+          },
+          {
+            "parse_ns": 600995,
+            "resolve_type_ns": 82857,
+            "compile_ns": 69441,
+            "validate_ns": 105826,
+            "execute_ns": 11077207,
+            "total_ns": 11936326
+          },
+          {
+            "parse_ns": 429852,
+            "resolve_type_ns": 66768,
+            "compile_ns": 89727,
+            "validate_ns": 74609,
+            "execute_ns": 12105918,
+            "total_ns": 12766874
+          },
+          {
+            "parse_ns": 425749,
+            "resolve_type_ns": 66987,
+            "compile_ns": 67614,
+            "validate_ns": 73032,
+            "execute_ns": 12914202,
+            "total_ns": 13547584
+          },
+          {
+            "parse_ns": 432765,
+            "resolve_type_ns": 64721,
+            "compile_ns": 96608,
+            "validate_ns": 76311,
+            "execute_ns": 11802074,
+            "total_ns": 12472479
+          },
+          {
+            "parse_ns": 424194,
+            "resolve_type_ns": 62101,
+            "compile_ns": 63594,
+            "validate_ns": 71382,
+            "execute_ns": 11821082,
+            "total_ns": 12442353
+          },
+          {
+            "parse_ns": 458125,
+            "resolve_type_ns": 66173,
+            "compile_ns": 72719,
+            "validate_ns": 75360,
+            "execute_ns": 12116146,
+            "total_ns": 12788523
+          },
+          {
+            "parse_ns": 433914,
+            "resolve_type_ns": 65588,
+            "compile_ns": 66183,
+            "validate_ns": 71789,
+            "execute_ns": 11037156,
+            "total_ns": 11674630
+          },
+          {
+            "parse_ns": 462009,
+            "resolve_type_ns": 66778,
+            "compile_ns": 71341,
+            "validate_ns": 73440,
+            "execute_ns": 13015508,
+            "total_ns": 13689076
+          }
+        ]
+      },
+      "median": {
+        "ast": {
+          "parse_ns": 442788,
+          "resolve_type_ns": 65661,
+          "compile_ns": 0,
+          "validate_ns": 0,
+          "execute_ns": 19697916,
+          "total_ns": 20225158
+        },
+        "vm": {
+          "parse_ns": 429852,
+          "resolve_type_ns": 64721,
+          "compile_ns": 69410,
+          "validate_ns": 73356,
+          "execute_ns": 11821082,
+          "total_ns": 12472479
+        }
+      }
+    }
+  }
+}
