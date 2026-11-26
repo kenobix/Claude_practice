@@ -5,11 +5,9 @@ from . import ast_nodes as ast
 from .diagnostics import DiagnosticError
 from .operators import apply_binary, apply_unary
 from .resolver import Resolution
+from .runtime import MAX_STEPS, ProgramOutput
 from .scanner import Token
-from .values import BoolValue, IntValue, Value, format_value
-
-MAX_OUTPUT_LINES = 1_024
-MAX_STEPS = 100_000
+from .values import BoolValue, IntValue, Value
 
 
 def interpret(
@@ -24,11 +22,10 @@ def interpret(
 class _Interpreter:
     def __init__(self, resolution: Resolution, write: Callable[[str], None]) -> None:
         self.resolution = resolution
-        self.write = write
+        self.output = ProgramOutput(write)
         # Each let writes its slot whenever it runs, including on block reentry.
         self.slots: list[Value | None] = [None] * len(resolution.declarations)
         self.steps = 0
-        self.output_lines = 0
 
     def _step(self, anchor: Token) -> None:
         if self.steps == MAX_STEPS:
@@ -36,14 +33,6 @@ class _Interpreter:
                 "E_LIMIT", "runtime", f"Execution exceeds {MAX_STEPS:,} AST steps.", anchor.position
             )
         self.steps += 1
-
-    def _print(self, anchor: Token, value: Value) -> None:
-        if self.output_lines == MAX_OUTPUT_LINES:
-            raise DiagnosticError(
-                "E_LIMIT", "runtime", f"Output exceeds {MAX_OUTPUT_LINES:,} lines.", anchor.position
-            )
-        self.write(format_value(value) + "\n")
-        self.output_lines += 1
 
     def _condition(self, expression: ast.Expression) -> bool:
         value = self.expression(expression)
@@ -60,7 +49,7 @@ class _Interpreter:
                 value = self.expression(expression)
                 self.slots[self.resolution.declaration_id(name)] = value
             case ast.Print(value=expression):
-                self._print(statement.anchor, self.expression(expression))
+                self.output.print_value(self.expression(expression), statement.anchor.position)
             case ast.Block(statements=statements):
                 for child in statements:
                     self.statement(child)
@@ -75,7 +64,8 @@ class _Interpreter:
                 assert_never(statement)
 
     def expression(self, expression: ast.Expression) -> Value:
-        self._step(expression.anchor)
+        anchor = expression.anchor
+        self._step(anchor)
         match expression:
             case ast.IntegerLiteral(value=value):
                 return IntValue(value)
@@ -86,10 +76,10 @@ class _Interpreter:
                 assert value is not None
                 return value
             case ast.Unary(operand=operand):
-                return apply_unary(expression.anchor, self.expression(operand))
+                return apply_unary(anchor.kind, self.expression(operand), anchor.position)
             case ast.Binary(left=left, right=right):
                 left_value = self.expression(left)
                 right_value = self.expression(right)
-                return apply_binary(expression.anchor, left_value, right_value)
+                return apply_binary(anchor.kind, left_value, right_value, anchor.position)
             case _:
                 assert_never(expression)

@@ -1,5 +1,7 @@
 from . import ast_nodes as ast
+from .bytecode import Bytecode, Instruction, validate
 from .scanner import Token
+from .values import BoolValue, IntValue, Value, format_value
 
 
 def token_data(token: Token) -> dict[str, object]:
@@ -8,6 +10,25 @@ def token_data(token: Token) -> dict[str, object]:
 
 def ast_data(program: ast.Program) -> dict[str, object]:
     return {"kind": "Program", "statements": [_node_data(node) for node in program.statements]}
+
+
+def value_data(value: Value) -> dict[str, object]:
+    return {"type": value.tag, "value": format_value(value) if isinstance(value, IntValue) else value.value}
+
+
+def instruction_data(pc: int, instruction: Instruction) -> dict[str, object]:
+    operand = instruction.operand
+    if isinstance(operand, (IntValue, BoolValue)):
+        operand = value_data(operand)
+    return {
+        "pc": pc, "op": instruction.op.name, "operand": operand,
+        **instruction.position.as_dict(),
+    }
+
+
+def disassembly_data(code: Bytecode) -> list[dict[str, object]]:
+    validate(code)
+    return [instruction_data(pc, instruction) for pc, instruction in enumerate(code.instructions)]
 
 
 def _node_data(node: ast.Statement | ast.Expression) -> dict[str, object]:
