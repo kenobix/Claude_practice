@@ -47,7 +47,7 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Type-check and build
         run: npm run build
-      - name: Run Phase 1–3 server and process restart tests
+      - name: Run Phase 1–4 server and process restart tests
         run: npm test
       - name: Install pinned Chromium and system dependencies
         run: npx playwright install --with-deps chromium --only-shell

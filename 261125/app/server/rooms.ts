@@ -14,6 +14,7 @@ import { createStorage } from './storage.ts';
 import type { StorageOptions } from './storage.ts';
 
 const HEARTBEAT_MS = 5_000;
+const HELLO_TIMEOUT_MS = 5_000;
 const BURST = 20;
 const UPDATE_INTERVAL_MS = 100;
 const emptyDoc = new Y.Doc();
@@ -32,6 +33,7 @@ type Peer = {
   clientId?: string;
   presence?: PresenceEntry;
   alive: boolean;
+  helloTimer?: ReturnType<typeof setTimeout>;
 };
 
 type Room = {
@@ -138,7 +140,9 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
   }
 
   function removePeer(room: Room, peer: Peer, notify = true) {
-    if (!room.peers.delete(peer) || !peer.presence || !notify) return;
+    if (!room.peers.delete(peer)) return;
+    clearTimeout(peer.helloTimer);
+    if (!peer.presence || !notify) return;
     const left = { id: peer.presence.id, clock: ++room.presenceClock, state: null };
     broadcast(room, presenceFrame([left]));
   }
@@ -186,6 +190,7 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
       }
       const [color, colorLight] = COLORS[peer.user.id];
       const others = [...room.peers].flatMap(({ presence }) => presence ? [presence] : []);
+      clearTimeout(peer.helloTimer);
       peer.clientId = header.client_id;
       peer.presence = {
         id: header.awareness_id,
@@ -256,7 +261,8 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
     for (const room of rooms.values()) {
       for (const peer of room.peers) {
         if (!validSession(peer.token)) disconnect(room, peer, 'SESSION_EXPIRED');
-        else if (!peer.alive || !peer.clientId) {
+        else if (!peer.clientId) continue;
+        else if (!peer.alive) {
           removePeer(room, peer);
           peer.socket.terminate();
         } else {
@@ -331,6 +337,10 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
       wss.handleUpgrade(request, socket, head, (ws) => {
         const peer: Peer = { socket: ws, token, user, alive: true };
         room.peers.add(peer);
+        peer.helloTimer = setTimeout(() => {
+          removePeer(room, peer);
+          ws.terminate();
+        }, HELLO_TIMEOUT_MS).unref();
         ws.on('error', () => removePeer(room, peer));
         ws.on('close', () => removePeer(room, peer));
         ws.on('pong', () => { peer.alive = true; });

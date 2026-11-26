@@ -868,3 +868,20 @@ test('P3-3: expiration rejects an existing socket and fresh upgrades until the a
   await fresh.ack(messageId, 2);
   assert.equal(witness.text.toString(), '有効期限後');
 });
+
+test('P4-1: a heartbeat between upgrade and HELLO allows the new connection to finish joining', async (t) => {
+  t.mock.timers.enable({ apis: ['setInterval'] });
+  const app = await setup(t);
+  const owner = await login(app, 'aki');
+  const id = await createDocument(app, owner);
+  const socket = new WebSocket(wsUrl(app, id), { origin: app.origin, headers: { Cookie: owner } });
+  t.after(() => socket.terminate());
+  await once(socket, 'open');
+  t.mock.timers.tick(5_000);
+
+  const incoming = once(socket, 'message', { signal: AbortSignal.timeout(2_000) });
+  socket.send(encodeFrame({ type: 'HELLO', version: VERSION, client_id: randomUUID(), awareness_id: 17 }));
+  const state = decodeFrame((await incoming)[0]);
+  assert.equal(state.header.type, 'STATE');
+  assert.equal(state.header.sequence, 0);
+});
