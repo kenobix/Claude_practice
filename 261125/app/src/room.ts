@@ -22,11 +22,13 @@ export type RoomStatus = {
   retrying: boolean;
   sessionExpired: boolean;
   volatileDraft?: string;
+  legacyBody?: string;
 };
 
 const ACK_TIMEOUT = 2_500;
+const MAX_ACK_TIMEOUTS = 3;
 const BLOCKED = new Set(['DOCUMENT_DELETED', 'ACCESS_DENIED', 'GRANT_CHANGED', 'WRITE_FORBIDDEN',
-  'TEXT_LIMIT', 'UPDATE_LIMIT', 'STATE_LIMIT', 'FRAME_LIMIT', 'INVALID_UPDATE', 'MESSAGE_ID_CONFLICT']);
+  'TEXT_LIMIT', 'UPDATE_LIMIT', 'STATE_LIMIT', 'FRAME_LIMIT', 'INVALID_UPDATE', 'LINE_ENDING', 'MESSAGE_ID_CONFLICT']);
 const HIDE_BODY = new Set(['DOCUMENT_DELETED', 'ACCESS_DENIED', 'GRANT_CHANGED', 'WRITE_FORBIDDEN']);
 
 export function openRoom(documentId: string, user: User, parent: HTMLElement, initialStatus: RoomStatus,
@@ -51,6 +53,7 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
   let disposed = false;
   let joinTimer: number | undefined;
   let sendTimer: number | undefined;
+  let ackTimeouts = 0;
   let work = Promise.resolve();
 
   function publish(change: Partial<RoomStatus>) {
@@ -81,7 +84,7 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
 
   function stop(problem: string, allowOffline = false) {
     window.clearTimeout(joinTimer);
-    window.clearTimeout(sendTimer);
+    clearSendTimer();
     inflight = undefined;
     if (disposed) return;
     publish({ connection: 'offline', problem, users: [], retrying: false });
@@ -102,6 +105,24 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
 
   function enqueue(action: () => Promise<void>) {
     work = work.then(async () => { if (!failed) await action(); }).catch(failLocal);
+  }
+
+  function clearSendTimer() {
+    window.clearTimeout(sendTimer);
+    sendTimer = undefined;
+  }
+
+  function scheduleSendTimer(delay: number, action: () => void) {
+    clearSendTimer();
+    const socket = ws;
+    const timer = window.setTimeout(() => {
+      enqueue(async () => {
+        if (disposed || ws !== socket || status.connection !== 'online' || sendTimer !== timer) return;
+        sendTimer = undefined;
+        action();
+      });
+    }, delay);
+    sendTimer = timer;
   }
 
   async function refuse(code: string) {
@@ -135,7 +156,14 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
     }
     inflight = item.messageId;
     ws.send(encodeFrame({ type: 'UPDATE', client_id: cache.clientId, grant_revision: grantRevision, message_id: item.messageId }, item.bytes));
-    sendTimer = window.setTimeout(() => { inflight = undefined; pump(); }, ACK_TIMEOUT);
+    scheduleSendTimer(ACK_TIMEOUT, () => {
+      if (++ackTimeouts === MAX_ACK_TIMEOUTS) {
+        stop(errorText('ACK_TIMEOUT'), true);
+        return;
+      }
+      inflight = undefined;
+      pump();
+    });
   }
 
   doc.on('update', (bytes: Uint8Array, origin: unknown, _doc: Y.Doc, transaction: Y.Transaction) => {
@@ -172,8 +200,8 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
       if (header.code === 'RATE_LIMIT') {
         if (inflight && header.message_id === inflight) {
           publish({ retrying: true });
-          window.clearTimeout(sendTimer);
-          sendTimer = window.setTimeout(() => { inflight = undefined; pump(); }, 350);
+          ackTimeouts = 0;
+          scheduleSendTimer(350, () => { inflight = undefined; pump(); });
         }
         return;
       }
@@ -181,17 +209,37 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
       return;
     }
     if (status.connection === 'joining') {
-      if (header.type !== 'STATE' || header.version !== VERSION || !isRole(header.role) ||
+      if ((header.type !== 'STATE' && header.type !== 'LEGACY_STATE') || header.version !== VERSION || !isRole(header.role) ||
           !isUint(header.grant_revision) || !isUint(header.sequence)) return stop(errorText('SYNC_SEQUENCE'));
       const nextScope = `${documentId}:${header.grant_revision}`;
       const drafts = await cache.drafts(documentId);
       await quarantineDrafts(cache, drafts, documentId, 'GRANT_CHANGED', header.grant_revision);
+      if (disposed || status.connection !== 'joining') return;
+      if (header.type === 'LEGACY_STATE') {
+        // Do not bind a document with CR to CodeMirror or mix it with the cached draft.
+        Y.applyUpdate(doc, payload, remote);
+        blocked = true;
+        publish({ role: header.role, sequence: header.sequence, legacyBody: text.toString() });
+        stop(errorText('LEGACY_LINE_ENDING'));
+        publishSave();
+        if (drafts.some((draft) => draft.scope === nextScope)) await cache.quarantine(nextScope, 'LEGACY_LINE_ENDING');
+        draftsChanged();
+        return;
+      }
       const { state, pending: stored } = await cache.load(nextScope);
       if (disposed || status.connection !== 'joining') return;
-      blocked = Boolean(state?.blocked);
-      const plan = header.role === 'viewer' || blocked
+      let blockReason = state?.blocked;
+      const recovered = !blockReason && (state || stored.length > 0)
+        ? prepareRecovery(payload, state?.bytes, stored, (state?.unconfirmed ?? 0) > stored.length)
+        : undefined;
+      if (recovered === null) {
+        blockReason = 'LINE_ENDING';
+        await cache.quarantine(nextScope, blockReason);
+      }
+      blocked = Boolean(blockReason);
+      const plan = header.role === 'viewer' || !recovered
         ? { complete: payload, ordered: [], repair: undefined }
-        : prepareRecovery(payload, state?.bytes, stored, (state?.unconfirmed ?? 0) > stored.length);
+        : recovered;
       const repair = plan.repair && { messageId: crypto.randomUUID(), bytes: plan.repair, repair: true };
       if (!blocked && !(await cache.save(nextScope, plan.complete, repair))) {
         await refuse('GRANT_CHANGED');
@@ -206,6 +254,7 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
         parent,
         doc: text.toString(),
         extensions: [
+          // The default line separator reads CRLF, CR and LF. The Yjs binding writes LF.
           lineNumbers(), highlightActiveLineGutter(), EditorView.lineWrapping,
           keymap.of([...yUndoManagerKeymap, ...defaultKeymap]), yCollab(text, awareness, { undoManager: undo }),
           editability.of(editAccess(!blocked && header.role !== 'viewer')),
@@ -214,7 +263,7 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
       });
       window.clearTimeout(joinTimer);
       publish({ connection: 'online', role: header.role, sequence: header.sequence, users: [user],
-        problem: state?.blocked ? errorText(state.blocked) : '' });
+        problem: blockReason ? errorText(blockReason) : '' });
       publishSave();
       draftsChanged();
       pump();
@@ -233,7 +282,8 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
       await cache.acknowledge(scope, id);
       pending = pending.filter(({ messageId }) => messageId !== id);
       if (inflight === id) {
-        window.clearTimeout(sendTimer);
+        clearSendTimer();
+        ackTimeouts = 0;
         inflight = undefined;
       }
       confirmed = true;
@@ -260,6 +310,7 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
     };
     socket.onmessage = ({ data }: MessageEvent<ArrayBuffer>) => {
       enqueue(async () => {
+        if (disposed || ws !== socket || status.connection === 'offline') return;
         let frame;
         try { frame = decodeFrame(new Uint8Array(data)); }
         catch { stop(errorText('SYNC_SEQUENCE'), true); return; }
@@ -269,7 +320,7 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
     socket.onclose = ({ reason, code }) => {
       // Process the preceding frames before reacting to the close.
       enqueue(async () => {
-        if (disposed || status.connection === 'offline') return;
+        if (disposed || ws !== socket || status.connection === 'offline') return;
         if (code === 1009) await refuse('FRAME_LIMIT');
         else if (reason) await refuse(reason);
         else if (status.connection === 'joining') {
@@ -280,7 +331,9 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
         else stop('接続が切れました。編集は端末に保存し、次の接続時に送ります。', true);
       });
     };
-    joinTimer = window.setTimeout(() => stop('接続がタイムアウトしました。接続し直してください。'), 8_000);
+    joinTimer = window.setTimeout(() => {
+      if (ws === socket && status.connection === 'joining') stop('接続がタイムアウトしました。接続し直してください。');
+    }, 8_000);
   }
 
   async function beforeReconnect() {
@@ -293,7 +346,7 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
     disposed = true;
     cache.signal.removeEventListener('abort', close);
     window.clearTimeout(joinTimer);
-    window.clearTimeout(sendTimer);
+    clearSendTimer();
     if (ws) {
       ws.onopen = ws.onmessage = ws.onclose = null;
       ws.close();

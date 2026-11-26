@@ -19,7 +19,7 @@ export type DocumentSummary = {
 
 export type Message =
   | { type: 'HELLO'; version: number; client_id: string; awareness_id: number }
-  | { type: 'STATE'; version: number; role: Role; acl_revision: number; grant_revision: number; sequence: number }
+  | { type: 'STATE' | 'LEGACY_STATE'; version: number; role: Role; acl_revision: number; grant_revision: number; sequence: number }
   | { type: 'UPDATE'; client_id: string; message_id: string; grant_revision: number }
   | { type: 'APPLIED'; sequence: number }
   | { type: 'ACK'; client_id: string; message_id: string; sequence: number }

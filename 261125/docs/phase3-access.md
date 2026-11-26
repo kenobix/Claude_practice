@@ -30,6 +30,7 @@ WebSocketへの切り替え失敗をブラウザから判定する場合は、HT
 | `GRANT_CHANGED`、`ACCESS_DENIED`、`DOCUMENT_DELETED` | 旧版の送信を止め、対象の下書きを隔離する。閲覧できる場合は最新の `STATE` を読み直す |
 | `RATE_LIMIT` | 接続と送信待ちを維持し、端末は350 ms待ってから同じ操作IDとバイト列で再送する |
 | `MISSING_DEPENDENCY` | 更新を拒否する。再接続で取得した `STATE` と端末データから必要な差分をまとめ、新しいIDで先に送る |
+| `LINE_ENDING` | 適用後の可視本文にCRが残る更新を拒否する。端末は該当する付与版の同期を止め、書き出し用に保持する |
 | `INVALID_UPDATE`、`MESSAGE_ID_CONFLICT`、`TEXT_LIMIT`、`UPDATE_LIMIT`、`STATE_LIMIT` | 更新を拒否し、端末は該当する付与版の送信を止めて下書きを隔離する |
 | `FRAME_LIMIT` | 長さを示す先頭2バイトを含むヘッダーが1,024バイトを超えた場合は理由を送り、コード1009で閉じる。メッセージ全体が8,389,632バイトを超えた場合は、受信処理でコード1009を返す |
 | `SESSION_EXPIRED` | 既存接続を閉じる。再ログインするまで新しい接続はHTTP 401 |

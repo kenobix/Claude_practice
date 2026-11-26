@@ -46,6 +46,7 @@ type Room = {
   sequence: number;
   snapshotSequence: number;
   state: Uint8Array;
+  legacyLineEndings: boolean;
   peers: Set<Peer>;
   presenceClock: number;
 };
@@ -92,6 +93,7 @@ function validateUpdate(state: Uint8Array, payload: Uint8Array) {
     if (candidate.share.size !== 1 || Object.keys(text.getAttributes()).length > 0 ||
       text.toDelta().some((part: { insert: unknown; attributes?: unknown }) =>
       typeof part.insert !== 'string' || part.attributes !== undefined)) return { error: 'INVALID_UPDATE' };
+    if (text.toString().includes('\r')) return { error: 'LINE_ENDING' };
     const next = Y.encodeStateAsUpdate(candidate);
     if (next.length > MAX_PAYLOAD) return { error: 'STATE_LIMIT' };
     return { next, update };
@@ -114,7 +116,7 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
     for (const row of storage.load()) {
       rooms.set(row.id, {
         id: row.id, title: row.title, owner: row.owner, aclRevision: row.acl_revision, sequence: row.sequence,
-        state: row.state, snapshotSequence: row.snapshotSequence,
+        state: row.state, legacyLineEndings: row.legacyLineEndings, snapshotSequence: row.snapshotSequence,
         grants: new Map(row.grants.map((grant) => [grant.user_id, { role: grant.role, revision: grant.revision }])),
         updateBudget: new Map(), peers: new Set(), presenceClock: 0,
       });
@@ -187,6 +189,14 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
           !isUint(header.awareness_id) || header.awareness_id > 0xffff_ffff || payload.length !== 0 ||
           [...room.peers].some(({ presence }) => presence?.id === header.awareness_id)) {
         return disconnect(room, peer, 'INVALID_HELLO');
+      }
+      if (room.legacyLineEndings) {
+        // Send the saved copy for export, without subscribing this peer to edits.
+        send(peer, encodeFrame({ type: 'LEGACY_STATE', version: VERSION, role, acl_revision: room.aclRevision,
+          grant_revision: revision, sequence: room.sequence }, room.state));
+        removePeer(room, peer);
+        peer.socket.close(1000);
+        return;
       }
       const [color, colorLight] = COLORS[peer.user.id];
       const others = [...room.peers].flatMap(({ presence }) => presence ? [presence] : []);
@@ -291,7 +301,7 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
     create(user: User, title: string) {
       const room: Room = {
         id: randomUUID(), owner: user.id, title, grants: new Map(), updateBudget: new Map(), aclRevision: 0, sequence: 0,
-        state: EMPTY_STATE, snapshotSequence: 0, peers: new Set(), presenceClock: 0,
+        state: EMPTY_STATE, legacyLineEndings: false, snapshotSequence: 0, peers: new Set(), presenceClock: 0,
       };
       try { storage.create(room.id, title, user.id); } catch (error) { recoverStorage(error); throw error; }
       rooms.set(room.id, room);

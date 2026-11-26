@@ -127,11 +127,13 @@ function Room({ document, user, cache, draftsChanged, reconnect, reauthenticate 
         {status.volatileDraft !== undefined && <button onClick={() => downloadText(`draft-${document.id}`, status.volatileDraft!)}>
           未保存の本文を書き出す
         </button>}
-        <button onClick={async () => {
+        {status.legacyBody !== undefined ? <button onClick={() => downloadText(`saved-${document.id}`, status.legacyBody!)}>
+          保存済みの本文を書き出す
+        </button> : <button onClick={async () => {
           await binding.current?.beforeReconnect();
           if (status.sessionExpired) reauthenticate();
           else reconnect();
-        }}>{status.sessionExpired ? 'ログインし直す' : '接続し直す'}</button></div>}
+        }}>{status.sessionExpired ? 'ログインし直す' : '接続し直す'}</button>}</div>}
       <div className="editor" ref={editor} />
     </article>
     <section className="presence" aria-label="接続中の利用者">

@@ -80,7 +80,7 @@ export function createStorage({ databasePath, checkpoint }: StorageOptions) {
         const snap = snapshot.get(row.id) as SnapshotRow | undefined;
         const doc = new Y.Doc();
         try {
-          doc.getText('body');
+          const body = doc.getText('body');
           let sequence = snap?.sequence ?? 0;
           if (snap) Y.applyUpdate(doc, snap.state);
           for (const update of updates.iterate(row.id, sequence) as Iterable<UpdateRow>) {
@@ -93,7 +93,8 @@ export function createStorage({ databasePath, checkpoint }: StorageOptions) {
           }
           const state = Y.encodeStateAsUpdate(doc);
           if (state.byteLength > MAX_PAYLOAD) throw new Error(`Stored state too large in ${row.id}`);
-          return { ...row, state, snapshotSequence: snap?.sequence ?? 0, grants: grants.all(row.id) as GrantRow[] };
+          return { ...row, state, legacyLineEndings: body.toString().includes('\r'),
+            snapshotSequence: snap?.sequence ?? 0, grants: grants.all(row.id) as GrantRow[] };
         } finally {
           doc.destroy();
         }

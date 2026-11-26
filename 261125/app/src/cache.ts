@@ -126,12 +126,12 @@ export async function openCache(userId: string, onClosed: () => void) {
         const cursor = states.result;
         if (!cursor) return;
         const { scope, unconfirmed, blocked } = cursor.value as SavedState;
-        if (unconfirmed > 0) exportable.add(scope);
+        if (unconfirmed > 0 || blocked === 'LINE_ENDING') exportable.add(scope);
         if (blocked) blockedScopes.set(scope, blocked);
         cursor.continue();
       };
       await complete(tx);
-      // A blocked scope with no pending edits is a fence, not an exportable draft.
+      // Only a line-ending quarantine needs the cached body even without pending edits.
       return [...exportable].map((scope) => {
         const [id, revision] = scope.split(':');
         return { scope, documentId: id, revision: Number(revision), blocked: blockedScopes.get(scope) };
