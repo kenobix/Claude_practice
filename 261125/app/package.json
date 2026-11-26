@@ -5,7 +5,10 @@
     "test": "node --experimental-test-isolation=none --test tests/server.test.ts",
     "build": "tsc --noEmit && vite build",
     "start": "node server/index.ts",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "backup": "node ops/backup.ts",
+    "measure": "node tools/measure.ts",
+    "demo": "node tools/demo.ts"
   },
   "dependencies": {
     "@codemirror/commands": "6.11.2",

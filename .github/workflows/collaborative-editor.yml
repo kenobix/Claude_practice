@@ -51,5 +51,5 @@ jobs:
         run: npm test
       - name: Install pinned Chromium and system dependencies
         run: npx playwright install --with-deps chromium --only-shell
-      - name: Run Phase 1–3 Chromium profile tests
+      - name: Run Phase 1–4 Chromium profile tests
         run: npm run test:browser

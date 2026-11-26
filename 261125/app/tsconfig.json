@@ -12,5 +12,5 @@
     "skipLibCheck": true,
     "types": ["node", "vite/client"]
   },
-  "include": ["src", "shared", "server", "tests", "playwright.config.ts"]
+  "include": ["src", "shared", "server", "tests", "ops", "tools", "playwright.config.ts"]
 }
