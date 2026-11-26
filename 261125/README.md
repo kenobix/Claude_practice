@@ -6,9 +6,11 @@ Phase 0では3つの `Y.Doc` に更新を逆順や重複で配送し、一部の
 
 Phase 1でオンライン共同編集、Phase 2でSQLiteとIndexedDBへの保存と切断復帰を実装しました。Phase 3では権限失効や文書削除後の同期を止め、端末に残った下書きを書き出せるようにしました。 [Phase 3の受入結果](docs/acceptance.md#phase-3の受入結果)
 
+Phase 4の結果とMVPの判定は受入記録にまとめています。 [MVPの受入結果](docs/acceptance.md#mvpの総合判定)・[共同編集デモ（3分）](demo/collaboration.mp4)・[再起動デモ（41秒）](demo/restart.mp4)
+
 ## アプリを起動する
 
-Node.js 22.18.0以降を使います。リポジトリのルートで次を実行します。
+Node.js 22.18.0以降を使います。試験ではNode.js 22.22.2とnpm 10.9.7を使いました。リポジトリのルートで次を実行します。
 
 ```bash
 cd 261125/app
@@ -49,6 +51,12 @@ npx playwright install chromium --only-shell
 npm run test:browser
 ```
 
+LinuxでChromiumの実行に必要なシステムライブラリがない場合は、`npx playwright install --with-deps chromium --only-shell` で導入してください。デモ録画、性能計測、OSの日本語IMEの手順は実験記録にあります。 [デモと性能計測](docs/experiments.md)
+
+## バックアップと復元
+
+バックアップには `npm run backup -- SOURCE.sqlite NEW_BACKUP.sqlite` を使います。稼働中のDBから取得でき、既存ファイルの上書きは拒否します。復元は別パスのDBと新しいブラウザプロファイルで確認します。 [操作手順とシステム構成図](docs/operations.md)
+
 ## Phase 0の実験を再現する
 
 Node.js 22.22.2とnpm 10.9.7で確認しました。依存の取得にはnpmレジストリへの接続が必要です。
@@ -68,4 +76,6 @@ npm test
 - [Phase 1の通信仕様](docs/phase1-protocol.md)
 - [Phase 2の保存と復旧](docs/phase2-storage.md)
 - [Phase 3の権限、削除、同期エラー](docs/phase3-access.md)
+- [Phase 4のデモ・入力試験・性能計測](docs/experiments.md)
+- [起動・バックアップ・復元](docs/operations.md)
 - [設計判断](docs/decisions/0001-sync-and-storage.md)
