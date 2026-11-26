@@ -64,9 +64,11 @@ async function staticPage(path: string, response: ServerResponse, origin: string
   response.end(bytes);
 }
 
-export async function startApplication({ port = 0, ...storage }: StorageOptions & { port?: number }) {
-  const accounts = createAccounts();
-  const rooms = createRooms((token) => Boolean(accounts.get(token)), accounts.prune, storage);
+export async function startApplication({ port = 0, sessionNow, updateNow, ...storage }: StorageOptions & {
+  port?: number; sessionNow?: () => number; updateNow?: () => number;
+}) {
+  const accounts = createAccounts(sessionNow);
+  const rooms = createRooms((token) => Boolean(accounts.get(token)), accounts.prune, storage, updateNow);
   let origin = '';
   let host = '';
 
@@ -117,6 +119,18 @@ export async function startApplication({ port = 0, ...storage }: StorageOptions 
       }
     }
 
+    const entry = /^\/api\/documents\/([0-9a-f-]+)$/.exec(path);
+    if (entry && method === 'GET') {
+      const access = rooms.access(entry[1], session.user.id);
+      if (access === 'DOCUMENT_DELETED') throw new HttpError(410, access);
+      if (access === 'ACCESS_DENIED') throw new HttpError(403, access);
+      return json(response, 200, access);
+    }
+    if (entry && method === 'DELETE') {
+      if (!rooms.deleteDocument(entry[1], session.user.id)) throw new HttpError(403, 'ACCESS_DENIED');
+      return json(response, 200, { deleted: true });
+    }
+
     const access = /^\/api\/documents\/([0-9a-f-]+)\/access\/([a-z]+)$/.exec(path);
     if (access && method === 'PUT') {
       const [, documentId, target] = access;
@@ -147,7 +161,13 @@ export async function startApplication({ port = 0, ...storage }: StorageOptions 
     if (!path) status = 404;
     else if (request.headers.host !== host || request.headers.origin !== origin) status = 403;
     else if (!session) status = 401;
-    else status = rooms.upgrade(request, socket, head, path[1], token, session.user);
+    else {
+      try { status = rooms.upgrade(request, socket, head, path[1], token, session.user); }
+      catch (error) {
+        console.error('WebSocket upgrade failed', error);
+        status = 503;
+      }
+    }
     if (status) socket.end(`HTTP/1.1 ${status} ${STATUS_CODES[status]}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`);
   });
 

@@ -117,6 +117,13 @@ output { font-variant-numeric: tabular-nums; }
 .person-dot[data-user="sora"] { color: #186354; }
 .grant-row { margin-top: .45rem; display: flex; align-items: center; justify-content: space-between; gap: .4rem; font-size: .88rem; }
 .grant-row select { min-width: 0; }
+.delete-document { margin-top: .8rem; color: #7d2532; }
+.drafts { margin-top: 1.2rem; padding-top: .9rem; border-top: 1px solid var(--line); }
+.drafts ul { padding: 0; margin: .6rem 0 0; list-style: none; display: grid; gap: .6rem; }
+.drafts li { padding: .7rem; background: var(--paper); border: 1px solid var(--line); border-radius: .4rem; }
+.drafts strong { display: block; overflow-wrap: anywhere; font-size: .9rem; }
+.drafts small, .drafts p { color: var(--muted); font-size: .8rem; }
+.drafts button { margin-top: .45rem; font-size: .85rem; }
 .empty-page { padding: clamp(1rem, 4vw, 2.5rem); border-left: 3px solid var(--line); }
 .empty-page h1 { font-size: clamp(1.45rem, 3vw, 2rem); margin-bottom: .3rem; }
 .empty-page p { color: var(--muted); }

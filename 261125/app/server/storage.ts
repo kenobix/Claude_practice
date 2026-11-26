@@ -110,6 +110,14 @@ export function createStorage({ databasePath, checkpoint }: StorageOptions) {
         db.prepare('UPDATE documents SET acl_revision=? WHERE id=?').run(aclRevision, id);
       });
     },
+    deleteDocument(id: string) {
+      db.prepare("UPDATE documents SET status='deleted', acl_revision=acl_revision+1 WHERE id=? AND status='active'").run(id);
+    },
+    deletedFor(id: string, user: string) {
+      return Boolean(db.prepare(`SELECT 1 FROM documents d LEFT JOIN grants g
+        ON g.document_id=d.id AND g.user_id=?
+        WHERE d.id=? AND d.status='deleted' AND (d.owner=? OR g.role IS NOT NULL)`).get(user, id, user));
+    },
     receipt(operation: Operation) {
       return db.prepare(`SELECT hash, sequence FROM receipts WHERE document_id=? AND user_id=? AND client_id=? AND message_id=?`)
         .get(operation.document, operation.user, operation.client, operation.message) as { hash: string; sequence: number } | undefined;

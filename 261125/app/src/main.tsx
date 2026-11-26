@@ -1,17 +1,30 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Access, DocumentSummary, User } from '../shared/protocol.ts';
 import type { RoomStatus } from './room.ts';
-import { errorText, roleLabel } from './words.ts';
+import { deleteCache, openCache, readDraftText, withCacheLock } from './cache.ts';
+import type { LocalCache, LocalDraft } from './cache.ts';
+import { reviewDrafts } from './access.ts';
+import { draftReason, errorText, roleLabel } from './words.ts';
 import './style.css';
 
 type Session = { user: User | null; accounts: User[] };
 const initialStatus: RoomStatus = {
   connection: 'joining', sequence: null, role: null, users: [], problem: '', localSave: 'idle', serverSave: 'idle',
+  retrying: false, sessionExpired: false,
 };
 const localLabel = { idle: '', writing: '端末に保存中', saved: '端末内保存済み', failed: '端末内保存に失敗' };
-const serverLabel = { idle: '', waiting: 'サーバー保存待ち', saved: 'サーバー保存済み' };
+const serverLabel = { idle: '', waiting: 'サーバー保存待ち', saved: 'サーバー保存済み', blocked: 'サーバーへの保存を停止' };
+
+function downloadText(name: string, text: string) {
+  const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = name + '.txt';
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+}
 
 async function api<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
   const response = await fetch(`/api/${path}`, {
@@ -76,19 +89,24 @@ function DocumentList({ documents, selected, choose, refresh, create, busy }: {
   </aside>;
 }
 
-function Room({ document, user, reconnect }: { document: DocumentSummary; user: User; reconnect: () => void }) {
+function Room({ document, user, cache, draftsChanged, reconnect, reauthenticate }: {
+  document: DocumentSummary; user: User; cache: LocalCache;
+  draftsChanged: () => void; reconnect: () => void; reauthenticate: () => void;
+}) {
   const [status, setStatus] = useState(initialStatus);
   const editor = useRef<HTMLDivElement>(null);
   const binding = useRef<ReturnType<typeof import('./room.ts').openRoom> | null>(null);
   useEffect(() => {
     let cancelled = false;
     void import('./room.ts').then(({ openRoom }) => {
-      if (!cancelled && editor.current) binding.current = openRoom(document.id, user, editor.current, initialStatus, setStatus);
+      if (!cancelled && editor.current) {
+        binding.current = openRoom(document.id, user, editor.current, initialStatus, cache, setStatus, draftsChanged, reconnect);
+      }
     }).catch(() => {
       if (!cancelled) setStatus({ ...initialStatus, connection: 'offline', problem: '編集画面を読み込めませんでした。接続し直してください。' });
     });
     return () => { cancelled = true; binding.current?.close(); binding.current = null; };
-  }, [document.id, user]);
+  }, [document.id, user, cache, draftsChanged, reconnect]);
 
   return <>
     <article className="page" aria-label="文書編集">
@@ -98,14 +116,22 @@ function Room({ document, user, reconnect }: { document: DocumentSummary; user: 
           <span role="status" data-connection={status.connection} className="connection">
             {status.connection === 'online' ? '接続中' : status.connection === 'joining' ? '接続を確認中' : '未接続'}
           </span>
-          <span>{roleLabel[status.role ?? document.role]}</span>
+          {status.role && <span>{roleLabel[status.role]}</span>}
           {status.sequence !== null && <span>受理順番号 <output aria-label="受理順番号">{status.sequence}</output></span>}
           <span data-local-save={status.localSave} aria-live="polite">{localLabel[status.localSave]}</span>
           <span data-server-save={status.serverSave} aria-live="polite">{serverLabel[status.serverSave]}</span>
         </div>
+        {status.retrying && <p className="muted" role="status">{errorText('RATE_LIMIT')}</p>}
       </header>
       {status.problem && <div className="room-error"><p role="alert">{status.problem}</p>
-        <button onClick={async () => { await binding.current?.beforeReconnect(); reconnect(); }}>接続し直す</button></div>}
+        {status.volatileDraft !== undefined && <button onClick={() => downloadText(`draft-${document.id}`, status.volatileDraft!)}>
+          未保存の本文を書き出す
+        </button>}
+        <button onClick={async () => {
+          await binding.current?.beforeReconnect();
+          if (status.sessionExpired) reauthenticate();
+          else reconnect();
+        }}>{status.sessionExpired ? 'ログインし直す' : '接続し直す'}</button></div>}
       <div className="editor" ref={editor} />
     </article>
     <section className="presence" aria-label="接続中の利用者">
@@ -118,8 +144,9 @@ function Room({ document, user, reconnect }: { document: DocumentSummary; user: 
   </>;
 }
 
-function Sharing({ document, user, accounts, update, busy }: {
-  document: DocumentSummary; user: User; accounts: User[]; update: (id: string, role: Access) => void; busy: boolean;
+function Sharing({ document, user, accounts, update, remove, busy }: {
+  document: DocumentSummary; user: User; accounts: User[]; update: (id: string, role: Access) => void;
+  remove: () => void; busy: boolean;
 }) {
   if (document.role !== 'owner') return null;
   return <section className="sharing">
@@ -133,17 +160,95 @@ function Sharing({ document, user, accounts, update, busy }: {
         <option value="viewer">閲覧者</option>
       </select>
     </label>)}
+    <button className="delete-document" disabled={busy} onClick={() => {
+      if (window.confirm('この文書を削除しますか？ 削除後はこの文書に接続できません。')) remove();
+    }}>文書を削除</button>
+  </section>;
+}
+
+function Drafts({ drafts, documents, exportDraft }: {
+  drafts: LocalDraft[]; documents: DocumentSummary[]; exportDraft: (draft: LocalDraft) => void;
+}) {
+  if (!drafts.length) return null;
+  return <section className="drafts" aria-label="同期を停止した下書き">
+    <h2>同期を停止した下書き</h2>
+    <ul>{drafts.map((draft) => <li key={draft.scope}>
+      <strong>{documents.find(({ id }) => id === draft.documentId)?.title ?? draft.documentId}</strong>
+      <small>付与版 {draft.revision}</small>
+      <p>{draftReason(draft.blocked!)}</p>
+      <button onClick={() => exportDraft(draft)}>テキストを書き出す</button>
+    </li>)}</ul>
   </section>;
 }
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<DocumentSummary | null>(null);
   const [retry, setRetry] = useState(0);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
-  const current = documents.find((document) => document.id === selected);
+  const [cache, setCache] = useState<LocalCache | null>(null);
+  const [cacheReady, setCacheReady] = useState(false);
+  const cacheRef = useRef<LocalCache | null>(null);
+  const [drafts, setDrafts] = useState<LocalDraft[]>([]);
+  const draftRead = useRef(0);
+  const current = documents.find((document) => document.id === selected?.id);
+  const userId = session?.user?.id;
+  const reconnect = useCallback(() => setRetry((attempt) => attempt + 1), []);
+
+  const draftsChanged = useCallback(() => {
+    const active = cacheRef.current;
+    if (!active) return;
+    const generation = ++draftRead.current;
+    void active.drafts().then((items) => {
+      if (cacheRef.current === active && draftRead.current === generation) setDrafts(items.filter((item) => item.blocked));
+    }).catch(() => {
+      if (cacheRef.current === active) setProblem(errorText('LOCAL_CACHE'));
+    });
+  }, []);
+
+  function clearWorkspace() {
+    cacheRef.current?.close();
+    cacheRef.current = null;
+    setCache(null);
+    setDocuments([]);
+    setSelected(null);
+    setDrafts([]);
+  }
+
+  useEffect(() => {
+    setCacheReady(false);
+    if (!userId) return;
+    let cancelled = false;
+    let opened: LocalCache | undefined;
+    function endWorkspace() {
+      if (!cancelled) {
+        clearWorkspace();
+        setSession((previous) => previous && { ...previous, user: null });
+      }
+    }
+    void withCacheLock(userId, async () => {
+      const current = await api<Session>('session');
+      if (cancelled) return;
+      if (current.user?.id !== userId) return endWorkspace();
+      return openCache(userId, endWorkspace);
+    }).then(async (active) => {
+      if (!active) return;
+      opened = active;
+      if (cancelled || active.signal.aborted) return active.close();
+      cacheRef.current = active;
+      setCache(active);
+      setCacheReady(true);
+      await reviewDrafts(active);
+      draftsChanged();
+    }).catch(() => {
+      if (!cancelled && (cacheRef.current === opened || !opened)) setProblem(errorText('LOCAL_CACHE'));
+    }).finally(() => {
+      if (!cancelled) setCacheReady(true);
+    });
+    return () => { cancelled = true; opened?.close(); };
+  }, [userId, draftsChanged]);
 
   async function perform(action: () => Promise<void>) {
     setBusy(true);
@@ -160,11 +265,17 @@ function App() {
   async function refreshDocuments() {
     const data = await api<{ documents: DocumentSummary[] }>('documents');
     setDocuments(data.documents);
+    const active = cacheRef.current;
+    if (active) {
+      await reviewDrafts(active);
+      draftsChanged();
+    }
   }
 
   function loadSession() {
     void perform(async () => {
       const data = await api<Session>('session');
+      if (!data.user || data.user.id !== userId) clearWorkspace();
       setSession(data);
       if (data.user) await refreshDocuments();
     });
@@ -189,30 +300,46 @@ function App() {
   return <div className="workspace">
     <header className="masthead">
       <span className="brand"><span className="brand-mark" aria-hidden="true" />共同ノート</span>
-      <div className="current-user"><span>{user.name}</span><button disabled={busy} onClick={() => void perform(async () => {
-        await api('session', 'DELETE');
-        setDocuments([]);
-        setSelected(null);
+      <div className="current-user"><span>{user.name}</span><button disabled={busy || !cacheReady} onClick={() => void perform(async () => {
+        clearWorkspace();
+        await withCacheLock(user.id, async () => {
+          await api('session', 'DELETE');
+          await deleteCache(user.id);
+        });
         setSession({ ...session, user: null });
-        const { deleteCache } = await import('./cache.ts');
-        await deleteCache(user.id);
       })}>ログアウト</button></div>
     </header>
     {problem && <p role="alert" className="app-error">{problem}</p>}
     <main className="desk">
-      <DocumentList documents={documents} selected={selected} choose={setSelected} busy={busy}
-        refresh={() => void perform(refreshDocuments)} create={(title) => void perform(async () => {
-          const { document } = await api<{ document: DocumentSummary }>('documents', 'POST', { title });
-          setDocuments((old) => [document, ...old]);
-          setSelected(document.id);
+      <div>
+        <DocumentList documents={documents} selected={selected?.id ?? null}
+          choose={(id) => setSelected(documents.find((item) => item.id === id) ?? null)} busy={busy}
+          refresh={() => void perform(refreshDocuments)} create={(title) => void perform(async () => {
+            const { document } = await api<{ document: DocumentSummary }>('documents', 'POST', { title });
+            setDocuments((old) => [document, ...old]);
+            setSelected(document);
+          })} />
+        <Drafts drafts={drafts} documents={documents} exportDraft={(draft) => void perform(async () => {
+          const active = cacheRef.current;
+          if (!active) return;
+          const { text, incomplete } = await readDraftText(active, draft.scope);
+          if (cacheRef.current !== active) return;
+          downloadText(`draft-${draft.documentId}-${draft.revision}`, text);
+          if (incomplete) setProblem('端末に残っていた下書きのうち、復元できた本文を書き出しました。');
         })} />
-      {current ? <div className="document" data-document-id={current.id}>
-        <Room key={`${current.id}:${retry}`} document={current} user={user} reconnect={() => setRetry(retry + 1)} />
-        <Sharing document={current} user={user} accounts={session.accounts} busy={busy}
+      </div>
+      {selected && cache ? <div className="document" data-document-id={selected.id}>
+        <Room key={`${selected.id}:${retry}`} document={current ?? selected} user={user} cache={cache}
+          draftsChanged={draftsChanged} reconnect={reconnect} reauthenticate={loadSession} />
+        {current && <Sharing document={current} user={user} accounts={session.accounts} busy={busy}
+          remove={() => void perform(async () => {
+            await api(`documents/${current.id}`, 'DELETE');
+            setDocuments((old) => old.filter((item) => item.id !== current.id));
+          })}
           update={(id, role) => void perform(async () => {
             const { document } = await api<{ document: DocumentSummary }>(`documents/${current.id}/access/${id}`, 'PUT', { role });
             setDocuments((old) => old.map((item) => item.id === document.id ? document : item));
-          })} />
+          })} />}
       </div> : <section className="empty-page"><h1>文書を開く</h1>
         <p>一覧から選ぶか、新しい文書を作成してください。</p></section>}
     </main>

@@ -14,7 +14,7 @@ function digest(password: string) {
   return createHash('sha256').update(password).digest();
 }
 
-export function createAccounts() {
+export function createAccounts(now = Date.now) {
   const logins = DEMO_USERS.map((user) => ({ ...user, password: randomBytes(12).toString('base64url') }));
   const proofs = new Map(logins.map(({ id, password }) => [id, digest(password)]));
   const sessions = new Map<string, Session>();
@@ -30,12 +30,12 @@ export function createAccounts() {
     },
     start(user: User) {
       const token = randomBytes(32).toString('hex');
-      sessions.set(token, { user, expires: Date.now() + SESSION_SECONDS * 1000 });
+      sessions.set(token, { user, expires: now() + SESSION_SECONDS * 1000 });
       return sessionCookie(token, SESSION_SECONDS);
     },
     get(token: string) {
       const session = sessions.get(token);
-      if (session && session.expires <= Date.now()) {
+      if (session && session.expires <= now()) {
         sessions.delete(token);
         return undefined;
       }
@@ -46,8 +46,8 @@ export function createAccounts() {
       return sessionCookie('', 0);
     },
     prune() {
-      const now = Date.now();
-      for (const [token, session] of sessions) if (session.expires <= now) sessions.delete(token);
+      const time = now();
+      for (const [token, session] of sessions) if (session.expires <= time) sessions.delete(token);
     },
   };
 }

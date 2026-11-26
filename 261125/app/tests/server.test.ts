@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { fork } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { on, once } from 'node:events';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { request } from 'node:http';
 import { createConnection } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -13,18 +14,19 @@ import { test } from 'node:test';
 import type { TestContext } from 'node:test';
 import { WebSocket } from 'ws';
 import * as Y from 'yjs';
+import * as encoding from 'lib0/encoding';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { startApplication } from '../server/application.ts';
-import { decodeFrame, encodeFrame, VERSION } from '../shared/protocol.ts';
+import { decodeFrame, encodeFrame, MAX_BODY, MAX_FRAME, MAX_HEADER, MAX_PAYLOAD, VERSION } from '../shared/protocol.ts';
 import type { Access, Message } from '../shared/protocol.ts';
 import type { Checkpoint } from '../server/storage.ts';
 
 type Application = Pick<Awaited<ReturnType<typeof startApplication>>, 'origin' | 'logins'>;
 
-async function setup(t: TestContext) {
+async function setup(t: TestContext, options: Pick<Parameters<typeof startApplication>[0], 'updateNow' | 'sessionNow'> = {}) {
   const dir = await mkdtemp(join(tmpdir(), 'collab-server-'));
   const databasePath = join(dir, 'collab.sqlite');
-  const app = await startApplication({ databasePath });
+  const app = await startApplication({ databasePath, ...options });
   t.after(async () => {
     await app.close();
     await rm(dir, { recursive: true, force: true });
@@ -80,9 +82,9 @@ async function expectUpgradeDenied(app: Application, id: string, status: number,
   assert.equal(outcome, status);
 }
 
-async function connect(t: TestContext, app: Application, id: string, cookie: string, clientId = randomUUID()) {
+async function connect(t: TestContext, app: Application, id: string, cookie: string, clientId = randomUUID(), timeout = 30_000) {
   const ws = new WebSocket(wsUrl(app, id), { origin: app.origin, headers: { Cookie: cookie }, handshakeTimeout: 2_000 });
-  const frames = on(ws, 'message', { signal: AbortSignal.timeout(5_000) });
+  const frames = on(ws, 'message', { signal: AbortSignal.timeout(timeout) });
   const doc = new Y.Doc();
   const text = doc.getText('body');
   t.after(async () => {
@@ -111,7 +113,7 @@ async function connect(t: TestContext, app: Application, id: string, cookie: str
   Y.applyUpdate(doc, initial.payload);
   const revision = Number(initial.header.grant_revision);
   return {
-    ws, doc, text, next, observed, initial: initial.header, clientId,
+    ws, doc, text, next, observed, initial: initial.header, initialBytes: initial.payload, clientId,
     send(payload: Uint8Array, grantRevision = revision, messageId = randomUUID()) {
       ws.send(encodeFrame({ type: 'UPDATE', client_id: clientId, message_id: messageId, grant_revision: grantRevision }, payload));
       return messageId;
@@ -425,4 +427,444 @@ test('P2-4: a snapshot covers a fixed prefix while an update is waiting on the s
   await recovered.ack(firstId, 1);
   assert.equal(recovered.observed.includes('APPLIED'), false);
   assert.deepEqual(inspect(running.databasePath, id), { sequence: 3, snapshot: 2, updates: [3], receipts: 3 });
+});
+
+type Connection = Awaited<ReturnType<typeof connect>>;
+
+function sent(peer: Connection, type: Message['type']) {
+  return peer.observed.filter((observed) => observed === type).length;
+}
+
+async function expectRejection(peer: Connection, code: string, messageId: string) {
+  assert.deepEqual((await peer.next('ERROR')).header, { type: 'ERROR', code, message_id: messageId });
+}
+
+test('P3-1: the in-flight commit precedes revocation, and the stale grant stays rejected after restart', { timeout: 20_000 }, async (t) => {
+  const directory = await fixtureDirectory(t);
+  const running = launch(t, directory, 'before-commit');
+  const app = await running.ready;
+  const [owner, editor, viewer] = await Promise.all(['aki', 'ren', 'sora'].map((id) => login(app, id)));
+  const id = await createDocument(app, owner);
+  await grant(app, id, owner, 'ren', 'editor');
+  await grant(app, id, owner, 'sora', 'viewer');
+  const writer = await connect(t, app, id, editor);
+  const witness = await connect(t, app, id, viewer);
+  const firstBytes = edit(writer.doc, (text) => text.insert(0, '受理済み'));
+  const first = writer.send(firstBytes);
+  await running.reached();
+  assert.deepEqual(inspect(running.databasePath, id), { sequence: 0, snapshot: undefined, updates: [], receipts: 0 });
+  const closed = once(writer.ws, 'close');
+  const httpChange = request(`${app.origin}/api/documents/${id}/access/ren`, {
+    method: 'PUT', headers: { Origin: app.origin, Cookie: owner, 'Content-Type': 'application/json' },
+  });
+  const revoking = once(httpChange, 'response').then(([response]) => { response.resume(); return response.statusCode; });
+  await new Promise<void>((resolve) => httpChange.end(JSON.stringify({ role: 'viewer' }), resolve));
+  await running.resume();
+  await writer.applied(1);
+  await writer.ack(first, 1);
+  await witness.applied(1);
+  assert.equal(await revoking, 200);
+  assert.equal((await writer.next('ERROR')).header.code, 'GRANT_CHANGED');
+  assert.equal((await closed)[1].toString(), 'GRANT_CHANGED');
+
+  const refused = edit(writer.doc, (text) => text.insert(text.length, '旧版'));
+  const oldId = randomUUID();
+  const reading = await connect(t, app, id, editor, writer.clientId);
+  const accepted = { sequence: 1, snapshot: undefined, updates: [1], receipts: 1 };
+  assert.equal(reading.initial.grant_revision, 2);
+  assert.equal(reading.initial.role, 'viewer');
+  assert.equal(reading.text.toString(), '受理済み');
+  await expectRejection(reading, 'GRANT_CHANGED', reading.send(refused, 1, oldId));
+  await expectRejection(reading, 'GRANT_CHANGED', reading.send(firstBytes, 1, first));
+  await expectRejection(reading, 'WRITE_FORBIDDEN', reading.send(refused, 2, oldId));
+  assert.deepEqual(inspect(running.databasePath, id), accepted);
+  assert.equal(sent(witness, 'APPLIED'), 1);
+  assert.equal(sent(reading, 'APPLIED'), 0);
+  assert.equal(sent(reading, 'ACK'), 0);
+
+  await running.stop();
+  const restarted = await launch(t, directory).ready;
+  const [newOwner, newEditor] = await Promise.all(['aki', 'ren'].map((name) => login(restarted, name)));
+  const readAfterRestart = await connect(t, restarted, id, newEditor, writer.clientId);
+  assert.equal(readAfterRestart.initial.grant_revision, 2);
+  assert.equal(readAfterRestart.text.toString(), '受理済み');
+  await expectRejection(readAfterRestart, 'GRANT_CHANGED', readAfterRestart.send(refused, 1, oldId));
+  const closedAgain = once(readAfterRestart.ws, 'close');
+  assert.equal((await grant(restarted, id, newOwner, 'ren', null)).status, 200);
+  await closedAgain;
+  await expectUpgradeDenied(restarted, id, 403, newEditor);
+  assert.equal((await grant(restarted, id, newOwner, 'ren', 'editor')).status, 200);
+  const regranted = await connect(t, restarted, id, newEditor, writer.clientId);
+  assert.equal(regranted.initial.grant_revision, 4);
+  await expectRejection(regranted, 'GRANT_CHANGED', regranted.send(refused, 1, oldId));
+  await expectRejection(regranted, 'GRANT_CHANGED', regranted.send(refused, 3, oldId));
+  assert.deepEqual(inspect(running.databasePath, id), accepted);
+  assert.equal(sent(regranted, 'APPLIED'), 0);
+  assert.equal(sent(regranted, 'ACK'), 0);
+  const complete = await connect(t, restarted, id, newOwner);
+  assert.equal(complete.text.toString(), '受理済み');
+  assert.equal(complete.initial.sequence, 1);
+});
+
+test('P3-2: a durable tombstone rejects old sockets and permits a deletion reason only for readers at deletion', async (t) => {
+  const app = await setup(t);
+  const [owner, editor, stranger] = await Promise.all(['aki', 'ren', 'sora'].map((id) => login(app, id)));
+  const id = await createDocument(app, owner);
+  await grant(app, id, owner, 'ren', 'editor');
+  // The stranger once had access but it ended before deletion.
+  await grant(app, id, owner, 'sora', 'viewer');
+  await grant(app, id, owner, 'sora', null);
+  const concealed = await http(app, 'documents/' + id, 'GET', stranger);
+  assert.equal(concealed.status, 403);
+  assert.deepEqual(await concealed.json(), { error: 'ACCESS_DENIED' });
+  const remove = (cookie: string, origin?: string) => http(app, 'documents/' + id, 'DELETE', cookie, undefined, origin);
+  assert.equal((await remove(editor)).status, 403);
+  assert.equal((await remove(owner, 'http://localhost')).status, 403);
+  const a = await connect(t, app, id, owner);
+  const b = await connect(t, app, id, editor);
+  const first = a.send(edit(a.doc, (text) => text.insert(0, '削除前')));
+  await Promise.all([a.applied(1), b.applied(1)]);
+  await a.ack(first, 1);
+  const original = inspect(app.databasePath, id);
+  const local = edit(b.doc, (text) => text.insert(text.length, '編集中'));
+  const disconnected = Promise.all([once(a.ws, 'close'), once(b.ws, 'close')]);
+  assert.deepEqual(await (await remove(owner)).json(), { deleted: true });
+  // A late send on the old socket cannot be accepted even around the close handshake.
+  b.send(local);
+  for (const socket of [a, b]) assert.equal((await socket.next('ERROR')).header.code, 'DOCUMENT_DELETED');
+  for (const [, reason] of await disconnected) assert.equal(reason.toString(), 'DOCUMENT_DELETED');
+  assert.equal(sent(b, 'ACK'), 0);
+  assert.equal(sent(a, 'APPLIED'), 1);
+  assert.equal(sent(b, 'APPLIED'), 1);
+  assert.deepEqual(inspect(app.databasePath, id), original);
+  assert.equal((await grant(app, id, owner, 'ren', 'editor')).status, 403);
+  assert.equal((await remove(owner)).status, 403);
+  assert.deepEqual(await (await http(app, 'documents', 'GET', owner)).json(), { documents: [] });
+
+  async function verify(application: Application, before: string, denied: string) {
+    const unknown = randomUUID();
+    const readDeleted = await http(application, 'documents/' + id, 'GET', before);
+    assert.equal(readDeleted.status, 410);
+    assert.deepEqual(await readDeleted.json(), { error: 'DOCUMENT_DELETED' });
+    for (const candidate of [id, unknown]) {
+      const read = await http(application, 'documents/' + candidate, 'GET', denied);
+      assert.equal(read.status, 403);
+      assert.deepEqual(await read.json(), { error: 'ACCESS_DENIED' });
+      await expectUpgradeDenied(application, candidate, 403, denied);
+    }
+    await expectUpgradeDenied(application, id, 410, before);
+  }
+
+  await verify(app, editor, stranger);
+  const replacementId = await createDocument(app, owner);
+  assert.notEqual(replacementId, id);
+  const db = new DatabaseSync(app.databasePath, { readOnly: true });
+  try {
+    assert.equal(db.prepare('SELECT status FROM documents WHERE id=?').get(id)?.status, 'deleted');
+  } finally { db.close(); }
+  await app.close();
+  const restarted = await startApplication({ databasePath: app.databasePath });
+  t.after(() => restarted.close());
+  await verify(restarted, await login(restarted, 'ren'), await login(restarted, 'sora'));
+});
+
+async function assertState(t: TestContext, app: Application, id: string, reader: string, sequence: number, expected: string) {
+  const peer = await connect(t, app, id, reader);
+  assert.equal(peer.initial.sequence, sequence);
+  assert.equal(peer.text.toString(), expected);
+  peer.ws.close();
+  await once(peer.ws, 'close');
+}
+
+test('P3-3: body bounds count UTF-16 units and rejection changes neither history nor delivery', async (t) => {
+  const app = await setup(t);
+  const owner = await login(app, 'aki');
+  const id = await createDocument(app, owner);
+  const a = await connect(t, app, id, owner);
+  const b = await connect(t, app, id, owner);
+  const before = '🙂'.repeat((MAX_BODY - 2) / 2) + 'A';
+  const near = a.send(edit(a.doc, (text) => text.insert(0, before)));
+  await Promise.all([a.applied(1), b.applied(1)]);
+  await a.ack(near, 1);
+  assert.equal(b.text.length, MAX_BODY - 1);
+  const exact = a.send(edit(a.doc, (text) => text.insert(text.length, 'B')));
+  await Promise.all([a.applied(2), b.applied(2)]);
+  await a.ack(exact, 2);
+  assert.equal(b.text.length, MAX_BODY);
+  await expectRejection(a, 'TEXT_LIMIT', a.send(edit(a.doc, (text) => text.insert(text.length, 'C'))));
+  assert.deepEqual(inspect(app.databasePath, id), { sequence: 2, snapshot: undefined, updates: [1, 2], receipts: 2 });
+  await assertState(t, app, id, owner, 2, before + 'B');
+  assert.equal(sent(b, 'APPLIED'), 2);
+  assert.equal(sent(a, 'ACK'), 2);
+});
+
+function paddedFrame(header: Message, payload: Uint8Array, headerSize: number) {
+  const base = JSON.stringify({ ...header, padding: '' });
+  assert.ok(base.length + 2 <= headerSize);
+  const json = Buffer.from(JSON.stringify({ ...header, padding: ' '.repeat(headerSize - 2 - base.length) }));
+  const prefix = Buffer.alloc(2);
+  prefix.writeUInt16BE(json.length);
+  return Buffer.concat([prefix, json, payload]);
+}
+
+// V1 encodes each redundant delete range explicitly. The deletes address already deleted text.
+function redundantDeletes(client: number, size: number) {
+  const newHeader = (count: number) => {
+    const encoder = encoding.createEncoder();
+    for (const value of [0, 1, client, count]) encoding.writeVarUint(encoder, value);
+    return encoding.toUint8Array(encoder);
+  };
+  const count = Math.floor((size - newHeader(Math.floor(size / 2)).length) / 2);
+  const header = newHeader(count);
+  const result = Buffer.alloc(size, 1);
+  result.set(header);
+  let pos = header.length;
+  for (let index = 0; index < count; index += 1) {
+    if (index === 0 && (size - header.length) % 2 === 1) {
+      result[pos++] = 128;
+      result[pos++] = 1;
+    } else result[pos++] = 0;
+    pos++;
+  }
+  assert.equal(pos, size);
+  return result;
+}
+
+test('P3-3: independently bound UPDATE, JSON header and complete WebSocket message sizes', { timeout: 35_000 }, async (t) => {
+  const app = await setup(t);
+  const owner = await login(app, 'aki');
+  const id = await createDocument(app, owner);
+  const a = await connect(t, app, id, owner);
+  const witness = await connect(t, app, id, owner);
+  a.doc.transact(() => { a.text.insert(0, 'a'.repeat(129)); a.text.delete(0, 129); });
+  const seed = a.send(Y.encodeStateAsUpdate(a.doc));
+  await Promise.all([a.applied(1), witness.applied(1)]);
+  await a.ack(seed, 1);
+  const update = (messageId: string): Message => ({ type: 'UPDATE', client_id: a.clientId, message_id: messageId, grant_revision: 0 });
+  for (const [size, headerSize] of [[MAX_PAYLOAD - 1, MAX_HEADER], [MAX_PAYLOAD, MAX_HEADER - 1], [MAX_PAYLOAD, MAX_HEADER]]) {
+    const id = randomUUID();
+    const bytes = redundantDeletes(a.doc.clientID, size);
+    const frame = paddedFrame(update(id), bytes, headerSize);
+    assert.equal(frame.length, size === MAX_PAYLOAD && headerSize === MAX_HEADER ? MAX_FRAME : MAX_FRAME - 1);
+    a.ws.send(frame);
+    await a.ack(id, 1);
+  }
+
+  const tooBig = randomUUID();
+  const over = redundantDeletes(a.doc.clientID, MAX_PAYLOAD + 1);
+  a.ws.send(paddedFrame(update(tooBig), over, MAX_HEADER - 1)); // Total still fits.
+  await expectRejection(a, 'UPDATE_LIMIT', tooBig);
+  const closes = once(a.ws, 'close');
+  a.ws.send(paddedFrame(update(randomUUID()), new Uint8Array([0, 0]), MAX_HEADER + 1));
+  assert.equal((await a.next('ERROR')).header.code, 'FRAME_LIMIT');
+  assert.equal((await closes)[0], 1009);
+
+  const other = await connect(t, app, id, owner, a.clientId);
+  const tooLong = once(other.ws, 'close');
+  const large = paddedFrame(update(randomUUID()), over, MAX_HEADER);
+  assert.equal(large.length, MAX_FRAME + 1);
+  other.ws.send(large);
+  assert.equal((await tooLong)[0], 1009);
+  assert.equal(sent(other, 'ACK'), 0);
+  assert.deepEqual(inspect(app.databasePath, id), { sequence: 1, snapshot: undefined, updates: [1], receipts: 4 });
+  assert.equal(sent(a, 'ACK'), 4);
+  assert.equal(sent(witness, 'APPLIED'), 1);
+  assert.ok(witness.initialBytes.length < 100);
+  await assertState(t, app, id, owner, 1, '');
+});
+
+test('P3-3: complete Yjs state can hit the limit with a much smaller final UPDATE', { timeout: 75_000 }, async (t) => {
+  const app = await setup(t);
+  const owner = await login(app, 'aki');
+  const id = await createDocument(app, owner);
+  const a = await connect(t, app, id, owner, randomUUID(), 70_000);
+  const source = new Y.Doc();
+  t.after(() => source.destroy());
+  source.clientID = 0x7000_0000;
+  const first = edit(source, (text) => text.insert(0, 'A'));
+  const seed = a.send(first);
+  await a.applied(1);
+  await a.ack(seed, 1);
+
+  // A distinct GC-only client contributes 17 bytes, plus four bytes for the two widened group counts.
+  const near = MAX_PAYLOAD - 1;
+  const initialSize = Y.encodeStateAsUpdate(source).length;
+  const available = near - initialSize - 4;
+  const remainder = available % 17;
+  const clients = Math.floor(available / 17) - remainder % 2;
+  const extra = available - clients * 17;
+  const gc = new Y.Doc();
+  try {
+    for (let index = 0; index < clients; index += 1) {
+      const client = 0x2000_0000 + index;
+      const length = index < extra / 2 ? 128 : 1;
+      gc.store.clients.set(client, [new Y.GC(Y.createID(client, 0), length)]);
+    }
+    const state = Y.encodeStateAsUpdate(gc);
+    assert.ok(state.length < MAX_PAYLOAD);
+    const bulk = a.send(state);
+    // Observe receipt and delivery without retaining a second copy of the synthetic GC history.
+    assert.equal((await a.next('APPLIED')).header.sequence, 2);
+    await a.ack(bulk, 2);
+  } finally { gc.destroy(); gc.store.clients.clear(); }
+
+  const verifySize = async (sequence: number, size: number) => {
+    const ws = new WebSocket(wsUrl(app, id), { origin: app.origin, headers: { Cookie: owner } });
+    await once(ws, 'open');
+    const message = once(ws, 'message');
+    ws.send(encodeFrame({ type: 'HELLO', version: VERSION, client_id: randomUUID(), awareness_id: 17 }));
+    const frame = decodeFrame((await message)[0]);
+    assert.equal(frame.header.type, 'STATE');
+    assert.equal(frame.header.sequence, sequence);
+    assert.equal(frame.payload.length, size);
+    const closing = once(ws, 'close');
+    ws.close();
+    await closing;
+    return createHash('sha256').update(frame.payload).digest('hex');
+  };
+
+  await verifySize(2, near);
+  const b = await connect(t, app, id, owner);
+  const tiny = edit(source, (text) => text.insert(text.length, 'B'));
+  assert.ok(tiny.length < 100);
+  assert.equal(Y.encodeStateAsUpdate(source).length, initialSize + 1);
+  const exact = a.send(tiny);
+  assert.equal((await a.next('APPLIED')).header.sequence, 3);
+  await b.applied(3);
+  await a.ack(exact, 3);
+  const before = await verifySize(3, MAX_PAYLOAD);
+  const excess = edit(source, (text) => text.insert(text.length, 'C'));
+  assert.ok(excess.length < 100);
+  assert.equal(Y.encodeStateAsUpdate(source).length, initialSize + 2);
+  await expectRejection(a, 'STATE_LIMIT', a.send(excess));
+  assert.equal(await verifySize(3, MAX_PAYLOAD), before);
+  assert.equal(b.text.toString(), 'AB');
+  assert.equal(sent(b, 'APPLIED'), 1);
+  assert.equal(sent(a, 'ACK'), 3);
+  assert.deepEqual(inspect(app.databasePath, id), { sequence: 3, snapshot: undefined, updates: [1, 2, 3], receipts: 3 });
+});
+
+test('P3-3: the per-user bucket shares 20 burst tokens across sockets and refills at ten per second', async (t) => {
+  let time = 0;
+  const app = await setup(t, { updateNow: () => time });
+  const [owner, viewer] = await Promise.all(['aki', 'sora'].map((id) => login(app, id)));
+  const id = await createDocument(app, owner);
+  await grant(app, id, owner, 'sora', 'viewer');
+  const a = await connect(t, app, id, owner);
+  const b = await connect(t, app, id, owner);
+  const witness = await connect(t, app, id, viewer);
+  const empty = Y.encodeStateAsUpdate(a.doc);
+  for (let index = 0; index < 20; index += 1) {
+    const writer = index % 2 === 0 ? a : b;
+    await writer.ack(writer.send(empty), 0);
+    if (index >= 18) assert.equal(inspect(app.databasePath, id).receipts, index + 1);
+  }
+  const change = edit(a.doc, (text) => text.insert(0, '再送'));
+  const retry = a.send(change);
+  await expectRejection(a, 'RATE_LIMIT', retry);
+  time = 99;
+  await expectRejection(a, 'RATE_LIMIT', a.send(change, 0, retry));
+  assert.deepEqual(inspect(app.databasePath, id), { sequence: 0, snapshot: undefined, updates: [], receipts: 20 });
+  assert.equal(sent(witness, 'APPLIED'), 0);
+  assert.equal(a.ws.readyState, WebSocket.OPEN);
+  time = 100;
+  a.send(change, 0, retry);
+  await Promise.all([a.applied(1), b.applied(1), witness.applied(1)]);
+  await a.ack(retry, 1);
+  for (let index = 0; index < 9; index += 1) {
+    time += 100;
+    await a.ack(a.send(empty), 1);
+  }
+  await expectRejection(b, 'RATE_LIMIT', b.send(empty));
+  assert.equal(witness.text.toString(), '再送');
+  assert.equal(sent(witness, 'APPLIED'), 1);
+  assert.equal(sent(a, 'ACK') + sent(b, 'ACK'), 30);
+  assert.deepEqual(inspect(app.databasePath, id), { sequence: 1, snapshot: undefined, updates: [1], receipts: 30 });
+});
+
+test('P3-3: the third connection is permitted, the fourth rejected, and a closed slot can be reused', async (t) => {
+  const app = await setup(t);
+  const owner = await login(app, 'aki');
+  const id = await createDocument(app, owner);
+  const a = await connect(t, app, id, owner); // 1
+  const b = await connect(t, app, id, owner); // 2
+  assert.equal(b.initial.sequence, 0);
+  const c = await connect(t, app, id, owner); // 3
+  assert.equal(c.initial.sequence, 0);
+  await expectUpgradeDenied(app, id, 409, owner); // 4
+  b.ws.close();
+  await once(b.ws, 'close');
+  const replacement = await connect(t, app, id, owner);
+  assert.equal(replacement.text.toString(), '');
+  assert.equal(replacement.initial.sequence, 0);
+  assert.equal(sent(a, 'APPLIED') + sent(c, 'APPLIED'), 0);
+  assert.deepEqual(inspect(app.databasePath, id), { sequence: 0, snapshot: undefined, updates: [], receipts: 0 });
+});
+
+test('P3-3: invalid and dependent updates are atomic, and resending the bundled dependency succeeds', async (t) => {
+  const app = await setup(t);
+  const owner = await login(app, 'aki');
+  const id = await createDocument(app, owner);
+  const a = await connect(t, app, id, owner);
+  const b = await connect(t, app, id, owner);
+  const first = edit(a.doc, (text) => text.insert(0, 'A'));
+  const second = edit(a.doc, (text) => text.insert(1, 'B'));
+  const removal = edit(a.doc, (text) => text.delete(0, 1));
+  const styled = new Y.Doc();
+  t.after(() => styled.destroy());
+  const metadata = edit(styled, (text) => text.setAttribute('title', 'test'));
+  await expectRejection(a, 'INVALID_UPDATE', a.send(new Uint8Array([255])));
+  await expectRejection(a, 'INVALID_UPDATE', a.send(new Uint8Array([0, 0, 0])));
+  await expectRejection(a, 'INVALID_UPDATE', a.send(metadata));
+  await expectRejection(a, 'MISSING_DEPENDENCY', a.send(second));
+  await expectRejection(a, 'MISSING_DEPENDENCY', a.send(removal));
+  assert.deepEqual(inspect(app.databasePath, id), { sequence: 0, snapshot: undefined, updates: [], receipts: 0 });
+  assert.equal(sent(a, 'ACK'), 0);
+  assert.equal(sent(b, 'APPLIED'), 0);
+  await assertState(t, app, id, owner, 0, '');
+
+  const bundle = a.send(Y.mergeUpdates([first, second, removal]));
+  await Promise.all([a.applied(1), b.applied(1)]);
+  await a.ack(bundle, 1);
+  assert.equal(b.text.toString(), 'B');
+  assert.deepEqual(inspect(app.databasePath, id), { sequence: 1, snapshot: undefined, updates: [1], receipts: 1 });
+});
+
+test('P3-3: expiration rejects an existing socket and fresh upgrades until the account signs in again', async (t) => {
+  let time = 0;
+  const app = await setup(t, { sessionNow: () => time });
+  const owner = await login(app, 'aki');
+  const id = await createDocument(app, owner);
+  await grant(app, id, owner, 'sora', 'viewer');
+  const a = await connect(t, app, id, owner);
+  time = 3_600_000 - 1;
+  const witnessCookie = await login(app, 'sora');
+  const witness = await connect(t, app, id, witnessCookie);
+  const seed = a.send(edit(a.doc, (text) => text.insert(0, '有効')));
+  await Promise.all([a.applied(1), witness.applied(1)]);
+  await a.ack(seed, 1);
+
+  time += 1;
+  const closed = once(a.ws, 'close');
+  const before = edit(a.doc, (text) => text.insert(text.length, '期限後'));
+  const messageId = a.send(before);
+  assert.equal((await closed)[1].toString(), 'SESSION_EXPIRED');
+  assert.equal((await http(app, 'documents/' + id, 'GET', owner)).status, 401);
+  await expectUpgradeDenied(app, id, 401, owner);
+  await expectUpgradeDenied(app, randomUUID(), 403, witnessCookie);
+  const noAccess = await http(app, 'documents/' + randomUUID(), 'GET', witnessCookie);
+  assert.equal(noAccess.status, 403);
+  assert.deepEqual(await noAccess.json(), { error: 'ACCESS_DENIED' });
+  assert.deepEqual(inspect(app.databasePath, id), { sequence: 1, snapshot: undefined, updates: [1], receipts: 1 });
+  assert.equal(sent(a, 'ACK'), 1);
+  assert.equal(sent(witness, 'APPLIED'), 1);
+  assert.equal(witness.text.toString(), '有効');
+
+  const fresh = await connect(t, app, id, await login(app, 'aki'), a.clientId);
+  assert.equal(fresh.text.toString(), '有効');
+  assert.equal(fresh.initial.sequence, 1);
+  fresh.send(before, 0, messageId);
+  await Promise.all([fresh.applied(2), witness.applied(2)]);
+  await fresh.ack(messageId, 2);
+  assert.equal(witness.text.toString(), '有効期限後');
 });

@@ -6,8 +6,8 @@ import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate, removeAwareness
 import { yCollab, yUndoManagerKeymap } from 'y-codemirror.next';
 import { decodeFrame, encodeFrame, isId, isRole, isUint, MAX_PAYLOAD, VERSION } from '../shared/protocol.ts';
 import type { Role, User } from '../shared/protocol.ts';
-import { openCache } from './cache.ts';
 import type { LocalCache, PendingUpdate } from './cache.ts';
+import { lookupAccess, quarantineDrafts } from './access.ts';
 import { prepareRecovery } from './recovery.ts';
 import { errorText } from './words.ts';
 
@@ -18,12 +18,19 @@ export type RoomStatus = {
   users: User[];
   problem: string;
   localSave: 'idle' | 'writing' | 'saved' | 'failed';
-  serverSave: 'idle' | 'waiting' | 'saved';
+  serverSave: 'idle' | 'waiting' | 'saved' | 'blocked';
+  retrying: boolean;
+  sessionExpired: boolean;
+  volatileDraft?: string;
 };
 
 const ACK_TIMEOUT = 2_500;
+const BLOCKED = new Set(['DOCUMENT_DELETED', 'ACCESS_DENIED', 'GRANT_CHANGED', 'WRITE_FORBIDDEN',
+  'TEXT_LIMIT', 'UPDATE_LIMIT', 'STATE_LIMIT', 'FRAME_LIMIT', 'INVALID_UPDATE', 'MESSAGE_ID_CONFLICT']);
+const HIDE_BODY = new Set(['DOCUMENT_DELETED', 'ACCESS_DENIED', 'GRANT_CHANGED', 'WRITE_FORBIDDEN']);
 
-export function openRoom(documentId: string, user: User, parent: HTMLElement, initialStatus: RoomStatus, onStatus: (status: RoomStatus) => void) {
+export function openRoom(documentId: string, user: User, parent: HTMLElement, initialStatus: RoomStatus,
+  cache: LocalCache, onStatus: (status: RoomStatus) => void, draftsChanged: () => void, reconnect: () => void) {
   const doc = new Y.Doc();
   const text = doc.getText('body');
   const awareness = new Awareness(doc);
@@ -32,7 +39,6 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
   const editability = new Compartment();
   let editor: EditorView | undefined;
   let status = initialStatus;
-  let cache: LocalCache | undefined;
   let ws: WebSocket | undefined;
   let scope: string | undefined;
   let grantRevision = 0;
@@ -41,6 +47,7 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
   let localWrites = 0;
   let confirmed = false;
   let failed = false;
+  let blocked = false;
   let disposed = false;
   let joinTimer: number | undefined;
   let sendTimer: number | undefined;
@@ -55,7 +62,7 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
   function publishSave() {
     publish({
       localSave: failed ? 'failed' : localWrites > 0 ? 'writing' : scope ? 'saved' : 'idle',
-      serverSave: localWrites > 0 || pending.length > 0
+      serverSave: blocked ? 'blocked' : localWrites > 0 || pending.length > 0
         ? 'waiting'
         : confirmed && !failed ? 'saved' : 'idle',
     });
@@ -77,15 +84,19 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
     window.clearTimeout(sendTimer);
     inflight = undefined;
     if (disposed) return;
-    publish({ connection: 'offline', problem, users: [] });
-    editor?.dispatch({ effects: editability.reconfigure(editAccess(allowOffline && !failed && status.role !== 'viewer')) });
+    publish({ connection: 'offline', problem, users: [], retrying: false });
+    editor?.dispatch({ effects: editability.reconfigure(editAccess(allowOffline && !failed && !blocked && status.role !== 'viewer')) });
     removeAwarenessStates(awareness, [...awareness.getStates().keys()].filter((id) => id !== doc.clientID), remote);
     ws?.close();
   }
 
   function failLocal() {
+    if (disposed) return;
     failed = true;
-    stop('端末への保存に失敗しました。本文を控えてから接続し直してください。');
+    const hasDraft = pending.length > 0 || localWrites > 0;
+    if (hasDraft) publish({ volatileDraft: text.toString() });
+    stop(hasDraft ? '端末への保存に失敗しました。必要な本文を書き出してから接続し直してください。'
+      : '端末内のデータを処理できませんでした。接続し直してください。');
     publishSave();
   }
 
@@ -93,28 +104,56 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
     work = work.then(async () => { if (!failed) await action(); }).catch(failLocal);
   }
 
+  async function refuse(code: string) {
+    if (disposed) return;
+    stop(errorText(code), code === 'STORAGE_RECOVERY');
+    if (code === 'SESSION_EXPIRED') publish({ sessionExpired: true });
+    if (!BLOCKED.has(code)) return;
+    blocked = true;
+    confirmed = false;
+    if (HIDE_BODY.has(code)) {
+      editor?.destroy();
+      editor = undefined;
+      publish({ role: null, sequence: null });
+    }
+    publishSave();
+    if (scope) await cache.quarantine(scope, code);
+    if (code === 'ACCESS_DENIED' || code === 'DOCUMENT_DELETED') {
+      await quarantineDrafts(cache, await cache.drafts(documentId), documentId, code);
+    }
+    draftsChanged();
+    if (code === 'GRANT_CHANGED') void beforeReconnect().then(() => { if (!disposed) reconnect(); });
+  }
+
   function pump() {
-    if (disposed || failed || status.connection !== 'online' || ws?.readyState !== WebSocket.OPEN || !cache || inflight) return;
+    if (disposed || failed || blocked || status.connection !== 'online' || ws?.readyState !== WebSocket.OPEN || inflight) return;
     const item = pending[0];
     if (!item) return;
-    if (item.bytes.byteLength > MAX_PAYLOAD) return stop(errorText('UPDATE_LIMIT'));
+    if (item.bytes.byteLength > MAX_PAYLOAD) {
+      enqueue(() => refuse('UPDATE_LIMIT'));
+      return;
+    }
     inflight = item.messageId;
     ws.send(encodeFrame({ type: 'UPDATE', client_id: cache.clientId, grant_revision: grantRevision, message_id: item.messageId }, item.bytes));
     sendTimer = window.setTimeout(() => { inflight = undefined; pump(); }, ACK_TIMEOUT);
   }
 
   doc.on('update', (bytes: Uint8Array, origin: unknown, _doc: Y.Doc, transaction: Y.Transaction) => {
-    const activeCache = cache;
     const activeScope = scope;
-    if (origin === remote || !transaction.local || !activeCache || !activeScope || failed || status.role === 'viewer') return;
+    if (origin === remote || !transaction.local || !activeScope || failed || blocked || status.role === 'viewer') return;
     const item = { bytes, messageId: crypto.randomUUID() };
     const snapshot = Y.encodeStateAsUpdate(doc);
     localWrites += 1;
     confirmed = false;
     publishSave();
     enqueue(async () => {
-      await activeCache.save(activeScope, snapshot, item);
+      const writable = await cache.save(activeScope, snapshot, item);
       localWrites -= 1;
+      if (!writable) {
+        draftsChanged();
+        if (!blocked) await refuse('GRANT_CHANGED');
+        return;
+      }
       pending.push(item);
       publishSave();
       pump();
@@ -127,28 +166,37 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
     }
   });
 
-  async function receive(header: Record<string, unknown>, payload: Uint8Array, activeCache: LocalCache) {
+  async function receive(header: Record<string, unknown>, payload: Uint8Array) {
     if (disposed || status.connection === 'offline') return;
     if (header.type === 'ERROR' && typeof header.code === 'string') {
-      if (header.code === 'RATE_LIMIT' && header.message_id === inflight) {
-        window.clearTimeout(sendTimer);
-        sendTimer = window.setTimeout(() => { inflight = undefined; pump(); }, 350);
+      if (header.code === 'RATE_LIMIT') {
+        if (inflight && header.message_id === inflight) {
+          publish({ retrying: true });
+          window.clearTimeout(sendTimer);
+          sendTimer = window.setTimeout(() => { inflight = undefined; pump(); }, 350);
+        }
         return;
       }
-      stop(errorText(header.code), header.code === 'STORAGE_RECOVERY');
+      await refuse(header.code);
       return;
     }
     if (status.connection === 'joining') {
       if (header.type !== 'STATE' || header.version !== VERSION || !isRole(header.role) ||
           !isUint(header.grant_revision) || !isUint(header.sequence)) return stop(errorText('SYNC_SEQUENCE'));
       const nextScope = `${documentId}:${header.grant_revision}`;
-      const { state, pending: stored } = await activeCache.load(nextScope);
+      const drafts = await cache.drafts(documentId);
+      await quarantineDrafts(cache, drafts, documentId, 'GRANT_CHANGED', header.grant_revision);
+      const { state, pending: stored } = await cache.load(nextScope);
       if (disposed || status.connection !== 'joining') return;
-      const plan = header.role === 'viewer'
+      blocked = Boolean(state?.blocked);
+      const plan = header.role === 'viewer' || blocked
         ? { complete: payload, ordered: [], repair: undefined }
         : prepareRecovery(payload, state?.bytes, stored, (state?.unconfirmed ?? 0) > stored.length);
       const repair = plan.repair && { messageId: crypto.randomUUID(), bytes: plan.repair, repair: true };
-      await activeCache.save(nextScope, plan.complete, repair);
+      if (!blocked && !(await cache.save(nextScope, plan.complete, repair))) {
+        await refuse('GRANT_CHANGED');
+        return;
+      }
       if (disposed || status.connection !== 'joining') return;
       scope = nextScope;
       grantRevision = header.grant_revision;
@@ -160,33 +208,36 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
         extensions: [
           lineNumbers(), highlightActiveLineGutter(), EditorView.lineWrapping,
           keymap.of([...yUndoManagerKeymap, ...defaultKeymap]), yCollab(text, awareness, { undoManager: undo }),
-          editability.of(editAccess(header.role !== 'viewer')),
+          editability.of(editAccess(!blocked && header.role !== 'viewer')),
           EditorView.contentAttributes.of({ 'aria-label': '本文' }),
         ],
       });
       window.clearTimeout(joinTimer);
-      publish({ connection: 'online', role: header.role, sequence: header.sequence, users: [user] });
+      publish({ connection: 'online', role: header.role, sequence: header.sequence, users: [user],
+        problem: state?.blocked ? errorText(state.blocked) : '' });
       publishSave();
+      draftsChanged();
       pump();
       return;
     }
     if (header.type === 'APPLIED' && status.sequence !== null && header.sequence === status.sequence + 1 && scope) {
       Y.applyUpdate(doc, payload, remote);
       publish({ sequence: header.sequence });
-      await activeCache.save(scope, payload);
+      if (!blocked) await cache.save(scope, payload);
       return;
     }
-    if (header.type === 'ACK' && isId(header.message_id) && header.client_id === activeCache.clientId &&
+    if (header.type === 'ACK' && isId(header.message_id) && header.client_id === cache.clientId &&
         isUint(header.sequence) && scope) {
       const id = header.message_id;
       if (!pending.some(({ messageId }) => messageId === id)) return;
-      await activeCache.acknowledge(scope, id);
+      await cache.acknowledge(scope, id);
       pending = pending.filter(({ messageId }) => messageId !== id);
       if (inflight === id) {
         window.clearTimeout(sendTimer);
         inflight = undefined;
       }
       confirmed = true;
+      publish({ retrying: false });
       publishSave();
       pump();
       return;
@@ -198,55 +249,64 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
     stop(errorText('SYNC_SEQUENCE'), true);
   }
 
-  void openCache(user.id, () => { if (!disposed) failLocal(); }).then((opened) => {
-    if (disposed) { opened.close(); return; }
-    cache = opened;
+  function connect() {
     const url = new URL(`/ws/${documentId}`, window.location.href);
     url.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const socket = new WebSocket(url);
     ws = socket;
     socket.binaryType = 'arraybuffer';
     socket.onopen = () => {
-      socket.send(encodeFrame({ type: 'HELLO', version: VERSION, client_id: opened.clientId, awareness_id: doc.clientID }));
+      socket.send(encodeFrame({ type: 'HELLO', version: VERSION, client_id: cache.clientId, awareness_id: doc.clientID }));
     };
     socket.onmessage = ({ data }: MessageEvent<ArrayBuffer>) => {
       enqueue(async () => {
         let frame;
         try { frame = decodeFrame(new Uint8Array(data)); }
         catch { stop(errorText('SYNC_SEQUENCE'), true); return; }
-        await receive(frame.header, frame.payload, opened);
+        await receive(frame.header, frame.payload);
       });
     };
-    socket.onclose = ({ reason }) => {
+    socket.onclose = ({ reason, code }) => {
       // Process the preceding frames before reacting to the close.
       enqueue(async () => {
         if (disposed || status.connection === 'offline') return;
-        if (reason) stop(errorText(reason), reason === 'STORAGE_RECOVERY');
-        else if (status.connection === 'joining') stop('接続できませんでした。共有設定と接続枠を確認してください。');
-        else if (status.role === 'viewer') stop('接続が切れました。表示中の本文を閲覧できます。');
+        if (code === 1009) await refuse('FRAME_LIMIT');
+        else if (reason) await refuse(reason);
+        else if (status.connection === 'joining') {
+          const access = await lookupAccess(documentId).catch(() => null);
+          if (typeof access === 'string') await refuse(access);
+          else stop('接続できませんでした。共有設定と接続枠を確認してください。');
+        } else if (status.role === 'viewer') stop('接続が切れました。表示中の本文を閲覧できます。');
         else stop('接続が切れました。編集は端末に保存し、次の接続時に送ります。', true);
       });
     };
     joinTimer = window.setTimeout(() => stop('接続がタイムアウトしました。接続し直してください。'), 8_000);
-  }).catch(failLocal);
+  }
 
-  return {
-    async beforeReconnect() {
-      editor?.dispatch({ effects: editability.reconfigure(editAccess(false)) });
-      await work;
-    },
-    close() {
-      disposed = true;
-      window.clearTimeout(joinTimer);
-      window.clearTimeout(sendTimer);
-      if (ws) {
-        ws.onopen = ws.onmessage = ws.onclose = null;
-        ws.close();
-      }
-      editor?.destroy();
-      undo.destroy();
-      doc.destroy();
-      void work.finally(() => cache?.close());
-    },
-  };
+  async function beforeReconnect() {
+    editor?.dispatch({ effects: editability.reconfigure(editAccess(false)) });
+    await work;
+  }
+
+  function close() {
+    if (disposed) return;
+    disposed = true;
+    cache.signal.removeEventListener('abort', close);
+    window.clearTimeout(joinTimer);
+    window.clearTimeout(sendTimer);
+    if (ws) {
+      ws.onopen = ws.onmessage = ws.onclose = null;
+      ws.close();
+    }
+    editor?.destroy();
+    undo.destroy();
+    doc.destroy();
+  }
+
+  if (cache.signal.aborted) close();
+  else {
+    cache.signal.addEventListener('abort', close);
+    connect();
+  }
+  return { beforeReconnect, close };
 }

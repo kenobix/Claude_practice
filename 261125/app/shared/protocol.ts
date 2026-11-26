@@ -1,12 +1,13 @@
 export const VERSION = 2;
 export const MAX_BODY = 100_000;
 export const MAX_PAYLOAD = 8 * 1024 * 1024;
-const MAX_HEADER = 1024;
+export const MAX_HEADER = 1024;
 export const MAX_FRAME = MAX_PAYLOAD + MAX_HEADER;
 export const MAX_AWARENESS = 4096;
 export const MAX_CONNECTIONS = 3;
 
 export type Role = 'owner' | 'editor' | 'viewer';
+export type DocumentAccess = { role: Role; grant_revision: number };
 export type Access = Exclude<Role, 'owner'> | null;
 export type User = { id: string; name: string };
 export type DocumentSummary = {
@@ -27,6 +28,7 @@ export type Message =
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', { fatal: true });
+export class FrameLimitError extends Error {}
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -55,9 +57,11 @@ export function encodeFrame(header: Message, payload: Uint8Array = new Uint8Arra
 }
 
 export function decodeFrame(frame: Uint8Array) {
-  if (frame.length < 3 || frame.length > MAX_FRAME) throw new Error('Invalid frame length');
+  if (frame.length > MAX_FRAME) throw new FrameLimitError('Frame too large');
+  if (frame.length < 3) throw new Error('Invalid frame length');
   const end = 2 + new DataView(frame.buffer, frame.byteOffset, frame.byteLength).getUint16(0);
-  if (end > MAX_HEADER || end > frame.length) throw new Error('Invalid header length');
+  if (end > MAX_HEADER) throw new FrameLimitError('Header too large');
+  if (end > frame.length) throw new Error('Invalid header length');
   const header: unknown = JSON.parse(decoder.decode(frame.subarray(2, end)));
   if (!isRecord(header)) throw new Error('Invalid frame header');
   return { header, payload: frame.subarray(end) };

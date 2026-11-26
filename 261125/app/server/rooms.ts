@@ -3,9 +3,10 @@ import { WebSocket, WebSocketServer } from 'ws';
 import type { IncomingMessage } from 'node:http';
 import type { Duplex } from 'node:stream';
 import * as Y from 'yjs';
+import { createDecoder } from 'lib0/decoding';
 import type { Access, DocumentSummary, Message, Role, User } from '../shared/protocol.ts';
 import {
-  decodeFrame, encodeFrame, isId, isUint, MAX_BODY, MAX_CONNECTIONS, MAX_FRAME, MAX_PAYLOAD, VERSION,
+  decodeFrame, encodeFrame, FrameLimitError, isId, isUint, MAX_BODY, MAX_CONNECTIONS, MAX_FRAME, MAX_PAYLOAD, VERSION,
 } from '../shared/protocol.ts';
 import { encodePresence, readCursor } from './presence.ts';
 import type { PresenceEntry } from './presence.ts';
@@ -66,8 +67,7 @@ function summary(room: Room, userId: string): DocumentSummary | null {
   };
 }
 
-function takeUpdateToken(room: Room, userId: string) {
-  const now = performance.now();
+function takeUpdateToken(room: Room, userId: string, now: number) {
   const previous = room.updateBudget.get(userId);
   const available = previous ? Math.min(BURST, previous.tokens + (now - previous.checked) / UPDATE_INTERVAL_MS) : BURST;
   const allowed = available >= 1;
@@ -82,10 +82,13 @@ function validateUpdate(state: Uint8Array, payload: Uint8Array) {
     Y.applyUpdate(candidate, state);
     let update: Uint8Array | undefined;
     candidate.once('update', (bytes: Uint8Array) => { update = bytes; });
-    Y.applyUpdate(candidate, payload);
+    const decoder = createDecoder(payload);
+    Y.readUpdate(decoder, candidate);
+    if (decoder.pos !== payload.length) return { error: 'INVALID_UPDATE' };
     if (candidate.store.pendingStructs || candidate.store.pendingDs) return { error: 'MISSING_DEPENDENCY' };
     if (text.length > MAX_BODY) return { error: 'TEXT_LIMIT' };
-    if (candidate.share.size !== 1 || text.toDelta().some((part: { insert: unknown; attributes?: unknown }) =>
+    if (candidate.share.size !== 1 || Object.keys(text.getAttributes()).length > 0 ||
+      text.toDelta().some((part: { insert: unknown; attributes?: unknown }) =>
       typeof part.insert !== 'string' || part.attributes !== undefined)) return { error: 'INVALID_UPDATE' };
     const next = Y.encodeStateAsUpdate(candidate);
     if (next.length > MAX_PAYLOAD) return { error: 'STATE_LIMIT' };
@@ -97,7 +100,8 @@ function validateUpdate(state: Uint8Array, payload: Uint8Array) {
   }
 }
 
-export function createRooms(validSession: (token: string) => boolean, pruneSessions: () => void, options: StorageOptions) {
+export function createRooms(validSession: (token: string) => boolean, pruneSessions: () => void,
+  options: StorageOptions, now = () => performance.now()) {
   const snapshotEvery = options.snapshotEvery ?? 100;
   if (!Number.isSafeInteger(snapshotEvery) || snapshotEvery < 1) throw new Error('Invalid snapshot interval');
   const storage = createStorage(options);
@@ -133,17 +137,17 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
     return encodeFrame({ type: 'AWARENESS' }, encodePresence(entries));
   }
 
-  function removePeer(room: Room, peer: Peer) {
-    if (!room.peers.delete(peer) || !peer.presence) return;
+  function removePeer(room: Room, peer: Peer, notify = true) {
+    if (!room.peers.delete(peer) || !peer.presence || !notify) return;
     const left = { id: peer.presence.id, clock: ++room.presenceClock, state: null };
     broadcast(room, presenceFrame([left]));
   }
 
-  function disconnect(room: Room, peer: Peer, code: string) {
-    removePeer(room, peer);
+  function disconnect(room: Room, peer: Peer, code: string, notify = true) {
+    removePeer(room, peer, notify);
     // The close reason survives even when the session already expired.
     if (validSession(peer.token)) send(peer, encodeFrame({ type: 'ERROR', code }));
-    peer.socket.close(1008, code);
+    peer.socket.close(code === 'FRAME_LIMIT' ? 1009 : 1008, code);
   }
 
   function recoverStorage(error: unknown) {
@@ -207,10 +211,10 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
       const response: Message = { type: 'ERROR', code, message_id: header.message_id as string };
       send(peer, encodeFrame(response));
     };
-    if (role === 'viewer') return reject('WRITE_FORBIDDEN');
     if (header.grant_revision !== revision) return reject('GRANT_CHANGED');
+    if (role === 'viewer') return reject('WRITE_FORBIDDEN');
     if (payload.length > MAX_PAYLOAD) return reject('UPDATE_LIMIT');
-    if (!takeUpdateToken(room, peer.user.id)) return reject('RATE_LIMIT');
+    if (!takeUpdateToken(room, peer.user.id, now())) return reject('RATE_LIMIT');
     const operation = {
       document: room.id, user: peer.user.id, client: peer.clientId, message: header.message_id,
       hash: createHash('sha256').update(payload).digest('hex'),
@@ -272,6 +276,12 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
         return entry ? [entry] : [];
       });
     },
+    access(documentId: string, userId: string) {
+      const room = rooms.get(documentId);
+      const role = room && roleOf(room, userId);
+      if (room && role) return { role, grant_revision: grantRevision(room, userId) };
+      return storage.deletedFor(documentId, userId) ? 'DOCUMENT_DELETED' as const : 'ACCESS_DENIED' as const;
+    },
     create(user: User, title: string) {
       const room: Room = {
         id: randomUUID(), owner: user.id, title, grants: new Map(), updateBudget: new Map(), aclRevision: 0, sequence: 0,
@@ -298,6 +308,14 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
       }
       return summary(room, owner);
     },
+    deleteDocument(documentId: string, owner: string) {
+      const room = rooms.get(documentId);
+      if (!room || room.owner !== owner) return false;
+      try { storage.deleteDocument(documentId); } catch (error) { recoverStorage(error); throw error; }
+      rooms.delete(documentId);
+      for (const peer of room.peers) disconnect(room, peer, 'DOCUMENT_DELETED', false);
+      return true;
+    },
     closeSession(token: string) {
       for (const room of rooms.values()) {
         for (const peer of room.peers) if (peer.token === token) disconnect(room, peer, 'SESSION_EXPIRED');
@@ -306,12 +324,14 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
     upgrade(request: IncomingMessage, socket: Duplex, head: Buffer, documentId: string, token: string, user: User) {
       if (!available) return 503;
       const room = rooms.get(documentId);
-      if (!room || !roleOf(room, user.id)) return 403;
+      if (!room || !roleOf(room, user.id)) {
+        return storage.deletedFor(documentId, user.id) ? 410 : 403;
+      }
       if (room.peers.size >= MAX_CONNECTIONS) return 409;
       wss.handleUpgrade(request, socket, head, (ws) => {
         const peer: Peer = { socket: ws, token, user, alive: true };
         room.peers.add(peer);
-        ws.on('error', () => { removePeer(room, peer); ws.terminate(); });
+        ws.on('error', () => removePeer(room, peer));
         ws.on('close', () => removePeer(room, peer));
         ws.on('pong', () => { peer.alive = true; });
         ws.on('message', (data, isBinary) => {
@@ -319,8 +339,8 @@ export function createRooms(validSession: (token: string) => boolean, pruneSessi
             if (!isBinary || !Buffer.isBuffer(data)) throw new Error('Expected a binary frame');
             const { header, payload } = decodeFrame(data);
             handleMessage(room, peer, header, payload);
-          } catch {
-            disconnect(room, peer, 'INVALID_MESSAGE');
+          } catch (error) {
+            disconnect(room, peer, error instanceof FrameLimitError ? 'FRAME_LIMIT' : 'INVALID_MESSAGE');
           }
         });
       });
