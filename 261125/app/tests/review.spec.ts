@@ -46,6 +46,78 @@ async function expectDocument(page: Page, expected: string, seq: number) {
   await expect.poll(() => body(page)).toBe(expected);
 }
 
+async function seedDraft(page: Page, scope: string, pending: Uint8Array, state?: Uint8Array, blocked?: string) {
+  const messageId = randomUUID();
+  await page.evaluate(async ({ scope, messageId, pending, state, blocked }) => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('collab-ren');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    try {
+      const tx = db.transaction(['states', 'outbox'], 'readwrite');
+      if (state || blocked) {
+        tx.objectStore('states').put({ scope, bytes: Uint8Array.from(state ?? [0, 0]), unconfirmed: Number(Boolean(state)), blocked });
+      }
+      else tx.objectStore('states').delete(scope);
+      tx.objectStore('outbox').add({ scope, messageId, bytes: Uint8Array.from(pending) });
+      await new Promise<void>((resolve, reject) => {
+        tx.oncomplete = () => resolve();
+        tx.onabort = () => reject(tx.error);
+      });
+    } finally { db.close(); }
+  }, { scope, messageId, pending: [...pending], state: state && [...state], blocked });
+  return { messageId, bytes: [...pending] };
+}
+
+function loadDraftRecords(page: Page, scope: string) {
+  return page.evaluate(async (scope) => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('collab-ren');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    try {
+      const tx = db.transaction(['states', 'outbox']);
+      const state = tx.objectStore('states').get(scope);
+      const outbox = tx.objectStore('outbox').index('scope').get(scope);
+      await new Promise<void>((resolve, reject) => {
+        tx.oncomplete = () => resolve();
+        tx.onabort = () => reject(tx.error);
+      });
+      return {
+        blocked: state.result?.blocked,
+        base: state.result?.draftBase && Array.from<number>(state.result.draftBase),
+        cached: state.result?.bytes && Array.from<number>(state.result.bytes),
+        pending: outbox.result && { messageId: outbox.result.messageId, bytes: Array.from<number>(outbox.result.bytes) },
+      };
+    } finally { db.close(); }
+  }, scope);
+}
+
+function appendDelta(state: Uint8Array, addition: string) {
+  const doc = new Y.Doc();
+  try {
+    Y.applyUpdate(doc, state);
+    const vector = Y.encodeStateVector(doc);
+    const body = doc.getText('body');
+    body.insert(body.length, addition);
+    return Y.encodeStateAsUpdate(doc, vector);
+  } finally { doc.destroy(); }
+}
+
+function draftExport(page: Page, label: string) {
+  return page.getByRole('region', { name: '同期を停止した下書き' })
+    .getByRole('listitem').filter({ hasText: label }).getByRole('button', { name: 'テキストを書き出す' });
+}
+
+async function downloadDraft(page: Page, label: string) {
+  const download = page.waitForEvent('download');
+  await draftExport(page, label).click();
+  const file = await download;
+  return { text: await readFile((await file.path())!, 'utf8'), name: file.suggestedFilename() };
+}
+
 test('review High: direct CRLF and CR updates are rejected without changing history or delivery', async () => {
   const f = await browserFixture();
   try {
@@ -61,6 +133,7 @@ test('review High: direct CRLF and CR updates are rejected without changing hist
     const id = await createDocument(owner.page, title);
     await grant(owner.page, 'レン', 'editor');
     await openDocument(editor.page, title);
+    await expectDocument(editor.page, '', 0);
     await append(owner.page, 'a\nb');
     await expectDocument(editor.page, 'a\nb', 1);
     const before = history(f.databasePath, id);
@@ -253,6 +326,177 @@ for (const mode of ['state-only', 'outbox-only']) {
     } finally { await f.close(); }
   });
 }
+
+for (const mode of ['legacy-outbox', 'lf-outbox', 'lf-already-quarantined', 'lf-state-and-outbox']) {
+  test(`review Medium: export recovers a dependent ${mode} draft without uploading it`, async () => {
+    const f = await browserFixture();
+    try {
+      const first = await f.start();
+      const owner = await f.profile('owner');
+      const editor = await f.profile('editor');
+      const { page: a } = owner;
+      const { page: b } = editor;
+      const writes: unknown[] = [];
+      const broadcasts: unknown[] = [];
+      await watchWire(b, ({ direction, header }) => {
+        if (direction === 'sent' && header.type === 'UPDATE') writes.push(header.message_id);
+      });
+      await watchWire(a, ({ direction, header }) => {
+        if (direction === 'received' && header.type === 'APPLIED') broadcasts.push(header.sequence);
+      });
+      await signIn(a, first.origin, first.logins[0]);
+      await signIn(b, first.origin, first.logins[1]);
+      const id = await createDocument(a, title);
+      await grant(a, 'レン', 'editor');
+      const legacy = mode === 'legacy-outbox';
+      const completeCache = mode === 'lf-state-and-outbox';
+      const base = editState(Uint8Array.of(0, 0), (body) => body.insert(0, legacy ? 'base\r\nlast' : 'base'));
+      const official = completeCache ? editState(base, (body) => body.insert(0, 'server:')) : base;
+      const delta = appendDelta(base, legacy ? ' draft' : '\r\ndraft');
+      const expected = legacy ? 'base\r\nlast draft' : 'base\r\ndraft';
+      expect(textOf(delta)).toBe('');
+
+      await first.close();
+      const db = new DatabaseSync(f.databasePath);
+      try {
+        db.exec('BEGIN');
+        db.prepare('INSERT INTO updates VALUES (?,1,?)').run(id, official);
+        db.prepare('UPDATE documents SET sequence=1 WHERE id=?').run(id);
+        db.prepare('INSERT INTO receipts VALUES (?,?,?,?,?,1,?)').run(
+          id, 'aki', randomUUID(), randomUUID(), createHash('sha256').update(official).digest('hex'), Date.now());
+        db.exec('COMMIT');
+      } finally { db.close(); }
+      const before = history(f.databasePath, id);
+      const app = await f.start({ port: Number(new URL(first.origin).port) });
+      await signIn(a, app.origin, app.logins[0]);
+      await signIn(b, app.origin, app.logins[1]);
+      const scope = `${id}:1`;
+      const original = await seedDraft(b, scope, delta, completeCache ? base : undefined,
+        mode === 'lf-already-quarantined' ? 'LINE_ENDING' : undefined);
+      await openDocument(a, title);
+      if (legacy) await expect(sequence(a)).toHaveText('1');
+      else await expectDocument(a, textOf(official), 1);
+      await openDocument(b, title);
+      if (legacy) await expect(content(b)).toHaveCount(0);
+      else {
+        await expectDocument(b, textOf(official), 1);
+        await expect(content(b)).toHaveAttribute('contenteditable', 'false');
+      }
+      await expect(saveStatus(b)).toHaveAttribute('data-server-save', 'blocked');
+      const filename = `draft-${id}-1.txt`;
+      expect(await downloadDraft(b, title)).toEqual({ text: expected, name: filename });
+      expect(await loadDraftRecords(b, scope)).toEqual({
+        blocked: legacy ? 'LEGACY_LINE_ENDING' : 'LINE_ENDING', base: [...official],
+        cached: completeCache ? [...base] : [0, 0], pending: original,
+      });
+
+      await b.reload();
+      // The local export also works before the user opens the document again.
+      expect(await downloadDraft(b, title)).toEqual({ text: expected, name: filename });
+      await probe(owner.context, app.origin, id, randomUUID(), async (_socket, next) => {
+        const frame = await next(legacy ? 'LEGACY_STATE' : 'STATE');
+        expect(frame.header.sequence).toBe(1);
+        expect(textOf(frame.payload)).toBe(textOf(official));
+      });
+      expect(history(f.databasePath, id)).toEqual(before);
+      expect(writes).toEqual([]);
+      expect(broadcasts).toEqual([]);
+    } finally { await f.close(); }
+  });
+}
+
+test('review Medium: an old grant cannot use another document or a newer grant for draft recovery', async () => {
+  const f = await browserFixture();
+  try {
+    const app = await f.start();
+    const owner = await f.profile('owner');
+    const editor = await f.profile('editor');
+    const { page: a } = owner;
+    const { page: b } = editor;
+    const requests: string[] = [];
+    const sockets: string[] = [];
+    const downloads: string[] = [];
+    await signIn(a, app.origin, app.logins[0]);
+    await signIn(b, app.origin, app.logins[1]);
+    const oldTitle = '権限を失った文書';
+    const id = await createDocument(a, oldTitle);
+    await grant(a, 'レン', 'editor');
+    await append(a, 'old base');
+    await expect(saveStatus(a)).toHaveText('サーバー保存済み');
+    let base!: Uint8Array;
+    await probe(owner.context, app.origin, id, randomUUID(), async (_socket, next) => {
+      base = (await next('STATE')).payload;
+    });
+    await grant(a, 'レン', '');
+    await append(a, ' owner only');
+    await expect(saveStatus(a)).toHaveText('サーバー保存済み');
+    await expect(b.getByRole('button', { name: 'ログアウト' })).toBeEnabled();
+    const scope = `${id}:1`;
+    const pending = await seedDraft(b, scope, appendDelta(base, '\r\nold draft'));
+
+    const otherTitle = '別の文書';
+    const otherId = await createDocument(a, otherTitle);
+    await grant(a, 'レン', 'editor');
+    await append(a, 'other base');
+    await expect(saveStatus(a)).toHaveText('サーバー保存済み');
+    let otherBase!: Uint8Array;
+    await probe(owner.context, app.origin, otherId, randomUUID(), async (_socket, next) => {
+      otherBase = (await next('STATE')).payload;
+    });
+    await seedDraft(b, `${otherId}:1`, appendDelta(otherBase, '\r\nother draft'));
+    await b.reload();
+    await openDocument(b, otherTitle);
+    expect((await downloadDraft(b, otherTitle)).text).toBe('other base\r\nother draft');
+
+    b.on('request', (request) => requests.push(request.url()));
+    b.on('websocket', (socket) => sockets.push(socket.url()));
+    b.on('download', (file) => downloads.push(file.suggestedFilename()));
+    await draftExport(b, id).click();
+    await expect(b.locator('.app-error')).toContainText('下書きは書き出せませんでした');
+    expect(requests).toEqual([]);
+    expect(sockets).toEqual([]);
+    expect(downloads).toEqual([]);
+    expect(await loadDraftRecords(b, scope)).toEqual({ blocked: 'ACCESS_DENIED', base: undefined, cached: [0, 0], pending });
+    expect((await b.request.get(`${app.origin}/api/documents/${id}`)).status()).toBe(403);
+
+    await openDocument(a, oldTitle);
+    await grant(a, 'レン', 'editor');
+    await b.reload();
+    await openDocument(b, oldTitle);
+    await expectDocument(b, 'old base owner only', 2);
+    await draftExport(b, oldTitle).click();
+    await expect(b.locator('.app-error')).toContainText('下書きは書き出せませんでした');
+    expect(downloads).toEqual([]);
+    expect(await loadDraftRecords(b, scope)).toEqual({ blocked: 'ACCESS_DENIED', base: undefined, cached: [0, 0], pending });
+
+    await b.getByRole('button', { name: 'ログアウト' }).click();
+    await expect(b.getByRole('button', { name: 'ログイン', exact: true })).toBeVisible();
+    await signIn(b, app.origin, app.logins[2]);
+    await expect(b.getByRole('button', { name: 'ログアウト' })).toBeEnabled();
+    await expect(b.getByRole('region', { name: '同期を停止した下書き' })).toHaveCount(0);
+  } finally { await f.close(); }
+});
+
+test('review Medium: export labels a partial draft and keeps its unresolved delta', async () => {
+  const f = await browserFixture();
+  try {
+    const app = await f.start();
+    const { page } = await f.profile('editor');
+    await signIn(page, app.origin, app.logins[1]);
+    await expect(page.getByRole('button', { name: 'ログアウト' })).toBeEnabled();
+    const id = randomUUID();
+    const scope = `${id}:1`;
+    const cached = editState(Uint8Array.of(0, 0), (body) => body.insert(0, 'local fragment\r\n'));
+    const missing = editState(Uint8Array.of(0, 0), (body) => body.insert(0, 'missing predecessor'));
+    const pending = await seedDraft(page, scope, appendDelta(missing, ' unresolved'), cached);
+    await page.reload();
+    expect(await downloadDraft(page, id)).toEqual({ text: 'local fragment\r\n', name: `draft-${id}-1-partial.txt` });
+    await expect(page.locator('.app-error')).toContainText('下書きの一部を復元できませんでした');
+    expect(await loadDraftRecords(page, scope)).toEqual({
+      blocked: 'ACCESS_DENIED', base: undefined, cached: [...cached], pending,
+    });
+  } finally { await f.close(); }
+});
 
 test('review Medium: silent disconnect exposes reconnect and preserves the unacknowledged operation', async () => {
   test.setTimeout(30_000);

@@ -326,8 +326,12 @@ function App() {
           if (!active) return;
           const { text, incomplete } = await readDraftText(active, draft.scope);
           if (cacheRef.current !== active) return;
-          downloadText(`draft-${draft.documentId}-${draft.revision}`, text);
-          if (incomplete) setProblem('端末に残っていた下書きのうち、復元できた本文を書き出しました。');
+          if (incomplete) {
+            setProblem(text ? '下書きの一部を復元できませんでした。復元できた本文を書き出しました。端末内のデータは残っています。'
+              : '下書きの復元に必要なデータが足りません。下書きは書き出せませんでした。端末内のデータは残っています。');
+            if (!text) return;
+          }
+          downloadText(`draft-${draft.documentId}-${draft.revision}${incomplete ? '-partial' : ''}`, text);
         })} />
       </div>
       {selected && cache ? <div className="document" data-document-id={selected.id}>

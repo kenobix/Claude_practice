@@ -6,6 +6,7 @@ import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate, removeAwareness
 import { yCollab, yUndoManagerKeymap } from 'y-codemirror.next';
 import { decodeFrame, encodeFrame, isId, isRole, isUint, MAX_PAYLOAD, VERSION } from '../shared/protocol.ts';
 import type { Role, User } from '../shared/protocol.ts';
+import { isLineEndingQuarantine } from './cache.ts';
 import type { LocalCache, PendingUpdate } from './cache.ts';
 import { lookupAccess, quarantineDrafts } from './access.ts';
 import { prepareRecovery } from './recovery.ts';
@@ -222,7 +223,9 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
         publish({ role: header.role, sequence: header.sequence, legacyBody: text.toString() });
         stop(errorText('LEGACY_LINE_ENDING'));
         publishSave();
-        if (drafts.some((draft) => draft.scope === nextScope)) await cache.quarantine(nextScope, 'LEGACY_LINE_ENDING');
+        if (drafts.some((draft) => draft.scope === nextScope)) {
+          await cache.quarantine(nextScope, 'LEGACY_LINE_ENDING', payload);
+        }
         draftsChanged();
         return;
       }
@@ -232,10 +235,8 @@ export function openRoom(documentId: string, user: User, parent: HTMLElement, in
       const recovered = !blockReason && (state || stored.length > 0)
         ? prepareRecovery(payload, state?.bytes, stored, (state?.unconfirmed ?? 0) > stored.length)
         : undefined;
-      if (recovered === null) {
-        blockReason = 'LINE_ENDING';
-        await cache.quarantine(nextScope, blockReason);
-      }
+      if (recovered === null) blockReason = 'LINE_ENDING';
+      if (blockReason && isLineEndingQuarantine(blockReason)) await cache.quarantine(nextScope, blockReason, payload);
       blocked = Boolean(blockReason);
       const plan = header.role === 'viewer' || !recovered
         ? { complete: payload, ordered: [], repair: undefined }

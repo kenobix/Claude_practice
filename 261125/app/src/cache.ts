@@ -1,9 +1,13 @@
 import * as Y from 'yjs';
 
 export type PendingUpdate = { messageId: string; bytes: Uint8Array; repair?: boolean };
-type SavedState = { scope: string; bytes: Uint8Array; unconfirmed: number; blocked?: string };
+type SavedState = { scope: string; bytes: Uint8Array; unconfirmed: number; blocked?: string; draftBase?: Uint8Array };
 export type LocalDraft = { scope: string; documentId: string; revision: number; blocked?: string };
 const EMPTY_STATE = new Uint8Array([0, 0]);
+
+export function isLineEndingQuarantine(code: string | undefined) {
+  return code === 'LINE_ENDING' || code === 'LEGACY_LINE_ENDING';
+}
 
 function result<T>(request: IDBRequest<T>) {
   return new Promise<T>((resolve, reject) => {
@@ -84,8 +88,8 @@ export async function openCache(userId: string, onClosed: () => void) {
           blocked = Boolean(saved?.blocked);
           if (blocked && !pending) return;
           const unconfirmed = pending?.repair ? count.result : Math.max(count.result, saved?.unconfirmed ?? 0);
-          states.put({ scope, bytes: saved ? Y.mergeUpdates([saved.bytes, bytes]) : bytes,
-            unconfirmed: unconfirmed + Number(Boolean(pending)), blocked: saved?.blocked });
+          states.put({ ...saved, scope, bytes: saved ? Y.mergeUpdates([saved.bytes, bytes]) : bytes,
+            unconfirmed: unconfirmed + Number(Boolean(pending)) });
           if (pending) outbox.add({ ...pending, scope });
         } catch { tx.abort(); }
       };
@@ -137,13 +141,15 @@ export async function openCache(userId: string, onClosed: () => void) {
         return { scope, documentId: id, revision: Number(revision), blocked: blockedScopes.get(scope) };
       });
     },
-    quarantine(scope: string, code: string) {
+    // A draft base comes from an authorized join for this document and grant.
+    quarantine(scope: string, code: string, draftBase?: Uint8Array) {
       const tx = db.transaction('states', 'readwrite', { durability: 'strict' });
       const states = tx.objectStore('states');
       const previous = states.get(scope);
       previous.onsuccess = () => {
         const saved = previous.result as SavedState | undefined;
-        if (!saved?.blocked) states.put({ scope, bytes: EMPTY_STATE, unconfirmed: 0, ...saved, blocked: code });
+        if (saved?.blocked && (!draftBase || saved.draftBase || !isLineEndingQuarantine(saved.blocked))) return;
+        states.put({ scope, bytes: EMPTY_STATE, unconfirmed: 0, ...saved, blocked: saved?.blocked ?? code, draftBase });
       };
       return complete(tx);
     },
@@ -160,6 +166,8 @@ export async function readDraftText(cache: LocalCache, scope: string) {
     const body = doc.getText('body');
     if (state) Y.applyUpdate(doc, state.bytes);
     for (const { bytes } of pending) Y.applyUpdate(doc, bytes);
+    // Keep the original draft text when the local data already resolves every dependency.
+    if (state?.draftBase && (doc.store.pendingStructs || doc.store.pendingDs)) Y.applyUpdate(doc, state.draftBase);
     return { text: body.toString(), incomplete: Boolean(doc.store.pendingStructs || doc.store.pendingDs) };
   } finally {
     doc.destroy();
