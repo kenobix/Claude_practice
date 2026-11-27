@@ -1,0 +1,10 @@
+let i: int = 0;
+let total: int = 0;
+while (i < 1400) {
+  if (i % 2 == 0) {
+    total = total + i;
+  } else {
+    total = total - i;
+  }
+  i = i + 1;
+}

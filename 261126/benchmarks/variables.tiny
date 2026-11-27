@@ -1,0 +1,12 @@
+let i: int = 0;
+let a: int = 1;
+let b: int = 2;
+let c: int = 3;
+let carry: int = 0;
+while (i < 1600) {
+  carry = a;
+  a = b;
+  b = c;
+  c = carry;
+  i = i + 1;
+}
