@@ -1,0 +1,14 @@
+{
+  "seed": 261126,
+  "total": 60,
+  "families": {
+    "scope-loop": 24,
+    "divmod": 20,
+    "zero-divisor": 16
+  },
+  "normal": 44,
+  "runtime_error": 16,
+  "source_sha256": "56112f9cc3b2747976776e428b9abcaf9e1efc1c4ef27fcfd9d639143369ca68",
+  "passed": 60,
+  "failures": []
+}

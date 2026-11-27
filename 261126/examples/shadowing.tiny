@@ -1,0 +1,10 @@
+let x: int = 1;
+{
+  print x;
+  x = 2;
+  let x: bool = true;
+  print x;
+  x = false;
+  print x;
+}
+print x;
