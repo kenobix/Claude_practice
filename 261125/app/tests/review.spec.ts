@@ -112,9 +112,9 @@ function draftExport(page: Page, label: string) {
 }
 
 async function downloadDraft(page: Page, label: string) {
-  const download = page.waitForEvent('download');
-  await draftExport(page, label).click();
-  const file = await download;
+  const button = draftExport(page, label);
+  await expect(button).toBeVisible();
+  const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5_000 }), button.click()]);
   return { text: await readFile((await file.path())!, 'utf8'), name: file.suggestedFilename() };
 }
 
@@ -435,7 +435,12 @@ test('review Medium: an old grant cannot use another document or a newer grant f
     const pending = await seedDraft(b, scope, appendDelta(base, '\r\nold draft'));
 
     const otherTitle = '別の文書';
-    const otherId = await createDocument(a, otherTitle);
+    await a.getByLabel('新しい文書').fill(otherTitle);
+    await a.getByRole('button', { name: '作成', exact: true }).click();
+    await expect(a.getByRole('heading', { name: otherTitle, exact: true })).toBeVisible();
+    await expectDocument(a, '', 0);
+    const otherId = (await a.locator('[data-document-id]').getAttribute('data-document-id'))!;
+    expect(otherId).not.toBe(id);
     await grant(a, 'レン', 'editor');
     await append(a, 'other base');
     await expect(saveStatus(a)).toHaveText('サーバー保存済み');
@@ -446,6 +451,9 @@ test('review Medium: an old grant cannot use another document or a newer grant f
     await seedDraft(b, `${otherId}:1`, appendDelta(otherBase, '\r\nother draft'));
     await b.reload();
     await openDocument(b, otherTitle);
+    await expectDocument(b, 'other base', 1);
+    await expect(saveStatus(b)).toHaveAttribute('data-server-save', 'blocked');
+    expect((await loadDraftRecords(b, `${otherId}:1`)).base).toEqual([...otherBase]);
     expect((await downloadDraft(b, otherTitle)).text).toBe('other base\r\nother draft');
 
     b.on('request', (request) => requests.push(request.url()));
