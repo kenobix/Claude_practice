@@ -203,12 +203,15 @@ WHERE id=? AND status IN ('pending','conflict')`, p.Status, p.Local.Hash, p.Loca
 	})
 }
 
-func (s *stateDB) complete(ctx context.Context, p Plan) error {
+func (s *stateDB) complete(ctx context.Context, p Plan, beforeCommit func() error) error {
 	return s.write(ctx, func(tx *sql.Tx) error {
 		if err := putBase(ctx, tx, p.Path, p.BaseRevision, p.Target); err != nil {
 			return err
 		}
-		return mutateOne(ctx, tx, "UPDATE plans SET status='complete' WHERE id=? AND status='pending'", p.ID)
+		if err := mutateOne(ctx, tx, "UPDATE plans SET status='complete' WHERE id=? AND status='pending'", p.ID); err != nil {
+			return err
+		}
+		return beforeCommit()
 	})
 }
 

@@ -203,15 +203,27 @@ func createSmall(dir *Dir, name, text string) error {
 	return errors.Join(writeErr, syncErr, f.Close())
 }
 
+// MetadataSize includes every DB and sidecar under the same management lock,
+// including the old and prepared states during a reconciliation.
 func (m *Managed) MetadataSize() (int64, error) {
-	_, size, err := m.dir.Info(LockFile)
+	_, total, err := m.dir.Info(LockFile)
 	if err != nil {
 		return 0, err
 	}
-	err = m.State.Names(func(name string) error {
-		_, n, err := m.State.Info(name)
-		size += n
-		return err
+	err = m.dir.Names(func(name string) error {
+		if name != "state" && !ReconcileDirName(name) {
+			return nil
+		}
+		dir, err := m.dir.PrivateDir(name, false)
+		if err != nil {
+			return err
+		}
+		defer dir.Close()
+		return dir.Names(func(file string) error {
+			_, n, err := dir.Info(file)
+			total += n
+			return err
+		})
 	})
-	return size, err
+	return total, err
 }

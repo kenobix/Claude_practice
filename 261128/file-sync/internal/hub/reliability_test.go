@@ -460,6 +460,8 @@ func TestOutboxResponseLossAndNewLocalBody(t *testing.T) {
 		t.Fatalf("outbox after response loss: %+v", s)
 	}
 	l.hubFile(t, notes, "Q", "client-a", 2)
+	l.assertBase(t, "A", notes, "P", 1)
+	l.assertBody(t, filepath.Join("A", safefs.Management, "stage", s.Outbox[0].Change.Operation+".outgoing"), "Q")
 	l.write(t, "A", notes, "R")
 	must(t, local.Sync(t.Context(), l.req(t, "A", 0)))
 	l.file(t, "A", notes, "R", 3)

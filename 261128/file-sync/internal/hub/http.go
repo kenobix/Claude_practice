@@ -140,6 +140,13 @@ func (h *Hub) blob(w http.ResponseWriter, r *http.Request, p principal, hash str
 			writeProblem(w, failure)
 			return
 		}
+		if err := h.at("before-blob-response"); err != nil {
+			h.mu.Lock()
+			failure := h.unavailable()
+			h.mu.Unlock()
+			writeProblem(w, failure)
+			return
+		}
 		writeJSON(w, status, protocol.Blob{Hash: hash, Size: r.ContentLength})
 	default:
 		data, failure := h.getBlob(context.WithoutCancel(r.Context()), p, hash)

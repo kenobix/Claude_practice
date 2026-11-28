@@ -16,6 +16,7 @@ type NetworkRequest struct {
 	Volume string
 	Root   string
 	Remote *protocol.Client
+	notify func(event) error
 }
 
 func Register(ctx context.Context, req NetworkRequest, mode string) error {
@@ -112,7 +113,7 @@ func withNetwork(ctx context.Context, req NetworkRequest, run func(*networkSync)
 	if err != nil {
 		return err
 	}
-	n := networkSync{engine: engine{ctx: ctx, destination: root, db: db}, remote: req.Remote, reg: reg}
+	n := networkSync{engine: engine{ctx: ctx, destination: root, db: db, notify: req.notify}, remote: req.Remote, reg: reg}
 	return run(&n)
 }
 
@@ -584,6 +585,9 @@ func (n *networkSync) installPlan(p Plan) error {
 		return err
 	}
 	if err := n.db.add(n.ctx, p); err != nil {
+		return err
+	}
+	if err := n.emit("plan-committed", p); err != nil {
 		return err
 	}
 	return n.apply(p, false)

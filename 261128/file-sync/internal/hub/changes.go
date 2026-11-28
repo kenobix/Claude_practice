@@ -193,10 +193,16 @@ deleted=excluded.deleted,client=excluded.client,op=excluded.op WHERE entries.rev
 		if err == nil && h.beforeChangeCommit != nil {
 			h.beforeChangeCommit()
 		}
-		return err
+		if err != nil {
+			return err
+		}
+		return h.at("before-change-commit")
 	})
 	if err != nil {
 		return nil, h.failure(err)
+	}
+	if err := h.at("change-committed"); err != nil {
+		return nil, h.unavailable()
 	}
 	if h.afterChangeCommit != nil {
 		h.afterChangeCommit()

@@ -239,14 +239,14 @@ func (d *Dir) read(path string, private bool) (*os.File, unix.Stat_t, error) {
 	return os.NewFile(uintptr(readFD), path), after, nil
 }
 
-func (d *Dir) readContent(path string, private bool, writer io.Writer) (Digest, Identity, error) {
+func (d *Dir) readContent(path string, private bool, writer io.Writer, limit int64) (Digest, Identity, error) {
 	file, before, err := d.read(path, private)
 	if err != nil {
 		return Digest{}, Identity{}, err
 	}
 	defer file.Close()
-	if before.Size > MaxSize {
-		return Digest{}, Identity{}, fmt.Errorf("%q exceeds %d bytes: %w", path, MaxSize, ErrLimit)
+	if before.Size > limit {
+		return Digest{}, Identity{}, fmt.Errorf("%q exceeds %d bytes: %w", path, limit, ErrLimit)
 	}
 	hash := sha256.New()
 	if writer == nil {
@@ -254,11 +254,11 @@ func (d *Dir) readContent(path string, private bool, writer io.Writer) (Digest, 
 	} else {
 		writer = io.MultiWriter(writer, hash)
 	}
-	n, err := io.Copy(writer, io.LimitReader(file, MaxSize+1))
+	n, err := io.Copy(writer, io.LimitReader(file, limit+1))
 	if err != nil {
 		return Digest{}, Identity{}, err
 	}
-	if n > MaxSize {
+	if n > limit {
 		return Digest{}, Identity{}, ErrLimit
 	}
 	var after unix.Stat_t
@@ -276,14 +276,18 @@ func (d *Dir) ReadUser(path string, writer io.Writer) (Digest, Identity, error) 
 	if err := Validate(path); err != nil {
 		return Digest{}, Identity{}, err
 	}
-	return d.readContent(path, false, writer)
+	return d.readContent(path, false, writer, MaxSize)
 }
 
 func (d *Dir) ReadPrivate(name string, writer io.Writer) (Digest, Identity, error) {
+	return d.ReadPrivateLimit(name, writer, MaxSize)
+}
+
+func (d *Dir) ReadPrivateLimit(name string, writer io.Writer, limit int64) (Digest, Identity, error) {
 	if !validComponent(name) {
 		return Digest{}, Identity{}, ErrPath
 	}
-	return d.readContent(name, true, writer)
+	return d.readContent(name, true, writer, limit)
 }
 
 func (d *Dir) SyncUser(path string, expected Identity) error {
@@ -463,4 +467,52 @@ func (d *Dir) SyncParents(path string) error {
 			return err
 		}
 	}
+}
+
+// Destination pins the parent of a prospective directory and refuses any existing entry.
+func (v *Volume) Destination(path string) (*Dir, string, error) {
+	parent, leaf, err := v.dir.Parent(path, false)
+	if err != nil {
+		return nil, "", err
+	}
+	fd, _, err := parent.node(leaf)
+	if err == nil {
+		unix.Close(fd)
+		err = unix.EEXIST
+	}
+	if !errors.Is(err, unix.ENOENT) {
+		parent.Close()
+		return nil, "", err
+	}
+	return parent, leaf, nil
+}
+
+// PublishDir installs a prepared private directory without replacing any entry.
+func (d *Dir) PublishDir(from string, prepared *Dir, to string) error {
+	if !validComponent(from) || !validComponent(to) {
+		return ErrPath
+	}
+	check, err := d.PrivateDir(from, false)
+	if err != nil {
+		return err
+	}
+	defer check.Close()
+	actual, err := check.ID()
+	if err != nil {
+		return err
+	}
+	expected, err := prepared.ID()
+	if err != nil {
+		return err
+	}
+	if actual != expected {
+		return ErrChanged
+	}
+	if err := prepared.Sync(); err != nil {
+		return err
+	}
+	if err := unix.Renameat2(d.fd, from, d.fd, to, unix.RENAME_NOREPLACE); err != nil {
+		return err
+	}
+	return d.Sync()
 }

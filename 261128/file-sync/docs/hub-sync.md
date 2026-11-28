@@ -97,3 +97,7 @@ go test -mod=readonly -race -count=1 -timeout=4m ./...
 ```
 
 通常試験はLinuxの一時領域に人工データを作り、localhostのTCPとUnixソケットを使う。seedの停止試験は最初の受理コミットを観測してから子プロセスへSIGKILLを送る。3プロセスの試験はビルドしたCLIを使い、ハブとA・Bのコマンドを別プロセスで実行する。デバイスとbind mountは隔離環境を条件とするPhase 1の試験で、通常のCIではスキップする。 [隔離試験の手順](local-copy.md#os試料の再現条件)・[受入結果](acceptance.md#phase-2の実測結果)
+
+## ハブを保守する
+
+ハブを停止してバックアップを取得する。別の保存先へ復元して世代が変わった場合は、端末の旧状態と送信待ちを保持したまま再登録する。 [バックアップと復元の手順](backup-restore.md)

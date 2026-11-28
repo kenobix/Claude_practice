@@ -18,6 +18,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kenobix/Claude_practice/261128/file-sync/internal/protocol"
 	"github.com/kenobix/Claude_practice/261128/file-sync/internal/safefs"
 	"golang.org/x/sys/unix"
 )
@@ -252,12 +253,12 @@ func findPlan(t *testing.T, s Status, revision int64) Plan {
 	return Plan{}
 }
 
-func killAtBoundary(t *testing.T, l lab, point string) {
+func killAtBoundary(t *testing.T, l lab, point string, extra ...string) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, os.Args[0], "-test.run=^$")
-	cmd.Env = append(os.Environ(), "FILE_SYNC_TEST_CHILD="+point, "FILE_SYNC_TEST_VOLUME="+l.volume)
+	cmd.Env = append(append(os.Environ(), "FILE_SYNC_TEST_CHILD="+point, "FILE_SYNC_TEST_VOLUME="+l.volume), extra...)
 	stdout, err := cmd.StdoutPipe()
 	must(t, err)
 	stdin, err := cmd.StdinPipe()
@@ -295,7 +296,7 @@ func TestMain(m *testing.M) {
 	}
 	req := lab{volume: os.Getenv("FILE_SYNC_TEST_VOLUME")}.request(2)
 	notify := func(ev event) error {
-		if ev.point == strings.TrimPrefix(point, "p3-") {
+		if ev.point == strings.TrimPrefix(strings.TrimPrefix(point, "p3-"), "p4-") {
 			if _, err := fmt.Fprintln(os.Stdout, point); err != nil {
 				return err
 			}
@@ -306,7 +307,14 @@ func TestMain(m *testing.M) {
 		return nil
 	}
 	var err error
-	if strings.HasPrefix(point, "p3-") {
+	if strings.HasPrefix(point, "p4-") {
+		remote, remoteErr := protocol.NewClient(os.Getenv("FILE_SYNC_TEST_HUB"), localTestToken(2))
+		if remoteErr != nil {
+			err = remoteErr
+		} else {
+			err = Sync(context.Background(), NetworkRequest{Volume: req.Volume, Root: "B", Remote: remote, notify: notify})
+		}
+	} else if strings.HasPrefix(point, "p3-") {
 		l := lab{volume: req.Volume}
 		err = resumeDelete(context.Background(), l, notify)
 	} else {

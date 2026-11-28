@@ -140,7 +140,7 @@ func (d *Dir) Observe(path string) (Digest, Identity, error) {
 		return Digest{}, Identity{}, err
 	}
 	defer unix.Close(fd)
-	digest, actual, err := d.readContent(path, false, nil)
+	digest, actual, err := d.readContent(path, false, nil, MaxSize)
 	if err != nil {
 		return Digest{}, Identity{}, err
 	}

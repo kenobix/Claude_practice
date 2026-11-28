@@ -33,10 +33,18 @@ func (c *candidate) close() {
 }
 
 func (c *candidate) syncClose() error {
+	return c.syncCloseAfter(nil)
+}
+
+func (c *candidate) syncCloseAfter(afterSync func() error) error {
 	if c.file == nil {
 		return c.dir.SyncPrivate(c.name, c.id)
 	}
-	err := errors.Join(c.file.Sync(), c.file.Close())
+	err := c.file.Sync()
+	if err == nil && afterSync != nil {
+		err = afterSync()
+	}
+	err = errors.Join(err, c.file.Close())
 	c.file = nil
 	return err
 }
@@ -113,7 +121,9 @@ func (e *engine) apply(p Plan, restart bool) error {
 			return err
 		}
 	}
-	if err := incoming.syncClose(); err != nil {
+	if err := e.around("before-incoming-sync-close", "incoming-synced-closed", p, func() error {
+		return incoming.syncCloseAfter(func() error { return e.emit("incoming-synced-before-close", p) })
+	}); err != nil {
 		return err
 	}
 	parent, leaf, err := e.destination.ParentRecording(p.Path, true, e.rememberDir)
@@ -148,6 +158,9 @@ func (e *engine) apply(p Plan, restart bool) error {
 		return e.recordConflict(p, current, incoming)
 	}
 	replace := p.Before.Hash != ""
+	if err := e.emit("before-rename", p); err != nil {
+		return err
+	}
 	if err := stage.Install(p.Incoming(), incoming.id, parent, leaf, replace); err != nil {
 		if errors.Is(err, unix.EEXIST) && !replace {
 			digest, _, observeErr := parent.Observe(leaf)
@@ -161,20 +174,17 @@ func (e *engine) apply(p Plan, restart bool) error {
 	if err := e.emit("renamed", p); err != nil {
 		return err
 	}
-	if err := parent.Sync(); err != nil {
+	if err := e.around("before-destination-directory-sync", "destination-directory-synced", p, parent.Sync); err != nil {
 		return err
 	}
-	if err := stage.Sync(); err != nil {
-		return err
-	}
-	if err := e.emit("before-baseline-commit", p); err != nil {
+	if err := e.around("before-stage-directory-sync", "stage-directory-synced", p, stage.Sync); err != nil {
 		return err
 	}
 	return e.complete(p)
 }
 
 func (e *engine) complete(p Plan) error {
-	if err := e.db.complete(e.ctx, p); err != nil {
+	if err := e.db.complete(e.ctx, p, func() error { return e.emit("before-baseline-commit", p) }); err != nil {
 		return err
 	}
 	if err := e.emit("baseline-committed", p); err != nil {
@@ -189,10 +199,28 @@ func (e *engine) saveBackup(p Plan) error {
 		return err
 	}
 	defer backup.close()
+	if p.Target.Hash == "" {
+		if err := e.around("before-trash-sync-close", "trash-synced-closed", p, func() error {
+			return backup.syncCloseAfter(func() error { return e.emit("trash-synced-before-close", p) })
+		}); err != nil {
+			return err
+		}
+		return e.around("before-trash-directory-sync", "trash-directory-synced", p, e.db.manager.Stage.Sync)
+	}
 	if err := backup.syncClose(); err != nil {
 		return err
 	}
 	return e.db.manager.Stage.Sync()
+}
+
+func (e *engine) around(before, after string, p Plan, operation func() error) error {
+	if err := e.emit(before, p); err != nil {
+		return err
+	}
+	if err := operation(); err != nil {
+		return err
+	}
+	return e.emit(after, p)
 }
 
 func (e *engine) cleanupBackup(p Plan) error {
@@ -428,6 +456,9 @@ func (e *engine) fill(p Plan, c *candidate, data []byte, want safefs.Digest) err
 	}
 	if id != c.id {
 		return safefs.ErrChanged
+	}
+	if isIncoming {
+		return e.emit("incoming-verified", p)
 	}
 	return nil
 }

@@ -76,22 +76,30 @@ type Hub struct {
 
 	beforeChangeCommit func()
 	afterChangeCommit  func()
+	fault              func(string) error
 }
 
-func Init(ctx context.Context, volume, path string, provision Provision) error {
+func provisionDigests(provision Provision) (digests [2][32]byte, err error) {
 	if !protocol.ValidName(provision.Space) {
-		return errors.New("invalid space ID")
+		return digests, errors.New("invalid space ID")
 	}
-	var digests [2][32]byte
 	for i, client := range provision.Clients {
 		digest, valid := protocol.TokenDigest(client.Token)
 		if !valid || !protocol.ValidName(client.ID) {
-			return errors.New("invalid client ID or token configuration")
+			return digests, errors.New("invalid client ID or token configuration")
 		}
 		digests[i] = digest
 	}
 	if digests[0] == digests[1] || provision.Clients[0].ID == provision.Clients[1].ID {
-		return errors.New("client IDs and tokens must be distinct")
+		return digests, errors.New("client IDs and tokens must be distinct")
+	}
+	return digests, nil
+}
+
+func Init(ctx context.Context, volume, path string, provision Provision) error {
+	digests, err := provisionDigests(provision)
+	if err != nil {
+		return err
 	}
 	setup := func(store *dbstore.Store, rootID string) error {
 		generation, err := protocol.NewID()
@@ -116,7 +124,7 @@ func Init(ctx context.Context, volume, path string, provision Provision) error {
 			return nil
 		})
 	}
-	h, err := open(ctx, volume, path, setup)
+	h, err := open(ctx, volume, path, setup, nil)
 	if err != nil {
 		return err
 	}
@@ -124,11 +132,11 @@ func Init(ctx context.Context, volume, path string, provision Provision) error {
 }
 
 func Open(ctx context.Context, volume, path string) (*Hub, error) {
-	return open(ctx, volume, path, nil)
+	return open(ctx, volume, path, nil, nil)
 }
 
-func open(ctx context.Context, volume, path string, setup func(*dbstore.Store, string) error) (_ *Hub, err error) {
-	h := &Hub{}
+func open(ctx context.Context, volume, path string, setup func(*dbstore.Store, string) error, fault func(string) error) (_ *Hub, err error) {
+	h := &Hub{fault: fault}
 	defer func() {
 		if err != nil {
 			err = errors.Join(err, h.Close())
@@ -183,6 +191,9 @@ func open(ctx context.Context, volume, path string, setup func(*dbstore.Store, s
 		if err := errors.Join(h.blobs.Sync(), h.root.Sync()); err != nil {
 			return nil, err
 		}
+	}
+	if err := h.at("before-database-open"); err != nil {
+		return nil, err
 	}
 	h.store, err = dbstore.Open(ctx, h.manager, initial, setup)
 	if err != nil {
@@ -275,4 +286,11 @@ func (h *Hub) verifyBlob(name string, expected safefs.Digest) (safefs.Identity, 
 		return id, fmt.Errorf("stored blob %s does not match its registration", name)
 	}
 	return id, nil
+}
+
+func (h *Hub) at(point string) error {
+	if h.fault != nil {
+		return h.fault(point)
+	}
+	return nil
 }

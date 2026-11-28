@@ -171,12 +171,19 @@ func Reconcile(ctx context.Context, req NetworkRequest, approval string) (report
 		return report, err
 	}
 	defer closePrepared()
+	observe := engine{notify: req.notify}
+	if err := observe.emit("reconcile-prepared", Plan{}); err != nil {
+		return report, err
+	}
 	db, err := openState(ctx, prepared, true)
 	if err != nil {
 		return report, err
 	}
 	r := &Registration{Space: h.Space, Client: h.Client, Generation: h.Generation, Mode: "reconcile"}
 	if err := prepareReconcile(ctx, db, r, report); err != nil {
+		return report, errors.Join(err, db.close())
+	}
+	if err := observe.emit("reconcile-db-committed", Plan{}); err != nil {
 		return report, errors.Join(err, db.close())
 	}
 	if err := db.checkpoint(ctx); err != nil {
@@ -186,6 +193,9 @@ func Reconcile(ctx context.Context, req NetworkRequest, approval string) (report
 		return report, err
 	}
 	if err := m.ActivateState(id, prepared); err != nil {
+		return report, err
+	}
+	if err := observe.emit("reconcile-activated", Plan{}); err != nil {
 		return report, err
 	}
 	db, err = openState(ctx, prepared, false)

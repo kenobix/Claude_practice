@@ -81,9 +81,13 @@ type lab struct {
 	provision Provision
 }
 
+func testProvision() Provision {
+	return Provision{Space: "test", Clients: [2]Client{{"client-a", token(1)}, {"client-b", token(2)}}}
+}
+
 func newLab(t *testing.T) *lab {
 	t.Helper()
-	l := &lab{dir: t.TempDir(), provision: Provision{Space: "test", Clients: [2]Client{{"client-a", token(1)}, {"client-b", token(2)}}}}
+	l := &lab{dir: t.TempDir(), provision: testProvision()}
 	for _, name := range []string{"hub", "A", "B"} {
 		must(t, os.Mkdir(filepath.Join(l.dir, name), 0700))
 	}

@@ -123,6 +123,13 @@ func (s *Store) configure(ctx context.Context, initialize bool) error {
 }
 
 func (s *Store) checkIntegrity(ctx context.Context) error {
+	if err := s.validateSQLite(ctx); err != nil {
+		return err
+	}
+	return s.checkMetadata()
+}
+
+func (s *Store) validateSQLite(ctx context.Context) error {
 	if err := s.Expect(ctx, "PRAGMA integrity_check", "ok"); err != nil {
 		return err
 	}
@@ -137,7 +144,7 @@ func (s *Store) checkIntegrity(ctx context.Context) error {
 	if hasViolation {
 		return errors.New("SQLite foreign_key_check found a violation")
 	}
-	return s.checkMetadata()
+	return nil
 }
 
 func (s *Store) Expect(ctx context.Context, query, want string) error {
@@ -220,3 +227,41 @@ func (e *OutcomeError) Error() string {
 }
 
 func (e *OutcomeError) Unwrap() error { return e.cause }
+
+const MaxDatabaseBytes = pageSize * pageLimit
+
+// InspectSnapshot opens a closed, checkpointed standalone copy without writing
+// sidecars. The caller holds the directory lock and has verified the file.
+func InspectSnapshot(ctx context.Context, dir *safefs.Dir, inspect func(*sql.Conn) error) (err error) {
+	name, err := dir.Anchor(safefs.StateDB)
+	if err != nil {
+		return err
+	}
+	db, err := sql.Open("sqlite3", (&url.URL{
+		Scheme: "file", Path: name, RawQuery: "mode=ro&immutable=1&_foreign_keys=on",
+	}).String())
+	if err != nil {
+		return err
+	}
+	defer func() { err = errors.Join(err, db.Close()) }()
+	db.SetMaxOpenConns(1)
+	conn, err := db.Conn(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { err = errors.Join(err, conn.Close()) }()
+	s := &Store{Conn: conn}
+	for query, want := range map[string]string{
+		"SELECT sqlite_version()": "3.53.4",
+		"PRAGMA page_size":        "4096",
+		"PRAGMA foreign_keys":     "1",
+	} {
+		if err := s.Expect(ctx, query, want); err != nil {
+			return err
+		}
+	}
+	if err := s.validateSQLite(ctx); err != nil {
+		return err
+	}
+	return inspect(conn)
+}

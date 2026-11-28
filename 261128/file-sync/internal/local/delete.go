@@ -41,7 +41,10 @@ func (e *engine) applyDelete(p Plan, restart bool) error {
 			return err
 		}
 		if err := e.db.write(e.ctx, func(tx *sql.Tx) error {
-			return mutateOne(e.ctx, tx, "UPDATE plans SET backed_up=1 WHERE id=? AND status='pending' AND backed_up=0", p.ID)
+			if err := mutateOne(e.ctx, tx, "UPDATE plans SET backed_up=1 WHERE id=? AND status='pending' AND backed_up=0", p.ID); err != nil {
+				return err
+			}
+			return e.emit("before-delete-backed-up-commit", p)
 		}); err != nil {
 			return err
 		}
@@ -65,13 +68,15 @@ func (e *engine) applyDelete(p Plan, restart bool) error {
 	if d != p.Before || id != oldID {
 		return e.holdDelete(p, d)
 	}
-	if err := parent.RemoveUser(leaf, id); err != nil {
-		return fmt.Errorf("unlink outcome requires inspection after reopening: %w", err)
-	}
-	if err := e.emit("unlinked", p); err != nil {
+	if err := e.around("before-unlink", "unlinked", p, func() error {
+		if err := parent.RemoveUser(leaf, id); err != nil {
+			return fmt.Errorf("unlink outcome requires inspection after reopening: %w", err)
+		}
+		return nil
+	}); err != nil {
 		return err
 	}
-	if err := parent.Sync(); err != nil {
+	if err := e.around("before-delete-directory-sync", "delete-directory-synced", p, parent.Sync); err != nil {
 		return err
 	}
 	return e.complete(p)

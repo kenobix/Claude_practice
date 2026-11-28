@@ -26,6 +26,8 @@ const usage = `usage:
   file-sync copy    -volume DIR -source PATH -destination PATH -revision N [-path PATH]
   file-sync recover -volume DIR -source PATH -destination PATH
   file-sync hub-init -volume DIR -root PATH -space SPACE -client-a ID -client-b ID
+  file-sync hub-backup -volume DIR -source HUB -destination NEW_BACKUP
+  file-sync hub-restore -volume DIR -source BACKUP -destination NEW_HUB -space SPACE -client-a ID -client-b ID
   file-sync hub -volume DIR -root PATH [-listen 127.0.0.1:8080]
   file-sync register -volume DIR -root PATH -hub 127.0.0.1:8080 (--seed | --pull | --reconcile [--approve SHA256])
   file-sync sync-once -volume DIR -root PATH -hub 127.0.0.1:8080
@@ -89,7 +91,12 @@ func run(ctx context.Context, args []string, output io.Writer) error {
 				flags.StringVar(&selection.File, "candidate", "", "root-relative file to use with --choose file")
 			}
 		}
-	case "copy", "recover":
+	case "copy", "recover", "hub-backup", "hub-restore":
+		if command == "hub-restore" {
+			flags.StringVar(&space, "space", "default", "current sync space ID")
+			flags.StringVar(&clientA, "client-a", "client-a", "first current client ID")
+			flags.StringVar(&clientB, "client-b", "client-b", "second current client ID")
+		}
 		flags.StringVar(&req.Source, "source", "", "source root relative to volume")
 		flags.StringVar(&req.Destination, "destination", "", "destination root relative to volume")
 		if command == "copy" {
@@ -135,6 +142,21 @@ func run(ctx context.Context, args []string, output io.Writer) error {
 			{ID: clientA, Token: os.Getenv("FILE_SYNC_TOKEN_A")},
 			{ID: clientB, Token: os.Getenv("FILE_SYNC_TOKEN_B")},
 		}})
+	case "hub-backup":
+		info, err := hub.Backup(ctx, *volume, req.Source, req.Destination)
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(output).Encode(info)
+	case "hub-restore":
+		info, err := hub.Restore(ctx, *volume, req.Source, req.Destination, hub.Provision{Space: space, Clients: [2]hub.Client{
+			{ID: clientA, Token: os.Getenv("FILE_SYNC_TOKEN_A")},
+			{ID: clientB, Token: os.Getenv("FILE_SYNC_TOKEN_B")},
+		}})
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(output).Encode(info)
 	case "hub":
 		return serve(ctx, *volume, *root, address, output)
 	case "register", "sync-once", "conflicts", "resolve":

@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/kenobix/Claude_practice/261128/file-sync/internal/protocol"
@@ -151,10 +152,16 @@ func (h *Hub) syncFinal(name string, id safefs.Identity) error {
 }
 
 func (h *Hub) registerBlob(ctx context.Context, space, hash string, size int64) error {
-	return h.store.Write(ctx, func(tx *sql.Tx) error {
-		_, err := tx.ExecContext(ctx, "INSERT INTO blobs VALUES (?,?,?)", space, hash, size)
-		return err
+	err := h.store.Write(ctx, func(tx *sql.Tx) error {
+		if _, err := tx.ExecContext(ctx, "INSERT INTO blobs VALUES (?,?,?)", space, hash, size); err != nil {
+			return err
+		}
+		return h.at("before-blob-commit")
 	})
+	if err != nil {
+		return err
+	}
+	return h.at("blob-committed")
 }
 
 func (h *Hub) getBlob(ctx context.Context, p principal, hash string) ([]byte, *protocol.Problem) {
@@ -224,16 +231,25 @@ func (h *Hub) reserveUpload(ctx context.Context, p principal, hash string, size 
 
 type uploadWriter struct {
 	io.Writer
-	err error
+	err        error
+	afterWrite func() error
 }
 
 func (w *uploadWriter) Write(b []byte) (int, error) {
 	n, err := w.Writer.Write(b)
+	if err == nil {
+		err = w.afterWrite()
+	}
 	w.err = err
 	return n, err
 }
 
 func (h *Hub) putBlob(ctx context.Context, p principal, hash string, size int64, body io.Reader) (int, *protocol.Problem) {
+	if err := h.at("before-upload-lock"); err != nil {
+		h.mu.Lock()
+		defer h.mu.Unlock()
+		return 0, h.failure(err)
+	}
 	h.put.Lock()
 	defer h.put.Unlock()
 	u, failure := h.reserveUpload(ctx, p, hash, size)
@@ -270,6 +286,13 @@ func (h *Hub) putBlob(ctx context.Context, p principal, hash string, size int64,
 		return 201, nil
 	}
 	name := u.final + ".part"
+	if err := h.at("before-blob-create"); err != nil {
+		h.mu.Lock()
+		defer h.mu.Unlock()
+		h.blobCount--
+		h.blobBytes -= size
+		return 0, h.failure(err)
+	}
 	f, id, err := h.blobs.Create(name)
 	if err != nil {
 		h.mu.Lock()
@@ -278,7 +301,7 @@ func (h *Hub) putBlob(ctx context.Context, p principal, hash string, size int64,
 		h.blobBytes -= size
 		return 0, h.failure(err)
 	}
-	writer := &uploadWriter{Writer: f}
+	writer := &uploadWriter{Writer: f, afterWrite: func() error { return h.at("blob-bytes-written") }}
 	failure = receive(body, writer, size, hash)
 	if failure != nil {
 		closeErr := f.Close()
@@ -304,7 +327,7 @@ func (h *Hub) putBlob(ctx context.Context, p principal, hash string, size int64,
 		defer h.mu.Unlock()
 		return 0, h.unavailable()
 	}
-	err = errors.Join(f.Sync(), f.Close())
+	err = h.syncUpload(f)
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	if err != nil {
@@ -313,16 +336,56 @@ func (h *Hub) putBlob(ctx context.Context, p principal, hash string, size int64,
 	if h.stopped {
 		return 0, problem(503, "storage_unavailable")
 	}
+	if err := h.at("before-blob-rename"); err != nil {
+		return 0, h.unavailable()
+	}
 	if err := h.blobs.Install(name, id, h.blobs, u.final, false); err != nil {
 		return 0, h.unavailable()
 	}
+	if err := h.at("blob-renamed"); err != nil {
+		return 0, h.unavailable()
+	}
+	if err := h.at("before-blob-directory-sync"); err != nil {
+		return 0, h.unavailable()
+	}
 	if err := h.blobs.Sync(); err != nil {
+		return 0, h.unavailable()
+	}
+	if err := h.at("blob-directory-synced"); err != nil {
 		return 0, h.unavailable()
 	}
 	if err := h.registerBlob(ctx, p.space, hash, size); err != nil {
 		return 0, h.failure(err)
 	}
 	return 201, nil
+}
+
+func (h *Hub) syncUpload(f *os.File) (err error) {
+	closed := false
+	defer func() {
+		if !closed {
+			err = errors.Join(err, f.Close())
+		}
+	}()
+	for _, point := range []string{"blob-verified", "before-blob-sync"} {
+		if err := h.at(point); err != nil {
+			return err
+		}
+	}
+	if err := f.Sync(); err != nil {
+		return err
+	}
+	for _, point := range []string{"blob-synced", "before-blob-close"} {
+		if err := h.at(point); err != nil {
+			return err
+		}
+	}
+	err = f.Close()
+	closed = true
+	if err != nil {
+		return err
+	}
+	return h.at("blob-closed")
 }
 
 func receive(body io.Reader, dest io.Writer, size int64, want string) *protocol.Problem {
