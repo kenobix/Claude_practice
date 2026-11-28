@@ -34,7 +34,7 @@ npm run demo -- "$demo_root/recordings"
 
 Chromium DevTools Protocolの `Input.imeSetComposition` で「にほん」「日本」の合成イベントを発生させ、`Input.insertText` で確定した。絵文字、Enterによる改行、クリップボードからのキー操作による貼り付けを続け、両プロファイルで同じ本文を確認した。別試験では先に入力したアキがUndoを実行し、レンの「相手」が両端末に残った。 [Chromium入力のAPI](https://chromedevtools.github.io/devtools-protocol/tot/Input/)・[入力試験](../app/tests/phase4.spec.ts)
 
-OSの日本語IMEによる変換と確定は未検証。隔離したX11環境でuim/AnthyとIBus/Mozcを試したが、起動したChromiumに変換結果が届く経路を確立できなかった。
+隔離したX11環境でuim/AnthyとIBus/Mozcを試したが、起動したChromiumに変換結果が届く経路を確立できなかった。その後、利用者がWindowsの日本語IMEで変換と確定を手動で確認した。 [手動確認の対象と結果](acceptance.md#windowsでの日本語imeの手動確認)
 
 ### OSの日本語IMEを手動で確認する手順
 

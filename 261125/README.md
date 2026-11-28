@@ -6,7 +6,9 @@ Phase 0では3つの `Y.Doc` に更新を逆順や重複で配送し、一部の
 
 Phase 1でオンライン共同編集、Phase 2でSQLiteとIndexedDBへの保存と切断復帰を実装しました。Phase 3では権限失効や文書削除後の同期を止め、端末に残った下書きを書き出せるようにしました。 [Phase 3の受入結果](docs/acceptance.md#phase-3の受入結果)
 
-Phase 4の結果とMVPの判定は受入記録にまとめています。 [MVPの受入結果](docs/acceptance.md#mvpの総合判定)・[共同編集デモ（3分）](demo/collaboration.mp4)・[再起動デモ（41秒）](demo/restart.mp4)
+Phase 0〜4の全受入条件に合格し、MVPが完成しました。最終独立再レビューで指摘の解消を確認し、残存指摘は全重要度で0件でした。利用者はWindowsの日本語IMEで変換と確定を行いました。ChromeとEdgeで本文と受理順番号111が一致し、編集した側に「サーバー保存済み」と表示されました。 [MVPの受入結果](docs/acceptance.md#mvpの総合判定)・[実IMEの確認対象と結果](docs/acceptance.md#windowsでの日本語imeの手動確認)
+
+GitHub Pagesではアプリの紹介資料と性能計測結果、デモ動画を公開します。共同編集を試すときは手元でNode.jsサーバーを起動してください。 [性能計測](docs/experiments.md#計測結果)・[共同編集デモ（3分）](demo/collaboration.mp4)・[再起動デモ（41秒）](demo/restart.mp4)
 
 ## アプリを起動する
 
