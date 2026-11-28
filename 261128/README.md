@@ -1,11 +1,12 @@
 # ファイル同期ソフト
 
-2026-11-28にPhase 0を実施した。元計画に沿って、2つのクライアントと中央ハブの間で通常ファイルを同期するための仕様と受入条件を確定した。製品のCLIとHTTPサーバーはPhase 1以降の成果物。
+2026-11-28にPhase 0で2つのクライアントと中央ハブの仕様・受入条件を定め、Phase 1で安全な走査とAからBへのローカルコピーを実装した。コピー先に反映予定を保存し、プロセスが途中で停止した場合は、ファイルの内容を照合して、安全に続けられる場合に再開する。
 
 - [元計画](../261014/plan_file_sync.md)
 - [プロトコルとデータ契約](file-sync/docs/protocol.md)
 - [状態遷移、競合、永続化と復旧](file-sync/docs/design.md)
 - [Phase 0〜5の受入条件](file-sync/docs/acceptance.md)
+- [Phase 1の使い方と復旧手順](file-sync/docs/local-copy.md)
 - [技術選定と再現手順](file-sync/docs/toolchain.md)
 - [固定期待値とデモ用人工データ](file-sync/fixtures/expected.json)
 - [作業記録](work_log.md)

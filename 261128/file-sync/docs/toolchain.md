@@ -28,11 +28,11 @@ export GOCACHE="$tool_dir/build" GOMODCACHE="$tool_dir/modules"
 )
 ```
 
-SHA-256の照合に失敗したら展開前に中止する。Goの表示は `go version go1.27.4 linux/amd64`。実装後のビルドと試験は同じGoとCgoの設定で行う。Phase 0ではモジュールに製品パッケージを置いていない。
+SHA-256の照合に失敗したら展開前に中止する。Goの表示は `go version go1.27.4 linux/amd64`。同じGoとCgoの設定で [Phase 1のビルドと試験](local-copy.md#ビルドと人工データでの実行) を行う。
 
 ## SQLiteの設定確認
 
-ハブDBと端末DBを開くときは `_journal_mode=WAL&_synchronous=FULL&_foreign_keys=on` をDSNで指定し、単一物理接続に対し [設計の設定](design.md#容量と満杯時の扱い) を適用する。新規DBではWALに切り替える前にページ長4,096を確定する。再Open時も同じ順で接続ごとの設定を確認する。
+Phase 1の端末DBはDSNの `_synchronous=FULL&_foreign_keys=on` と、単一物理接続上のPRAGMAで [設計の設定](design.md#容量と満杯時の扱い) を適用する。Phase 0では、ハブDBと端末DBのDSNに `_journal_mode=WAL` を指定する方針だった。Phase 1の端末DBでは、ページ長4,096を設定してから、初期化時に限りPRAGMAでWALへ移行する。既存DBを開くときはWALを含む全設定を読み返し、モードの不一致を検出したら停止する。Phase 1のSQLite設定試験でバージョン・設定・チェックポイントを照合した。
 
 `SELECT sqlite_version()` が `3.53.4`、 `PRAGMA journal_mode` が `wal`、 `PRAGMA synchronous` が `2`、 `PRAGMA foreign_keys` が `1` を返すことを確認する。 `PRAGMA integrity_check` は `ok`、 `PRAGMA foreign_key_check` は0行が成功条件。 `PRAGMA wal_checkpoint(TRUNCATE)` のbusyが0で、書込み前のWALが0バイトであることも確認する。PRAGMAの設定に成功したかは、設定文の終了だけでなく実際の値を読み返して判断する。 [ドライバの設定実装](https://raw.githubusercontent.com/mattn/go-sqlite3/v1.14.52/sqlite3.go)・[SQLite PRAGMA](https://sqlite.org/pragma.html)
 
