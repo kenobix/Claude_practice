@@ -7,7 +7,7 @@ export CGO_ENABLED=1 GOTOOLCHAIN=local GOWORK=off
 go mod download all
 go mod verify
 result=$(mktemp -d)
-product=4a3ef75e26a19e54b7848cc3528021e27450b043
+product=c8941c398ec1904907ad3416cbf5af4fb2c7bba7
 python3 -B tools/verify_mvp.py demo --product-sha "$product" --output "$result/demo.json"
 ```
 

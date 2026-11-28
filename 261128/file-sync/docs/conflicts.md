@@ -36,6 +36,8 @@ FILE_SYNC_TOKEN="$token_b" "$bin" resolve -volume "$demo" -root B -hub "$address
 
 版が進んだ場合は終了コード3になり、`conflicts` で最新候補を確認して選び直す。CASで拒否されたIDには受理記録がなく、新しい選択には新しいIDを使う。途中で応答が失われた場合や受理後に停止した場合は、`sync-once` で元の解決を再開する。 `resolution.state` は、送信・受理照会中の `ready`、受理確認済みで端末反映待ちの `accepted`、再選択待ちの `stale`、端末反映まで済んだ `complete` を示す。解決後も候補コピーは残る。
 
+ハブから明示的な容量拒否を受けた解決は `ready` のまま保留される。 `status` の `holds` に `resolution_capacity` が表示され、`resolve` と、保留が続く間の `sync-once` は終了コード3を返す。 `sync-once` は同じIDと候補で解決を再試行し、無関係なパスを同期する。容量待ちの間に対象の版が進みCASが拒否されたときは、表示された最新の版で選び直す。
+
 ## 削除を伝える
 
 次の例は、同じ基準版で本文が一致した状態から始める。Aの削除を送信し、Bで受信する。
