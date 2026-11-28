@@ -1,0 +1,17 @@
+/demo-run/
+/runtime/
+/build/
+.file-sync/
+.file-sync-offline-*/
+backup.json
+blobs/
+backups/
+.env
+.env.*
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.token

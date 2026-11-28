@@ -1,0 +1,46 @@
+{
+  "contents": {
+    "P": {"unit_hex": "616263", "repeat": 1, "size": 3, "sha256": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"},
+    "Q": {"unit_hex": "68656c6c6f", "repeat": 1, "size": 5, "sha256": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"},
+    "R": {"unit_hex": "776f726c64", "repeat": 1, "size": 5, "sha256": "486ea46224d1bb4fb680f34f7c9ad96a8f24ec88be73ea8e5a6c65260e9cb8a7"},
+    "S": {"unit_hex": "68656c6c6f0a", "repeat": 1, "size": 6, "sha256": "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03"},
+    "E": {"unit_hex": "", "repeat": 1, "size": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    "X": {"unit_hex": "00", "repeat": 10485759, "size": 10485759, "sha256": "9ab1520f9cb2747102f57a449fa1704bd285f1a6e598c3e0988811859043a448"},
+    "M": {"unit_hex": "00", "repeat": 10485760, "size": 10485760, "sha256": "e5b844cc57f57094ea4585e235f36c78c1cd222262bb89d53c94dcb4d6b3e55d"},
+    "N": {"unit_hex": "00", "repeat": 10485761, "size": 10485761, "sha256": "0c2725e0d4ae4ae669bdd6c88b253997198efb67d962d217c52e6cbfd318fe0c"}
+  },
+  "demo": {
+    "client-a": {"notes.txt": "P", "empty.txt": "E"},
+    "client-b": {}
+  },
+  "cases": {
+    "P2-01": {
+      "path": "notes.txt", "generation": "G", "hub_revision": 1, "hub_content": "P", "hub_deleted": false,
+      "a_content": "P", "a_base_revision": 1, "b_content": "P", "b_base_revision": 1,
+      "receipts": ["a1:1:applied"], "conflict": null, "result": "success", "preserve": ["P"]
+    },
+    "P3-02": {
+      "path": "notes.txt", "generation": "G", "hub_revision": 2, "hub_content": "Q", "hub_deleted": false,
+      "a_content": "Q", "a_base_revision": 2, "b_content": "R", "b_base_revision": 1,
+      "receipts": ["a1:1:applied", "a2:2:applied"], "conflict": {"client": "B", "local": "R", "hub": "Q", "hub_revision": 2},
+      "result": "pending", "preserve": ["P", "Q", "R"]
+    },
+    "P3-06": {
+      "path": "notes.txt", "generation": "G", "hub_revision": 2, "hub_content": null, "hub_deleted": true,
+      "a_content": null, "a_base_revision": 2, "b_content": null, "b_base_revision": 2,
+      "receipts": ["a1:1:applied", "a2:2:applied"], "conflict": null, "result": "success", "preserve": ["P:hub-blob", "P:B-trash"]
+    },
+    "P4-04": {
+      "path": "notes.txt", "generation": "G", "hub_revision": 3, "hub_content": "R", "hub_deleted": false,
+      "a_content": "R", "a_base_revision": 3, "b_content": "R", "b_base_revision": 3,
+      "receipts": ["a1:1:applied", "a2:2:applied", "b2:3:applied"], "conflict": null,
+      "replay_result": "a2:2:applied", "result": "success", "preserve": ["P", "Q", "R"]
+    },
+    "P4-12": {
+      "path": "notes.txt", "generation": "G2", "hub_revision": 1, "hub_content": "P", "hub_deleted": false,
+      "a_content": "R", "a_base_revision": null, "b_content": "Q", "b_base_revision": 2,
+      "receipts": ["G/a1:1:applied"], "conflict": {"client": "A", "local": "R", "hub": "P", "hub_revision": 1},
+      "result": "pending", "preserve": ["P", "Q:old-hub-and-B", "R:A-and-old-outbox"]
+    }
+  }
+}
