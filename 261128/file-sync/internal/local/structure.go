@@ -26,6 +26,16 @@ func relatedPath(a, b string) bool {
 	return a == b || strings.HasPrefix(a, b+"/") || strings.HasPrefix(b, a+"/")
 }
 
+// The outermost blocked ancestor groups paths that share a structural hold.
+func structuralHoldRoot(path string, decisions map[string]string) string {
+	for i := 0; i < len(path); i++ {
+		if path[i] == '/' && decisions[path[:i]] == "namespace_conflict" {
+			return path[:i]
+		}
+	}
+	return path
+}
+
 // ownedDirectory checks the on-disk identity against the ownership record.
 func (n *networkSync) ownedDirectory(path string) (safefs.DirectoryStamp, bool, error) {
 	var device, inode, seconds int64

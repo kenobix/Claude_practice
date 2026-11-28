@@ -23,11 +23,12 @@ type ResolveRequest struct {
 }
 
 type resolution struct {
-	State    string            `json:"state"`
-	Change   protocol.Change   `json:"change"`
-	Before   safefs.Digest     `json:"before"`
-	Selected ConflictCandidate `json:"selected"`
-	Receipt  *protocol.Receipt `json:"receipt,omitempty"`
+	State              string            `json:"state"`
+	Change             protocol.Change   `json:"change"`
+	Before             safefs.Digest     `json:"before"`
+	Selected           ConflictCandidate `json:"selected"`
+	Receipt            *protocol.Receipt `json:"receipt,omitempty"`
+	WaitingForCapacity bool              `json:"waiting_for_capacity,omitempty"`
 }
 
 func Resolve(ctx context.Context, req NetworkRequest, choice ResolveRequest) error {
@@ -284,12 +285,22 @@ func (n *networkSync) runResolution(c *Conflict) error {
 	}
 	if r.State == "ready" {
 		result, err := n.postResolution(r)
+		if storageFull(err) {
+			if !r.WaitingForCapacity {
+				r.WaitingForCapacity = true
+				if err := n.writeConflict(c); err != nil {
+					return err
+				}
+			}
+			return errors.Join(ErrConflict, errResolutionHeld, err)
+		}
 		if err != nil {
 			var p *protocol.Problem
 			if !errors.As(err, &p) || (p.Code != "revision_mismatch" && p.Code != "namespace_conflict") {
 				return err
 			}
 			c.State, r.State = "pending", "stale"
+			r.WaitingForCapacity = false
 			if err := n.writeConflict(c); err != nil {
 				return err
 			}
@@ -309,6 +320,7 @@ func (n *networkSync) runResolution(c *Conflict) error {
 			return errors.Join(ErrConflict, errResolutionHeld, p)
 		}
 		r.Receipt, r.State = &result, "accepted"
+		r.WaitingForCapacity = false
 		if err := n.writeConflict(c); err != nil {
 			return err
 		}

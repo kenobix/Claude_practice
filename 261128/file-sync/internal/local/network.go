@@ -411,6 +411,7 @@ func (n *networkSync) compare(rejected map[string]Outgoing, only map[string]Outg
 	}
 	next := make(map[string]Outgoing)
 	for _, deleting := range []bool{true, false} {
+		var rejudgedGroups map[string]bool
 		if !deleting {
 			// Re-read after the deletion pass. A held or rejected deletion
 			// cannot make a dependent install eligible.
@@ -421,16 +422,30 @@ func (n *networkSync) compare(rejected map[string]Outgoing, only map[string]Outg
 			if err := n.blockStructure(snapshot, m.Entries, decisions, protected, selected, false); err != nil {
 				return nil, err
 			}
+			if only != nil {
+				rejudgedGroups = make(map[string]bool, len(only))
+				for path := range only {
+					rejudgedGroups[structuralHoldRoot(path, decisions)] = true
+				}
+			}
 		}
 		for _, path := range ordered {
 			action := decisions[path]
 			prior, rejudged := rejected[path]
-			if only != nil && !rejudged {
-				continue
-			}
 			base, l, h := bases[path], snapshot.Files[path], hubEntries[path]
 			isDelete := (action == "send" && l.Hash == "") || (action == "receive" && h.Deleted)
 			if deleting != isDelete {
+				continue
+			}
+			if only != nil && !rejudged {
+				// Report the related paths without replaying their work or
+				// replacing a hold for an existing conflict or apply plan.
+				if action == "namespace_conflict" && holds[path] == "" &&
+					rejudgedGroups[structuralHoldRoot(path, decisions)] {
+					if err := n.db.setHold(n.ctx, path, action); err != nil {
+						return nil, err
+					}
+				}
 				continue
 			}
 			switch action {

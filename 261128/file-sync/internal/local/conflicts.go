@@ -121,11 +121,15 @@ ON CONFLICT(id) DO UPDATE SET active=excluded.active,data=excluded.data`,
 
 func (n *networkSync) writeConflict(c *Conflict) error {
 	c.updateSaved()
+	reason := c.Reason
+	if r := c.Resolution; r != nil && r.State == "ready" && r.WaitingForCapacity {
+		reason = "resolution_capacity"
+	}
 	return n.db.write(n.ctx, func(tx *sql.Tx) error {
 		if err := putConflict(n.ctx, tx, c); err != nil {
 			return err
 		}
-		return putHold(n.ctx, tx, c.Path, c.Reason)
+		return putHold(n.ctx, tx, c.Path, reason)
 	})
 }
 
