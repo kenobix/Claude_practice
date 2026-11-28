@@ -29,6 +29,7 @@ type Status struct {
 	Plans            []Plan            `json:"plans"`
 	Registration     *Registration     `json:"registration,omitempty"`
 	RegistrationPlan map[string]Base   `json:"registration_plan,omitempty"`
+	Conflicts        []Conflict        `json:"conflicts,omitempty"`
 	Outbox           []Outgoing        `json:"outbox,omitempty"`
 	Holds            map[string]string `json:"holds,omitempty"`
 }
@@ -103,6 +104,10 @@ func Inspect(ctx context.Context, volume, path string) (status Status, err error
 		return Status{}, err
 	}
 	defer func() { err = errors.Join(err, db.close()) }()
+	return db.inspect(ctx)
+}
+
+func (db *stateDB) inspect(ctx context.Context) (status Status, err error) {
 	status.Plans, err = db.plans(ctx)
 	if err != nil {
 		return Status{}, err
@@ -130,6 +135,10 @@ func Inspect(ctx context.Context, volume, path string) (status Status, err error
 		return Status{}, err
 	}
 	status.Holds, err = db.holds(ctx)
+	if err != nil {
+		return Status{}, err
+	}
+	status.Conflicts, err = db.conflicts(ctx, false)
 	return status, err
 }
 

@@ -357,6 +357,10 @@ func (d *Dir) Install(name string, expected Identity, parent *Dir, leaf string, 
 // Parent opens each ancestor under the pinned root. Missing ancestors are
 // installed one at a time, and their entries are synced before proceeding.
 func (d *Dir) Parent(path string, create bool) (*Dir, string, error) {
+	return d.ParentRecording(path, create, nil)
+}
+
+func (d *Dir) ParentRecording(path string, create bool, created func(string, DirectoryStamp) error) (*Dir, string, error) {
 	if err := Validate(path); err != nil {
 		return nil, "", err
 	}
@@ -365,7 +369,7 @@ func (d *Dir) Parent(path string, create bool) (*Dir, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-	for _, part := range parts[:len(parts)-1] {
+	for i, part := range parts[:len(parts)-1] {
 		child, err := parent.openDir(part)
 		if errors.Is(err, unix.ENOENT) && create {
 			err = unix.Mkdirat(parent.fd, part, 0700)
@@ -374,6 +378,13 @@ func (d *Dir) Parent(path string, create bool) (*Dir, string, error) {
 			}
 			if err == nil {
 				err = parent.Sync()
+				if err == nil && created != nil {
+					var stamp DirectoryStamp
+					stamp, err = child.stamp()
+					if err == nil && stamp.HasBirth {
+						err = created(strings.Join(parts[:i+1], "/"), stamp)
+					}
+				}
 				if err != nil {
 					child.Close()
 				}

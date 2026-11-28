@@ -27,8 +27,11 @@ const usage = `usage:
   file-sync recover -volume DIR -source PATH -destination PATH
   file-sync hub-init -volume DIR -root PATH -space SPACE -client-a ID -client-b ID
   file-sync hub -volume DIR -root PATH [-listen 127.0.0.1:8080]
-  file-sync register -volume DIR -root PATH -hub 127.0.0.1:8080 (--seed | --pull)
-  file-sync sync-once -volume DIR -root PATH -hub 127.0.0.1:8080`
+  file-sync register -volume DIR -root PATH -hub 127.0.0.1:8080 (--seed | --pull | --reconcile [--approve SHA256])
+  file-sync sync-once -volume DIR -root PATH -hub 127.0.0.1:8080
+  file-sync conflicts -volume DIR -root PATH -hub 127.0.0.1:8080
+  file-sync resolve -volume DIR -root PATH -hub 127.0.0.1:8080 -path PATH
+                    --generation ID --revision N --choose local|hub|delete|file [--candidate PATH]`
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -57,9 +60,11 @@ func run(ctx context.Context, args []string, output io.Writer) error {
 	var root *string
 	var req local.Request
 	var address, space, clientA, clientB string
-	var seed, pull bool
+	var seed, pull, reconcile bool
+	var approval string
+	var selection local.ResolveRequest
 	switch command {
-	case "scan", "init", "status", "hub-init", "hub", "register", "sync-once":
+	case "scan", "init", "status", "hub-init", "hub", "register", "sync-once", "conflicts", "resolve":
 		root = flags.String("root", "", "root relative to volume")
 		switch command {
 		case "hub":
@@ -68,11 +73,20 @@ func run(ctx context.Context, args []string, output io.Writer) error {
 			flags.StringVar(&space, "space", "default", "sync space ID")
 			flags.StringVar(&clientA, "client-a", "client-a", "first client ID")
 			flags.StringVar(&clientB, "client-b", "client-b", "second client ID")
-		case "register", "sync-once":
+		case "register", "sync-once", "conflicts", "resolve":
 			flags.StringVar(&address, "hub", "127.0.0.1:8080", "loopback hub address")
-			if command == "register" {
+			switch command {
+			case "register":
 				flags.BoolVar(&seed, "seed", false, "seed a hub with no rows")
 				flags.BoolVar(&pull, "pull", false, "pull into an empty client root")
+				flags.BoolVar(&reconcile, "reconcile", false, "preview or explicitly approve re-registration")
+				flags.StringVar(&approval, "approve", "", "SHA-256 printed by an unchanged reconciliation preview")
+			case "resolve":
+				flags.StringVar(&selection.Path, "path", "", "relative conflict path")
+				flags.StringVar(&selection.Generation, "generation", "", "displayed hub generation")
+				flags.Int64Var(&selection.Revision, "revision", -1, "displayed latest hub revision")
+				flags.StringVar(&selection.Choice, "choose", "", "local, hub, delete, or file")
+				flags.StringVar(&selection.File, "candidate", "", "root-relative file to use with --choose file")
 			}
 		}
 	case "copy", "recover":
@@ -97,7 +111,7 @@ func run(ctx context.Context, args []string, output io.Writer) error {
 			explicitPath = true
 		}
 	})
-	if explicitPath && req.Path == "" {
+	if command == "copy" && explicitPath && req.Path == "" {
 		return errors.New("invalid path: empty -path")
 	}
 	req.Volume = *volume
@@ -123,17 +137,33 @@ func run(ctx context.Context, args []string, output io.Writer) error {
 		}})
 	case "hub":
 		return serve(ctx, *volume, *root, address, output)
-	case "register", "sync-once":
+	case "register", "sync-once", "conflicts", "resolve":
 		remote, err := protocol.NewClient(address, os.Getenv("FILE_SYNC_TOKEN"))
 		if err != nil {
 			return err
 		}
 		req := local.NetworkRequest{Volume: *volume, Root: *root, Remote: remote}
-		if command == "sync-once" {
+		switch command {
+		case "sync-once":
 			return local.Sync(ctx, req)
+		case "conflicts":
+			list, err := local.ListConflicts(ctx, req)
+			if err != nil {
+				return err
+			}
+			return json.NewEncoder(output).Encode(list)
+		case "resolve":
+			return local.Resolve(ctx, req, selection)
 		}
-		if seed == pull {
-			return errors.New("select exactly one of --seed or --pull")
+		if reconcile && !seed && !pull {
+			report, err := local.Reconcile(ctx, req, approval)
+			if report.Manifest.Generation == "" {
+				return err
+			}
+			return errors.Join(err, json.NewEncoder(output).Encode(report))
+		}
+		if seed == pull || reconcile || approval != "" {
+			return errors.New("select exactly one of --seed, --pull or --reconcile")
 		}
 		mode := "seed"
 		if pull {

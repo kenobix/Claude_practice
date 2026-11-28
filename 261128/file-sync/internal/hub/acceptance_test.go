@@ -536,6 +536,13 @@ func TestSeedProcess(t *testing.T) {
 	}
 	remote, err := protocol.NewClient(os.Getenv("FILE_SYNC_CHILD_ADDRESS"), os.Getenv("FILE_SYNC_CHILD_TOKEN"))
 	must(t, err)
+	if approval := os.Getenv("FILE_SYNC_CHILD_APPROVAL"); approval != "" {
+		_, err := local.Reconcile(t.Context(), local.NetworkRequest{Volume: volume, Root: "B", Remote: remote}, approval)
+		if !errors.Is(err, local.ErrConflict) {
+			t.Fatalf("reconcile result %v", err)
+		}
+		return
+	}
 	must(t, local.Register(t.Context(), local.NetworkRequest{Volume: volume, Root: "A", Remote: remote}, "seed"))
 }
 

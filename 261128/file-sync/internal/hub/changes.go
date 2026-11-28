@@ -107,31 +107,31 @@ SELECT request,response FROM receipts WHERE space=? AND generation=? AND client=
 		}
 		return nil, pb
 	}
-	if c.Deleted {
-		if current.Revision == 0 {
-			return nil, problem(422, "unknown_delete")
+	if c.Deleted && current.Revision == 0 {
+		return nil, problem(422, "unknown_delete")
+	}
+	same := c.Deleted && current.Deleted
+	if !c.Deleted {
+		conflicts, err := h.namespace(ctx, p.space, c.Path)
+		if err != nil {
+			return nil, h.failure(err)
 		}
-		return nil, problem(422, "delete_unsupported")
+		if len(conflicts) > 0 {
+			return nil, &protocol.Problem{Status: 409, Code: "namespace_conflict", Conflicts: conflicts}
+		}
+		var size int64
+		err = h.store.Conn.QueryRowContext(ctx, "SELECT size FROM blobs WHERE space=? AND hash=?", p.space, *c.Hash).Scan(&size)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, problem(422, "blob_missing")
+		}
+		if err != nil {
+			return nil, h.failure(err)
+		}
+		if c.Size != size {
+			return nil, problem(422, "blob_size_mismatch")
+		}
+		same = current.Hash != nil && *current.Hash == *c.Hash && current.Size == c.Size && !current.Deleted
 	}
-	conflicts, err := h.namespace(ctx, p.space, c.Path)
-	if err != nil {
-		return nil, h.failure(err)
-	}
-	if len(conflicts) > 0 {
-		return nil, &protocol.Problem{Status: 409, Code: "namespace_conflict", Conflicts: conflicts}
-	}
-	var size int64
-	err = h.store.Conn.QueryRowContext(ctx, "SELECT size FROM blobs WHERE space=? AND hash=?", p.space, *c.Hash).Scan(&size)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, problem(422, "blob_missing")
-	}
-	if err != nil {
-		return nil, h.failure(err)
-	}
-	if c.Size != size {
-		return nil, problem(422, "blob_size_mismatch")
-	}
-	same := current.Hash != nil && *current.Hash == *c.Hash && current.Size == c.Size && !current.Deleted
 	if !same && current.Revision == math.MaxInt64 {
 		return nil, problem(507, "storage_limit")
 	}
@@ -149,16 +149,18 @@ SELECT request,response FROM receipts WHERE space=? AND generation=? AND client=
 		}
 	}
 	if receipts >= protocol.MaxReceipts || (current.Revision == 0 && all >= protocol.MaxPaths) ||
-		((current.Revision == 0 || current.Deleted) && live >= safefs.MaxFiles) {
+		(!c.Deleted && (current.Revision == 0 || current.Deleted) && live >= safefs.MaxFiles) {
 		return nil, problem(507, "storage_limit")
 	}
-	if _, err := h.verifyBlob(blobName(p.space, *c.Hash), safefs.Digest{Hash: *c.Hash, Size: size}); err != nil {
-		return nil, h.failure(err)
+	if !c.Deleted {
+		if _, err := h.verifyBlob(blobName(p.space, *c.Hash), safefs.Digest{Hash: *c.Hash, Size: c.Size}); err != nil {
+			return nil, h.failure(err)
+		}
 	}
 	r := protocol.Receipt{Generation: p.generation, Operation: c.Operation, Result: "unchanged", Entry: current}
 	if !same {
 		r.Result = "applied"
-		r.Entry = protocol.Entry{Path: c.Path, Revision: current.Revision + 1, Hash: c.Hash, Size: c.Size, Client: p.client, Operation: c.Operation}
+		r.Entry = protocol.Entry{Path: c.Path, Revision: current.Revision + 1, Hash: c.Hash, Size: c.Size, Deleted: c.Deleted, Client: p.client, Operation: c.Operation}
 	}
 	response, err = json.Marshal(r)
 	if err != nil {
@@ -176,10 +178,10 @@ SELECT COALESCE((SELECT revision FROM entries WHERE space=? AND path=?),0)`, p.s
 		}
 		if !same {
 			result, err := tx.ExecContext(ctx, `
-INSERT INTO entries VALUES (?,?,?,?,?,0,?,?)
+INSERT INTO entries VALUES (?,?,?,?,?,?,?,?)
 ON CONFLICT(space,path) DO UPDATE SET revision=excluded.revision,hash=excluded.hash,size=excluded.size,
-deleted=0,client=excluded.client,op=excluded.op WHERE entries.revision=?`,
-				p.space, c.Path, r.Entry.Revision, *c.Hash, c.Size, p.client, c.Operation, c.Base)
+deleted=excluded.deleted,client=excluded.client,op=excluded.op WHERE entries.revision=?`,
+				p.space, c.Path, r.Entry.Revision, c.Hash, c.Size, c.Deleted, p.client, c.Operation, c.Base)
 			if err != nil {
 				return err
 			}

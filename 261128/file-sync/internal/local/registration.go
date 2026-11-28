@@ -55,10 +55,9 @@ func (n *networkSync) beginRegistration(mode string, m protocol.Manifest, s safe
 		}
 		var paths []string
 		for _, e := range m.Entries {
-			if e.Deleted {
-				return fmt.Errorf("%w: pull cannot register tombstones in Phase 2", ErrConflict)
+			if !e.Deleted {
+				paths = append(paths, e.Path)
 			}
-			paths = append(paths, e.Path)
 			items = append(items, registrationItem{path: e.Path, base: Base{Revision: e.Revision, Digest: digestOf(e)}})
 		}
 		if err := checkIncomingSpace(s, paths); err != nil {
@@ -208,7 +207,7 @@ func (n *networkSync) resumePull(items []registrationItem) error {
 	var paths []string
 	var entries []protocol.Entry
 	for _, item := range items {
-		entries = append(entries, protocol.Entry{Path: item.path})
+		entries = append(entries, protocol.Entry{Path: item.path, Deleted: item.base.Hash == ""})
 		base := bases[item.path]
 		if base == item.base {
 			continue
@@ -216,7 +215,9 @@ func (n *networkSync) resumePull(items []registrationItem) error {
 		if base.Revision != 0 || s.Files[item.path].Hash != "" {
 			return fmt.Errorf("%w: unplanned local state at %q during pull", ErrConflict, item.path)
 		}
-		paths = append(paths, item.path)
+		if item.base.Hash != "" {
+			paths = append(paths, item.path)
+		}
 	}
 	if len(structuralPaths(s, entries)) != 0 {
 		return fmt.Errorf("%w: pull plan conflicts with the local namespace", ErrConflict)
@@ -228,7 +229,13 @@ func (n *networkSync) resumePull(items []registrationItem) error {
 		if bases[item.path] == item.base {
 			continue
 		}
-		if err := n.install(item.path, Base{}, item.base); err != nil {
+		var err error
+		if item.base.Hash == "" {
+			err = n.adopt(item.path, Base{}, item.base)
+		} else {
+			err = n.install(item.path, Base{}, item.base)
+		}
+		if err != nil {
 			return err
 		}
 	}

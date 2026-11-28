@@ -155,7 +155,8 @@ func (c *Client) Post(ctx context.Context, change Change, body []byte) (Receipt,
 		func() bool {
 			e := result.Entry
 			if !VerifyEntry(e) || result.Generation != change.Generation || result.Operation != change.Operation ||
-				e.Path != change.Path || e.Deleted || change.Hash == nil || *e.Hash != *change.Hash || e.Size != change.Size {
+				e.Path != change.Path || e.Deleted != change.Deleted || e.Size != change.Size ||
+				(!e.Deleted && (change.Hash == nil || *e.Hash != *change.Hash)) {
 				return false
 			}
 			switch result.Result {

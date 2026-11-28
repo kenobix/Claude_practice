@@ -44,6 +44,9 @@ type Outgoing struct {
 
 func (o Outgoing) name() string { return o.Change.Operation + ".outgoing" }
 func (o Outgoing) digest() safefs.Digest {
+	if o.Change.Deleted {
+		return safefs.Digest{}
+	}
 	return safefs.Digest{Hash: *o.Change.Hash, Size: o.Change.Size}
 }
 
@@ -80,7 +83,7 @@ func (s *stateDB) registrationItems(ctx context.Context) ([]registrationItem, er
 		if err := rows.Scan(&item.path, &item.base.Revision, &item.base.Hash, &item.base.Size); err != nil {
 			return nil, err
 		}
-		if len(items) >= safefs.MaxFiles || safefs.Validate(item.path) != nil || !protocol.IsHex(item.base.Hash, 64) {
+		if len(items) >= protocol.MaxPaths || safefs.Validate(item.path) != nil || (item.base.Hash != "" && !protocol.IsHex(item.base.Hash, 64)) || (item.base.Hash == "" && item.base.Size != 0) {
 			return nil, errors.New("invalid persisted registration plan")
 		}
 		items = append(items, item)
@@ -102,9 +105,9 @@ func (s *stateDB) outbox(ctx context.Context) ([]Outgoing, error) {
 			return nil, err
 		}
 		c, err := protocol.DecodeChange(item.request)
-		if err != nil || c.Path != path || c.Operation != id || c.Base < 0 || c.Deleted ||
+		if err != nil || c.Path != path || c.Operation != id || c.Base < 0 ||
 			!protocol.IsHex(id, 32) || !protocol.IsHex(c.Generation, 32) || !protocol.ValidName(c.Client) ||
-			!protocol.MaxCandidate(c.Size, safefs.MaxSize, c.Hash, false) || safefs.Validate(path) != nil ||
+			!protocol.MaxCandidate(c.Size, safefs.MaxSize, c.Hash, c.Deleted) || safefs.Validate(path) != nil ||
 			len(result) >= safefs.MaxManagedCopies {
 			return nil, errors.New("invalid persisted outgoing operation")
 		}
@@ -119,7 +122,10 @@ func outgoing(r *Registration, path string, base int64, d safefs.Digest) (Outgoi
 	if err != nil {
 		return Outgoing{}, err
 	}
-	c := protocol.Change{Generation: r.Generation, Client: r.Client, Operation: id, Path: path, Base: base, Hash: &d.Hash, Size: d.Size}
+	c := protocol.Change{Generation: r.Generation, Client: r.Client, Operation: id, Path: path, Base: base, Size: d.Size, Deleted: d.Hash == ""}
+	if !c.Deleted {
+		c.Hash = &d.Hash
+	}
 	payload, err := json.Marshal(c)
 	if err != nil {
 		return Outgoing{}, err

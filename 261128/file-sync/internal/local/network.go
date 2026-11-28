@@ -36,7 +36,55 @@ type networkSync struct {
 	sourceKey string
 }
 
-func runNetwork(ctx context.Context, req NetworkRequest, mode string) (err error) {
+func runNetwork(ctx context.Context, req NetworkRequest, mode string) error {
+	return withNetwork(ctx, req, func(n *networkSync) error {
+		reg := n.reg
+		if mode == "" && (reg == nil || !reg.Complete) {
+			return errors.New("registration must complete before sync")
+		}
+		if mode != "" && reg != nil && reg.Mode != mode {
+			return errors.New("resume registration using its original mode")
+		}
+		manifest, err := n.manifest()
+		if err != nil {
+			return err
+		}
+		snapshot, err := n.scan()
+		if err != nil {
+			return err
+		}
+		if reg == nil {
+			if err := n.beginRegistration(mode, manifest, snapshot); err != nil {
+				return err
+			}
+		}
+		n.bindRegistration()
+		if err := n.checkManifestHistory(manifest); err != nil {
+			return err
+		}
+		if err := n.recoverFiles(); err != nil {
+			return err
+		}
+		if mode != "" {
+			if n.reg.Complete {
+				return n.registrationHolds()
+			}
+			return n.finishRegistration()
+		}
+		if err := n.resumeResolutions(); err != nil {
+			return err
+		}
+		return n.sync()
+	})
+}
+
+func (n *networkSync) bindRegistration() {
+	n.sourceKey = "hub-" + n.reg.Generation
+	n.req.Source = n.sourceKey
+	n.fetch = func(want safefs.Digest) ([]byte, error) { return n.remote.Get(n.ctx, n.reg.Generation, want) }
+}
+
+func withNetwork(ctx context.Context, req NetworkRequest, run func(*networkSync) error) (err error) {
 	if req.Remote == nil {
 		return errors.New("missing hub connection")
 	}
@@ -64,39 +112,8 @@ func runNetwork(ctx context.Context, req NetworkRequest, mode string) (err error
 	if err != nil {
 		return err
 	}
-	if mode == "" && (reg == nil || !reg.Complete) {
-		return errors.New("initial registration must complete before sync")
-	}
-	if mode != "" && reg != nil && reg.Mode != mode {
-		return errors.New("resume registration using its original mode")
-	}
 	n := networkSync{engine: engine{ctx: ctx, destination: root, db: db}, remote: req.Remote, reg: reg}
-	manifest, err := n.manifest()
-	if err != nil {
-		return err
-	}
-	snapshot, err := n.scan()
-	if err != nil {
-		return err
-	}
-	if reg == nil {
-		if err := n.beginRegistration(mode, manifest, snapshot); err != nil {
-			return err
-		}
-	}
-	n.sourceKey = "hub-" + n.reg.Generation
-	n.req.Source = n.sourceKey
-	n.fetch = func(want safefs.Digest) ([]byte, error) { return n.remote.Get(ctx, n.reg.Generation, want) }
-	if err := n.recoverFiles(); err != nil {
-		return err
-	}
-	if mode != "" {
-		if n.reg.Complete {
-			return n.registrationHolds()
-		}
-		return n.finishRegistration()
-	}
-	return n.sync()
+	return run(&n)
 }
 
 func (n *networkSync) manifest() (protocol.Manifest, error) {
@@ -131,8 +148,28 @@ func (n *networkSync) recoverFiles() error {
 	if _, _, err := n.db.usage(n.ctx, plans); err != nil {
 		return err
 	}
-	_, err = n.recover(plans)
-	return err
+	for _, p := range plans {
+		if p.Resolution || p.Settled || p.Status == "rejected" {
+			continue
+		}
+		var err error
+		if p.Status == "conflict" {
+			err = n.retainConflict(p)
+		} else if p.Status == "pending" {
+			err = n.apply(p, true)
+		} else {
+			err = n.cleanupBackup(p)
+		}
+		if errors.Is(err, safefs.ErrStructure) && p.Status == "pending" {
+			err = n.db.setHold(n.ctx, p.Path, "apply_structure")
+		} else {
+			err = n.handleApplyHold(err)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (n *networkSync) sync() error {
@@ -193,6 +230,52 @@ func (n *networkSync) sync() error {
 	return nil
 }
 
+func hubPaths(m protocol.Manifest) map[string]protocol.Entry {
+	paths := make(map[string]protocol.Entry, len(m.Entries))
+	for _, e := range m.Entries {
+		paths[e.Path] = e
+	}
+	return paths
+}
+
+func (n *networkSync) checkManifestHistory(m protocol.Manifest) error {
+	entries := hubPaths(m)
+	bases, err := n.db.bases(n.ctx)
+	if err != nil {
+		return err
+	}
+	for path, base := range bases {
+		e := entries[path]
+		if e.Revision < base.Revision || (e.Revision == base.Revision && digestOf(e) != base.Digest) {
+			return fmt.Errorf("hub baseline regressed or disagrees for %q; reconcile required", path)
+		}
+	}
+	conflicts, err := n.db.conflicts(n.ctx, true)
+	if err != nil {
+		return err
+	}
+	for _, c := range conflicts {
+		e, latest := entries[c.Path], c.latest()
+		if e.Revision < latest.Revision || (e.Revision == latest.Revision && digestOf(e) != latest.Digest) {
+			return fmt.Errorf("hub conflict version regressed or disagrees for %q; reconcile required", c.Path)
+		}
+	}
+	plans, err := n.db.plans(n.ctx)
+	if err != nil {
+		return err
+	}
+	for _, p := range plans {
+		if p.Status != "pending" || p.Source != n.sourceKey {
+			continue
+		}
+		e := entries[p.Path]
+		if e.Revision < p.Target.Revision || (e.Revision == p.Target.Revision && digestOf(e) != p.Target.Digest) {
+			return fmt.Errorf("hub apply target regressed or disagrees for %q; reconcile required", p.Path)
+		}
+	}
+	return nil
+}
+
 func (n *networkSync) compare(rejected map[string]Outgoing, only map[string]Outgoing) (map[string]Outgoing, error) {
 	snapshot, err := n.scan()
 	if err != nil {
@@ -200,6 +283,9 @@ func (n *networkSync) compare(rejected map[string]Outgoing, only map[string]Outg
 	}
 	m, err := n.manifest()
 	if err != nil {
+		return nil, err
+	}
+	if err := n.checkManifestHistory(m); err != nil {
 		return nil, err
 	}
 	bases, err := n.db.bases(n.ctx)
@@ -210,22 +296,38 @@ func (n *networkSync) compare(rejected map[string]Outgoing, only map[string]Outg
 	if err != nil {
 		return nil, err
 	}
-	hubEntries := make(map[string]protocol.Entry, len(m.Entries))
+	conflicts, err := n.db.conflicts(n.ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	active := make(map[string]*Conflict, len(conflicts))
 	paths := make(map[string]bool)
+	for i := range conflicts {
+		active[conflicts[i].Path] = &conflicts[i]
+		paths[conflicts[i].Path] = true
+	}
+	hubEntries := hubPaths(m)
+	plans, err := n.db.plans(n.ctx)
+	if err != nil {
+		return nil, err
+	}
+	badApply := make(map[string]string)
+	for _, p := range plans {
+		if p.Status == "rejected" && !p.Settled {
+			badApply[p.Path] = "apply_rejected"
+		}
+		if p.Status == "pending" && holds[p.Path] == "apply_structure" {
+			badApply[p.Path] = "apply_structure"
+		}
+	}
 	for _, e := range m.Entries {
-		hubEntries[e.Path] = e
 		paths[e.Path] = true
 	}
 	for path := range snapshot.Files {
 		paths[path] = true
 	}
-	for path, base := range bases {
+	for path := range bases {
 		paths[path] = true
-		entry := hubEntries[path]
-		if entry.Revision < base.Revision ||
-			(entry.Revision == base.Revision && (entry.Deleted || digestOf(entry) != base.Digest)) {
-			return nil, fmt.Errorf("hub baseline regressed or disagrees for %q", path)
-		}
 	}
 	for path := range holds {
 		paths[path] = true
@@ -233,53 +335,122 @@ func (n *networkSync) compare(rejected map[string]Outgoing, only map[string]Outg
 	for path := range rejected {
 		paths[path] = true
 	}
-	blocked := structuralPaths(snapshot, m.Entries)
-	pulls := make([]string, 0)
-	decisions := make(map[string]string)
 	ordered := slices.Sorted(maps.Keys(paths))
+	decisions := make(map[string]string)
+	protected := make(map[string]bool)
 	for _, path := range ordered {
-		if only != nil {
-			if _, ok := only[path]; !ok {
-				continue
-			}
-		}
 		base, l, h := bases[path], snapshot.Files[path], hubEntries[path]
+		var action string
 		switch {
+		case active[path] != nil:
+			action = active[path].Reason
+		case badApply[path] != "":
+			action = badApply[path]
 		case holds[path] == "registration_local_edit" && l != base.Digest:
-			decisions[path] = "registration_local_edit"
+			action = "registration_local_edit"
 		case holds[path] == "both_changed":
-			decisions[path] = "both_changed"
-		case blocked[path]:
-			decisions[path] = "namespace_conflict"
-		case h.Deleted:
-			decisions[path] = "hub_delete_unsupported"
-		case l.Hash == "" && base.Revision != 0:
-			decisions[path] = "local_delete_unsupported"
+			action = "both_changed"
 		case h.Revision == base.Revision && l == base.Digest:
-			decisions[path] = "none"
+			action = "none"
 		case h.Revision == base.Revision:
-			decisions[path] = "send"
+			action = "send"
 		case l == digestOf(h):
-			decisions[path] = "adopt"
+			action = "adopt"
 		case l == base.Digest:
-			decisions[path] = "receive"
-			pulls = append(pulls, path)
+			action = "receive"
 		default:
-			decisions[path] = "both_changed"
+			action = "both_changed"
+		}
+		// A directory in place of a known live file is a structural
+		// change, not evidence of a user deleting the file.
+		if base.Hash != "" && l.Hash == "" && action == "send" && structurallyAbsent(snapshot, path) {
+			action = "namespace_conflict"
+		}
+		decisions[path] = action
+		if action != "none" && action != "adopt" && action != "send" && action != "receive" {
+			protected[path] = true
 		}
 	}
-	if err := checkIncomingSpace(snapshot, pulls); err != nil {
-		return nil, err
+	for _, path := range ordered {
+		if decisions[path] != "none" && !protected[path] && blockedBy(path, protected) {
+			decisions[path] = "namespace_conflict"
+		}
 	}
 	next := make(map[string]Outgoing)
-	for _, path := range ordered {
-		action, selected := decisions[path]
-		if !selected {
-			continue
+	for _, deleting := range []bool{true, false} {
+		if !deleting {
+			// The deletion pass durably finished before any dependent install.
+			// Re-read the actual structure rather than assume earlier success.
+			snapshot, err = n.scan()
+			if err != nil {
+				return nil, err
+			}
+			for _, path := range ordered {
+				if !protected[path] && blockedBy(path, protected) && (decisions[path] == "send" || decisions[path] == "receive") {
+					decisions[path] = "namespace_conflict"
+				}
+				if _, selected := only[path]; only != nil && !selected {
+					continue
+				}
+				if decisions[path] != "receive" || digestOf(hubEntries[path]).Hash == "" || !snapshot.Dirs[path] {
+					continue
+				}
+				if err := n.pruneOwned(path, snapshot); err != nil {
+					return nil, err
+				}
+			}
+			blocked := structuralPaths(snapshot, m.Entries)
+			var pulls []string
+			for _, path := range ordered {
+				if blocked[path] && (decisions[path] == "receive" || decisions[path] == "send") {
+					decisions[path] = "namespace_conflict"
+				}
+				if decisions[path] == "receive" && digestOf(hubEntries[path]).Hash != "" {
+					pulls = append(pulls, path)
+				}
+			}
+			if err := checkIncomingSpace(snapshot, pulls); err != nil {
+				return nil, err
+			}
 		}
-		prior, rejudged := rejected[path]
-		switch action {
-		case "none", "send", "adopt", "receive":
+		for _, path := range ordered {
+			action := decisions[path]
+			prior, rejudged := rejected[path]
+			if only != nil && !rejudged {
+				continue
+			}
+			base, l, h := bases[path], snapshot.Files[path], hubEntries[path]
+			isDelete := (action == "send" && l.Hash == "") || (action == "receive" && h.Deleted)
+			if deleting != isDelete {
+				continue
+			}
+			switch action {
+			case "none", "adopt", "send", "receive":
+			default:
+				if action == "both_changed" || active[path] != nil {
+					c := active[path]
+					var item *Outgoing
+					if rejudged {
+						item = &prior
+					}
+					if c == nil {
+						c, err = n.makeConflict(path, action, base, localCandidate(path, snapshot, base), h, item)
+					} else {
+						err = n.updateHubCandidate(c, h)
+					}
+					if err != nil {
+						return nil, err
+					}
+					if err := n.saveCandidates(c, item); err != nil {
+						return nil, err
+					}
+				} else if holds[path] != action {
+					if err := n.db.setHold(n.ctx, path, action); err != nil {
+						return nil, err
+					}
+				}
+				continue
+			}
 			if rejudged {
 				if err := n.retireRejected(prior, action); err != nil {
 					return nil, err
@@ -291,42 +462,60 @@ func (n *networkSync) compare(rejected map[string]Outgoing, only map[string]Outg
 					return nil, err
 				}
 			}
-		default:
-			if holds[path] != action {
-				if err := n.db.setHold(n.ctx, path, action); err != nil {
+			var actionErr error
+			switch action {
+			case "send":
+				if l.Hash == "" {
+					if err := n.confirmAbsence(path); err != nil {
+						return nil, err
+					}
+				}
+				item, err := n.prepareOutgoing(path, base.Revision, l)
+				if err != nil {
 					return nil, err
 				}
-			}
-			continue
-		}
-		base, l, h := bases[path], snapshot.Files[path], hubEntries[path]
-		var actionErr error
-		switch action {
-		case "send":
-			item, err := n.prepareOutgoing(path, base.Revision, l)
-			if err != nil {
-				return nil, err
-			}
-			actionErr = n.send(item)
-			if errors.Is(actionErr, errRejudge) {
-				item.Status = "rejected"
-				if rejudged {
-					actionErr = n.db.setHold(n.ctx, path, "revision_changed_again")
-				} else {
+				actionErr = n.send(item)
+				if errors.Is(actionErr, errRejudge) {
+					item.Status = "rejected"
 					next[path] = item
 					actionErr = nil
+				} else if deleting && actionErr == nil {
+					// Our successful deletion releases a namespace blocker.
+					// A remote recreation will still be subject to hub CAS.
+					for i := range m.Entries {
+						if m.Entries[i].Path == path {
+							m.Entries[i].Deleted = true
+							break
+						}
+					}
+				}
+			case "adopt":
+				actionErr = n.adopt(path, base, Base{Revision: h.Revision, Digest: l})
+			case "receive":
+				actionErr = n.install(path, base, Base{Revision: h.Revision, Digest: digestOf(h)})
+				if _, held := actionErr.(*applyHold); held {
+					actionErr = n.handleApplyHold(actionErr)
+					protected[path] = true
+				} else if errors.Is(actionErr, safefs.ErrLimit) {
+					actionErr = n.db.setHold(n.ctx, path, "apply_pending")
+					protected[path] = true
 				}
 			}
-		case "adopt":
-			actionErr = n.adopt(path, base, Base{Revision: h.Revision, Digest: l})
-		case "receive":
-			actionErr = n.install(path, base, Base{Revision: h.Revision, Digest: digestOf(h)})
-		}
-		if actionErr != nil {
-			return nil, fmt.Errorf("%s %q: %w", action, path, actionErr)
+			if actionErr != nil {
+				return nil, fmt.Errorf("%s %q: %w", action, path, actionErr)
+			}
 		}
 	}
 	return next, nil
+}
+
+func blockedBy(path string, protected map[string]bool) bool {
+	for p := range protected {
+		if path != p && relatedPath(path, p) {
+			return true
+		}
+	}
+	return false
 }
 
 func digestOf(e protocol.Entry) safefs.Digest {
@@ -344,22 +533,28 @@ func (n *networkSync) clearHold(path string) error {
 
 func (n *networkSync) adopt(path string, base, target Base) error {
 	d, id, err := n.destination.Observe(path)
-	if err != nil {
+	if err != nil && !(target.Hash == "" && errors.Is(err, safefs.ErrStructure)) {
 		return err
 	}
 	if d != target.Digest {
 		return fmt.Errorf("%w: %q changed during baseline adoption", ErrConflict, path)
 	}
-	if err := n.destination.SyncUser(path, id); err != nil {
-		return err
+	if d.Hash != "" {
+		if err := n.destination.SyncUser(path, id); err != nil {
+			return err
+		}
 	}
-	if err := n.destination.SyncParents(path); err != nil {
+	if err := n.destination.SyncExistingParents(path); err != nil {
 		return err
 	}
 	return n.db.write(n.ctx, func(tx *sql.Tx) error { return putBase(n.ctx, tx, path, base.Revision, target) })
 }
 
 func (n *networkSync) install(path string, base, target Base) error {
+	return n.installPlan(Plan{Path: path, Source: n.sourceKey, BaseRevision: base.Revision, Before: base.Digest, Target: target, Status: "pending"})
+}
+
+func (n *networkSync) installPlan(p Plan) error {
 	plans, err := n.db.plans(n.ctx)
 	if err != nil {
 		return err
@@ -371,13 +566,16 @@ func (n *networkSync) install(path string, base, target Base) error {
 	if err != nil {
 		return err
 	}
-	id, err := newID()
-	if err != nil {
-		return err
+	if p.ID == "" {
+		p.ID, err = newID()
+		if err != nil {
+			return err
+		}
 	}
-	p := Plan{ID: id, Path: path, Source: n.sourceKey, BaseRevision: base.Revision, Before: base.Digest, Target: target, Status: "pending"}
-	count++
-	used += target.Size
+	if p.Target.Hash != "" {
+		count++
+		used += p.Target.Size
+	}
 	if p.needsBackup() {
 		count++
 		used += p.Before.Size

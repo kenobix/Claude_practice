@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net"
 	"os"
 	"os/exec"
@@ -45,18 +46,30 @@ func TestIndependentHubAndClientProcesses(t *testing.T) {
 	}
 	artificial := func(n byte) string { return base64.RawURLEncoding.EncodeToString(bytes.Repeat([]byte{n}, 32)) }
 	tokens := []string{artificial(1), artificial(2)}
-	call := func(cmd, root string, env []string, args ...string) []byte {
+	invoke := func(exitCode int, cmd, root string, env []string, args ...string) []byte {
 		t.Helper()
 		command := exec.CommandContext(ctx, bin, append([]string{cmd, "-volume", volume, "-root", root}, args...)...)
 		command.Env = append(os.Environ(), env...)
 		out, err := command.CombinedOutput()
+		actual := 0
 		if err != nil {
-			t.Fatalf("%s %s: %v %s", cmd, root, err, out)
+			var exit *exec.ExitError
+			if !errors.As(err, &exit) {
+				t.Fatalf("%s %s: %v", cmd, root, err)
+			}
+			actual = exit.ExitCode()
+		}
+		if actual != exitCode {
+			t.Fatalf("%s %s: exit %d instead of %d, %s", cmd, root, actual, exitCode, out)
 		}
 		if bytes.Contains(out, []byte(tokens[0])) || bytes.Contains(out, []byte(tokens[1])) {
 			t.Fatalf("%s leaked a token", cmd)
 		}
 		return out
+	}
+	call := func(cmd, root string, env []string, args ...string) []byte {
+		t.Helper()
+		return invoke(0, cmd, root, env, args...)
 	}
 	call("hub-init", "hub", []string{"FILE_SYNC_TOKEN_A=" + tokens[0], "FILE_SYNC_TOKEN_B=" + tokens[1]})
 	call("init", "A", nil)
@@ -140,6 +153,59 @@ func TestIndependentHubAndClientProcesses(t *testing.T) {
 			t.Fatalf("blob %s: %q", entry.hash, got)
 		}
 	}
+	const sHash = "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03"
+	const rHash = "486ea46224d1bb4fb680f34f7c9ad96a8f24ec88be73ea8e5a6c65260e9cb8a7"
+	check(os.WriteFile(filepath.Join(volume, "A", path), []byte("hello\n"), 0600))
+	check(os.WriteFile(filepath.Join(volume, "B", path), []byte("world"), 0600))
+	call("sync-once", "A", env(0), "-hub", address)
+	invoke(3, "sync-once", "B", env(1), "-hub", address)
+	var conflicts []local.Conflict
+	check(json.Unmarshal(call("conflicts", "B", env(1), "-hub", address), &conflicts))
+	if len(conflicts) != 1 || !conflicts[0].Saved || conflicts[0].Base.Revision != 2 ||
+		conflicts[0].Local.Hash != rHash || conflicts[0].Hub[0].Hash != sHash || conflicts[0].Hub[0].Revision != 3 {
+		t.Fatalf("CLI conflict %+v", conflicts)
+	}
+	stage := filepath.Join(volume, "B", safefs.Management, "stage")
+	for _, c := range []local.ConflictCandidate{conflicts[0].Local, conflicts[0].Hub[0]} {
+		data, err := os.ReadFile(filepath.Join(stage, c.Copy))
+		check(err)
+		if protocol.Digest(data) != c.Digest {
+			t.Fatalf("CLI conflict candidate differs: %+v", c)
+		}
+	}
+	call("resolve", "B", env(1), "-hub", address, "-path", path, "--generation", g, "--revision", "3", "--choose", "local")
+	call("sync-once", "A", env(0), "-hub", address)
+	files("world", rHash, g, 4)
+	check(os.Remove(filepath.Join(volume, "A", path)))
+	call("sync-once", "A", env(0), "-hub", address)
+	call("sync-once", "B", env(1), "-hub", address)
+	for _, root := range []string{"A", "B"} {
+		var s local.Status
+		check(json.Unmarshal(call("status", root, nil), &s))
+		if _, err := os.Stat(filepath.Join(volume, root, path)); !errors.Is(err, os.ErrNotExist) ||
+			s.Bases[path] != (local.Base{Revision: 5}) || len(s.Holds) != 0 {
+			t.Fatalf("CLI tombstone %s status %+v, lookup %v", root, s, err)
+		}
+		if root == "B" {
+			plan := s.Plans[len(s.Plans)-1]
+			for _, p := range s.Plans {
+				if p.Target.Revision == 5 {
+					plan = p
+				}
+			}
+			data, err := os.ReadFile(filepath.Join(stage, plan.Backup()))
+			check(err)
+			if plan.Target.Revision != 5 || !plan.BackedUp || plan.Status != "complete" ||
+				protocol.Digest(data) != (safefs.Digest{Hash: rHash, Size: 5}) {
+				t.Fatalf("CLI trash invalid %+v", plan)
+			}
+		}
+	}
+	m, err = remote.Manifest(ctx)
+	check(err)
+	if len(m.Entries) != 1 || !m.Entries[0].Deleted || m.Entries[0].Hash != nil || m.Entries[0].Revision != 5 || m.Generation != g {
+		t.Fatalf("CLI manifest after deletion %+v", m)
+	}
 	check(process.Process.Signal(syscall.SIGTERM))
 	err = process.Wait()
 	stopped = true
@@ -160,13 +226,13 @@ func TestIndependentHubAndClientProcesses(t *testing.T) {
 		check(rows.Scan(&gotG, &client, &data))
 		check(json.Unmarshal(data, &receipt))
 		count++
-		if count > 2 || gotG != g || client != []string{"client-a", "client-b"}[count-1] || receipt.Entry.Revision != int64(count) || receipt.Result != "applied" {
+		if count > 5 || gotG != g || client != []string{"client-a", "client-b", "client-a", "client-b", "client-a"}[count-1] || receipt.Entry.Revision != int64(count) || receipt.Result != "applied" {
 			t.Fatalf("unexpected receipt %d: %s %+v", count, client, receipt)
 		}
 	}
 	check(rows.Err())
-	if count != 2 {
+	if count != 5 {
 		t.Fatalf("receipt count %d", count)
 	}
-	t.Logf("distinct hub/client processes: %s/1 to %s/2; generation %s; two applied receipts", pHash, qHash, g)
+	t.Logf("distinct hub/client processes: %s/1 -> %s/2 -> %s/3; preserved competing %s, resolved /4, deleted /5; generation %s; five receipts", pHash, qHash, sHash, rHash, g)
 }

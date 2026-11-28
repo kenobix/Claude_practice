@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/kenobix/Claude_practice/261128/file-sync/internal/safefs"
@@ -21,6 +22,7 @@ const (
 
 type Store struct {
 	manager *safefs.Managed
+	pages   int
 	DB      *sql.DB
 	Conn    *sql.Conn
 }
@@ -47,7 +49,11 @@ func Open(ctx context.Context, manager *safefs.Managed, initialize bool, setup f
 	}
 	db.SetMaxOpenConns(1)
 	db.SetMaxIdleConns(1)
-	s := &Store{manager: manager, DB: db}
+	limit := pageLimit
+	if n := manager.PreparedPageLimit(); n > 0 {
+		limit = min(n, pageLimit)
+	}
+	s := &Store{manager: manager, DB: db, pages: limit}
 	if err := s.checkMetadata(); err != nil {
 		db.Close()
 		return nil, err
@@ -97,7 +103,7 @@ func (s *Store) configure(ctx context.Context, initialize bool) error {
 		{"", "journal_mode", "wal"},
 		{"", "synchronous", "2"},
 		{"", "foreign_keys", "1"},
-		{"max_page_count=8192", "max_page_count", "8192"},
+		{"max_page_count=" + strconv.Itoa(s.pages), "max_page_count", strconv.Itoa(s.pages)},
 		{"cache_spill=0", "cache_spill", "0"},
 		{"temp_store=MEMORY", "temp_store", "2"},
 		{"wal_autocheckpoint=0", "wal_autocheckpoint", "0"},
@@ -157,7 +163,7 @@ func (s *Store) checkMetadata() error {
 	if err != nil {
 		return err
 	}
-	if size > metadataLimit || dbSize > pageSize*pageLimit {
+	if size > metadataLimit || dbSize > int64(pageSize*s.pages) {
 		return fmt.Errorf("SQLite management budget: %w", safefs.ErrLimit)
 	}
 	return nil

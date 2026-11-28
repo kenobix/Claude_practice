@@ -21,15 +21,16 @@ const (
 )
 
 type Managed struct {
-	dir   *Dir
-	State *Dir
-	Stage *Dir
-	lock  *os.File
+	dir           *Dir
+	State         *Dir
+	Stage         *Dir
+	lock          *os.File
+	preparedPages int
 }
 
 func StageName(name string) bool {
 	id, suffix, ok := strings.Cut(name, ".")
-	if !ok || len(id) != 32 || (suffix != "incoming" && suffix != "local" && suffix != "before" && suffix != "outgoing") {
+	if !ok || len(id) != 32 || (suffix != "incoming" && suffix != "local" && suffix != "before" && suffix != "outgoing" && suffix != "trash" && suffix != "candidate") {
 		return false
 	}
 	return strings.Trim(id, "0123456789abcdef") == ""
@@ -49,19 +50,27 @@ func (m *Managed) Close() {
 }
 
 func (d *Dir) OpenManagement() (*Managed, error) {
+	return d.openManagement(false)
+}
+
+func (d *Dir) OpenReconcileManagement() (*Managed, error) {
+	return d.openManagement(true)
+}
+
+func (d *Dir) openManagement(reconcile bool) (*Managed, error) {
 	dir, err := d.PrivateDir(Management, false)
 	if err != nil {
 		return nil, err
 	}
 	m := &Managed{dir: dir}
-	if err := m.open(); err != nil {
+	if err := m.open(reconcile); err != nil {
 		m.Close()
 		return nil, fmt.Errorf("management directory: %w", err)
 	}
 	return m, nil
 }
 
-func (m *Managed) open() error {
+func (m *Managed) open(reconcile bool) error {
 	if err := m.dir.Lock(); err != nil {
 		return err
 	}
@@ -78,20 +87,28 @@ func (m *Managed) open() error {
 		case LockFile, "state", "stage":
 			return nil
 		default:
+			if ReconcileDirName(name) {
+				return nil
+			}
 			return fmt.Errorf("unexpected entry %q: %w", name, ErrType)
 		}
 	}); err != nil {
 		return err
 	}
 	m.State, err = m.dir.PrivateDir("state", false)
-	if err != nil {
+	if err != nil && !(reconcile && errors.Is(err, unix.ENOENT)) {
 		return err
 	}
 	m.Stage, err = m.dir.PrivateDir("stage", false)
 	if err != nil {
 		return err
 	}
-	if err := m.ValidateStateFiles(); err != nil {
+	if !reconcile {
+		if err := m.ValidateStateFiles(); err != nil {
+			return err
+		}
+	}
+	if _, err := m.StateInventory(); err != nil {
 		return err
 	}
 	count := 0

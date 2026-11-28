@@ -121,15 +121,10 @@ func TestAPIValidationAndIsolation(t *testing.T) {
 				t.Fatalf("namespace response %s", body)
 			}
 		}
-		for _, tc := range []struct {
-			path, code string
-			base       int64
-		}{{notes, "delete_unsupported", 1}, {"absent.txt", "unknown_delete", 0}} {
-			c := good
-			c.Path, c.Base, c.Deleted, c.Hash, c.Size = tc.path, tc.base, true, nil, 0
-			status, body := l.post(t, c, 0)
-			assertCode(t, status, body, 422, tc.code)
-		}
+		c := good
+		c.Path, c.Base, c.Deleted, c.Hash, c.Size = "absent.txt", 0, true, nil, 0
+		status, body := l.post(t, c, 0)
+		assertCode(t, status, body, 422, "unknown_delete")
 	})
 	t.Run("another_space", func(t *testing.T) {
 		c, _ := protocol.TokenDigest(token(3))
@@ -375,7 +370,7 @@ func (r notifyingReader) Read(b []byte) (int, error) {
 
 func TestClientHoldsAndManualIsolation(t *testing.T) {
 	l := newLab(t)
-	l.seed(t)
+	g := l.seed(t)
 	status := l.status(t, "B")
 	req := local.Request{Volume: l.dir, Source: "A", Destination: "B", Revision: 90}
 	if err := local.Copy(t.Context(), req); err == nil {
@@ -405,11 +400,11 @@ func TestClientHoldsAndManualIsolation(t *testing.T) {
 	}
 	l.hubFile(t, notes, "Q", "client-a", 2)
 	must(t, os.Remove(filepath.Join(l.dir, "A", notes)))
-	if err := local.Sync(t.Context(), l.req(t, "A", 0)); !errors.Is(err, local.ErrConflict) {
-		t.Fatalf("local deletion: %v", err)
-	}
-	if l.status(t, "A").Holds[notes] != "local_delete_unsupported" || len(l.history(t)) != 2 {
-		t.Fatal("deletion propagated")
+	must(t, local.Sync(t.Context(), l.req(t, "A", 0)))
+	l.assertDeleted(t, notes, g, "client-a", 3)
+	l.assertBase(t, "A", notes, "", 3)
+	if len(l.history(t)) != 3 {
+		t.Fatal("deletion history has the wrong count")
 	}
 	for _, test := range []struct {
 		root   string
@@ -424,7 +419,7 @@ func TestClientHoldsAndManualIsolation(t *testing.T) {
 		return err
 	}))
 	l.reopen(t)
-	if err := local.Sync(t.Context(), l.req(t, "B", 1)); !errors.Is(err, local.ErrConflict) || len(l.history(t)) != 2 {
+	if err := local.Sync(t.Context(), l.req(t, "B", 1)); !errors.Is(err, local.ErrConflict) || len(l.history(t)) != 3 {
 		t.Fatalf("old generation participated: %v", err)
 	}
 }

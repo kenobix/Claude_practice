@@ -29,11 +29,19 @@ type Plan struct {
 	Local         safefs.Digest `json:"local"`
 	LocalReserved bool          `json:"local_reserved"`
 	Saved         bool          `json:"saved"`
+	BackedUp      bool          `json:"backed_up,omitempty"`
+	Settled       bool          `json:"settled,omitempty"`
+	Resolution    bool          `json:"resolution,omitempty"`
 }
 
 func (p Plan) Incoming() string  { return p.ID + ".incoming" }
 func (p Plan) LocalCopy() string { return p.ID + ".local" }
-func (p Plan) Backup() string    { return p.ID + ".before" }
+func (p Plan) Backup() string {
+	if p.Target.Hash == "" {
+		return p.ID + ".trash"
+	}
+	return p.ID + ".before"
+}
 func (p Plan) needsBackup() bool { return p.Before.Hash != "" && p.Before != p.Target.Digest }
 
 type stateDB struct {
@@ -92,8 +100,10 @@ func setupClient(ctx context.Context, store *dbstore.Store, initialize bool, roo
 			if _, err := tx.ExecContext(ctx, "INSERT INTO identity VALUES (1, ?)", rootID); err != nil {
 				return err
 			}
-			_, err := tx.ExecContext(ctx, networkSchema)
-			return err
+			if _, err := tx.ExecContext(ctx, networkSchema); err != nil {
+				return err
+			}
+			return migratePhase3(ctx, tx)
 		})
 	}
 	var actual string
@@ -115,10 +125,14 @@ func setupClient(ctx context.Context, store *dbstore.Store, initialize bool, roo
 			return err
 		}
 		return store.Write(ctx, func(tx *sql.Tx) error {
-			_, err := tx.ExecContext(ctx, networkSchema)
-			return err
+			if _, err := tx.ExecContext(ctx, networkSchema); err != nil {
+				return err
+			}
+			return migratePhase3(ctx, tx)
 		})
 	case 2:
+		return store.Write(ctx, func(tx *sql.Tx) error { return migratePhase3(ctx, tx) })
+	case 3:
 		return nil
 	default:
 		return errors.New("unsupported client database schema")
@@ -146,7 +160,7 @@ func (s *stateDB) lookup(ctx context.Context, path string) (Base, error) {
 func (s *stateDB) plans(ctx context.Context) ([]Plan, error) {
 	rows, err := s.conn.QueryContext(ctx, `
 SELECT id,path,source,base_revision,before_hash,before_size,target_revision,target_hash,target_size,
-       status,local_hash,local_size,local_reserved,saved FROM plans ORDER BY path,id`)
+       status,local_hash,local_size,local_reserved,saved,backed_up,resolution,settled FROM plans ORDER BY path,id`)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +170,7 @@ SELECT id,path,source,base_revision,before_hash,before_size,target_revision,targ
 		var p Plan
 		err := rows.Scan(&p.ID, &p.Path, &p.Source, &p.BaseRevision, &p.Before.Hash, &p.Before.Size,
 			&p.Target.Revision, &p.Target.Hash, &p.Target.Size, &p.Status, &p.Local.Hash, &p.Local.Size,
-			&p.LocalReserved, &p.Saved)
+			&p.LocalReserved, &p.Saved, &p.BackedUp, &p.Resolution, &p.Settled)
 		if err != nil {
 			return nil, err
 		}
@@ -174,9 +188,9 @@ SELECT id,path,source,base_revision,before_hash,before_size,target_revision,targ
 func (s *stateDB) add(ctx context.Context, p Plan) error {
 	return s.write(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, `
-INSERT INTO plans (id,path,source,base_revision,before_hash,before_size,target_revision,target_hash,target_size)
-VALUES (?,?,?,?,?,?,?,?,?)`, p.ID, p.Path, p.Source, p.BaseRevision, p.Before.Hash, p.Before.Size,
-			p.Target.Revision, p.Target.Hash, p.Target.Size)
+INSERT INTO plans (id,path,source,base_revision,before_hash,before_size,target_revision,target_hash,target_size,resolution)
+VALUES (?,?,?,?,?,?,?,?,?,?)`, p.ID, p.Path, p.Source, p.BaseRevision, p.Before.Hash, p.Before.Size,
+			p.Target.Revision, p.Target.Hash, p.Target.Size, p.Resolution)
 		return err
 	})
 }
@@ -226,11 +240,11 @@ func (s *stateDB) usage(ctx context.Context, plans []Plan) (count int, bytes int
 	reserved := make(map[string]int64)
 	retained := make(map[string]int64)
 	for _, p := range plans {
-		if p.Status != "complete" {
+		if p.Status != "complete" && p.Target.Hash != "" {
 			reserved[p.Incoming()] = p.Target.Size
 		}
 		if p.needsBackup() {
-			if p.Status == "pending" {
+			if p.Status == "pending" || p.BackedUp {
 				reserved[p.Backup()] = p.Before.Size
 			} else {
 				retained[p.Backup()] = p.Before.Size
@@ -245,11 +259,34 @@ func (s *stateDB) usage(ctx context.Context, plans []Plan) (count int, bytes int
 		return 0, 0, err
 	}
 	for _, item := range outbox {
+		if item.Change.Deleted {
+			continue
+		}
 		if item.Status == "done" {
 			retained[item.name()] = item.Change.Size
 		} else {
 			reserved[item.name()] = item.Change.Size
 		}
+	}
+	rows, err := s.conn.QueryContext(ctx, "SELECT name,size FROM saved_copies")
+	if err != nil {
+		return 0, 0, err
+	}
+	for rows.Next() {
+		var name string
+		var size int64
+		if err := rows.Scan(&name, &size); err != nil {
+			rows.Close()
+			return 0, 0, err
+		}
+		if !safefs.StageName(name) {
+			rows.Close()
+			return 0, 0, errors.New("invalid saved copy name")
+		}
+		reserved[name] = size
+	}
+	if err := errors.Join(rows.Err(), rows.Close()); err != nil {
+		return 0, 0, err
 	}
 	for _, size := range reserved {
 		count++

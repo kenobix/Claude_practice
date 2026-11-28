@@ -28,8 +28,10 @@ func (n *networkSync) prepareOutgoing(path string, base int64, d safefs.Digest) 
 	if err != nil {
 		return Outgoing{}, err
 	}
-	if err := checkCopyBudget(count+1, used+d.Size); err != nil {
-		return Outgoing{}, err
+	if d.Hash != "" {
+		if err := checkCopyBudget(count+1, used+d.Size); err != nil {
+			return Outgoing{}, err
+		}
 	}
 	item, err := outgoing(n.reg, path, base, d)
 	if err != nil {
@@ -40,6 +42,9 @@ func (n *networkSync) prepareOutgoing(path string, base int64, d safefs.Digest) 
 }
 
 func (n *networkSync) stageOutgoing(item Outgoing) error {
+	if item.Change.Deleted {
+		return nil
+	}
 	p := Plan{Path: item.Change.Path, ID: item.Change.Operation}
 	c, err := n.acquire(p, item.name(), item.digest(), n.destination)
 	if err != nil {
@@ -70,9 +75,12 @@ func (n *networkSync) send(item Outgoing) error {
 		return errors.New("outgoing operation is not ready")
 	}
 	var buf bytes.Buffer
-	digest, _, err := n.db.manager.Stage.ReadPrivate(item.name(), &buf)
-	if err != nil || digest != item.digest() {
-		return errors.Join(err, fmt.Errorf("stored outgoing body: %w", ErrHash))
+	digest := item.digest()
+	if !item.Change.Deleted {
+		actual, _, err := n.db.manager.Stage.ReadPrivate(item.name(), &buf)
+		if err != nil || actual != digest {
+			return errors.Join(err, fmt.Errorf("stored outgoing body: %w", ErrHash))
+		}
 	}
 	putAttempts := 0
 	put := func() error {
@@ -85,7 +93,7 @@ func (n *networkSync) send(item Outgoing) error {
 		}
 		return errors.New("outgoing operation exhausted its PUT attempts")
 	}
-	if firstSend {
+	if firstSend && !item.Change.Deleted {
 		if err := put(); err != nil {
 			return err
 		}
@@ -103,6 +111,9 @@ func (n *networkSync) send(item Outgoing) error {
 		if errors.As(err, &p) {
 			switch p.Code {
 			case "blob_missing":
+				if item.Change.Deleted {
+					return err
+				}
 				if putErr := put(); putErr != nil {
 					return putErr
 				}
@@ -127,18 +138,24 @@ func (n *networkSync) send(item Outgoing) error {
 }
 
 func (n *networkSync) retireRejected(item Outgoing, decision string) error {
-	// Persist the fresh decision before releasing the old request and bytes.
-	err := n.db.write(n.ctx, func(tx *sql.Tx) error {
+	return n.db.write(n.ctx, func(tx *sql.Tx) error {
 		if err := putHold(n.ctx, tx, item.Change.Path, "rechecked_"+decision); err != nil {
 			return err
 		}
-		return mutateOne(n.ctx, tx, "UPDATE outbox SET status='done' WHERE id=? AND status='rejected'", item.Change.Operation)
+		return n.archiveRejected(tx, item)
 	})
-	if err != nil {
+}
+
+func (n *networkSync) archiveRejected(tx *sql.Tx, item Outgoing) error {
+	if _, err := tx.ExecContext(n.ctx, "INSERT INTO rejected_changes VALUES (?,?)", item.Change.Operation, item.request); err != nil {
 		return err
 	}
-	item.Status = "done"
-	return n.cleanupOutgoing(item)
+	if !item.Change.Deleted {
+		if _, err := tx.ExecContext(n.ctx, "INSERT INTO saved_copies VALUES (?,?)", item.name(), item.Change.Size); err != nil {
+			return err
+		}
+	}
+	return mutateOne(n.ctx, tx, "DELETE FROM outbox WHERE id=? AND status='rejected'", item.Change.Operation)
 }
 
 func (n *networkSync) cleanupOutgoing(item Outgoing) error {

@@ -294,9 +294,9 @@ func TestMain(m *testing.M) {
 		os.Exit(m.Run())
 	}
 	req := lab{volume: os.Getenv("FILE_SYNC_TEST_VOLUME")}.request(2)
-	err := run(context.Background(), req, false, func(ev event) error {
-		if ev.point == point {
-			if _, err := fmt.Fprintln(os.Stdout, ev.point); err != nil {
+	notify := func(ev event) error {
+		if ev.point == strings.TrimPrefix(point, "p3-") {
+			if _, err := fmt.Fprintln(os.Stdout, point); err != nil {
 				return err
 			}
 			var wait [1]byte
@@ -304,7 +304,14 @@ func TestMain(m *testing.M) {
 			return err
 		}
 		return nil
-	})
+	}
+	var err error
+	if strings.HasPrefix(point, "p3-") {
+		l := lab{volume: req.Volume}
+		err = resumeDelete(context.Background(), l, notify)
+	} else {
+		err = run(context.Background(), req, false, notify)
+	}
 	fmt.Fprintln(os.Stderr, "child returned without SIGKILL:", err)
 	os.Exit(1)
 }

@@ -11,6 +11,13 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+type applyHold struct{ plan Plan }
+
+func (h *applyHold) Error() string {
+	return fmt.Sprintf("%s: %q (plan %s)", ErrConflict, h.plan.Path, h.plan.ID)
+}
+func (h *applyHold) Unwrap() error { return ErrConflict }
+
 type candidate struct {
 	dir  *safefs.Dir
 	name string
@@ -49,16 +56,22 @@ func (e *engine) apply(p Plan, restart bool) error {
 	if base.Revision != p.BaseRevision {
 		return errors.New("baseline differs from persisted plan")
 	}
+	if p.Target.Hash == "" {
+		if !p.Resolution && base.Digest != p.Before {
+			return errors.New("deletion preimage differs from baseline")
+		}
+		return e.applyDelete(p, restart)
+	}
 	stage := e.db.manager.Stage
 	if restart {
 		actual, id, err := e.destination.Observe(p.Path)
 		if err != nil {
 			return err
 		}
-		if p.Before == base.Digest && actual == p.Target.Digest {
+		if (p.Before == base.Digest || p.Resolution) && actual == p.Target.Digest {
 			return e.finishPublished(p, id)
 		}
-		if actual != p.Before || p.Before != base.Digest {
+		if actual != p.Before || (p.Before != base.Digest && !p.Resolution) {
 			p.Status, p.Local = "conflict", actual
 			if err := e.db.update(e.ctx, p); err != nil {
 				return errors.Join(ErrConflict, err)
@@ -85,7 +98,7 @@ func (e *engine) apply(p Plan, restart bool) error {
 	if err != nil {
 		return err
 	}
-	if actual != p.Before || p.Before != base.Digest {
+	if actual != p.Before || (p.Before != base.Digest && !p.Resolution) {
 		return e.recordConflict(p, actual, incoming)
 	}
 	if p.needsBackup() {
@@ -103,7 +116,7 @@ func (e *engine) apply(p Plan, restart bool) error {
 	if err := incoming.syncClose(); err != nil {
 		return err
 	}
-	parent, leaf, err := e.destination.Parent(p.Path, true)
+	parent, leaf, err := e.destination.ParentRecording(p.Path, true, e.rememberDir)
 	if err != nil {
 		return err
 	}
@@ -183,7 +196,7 @@ func (e *engine) saveBackup(p Plan) error {
 }
 
 func (e *engine) cleanupBackup(p Plan) error {
-	if !p.needsBackup() {
+	if !p.needsBackup() || p.Target.Hash == "" {
 		return nil
 	}
 	stage := e.db.manager.Stage
@@ -278,14 +291,16 @@ func (e *engine) recordConflict(p Plan, local safefs.Digest, incoming *candidate
 }
 
 func (e *engine) retainConflict(p Plan) error {
-	hold := fmt.Errorf("%w: %q (plan %s)", ErrConflict, p.Path, p.ID)
-	incoming, err := e.acquire(p, p.Incoming(), p.Target.Digest, e.source)
-	if err != nil {
-		return errors.Join(hold, err)
-	}
-	defer incoming.close()
-	if err := incoming.syncClose(); err != nil {
-		return errors.Join(hold, err)
+	hold := &applyHold{plan: p}
+	if p.Target.Hash != "" {
+		incoming, err := e.acquire(p, p.Incoming(), p.Target.Digest, e.source)
+		if err != nil {
+			return errors.Join(hold, err)
+		}
+		defer incoming.close()
+		if err := incoming.syncClose(); err != nil {
+			return errors.Join(hold, err)
+		}
 	}
 	if p.Local.Hash != "" {
 		if !p.LocalReserved {
@@ -323,6 +338,7 @@ func (e *engine) retainConflict(p Plan) error {
 			return errors.Join(hold, err)
 		}
 	}
+	hold.plan = p
 	return hold
 }
 
