@@ -28,8 +28,9 @@ type Identity struct {
 func identity(st unix.Stat_t) Identity { return Identity{Device: st.Dev, Inode: st.Ino} }
 
 type Dir struct {
-	fd   int
-	proc int
+	fd        int
+	proc      int
+	ancestors []*Dir
 }
 
 type Volume struct {
@@ -120,7 +121,12 @@ func (v *Volume) LockRoot(path string) (*Dir, error) {
 	return root, nil
 }
 
-func (d *Dir) Close()      { unix.Close(d.fd) }
+func (d *Dir) Close() {
+	unix.Close(d.fd)
+	for _, parent := range d.ancestors {
+		parent.Close()
+	}
+}
 func (d *Dir) Sync() error { return unix.Fsync(d.fd) }
 func (d *Dir) Lock() error { return unix.Flock(d.fd, unix.LOCK_EX|unix.LOCK_NB) }
 
@@ -469,10 +475,18 @@ func (d *Dir) SyncParents(path string) error {
 	}
 }
 
-// Destination pins the parent of a prospective directory and refuses any existing entry.
+// Destination pins the parent of a prospective directory and refuses any existing entry
+// or managed ancestor. Keep the returned directory open through publication.
 func (v *Volume) Destination(path string) (*Dir, string, error) {
+	if err := v.checkVolumeMount(); err != nil {
+		return nil, "", err
+	}
 	parent, leaf, err := v.dir.Parent(path, false)
 	if err != nil {
+		return nil, "", err
+	}
+	if err := parent.lockUnmanagedAncestors(true); err != nil {
+		parent.Close()
 		return nil, "", err
 	}
 	fd, _, err := parent.node(leaf)

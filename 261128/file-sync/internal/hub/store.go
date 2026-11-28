@@ -146,11 +146,15 @@ func open(ctx context.Context, volume, path string, setup func(*dbstore.Store, s
 	if err != nil {
 		return nil, err
 	}
-	h.root, err = h.volume.LockRoot(path)
+	initial := setup != nil
+	if initial {
+		h.root, err = h.volume.LockRootForSetup(path)
+	} else {
+		h.root, err = h.volume.LockRoot(path)
+	}
 	if err != nil {
 		return nil, err
 	}
-	initial := setup != nil
 	if err := h.root.Names(func(name string) error {
 		if initial || (name != "blobs" && name != safefs.Management) {
 			return errors.New("unexpected entry in dedicated hub root")

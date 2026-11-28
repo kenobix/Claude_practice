@@ -46,7 +46,7 @@ func Reconcile(ctx context.Context, req NetworkRequest, approval string) (report
 		return report, err
 	}
 	defer v.Close()
-	root, err := v.LockRoot(req.Root)
+	root, err := v.LockRootForSetup(req.Root)
 	if err != nil {
 		return report, err
 	}

@@ -12,6 +12,12 @@ import (
 
 var errRejudge = errors.New("new comparison required")
 
+func storageFull(err error) bool {
+	var problem *protocol.Problem
+	return errors.As(err, &problem) && problem.Status == 507 &&
+		(problem.Code == "storage_full" || problem.Code == "storage_limit")
+}
+
 func (n *networkSync) checkOutgoing(item Outgoing) error {
 	if item.Change.Generation != n.reg.Generation || item.Change.Client != n.reg.Client {
 		return errors.New("outgoing operation belongs to another registration")

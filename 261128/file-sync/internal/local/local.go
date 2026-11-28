@@ -40,7 +40,7 @@ func Init(ctx context.Context, volume, path string) (err error) {
 		return err
 	}
 	defer v.Close()
-	root, err := v.LockRoot(path)
+	root, err := v.LockRootForSetup(path)
 	if err != nil {
 		return err
 	}

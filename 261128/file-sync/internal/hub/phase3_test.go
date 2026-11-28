@@ -846,6 +846,8 @@ func TestP3ReverseStructureChangeOnlyRemovesOwnedEmptyDirectory(t *testing.T) {
 			if owned {
 				must(t, local.Sync(t.Context(), b))
 				l.file(t, "B", "a", "Q", 1)
+				l.assertBase(t, "B", "a/b", "", 2)
+				l.assertTrash(t, "B", "a/b", "P", 2)
 			} else {
 				l.pending(t, b)
 				st, err := os.Stat(parent)
@@ -854,9 +856,11 @@ func TestP3ReverseStructureChangeOnlyRemovesOwnedEmptyDirectory(t *testing.T) {
 					t.Fatal("user's directory lost")
 				}
 				l.assertBase(t, "B", "a", "", 0)
+				l.file(t, "B", "a/b", "P", 1)
+				if l.status(t, "B").Holds["a/b"] != "namespace_conflict" {
+					t.Fatal("child of unmanaged replacement directory not held")
+				}
 			}
-			l.assertBase(t, "B", "a/b", "", 2)
-			l.assertTrash(t, "B", "a/b", "P", 2)
 			l.assertHistory(t, g, "client-a:a/b:1:applied", "client-a:a/b:2:applied", "client-a:a:1:applied")
 		})
 	}
@@ -982,9 +986,11 @@ func TestP3OwnedNonemptyDirectoryIsNotRecursivelyRemoved(t *testing.T) {
 	if st, err := os.Stat(filepath.Join(l.dir, "B", "outer/inner")); err != nil || !st.IsDir() {
 		t.Fatalf("child directory was removed: %v", err)
 	}
-	l.assertBase(t, "B", "outer/inner/doc", "", 2)
+	l.file(t, "B", "outer/inner/doc", "P", 1)
 	l.assertBase(t, "B", "outer", "", 0)
-	l.assertTrash(t, "B", "outer/inner/doc", "P", 2)
+	if l.status(t, "B").Holds["outer/inner/doc"] != "namespace_conflict" {
+		t.Fatal("child of nonempty directory not held")
+	}
 	l.assertHistory(t, g, "client-a:outer/inner/doc:1:applied", "client-a:outer/inner/doc:2:applied", "client-a:outer:1:applied")
 }
 

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/kenobix/Claude_practice/261128/file-sync/internal/safefs"
 	"golang.org/x/sys/unix"
@@ -249,24 +248,7 @@ func (e *engine) checkRecoveryCapacity(path string) error {
 	if err != nil {
 		return err
 	}
-	if len(snapshot.Files) >= safefs.MaxFiles {
-		return safefs.ErrLimit
-	}
-	dirs := len(snapshot.Dirs)
-	for {
-		i := strings.LastIndexByte(path, '/')
-		if i < 0 {
-			break
-		}
-		path = path[:i]
-		if !snapshot.Dirs[path] {
-			dirs++
-		}
-	}
-	if dirs > safefs.MaxDirs {
-		return safefs.ErrLimit
-	}
-	return nil
+	return checkIncomingSpace(snapshot, []string{path})
 }
 
 func (e *engine) finishPublished(p Plan, id safefs.Identity) error {

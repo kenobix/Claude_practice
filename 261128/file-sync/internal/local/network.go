@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 
 	"github.com/kenobix/Claude_practice/261128/file-sync/internal/protocol"
 	"github.com/kenobix/Claude_practice/261128/file-sync/internal/safefs"
@@ -29,6 +30,11 @@ func Register(ctx context.Context, req NetworkRequest, mode string) error {
 func Sync(ctx context.Context, req NetworkRequest) error {
 	return runNetwork(ctx, req, "")
 }
+
+var (
+	errIncomingFiles = fmt.Errorf("incoming file count: %w", safefs.ErrLimit)
+	errIncomingDirs  = fmt.Errorf("incoming directory count: %w", safefs.ErrLimit)
+)
 
 type networkSync struct {
 	engine
@@ -149,6 +155,17 @@ func (n *networkSync) recoverFiles() error {
 	if _, _, err := n.db.usage(n.ctx, plans); err != nil {
 		return err
 	}
+	// Persisted deletions can release space and structure needed by a
+	// persisted install. Keep the original order within each class.
+	slices.SortStableFunc(plans, func(a, b Plan) int {
+		if (a.Target.Hash == "") == (b.Target.Hash == "") {
+			return 0
+		}
+		if a.Target.Hash == "" {
+			return -1
+		}
+		return 1
+	})
 	for _, p := range plans {
 		if p.Resolution || p.Settled || p.Status == "rejected" {
 			continue
@@ -161,9 +178,12 @@ func (n *networkSync) recoverFiles() error {
 		} else {
 			err = n.cleanupBackup(p)
 		}
-		if errors.Is(err, safefs.ErrStructure) && p.Status == "pending" {
+		switch {
+		case errors.Is(err, safefs.ErrStructure) && p.Status == "pending":
 			err = n.db.setHold(n.ctx, p.Path, "apply_structure")
-		} else {
+		case n.reg.Complete && p.Status == "pending" && incomingLimitReason(err) != "":
+			err = n.db.setHold(n.ctx, p.Path, incomingLimitReason(err))
+		default:
 			err = n.handleApplyHold(err)
 		}
 		if err != nil {
@@ -179,6 +199,7 @@ func (n *networkSync) sync() error {
 		return err
 	}
 	rejected := make(map[string]Outgoing)
+	deferred := make(map[string]bool)
 	for _, item := range out {
 		if err := n.checkOutgoing(item); err != nil {
 			return err
@@ -197,18 +218,22 @@ func (n *networkSync) sync() error {
 				sendErr = nil
 			}
 		}
+		if storageFull(sendErr) {
+			deferred[item.Change.Path] = true
+			sendErr = n.db.setHold(n.ctx, item.Change.Path, "send_capacity")
+		}
 		if sendErr != nil {
 			return fmt.Errorf("resume %q: %w", item.Change.Path, sendErr)
 		}
 	}
-	pending, err := n.compare(rejected, nil)
+	pending, err := n.compare(rejected, nil, deferred)
 	if err != nil {
 		return err
 	}
 	if len(pending) > 0 {
 		// The original candidates stay saved until a fresh decision succeeds
 		// or the corresponding path is explicitly held.
-		last, err := n.compare(pending, pending)
+		last, err := n.compare(pending, pending, deferred)
 		if err != nil {
 			return err
 		}
@@ -277,7 +302,7 @@ func (n *networkSync) checkManifestHistory(m protocol.Manifest) error {
 	return nil
 }
 
-func (n *networkSync) compare(rejected map[string]Outgoing, only map[string]Outgoing) (map[string]Outgoing, error) {
+func (n *networkSync) compare(rejected map[string]Outgoing, only map[string]Outgoing, deferred map[string]bool) (map[string]Outgoing, error) {
 	snapshot, err := n.scan()
 	if err != nil {
 		return nil, err
@@ -317,8 +342,11 @@ func (n *networkSync) compare(rejected map[string]Outgoing, only map[string]Outg
 		if p.Status == "rejected" && !p.Settled {
 			badApply[p.Path] = "apply_rejected"
 		}
-		if p.Status == "pending" && holds[p.Path] == "apply_structure" {
-			badApply[p.Path] = "apply_structure"
+		if !p.Resolution && p.Status == "pending" {
+			switch reason := holds[p.Path]; reason {
+			case "apply_structure", "incoming_file_limit", "incoming_directory_limit":
+				badApply[p.Path] = reason
+			}
 		}
 	}
 	for _, e := range m.Entries {
@@ -347,6 +375,8 @@ func (n *networkSync) compare(rejected map[string]Outgoing, only map[string]Outg
 			action = active[path].Reason
 		case badApply[path] != "":
 			action = badApply[path]
+		case deferred[path]:
+			action = "send_capacity"
 		case holds[path] == "registration_local_edit" && l != base.Digest:
 			action = "registration_local_edit"
 		case holds[path] == "both_changed":
@@ -372,45 +402,23 @@ func (n *networkSync) compare(rejected map[string]Outgoing, only map[string]Outg
 			protected[path] = true
 		}
 	}
-	for _, path := range ordered {
-		if decisions[path] != "none" && !protected[path] && blockedBy(path, protected) {
-			decisions[path] = "namespace_conflict"
-		}
+	selected := func(path string) bool {
+		_, ok := only[path]
+		return only == nil || ok
+	}
+	if err := n.blockStructure(snapshot, m.Entries, decisions, protected, selected, true); err != nil {
+		return nil, err
 	}
 	next := make(map[string]Outgoing)
 	for _, deleting := range []bool{true, false} {
 		if !deleting {
-			// The deletion pass durably finished before any dependent install.
-			// Re-read the actual structure rather than assume earlier success.
+			// Re-read after the deletion pass. A held or rejected deletion
+			// cannot make a dependent install eligible.
 			snapshot, err = n.scan()
 			if err != nil {
 				return nil, err
 			}
-			for _, path := range ordered {
-				if !protected[path] && blockedBy(path, protected) && (decisions[path] == "send" || decisions[path] == "receive") {
-					decisions[path] = "namespace_conflict"
-				}
-				if _, selected := only[path]; only != nil && !selected {
-					continue
-				}
-				if decisions[path] != "receive" || digestOf(hubEntries[path]).Hash == "" || !snapshot.Dirs[path] {
-					continue
-				}
-				if err := n.pruneOwned(path, snapshot); err != nil {
-					return nil, err
-				}
-			}
-			blocked := structuralPaths(snapshot, m.Entries)
-			var pulls []string
-			for _, path := range ordered {
-				if blocked[path] && (decisions[path] == "receive" || decisions[path] == "send") {
-					decisions[path] = "namespace_conflict"
-				}
-				if decisions[path] == "receive" && digestOf(hubEntries[path]).Hash != "" {
-					pulls = append(pulls, path)
-				}
-			}
-			if err := checkIncomingSpace(snapshot, pulls); err != nil {
+			if err := n.blockStructure(snapshot, m.Entries, decisions, protected, selected, false); err != nil {
 				return nil, err
 			}
 		}
@@ -452,6 +460,25 @@ func (n *networkSync) compare(rejected map[string]Outgoing, only map[string]Outg
 				}
 				continue
 			}
+			if action == "receive" && !h.Deleted {
+				if err := checkIncomingSpace(snapshot, []string{path}); err != nil {
+					if err := n.db.setHold(n.ctx, path, incomingLimitReason(err)); err != nil {
+						return nil, err
+					}
+					continue
+				}
+				if snapshot.Dirs[path] {
+					if err := n.pruneOwned(path, snapshot); err != nil {
+						return nil, err
+					}
+					if snapshot.Dirs[path] {
+						if err := n.db.setHold(n.ctx, path, "namespace_conflict"); err != nil {
+							return nil, err
+						}
+						continue
+					}
+				}
+			}
 			if rejudged {
 				if err := n.retireRejected(prior, action); err != nil {
 					return nil, err
@@ -476,9 +503,15 @@ func (n *networkSync) compare(rejected map[string]Outgoing, only map[string]Outg
 					return nil, err
 				}
 				actionErr = n.send(item)
-				if errors.Is(actionErr, errRejudge) {
+				if storageFull(actionErr) {
+					deferred[path], protected[path] = true, true
+					actionErr = n.db.setHold(n.ctx, path, "send_capacity")
+				} else if errors.Is(actionErr, errRejudge) {
 					item.Status = "rejected"
 					next[path] = item
+					if deleting {
+						protected[path] = true
+					}
 					actionErr = nil
 				} else if deleting && actionErr == nil {
 					// Our successful deletion releases a namespace blocker.
@@ -496,10 +529,12 @@ func (n *networkSync) compare(rejected map[string]Outgoing, only map[string]Outg
 				actionErr = n.install(path, base, Base{Revision: h.Revision, Digest: digestOf(h)})
 				if _, held := actionErr.(*applyHold); held {
 					actionErr = n.handleApplyHold(actionErr)
-					protected[path] = true
+					decisions[path], holds[path], protected[path] = "apply_local_edit", "apply_local_edit", true
 				} else if errors.Is(actionErr, safefs.ErrLimit) {
 					actionErr = n.db.setHold(n.ctx, path, "apply_pending")
-					protected[path] = true
+					decisions[path], holds[path], protected[path] = "apply_pending", "apply_pending", true
+				} else if actionErr == nil && !h.Deleted {
+					recordInstallation(snapshot, path, digestOf(h))
 				}
 			}
 			if actionErr != nil {
@@ -608,10 +643,32 @@ func checkIncomingSpace(s safefs.Snapshot, incoming []string) error {
 			}
 		}
 	}
-	if count > safefs.MaxFiles || dirs > safefs.MaxDirs {
-		return safefs.ErrLimit
+	if count > safefs.MaxFiles {
+		return errIncomingFiles
+	}
+	if dirs > safefs.MaxDirs {
+		return errIncomingDirs
 	}
 	return nil
+}
+
+func incomingLimitReason(err error) string {
+	switch {
+	case errors.Is(err, errIncomingFiles):
+		return "incoming_file_limit"
+	case errors.Is(err, errIncomingDirs):
+		return "incoming_directory_limit"
+	default:
+		return ""
+	}
+}
+
+func recordInstallation(s safefs.Snapshot, path string, digest safefs.Digest) {
+	s.Files[path] = digest
+	for i := strings.LastIndexByte(path, '/'); i >= 0; i = strings.LastIndexByte(path, '/') {
+		path = path[:i]
+		s.Dirs[path] = true
+	}
 }
 
 func structuralPaths(s safefs.Snapshot, entries []protocol.Entry) map[string]bool {
