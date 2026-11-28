@@ -5,10 +5,14 @@
 | 作業 | 読む資料 |
 | --- | --- |
 | 新規企画の受入条件、並列開発、独立レビュー、PRの確認 | [開発の進め方](development-workflow.md) |
-| Workerの競合や再試行、Webhook受付、永続化、復旧、解析器の設計や検証 | [テストと信頼性](testing-and-reliability.md) |
+| Workerの競合や再試行、Webhook受付、永続化、復旧 | [テストと信頼性](testing-and-reliability.md) |
+| 共同編集や同期の設計、再接続、権限失効、下書きの復元 | [テストと信頼性](testing-and-reliability.md#同期する本文と削除の検証) |
+| 言語処理系や解析器の設計、ソース位置、資源上限、独立期待値 | [入力の扱いと位置](testing-and-reliability.md#解析の対象範囲と途中結果)・[期待値と検証範囲](testing-and-reliability.md#期待値の根拠と検証範囲) |
+| ブラウザの入力試験、OSのIME | [ブラウザとOSの入力試験](testing-and-reliability.md#ブラウザとosの入力試験) |
 | Dockerの権限・容量・後片付け、公開トンネルや外部サービスを使う試験 | [実行環境と運用](environment-and-operations.md) |
+| WALデータベースのバックアップと復元、旧端末の再参加 | [バックアップと復元](environment-and-operations.md#walデータベースのバックアップと復元) |
 | 日本語の技術文書やUI文言を書く、推敲する、レビューする | [日本語技術文書の書き方](japanese-writing.md) |
-| 適用条件が抜けた文、特定の処理段階を全体に広げた文を見直す | [失敗事例](lessons-learned.md) |
+| 技術文書での条件の欠落、CI通過後の仕様の不具合、回帰試験のタイムアウトを調べる | [失敗事例](lessons-learned.md) |
 
 ## 知見の追加と更新
 
