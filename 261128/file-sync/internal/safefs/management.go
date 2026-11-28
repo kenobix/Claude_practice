@@ -29,7 +29,7 @@ type Managed struct {
 
 func StageName(name string) bool {
 	id, suffix, ok := strings.Cut(name, ".")
-	if !ok || len(id) != 32 || (suffix != "incoming" && suffix != "local" && suffix != "before") {
+	if !ok || len(id) != 32 || (suffix != "incoming" && suffix != "local" && suffix != "before" && suffix != "outgoing") {
 		return false
 	}
 	return strings.Trim(id, "0123456789abcdef") == ""

@@ -1,8 +1,8 @@
-name: File sync Phase 1
+name: File sync
 
 on:
   push:
-    branches: [feat/file-sync]
+    branches: [feat/file-sync, main]
     paths:
       - '261128/**'
       - '.github/workflows/file-sync.yml'
@@ -55,7 +55,7 @@ jobs:
           test -z "$(gofmt -l cmd internal)"
           go vet -mod=readonly ./...
           go build -mod=readonly -o "$RUNNER_TEMP/file-sync" ./cmd/file-sync
-      - name: Run Phase 1 tests
+      - name: Run local and hub sync tests
         run: go test -mod=readonly -v -count=1 -timeout=4m ./...
       - name: Run the race detector
         run: go test -mod=readonly -race -count=1 -timeout=4m ./...

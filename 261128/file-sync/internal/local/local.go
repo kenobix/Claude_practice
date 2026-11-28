@@ -2,12 +2,11 @@ package local
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/kenobix/Claude_practice/261128/file-sync/internal/protocol"
 	"github.com/kenobix/Claude_practice/261128/file-sync/internal/safefs"
 )
 
@@ -26,8 +25,12 @@ type Request struct {
 }
 
 type Status struct {
-	Bases map[string]Base `json:"baseline"`
-	Plans []Plan          `json:"plans"`
+	Bases            map[string]Base   `json:"baseline"`
+	Plans            []Plan            `json:"plans"`
+	Registration     *Registration     `json:"registration,omitempty"`
+	RegistrationPlan map[string]Base   `json:"registration_plan,omitempty"`
+	Outbox           []Outgoing        `json:"outbox,omitempty"`
+	Holds            map[string]string `json:"holds,omitempty"`
 }
 
 func Init(ctx context.Context, volume, path string) (err error) {
@@ -104,27 +107,54 @@ func Inspect(ctx context.Context, volume, path string) (status Status, err error
 	if err != nil {
 		return Status{}, err
 	}
-	status.Bases = make(map[string]Base)
-	rows, err := db.conn.QueryContext(ctx, "SELECT path,revision,hash,size FROM baseline ORDER BY path")
+	status.Bases, err = db.bases(ctx)
 	if err != nil {
 		return Status{}, err
+	}
+	status.Registration, err = db.registration(ctx)
+	if err != nil {
+		return Status{}, err
+	}
+	if status.Registration != nil && !status.Registration.Complete {
+		items, err := db.registrationItems(ctx)
+		if err != nil {
+			return Status{}, err
+		}
+		status.RegistrationPlan = make(map[string]Base, len(items))
+		for _, item := range items {
+			status.RegistrationPlan[item.path] = item.base
+		}
+	}
+	status.Outbox, err = db.outbox(ctx)
+	if err != nil {
+		return Status{}, err
+	}
+	status.Holds, err = db.holds(ctx)
+	return status, err
+}
+
+func (s *stateDB) bases(ctx context.Context) (map[string]Base, error) {
+	bases := make(map[string]Base)
+	rows, err := s.conn.QueryContext(ctx, "SELECT path,revision,hash,size FROM baseline ORDER BY path")
+	if err != nil {
+		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var path string
 		var base Base
 		if err := rows.Scan(&path, &base.Revision, &base.Hash, &base.Size); err != nil {
-			return Status{}, err
+			return nil, err
 		}
 		if err := safefs.Validate(path); err != nil {
-			return Status{}, err
+			return nil, err
 		}
-		if len(status.Bases) >= planLimit {
-			return Status{}, safefs.ErrLimit
+		if len(bases) >= planLimit {
+			return nil, safefs.ErrLimit
 		}
-		status.Bases[path] = base
+		bases[path] = base
 	}
-	return status, rows.Err()
+	return bases, rows.Err()
 }
 
 func Copy(ctx context.Context, req Request) error {
@@ -147,6 +177,7 @@ type engine struct {
 	destination *safefs.Dir
 	db          *stateDB
 	notify      func(event) error
+	fetch       func(safefs.Digest) ([]byte, error)
 }
 
 func run(ctx context.Context, req Request, recoveryOnly bool, notify func(event) error) (err error) {
@@ -203,12 +234,19 @@ func run(ctx context.Context, req Request, recoveryOnly bool, notify func(event)
 		return err
 	}
 	defer func() { err = errors.Join(err, db.close()) }()
+	reg, err := db.registration(ctx)
+	if err != nil {
+		return err
+	}
+	if reg != nil {
+		return errors.New("registered root cannot be a manual copy or recovery destination")
+	}
 	e := engine{ctx: ctx, req: req, source: source, destination: destination, db: db, notify: notify}
 	plans, err := db.plans(ctx)
 	if err != nil {
 		return err
 	}
-	if _, _, err := db.usage(plans); err != nil {
+	if _, _, err := db.usage(ctx, plans); err != nil {
 		return err
 	}
 	recovered, err := e.recover(plans)
@@ -321,7 +359,7 @@ func (e *engine) copy(input, output safefs.Snapshot, existing []Plan) error {
 	if len(existing)+len(requested) > planLimit {
 		return fmt.Errorf("plan count: %w", safefs.ErrLimit)
 	}
-	count, size, err := e.db.usage(existing)
+	count, size, err := e.db.usage(e.ctx, existing)
 	if err != nil {
 		return err
 	}
@@ -348,10 +386,4 @@ func (e *engine) copy(input, output safefs.Snapshot, existing []Plan) error {
 	return nil
 }
 
-func newID() (string, error) {
-	var entropy [16]byte
-	if _, err := rand.Read(entropy[:]); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(entropy[:]), nil
-}
+func newID() (string, error) { return protocol.NewID() }

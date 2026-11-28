@@ -5,20 +5,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"net/url"
-	"strings"
 
+	"github.com/kenobix/Claude_practice/261128/file-sync/internal/dbstore"
 	"github.com/kenobix/Claude_practice/261128/file-sync/internal/safefs"
-	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/sys/unix"
 )
 
-const (
-	pageSize      = 4096
-	pageLimit     = 8192
-	metadataLimit = 128 << 20
-	planLimit     = 4096
-)
+const planLimit = 4096
 
 type Base struct {
 	Revision int64 `json:"revision"`
@@ -47,6 +40,7 @@ type stateDB struct {
 	manager *safefs.Managed
 	db      *sql.DB
 	conn    *sql.Conn
+	store   *dbstore.Store
 }
 
 const schema = `
@@ -80,187 +74,63 @@ PRAGMA user_version=1;
 `
 
 func openState(ctx context.Context, manager *safefs.Managed, initialize bool) (*stateDB, error) {
-	name, err := manager.State.Anchor(safefs.StateDB)
+	store, err := dbstore.Open(ctx, manager, initialize, func(store *dbstore.Store, rootID string) error {
+		return setupClient(ctx, store, initialize, rootID)
+	})
 	if err != nil {
 		return nil, err
 	}
-	var marker strings.Builder
-	digest, _, err := manager.State.ReadPrivate(safefs.RootID, &marker)
-	if err != nil {
-		return nil, err
-	}
-	rootID := marker.String()
-	if digest.Size != 32 || !safefs.StageName(rootID+".incoming") {
-		return nil, errors.New("invalid root identity")
-	}
-	db, err := sql.Open("sqlite3", (&url.URL{
-		Scheme: "file", Path: name, RawQuery: "mode=rw&_synchronous=FULL&_foreign_keys=on",
-	}).String())
-	if err != nil {
-		return nil, err
-	}
-	db.SetMaxOpenConns(1)
-	db.SetMaxIdleConns(1)
-	s := &stateDB{manager: manager, db: db}
-	if err := s.checkMetadata(); err != nil {
-		db.Close()
-		return nil, err
-	}
-	s.conn, err = db.Conn(ctx)
-	if err != nil {
-		db.Close()
-		return nil, err
-	}
-	if err := s.configure(ctx, initialize, rootID); err != nil {
-		return nil, errors.Join(err, s.close())
-	}
-	return s, nil
+	return &stateDB{manager: manager, conn: store.Conn, db: store.DB, store: store}, nil
 }
 
-func (s *stateDB) close() error {
-	return errors.Join(s.conn.Close(), s.db.Close())
-}
-
-func (s *stateDB) configure(ctx context.Context, initialize bool, rootID string) error {
-	if err := s.expect(ctx, "SELECT sqlite_version()", "3.53.4"); err != nil {
-		return err
-	}
+func setupClient(ctx context.Context, store *dbstore.Store, initialize bool, rootID string) error {
 	if initialize {
-		if _, err := s.conn.ExecContext(ctx, "PRAGMA page_size=4096"); err != nil {
-			return err
-		}
-		if err := s.expect(ctx, "PRAGMA journal_mode=WAL", "wal"); err != nil {
-			return err
-		}
-	}
-	settings := []struct{ set, read, want string }{
-		{"", "page_size", "4096"},
-		{"", "journal_mode", "wal"},
-		{"", "synchronous", "2"},
-		{"", "foreign_keys", "1"},
-		{"max_page_count=8192", "max_page_count", "8192"},
-		{"cache_spill=0", "cache_spill", "0"},
-		{"temp_store=MEMORY", "temp_store", "2"},
-		{"wal_autocheckpoint=0", "wal_autocheckpoint", "0"},
-		{"mmap_size=0", "mmap_size", "0"},
-	}
-	for _, setting := range settings {
-		if setting.set != "" {
-			if _, err := s.conn.ExecContext(ctx, "PRAGMA "+setting.set); err != nil {
-				return err
-			}
-		}
-		if err := s.expect(ctx, "PRAGMA "+setting.read, setting.want); err != nil {
-			return err
-		}
-	}
-	if initialize {
-		err := s.write(ctx, func(tx *sql.Tx) error {
+		return store.Write(ctx, func(tx *sql.Tx) error {
 			if _, err := tx.ExecContext(ctx, schema); err != nil {
 				return err
 			}
-			_, err := tx.ExecContext(ctx, "INSERT INTO identity VALUES (1, ?)", rootID)
+			if _, err := tx.ExecContext(ctx, "INSERT INTO identity VALUES (1, ?)", rootID); err != nil {
+				return err
+			}
+			_, err := tx.ExecContext(ctx, networkSchema)
 			return err
 		})
-		if err != nil {
-			return err
-		}
-	}
-	if err := s.expect(ctx, "PRAGMA user_version", "1"); err != nil {
-		return err
-	}
-	if err := s.expect(ctx, "PRAGMA integrity_check", "ok"); err != nil {
-		return err
-	}
-	rows, err := s.conn.QueryContext(ctx, "PRAGMA foreign_key_check")
-	if err != nil {
-		return err
-	}
-	hasViolation := rows.Next()
-	if err := errors.Join(rows.Err(), rows.Close()); err != nil {
-		return err
-	}
-	if hasViolation {
-		return errors.New("SQLite foreign_key_check found a violation")
 	}
 	var actual string
-	err = s.conn.QueryRowContext(ctx, "SELECT root_id FROM identity WHERE singleton=1").Scan(&actual)
-	if err != nil {
+	if err := store.Conn.QueryRowContext(ctx, "SELECT root_id FROM identity WHERE singleton=1").Scan(&actual); err != nil {
 		return err
 	}
 	if actual != rootID {
 		return errors.New("state database and root identity disagree")
 	}
-	return s.checkMetadata()
+	var version int
+	if err := store.Conn.QueryRowContext(ctx, "PRAGMA user_version").Scan(&version); err != nil {
+		return err
+	}
+	switch version {
+	case 1:
+		// A hub also has a root marker and can have user_version 1.
+		// Require the old client schema before applying the additive migration.
+		if err := store.Expect(ctx, "SELECT count(*) FROM sqlite_schema WHERE type='table' AND name IN ('baseline','plans')", "2"); err != nil {
+			return err
+		}
+		return store.Write(ctx, func(tx *sql.Tx) error {
+			_, err := tx.ExecContext(ctx, networkSchema)
+			return err
+		})
+	case 2:
+		return nil
+	default:
+		return errors.New("unsupported client database schema")
+	}
 }
 
-func (s *stateDB) expect(ctx context.Context, query, want string) error {
-	var value string
-	if err := s.conn.QueryRowContext(ctx, query).Scan(&value); err != nil {
-		return fmt.Errorf("%s: %w", query, err)
-	}
-	if value != want {
-		return fmt.Errorf("%s: got %q, want %q", query, value, want)
-	}
-	return nil
-}
+func (s *stateDB) close() error { return s.store.Close() }
 
-func (s *stateDB) checkMetadata() error {
-	if err := s.manager.ValidateStateFiles(); err != nil {
-		return err
-	}
-	size, err := s.manager.MetadataSize()
-	if err != nil {
-		return err
-	}
-	_, dbSize, err := s.manager.State.Info(safefs.StateDB)
-	if err != nil {
-		return err
-	}
-	if size > metadataLimit || dbSize > pageSize*pageLimit {
-		return fmt.Errorf("SQLite management budget: %w", safefs.ErrLimit)
-	}
-	return nil
-}
-
-func (s *stateDB) checkpoint(ctx context.Context) error {
-	if err := s.checkMetadata(); err != nil {
-		return err
-	}
-	var busy, log, done int
-	err := s.conn.QueryRowContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)").Scan(&busy, &log, &done)
-	if err != nil {
-		return err
-	}
-	if busy != 0 || log != 0 || done != 0 {
-		return fmt.Errorf("SQLite WAL checkpoint incomplete (%d, %d, %d)", busy, log, done)
-	}
-	_, size, err := s.manager.State.Info(safefs.StateDB + "-wal")
-	if err != nil {
-		return err
-	}
-	if size != 0 {
-		return errors.New("SQLite WAL did not truncate")
-	}
-	return s.checkMetadata()
-}
+func (s *stateDB) checkpoint(ctx context.Context) error { return s.store.Checkpoint(ctx) }
 
 func (s *stateDB) write(ctx context.Context, perform func(*sql.Tx) error) error {
-	if err := s.checkpoint(ctx); err != nil {
-		return err
-	}
-	tx, err := s.conn.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-	if err := perform(tx); err != nil {
-		return err
-	}
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("SQLite commit outcome requires inspection after reopening: %w", err)
-	}
-	return s.checkMetadata()
+	return s.store.Write(ctx, perform)
 }
 
 func (s *stateDB) lookup(ctx context.Context, path string) (Base, error) {
@@ -321,14 +191,20 @@ WHERE id=? AND status IN ('pending','conflict')`, p.Status, p.Local.Hash, p.Loca
 
 func (s *stateDB) complete(ctx context.Context, p Plan) error {
 	return s.write(ctx, func(tx *sql.Tx) error {
-		if err := mutateOne(ctx, tx, `
-INSERT INTO baseline (path,revision,hash,size) VALUES (?,?,?,?)
-ON CONFLICT(path) DO UPDATE SET revision=excluded.revision, hash=excluded.hash, size=excluded.size
-WHERE baseline.revision=?`, p.Path, p.Target.Revision, p.Target.Hash, p.Target.Size, p.BaseRevision); err != nil {
+		if err := putBase(ctx, tx, p.Path, p.BaseRevision, p.Target); err != nil {
 			return err
 		}
 		return mutateOne(ctx, tx, "UPDATE plans SET status='complete' WHERE id=? AND status='pending'", p.ID)
 	})
+}
+
+func putBase(ctx context.Context, tx *sql.Tx, path string, previous int64, target Base) error {
+	if previous == 0 {
+		return mutateOne(ctx, tx, "INSERT INTO baseline (path,revision,hash,size) VALUES (?,?,?,?)",
+			path, target.Revision, target.Hash, target.Size)
+	}
+	return mutateOne(ctx, tx, "UPDATE baseline SET revision=?,hash=?,size=? WHERE path=? AND revision=?",
+		target.Revision, target.Hash, target.Size, path, previous)
 }
 
 func mutateOne(ctx context.Context, tx *sql.Tx, statement string, args ...any) error {
@@ -346,7 +222,7 @@ func mutateOne(ctx context.Context, tx *sql.Tx, statement string, args ...any) e
 	return nil
 }
 
-func (s *stateDB) usage(plans []Plan) (count int, bytes int64, err error) {
+func (s *stateDB) usage(ctx context.Context, plans []Plan) (count int, bytes int64, err error) {
 	reserved := make(map[string]int64)
 	retained := make(map[string]int64)
 	for _, p := range plans {
@@ -362,6 +238,17 @@ func (s *stateDB) usage(plans []Plan) (count int, bytes int64, err error) {
 		}
 		if p.LocalReserved {
 			reserved[p.LocalCopy()] = p.Local.Size
+		}
+	}
+	outbox, err := s.outbox(ctx)
+	if err != nil {
+		return 0, 0, err
+	}
+	for _, item := range outbox {
+		if item.Status == "done" {
+			retained[item.name()] = item.Change.Size
+		} else {
+			reserved[item.name()] = item.Change.Size
 		}
 	}
 	for _, size := range reserved {

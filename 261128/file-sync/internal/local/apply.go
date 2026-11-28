@@ -293,7 +293,7 @@ func (e *engine) retainConflict(p Plan) error {
 			if err != nil {
 				return errors.Join(hold, err)
 			}
-			count, size, err := e.db.usage(plans)
+			count, size, err := e.db.usage(e.ctx, plans)
 			if err != nil {
 				return errors.Join(hold, err)
 			}
@@ -343,7 +343,21 @@ func (e *engine) acquire(p Plan, name string, want safefs.Digest, from *safefs.D
 		return nil, err
 	}
 	var data bytes.Buffer
-	actual, _, err := from.ReadUser(p.Path, &data)
+	var actual safefs.Digest
+	if from == nil {
+		if e.fetch == nil {
+			return nil, errors.New("missing candidate source")
+		}
+		body, fetchErr := e.fetch(want)
+		if fetchErr != nil {
+			return nil, fetchErr
+		}
+		_, _ = data.Write(body)
+		actual = want // The protocol client validated the full response.
+		err = nil
+	} else {
+		actual, _, err = from.ReadUser(p.Path, &data)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("read source of %s: %w", name, err)
 	}
