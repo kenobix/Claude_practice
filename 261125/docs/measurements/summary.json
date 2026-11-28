@@ -1,0 +1,178 @@
+{
+  "measuredAtUtc": "2026-11-26T08:04:51.193Z",
+  "node": "v22.22.2",
+  "sqlite": "3.51.2",
+  "kernel": "6.6.87.2-microsoft-standard-WSL2",
+  "arch": "x64",
+  "cpu": "AMD Ryzen 7 7735HS with Radeon Graphics",
+  "logicalCpuCount": 8,
+  "browser": "HeadlessChrome/159.0.8154.6",
+  "seed": 261125,
+  "trials": 5,
+  "onlineUpdatesPerTrial": 100,
+  "initialBodyUtf16": 1024,
+  "updateBodyUtf16": 16,
+  "pacingWaitMs": 110,
+  "disconnectedUpdatesPerProfile": 5,
+  "deliveryMs": {
+    "n": 500,
+    "min": 6.572277999999642,
+    "median": 11.689675999999963,
+    "p95": 22.334076000013738,
+    "max": 31.104850000003353
+  },
+  "ackMs": {
+    "n": 500,
+    "min": 7.06664300000557,
+    "median": 11.464352500001041,
+    "p95": 21.6278239999956,
+    "max": 31.925244999991264
+  },
+  "reconnectPeerAppliedMs": {
+    "n": 5,
+    "min": 207.01205199999822,
+    "median": 227.42452399999456,
+    "p95": 366.2822670000023,
+    "max": 366.2822670000023
+  },
+  "reconnectLastAckMs": {
+    "n": 5,
+    "min": 206.8618260000003,
+    "median": 228.96293499999592,
+    "p95": 368.68698199999926,
+    "max": 368.68698199999926
+  },
+  "reconnectVisibleAndSavedMs": {
+    "n": 5,
+    "min": 289.5407620000042,
+    "median": 377.7469689999998,
+    "p95": 466.99371700000484,
+    "max": 466.99371700000484
+  },
+  "onlineWireBytes": [
+    {
+      "A": {
+        "sent": 17600,
+        "received": 20188
+      },
+      "B": {
+        "sent": 0,
+        "received": 6894
+      }
+    },
+    {
+      "A": {
+        "sent": 17600,
+        "received": 20188
+      },
+      "B": {
+        "sent": 0,
+        "received": 6894
+      }
+    },
+    {
+      "A": {
+        "sent": 17600,
+        "received": 20188
+      },
+      "B": {
+        "sent": 0,
+        "received": 6894
+      }
+    },
+    {
+      "A": {
+        "sent": 17600,
+        "received": 20188
+      },
+      "B": {
+        "sent": 0,
+        "received": 6894
+      }
+    },
+    {
+      "A": {
+        "sent": 17600,
+        "received": 20188
+      },
+      "B": {
+        "sent": 0,
+        "received": 6894
+      }
+    }
+  ],
+  "reconnectWireBytes": [
+    {
+      "A": {
+        "sent": 0,
+        "received": 451
+      },
+      "B": {
+        "sent": 978,
+        "received": 4070
+      }
+    },
+    {
+      "A": {
+        "sent": 215,
+        "received": 451
+      },
+      "B": {
+        "sent": 978,
+        "received": 4364
+      }
+    },
+    {
+      "A": {
+        "sent": 0,
+        "received": 451
+      },
+      "B": {
+        "sent": 978,
+        "received": 4070
+      }
+    },
+    {
+      "A": {
+        "sent": 0,
+        "received": 451
+      },
+      "B": {
+        "sent": 977,
+        "received": 4070
+      }
+    },
+    {
+      "A": {
+        "sent": 215,
+        "received": 451
+      },
+      "B": {
+        "sent": 978,
+        "received": 4364
+      }
+    }
+  ],
+  "onlineDatabaseGrowth": [
+    {
+      "logicalBytes": 53248,
+      "mainPlusWalBytes": 2261880
+    },
+    {
+      "logicalBytes": 53248,
+      "mainPlusWalBytes": 2261880
+    },
+    {
+      "logicalBytes": 53248,
+      "mainPlusWalBytes": 2257760
+    },
+    {
+      "logicalBytes": 53248,
+      "mainPlusWalBytes": 2261880
+    },
+    {
+      "logicalBytes": 53248,
+      "mainPlusWalBytes": 2286600
+    }
+  ]
+}
