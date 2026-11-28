@@ -1,8 +1,10 @@
 # 初回同期の性能計測
 
+掲載する15試行は独立レビュー修正前の製品コードSHA `5534795714958e52e8c6f05fc9f7a4a740dabf89` で取得した。修正後の試行は受入記録に掲載する。 [修正後の照合](acceptance.md#修正後の計測照合)
+
 ## 再現
 
-LinuxまたはWSL2のLinuxファイルシステムで、 `261128/file-sync` から実行する。Python 3の標準ライブラリと `findmnt` を使う。時間を記録する前に固定Goを使ってCLIをビルドする。 [Goと依存の再現](toolchain.md#goと依存の再現)
+LinuxまたはWSL2のLinuxファイルシステムで、 `261128/file-sync` から実行する。Python 3の標準ライブラリと `findmnt` を使う。過去の15試行を再現する場合は、計測スクリプトを含むレビュー前のHEAD `0c669d42802e81a142ad46c3e97d4e956b38e50e` を別のcloneにチェックアウトし、固定GoでCLIをビルドする。修正後のコードを測る場合は、その製品コードSHAを指定する。 [Goと依存の再現](toolchain.md#goと依存の再現)
 
 ```bash
 export GOTOOLCHAIN=local GOWORK=off CGO_ENABLED=1

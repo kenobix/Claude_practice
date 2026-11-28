@@ -1,6 +1,6 @@
 # デモの台本と再生成
 
-4分の無音MP4。日本語字幕を画面下に焼き込んだ。構成図は説明用。端末画面は実演で取得した終了コード・標準エラーと、 `status`・`conflicts` の項目、読取専用SQLの受理履歴、本文の独立照合を抜粋して組み直した。コマンドの共通引数を省略し、一時パスや認証トークンは表示しない。障害試験と性能計測の場面は別に実行して得た結果を表示する。
+Phase 5の製品コードSHA `5534795714958e52e8c6f05fc9f7a4a740dabf89` で収録した4分の無音MP4。日本語字幕を画面下に焼き込んだ。構成図は説明用。端末画面は実演で取得した終了コード・標準エラーと、 `status`・`conflicts` の項目、読取専用SQLの受理履歴、本文の独立照合を抜粋して組み直した。コマンドの共通引数を省略し、一時パスや認証トークンは表示しない。障害試験と性能計測の場面は別に実行して得た結果を表示する。
 
 | 時間 | 台本と画面 |
 | --- | --- |
@@ -16,7 +16,7 @@
 
 ## 再生成
 
-`261128/file-sync` から実行する。製品のGo環境に加え、Pillow 12.2.0、FFmpeg 6.1.1（`libx264` あり）、Noto Sans CJK JPとDejaVu Sans Monoを使った。Pythonは3.12.3。既定と異なるフォントのパスは `--font`、`--mono` で指定できる。 [固定Goの準備](../file-sync/docs/toolchain.md#goと依存の再現)
+別のcloneにレビュー前のHEAD `0c669d42802e81a142ad46c3e97d4e956b38e50e` をチェックアウトし、`261128/file-sync` から実行する。製品のGo環境に加え、Pillow 12.2.0、FFmpeg 6.1.1（`libx264` あり）、Noto Sans CJK JPとDejaVu Sans Monoを使った。Pythonは3.12.3。既定と異なるフォントのパスは `--font`、`--mono` で指定できる。 [固定Goの準備](../file-sync/docs/toolchain.md#goと依存の再現)
 
 ```bash
 export CGO_ENABLED=1 GOTOOLCHAIN=local GOWORK=off

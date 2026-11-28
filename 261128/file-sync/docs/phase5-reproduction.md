@@ -7,7 +7,7 @@ export CGO_ENABLED=1 GOTOOLCHAIN=local GOWORK=off
 go mod download all
 go mod verify
 result=$(mktemp -d)
-product=5534795714958e52e8c6f05fc9f7a4a740dabf89
+product=4a3ef75e26a19e54b7848cc3528021e27450b043
 python3 -B tools/verify_mvp.py demo --product-sha "$product" --output "$result/demo.json"
 ```
 
@@ -63,4 +63,4 @@ python3 -B tools/verify_mvp.py demo --output "$result/demo.json"
 )
 ```
 
-レビューで特定のHEADを再現する場合は、clone後にそのSHAをチェックアウトしてから実行する。通常・raceの試験と任意の隔離・大容量試験の前提条件は別資料に記載した。 [Phase 4の再現手順](phase4-verification.md#再現手順)・[Draft PR #13](https://github.com/kenobix/Claude_practice/pull/13)
+レビューで特定のHEADを再現する場合は、clone後にそのSHAをチェックアウトしてから実行する。通常・raceの試験と任意の隔離・大容量試験の前提条件は別資料に記載した。通常・raceの葉テストの集計は受入記録のコマンドで再現できる。 [Phase 4の再現手順](phase4-verification.md#再現手順)・[集計手順](acceptance.md#葉テストの集計)・[Draft PR #13](https://github.com/kenobix/Claude_practice/pull/13)

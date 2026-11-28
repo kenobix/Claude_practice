@@ -2,7 +2,7 @@
 
 2つの作業フォルダでファイルの作成・更新・削除を同期する。通信途絶や同時編集が起きたとき、どの版が受理され、元の内容がどこに残るかを確認できる。ハブと2クライアントは同じマシンで動かす。
 
-[静的な紹介ページの公開予定先](https://kenobix.github.io/Claude_practice/261128/)・[日本語字幕付きデモ（4分）](demo/file-sync.mp4)・[台本・再生成](demo/storyboard.md)
+[静的な紹介ページの公開予定先](https://kenobix.github.io/Claude_practice/261128/)・[Phase 5で収録した日本語字幕付きデモ（4分）](demo/file-sync.mp4)・[台本・再生成](demo/storyboard.md)
 
 ## 構成
 
@@ -50,7 +50,9 @@ Syncthingは、接続先の端末から受け取ったインデックスを使�
 
 Phase 4では、HTTP応答前後、受信のrename前後、削除の退避・unlink前後を含む境界で実際に子プロセスをSIGKILLした。コミット後に応答を失った場合も同じ操作IDは1件だけ受理された。復元後は正しく認証しても旧世代の更新がHTTP 409となった。詳細の試験コマンドは再現手順に掲載した。 [障害・容量試験](file-sync/docs/phase4-verification.md)・[応答消失と旧世代拒否の再現](file-sync/docs/phase5-reproduction.md#応答消失と旧世代拒否)
 
-各条件を新しいハブと端末で5回計測した。AのseedからBのpullまでの中央値は、空ファイル100件で7.13秒、1,000件で71.17秒、10 MiBファイル1件で0.89秒だった。空ファイルの実体は1件にまとまり、PUT・GETの各要求数は100件の条件で100回、1,000件の条件で1,000回だった。 [計測区間、走査時間と比較表](file-sync/docs/measurements.md)・[試行別JSON](file-sync/docs/measurement-results.json)
+製品コードSHA `5534795714958e52e8c6f05fc9f7a4a740dabf89` の時点で、条件ごとに新しいハブと端末を使って5回計測した。AのseedからBのpullまでの中央値は、空ファイル100件で7.13秒、1,000件で71.17秒、10 MiBファイル1件で0.89秒だった。空ファイルの実体は1件にまとまり、PUT・GETの各要求数は100件の条件で100回、1,000件の条件で1,000回だった。 [計測区間、走査時間と比較表](file-sync/docs/measurements.md)・[試行別JSON](file-sync/docs/measurement-results.json)
+
+独立レビューで見つかった構造衝突、端末の件数上限、入れ子ルートの初期化を修正し、発生時の本文、基準版、履歴の組を再検証した。修正後の検証と計測は受入記録に掲載した。
 
 [Phase 0〜5の受入記録](file-sync/docs/acceptance.md)・[固定fixture](file-sync/fixtures/expected.json)・[作業記録](work_log.md)・[元計画](../261014/plan_file_sync.md)
 
