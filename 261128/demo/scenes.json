@@ -1,0 +1,13 @@
+[
+  {"seconds": 23, "id": "intro", "title": "ファイル同期ソフト", "caption": "同じマシンのA・Bが、localhostのハブを介してファイルを同期します。"},
+  {"seconds": 21, "id": "register", "title": "Aから初回登録し、Bで受信", "caption": "Aで seed、Bで pull を実行します。入力は abc と、0バイトの空ファイルです。"},
+  {"seconds": 20, "id": "initial", "title": "本文と基準版を照合", "caption": "2つのパスは版1で、作成の受理は各1件。空ファイルには本文のhashと版があります。"},
+  {"seconds": 23, "id": "hold", "title": "同じ版から別々に編集", "caption": "Aで hello、Bで world を保存します。Aが先に受理され、Bは終了コード3で保留します。"},
+  {"seconds": 21, "id": "copies", "title": "競合の両候補を保存", "caption": "Bの元パスは world、基準は abc の版1です。hello と world の管理コピーも照合します。"},
+  {"seconds": 26, "id": "resolve", "title": "Bの候補を選んで解決", "caption": "表示された世代と版を指定し、Bの world を選びます。A・B・ハブは版3に揃います。"},
+  {"seconds": 21, "id": "offline", "title": "Bが同期しない間にAで削除", "caption": "別の一時領域で abc の版1から始めます。Bを同期せず、Aから削除を送ります。"},
+  {"seconds": 31, "id": "deleted", "title": "Bの復帰と削除退避", "caption": "復帰したBは旧本文を退避して削除を反映します。再同期してもファイルは復活せず、受理履歴は2件です。"},
+  {"seconds": 21, "id": "recovery", "title": "応答消失と旧世代の拒否", "caption": "コミット後の応答消失では同じIDを再送します。古いバックアップからの復元では旧世代の更新を拒否します。"},
+  {"seconds": 19, "id": "measure", "title": "初回同期の計測", "caption": "各条件を5回、空のハブから試しました。空ファイルでは件数、10 MiBでは本文転送を確認できます。"},
+  {"seconds": 14, "id": "limits", "title": "対象環境と検証範囲", "caption": "localhostのLinux環境で、同期中は外部編集を止めます。削除も伝播するため、長期バックアップは別に保管します。"}
+]

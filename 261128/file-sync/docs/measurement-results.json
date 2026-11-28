@@ -1,0 +1,636 @@
+{
+  "product_sha": "5534795714958e52e8c6f05fc9f7a4a740dabf89",
+  "go": "go1.27.4",
+  "sqlite": "3.53.4",
+  "result": "pass",
+  "environment": {
+    "os": "Ubuntu 24.04.4 LTS",
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "arch": "x86_64",
+    "cpu": "AMD Ryzen 7 7735HS with Radeon Graphics",
+    "logical_cpus": 8,
+    "memory_bytes": 29429559296,
+    "filesystem": "ext4",
+    "python": "3.12.3",
+    "transport": "IPv4 localhost HTTP via local Python meter",
+    "clock": "time.perf_counter_ns",
+    "warmup_trials": 0,
+    "trials_per_case": 5,
+    "scan_scope": "A standalone scan process including JSON stdout",
+    "storage_scope": "logical lengths after B exits; hub still running; before SQLite observer"
+  },
+  "cases": [
+    {
+      "files": 100,
+      "content": "E",
+      "file_bytes": 0,
+      "statistics": {
+        "scan_a_ns": {
+          "min": 15022649,
+          "median": 15586027,
+          "max": 16476622
+        },
+        "seed_a_ns": {
+          "min": 4312344284,
+          "median": 4652071240,
+          "max": 5659774236
+        },
+        "pull_b_ns": {
+          "min": 2369785292,
+          "median": 2480406477,
+          "max": 3053723716
+        },
+        "convergence_ns": {
+          "min": 6726134142,
+          "median": 7132477717,
+          "max": 8713497952
+        }
+      },
+      "samples": [
+        {
+          "scan_a_ns": 16476622,
+          "seed_a_ns": 4652071240,
+          "pull_b_ns": 2480406477,
+          "convergence_ns": 7132477717,
+          "http": {
+            "blob_put": {
+              "requests": 100,
+              "request_body_bytes": 0,
+              "response_body_bytes": 9300
+            },
+            "blob_get": {
+              "requests": 100,
+              "request_body_bytes": 0,
+              "response_body_bytes": 0
+            },
+            "manifest": {
+              "requests": 2,
+              "request_body_bytes": 0,
+              "response_body_bytes": 21469
+            },
+            "changes": {
+              "requests": 100,
+              "request_body_bytes": 26900,
+              "response_body_bytes": 33600
+            }
+          },
+          "storage": {
+            "db_bytes": 163840,
+            "wal_bytes": 16512,
+            "shm_bytes": 32768,
+            "blob_files": 1,
+            "blob_bytes": 0
+          }
+        },
+        {
+          "scan_a_ns": 15022649,
+          "seed_a_ns": 5659774236,
+          "pull_b_ns": 3053723716,
+          "convergence_ns": 8713497952,
+          "http": {
+            "blob_put": {
+              "requests": 100,
+              "request_body_bytes": 0,
+              "response_body_bytes": 9300
+            },
+            "blob_get": {
+              "requests": 100,
+              "request_body_bytes": 0,
+              "response_body_bytes": 0
+            },
+            "manifest": {
+              "requests": 2,
+              "request_body_bytes": 0,
+              "response_body_bytes": 21469
+            },
+            "changes": {
+              "requests": 100,
+              "request_body_bytes": 26900,
+              "response_body_bytes": 33600
+            }
+          },
+          "storage": {
+            "db_bytes": 163840,
+            "wal_bytes": 16512,
+            "shm_bytes": 32768,
+            "blob_files": 1,
+            "blob_bytes": 0
+          }
+        },
+        {
+          "scan_a_ns": 15194458,
+          "seed_a_ns": 5163995287,
+          "pull_b_ns": 2396137219,
+          "convergence_ns": 7560132506,
+          "http": {
+            "blob_put": {
+              "requests": 100,
+              "request_body_bytes": 0,
+              "response_body_bytes": 9300
+            },
+            "blob_get": {
+              "requests": 100,
+              "request_body_bytes": 0,
+              "response_body_bytes": 0
+            },
+            "manifest": {
+              "requests": 2,
+              "request_body_bytes": 0,
+              "response_body_bytes": 21469
+            },
+            "changes": {
+              "requests": 100,
+              "request_body_bytes": 26900,
+              "response_body_bytes": 33600
+            }
+          },
+          "storage": {
+            "db_bytes": 163840,
+            "wal_bytes": 16512,
+            "shm_bytes": 32768,
+            "blob_files": 1,
+            "blob_bytes": 0
+          }
+        },
+        {
+          "scan_a_ns": 15598154,
+          "seed_a_ns": 4312344284,
+          "pull_b_ns": 2610103749,
+          "convergence_ns": 6922448033,
+          "http": {
+            "blob_put": {
+              "requests": 100,
+              "request_body_bytes": 0,
+              "response_body_bytes": 9300
+            },
+            "blob_get": {
+              "requests": 100,
+              "request_body_bytes": 0,
+              "response_body_bytes": 0
+            },
+            "manifest": {
+              "requests": 2,
+              "request_body_bytes": 0,
+              "response_body_bytes": 21469
+            },
+            "changes": {
+              "requests": 100,
+              "request_body_bytes": 26900,
+              "response_body_bytes": 33600
+            }
+          },
+          "storage": {
+            "db_bytes": 163840,
+            "wal_bytes": 16512,
+            "shm_bytes": 32768,
+            "blob_files": 1,
+            "blob_bytes": 0
+          }
+        },
+        {
+          "scan_a_ns": 15586027,
+          "seed_a_ns": 4356348850,
+          "pull_b_ns": 2369785292,
+          "convergence_ns": 6726134142,
+          "http": {
+            "blob_put": {
+              "requests": 100,
+              "request_body_bytes": 0,
+              "response_body_bytes": 9300
+            },
+            "blob_get": {
+              "requests": 100,
+              "request_body_bytes": 0,
+              "response_body_bytes": 0
+            },
+            "manifest": {
+              "requests": 2,
+              "request_body_bytes": 0,
+              "response_body_bytes": 21469
+            },
+            "changes": {
+              "requests": 100,
+              "request_body_bytes": 26900,
+              "response_body_bytes": 33600
+            }
+          },
+          "storage": {
+            "db_bytes": 163840,
+            "wal_bytes": 16512,
+            "shm_bytes": 32768,
+            "blob_files": 1,
+            "blob_bytes": 0
+          }
+        }
+      ]
+    },
+    {
+      "files": 1000,
+      "content": "E",
+      "file_bytes": 0,
+      "statistics": {
+        "scan_a_ns": {
+          "min": 70750546,
+          "median": 71480045,
+          "max": 76366133
+        },
+        "seed_a_ns": {
+          "min": 44477503324,
+          "median": 44873695899,
+          "max": 48961273669
+        },
+        "pull_b_ns": {
+          "min": 25802230006,
+          "median": 26426342767,
+          "max": 29985796111
+        },
+        "convergence_ns": {
+          "min": 70688120767,
+          "median": 71171362604,
+          "max": 78947069780
+        }
+      },
+      "samples": [
+        {
+          "scan_a_ns": 71096300,
+          "seed_a_ns": 48961273669,
+          "pull_b_ns": 29985796111,
+          "convergence_ns": 78947069780,
+          "http": {
+            "blob_put": {
+              "requests": 1000,
+              "request_body_bytes": 0,
+              "response_body_bytes": 93000
+            },
+            "blob_get": {
+              "requests": 1000,
+              "request_body_bytes": 0,
+              "response_body_bytes": 0
+            },
+            "manifest": {
+              "requests": 2,
+              "request_body_bytes": 0,
+              "response_body_bytes": 213169
+            },
+            "changes": {
+              "requests": 1000,
+              "request_body_bytes": 269000,
+              "response_body_bytes": 336000
+            }
+          },
+          "storage": {
+            "db_bytes": 1142784,
+            "wal_bytes": 16512,
+            "shm_bytes": 32768,
+            "blob_files": 1,
+            "blob_bytes": 0
+          }
+        },
+        {
+          "scan_a_ns": 72355388,
+          "seed_a_ns": 44477503324,
+          "pull_b_ns": 26210617443,
+          "convergence_ns": 70688120767,
+          "http": {
+            "blob_put": {
+              "requests": 1000,
+              "request_body_bytes": 0,
+              "response_body_bytes": 93000
+            },
+            "blob_get": {
+              "requests": 1000,
+              "request_body_bytes": 0,
+              "response_body_bytes": 0
+            },
+            "manifest": {
+              "requests": 2,
+              "request_body_bytes": 0,
+              "response_body_bytes": 213169
+            },
+            "changes": {
+              "requests": 1000,
+              "request_body_bytes": 269000,
+              "response_body_bytes": 336000
+            }
+          },
+          "storage": {
+            "db_bytes": 1142784,
+            "wal_bytes": 16512,
+            "shm_bytes": 32768,
+            "blob_files": 1,
+            "blob_bytes": 0
+          }
+        },
+        {
+          "scan_a_ns": 70750546,
+          "seed_a_ns": 44915175202,
+          "pull_b_ns": 25802230006,
+          "convergence_ns": 70717405208,
+          "http": {
+            "blob_put": {
+              "requests": 1000,
+              "request_body_bytes": 0,
+              "response_body_bytes": 93000
+            },
+            "blob_get": {
+              "requests": 1000,
+              "request_body_bytes": 0,
+              "response_body_bytes": 0
+            },
+            "manifest": {
+              "requests": 2,
+              "request_body_bytes": 0,
+              "response_body_bytes": 213169
+            },
+            "changes": {
+              "requests": 1000,
+              "request_body_bytes": 269000,
+              "response_body_bytes": 336000
+            }
+          },
+          "storage": {
+            "db_bytes": 1146880,
+            "wal_bytes": 16512,
+            "shm_bytes": 32768,
+            "blob_files": 1,
+            "blob_bytes": 0
+          }
+        },
+        {
+          "scan_a_ns": 71480045,
+          "seed_a_ns": 44873695899,
+          "pull_b_ns": 26426342767,
+          "convergence_ns": 71300038666,
+          "http": {
+            "blob_put": {
+              "requests": 1000,
+              "request_body_bytes": 0,
+              "response_body_bytes": 93000
+            },
+            "blob_get": {
+              "requests": 1000,
+              "request_body_bytes": 0,
+              "response_body_bytes": 0
+            },
+            "manifest": {
+              "requests": 2,
+              "request_body_bytes": 0,
+              "response_body_bytes": 213169
+            },
+            "changes": {
+              "requests": 1000,
+              "request_body_bytes": 269000,
+              "response_body_bytes": 336000
+            }
+          },
+          "storage": {
+            "db_bytes": 1146880,
+            "wal_bytes": 16512,
+            "shm_bytes": 32768,
+            "blob_files": 1,
+            "blob_bytes": 0
+          }
+        },
+        {
+          "scan_a_ns": 76366133,
+          "seed_a_ns": 44734928035,
+          "pull_b_ns": 26436434569,
+          "convergence_ns": 71171362604,
+          "http": {
+            "blob_put": {
+              "requests": 1000,
+              "request_body_bytes": 0,
+              "response_body_bytes": 93000
+            },
+            "blob_get": {
+              "requests": 1000,
+              "request_body_bytes": 0,
+              "response_body_bytes": 0
+            },
+            "manifest": {
+              "requests": 2,
+              "request_body_bytes": 0,
+              "response_body_bytes": 213169
+            },
+            "changes": {
+              "requests": 1000,
+              "request_body_bytes": 269000,
+              "response_body_bytes": 336000
+            }
+          },
+          "storage": {
+            "db_bytes": 1142784,
+            "wal_bytes": 16512,
+            "shm_bytes": 32768,
+            "blob_files": 1,
+            "blob_bytes": 0
+          }
+        }
+      ]
+    },
+    {
+      "files": 1,
+      "content": "M",
+      "file_bytes": 10485760,
+      "statistics": {
+        "scan_a_ns": {
+          "min": 21963748,
+          "median": 22135916,
+          "max": 27275487
+        },
+        "seed_a_ns": {
+          "min": 503479351,
+          "median": 548668697,
+          "max": 700052135
+        },
+        "pull_b_ns": {
+          "min": 335661897,
+          "median": 374160474,
+          "max": 414099913
+        },
+        "convergence_ns": {
+          "min": 866377800,
+          "median": 890594193,
+          "max": 1114152048
+        }
+      },
+      "samples": [
+        {
+          "scan_a_ns": 22977672,
+          "seed_a_ns": 700052135,
+          "pull_b_ns": 414099913,
+          "convergence_ns": 1114152048,
+          "http": {
+            "blob_put": {
+              "requests": 1,
+              "request_body_bytes": 10485760,
+              "response_body_bytes": 100
+            },
+            "blob_get": {
+              "requests": 1,
+              "request_body_bytes": 0,
+              "response_body_bytes": 10485760
+            },
+            "manifest": {
+              "requests": 2,
+              "request_body_bytes": 0,
+              "response_body_bytes": 389
+            },
+            "changes": {
+              "requests": 1,
+              "request_body_bytes": 276,
+              "response_body_bytes": 343
+            }
+          },
+          "storage": {
+            "db_bytes": 53248,
+            "wal_bytes": 16512,
+            "shm_bytes": 32768,
+            "blob_files": 1,
+            "blob_bytes": 10485760
+          }
+        },
+        {
+          "scan_a_ns": 27275487,
+          "seed_a_ns": 646511561,
+          "pull_b_ns": 377388028,
+          "convergence_ns": 1023899589,
+          "http": {
+            "blob_put": {
+              "requests": 1,
+              "request_body_bytes": 10485760,
+              "response_body_bytes": 100
+            },
+            "blob_get": {
+              "requests": 1,
+              "request_body_bytes": 0,
+              "response_body_bytes": 10485760
+            },
+            "manifest": {
+              "requests": 2,
+              "request_body_bytes": 0,
+              "response_body_bytes": 389
+            },
+            "changes": {
+              "requests": 1,
+              "request_body_bytes": 276,
+              "response_body_bytes": 343
+            }
+          },
+          "storage": {
+            "db_bytes": 53248,
+            "wal_bytes": 16512,
+            "shm_bytes": 32768,
+            "blob_files": 1,
+            "blob_bytes": 10485760
+          }
+        },
+        {
+          "scan_a_ns": 21963748,
+          "seed_a_ns": 503479351,
+          "pull_b_ns": 374160474,
+          "convergence_ns": 877639825,
+          "http": {
+            "blob_put": {
+              "requests": 1,
+              "request_body_bytes": 10485760,
+              "response_body_bytes": 100
+            },
+            "blob_get": {
+              "requests": 1,
+              "request_body_bytes": 0,
+              "response_body_bytes": 10485760
+            },
+            "manifest": {
+              "requests": 2,
+              "request_body_bytes": 0,
+              "response_body_bytes": 389
+            },
+            "changes": {
+              "requests": 1,
+              "request_body_bytes": 276,
+              "response_body_bytes": 343
+            }
+          },
+          "storage": {
+            "db_bytes": 53248,
+            "wal_bytes": 16512,
+            "shm_bytes": 32768,
+            "blob_files": 1,
+            "blob_bytes": 10485760
+          }
+        },
+        {
+          "scan_a_ns": 22119064,
+          "seed_a_ns": 530715903,
+          "pull_b_ns": 335661897,
+          "convergence_ns": 866377800,
+          "http": {
+            "blob_put": {
+              "requests": 1,
+              "request_body_bytes": 10485760,
+              "response_body_bytes": 100
+            },
+            "blob_get": {
+              "requests": 1,
+              "request_body_bytes": 0,
+              "response_body_bytes": 10485760
+            },
+            "manifest": {
+              "requests": 2,
+              "request_body_bytes": 0,
+              "response_body_bytes": 389
+            },
+            "changes": {
+              "requests": 1,
+              "request_body_bytes": 276,
+              "response_body_bytes": 343
+            }
+          },
+          "storage": {
+            "db_bytes": 53248,
+            "wal_bytes": 16512,
+            "shm_bytes": 32768,
+            "blob_files": 1,
+            "blob_bytes": 10485760
+          }
+        },
+        {
+          "scan_a_ns": 22135916,
+          "seed_a_ns": 548668697,
+          "pull_b_ns": 341925496,
+          "convergence_ns": 890594193,
+          "http": {
+            "blob_put": {
+              "requests": 1,
+              "request_body_bytes": 10485760,
+              "response_body_bytes": 100
+            },
+            "blob_get": {
+              "requests": 1,
+              "request_body_bytes": 0,
+              "response_body_bytes": 10485760
+            },
+            "manifest": {
+              "requests": 2,
+              "request_body_bytes": 0,
+              "response_body_bytes": 389
+            },
+            "changes": {
+              "requests": 1,
+              "request_body_bytes": 276,
+              "response_body_bytes": 343
+            }
+          },
+          "storage": {
+            "db_bytes": 53248,
+            "wal_bytes": 16512,
+            "shm_bytes": 32768,
+            "blob_files": 1,
+            "blob_bytes": 10485760
+          }
+        }
+      ]
+    }
+  ]
+}

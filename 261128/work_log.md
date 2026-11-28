@@ -89,3 +89,19 @@ bind mountの拒否は別の非特権ユーザー・マウント名前空間で�
 P4-01〜P4-14は合格した。固定上限の1,920 MiBを使う試験は通常CIとは別にext4の一時領域で実行した。SQLiteの上限、停止点、HTTP応答と保持データは受入結果に記録した。実機電源断とデバイス試料は今回の確認に含めていない。 [受入結果](file-sync/docs/acceptance.md#phase-4の実測結果)・[測定値と再現手順](file-sync/docs/phase4-verification.md)
 
 ローカルの通常試験とrace検査はそれぞれ227件が合格し、Phase 3の135件をすべて含んだ。実ファイルでblob枠を埋める3試行は別枠で合格した。既定では隔離用2件、単独で呼ぶ子プロセス用2件、大容量試験1件をスキップした。依存のチェックサム、gofmt、go vet、ビルドも確認した。
+
+## 2026-11-28　Phase 5
+
+承認済みの `5534795714958e52e8c6f05fc9f7a4a740dabf89` から、変更のない `feat/file-sync` で開始した。クリーンな状態からのビルド、別プロセスによる実演、性能計測と公開用の静的資料を整備した。製品コード、固定fixtureと依存、共通のworkflowに差分はない。
+
+### 再現と計測
+
+- P5-01はハブ、A、Bを独立したCLIプロセスとして起動した。PとEは各版1、編集競合ではハブQ/2とBのR・基準P/1を確認した。QとRの保存を照合してから、手動でRを選んで版3に揃えた。別の初期化でBの復帰後にtombstone/2と旧本文Pの退避を確認した。再同期後もPは復活せず、受理履歴は2件のままだった。応答消失の前後と復元を扱う既存の限定試験も実行した。 [実演と復旧の再現](file-sync/docs/phase5-reproduction.md)
+- P5-02は空ファイル100件・1,000件、10 MiBファイル1件を条件ごとに5回実行した。各パスの本文・SHA-256、版1と受理1件を照合した。中継でHTTP要求数と本文バイト数を直接計数し、保存先の共有blob数と別々に記録した。 [計測方法と結果](file-sync/docs/measurements.md)・[全試行のJSON](file-sync/docs/measurement-results.json)
+- 共通資料の独立期待値、実行条件ごとの検証範囲、終了前に証拠を残す手順を参照した。CI Runnerの試行別集計、Database Engineの停止点とCLI再現、PCAP Analyzerの固定入力の比較、共同編集アプリの結果と復元、言語VMの台本と動画生成手順を参考にした。 [共通技術資料](../docs/engineering/README.md)
+
+### 公開準備と検証
+
+日本語字幕付き4分のデモ、台本、再生成手順、紹介ページを用意した。映像ではCLIで観測した出力と検査値を抜粋した。構成図と障害試験は、説明用であることと試験結果であることを画面に示した。全編をデコードし、字幕と場面の表示を確認した。ローカルのChromiumで幅1,440 pxと390 pxの表示、ポスター、相対リンク、文書の参照先、再生と終盤へのシークを確認した。GitHub Pagesの公開元は `main` のルートで、公開は独立レビュー後の工程に残る。 [台本と公開用MP4](demo/storyboard.md)・[受入記録](file-sync/docs/acceptance.md#最終受入と証拠の対象)
+
+Phase 0〜5の44条件を確認した。Phase 4の大容量実ファイル試験3件と隔離したbind mountの証拠を引き継いだ。 `ENOSPC` と `EIO` は注入で確認し、デバイス試料は未実施。実機電源断は受入範囲外。通常試験とrace検査では、Phase 4と同じ227件がそれぞれ合格した。Goアーカイブとモジュールのチェックサム、gofmt、go vet、ビルドも通過した。コードとfixtureの差分を調べ、Phase 4の試験証拠とPhase 5の計測対象を最終PRと照合した。 [Phase 4の証拠](file-sync/docs/phase4-verification.md)・[最終PR](https://github.com/kenobix/Claude_practice/pull/13)
